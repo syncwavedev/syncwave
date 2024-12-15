@@ -19,14 +19,18 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-font-smoothing: antialiased;
 	-webkit-text-size-adjust: none;
-	background: var(--color-bg);
+	background: var(--color-subtle-light);
 	color: var(--color-ink);
 	font-family: var(--font-sans);
 	line-height: 1.4;
-	overflow: unset;
 	scroll-behavior: auto;
 	text-rendering: optimizeLegibility;
 	text-size-adjust: none;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	overflow: hidden;
+	height: 100%;
 }
 
 .icon {

@@ -1,0 +1,211 @@
+.text-center {
+	text-align: center;
+}
+
+.text-muted {
+	color: var(--color-ink-muted);
+}
+
+.text-secondary {
+	color: var(--color-ink-secondary);
+}
+
+.text-3xl {
+	font-size: var(--text-3xl);
+}
+
+.text-2xl {
+	font-size: var(--text-2xl);
+}
+
+.text-xl {
+	font-size: var(--text-xl);
+}
+
+.text-lg {
+	font-size: var(--text-lg);
+}
+
+.text-md {
+	font-size: var(--text-md);
+}
+
+.text-sm {
+	font-size: var(--text-sm);
+}
+
+.text-xs {
+	font-size: var(--text-xs);
+}
+
+.font-medium {
+	font-weight: 500;
+}
+
+.font-semibold {
+	font-weight: 600;
+}
+
+.font-bold {
+	font-weight: 700;
+}
+
+.font-extrabold {
+	font-weight: 800;
+}
+
+.font-black {
+	font-weight: 900;
+}
+
+/* Margins */
+
+.m-0 {
+	margin: 0;
+}
+
+.m-1 {
+	margin: 0.25rem;
+}
+
+.mt-1 {
+	margin-block-start: 0.25rem;
+}
+
+.mt-2 {
+	margin-block-start: 0.5rem;
+}
+
+.mt-4 {
+	margin-block-start: 1rem;
+}
+
+.mt-6 {
+	margin-block-start: 1.5rem;
+}
+
+.mt-8 {
+	margin-block-start: 2rem;
+}
+
+.mt-12 {
+	margin-block-start: 3rem;
+}
+
+.ml-auto {
+	margin-inline-start: auto;
+}
+
+.ml-2 {
+	margin-inline-start: 0.5rem;
+}
+
+.ml-4 {
+	margin-inline-start: 1rem;
+}
+
+.mx-auto {
+	margin-inline-start: auto;
+	margin-inline-end: auto;
+}
+
+/* Padding */
+.p-2 {
+	padding: 0.5rem;
+}
+
+.p-4 {
+	padding: 1rem;
+}
+
+.py-2 {
+	padding-block-start: 0.5rem;
+	padding-block-end: 0.5rem;
+}
+
+.pt-2 {
+	padding-block-start: 0.5rem;
+}
+
+/* Flexbox */
+
+.flex {
+	display: flex;
+}
+
+.flex-col {
+	flex-direction: column;
+}
+
+.align-center {
+	align-items: center;
+}
+
+.justify-center {
+	justify-content: center;
+}
+
+.gap-1 {
+	gap: 0.25rem;
+}
+
+.gap-2 {
+	gap: 0.5rem;
+}
+
+.gap-3 {
+	gap: 0.75rem;
+}
+
+.gap-4 {
+	gap: 1rem;
+}
+
+.gap-6 {
+	gap: 1.5rem;
+}
+
+.gap-8 {
+	gap: 2rem;
+}
+
+/* Visibility */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+/* Display */
+.hidden {
+	display: none;
+}
+
+/* Borders */
+
+.border {
+	border: 1px solid var(--color-subtle-light);
+}
+
+.border-rounded {
+	border-radius: 0.25rem;
+}
+
+/* Positioning */
+.sticky {
+	position: sticky;
+}
+
+.top-0 {
+	top: 0;
+}
+
+/* Backgrounds */
+.bg-white {
+	background-color: var(--color-bg);
+}

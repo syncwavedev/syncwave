@@ -1,3 +1,3 @@
-import { f } from "ground-common";
+import {f} from 'ground-common';
 
 f();

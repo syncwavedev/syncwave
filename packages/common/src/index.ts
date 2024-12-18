@@ -1,3 +1,3 @@
 export function f() {
-  console.log("works!");
+    console.log('works!');
 }

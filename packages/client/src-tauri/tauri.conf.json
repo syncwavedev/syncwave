@@ -19,7 +19,7 @@
             }
         ],
         "security": {
-            "csp": null
+            "csp": "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
         }
     },
     "bundle": {

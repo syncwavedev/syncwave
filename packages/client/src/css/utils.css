@@ -104,6 +104,18 @@
 	margin-inline-start: 1rem;
 }
 
+.mr-2 {
+    margin-inline-end: 0.5rem;
+}
+
+.mr-3 {
+    margin-inline-end: 0.75rem;
+}
+
+.mr-4 {
+    margin-inline-end: 1rem;
+}
+
 .mx-auto {
 	margin-inline-start: auto;
 	margin-inline-end: auto;

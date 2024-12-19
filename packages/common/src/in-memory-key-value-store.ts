@@ -1,6 +1,5 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
 import {Condition, Cursor, CursorNext, KeyValueStore, Transaction} from './contracts/key-value-store';
-import {Result} from './result';
 
 function compareUint8Array(a: Uint8Array, b: Uint8Array): 1 | 0 | -1 {
     const minLength = Math.min(a.length, b.length);
@@ -16,14 +15,20 @@ function compareUint8Array(a: Uint8Array, b: Uint8Array): 1 | 0 | -1 {
     return 0;
 }
 
+export class CursorClosedError extends Error {
+    constructor() {
+        super('cursor is closed');
+    }
+}
+
 export class InMemoryKeyValueCursor implements Cursor<Uint8Array, Uint8Array> {
     private closed = false;
 
     constructor(private iterator: Iterator<Uint8Array, Uint8Array>) {}
 
-    async next(): Promise<Result<unknown, CursorNext<Uint8Array<ArrayBufferLike>, Uint8Array<ArrayBufferLike>>>> {
+    async next(): Promise<CursorNext<Uint8Array, Uint8Array>> {
         if (this.closed) {
-            return Result.error({type: 'closed', message: 'cursor is closed'});
+            throw new CursorClosedError();
         }
 
         let result: CursorNext<Uint8Array, Uint8Array>;
@@ -42,13 +47,11 @@ export class InMemoryKeyValueCursor implements Cursor<Uint8Array, Uint8Array> {
             };
         }
 
-        return Result.ok(result);
+        return result;
     }
 
-    close(): Promise<Result<unknown, void>> {
+    async close(): Promise<void> {
         this.closed = true;
-
-        return Promise.resolve(Result.ok());
     }
 }
 
@@ -57,45 +60,31 @@ export class InMemoryKeyValueStore implements KeyValueStore<Uint8Array, Uint8Arr
 
     constructor() {}
 
-    transaction<TResult>(
-        fn: (txn: Transaction<Uint8Array, Uint8Array>) => Promise<Result<unknown, TResult>>
-    ): Promise<Result<unknown, TResult>> {
+    transaction<TResult>(fn: (txn: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>): Promise<TResult> {
         throw new Error('Method not implemented.');
     }
 
-    async get(key: Uint8Array): Promise<Result<unknown, Uint8Array>> {
-        const result = this.tree.get(key);
-
-        if (!result) {
-            return Result.error({type: 'not_found', message: 'entry does not exist'});
-        } else {
-            return Result.ok(result);
-        }
+    async get(key: Uint8Array): Promise<Uint8Array | undefined> {
+        return this.tree.get(key) ?? undefined;
     }
 
-    query(condition: Condition<Uint8Array>): Promise<Result<unknown, Cursor<Uint8Array, Uint8Array>>> {
-        let cursor: Cursor<Uint8Array, Uint8Array>;
-
+    async query(condition: Condition<Uint8Array>): Promise<Cursor<Uint8Array, Uint8Array>> {
         if (condition.gt) {
-            cursor = new InMemoryKeyValueCursor(this.tree.gt(condition.gt));
+            return new InMemoryKeyValueCursor(this.tree.gt(condition.gt));
         } else if (condition.gte) {
-            cursor = new InMemoryKeyValueCursor(this.tree.ge(condition.gte));
+            return new InMemoryKeyValueCursor(this.tree.ge(condition.gte));
         } else if (condition.lt) {
-            cursor = new InMemoryKeyValueCursor(this.tree.lt(condition.lt));
+            return new InMemoryKeyValueCursor(this.tree.lt(condition.lt));
         } else if (condition.lte) {
-            cursor = new InMemoryKeyValueCursor(this.tree.le(condition.lte));
+            return new InMemoryKeyValueCursor(this.tree.le(condition.lte));
         } else {
             throw new Error('unreachable');
         }
-
-        return Promise.resolve(Result.ok(cursor));
     }
 
-    async put(key: Uint8Array, value: Uint8Array): Promise<Result<unknown, void>> {
+    async put(key: Uint8Array, value: Uint8Array): Promise<void> {
         return await this.transaction(async txn => {
             await txn.put(key, value);
-
-            return Result.ok();
         });
     }
 }

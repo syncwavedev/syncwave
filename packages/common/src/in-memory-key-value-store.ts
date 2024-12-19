@@ -1,12 +1,5 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
-import {
-    Condition,
-    Cursor,
-    CursorNext,
-    InvalidQueryCondition,
-    KeyValueStore,
-    Transaction,
-} from './contracts/key-value-store';
+import {Condition, Cursor, CursorNext, InvalidQueryCondition, KVStore, Transaction} from './contracts/key-value-store';
 import {Locker} from './contracts/locker';
 import {InMemoryLocker} from './in-memory-locker';
 
@@ -92,7 +85,7 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
 
 // this implementation handles one operation at a time because of the single store level lock
 // performance is suboptimal, so this store is intended for testing purposes only
-export class InMemoryKeyValueStore implements KeyValueStore<Uint8Array, Uint8Array> {
+export class InMemoryKeyValueStore implements KVStore<Uint8Array, Uint8Array> {
     private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
     private locker: Locker<InMemoryKeyValueStore> = new InMemoryLocker();
 

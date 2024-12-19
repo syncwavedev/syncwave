@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {Entry} from './contracts/key-value-store';
 import {InMemoryKeyValueStore} from './in-memory-key-value-store';
-import {MappedKeyValueStore, Mapper} from './mapped-key-value-store'; // Replace with the correct file path
+import {MappedKVStore, Mapper} from './mapped-key-value-store'; // Replace with the correct file path
 
 function createMapper(): Mapper<Uint8Array, string> {
     return {
@@ -16,7 +16,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         await mappedStore.put('key1', 'value1');
         const result = await mappedStore.get('key1');
@@ -29,7 +29,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         await mappedStore.put('key2', 'value2');
         const result = await mappedStore.get('key2');
@@ -42,7 +42,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         await mappedStore.put('a', 'valueA');
         await mappedStore.put('b', 'valueB');
@@ -68,7 +68,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         await mappedStore.transaction(async txn => {
             await txn.put('key3', 'value3');
@@ -85,7 +85,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         await mappedStore.put('key4', 'value4');
 
@@ -104,7 +104,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         const cursor = await mappedStore.query({gte: 'key5'});
         await cursor.close();
@@ -117,7 +117,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         const cursor = await mappedStore.query({gte: 'z'});
         const results: Entry<string, string>[] = [];
@@ -136,7 +136,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         await mappedStore.transaction(async txn => {
             await txn.put('key6', 'value6');
@@ -153,7 +153,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const valueMapper = createMapper();
 
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKeyValueStore(store, keyMapper, valueMapper);
+        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         await mappedStore.put('key7', 'value7');
 

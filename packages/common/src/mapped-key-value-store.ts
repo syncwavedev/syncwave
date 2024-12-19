@@ -1,4 +1,4 @@
-import {Condition, Crud, Cursor, CursorNext, KeyValueStore, Transaction} from './contracts/key-value-store';
+import {Condition, Crud, Cursor, CursorNext, KVStore, Transaction} from './contracts/key-value-store';
 import {assertNever} from './utils';
 
 export interface Mapper<TPrivate, TPublic> {
@@ -58,11 +58,11 @@ export class MappedCursor<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
     }
 }
 
-export class MappedKeyValueStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
-    implements KeyValueStore<TKeyPublic, TValuePublic>
+export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
+    implements KVStore<TKeyPublic, TValuePublic>
 {
     constructor(
-        private store: KeyValueStore<TKeyPrivate, TValuePrivate>,
+        private store: KVStore<TKeyPrivate, TValuePrivate>,
         private keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}

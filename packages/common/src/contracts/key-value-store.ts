@@ -77,7 +77,9 @@ export interface Crud<TKey, TValue> {
 
 export interface Transaction<TKey, TValue> extends Crud<TKey, TValue> {}
 
-export interface KeyValueStore<TKey, TValue> extends Crud<TKey, TValue> {
+export interface KVStore<TKey, TValue> extends Crud<TKey, TValue> {
     // fn must be called multiple times in case of a conflict (optimistic concurrency)
     transaction<TResult>(fn: (txn: Transaction<TKey, TValue>) => Promise<TResult>): Promise<TResult>;
 }
+
+export type Uint8KVStore = KVStore<Uint8Array, Uint8Array>;

@@ -50,6 +50,8 @@
   },
   "dependencies": {
     "functional-red-black-tree": "^1.0.1",
-    "ts-pattern": "^5.2.0"
+    "msgpackr": "^1.11.2",
+    "ts-pattern": "^5.2.0",
+    "yjs": "^13.6.20"
   }
 }

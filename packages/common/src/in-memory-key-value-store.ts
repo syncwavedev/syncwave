@@ -1,5 +1,14 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
-import {Condition, Cursor, CursorNext, KeyValueStore, Transaction} from './contracts/key-value-store';
+import {
+    Condition,
+    Cursor,
+    CursorNext,
+    InvalidQueryCondition,
+    KeyValueStore,
+    Transaction,
+} from './contracts/key-value-store';
+import {Locker} from './contracts/locker';
+import {InMemoryLocker} from './in-memory-locker';
 
 function compareUint8Array(a: Uint8Array, b: Uint8Array): 1 | 0 | -1 {
     const minLength = Math.min(a.length, b.length);
@@ -33,14 +42,14 @@ export class InMemoryKeyValueCursor implements Cursor<Uint8Array, Uint8Array> {
 
         let result: CursorNext<Uint8Array, Uint8Array>;
 
-        if (this.iterator.hasNext) {
-            this.iterator.next();
-
+        if (this.iterator.valid) {
             result = {
                 type: 'entry',
                 key: this.iterator.key!,
                 value: this.iterator.value!,
             };
+
+            this.iterator.next();
         } else {
             result = {
                 type: 'done',
@@ -55,14 +64,8 @@ export class InMemoryKeyValueCursor implements Cursor<Uint8Array, Uint8Array> {
     }
 }
 
-export class InMemoryKeyValueStore implements KeyValueStore<Uint8Array, Uint8Array> {
-    private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
-
-    constructor() {}
-
-    transaction<TResult>(fn: (txn: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>): Promise<TResult> {
-        throw new Error('Method not implemented.');
-    }
+export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> {
+    constructor(public tree: Tree<Uint8Array, Uint8Array>) {}
 
     async get(key: Uint8Array): Promise<Uint8Array | undefined> {
         return this.tree.get(key) ?? undefined;
@@ -78,13 +81,55 @@ export class InMemoryKeyValueStore implements KeyValueStore<Uint8Array, Uint8Arr
         } else if (condition.lte) {
             return new InMemoryKeyValueCursor(this.tree.le(condition.lte));
         } else {
-            throw new Error('unreachable');
+            throw new InvalidQueryCondition(condition);
         }
     }
 
     async put(key: Uint8Array, value: Uint8Array): Promise<void> {
-        return await this.transaction(async txn => {
-            await txn.put(key, value);
+        this.tree = this.tree.remove(key).insert(key, value);
+    }
+}
+
+// this implementation handles one operation at a time because of the single store level lock
+// performance is suboptimal, so this store is intended for testing purposes only
+export class InMemoryKeyValueStore implements KeyValueStore<Uint8Array, Uint8Array> {
+    private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
+    private locker: Locker<InMemoryKeyValueStore> = new InMemoryLocker();
+
+    constructor() {}
+
+    async transaction<TResult>(fn: (txn: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>): Promise<TResult> {
+        return await this.locker.lock(this, async () => {
+            const retries = 10;
+
+            for (let attempt = 0; attempt <= retries; attempt += 1) {
+                const txn = new InMemoryTransaction(this.tree);
+                try {
+                    const result = await fn(txn);
+
+                    this.tree = txn.tree;
+
+                    return result;
+                } catch (error) {
+                    if (attempt === retries) {
+                        throw error;
+                    }
+                }
+            }
+
+            throw new Error('unreachable');
         });
+    }
+
+    async get(key: Uint8Array): Promise<Uint8Array | undefined> {
+        return await this.transaction(txn => txn.get(key));
+    }
+
+    async query(condition: Condition<Uint8Array>): Promise<Cursor<Uint8Array, Uint8Array>> {
+        return await this.transaction(txn => txn.query(condition));
+    }
+
+    async put(key: Uint8Array, value: Uint8Array): Promise<void> {
+        return await this.transaction(txn => txn.put(key, value));
     }
 }

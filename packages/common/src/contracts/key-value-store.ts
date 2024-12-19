@@ -37,6 +37,11 @@ export interface DeleteMutation<TKey> {
     readonly key: TKey;
 }
 
+export interface Entry<TKey, TValue> {
+    readonly key: TKey;
+    readonly value: TValue;
+}
+
 export type Mutation<TKey, TValue> = PutMutation<TKey, TValue> | DeleteMutation<TKey>;
 
 export type Condition<TKey> = GtCondition<TKey> | GteCondition<TKey> | LtCondition<TKey> | LteCondition<TKey>;
@@ -56,6 +61,12 @@ export type CursorNext<TKey, TValue> = CursorNextDone | CursorNextValue<TKey, TV
 export interface Cursor<TKey, TValue> {
     next(): Promise<CursorNext<TKey, TValue>>;
     close(): Promise<void>;
+}
+
+export class InvalidQueryCondition extends Error {
+    constructor(public readonly condition) {
+        super('invalid query condition');
+    }
 }
 
 export interface Crud<TKey, TValue> {

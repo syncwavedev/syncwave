@@ -1,4 +1,4 @@
-import navaid from 'navaid';
+import Navigo from 'navigo';
 
-const router = navaid();
+const router = new Navigo('/');
 export default router;

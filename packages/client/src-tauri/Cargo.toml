@@ -19,7 +19,9 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
+wry = "0.47.2"
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-haptics = "2.0.0"
+tauri-plugin-swipe-back-ios = "1.0.0"

@@ -97,6 +97,12 @@ h3,
 h4,
 h5,
 h6 {
-    font-weight: inherit;
-    font-size: inherit;
+	font-weight: inherit;
+	font-size: inherit;
+}
+
+hr {
+	border: 0;
+	border-top: 1px solid var(--color-subtle);
+	margin: 1em 0;
 }

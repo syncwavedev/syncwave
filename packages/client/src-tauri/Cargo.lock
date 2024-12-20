@@ -1380,6 +1380,8 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-haptics",
  "tauri-plugin-opener",
+ "tauri-plugin-swipe-back-ios",
+ "wry",
 ]
 
 [[package]]
@@ -3735,6 +3737,18 @@ dependencies = [
  "url",
  "windows",
  "zbus",
+]
+
+[[package]]
+name = "tauri-plugin-swipe-back-ios"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f67ec8853ef654cd3cadf61d6e01716836bcc0505dc2694832c959b403879fcf"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

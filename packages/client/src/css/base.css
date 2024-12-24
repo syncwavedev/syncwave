@@ -29,7 +29,13 @@ body {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
-	height: 100vh;
+	height: 100%;
+}
+
+hr {
+	border: 0;
+	border-top: 1px solid var(--color-border);
+	margin: 1em 0;
 }
 
 .icon {

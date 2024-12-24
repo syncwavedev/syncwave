@@ -31,6 +31,12 @@ export abstract class Schema<T> {
     abstract visit<T>(visitor: SchemaVisitor<T>): T;
 
     abstract validate(value: unknown): value is T;
+
+    assertValid(value: unknown): asserts value is T {
+        if (!this.validate(value)) {
+            throw new Error('value is invalid');
+        }
+    }
 }
 
 export class UndefinedSchema extends Schema<undefined> {

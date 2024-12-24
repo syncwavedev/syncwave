@@ -76,3 +76,7 @@ export function concatBuffers(a: Uint8Array, b: Uint8Array): Uint8Array {
 
     return mergedArray;
 }
+
+export function distinct<T>(items: T[]): T[] {
+    return [...new Set(items).values()];
+}

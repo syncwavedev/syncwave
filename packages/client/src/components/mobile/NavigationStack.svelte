@@ -6,17 +6,26 @@
 		leading,
 		trailing,
 		children,
-		bottomToolbar
+		bottomToolbar,
+		scrollTopOnTitleClick
 	}: {
 		navigationTitle?: string;
 		leading?: Snippet;
 		trailing?: Snippet;
 		children?: Snippet;
 		bottomToolbar?: Snippet;
+		scrollTopOnTitleClick?: boolean;
 	} = $props();
 
 	const withTopToolbar = !!navigationTitle || !!leading;
 	const withBottomToolbar = !!bottomToolbar;
+
+	const scrollTop = () => {
+		const element = document.querySelector('.content');
+		if (element) {
+			element.scrollTo({top: 0, behavior: 'smooth'});
+		}
+	};
 </script>
 
 <div class="navigation-stack">
@@ -25,9 +34,13 @@
 			<div class="top-toolbar__leading">
 				{@render leading?.()}
 			</div>
-			<div class="top-toolbar__title font-medium">
+			<button
+				type="button"
+				class="top-toolbar__title font-semibold"
+				onclick={scrollTopOnTitleClick ? scrollTop : undefined}
+			>
 				{navigationTitle}
-			</div>
+			</button>
 			<div class="top-toolbar__trailing">
 				{@render trailing?.()}
 			</div>
@@ -70,6 +83,8 @@
 		padding-top: env(safe-area-inset-top);
 		padding-right: max(0.75rem, env(safe-area-inset-right));
 		padding-left: max(0.75rem, env(safe-area-inset-left));
+
+		padding-bottom: 0.75rem;
 	}
 
 	.top-toolbar__trailing {
@@ -92,6 +107,7 @@
 		padding: 0 calc(env(safe-area-inset-left) + 0.75rem) 0
 			calc(env(safe-area-inset-right) + 0.75rem);
 		flex: 1 1 auto;
+		padding-bottom: env(safe-area-inset-bottom);
 
 		overflow-y: auto; /* Scrollable area */
 	}

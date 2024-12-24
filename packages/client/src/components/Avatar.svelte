@@ -7,46 +7,49 @@
 		imageUrl?: string;
 	} = $props();
 
-	function stringToColor(str: string) {
-		const colors = [
-			'oklch(60% 0.275 0)',
-			'oklch(60% 0.275 18)',
-			'oklch(60% 0.275 36)',
-			'oklch(60% 0.275 54)',
-			'oklch(60% 0.275 72)',
-			'oklch(60% 0.275 90)',
-			'oklch(60% 0.275 108)',
-			'oklch(60% 0.275 126)',
-			'oklch(60% 0.275 144)',
-			'oklch(60% 0.275 162)',
-			'oklch(60% 0.275 180)',
-			'oklch(60% 0.275 198)',
-			'oklch(60% 0.275 216)',
-			'oklch(60% 0.275 234)',
-			'oklch(60% 0.275 252)',
-			'oklch(60% 0.275 270)',
-			'oklch(60% 0.275 288)',
-			'oklch(60% 0.275 306)',
-			'oklch(60% 0.275 324)',
-			'oklch(60% 0.275 342)'
-		];
+	const colorPairs = [
+		// Glassy pink with deeper rose text
+		{bg: 'oklch(92% 0.12 20 / 0.85)', text: 'oklch(35% 0.22 20)'},
+		// Frosted emerald with deep forest text
+		{bg: 'oklch(88% 0.15 150 / 0.85)', text: 'oklch(35% 0.25 150)'},
+		// Glassy violet with rich purple text
+		{bg: 'oklch(90% 0.12 280 / 0.85)', text: 'oklch(35% 0.22 280)'},
+		// Crystalline amber with deep copper text
+		{bg: 'oklch(90% 0.15 50 / 0.85)', text: 'oklch(35% 0.25 50)'},
+		// Frosted azure with deep ocean text
+		{bg: 'oklch(90% 0.12 230 / 0.85)', text: 'oklch(35% 0.22 230)'},
+		// Glassy teal with deep turquoise text
+		{bg: 'oklch(88% 0.15 190 / 0.85)', text: 'oklch(35% 0.25 190)'}
+	];
 
+	function getAvatarColors(str: string) {
+		// Produce a hash from the string so we can pick a color pair
 		let hash = 0;
 		for (let i = 0; i < str.length; i++) {
 			hash = str.charCodeAt(i) + ((hash << 5) - hash);
 		}
 
-		return colors[Math.abs(hash) % colors.length];
+		// Pick from our list of pairs
+		const pair = colorPairs[Math.abs(hash) % colorPairs.length];
+		return {bgColor: pair.bg, textColor: pair.text};
 	}
 
-	const backgroundColor = stringToColor(title);
+	const {bgColor, textColor} = getAvatarColors(title);
 </script>
 
 {#if imageUrl}
 	<img class="avatar-image" src={imageUrl} alt={title} />
 {:else}
-	<div class="avatar-placeholder font-semibold" style="background-color: {backgroundColor}">
-		<span class="avatar-placeholder__letter">{title[0].toUpperCase()}</span>
+	<div
+		class="avatar-placeholder font-semibold"
+		style="
+			background-color: {bgColor};
+			color: {textColor};
+		"
+	>
+		<span class="avatar-placeholder__letter">
+			{title[0].toUpperCase()}
+		</span>
 	</div>
 {/if}
 
@@ -60,7 +63,7 @@
 	}
 
 	.avatar-placeholder__letter {
-		font-size: 0.5em;
+		font-size: max(0.4em, 15px);
 	}
 
 	.avatar-placeholder {
@@ -68,7 +71,6 @@
 		height: 1em;
 		display: flex;
 		justify-content: center;
-		color: var(--color-always-white);
 		align-items: center;
 		border-radius: 50%;
 	}

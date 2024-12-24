@@ -229,6 +229,7 @@
 		display: flex;
 		align-items: center;
 		cursor: pointer;
+		margin-bottom: 0.25rem;
 	}
 
 	.board-avatar {

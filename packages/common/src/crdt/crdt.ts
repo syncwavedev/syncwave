@@ -1,11 +1,11 @@
 import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
-import {array, date, InferSchemaValue, map, number, object, richtext, Schema, string} from './schema';
+import {Serializer} from '../contracts/serializer';
+import {JsonSerializer} from '../json-serializer';
+import {assert, Brand} from '../utils';
+import {Richtext} from './richtext';
+import {array, InferSchemaValue, map, number, object, richtext, Schema, string} from './schema';
 
-class Diff<T> {
-    __tsDiffHint?: T;
-
-    constructor(public _state: Uint8Array) {}
-}
+export type DocDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 
 type Unsubscribe = () => void;
 
@@ -26,9 +26,9 @@ class Doc<T> {
         return new Doc(schema, doc);
     }
 
-    static load<T>(schema: Schema<T>, state: Diff<T>): Doc<T> {
+    static load<T>(schema: Schema<T>, diff: DocDiff<T>): Doc<T> {
         const doc = new YDoc();
-        applyUpdateV2(doc, state._state);
+        applyUpdateV2(doc, diff);
 
         return new Doc(schema, doc);
     }
@@ -42,11 +42,11 @@ class Doc<T> {
         return this.doc.getMap(ROOT_KEY);
     }
 
-    private get value(): YValue {
+    private get yValue(): YValue {
         return this.root.get(ROOT_VALUE);
     }
 
-    private set value(value: YValue) {
+    private set yValue(value: YValue) {
         this.root.set(ROOT_VALUE, value);
     }
 
@@ -54,60 +54,101 @@ class Doc<T> {
         return this.map(x => x);
     }
 
-    state(): Diff<T> {
-        return new Diff(encodeStateAsUpdateV2(this.doc));
+    state(): DocDiff<T> {
+        return encodeStateAsUpdateV2(this.doc) as DocDiff<T>;
     }
 
     map<TResult>(mapper: (snapshot: T) => TResult): TResult {
         // for simplicity sake we make full copy of the Doc to create a snapshot,
         // even though not all fields might be needed by the mapper
-        return mapper(createProxy(this.schema, this.copyValue()));
+        return mapper(createProxy(this.schema, this.copyYValue()));
     }
 
     // if recipe returns T, then whole doc is overridden with the returned value
     update(recipe: (draft: T) => T | void): void {
         const log: OpLog = [];
-        const draft = createProxy(this.schema, this.copyValue(), log);
+        const draft = createProxy(this.schema, this.copyYValue(), log);
 
         const replacement = recipe(draft);
         if (replacement) {
-            this.value = mapToYValue(this.schema, replacement);
+            this.schema.assertValid(replacement);
+            this.yValue = mapToYValue(this.schema, replacement);
         } else {
-            replayLog(this.schema, this.value, log);
+            replayLog(this.schema, this.yValue, log);
         }
     }
 
-    apply(diff: Diff<T>): void {
-        applyUpdateV2(this.doc, diff._state);
+    apply(diff: DocDiff<T>): void {
+        applyUpdateV2(this.doc, diff);
     }
 
-    subscribe(next: (diff: Diff<T>) => void): Unsubscribe {
-        const fn = (state: Uint8Array) => next(new Diff(state));
+    subscribe(next: (diff: DocDiff<T>) => void): Unsubscribe {
+        const fn = (state: Uint8Array) => next(state as DocDiff<T>);
         this.doc.on('updateV2', fn);
 
         return () => this.doc.off('update', fn);
     }
 
-    private copyValue(): YValue {
-        return Doc.load(this.schema, this.state()).value;
+    private copyYValue(): YValue {
+        return Doc.load(this.schema, this.state()).yValue;
     }
 }
 
 type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string | null | undefined;
 
+// using JsonSerializer for simplicity sake, more efficient serialization would require varint serialization
+const intToStringSerializer: Serializer<number, string> = new JsonSerializer();
+
+// mapToYValue assumes that value is valid for the given schema
 function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
+    return schema.visit<YValue>({
+        nullable: nullable => (value === null ? null : mapToYValue(nullable.inner, value as any)),
+        optional: optional => (value === null ? null : mapToYValue(optional.inner, value as any)),
+        array: array => {
+            assert(Array.isArray(value));
+
+            const result = new YArray<YValue>();
+            result.push(value.map(x => mapToYValue(array.item, x)));
+
+            return result;
+        },
+        boolean: () => value as boolean,
+        number: () => value as number,
+        richtext: () => {
+            const delta = (value as Richtext).toDelta();
+            const result = new YText();
+            result.applyDelta(delta, {sanitize: false});
+            return result;
+        },
+        string: () => value as string,
+        map: map => {
+            assert(value instanceof Map);
+            const entries = [...value.entries()].map(([key, value]) => [key, mapToYValue(map.value, value)] as const);
+            return new YMap(entries);
+        },
+        object: object => {
+            assert(typeof value === 'object' && value !== null);
+
+            const result = new YMap<YValue>();
+            for (const [key, fieldValue] of Object.entries(value)) {
+                const field = object.fields.find(x => x.name === key);
+
+                // mapToYValue assumes that value is valid for the given schema
+                assert(field !== undefined);
+
+                result.set(intToStringSerializer.encode(field.id), mapToYValue(field.schema, fieldValue));
+            }
+
+            return result;
+        },
+    });
+}
+
+function replayLog<T>(schema: Schema<T>, yValue: YValue, log: OpLog): void {
     throw new Error('not implemented');
 }
 
-function mapFromYValue<T>(schema: Schema<T>, value: YValue): T {
-    throw new Error('not implemented');
-}
-
-function replayLog<T>(schema: Schema<T>, value: YValue, log: OpLog): void {
-    throw new Error('not implemented');
-}
-
-function createProxy(schema: Schema<any>, value: YValue, log?: OpLog): any {
+function createProxy(schema: Schema<any>, yValue: YValue, log?: OpLog): any {
     throw new Error('not implemented');
 }
 
@@ -121,23 +162,26 @@ const taskSchema = object({
     meta: [
         5,
         object({
-            createdAt: [0, date()],
-            updatedAt: [1, date()],
+            createdAt: [0, number()],
+            updatedAt: [1, number()],
         }),
     ],
 });
 
+const description = new Richtext();
+description.insert(0, 'some desc');
+
 const doc = Doc.create(taskSchema, {
     title: 'sdf',
-    description: 'some desc',
+    description,
     tags: new Map([
         ['green', 2],
         ['blue', 3],
     ]),
     reactions: undefined,
     meta: {
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
     },
 });
 
@@ -147,7 +191,7 @@ doc.update(draft => {
     draft.title = 'new ' + draft.title;
     draft.meta = {
         createdAt: draft.meta.createdAt,
-        updatedAt: new Date(),
+        updatedAt: Date.now(),
     };
 });
 

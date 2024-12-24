@@ -1,31 +1,27 @@
 import {distinct} from '../utils';
-
-export abstract class Richtext {}
+import {Richtext} from './richtext';
 
 export interface SchemaVisitor<T> {
     string(schema: StringSchema): T;
     richtext(schema: RichtextSchema): T;
-    date(schema: DateSchema): T;
     number(schema: NumberSchema): T;
     boolean(schema: BooleanSchema): T;
-    any(schema: AnySchema): T;
     map<TValue>(schema: MapSchema<TValue>): T;
     array<TItem>(schema: ArraySchema<TItem>): T;
-    union<TUnion>(schema: UnionSchema<TUnion>): T;
     object<TObject extends object>(schema: ObjectSchema<TObject>): T;
-    undefined_(schema: UndefinedSchema): T;
-    null_(schema: NullSchema): T;
+    optional<TInner>(schema: OptionalSchema<TInner>): T;
+    nullable<TInner>(schema: NullableSchema<TInner>): T;
 }
 
 export abstract class Schema<T> {
     __tsSchemaType?: T;
 
     optional(): Schema<T | undefined> {
-        return new UnionSchema([this, new UndefinedSchema()]);
+        return new OptionalSchema(this);
     }
 
     nullable(): Schema<T | null> {
-        return new UnionSchema([this, new NullSchema()]);
+        return new NullableSchema(this);
     }
 
     abstract visit<T>(visitor: SchemaVisitor<T>): T;
@@ -39,23 +35,31 @@ export abstract class Schema<T> {
     }
 }
 
-export class UndefinedSchema extends Schema<undefined> {
+export class OptionalSchema<T> extends Schema<T | undefined> {
+    constructor(public readonly inner: Schema<T>) {
+        super();
+    }
+
     visit<T>(visitor: SchemaVisitor<T>): T {
-        return visitor.undefined_(this);
+        return visitor.optional(this);
     }
 
     validate(value: unknown): value is undefined {
-        return value === undefined;
+        return value === undefined || this.inner.validate(value);
     }
 }
 
-export class NullSchema extends Schema<null> {
+export class NullableSchema<T> extends Schema<T | null> {
+    constructor(public readonly inner: Schema<T>) {
+        super();
+    }
+
     visit<T>(visitor: SchemaVisitor<T>): T {
-        return visitor.null_(this);
+        return visitor.nullable(this);
     }
 
     validate(value: unknown): value is null {
-        return value === null;
+        return value === null || this.inner.validate(value);
     }
 }
 
@@ -79,16 +83,6 @@ export class RichtextSchema extends Schema<Richtext> {
     }
 }
 
-export class DateSchema extends Schema<Date> {
-    visit<T>(visitor: SchemaVisitor<T>): T {
-        return visitor.date(this);
-    }
-
-    validate(value: unknown): value is Date {
-        return value instanceof Date;
-    }
-}
-
 export class NumberSchema extends Schema<number> {
     visit<T>(visitor: SchemaVisitor<T>): T {
         return visitor.number(this);
@@ -109,18 +103,8 @@ export class BooleanSchema extends Schema<boolean> {
     }
 }
 
-export class AnySchema extends Schema<any> {
-    visit<T>(visitor: SchemaVisitor<T>): T {
-        return visitor.any(this);
-    }
-
-    validate(value: unknown): value is any {
-        return true;
-    }
-}
-
 export class MapSchema<TValue> extends Schema<Map<string, TValue>> {
-    constructor(public readonly valueSchema: Schema<any>) {
+    constructor(public readonly value: Schema<any>) {
         super();
     }
 
@@ -134,7 +118,7 @@ export class MapSchema<TValue> extends Schema<Map<string, TValue>> {
         }
 
         for (const [k, v] of value.entries()) {
-            if (typeof k !== 'string' || !this.valueSchema.validate(v)) {
+            if (typeof k !== 'string' || !this.value.validate(v)) {
                 return false;
             }
         }
@@ -144,7 +128,7 @@ export class MapSchema<TValue> extends Schema<Map<string, TValue>> {
 }
 
 export class ArraySchema<T> extends Schema<T[]> {
-    constructor(public readonly itemSchema: Schema<any>) {
+    constructor(public readonly item: Schema<any>) {
         super();
     }
 
@@ -158,7 +142,7 @@ export class ArraySchema<T> extends Schema<T[]> {
         }
 
         for (const item of value) {
-            if (!this.itemSchema.validate(item)) {
+            if (!this.item.validate(item)) {
                 return false;
             }
         }
@@ -174,7 +158,7 @@ interface ObjectField {
 }
 
 export class ObjectSchema<T extends object> extends Schema<T> {
-    private readonly fields: ObjectField[];
+    public readonly fields: ObjectField[];
 
     constructor(definition: ObjectDefinition) {
         super();
@@ -218,25 +202,7 @@ export class ObjectSchema<T extends object> extends Schema<T> {
     }
 }
 
-export class UnionSchema<T> extends Schema<T> {
-    constructor(public readonly options: Schema<any>[]) {
-        super();
-    }
-
-    visit<T>(visitor: SchemaVisitor<T>): T {
-        return visitor.union(this);
-    }
-
-    validate(value: unknown): value is T {
-        return this.options.some(x => x.validate(value));
-    }
-}
-
 export type InferSchemaValue<T extends Schema<any>> = T extends Schema<infer R> ? R : never;
-
-export function union<const T extends Schema<any>[]>(...options: T): Schema<InferSchemaValue<T[number]>> {
-    return new UnionSchema(options);
-}
 
 export function string(): Schema<string> {
     return new StringSchema();
@@ -246,20 +212,12 @@ export function richtext(): Schema<Richtext> {
     return new RichtextSchema();
 }
 
-export function date(): Schema<Date> {
-    return new DateSchema();
-}
-
 export function number(): Schema<number> {
     return new NumberSchema();
 }
 
 export function boolean(): Schema<boolean> {
     return new BooleanSchema();
-}
-
-export function any(): Schema<any> {
-    return new AnySchema();
 }
 
 export function map<TSchema extends Schema<any>>(valueSchema: TSchema): Schema<Map<string, InferSchemaValue<TSchema>>> {

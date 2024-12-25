@@ -29,7 +29,7 @@ body {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
-	height: 100%;
+	height: 100vdh;
 }
 
 hr {
@@ -40,8 +40,8 @@ hr {
 
 .icon {
 	display: inline-flex;
-	height: 1em;
-	width: 1em;
+	inline-size: 100%;
+	block-size: 100%;
 	vertical-align: -0.125em;
 }
 

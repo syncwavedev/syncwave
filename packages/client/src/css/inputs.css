@@ -1,13 +1,12 @@
 .input {
-	background-color: var(--color-subtle-1);
 	border-radius: var(--input-border-radius, 0.5em);
-	border: var(--input-border-size, 0px) solid var(--color-border);
+	border: var(--input-border-size, 1px) solid var(--color-border);
 	color: var(--color-ink);
 	font-size: max(16px, 1em);
 	inline-size: 100%;
 	line-height: var(--input-line-height, 1.2);
 	max-inline-size: 100%;
-	padding: var(--input-padding, 0.5em 0.8em);
+	padding: var(--input-padding, 0.7em 0.8em);
 	resize: none;
 
 	outline: var(--outline-size, 0) solid var(--outline-color, transparent);

@@ -42,17 +42,7 @@
 				date: new Date('2024-01-15')
 			}
 		},
-		{
-			id: 2,
-			name: 'Personal',
-			avatar:
-				'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Telegram_2019_Logo.svg/1200px-Telegram_2019_Logo.svg.png',
-			lastAction: {
-				user: 'Sarah',
-				action: 'Commented on task',
-				date: new Date('2024-12-16')
-			}
-		},
+
 		{
 			id: 3,
 			name: 'Product Design',
@@ -233,7 +223,7 @@
 	}
 
 	.board-avatar {
-		font-size: 3.5rem;
+		--btn-size: 3.5rem;
 		border-radius: 50%;
 		overflow: hidden;
 		flex-shrink: 0;

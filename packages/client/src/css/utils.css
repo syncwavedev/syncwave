@@ -5,7 +5,6 @@
 .text-muted {
 	color: var(--color-ink-muted);
 }
-
 .text-secondary {
 	color: var(--color-ink-secondary);
 }
@@ -13,27 +12,21 @@
 .text-3xl {
 	font-size: var(--text-3xl);
 }
-
 .text-2xl {
 	font-size: var(--text-2xl);
 }
-
 .text-xl {
 	font-size: var(--text-xl);
 }
-
 .text-lg {
 	font-size: var(--text-lg);
 }
-
 .text-md {
 	font-size: var(--text-md);
 }
-
 .text-sm {
 	font-size: var(--text-sm);
 }
-
 .text-xs {
 	font-size: var(--text-xs);
 }
@@ -41,19 +34,15 @@
 .font-medium {
 	font-weight: 500;
 }
-
 .font-semibold {
 	font-weight: 600;
 }
-
 .font-bold {
 	font-weight: 700;
 }
-
 .font-extrabold {
 	font-weight: 800;
 }
-
 .font-black {
 	font-weight: 900;
 }
@@ -84,7 +73,6 @@
 .leading-tight {
 	line-height: 1.25;
 }
-
 .leading-snug {
 	line-height: 1.375;
 }
@@ -94,7 +82,6 @@
 .m-0 {
 	margin: 0;
 }
-
 .m-1 {
 	margin: 0.25rem;
 }
@@ -102,27 +89,21 @@
 .mt-0_5 {
 	margin-block-start: 0.125rem;
 }
-
 .mt-1 {
 	margin-block-start: 0.25rem;
 }
-
 .mt-2 {
 	margin-block-start: 0.5rem;
 }
-
 .mt-4 {
 	margin-block-start: 1rem;
 }
-
 .mt-6 {
 	margin-block-start: 1.5rem;
 }
-
 .mt-8 {
 	margin-block-start: 2rem;
 }
-
 .mt-12 {
 	margin-block-start: 3rem;
 }
@@ -130,23 +111,18 @@
 .ml-auto {
 	margin-inline-start: auto;
 }
-
 .ml-2 {
 	margin-inline-start: 0.5rem;
 }
-
 .ml-4 {
 	margin-inline-start: 1rem;
 }
-
 .mr-2 {
 	margin-inline-end: 0.5rem;
 }
-
 .mr-3 {
 	margin-inline-end: 0.75rem;
 }
-
 .mr-4 {
 	margin-inline-end: 1rem;
 }
@@ -155,7 +131,6 @@
 	margin-block-start: 0.5rem;
 	margin-block-end: 0.5rem;
 }
-
 .my-4 {
 	margin-block-start: 1rem;
 	margin-block-end: 1rem;
@@ -170,16 +145,13 @@
 .p-2 {
 	padding: 0.5rem;
 }
-
 .p-4 {
 	padding: 1rem;
 }
-
 .py-2 {
 	padding-block-start: 0.5rem;
 	padding-block-end: 0.5rem;
 }
-
 .pt-2 {
 	padding-block-start: 0.5rem;
 }
@@ -197,31 +169,35 @@
 .align-center {
 	align-items: center;
 }
+.align-end {
+	align-items: flex-end;
+}
 
 .justify-center {
 	justify-content: center;
+}
+.justify-between {
+	justify-content: space-between;
+}
+.justify-end {
+	justify-content: flex-end;
 }
 
 .gap-1 {
 	gap: 0.25rem;
 }
-
 .gap-2 {
 	gap: 0.5rem;
 }
-
 .gap-3 {
 	gap: 0.75rem;
 }
-
 .gap-4 {
 	gap: 1rem;
 }
-
 .gap-6 {
 	gap: 1.5rem;
 }
-
 .gap-8 {
 	gap: 2rem;
 }
@@ -271,7 +247,6 @@
 .w-full {
 	width: 100%;
 }
-
 .w-4 {
 	width: 1em;
 }

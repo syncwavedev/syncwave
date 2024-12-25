@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte';
+	import ChevronLeft from '../icons/ChevronLeft.svelte';
 
 	let {
 		navigationTitle,
@@ -7,128 +8,147 @@
 		trailing,
 		children,
 		bottomToolbar,
-		scrollTopOnTitleClick
-	}: {
+		scrollTopOnTitleClick = false,
+		backButton = false
+	} = $props<{
 		navigationTitle?: string;
 		leading?: Snippet;
 		trailing?: Snippet;
 		children?: Snippet;
 		bottomToolbar?: Snippet;
 		scrollTopOnTitleClick?: boolean;
-	} = $props();
+		backButton?: boolean;
+	}>();
 
-	const withTopToolbar = !!navigationTitle || !!leading;
-	const withBottomToolbar = !!bottomToolbar;
+	let contentElement = $state<HTMLElement | null>(null);
 
-	const scrollTop = () => {
-		const element = document.querySelector('.content');
-		if (element) {
-			element.scrollTo({top: 0, behavior: 'smooth'});
+	function handleTitleClick() {
+		if (scrollTopOnTitleClick) {
+			contentElement?.scrollTo({top: 0, behavior: 'smooth'});
 		}
-	};
+	}
+
+	function onBackClick() {
+		history.back();
+	}
+
+	const hasTopToolbar = !!(navigationTitle || leading || trailing || backButton);
 </script>
 
-<div class="navigation-stack">
-	{#if withTopToolbar}
-		<div class="top-toolbar">
-			<div class="top-toolbar__leading">
+<div class="navigation-stack flex flex-col">
+	{#if hasTopToolbar}
+		<header class="flex align-end top-bar">
+			<div class="flex align-center gap-3">
+				{#if backButton}
+					<button onclick={onBackClick} class="btn btn--circle">
+						<ChevronLeft />
+					</button>
+				{/if}
 				{@render leading?.()}
 			</div>
-			<button
-				type="button"
-				class="top-toolbar__title font-semibold"
-				onclick={scrollTopOnTitleClick ? scrollTop : undefined}
-			>
-				{navigationTitle}
-			</button>
-			<div class="top-toolbar__trailing">
+
+			{#if navigationTitle}
+				<button
+					type="button"
+					class="top-bar__toolbar__title font-semibold"
+					onclick={handleTitleClick}
+				>
+					{navigationTitle}
+				</button>
+			{/if}
+
+			<div class="flex align-center justify-end gap-3 ml-auto">
 				{@render trailing?.()}
 			</div>
-		</div>
+		</header>
 	{/if}
-	<div
-		class="content"
-		class:with-top-toolbar={withTopToolbar}
-		class:with-bottom-toolbar={withBottomToolbar}
-	>
+
+	<main bind:this={contentElement} class="content" class:with-bottom-bar={bottomToolbar}>
 		{@render children?.()}
-	</div>
-	{#if withBottomToolbar}
-		<div class="bottom-toolbar">
-			{@render bottomToolbar()}
-		</div>
+	</main>
+
+	{#if bottomToolbar}
+		<footer class="bottom-bar">
+			{@render bottomToolbar?.()}
+		</footer>
 	{/if}
 </div>
 
 <style>
-	.navigation-stack {
-		display: flex;
-		flex-direction: column;
-		height: 100vh;
+	:root {
+		--top-bar-height: calc(max(env(safe-area-inset-top), 0.5rem) + 2rem + 0.5rem);
+		--bottom-bar-height: calc(max(env(safe-area-inset-bottom), 0.5rem) + var(--btn-size) + 0.5rem);
 	}
 
-	.top-toolbar {
-		position: fixed;
+	.navigation-stack {
+		height: 100svh;
+	}
+
+	.top-bar {
+		--btn-size: 1.75rem;
+
+		padding-top: max(env(safe-area-inset-top), 0.5rem);
+		padding-left: calc(env(safe-area-inset-left) + 1rem);
+		padding-right: calc(env(safe-area-inset-right) + 1rem);
+		padding-bottom: 0.5rem;
+
+		height: var(--top-bar-height);
+
+		position: absolute;
 		top: 0;
 		left: 0;
-		width: 100%;
-		height: var(--header-height, calc(2.5rem + env(safe-area-inset-top)));
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
+		right: 0;
+		z-index: 10;
 
-		z-index: 1000;
+		background-color: var(--color-bg-90);
+		backdrop-filter: blur(12px);
 
-		/* Safe area consideration for devices with notches */
-		padding-top: env(safe-area-inset-top);
-		padding-right: max(0.75rem, env(safe-area-inset-right));
-		padding-left: max(0.75rem, env(safe-area-inset-left));
-
-		padding-bottom: 0.75rem;
+		border-bottom: 0.5px solid var(--color-border);
 	}
 
-	.top-toolbar__trailing {
-		display: flex;
-		align-items: center;
-	}
-
-	.top-toolbar__leading {
-		display: flex;
-		align-items: center;
-	}
-
-	.top-toolbar__title {
+	.top-bar__toolbar__title {
+		text-align: center;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		position: absolute;
 		left: 50%;
 		transform: translateX(-50%);
 	}
 
 	.content {
-		padding: 0 calc(env(safe-area-inset-left) + 0.75rem) 0
-			calc(env(safe-area-inset-right) + 0.75rem);
-		flex: 1 1 auto;
+		flex: 1;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
+		overscroll-behavior: contain;
+
+		padding-top: var(--top-bar-height);
 		padding-bottom: env(safe-area-inset-bottom);
+		padding-left: calc(env(safe-area-inset-left) + 0.75rem);
+		padding-right: calc(env(safe-area-inset-right) + 0.75rem);
 
-		overflow-y: auto; /* Scrollable area */
+		&.with-bottom-bar {
+			padding-bottom: var(--bottom-bar-height);
+		}
 	}
 
-	.with-top-toolbar {
-		margin-top: var(--header-height, calc(2.5rem + env(safe-area-inset-top)));
-	}
+	.bottom-bar {
+		padding-top: 0.5rem;
+		padding-left: calc(env(safe-area-inset-left) + 1rem);
+		padding-right: calc(env(safe-area-inset-right) + 1rem);
+		padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
 
-	.with-bottom-toolbar {
-		margin-bottom: var(--footer-height, 3rem);
-	}
+		height: var(--bottom-bar-height);
 
-	.bottom-toolbar {
-		background: var(--color-subtle-light);
-		position: fixed;
+		position: absolute;
 		bottom: 0;
 		left: 0;
-		width: 100%;
-		height: var(--footer-height, 3rem);
+		right: 0;
+		z-index: 10;
 
-		/* Safe area consideration for devices with notches */
-		z-index: 1000;
+		border-top: 0.5px solid var(--color-border);
+
+		background-color: var(--color-bg-90);
+		backdrop-filter: blur(12px);
 	}
 </style>

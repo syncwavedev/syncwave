@@ -1,5 +1,5 @@
 :root {
-	--btn-size: 2.5em;
+	--btn-size: 2.75em;
 }
 
 .btn {
@@ -10,8 +10,8 @@
 	color: var(--btn-color, --color-ink);
 	font-weight: 600;
 	border: var(--btn-border-size, 0px) solid var(--color-border);
-	padding: 0.5em 1.1em;
 
+	padding: var(--btn-padding, 0);
 	text-decoration: none;
 	background: var(--btn-background, --color-bg);
 
@@ -22,26 +22,12 @@
 		filter 300ms ease,
 		opacity 300ms ease;
 
-	&.btn--positive {
-		--btn-color: var(--color-positive);
-	}
-
-	&.btn--negative {
-		--btn-color: var(--color-negative);
-	}
-
-	&.btn--link {
-		--btn-color: var(--color-link);
-	}
-
-	&.btn--icon {
-		--btn-border-size: 0;
-		padding: 0;
+	&.btn-block {
+		--btn-padding: 0.5em 1.1em;
 	}
 
 	&.btn--circle {
-		--btn-color: var(--color-ink);
-		/* --btn-border-size: 0; */
+		--btn-border-size: 1px;
 
 		border-radius: 50%;
 		padding: 0.525em;

@@ -35,7 +35,6 @@ ol[role='list'] {
 
 /* Set core body defaults */
 body {
-	min-height: 100%;
 	line-height: 1.5;
 }
 
@@ -111,4 +110,9 @@ h5,
 h6 {
 	font-weight: inherit;
 	font-size: inherit;
+}
+
+/* Remove tap highlight color */
+* {
+	-webkit-tap-highlight-color: transparent;
 }

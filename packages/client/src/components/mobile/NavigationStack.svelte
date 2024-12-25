@@ -100,10 +100,7 @@
 		right: 0;
 		z-index: 10;
 
-		background-color: var(--color-bg-90);
-		backdrop-filter: blur(12px);
-
-		border-bottom: 0.5px solid var(--color-border);
+		background-color: var(--color-subtle-1);
 	}
 
 	.top-bar__toolbar__title {
@@ -127,6 +124,8 @@
 		padding-left: calc(env(safe-area-inset-left) + 0.75rem);
 		padding-right: calc(env(safe-area-inset-right) + 0.75rem);
 
+		background-color: var(--color-bg);
+
 		&.with-bottom-bar {
 			padding-bottom: var(--bottom-bar-height);
 		}
@@ -146,9 +145,6 @@
 		right: 0;
 		z-index: 10;
 
-		border-top: 0.5px solid var(--color-border);
-
-		background-color: var(--color-bg-90);
-		backdrop-filter: blur(12px);
+		background-color: var(--color-subtle-1);
 	}
 </style>

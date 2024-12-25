@@ -6,42 +6,29 @@
 	--lch-white-90: 100% 0 0 / 0.9;
 
 	/* Gray */
-	--lch-gray-50: 97.23% 0 0;
-	--lch-gray-100: 95.49% 0 0;
-	--lch-gray-150: 90.94% 0 0;
-	--lch-gray-200: 84% 0 0;
-	--lch-gray-250: 76% 0 0;
-	--lch-gray-300: 68% 0 0;
-	--lch-gray-350: 60% 0 0;
-	--lch-gray-400: 52% 0 0;
-	--lch-gray-450: 44% 0 0;
-	--lch-gray-500: 36% 0 0;
-	--lch-gray-550: 30% 0 0;
-	--lch-gray-600: 24% 0 0;
-	--lch-gray-650: 19% 0 0;
-	--lch-gray-700: 15% 0 0;
-	--lch-gray-750: 12% 0 0;
-	--lch-gray-800: 9% 0 0;
-	--lch-gray-850: 6% 0 0;
-	--lch-gray-900: 3% 0 0;
+	--lch-gray-100: 97% 0 0;
+	--lch-gray-200: 95% 0 0;
+	--lch-gray-300: 91% 0 0;
+	--lch-gray-400: 86% 0 0;
+	--lch-gray-500: 77% 0 0;
+	--lch-gray-600: 63% 0 0;
 
 	--lch-always-black: 0% 0 0;
 	--lch-always-white: 100% 0 0;
 
 	/* Abstractions */
 	--color-bg: oklch(var(--lch-white));
-	--color-bg-90: oklch(var(--lch-white-90));
 
-	--color-border: oklch(var(--lch-gray-250));
+	--color-border: oklch(var(--lch-gray-300));
 
 	--color-ink: oklch(var(--lch-black));
-	--color-ink-muted: oklch(var(--lch-gray-300));
-	--color-ink-secondary: oklch(var(--lch-gray-400));
+	--color-ink-muted: oklch(var(--lch-gray-500));
+	--color-ink-secondary: oklch(var(--lch-gray-600));
 	--color-ink-reversed: oklch(var(--lch-white));
 
-	--color-subtle-1: oklch(var(--lch-gray-50));
-	--color-subtle-2: oklch(var(--lch-gray-150));
-	--color-subtle-3: oklch(var(--lch-gray-250));
+	--color-subtle-1: oklch(var(--lch-gray-100));
+	--color-subtle-2: oklch(var(--lch-gray-200));
+	--color-subtle-3: oklch(var(--lch-gray-300));
 
 	--color-always-black: oklch(var(--lch-always-black));
 	--color-always-white: oklch(var(--lch-always-white));
@@ -54,24 +41,12 @@
 		--lch-white-90: 0% 0 0 / 0.9;
 
 		/* Gray */
-		--lch-gray-50: 2.77% 0 0;
-		--lch-gray-100: 4.51% 0 0;
-		--lch-gray-150: 9.06% 0 0;
-		--lch-gray-200: 16% 0 0;
-		--lch-gray-250: 24% 0 0;
-		--lch-gray-300: 32% 0 0;
-		--lch-gray-350: 40% 0 0;
-		--lch-gray-400: 48% 0 0;
-		--lch-gray-450: 56% 0 0;
-		--lch-gray-500: 64% 0 0;
-		--lch-gray-550: 70% 0 0;
-		--lch-gray-600: 76% 0 0;
-		--lch-gray-650: 81% 0 0;
-		--lch-gray-700: 85% 0 0;
-		--lch-gray-750: 88% 0 0;
-		--lch-gray-800: 91% 0 0;
-		--lch-gray-850: 94% 0 0;
-		--lch-gray-900: 97% 0 0;
+		--lch-gray-100: 17% 0 0;
+		--lch-gray-200: 19% 0 0;
+		--lch-gray-300: 23% 0 0;
+		--lch-gray-400: 28% 0 0;
+		--lch-gray-500: 37% 0 0;
+		--lch-gray-600: 51% 0 0;
 	}
 }
 

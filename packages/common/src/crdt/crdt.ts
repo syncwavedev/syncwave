@@ -158,19 +158,123 @@ function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
     });
 }
 
+type Path = Array<string | number>;
+
 interface BaseOpLogEntry<TType extends string> {
     readonly type: TType;
+    readonly path: Path;
 }
 
-type OpLogEntry = never;
+type ArrayMethod = {
+    [K in keyof typeof Array.prototype]: (typeof Array.prototype)[K] extends (...args: any) => any
+        ? K extends string
+            ? K
+            : never
+        : never;
+}[keyof typeof Array.prototype];
+
+interface BaseArrayLog<TMethod extends ArrayMethod> extends BaseOpLogEntry<`array_${TMethod}`> {
+    readonly args: Parameters<(typeof Array.prototype)[TMethod]>;
+}
+
+interface ArrayPushLog extends BaseArrayLog<'push'> {}
+
+interface ArrayUnshiftLog extends BaseArrayLog<'unshift'> {}
+
+interface ArraySetLog extends BaseOpLogEntry<'array_set'> {
+    readonly index: number;
+    readonly value: any;
+}
+
+type OpLogEntry = ArrayPushLog | ArrayUnshiftLog | ArraySetLog;
 type OpLog = OpLogEntry[];
 
 function replayLog<T>(schema: Schema<T>, yValue: YValue, log: OpLog): void {
     throw new Error('not implemented');
 }
 
-function createArrayProxy<T>(schema: ArraySchema<T>, value: Array<T>, log: OpLog): T[] {
-    throw new Error('not implemented');
+function wrapFn<T extends (...args: any[]) => any>(thisArg: any, fn: T, before: (args: Parameters<T>) => void): T {
+    return new Proxy(fn, {
+        apply(target, _thisArg: any, args: any[]) {
+            before(args as Parameters<T>);
+            return Reflect.apply(target, thisArg, args);
+        },
+    });
+}
+
+function createArrayProxy<T>(schema: ArraySchema<T>, value: Array<T>, log: OpLog, path: Path): T[] {
+    return new Proxy(value, {
+        get(target, prop, receiver) {
+            const original = Reflect.get(target, prop, receiver);
+
+            const typedProp: keyof Array<any> = prop as keyof Array<any>;
+            if (
+                typeof typedProp !== 'string' ||
+                typedProp === 'at' ||
+                typedProp === 'concat' ||
+                typedProp === 'entries' ||
+                typedProp === 'every' ||
+                typedProp === 'filter' ||
+                typedProp === 'find' ||
+                typedProp === 'findIndex' ||
+                typedProp === 'flat' ||
+                typedProp === 'flatMap' ||
+                typedProp === 'forEach' ||
+                typedProp === 'includes' ||
+                typedProp === 'indexOf' ||
+                typedProp === 'join' ||
+                typedProp === 'keys' ||
+                typedProp === 'lastIndexOf' ||
+                typedProp === 'length' ||
+                typedProp === 'map' ||
+                typedProp === 'reduce' ||
+                typedProp === 'reduceRight' ||
+                typedProp === 'slice' ||
+                typedProp === 'some' ||
+                typedProp === 'toLocaleString' ||
+                typedProp === 'toString' ||
+                typedProp === 'values'
+            ) {
+                // read methods, no logs needed
+            } else if (
+                typedProp === 'copyWithin' ||
+                typedProp === 'reverse' ||
+                typedProp === 'fill' ||
+                typedProp === 'pop' ||
+                typedProp === 'shift' ||
+                typedProp === 'sort' ||
+                typedProp === 'splice'
+            ) {
+                throw new Error('unsupported CRDT array modification: ' + typedProp);
+            } else if (typedProp === 'push') {
+                return wrapFn(target, original as typeof Array.prototype.push, args =>
+                    log.push({type: 'array_push', args, path})
+                );
+            } else if (typedProp === 'unshift') {
+                return wrapFn(target, original as typeof Array.prototype.unshift, args =>
+                    log.push({type: 'array_unshift', args, path})
+                );
+            } else {
+                const _: never = typedProp;
+            }
+
+            return original;
+        },
+        set(target, prop, value, receiver) {
+            if (typeof prop !== 'string' || !Number.isInteger(+prop)) {
+                throw new Error('unsupported CRDT array modification: set ' + prop.toString());
+            }
+
+            log.push({
+                type: 'array_set',
+                path,
+                index: +prop.toString(),
+                value,
+            });
+
+            return Reflect.set(target, prop, value, receiver);
+        },
+    });
 }
 
 function createMapProxy<T>(schema: MapSchema<T>, value: Map<string, T>, log: OpLog): Map<string, T> {

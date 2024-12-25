@@ -77,7 +77,7 @@ class Doc<T> {
     // if recipe returns T, then whole doc is overridden with the returned value
     update(recipe: (draft: T) => T | void): void {
         const log: OpLog = [];
-        const draft = createProxy(this.schema, mapFromYValue(this.schema, this.yValue), log);
+        const draft = createProxy(this.schema, mapFromYValue(this.schema, this.yValue), log, []);
 
         const replacement = recipe(draft);
         if (replacement) {
@@ -165,15 +165,12 @@ interface BaseOpLogEntry<TType extends string> {
     readonly path: Path;
 }
 
-type ArrayMethod = {
-    [K in keyof typeof Array.prototype]: (typeof Array.prototype)[K] extends (...args: any) => any
-        ? K extends string
-            ? K
-            : never
-        : never;
-}[keyof typeof Array.prototype];
+type Method<T extends {prototype: any}> = {
+    [K in keyof T['prototype']]: T['prototype'][K] extends (...args: any) => any ? K : never;
+}[keyof T['prototype']];
 
-interface BaseArrayLog<TMethod extends ArrayMethod> extends BaseOpLogEntry<`array_${TMethod}`> {
+interface BaseArrayLog<TMethod extends Extract<Method<typeof Array>, string>>
+    extends BaseOpLogEntry<`array_${TMethod}`> {
     readonly args: Parameters<(typeof Array.prototype)[TMethod]>;
 }
 
@@ -186,7 +183,17 @@ interface ArraySetLog extends BaseOpLogEntry<'array_set'> {
     readonly value: any;
 }
 
-type OpLogEntry = ArrayPushLog | ArrayUnshiftLog | ArraySetLog;
+interface BaseMapLog<TMethod extends Extract<Method<typeof Map>, string>> extends BaseOpLogEntry<`map_${TMethod}`> {
+    readonly args: Parameters<(typeof Map.prototype)[TMethod]>;
+}
+
+interface MapSetLog extends BaseMapLog<'set'> {}
+
+interface MapDeleteLog extends BaseMapLog<'delete'> {}
+
+interface MapClearLog extends BaseMapLog<'clear'> {}
+
+type OpLogEntry = ArrayPushLog | ArrayUnshiftLog | ArraySetLog | MapSetLog | MapDeleteLog | MapClearLog;
 type OpLog = OpLogEntry[];
 
 function replayLog<T>(schema: Schema<T>, yValue: YValue, log: OpLog): void {
@@ -208,8 +215,11 @@ function createArrayProxy<T>(schema: ArraySchema<T>, value: Array<T>, log: OpLog
             const original = Reflect.get(target, prop, receiver);
 
             const typedProp: keyof Array<any> = prop as keyof Array<any>;
+
             if (
-                typeof typedProp !== 'string' ||
+                typeof typedProp === 'number' ||
+                typedProp === Symbol.iterator ||
+                typedProp === Symbol.unscopables ||
                 typedProp === 'at' ||
                 typedProp === 'concat' ||
                 typedProp === 'entries' ||
@@ -277,8 +287,67 @@ function createArrayProxy<T>(schema: ArraySchema<T>, value: Array<T>, log: OpLog
     });
 }
 
-function createMapProxy<T>(schema: MapSchema<T>, value: Map<string, T>, log: OpLog): Map<string, T> {
-    throw new Error('not implemented');
+function createMapProxy<T>(schema: MapSchema<T>, value: Map<string, T>, log: OpLog, path: Path): Map<string, T> {
+    return new Proxy(value, {
+        get(target, prop, receiver) {
+            // Typical read or method access on the Map
+            const original = Reflect.get(target, prop, receiver);
+
+            // Distinguish Map methods we want to intercept
+            const typedProp = prop as keyof Map<string, T>;
+
+            if (
+                typedProp === Symbol.iterator ||
+                typedProp === Symbol.toStringTag ||
+                typedProp === 'get' ||
+                typedProp === 'has' ||
+                typedProp === 'entries' ||
+                typedProp === 'keys' ||
+                typedProp === 'values' ||
+                typedProp === 'forEach' ||
+                typedProp === 'size'
+            ) {
+                // read methods, no logs needed
+                return original;
+            } else if (typedProp === 'set') {
+                return wrapFn(target, original as typeof Map.prototype.set, args => {
+                    log.push({
+                        type: 'map_set',
+                        path,
+                        args,
+                    });
+                });
+            } else if (typedProp === 'delete') {
+                return wrapFn(target, original as typeof Map.prototype.delete, args => {
+                    log.push({
+                        type: 'map_delete',
+                        path,
+                        args,
+                    });
+                });
+            } else if (typedProp === 'clear') {
+                return wrapFn(target, original as typeof Map.prototype.clear, args => {
+                    log.push({
+                        type: 'map_clear',
+                        path,
+                        args,
+                    });
+                });
+            } else {
+                const _: never = typedProp;
+            }
+
+            return original;
+        },
+
+        // Setting properties on the Map object itself (not via .set())
+        // is typically not how Maps are used. If it happens, decide if you want to allow it:
+        set(target, prop, newValue, receiver) {
+            // If this occurs, it's something like mapProxy.someProp = ...
+            // which is generally outside normal Map usage.
+            throw new Error('unsupported CRDT map modification: direct set of property ' + prop.toString());
+        },
+    });
 }
 
 function createObjectProxy<T extends object>(schema: ObjectSchema<T>, value: T, log: OpLog): T {
@@ -290,16 +359,16 @@ function createRichtextProxy(schema: RichtextSchema, value: Richtext, log: OpLog
 }
 
 // createProxy assumes that yValue is valid for the given schema
-function createProxy<T>(schema: Schema<T>, value: T, log: OpLog): T {
+function createProxy<T>(schema: Schema<T>, value: T, log: OpLog, path: Path): T {
     return schema.visit<any>({
         number: () => value,
         boolean: () => value,
         string: () => value,
         richtext: richtextSchema => createRichtextProxy(richtextSchema, value as Richtext, log),
-        nullable: ({inner}) => (value === null ? null : createProxy(inner, value as any, log)),
-        optional: ({inner}) => (value === undefined ? undefined : createProxy(inner, value as any, log)),
-        array: arraySchema => createArrayProxy(arraySchema, value as Array<any>, log),
-        map: mapSchema => createMapProxy(mapSchema, value as Map<string, any>, log),
+        nullable: ({inner}) => (value === null ? null : createProxy(inner, value as any, log, path)),
+        optional: ({inner}) => (value === undefined ? undefined : createProxy(inner, value as any, log, path)),
+        array: arraySchema => createArrayProxy(arraySchema, value as Array<any>, log, path),
+        map: mapSchema => createMapProxy(mapSchema, value as Map<string, any>, log, path),
         object: objectSchema => createObjectProxy(objectSchema, value as object, log),
     });
 }

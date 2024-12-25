@@ -3,6 +3,10 @@ import Delta, {AttributeMap} from 'quill-delta';
 export class Richtext {
     private delta = new Delta();
 
+    constructor(delta?: Delta) {
+        this.delta = delta ?? new Delta();
+    }
+
     insert(index: number, content: string, formattingAttributes?: AttributeMap) {
         this.applyDelta(new Delta().retain(index).insert(content, formattingAttributes));
     }

@@ -181,17 +181,8 @@ export class ObjectSchema<T extends object> extends Schema<T> {
             return false;
         }
 
-        const entries = Object.entries(subject);
-
-        if (entries.length !== this.fields.length) {
-            return false;
-        }
-
-        for (const [key, value] of entries) {
-            const field = this.fields.find(x => x.name === key);
-            if (!field) {
-                return false;
-            }
+        for (const field of this.fields) {
+            const value = subject[field.name];
 
             if (!field.schema.validate(value)) {
                 return false;

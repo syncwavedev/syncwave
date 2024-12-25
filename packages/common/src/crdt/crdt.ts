@@ -3,7 +3,20 @@ import {Serializer} from '../contracts/serializer';
 import {JsonSerializer} from '../json-serializer';
 import {assert, Brand} from '../utils';
 import {Richtext} from './richtext';
-import {array, InferSchemaValue, map, number, object, richtext, Schema, string} from './schema';
+import {
+    array,
+    ArraySchema,
+    InferSchemaValue,
+    map,
+    MapSchema,
+    number,
+    object,
+    ObjectSchema,
+    richtext,
+    RichtextSchema,
+    Schema,
+    string,
+} from './schema';
 
 export type DocDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 
@@ -11,9 +24,6 @@ type Unsubscribe = () => void;
 
 const ROOT_KEY = 'root';
 const ROOT_VALUE = 'value';
-
-type OpLogEntry = never;
-type OpLog = OpLogEntry[];
 
 class Doc<T> {
     static create<T>(schema: Schema<T>, value: T): Doc<T> {
@@ -61,13 +71,13 @@ class Doc<T> {
     map<TResult>(mapper: (snapshot: T) => TResult): TResult {
         // for simplicity sake we make full copy of the Doc to create a snapshot,
         // even though not all fields might be needed by the mapper
-        return mapper(createProxy(this.schema, this.copyYValue()));
+        return mapper(mapFromYValue(this.schema, this.yValue));
     }
 
     // if recipe returns T, then whole doc is overridden with the returned value
     update(recipe: (draft: T) => T | void): void {
         const log: OpLog = [];
-        const draft = createProxy(this.schema, this.copyYValue(), log);
+        const draft = createProxy(this.schema, mapFromYValue(this.schema, this.yValue), log);
 
         const replacement = recipe(draft);
         if (replacement) {
@@ -98,6 +108,10 @@ type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string 
 
 // using JsonSerializer for simplicity sake, more efficient serialization would require varint serialization
 const intToStringSerializer: Serializer<number, string> = new JsonSerializer();
+
+function mapFromYValue<T>(schema: Schema<T>, yValue: YValue): T {
+    throw new Error('not implemented');
+}
 
 // mapToYValue assumes that value is valid for the given schema
 function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
@@ -144,12 +158,46 @@ function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
     });
 }
 
+interface BaseOpLogEntry<TType extends string> {
+    readonly type: TType;
+}
+
+type OpLogEntry = never;
+type OpLog = OpLogEntry[];
+
 function replayLog<T>(schema: Schema<T>, yValue: YValue, log: OpLog): void {
     throw new Error('not implemented');
 }
 
-function createProxy(schema: Schema<any>, yValue: YValue, log?: OpLog): any {
+function createArrayProxy<T>(schema: ArraySchema<T>, value: Array<T>, log: OpLog): T[] {
     throw new Error('not implemented');
+}
+
+function createMapProxy<T>(schema: MapSchema<T>, value: Map<string, T>, log: OpLog): Map<string, T> {
+    throw new Error('not implemented');
+}
+
+function createObjectProxy<T extends object>(schema: ObjectSchema<T>, value: T, log: OpLog): T {
+    throw new Error('not implemented');
+}
+
+function createRichtextProxy(schema: RichtextSchema, value: Richtext, log: OpLog): Richtext {
+    throw new Error('not implemented');
+}
+
+// createProxy assumes that yValue is valid for the given schema
+function createProxy<T>(schema: Schema<T>, value: T, log: OpLog): T {
+    return schema.visit<any>({
+        number: () => value,
+        boolean: () => value,
+        string: () => value,
+        richtext: richtextSchema => createRichtextProxy(richtextSchema, value as Richtext, log),
+        nullable: ({inner}) => (value === null ? null : createProxy(inner, value as any, log)),
+        optional: ({inner}) => (value === undefined ? undefined : createProxy(inner, value as any, log)),
+        array: arraySchema => createArrayProxy(arraySchema, value as Array<any>, log),
+        map: mapSchema => createMapProxy(mapSchema, value as Map<string, any>, log),
+        object: objectSchema => createObjectProxy(objectSchema, value as object, log),
+    });
 }
 
 // playground

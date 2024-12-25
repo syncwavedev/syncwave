@@ -12,6 +12,13 @@
 			updateState: true
 		});
 	};
+
+	const onSearch = () => {
+		navigator.navigate('/search', {
+			updateBrowserURL: true,
+			updateState: true
+		});
+	};
 </script>
 
 {#snippet leading()}
@@ -22,7 +29,7 @@
 
 {#snippet bottomToolbar()}
 	<div class="flex align-center justify-between">
-		<button onclick={onNewBoard} class="btn btn--circle">
+		<button onclick={onSearch} class="btn btn--circle">
 			<Search />
 		</button>
 		<button onclick={onNewBoard} class="btn btn--circle">

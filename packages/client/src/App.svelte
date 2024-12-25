@@ -2,6 +2,7 @@
 	import Home from './pages/Home.svelte';
 	import NewBoard from './pages/NewBoard.svelte';
 	import navigator from './lib/navigator.js';
+	import Search from './pages/Search.svelte';
 
 	let Page: any = $state(Home);
 	let params: any = $state({});
@@ -12,6 +13,9 @@
 		});
 		navigator.on('/boards/new', () => {
 			Page = NewBoard;
+		});
+		navigator.on('/search', () => {
+			Page = Search;
 		});
 		navigator.resolve();
 	});

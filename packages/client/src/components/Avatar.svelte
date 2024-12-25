@@ -7,14 +7,16 @@
 		imageUrl?: string;
 	} = $props();
 
-	const colorPairs = [
-		{bg: 'lch(88% 34 10)', text: 'lch(0% 0 0)'},
-		{bg: 'lch(84% 28 50)', text: 'lch(0% 0 0)'},
-		{bg: 'lch(86% 33 125)', text: 'lch(0% 0 0)'},
-		{bg: 'lch(82% 25 170)', text: 'lch(0% 0 0)'},
-		{bg: 'lch(90% 30 210)', text: 'lch(0% 0 0)'},
-		{bg: 'lch(87% 36 260)', text: 'lch(0% 0 0)'},
-		{bg: 'lch(85% 27 320)', text: 'lch(0% 0 0)'}
+	const avatarColors = [
+		{bg: 'lch(57% 16 240)', text: 'lch(100% 0 0)'},
+		{bg: 'lch(75% 35 25)', text: 'lch(100% 0 0)'},
+		{bg: 'lch(60% 65 40)', text: 'lch(100% 0 0)'},
+		{bg: 'lch(70% 50 55)', text: 'lch(100% 0 0)'},
+		{bg: 'lch(80% 40 80)', text: 'lch(100% 0 0)'},
+		{bg: 'lch(65% 50 135)', text: 'lch(100% 0 0)'},
+		{bg: 'lch(70% 35 195)', text: 'lch(100% 0 0)'},
+		{bg: 'lch(60% 45 250)', text: 'lch(100% 0 0)'},
+		{bg: 'lch(65% 40 290)', text: 'lch(100% 0 0)'}
 	];
 
 	function getAvatarColors(str: string) {
@@ -23,7 +25,7 @@
 			hash = str.charCodeAt(i) + ((hash << 5) - hash);
 		}
 
-		const pair = colorPairs[Math.abs(hash) % colorPairs.length];
+		const pair = avatarColors[Math.abs(hash) % avatarColors.length];
 		return {bgColor: pair.bg, textColor: pair.text};
 	}
 

@@ -32,7 +32,7 @@
 	--color-bg: oklch(var(--lch-white));
 	--color-bg-90: oklch(var(--lch-white-90));
 
-	--color-border: oklch(var(--lch-gray-200));
+	--color-border: oklch(var(--lch-gray-250));
 
 	--color-ink: oklch(var(--lch-black));
 	--color-ink-muted: oklch(var(--lch-gray-300));

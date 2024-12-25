@@ -8,6 +8,7 @@
 	max-inline-size: 100%;
 	padding: var(--input-padding, 0.7em 0.8em);
 	resize: none;
+	background: inherit;
 
 	outline: var(--outline-size, 0) solid var(--outline-color, transparent);
 

@@ -42,7 +42,20 @@ interface ObjectDeleteLog extends BaseOpLogEntry<'object_delete'> {
     readonly prop: string;
 }
 
-type OpLogEntry =
+interface BaseRichtextLog<TMethod extends Extract<Method<typeof Richtext>, string>>
+    extends BaseOpLogEntry<`richtext_${TMethod}`> {
+    readonly args: Parameters<(typeof Richtext.prototype)[TMethod]>;
+}
+
+interface RichtextApplyDeltaLog extends BaseRichtextLog<'applyDelta'> {}
+
+interface RichtextDeleteLog extends BaseRichtextLog<'delete'> {}
+
+interface RichtextInsertLog extends BaseRichtextLog<'insert'> {}
+
+interface RichtextFormatLog extends BaseRichtextLog<'format'> {}
+
+export type OpLogEntry =
     | ArrayPushLog
     | ArrayUnshiftLog
     | ArraySetLog
@@ -50,8 +63,12 @@ type OpLogEntry =
     | MapDeleteLog
     | MapClearLog
     | ObjectSetLog
-    | ObjectDeleteLog;
-type OpLog = OpLogEntry[];
+    | ObjectDeleteLog
+    | RichtextApplyDeltaLog
+    | RichtextDeleteLog
+    | RichtextInsertLog
+    | RichtextFormatLog;
+export type OpLog = OpLogEntry[];
 
 function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
     return new Proxy(
@@ -152,10 +169,8 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
 function createMapProxy<T>(subject: Map<string, T>, log: OpLog): Map<string, T> {
     return new Proxy(new Map([...subject.entries()].map(([key, value]) => [key, createProxy(value, log)])), {
         get(target, prop, receiver) {
-            // Typical read or method access on the Map
             const original = Reflect.get(target, prop, receiver);
 
-            // Distinguish Map methods we want to intercept
             const method = prop as keyof Map<string, T>;
 
             if (
@@ -204,13 +219,11 @@ function createMapProxy<T>(subject: Map<string, T>, log: OpLog): Map<string, T> 
 
             return original;
         },
-
-        // Setting properties on the Map object itself (not via .set())
-        // is typically not how Maps are used. If it happens, decide if you want to allow it:
         set(target, prop, newValue, receiver) {
-            // If this occurs, it's something like mapProxy.someProp = ...
-            // which is generally outside normal Map usage.
-            throw new Error('unsupported CRDT map modification: direct set of property ' + prop.toString());
+            throw new Error('unsupported map modification: direct set of property ' + prop.toString());
+        },
+        deleteProperty(target, prop) {
+            throw new Error('unsupported map modification: delete of property ' + prop.toString());
         },
     });
 }
@@ -256,12 +269,68 @@ function createObjectProxy<T extends object>(subject: T, log: OpLog): T {
     });
 }
 
-function createRichtextProxy(value: Richtext, log: OpLog): Richtext {
-    throw new Error('not implemented');
+function createRichtextProxy(subject: Richtext, log: OpLog): Richtext {
+    return new Proxy(subject, {
+        get(target, prop, receiver) {
+            const original = Reflect.get(target, prop, receiver);
+
+            const method = prop as keyof Richtext;
+
+            if (method === 'length' || method === 'toDelta' || method === 'toString') {
+                // read methods, no logs needed
+                return original;
+            } else if (method === 'applyDelta') {
+                return (...args: any) => {
+                    log.push({
+                        type: 'richtext_applyDelta',
+                        subject,
+                        args,
+                    });
+                    return original.apply(target, args);
+                };
+            } else if (method === 'delete') {
+                return (...args: any) => {
+                    log.push({
+                        type: 'richtext_delete',
+                        subject,
+                        args,
+                    });
+                    return original.apply(target, args);
+                };
+            } else if (method === 'insert') {
+                return (...args: any) => {
+                    log.push({
+                        type: 'richtext_insert',
+                        subject,
+                        args,
+                    });
+                    return original.apply(target, args);
+                };
+            } else if (method === 'format') {
+                return (...args: any) => {
+                    log.push({
+                        type: 'richtext_format',
+                        subject,
+                        args,
+                    });
+                    return original.apply(target, args);
+                };
+            } else {
+                const _: never = method;
+            }
+
+            return original;
+        },
+        set(target, prop, newValue, receiver) {
+            throw new Error('unsupported modification: direct set of property ' + prop.toString());
+        },
+        deleteProperty(target, prop) {
+            throw new Error('unsupported richtext modification: delete of property ' + prop.toString());
+        },
+    });
 }
 
-// createProxy assumes that yValue is valid for the given schema
-function createProxy<T>(value: T, log: OpLog): T {
+export function createProxy<T>(value: T, log: OpLog): T {
     if (
         typeof value === 'number' ||
         typeof value === 'boolean' ||

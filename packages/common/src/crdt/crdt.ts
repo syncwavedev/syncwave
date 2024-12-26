@@ -2,6 +2,7 @@ import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map 
 import {Serializer} from '../contracts/serializer';
 import {JsonSerializer} from '../json-serializer';
 import {assert, Brand} from '../utils';
+import {createProxy, OpLog} from './observe';
 import {Richtext} from './richtext';
 import {array, InferSchemaValue, map, number, object, richtext, Schema, string} from './schema';
 
@@ -64,7 +65,7 @@ class Doc<T> {
     // if recipe returns T, then whole doc is overridden with the returned value
     update(recipe: (draft: T) => T | void): void {
         const log: OpLog = [];
-        const draft = createProxy(this.schema, mapFromYValue(this.schema, this.yValue), log, []);
+        const draft = createProxy(mapFromYValue(this.schema, this.yValue), log);
 
         const replacement = recipe(draft);
         if (replacement) {

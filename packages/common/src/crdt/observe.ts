@@ -82,7 +82,7 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     return original;
                 }
 
-                const method = prop as Extract<keyof Array<any>, string | symbol>;
+                const method = prop as Exclude<Extract<keyof Array<any>, string | symbol>, 'length'>;
 
                 if (
                     method === Symbol.iterator ||
@@ -102,7 +102,6 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     method === 'join' ||
                     method === 'keys' ||
                     method === 'lastIndexOf' ||
-                    method === 'length' ||
                     method === 'map' ||
                     method === 'reduce' ||
                     method === 'reduceRight' ||
@@ -113,6 +112,9 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     method === 'values'
                 ) {
                     // read methods, no logs needed
+                    return (...args: any) => {
+                        return original.apply(target, args);
+                    };
                 } else if (
                     method === 'copyWithin' ||
                     method === 'reverse' ||
@@ -168,10 +170,11 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
 
 function createMapProxy<T>(subject: Map<string, T>, log: OpLog): Map<string, T> {
     return new Proxy(new Map([...subject.entries()].map(([key, value]) => [key, createProxy(value, log)])), {
-        get(target, prop, receiver) {
-            const original = Reflect.get(target, prop, receiver);
+        get(target, prop) {
+            // skip receiver because of the private fields in Map
+            const original = Reflect.get(target, prop);
 
-            const method = prop as keyof Map<string, T>;
+            const method = prop as Exclude<keyof Map<string, T>, 'size'>;
 
             if (
                 method === Symbol.iterator ||
@@ -181,11 +184,12 @@ function createMapProxy<T>(subject: Map<string, T>, log: OpLog): Map<string, T> 
                 method === 'entries' ||
                 method === 'keys' ||
                 method === 'values' ||
-                method === 'forEach' ||
-                method === 'size'
+                method === 'forEach'
             ) {
                 // read methods, no logs needed
-                return original;
+                return (...args: any) => {
+                    return original.apply(target, args);
+                };
             } else if (method === 'set') {
                 return (key: string, value: any) => {
                     log.push({
@@ -330,7 +334,7 @@ function createRichtextProxy(subject: Richtext, log: OpLog): Richtext {
     });
 }
 
-export function createProxy<T>(value: T, log: OpLog): T {
+function createProxy<T>(value: T, log: OpLog): T {
     if (
         typeof value === 'number' ||
         typeof value === 'boolean' ||
@@ -351,4 +355,13 @@ export function createProxy<T>(value: T, log: OpLog): T {
     } else {
         throw new Error('unsupported value for proxy: ' + value);
     }
+}
+
+export function observe<TValue, TResult>(
+    value: TValue,
+    recipe: (value: TValue) => TResult
+): [result: TResult, log: OpLog] {
+    const log: OpLog = [];
+
+    return [recipe(createProxy(value, log)), log];
 }

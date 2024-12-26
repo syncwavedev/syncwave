@@ -4,7 +4,7 @@ import {JsonSerializer} from '../json-serializer';
 import {assert, Brand} from '../utils';
 import {observe, OpLog} from './observe';
 import {Richtext} from './richtext';
-import {array, InferSchemaValue, map, number, object, richtext, Schema, string} from './schema';
+import {Schema} from './schema';
 
 export type DocDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 
@@ -13,7 +13,7 @@ type Unsubscribe = () => void;
 const ROOT_KEY = 'root';
 const ROOT_VALUE = 'value';
 
-class Doc<T> {
+export class Doc<T> {
     static create<T>(schema: Schema<T>, value: T): Doc<T> {
         schema.assertValid(value);
 
@@ -73,13 +73,15 @@ class Doc<T> {
         }
     }
 
-    apply(diff: DocDiff<T>): void {
-        applyUpdateV2(this.doc, diff);
+    apply(diff: DocDiff<T>, options?: {tag: string}): void {
+        applyUpdateV2(this.doc, diff, options?.tag);
     }
 
-    subscribe(next: (diff: DocDiff<T>) => void): Unsubscribe {
-        const fn = (state: Uint8Array) => next(state as DocDiff<T>);
-        this.doc.on('updateV2', fn);
+    subscribe(next: (diff: DocDiff<T>, tag: string | undefined) => void): Unsubscribe {
+        const fn = (state: Uint8Array, tag: string | undefined) => next(state as DocDiff<T>, tag);
+        this.doc.on('updateV2', (diff, tag) => {
+            fn(diff, tag);
+        });
 
         return () => this.doc.off('update', fn);
     }
@@ -146,50 +148,3 @@ function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
 function replayLog<T>(schema: Schema<T>, yValue: YValue, log: OpLog): void {
     throw new Error('not implemented');
 }
-
-// playground
-
-const taskSchema = object({
-    title: [1, string()],
-    description: [2, richtext()],
-    tags: [3, map(number())],
-    reactions: [4, array(string()).optional()],
-    meta: [
-        5,
-        object({
-            createdAt: [0, number()],
-            updatedAt: [1, number()],
-        }),
-    ],
-});
-
-const description = new Richtext();
-description.insert(0, 'some desc');
-
-const doc = Doc.create(taskSchema, {
-    title: 'sdf',
-    description,
-    tags: new Map([
-        ['green', 2],
-        ['blue', 3],
-    ]),
-    reactions: undefined,
-    meta: {
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-    },
-});
-
-console.log(doc.snapshot().title);
-doc.update(draft => {
-    draft.reactions?.push('more!');
-    draft.title = 'new ' + draft.title;
-    draft.meta = {
-        createdAt: draft.meta.createdAt,
-        updatedAt: Date.now(),
-    };
-});
-
-const info = doc.map(x => x.title + ' ' + x.reactions?.length);
-
-type Task = InferSchemaValue<typeof taskSchema>;

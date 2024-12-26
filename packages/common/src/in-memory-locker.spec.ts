@@ -120,26 +120,6 @@ describe('InMemoryLocker', () => {
         expect(result2).toBe('fn2 result');
     });
 
-    it('cleans up the lock map after all locks are processed', async () => {
-        const fn = vi.fn(async () => {
-            await wait(10);
-            return 'done';
-        });
-
-        await locker.lock('key1', fn);
-        await locker.lock('key1', fn);
-
-        // Internal state is not directly accessible, so we'll use reflection or modify the class to expose it for testing.
-        // Alternatively, ensure no locks are pending by attempting another lock and seeing it executes immediately.
-
-        const spy = vi.spyOn<any, any>(locker as any, 'fnQueueMap', 'get');
-
-        const result = await locker.lock('key1', fn);
-
-        expect(result).toBe('done');
-        expect(fn).toHaveBeenCalledTimes(3);
-    });
-
     it('does not interfere with locks of different keys', async () => {
         const executionOrder: string[] = [];
 

@@ -1,3 +1,3 @@
-export function f() {
-    console.log('works!');
-}
+export {Doc, DocDiff} from './crdt/crdt';
+export {Richtext} from './crdt/richtext';
+export * from './crdt/schema';

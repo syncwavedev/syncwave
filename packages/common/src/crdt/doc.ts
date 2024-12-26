@@ -239,7 +239,7 @@ class Locator {
     }
 }
 
-function replayLog<T>(log: OpLog, locator: Locator): void {
+function replayLog(log: OpLog, locator: Locator): void {
     for (const entry of log) {
         const {schema, yValue} = locator.locate(entry.subject);
 

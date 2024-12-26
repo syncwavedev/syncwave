@@ -219,6 +219,16 @@ export function array<TSchema extends Schema<any>>(itemSchema: TSchema): Schema<
     return new ArraySchema(itemSchema);
 }
 
+export function nullable<TSchema extends Schema<any>>(innerSchema: TSchema): Schema<InferSchemaValue<TSchema> | null> {
+    return new NullableSchema(innerSchema);
+}
+
+export function optional<TSchema extends Schema<any>>(
+    innerSchema: TSchema
+): Schema<InferSchemaValue<TSchema> | undefined> {
+    return new OptionalSchema(innerSchema);
+}
+
 type InferObjectSchemaValue<T extends Record<string, [number, Schema<any>]>> = {
     -readonly [K in keyof T]: InferSchemaValue<T[K][1]>;
 };

@@ -4,14 +4,14 @@ import {MappedKVStore, Mapper} from './mapped-key-value-store';
 import {concatBuffers} from './utils';
 
 function createPrefixMapper(prefix: Uint8Array | string): Mapper<Uint8Array, Uint8Array> {
-    prefix = typeof prefix === 'string' ? encodeString(prefix) : prefix;
+    const prefixBuf = typeof prefix === 'string' ? encodeString(prefix) : prefix;
 
     return {
         decode(key) {
-            return key.slice(prefix.length);
+            return key.slice(prefixBuf.length);
         },
         encode(key) {
-            return concatBuffers(prefix, key);
+            return concatBuffers(prefixBuf, key);
         },
     };
 }

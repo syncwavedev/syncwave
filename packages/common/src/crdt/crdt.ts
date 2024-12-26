@@ -1,10 +1,10 @@
 import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
 import {Serializer} from '../contracts/serializer';
 import {JsonSerializer} from '../json-serializer';
-import {assert, Brand} from '../utils';
+import {assert, assertNever, Brand} from '../utils';
 import {observe, OpLog} from './observe';
 import {Richtext} from './richtext';
-import {Schema} from './schema';
+import {ArraySchema, Schema} from './schema';
 
 export type DocDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 
@@ -64,12 +64,16 @@ export class Doc<T> {
 
     // if recipe returns T, then whole doc is overridden with the returned value
     update(recipe: (draft: T) => T | void): void {
-        const [replacement, log] = observe(mapFromYValue(this.schema, this.yValue), draft => recipe(draft));
+        const value = mapFromYValue(this.schema, this.yValue);
+        const locator = new Locator();
+        locator.addDeep(value, this.yValue, this.schema);
+
+        const [replacement, log] = observe(value, draft => recipe(draft));
         if (replacement) {
             this.schema.assertValid(replacement);
             this.yValue = mapToYValue(this.schema, replacement);
         } else {
-            replayLog(this.schema, this.yValue, log);
+            replayLog(this.schema, this.yValue, log, locator);
         }
     }
 
@@ -85,10 +89,6 @@ export class Doc<T> {
 
         return () => this.doc.off('update', fn);
     }
-
-    private copyYValue(): YValue {
-        return Doc.load(this.schema, this.state()).yValue;
-    }
 }
 
 type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string | null | undefined;
@@ -97,7 +97,28 @@ type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string 
 const intToStringSerializer: Serializer<number, string> = new JsonSerializer();
 
 function mapFromYValue<T>(schema: Schema<T>, yValue: YValue): T {
-    throw new Error('not implemented');
+    return schema.visit<any>({
+        nullable: nullable => (yValue === null ? null : mapFromYValue(nullable, yValue)),
+        optional: optional => (yValue === undefined ? undefined : mapFromYValue(optional, yValue)),
+        array: array => [...(yValue as YArray<any>).map(item => mapFromYValue(array.item, item))],
+        boolean: () => yValue,
+        number: () => yValue,
+        string: () => yValue,
+        object: object => {
+            const result: any = {};
+            for (const [key, value] of (yValue as YMap<any>).entries()) {
+                const field = object.fields.find(x => x.id === intToStringSerializer.decode(key));
+                assert(field !== undefined);
+
+                result[field.name] = mapFromYValue(field.schema, value);
+            }
+
+            return result;
+        },
+        richtext: () => new Richtext((yValue as YText).toDelta()),
+        map: map =>
+            new Map([...(yValue as YMap<any>).entries()].map(([key, value]) => [key, mapFromYValue(map.value, value)])),
+    });
 }
 
 // mapToYValue assumes that value is valid for the given schema
@@ -145,6 +166,94 @@ function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
     });
 }
 
-function replayLog<T>(schema: Schema<T>, yValue: YValue, log: OpLog): void {
-    throw new Error('not implemented');
+interface LocatorEntry {
+    readonly yValue: any;
+    readonly schema: Schema<any>;
+}
+
+class Locator {
+    private map = new Map<any, LocatorEntry>();
+
+    constructor() {}
+
+    locate(subject: any): LocatorEntry {
+        const result = this.map.get(subject);
+
+        if (!result) {
+            throw new Error('could not locate subject ' + subject);
+        }
+
+        return result;
+    }
+
+    addDeep(subject: any, yValue: YValue, schema: Schema<any>) {
+        schema.visit({
+            nullable: nullable => {
+                if (subject !== null) {
+                    this.addDeep(subject, yValue, nullable.inner);
+                }
+            },
+            optional: optional => {
+                if (subject !== undefined) {
+                    this.addDeep(subject, yValue, optional.inner);
+                }
+            },
+            boolean: () => {},
+            string: () => {},
+            number: () => {},
+            array: array => {
+                this.map.set(subject, {yValue, schema});
+                for (let i = 0; i < subject.length; i += 1) {
+                    const subjectItem = subject[i];
+                    const yValueItem = (yValue as YArray<any>)[i];
+
+                    this.addDeep(subjectItem, yValueItem, array.item);
+                }
+            },
+            map: map => {
+                this.map.set(subject, {yValue, schema});
+
+                for (const [key, subjectValue] of subject.entries()) {
+                    const yValueValue = (yValue as YMap<any>).get(key);
+
+                    this.addDeep(subjectValue, yValueValue, map.value);
+                }
+            },
+
+            richtext: () => {
+                this.map.set(subject, {yValue, schema});
+            },
+            object: object => {
+                this.map.set(subject, {yValue, schema});
+
+                for (const [key, subjectValue] of Object.entries(subject)) {
+                    const field = object.fields.find(x => x.name === key);
+                    assert(field !== undefined);
+
+                    const yValueValue = (yValue as YMap<any>).get(field.id.toString());
+
+                    this.addDeep(subjectValue, yValueValue, field.schema);
+                }
+            },
+        });
+    }
+}
+
+function replayLog<T>(schema: Schema<T>, yValue: YValue, log: OpLog, locator: Locator): void {
+    for (const entry of log) {
+        if (entry.type === 'array_push') {
+            const {schema, yValue} = locator.locate(entry.subject);
+            const yArgs = entry.args.map(x => mapToYValue((schema as ArraySchema<any>).item, x));
+            (yValue as YArray<any>).push(yArgs);
+
+            for (let i = 0; i < yArgs.length; i += 1) {
+                const yArg = yArgs[i];
+                const arg = entry.args[i];
+
+                locator.addDeep(arg, yArg, schema);
+            }
+        } else {
+            assertNever(entry);
+        }
+    }
 }

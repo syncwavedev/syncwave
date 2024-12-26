@@ -152,6 +152,12 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     throw new Error('unsupported array modification: set ' + prop.toString());
                 }
 
+                const index = +prop.toString();
+
+                if (target.length <= index || index < 0) {
+                    throw new Error('unsupported index modification');
+                }
+
                 log.push({
                     type: 'array_set',
                     subject,

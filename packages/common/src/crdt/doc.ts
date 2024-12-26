@@ -1,10 +1,11 @@
+import Delta from 'quill-delta';
 import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
 import {Serializer} from '../contracts/serializer';
 import {JsonSerializer} from '../json-serializer';
 import {assert, assertNever, Brand, zip} from '../utils';
 import {observe, OpLog} from './observe';
 import {Richtext} from './richtext';
-import {ArraySchema, MapSchema, ObjectSchema, Schema} from './schema';
+import {ArraySchema, MapSchema, ObjectSchema, RichtextSchema, Schema} from './schema';
 
 export type DocDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 
@@ -98,9 +99,9 @@ const intToStringSerializer: Serializer<number, string> = new JsonSerializer();
 
 function mapFromYValue<T>(schema: Schema<T>, yValue: YValue): T {
     return schema.visit<any>({
-        nullable: nullable => (yValue === null ? null : mapFromYValue(nullable, yValue)),
-        optional: optional => (yValue === undefined ? undefined : mapFromYValue(optional, yValue)),
-        array: array => [...(yValue as YArray<any>).map(item => mapFromYValue(array.item, item))],
+        nullable: nullable => (yValue === null ? null : mapFromYValue(nullable.inner, yValue)),
+        optional: optional => (yValue === undefined ? undefined : mapFromYValue(optional.inner, yValue)),
+        array: array => [...(yValue as YArray<any>).map(item => mapFromYValue(array.item, item.get('value')))],
         boolean: () => yValue,
         number: () => yValue,
         string: () => yValue,
@@ -115,7 +116,7 @@ function mapFromYValue<T>(schema: Schema<T>, yValue: YValue): T {
 
             return result;
         },
-        richtext: () => new Richtext((yValue as YText).toDelta()),
+        richtext: () => new Richtext(new Delta({ops: (yValue as YText).toDelta()})),
         map: map =>
             new Map([...(yValue as YMap<any>).entries()].map(([key, value]) => [key, mapFromYValue(map.value, value)])),
     });
@@ -125,12 +126,12 @@ function mapFromYValue<T>(schema: Schema<T>, yValue: YValue): T {
 function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
     return schema.visit<YValue>({
         nullable: nullable => (value === null ? null : mapToYValue(nullable.inner, value as any)),
-        optional: optional => (value === null ? null : mapToYValue(optional.inner, value as any)),
+        optional: optional => (value === undefined ? undefined : mapToYValue(optional.inner, value as any)),
         array: array => {
             assert(Array.isArray(value));
 
             const result = new YArray<YValue>();
-            result.push(value.map(x => mapToYValue(array.item, x)));
+            result.push(value.map(x => new YMap<YValue>([['value', mapToYValue(array.item, x)]])));
 
             return result;
         },
@@ -139,7 +140,7 @@ function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
         richtext: () => {
             const delta = (value as Richtext).toDelta();
             const result = new YText();
-            result.applyDelta(delta, {sanitize: false});
+            result.applyDelta(delta.ops, {sanitize: false});
             return result;
         },
         string: () => value as string,
@@ -246,21 +247,21 @@ function replayLog(log: OpLog, locator: Locator): void {
         if (entry.type === 'array_push') {
             assert(yValue instanceof YArray && schema instanceof ArraySchema);
 
-            const yArgs = entry.args.map(x => mapToYValue(schema.item, x));
+            const yArgs = entry.args.map(x => new YMap<YValue>([['value', mapToYValue(schema.item, x)]]));
             yValue.push(yArgs);
 
             zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg, schema));
         } else if (entry.type === 'array_unshift') {
             assert(yValue instanceof YArray && schema instanceof ArraySchema);
 
-            const yArgs = entry.args.map(x => mapToYValue(schema.item, x));
+            const yArgs = entry.args.map(x => new YMap<YValue>([['value', mapToYValue(schema.item, x)]]));
             yValue.unshift(yArgs);
 
             zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg, schema));
         } else if (entry.type === 'array_set') {
             assert(yValue instanceof YArray && schema instanceof ArraySchema);
 
-            yValue[entry.index] = mapToYValue(schema.item, entry.value);
+            yValue.get(entry.index).set('value', mapToYValue(schema.item, entry.value));
             locator.addDeep(entry.value, yValue[entry.index], schema.item);
         } else if (entry.type === 'map_clear') {
             assert(yValue instanceof YMap);
@@ -284,18 +285,18 @@ function replayLog(log: OpLog, locator: Locator): void {
             assert(field !== undefined);
             const yMapValue = mapToYValue(field.schema, entry.value);
             yValue.set(field.id.toString(), yMapValue);
-            locator.addDeep(entry.value, yMapValue, schema);
+            locator.addDeep(entry.value, yMapValue, field.schema);
         } else if (entry.type === 'richtext_insert') {
-            assert(yValue instanceof YText && schema instanceof Richtext);
+            assert(yValue instanceof YText && schema instanceof RichtextSchema);
             yValue.insert(...entry.args);
         } else if (entry.type === 'richtext_applyDelta') {
-            assert(yValue instanceof YText && schema instanceof Richtext);
-            yValue.applyDelta(...entry.args);
+            assert(yValue instanceof YText && schema instanceof RichtextSchema);
+            yValue.applyDelta(entry.args[0].ops);
         } else if (entry.type === 'richtext_delete') {
-            assert(yValue instanceof YText && schema instanceof Richtext);
+            assert(yValue instanceof YText && schema instanceof RichtextSchema);
             yValue.delete(...entry.args);
         } else if (entry.type === 'richtext_format') {
-            assert(yValue instanceof YText && schema instanceof Richtext);
+            assert(yValue instanceof YText && schema instanceof RichtextSchema);
             yValue.format(...entry.args);
         } else {
             assertNever(entry);

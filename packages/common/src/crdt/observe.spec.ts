@@ -58,7 +58,7 @@ describe('observe', () => {
             x => [{type: 'object_set', subject: x[0], prop: 'val', value: 'new'}]
         ),
         tc(
-            [],
+            [1, 2, 3],
             x => (x[2] = 'val'),
             x => [{type: 'array_set', subject: x, index: 2, value: 'val'}]
         ),

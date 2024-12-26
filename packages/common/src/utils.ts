@@ -80,3 +80,14 @@ export function concatBuffers(a: Uint8Array, b: Uint8Array): Uint8Array {
 export function distinct<T>(items: T[]): T[] {
     return [...new Set(items).values()];
 }
+
+export function zip<T1, T2>(a: T1[], b: T2[]): [T1, T2][] {
+    assert(a.length === b.length);
+
+    const result: [T1, T2][] = [];
+    for (let i = 0; i < a.length; i += 1) {
+        result.push([a[i], b[i]]);
+    }
+
+    return result;
+}

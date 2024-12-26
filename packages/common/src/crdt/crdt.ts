@@ -1,10 +1,10 @@
 import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
 import {Serializer} from '../contracts/serializer';
 import {JsonSerializer} from '../json-serializer';
-import {assert, assertNever, Brand} from '../utils';
+import {assert, assertNever, Brand, zip} from '../utils';
 import {observe, OpLog} from './observe';
 import {Richtext} from './richtext';
-import {ArraySchema, Schema} from './schema';
+import {ArraySchema, MapSchema, ObjectSchema, Schema} from './schema';
 
 export type DocDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 
@@ -73,7 +73,7 @@ export class Doc<T> {
             this.schema.assertValid(replacement);
             this.yValue = mapToYValue(this.schema, replacement);
         } else {
-            replayLog(this.schema, this.yValue, log, locator);
+            replayLog(log, locator);
         }
     }
 
@@ -239,19 +239,64 @@ class Locator {
     }
 }
 
-function replayLog<T>(schema: Schema<T>, yValue: YValue, log: OpLog, locator: Locator): void {
+function replayLog<T>(log: OpLog, locator: Locator): void {
     for (const entry of log) {
+        const {schema, yValue} = locator.locate(entry.subject);
+
         if (entry.type === 'array_push') {
-            const {schema, yValue} = locator.locate(entry.subject);
-            const yArgs = entry.args.map(x => mapToYValue((schema as ArraySchema<any>).item, x));
-            (yValue as YArray<any>).push(yArgs);
+            assert(yValue instanceof YArray && schema instanceof ArraySchema);
 
-            for (let i = 0; i < yArgs.length; i += 1) {
-                const yArg = yArgs[i];
-                const arg = entry.args[i];
+            const yArgs = entry.args.map(x => mapToYValue(schema.item, x));
+            yValue.push(yArgs);
 
-                locator.addDeep(arg, yArg, schema);
-            }
+            zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg, schema));
+        } else if (entry.type === 'array_unshift') {
+            assert(yValue instanceof YArray && schema instanceof ArraySchema);
+
+            const yArgs = entry.args.map(x => mapToYValue(schema.item, x));
+            yValue.unshift(yArgs);
+
+            zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg, schema));
+        } else if (entry.type === 'array_set') {
+            assert(yValue instanceof YArray && schema instanceof ArraySchema);
+
+            yValue[entry.index] = mapToYValue(schema.item, entry.value);
+            locator.addDeep(entry.value, yValue[entry.index], schema.item);
+        } else if (entry.type === 'map_clear') {
+            assert(yValue instanceof YMap);
+            yValue.clear();
+        } else if (entry.type === 'map_delete') {
+            assert(yValue instanceof YMap);
+            yValue.delete(entry.args[0]);
+        } else if (entry.type === 'map_set') {
+            assert(yValue instanceof YMap && schema instanceof MapSchema);
+            const yMapValue = mapToYValue(schema.value, entry.args[1]);
+            yValue.set(entry.args[0], yMapValue);
+            locator.addDeep(entry.args[1], yMapValue, schema.value);
+        } else if (entry.type === 'object_delete') {
+            assert(yValue instanceof YMap && schema instanceof ObjectSchema);
+            const field = schema.fields.find(x => x.name === entry.prop);
+            assert(field !== undefined);
+            yValue.delete(field.id.toString());
+        } else if (entry.type === 'object_set') {
+            assert(yValue instanceof YMap && schema instanceof ObjectSchema);
+            const field = schema.fields.find(x => x.name === entry.prop);
+            assert(field !== undefined);
+            const yMapValue = mapToYValue(field.schema, entry.value);
+            yValue.set(field.id.toString(), yMapValue);
+            locator.addDeep(entry.value, yMapValue, schema);
+        } else if (entry.type === 'richtext_insert') {
+            assert(yValue instanceof YText && schema instanceof Richtext);
+            yValue.insert(...entry.args);
+        } else if (entry.type === 'richtext_applyDelta') {
+            assert(yValue instanceof YText && schema instanceof Richtext);
+            yValue.applyDelta(...entry.args);
+        } else if (entry.type === 'richtext_delete') {
+            assert(yValue instanceof YText && schema instanceof Richtext);
+            yValue.delete(...entry.args);
+        } else if (entry.type === 'richtext_format') {
+            assert(yValue instanceof YText && schema instanceof Richtext);
+            yValue.format(...entry.args);
         } else {
             assertNever(entry);
         }

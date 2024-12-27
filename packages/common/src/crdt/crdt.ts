@@ -46,7 +46,7 @@ export class Crdt<T> {
     }
 
     snapshot(): T {
-        return mapFromYValue(this.yValue);
+        return this.map(x => x);
     }
 
     state(): DocDiff<T> {
@@ -61,11 +61,11 @@ export class Crdt<T> {
 
     // if recipe returns T, then whole doc is overridden with the returned value
     update(recipe: (draft: T) => T | void): void {
-        const value = mapFromYValue(this.yValue);
+        const snapshot = this.snapshot();
         const locator = new Locator();
-        locator.addDeep(value, this.yValue);
+        locator.addDeep(snapshot, this.yValue);
 
-        const [replacement, log] = observe(value, draft => recipe(draft));
+        const [replacement, log] = observe(snapshot, draft => recipe(draft));
         if (replacement) {
             this.yValue = mapToYValue(replacement);
         } else {
@@ -86,7 +86,7 @@ export class Crdt<T> {
 
 type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string | null | undefined;
 
-const MAP_META_OBJECT_TYPE_KEY = '__internal_is_object';
+const INTERPRET_AS_OBJECT_KEY = '__interpret_as_object__';
 
 function mapFromYValue(yValue: YValue): any {
     if (
@@ -100,10 +100,10 @@ function mapFromYValue(yValue: YValue): any {
     } else if (yValue.constructor === YArray) {
         return [...(yValue as YArray<any>).map(item => mapFromYValue(item.get('value')))];
     } else if (yValue.constructor === YMap) {
-        if ((yValue as YMap<any>).get(MAP_META_OBJECT_TYPE_KEY) === true) {
+        if ((yValue as YMap<any>).get(INTERPRET_AS_OBJECT_KEY) === true) {
             const result: any = {};
             for (const [key, value] of (yValue as YMap<any>).entries()) {
-                if (key === MAP_META_OBJECT_TYPE_KEY) continue;
+                if (key === INTERPRET_AS_OBJECT_KEY) continue;
                 result[key] = mapFromYValue(value);
             }
 
@@ -143,7 +143,7 @@ function mapToYValue(value: any): YValue {
         return result;
     } else if (value.constructor === Object) {
         const result = new YMap<YValue>();
-        result.set(MAP_META_OBJECT_TYPE_KEY, true);
+        result.set(INTERPRET_AS_OBJECT_KEY, true);
         for (const [key, fieldValue] of Object.entries(value)) {
             result.set(key, mapToYValue(fieldValue));
         }

@@ -1,11 +1,8 @@
 import Delta from 'quill-delta';
 import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
-import {Serializer} from '../contracts/serializer';
-import {JsonSerializer} from '../json-serializer';
+import {Richtext} from '../richtext';
 import {assert, assertNever, Brand, zip} from '../utils';
 import {observe, OpLog} from './observe';
-import {Richtext} from './richtext';
-import {ArraySchema, MapSchema, ObjectSchema, RichtextSchema, Schema} from './schema';
 
 export type DocDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 
@@ -15,27 +12,22 @@ const ROOT_KEY = 'root';
 const ROOT_VALUE = 'value';
 
 export class Doc<T> {
-    static create<T>(schema: Schema<T>, value: T): Doc<T> {
-        schema.assertValid(value);
-
+    static create<T>(value: T): Doc<T> {
         const doc = new YDoc();
         const rootMap = doc.getMap<YValue>(ROOT_KEY);
-        rootMap.set(ROOT_VALUE, mapToYValue(schema, value));
+        rootMap.set(ROOT_VALUE, mapToYValue(value));
 
-        return new Doc(schema, doc);
+        return new Doc(doc);
     }
 
-    static load<T>(schema: Schema<T>, diff: DocDiff<T>): Doc<T> {
+    static load<T>(diff: DocDiff<T>): Doc<T> {
         const doc = new YDoc();
         applyUpdateV2(doc, diff);
 
-        return new Doc(schema, doc);
+        return new Doc(doc);
     }
 
-    private constructor(
-        private schema: Schema<T>,
-        private doc: YDoc
-    ) {}
+    private constructor(private doc: YDoc) {}
 
     private get root(): YMap<YValue> {
         return this.doc.getMap(ROOT_KEY);
@@ -50,7 +42,7 @@ export class Doc<T> {
     }
 
     snapshot(): T {
-        return this.map(x => x);
+        return mapFromYValue(this.yValue);
     }
 
     state(): DocDiff<T> {
@@ -60,19 +52,18 @@ export class Doc<T> {
     map<TResult>(mapper: (snapshot: T) => TResult): TResult {
         // for simplicity sake we make full copy of the Doc to create a snapshot,
         // even though not all fields might be needed by the mapper
-        return mapper(mapFromYValue(this.schema, this.yValue));
+        return mapper(mapFromYValue(this.yValue));
     }
 
     // if recipe returns T, then whole doc is overridden with the returned value
     update(recipe: (draft: T) => T | void): void {
-        const value = mapFromYValue(this.schema, this.yValue);
+        const value = mapFromYValue(this.yValue);
         const locator = new Locator();
-        locator.addDeep(value, this.yValue, this.schema);
+        locator.addDeep(value, this.yValue);
 
         const [replacement, log] = observe(value, draft => recipe(draft));
         if (replacement) {
-            this.schema.assertValid(replacement);
-            this.yValue = mapToYValue(this.schema, replacement);
+            this.yValue = mapToYValue(replacement);
         } else {
             replayLog(log, locator);
         }
@@ -94,90 +85,80 @@ export class Doc<T> {
 
 type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string | null | undefined;
 
-// using JsonSerializer for simplicity sake, more efficient serialization would require varint serialization
-const intToStringSerializer: Serializer<number, string> = new JsonSerializer();
+const MAP_META_OBJECT_TYPE_KEY = '__internal_is_object';
 
-function mapFromYValue<T>(schema: Schema<T>, yValue: YValue): T {
-    return schema.visit<any>({
-        nullable: nullable => (yValue === null ? null : mapFromYValue(nullable.inner, yValue)),
-        optional: optional => (yValue === undefined ? undefined : mapFromYValue(optional.inner, yValue)),
-        array: array => [...(yValue as YArray<any>).map(item => mapFromYValue(array.item, item.get('value')))],
-        boolean: () => yValue,
-        number: () => yValue,
-        string: () => yValue,
-        object: object => {
+function mapFromYValue(yValue: YValue): any {
+    if (
+        yValue === null ||
+        yValue === undefined ||
+        typeof yValue === 'string' ||
+        typeof yValue === 'number' ||
+        typeof yValue === 'boolean'
+    ) {
+        return yValue;
+    } else if (yValue.constructor === YArray) {
+        return [...(yValue as YArray<any>).map(item => mapFromYValue(item.get('value')))];
+    } else if (yValue.constructor === YMap) {
+        if ((yValue as YMap<any>).get(MAP_META_OBJECT_TYPE_KEY) === true) {
             const result: any = {};
             for (const [key, value] of (yValue as YMap<any>).entries()) {
-                const field = object.fields.find(x => x.id === intToStringSerializer.decode(key));
-                assert(field !== undefined);
-
-                result[field.name] = mapFromYValue(field.schema, value);
+                if (key === MAP_META_OBJECT_TYPE_KEY) continue;
+                result[key] = mapFromYValue(value);
             }
 
             return result;
-        },
-        richtext: () => new Richtext(new Delta({ops: (yValue as YText).toDelta()})),
-        map: map =>
-            new Map([...(yValue as YMap<any>).entries()].map(([key, value]) => [key, mapFromYValue(map.value, value)])),
-    });
+        } else {
+            return new Map([...(yValue as YMap<any>).entries()].map(([key, value]) => [key, mapFromYValue(value)]));
+        }
+    } else if (yValue.constructor === YText) {
+        return new Richtext(new Delta({ops: (yValue as YText).toDelta()}));
+    } else {
+        throw new Error('cannot map unsupported YValue: ' + yValue);
+    }
 }
 
 // mapToYValue assumes that value is valid for the given schema
-function mapToYValue<T>(schema: Schema<T>, value: T): YValue {
-    return schema.visit<YValue>({
-        nullable: nullable => (value === null ? null : mapToYValue(nullable.inner, value as any)),
-        optional: optional => (value === undefined ? undefined : mapToYValue(optional.inner, value as any)),
-        array: array => {
-            assert(Array.isArray(value));
+function mapToYValue(value: any): YValue {
+    if (
+        value === null ||
+        value === undefined ||
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean'
+    ) {
+        return value;
+    } else if (value.constructor === Map) {
+        const entries = [...value.entries()].map(([key, value]) => [key, mapToYValue(value)] as const);
+        return new YMap(entries);
+    } else if (value.constructor === Richtext) {
+        const delta = (value as Richtext).toDelta();
+        const result = new YText();
+        result.applyDelta(delta.ops, {sanitize: false});
+        return result;
+    } else if (value.constructor === Array) {
+        const result = new YArray<YValue>();
+        result.push(value.map(x => new YMap<YValue>([['value', mapToYValue(x)]])));
 
-            const result = new YArray<YValue>();
-            result.push(value.map(x => new YMap<YValue>([['value', mapToYValue(array.item, x)]])));
+        return result;
+    } else if (value.constructor === Object) {
+        const result = new YMap<YValue>();
+        result.set(MAP_META_OBJECT_TYPE_KEY, true);
+        for (const [key, fieldValue] of Object.entries(value)) {
+            result.set(key, mapToYValue(fieldValue));
+        }
 
-            return result;
-        },
-        boolean: () => value as boolean,
-        number: () => value as number,
-        richtext: () => {
-            const delta = (value as Richtext).toDelta();
-            const result = new YText();
-            result.applyDelta(delta.ops, {sanitize: false});
-            return result;
-        },
-        string: () => value as string,
-        map: map => {
-            assert(value instanceof Map);
-            const entries = [...value.entries()].map(([key, value]) => [key, mapToYValue(map.value, value)] as const);
-            return new YMap(entries);
-        },
-        object: object => {
-            assert(typeof value === 'object' && value !== null);
-
-            const result = new YMap<YValue>();
-            for (const [key, fieldValue] of Object.entries(value)) {
-                const field = object.fields.find(x => x.name === key);
-
-                // mapToYValue assumes that value is valid for the given schema
-                assert(field !== undefined);
-
-                result.set(intToStringSerializer.encode(field.id), mapToYValue(field.schema, fieldValue));
-            }
-
-            return result;
-        },
-    });
-}
-
-interface LocatorEntry {
-    readonly yValue: any;
-    readonly schema: Schema<any>;
+        return result;
+    } else {
+        throw new Error('cannot map unsupported value to YValue: ' + value);
+    }
 }
 
 class Locator {
-    private map = new Map<any, LocatorEntry>();
+    private map = new Map<any, YValue>();
 
     constructor() {}
 
-    locate(subject: any): LocatorEntry {
+    locate(subject: any): YValue {
         const result = this.map.get(subject);
 
         if (!result) {
@@ -187,82 +168,70 @@ class Locator {
         return result;
     }
 
-    addDeep(subject: any, yValue: YValue, schema: Schema<any>) {
-        schema.visit({
-            nullable: nullable => {
-                if (subject !== null) {
-                    this.addDeep(subject, yValue, nullable.inner);
-                }
-            },
-            optional: optional => {
-                if (subject !== undefined) {
-                    this.addDeep(subject, yValue, optional.inner);
-                }
-            },
-            boolean: () => {},
-            string: () => {},
-            number: () => {},
-            array: array => {
-                this.map.set(subject, {yValue, schema});
-                for (let i = 0; i < subject.length; i += 1) {
-                    const subjectItem = subject[i];
-                    const yValueItem = (yValue as YArray<any>)[i];
+    addDeep(subject: any, yValue: YValue) {
+        if (
+            subject === null ||
+            subject === undefined ||
+            typeof subject === 'string' ||
+            typeof subject === 'number' ||
+            typeof subject === 'boolean'
+        ) {
+            return subject;
+        } else if (subject.constructor === Map) {
+            this.map.set(subject, yValue);
 
-                    this.addDeep(subjectItem, yValueItem, array.item);
-                }
-            },
-            map: map => {
-                this.map.set(subject, {yValue, schema});
+            for (const [key, subjectValue] of subject.entries()) {
+                const yValueValue = (yValue as YMap<any>).get(key);
 
-                for (const [key, subjectValue] of subject.entries()) {
-                    const yValueValue = (yValue as YMap<any>).get(key);
+                this.addDeep(subjectValue, yValueValue);
+            }
+        } else if (subject.constructor === Richtext) {
+            this.map.set(subject, yValue);
+        } else if (subject.constructor === Array) {
+            this.map.set(subject, yValue);
+            for (let i = 0; i < subject.length; i += 1) {
+                const subjectItem = subject[i];
+                const yValueItem = (yValue as YArray<any>)[i];
 
-                    this.addDeep(subjectValue, yValueValue, map.value);
-                }
-            },
+                this.addDeep(subjectItem, yValueItem);
+            }
+        } else if (subject.constructor === Object) {
+            this.map.set(subject, yValue);
 
-            richtext: () => {
-                this.map.set(subject, {yValue, schema});
-            },
-            object: object => {
-                this.map.set(subject, {yValue, schema});
+            for (const [key, subjectValue] of Object.entries(subject)) {
+                const yValueValue = (yValue as YMap<any>).get(key);
 
-                for (const [key, subjectValue] of Object.entries(subject)) {
-                    const field = object.fields.find(x => x.name === key);
-                    assert(field !== undefined);
-
-                    const yValueValue = (yValue as YMap<any>).get(field.id.toString());
-
-                    this.addDeep(subjectValue, yValueValue, field.schema);
-                }
-            },
-        });
+                this.addDeep(subjectValue, yValueValue);
+            }
+        } else {
+            throw new Error('cannot add unsupported subject to Locator: ' + subject);
+        }
     }
 }
 
 function replayLog(log: OpLog, locator: Locator): void {
     for (const entry of log) {
-        const {schema, yValue} = locator.locate(entry.subject);
+        const yValue = locator.locate(entry.subject);
 
         if (entry.type === 'array_push') {
-            assert(yValue instanceof YArray && schema instanceof ArraySchema);
+            assert(yValue instanceof YArray);
 
-            const yArgs = entry.args.map(x => new YMap<YValue>([['value', mapToYValue(schema.item, x)]]));
+            const yArgs = entry.args.map(x => new YMap<YValue>([['value', mapToYValue(x)]]));
             yValue.push(yArgs);
 
-            zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg, schema));
+            zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg));
         } else if (entry.type === 'array_unshift') {
-            assert(yValue instanceof YArray && schema instanceof ArraySchema);
+            assert(yValue instanceof YArray);
 
-            const yArgs = entry.args.map(x => new YMap<YValue>([['value', mapToYValue(schema.item, x)]]));
+            const yArgs = entry.args.map(x => new YMap<YValue>([['value', mapToYValue(x)]]));
             yValue.unshift(yArgs);
 
-            zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg, schema));
+            zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg));
         } else if (entry.type === 'array_set') {
-            assert(yValue instanceof YArray && schema instanceof ArraySchema);
+            assert(yValue instanceof YArray);
 
-            yValue.get(entry.index).set('value', mapToYValue(schema.item, entry.value));
-            locator.addDeep(entry.value, yValue[entry.index], schema.item);
+            (yValue.get(entry.index) as YMap<YValue>).set('value', mapToYValue(entry.value));
+            locator.addDeep(entry.value, yValue[entry.index]);
         } else if (entry.type === 'map_clear') {
             assert(yValue instanceof YMap);
             yValue.clear();
@@ -270,33 +239,29 @@ function replayLog(log: OpLog, locator: Locator): void {
             assert(yValue instanceof YMap);
             yValue.delete(entry.args[0]);
         } else if (entry.type === 'map_set') {
-            assert(yValue instanceof YMap && schema instanceof MapSchema);
-            const yMapValue = mapToYValue(schema.value, entry.args[1]);
+            assert(yValue instanceof YMap);
+            const yMapValue = mapToYValue(entry.args[1]);
             yValue.set(entry.args[0], yMapValue);
-            locator.addDeep(entry.args[1], yMapValue, schema.value);
+            locator.addDeep(entry.args[1], yMapValue);
         } else if (entry.type === 'object_delete') {
-            assert(yValue instanceof YMap && schema instanceof ObjectSchema);
-            const field = schema.fields.find(x => x.name === entry.prop);
-            assert(field !== undefined);
-            yValue.delete(field.id.toString());
+            assert(yValue instanceof YMap);
+            yValue.delete(entry.prop);
         } else if (entry.type === 'object_set') {
-            assert(yValue instanceof YMap && schema instanceof ObjectSchema);
-            const field = schema.fields.find(x => x.name === entry.prop);
-            assert(field !== undefined);
-            const yMapValue = mapToYValue(field.schema, entry.value);
-            yValue.set(field.id.toString(), yMapValue);
-            locator.addDeep(entry.value, yMapValue, field.schema);
+            assert(yValue instanceof YMap);
+            const yMapValue = mapToYValue(entry.value);
+            yValue.set(entry.prop, yMapValue);
+            locator.addDeep(entry.value, yMapValue);
         } else if (entry.type === 'richtext_insert') {
-            assert(yValue instanceof YText && schema instanceof RichtextSchema);
+            assert(yValue instanceof YText);
             yValue.insert(...entry.args);
         } else if (entry.type === 'richtext_applyDelta') {
-            assert(yValue instanceof YText && schema instanceof RichtextSchema);
+            assert(yValue instanceof YText);
             yValue.applyDelta(entry.args[0].ops);
         } else if (entry.type === 'richtext_delete') {
-            assert(yValue instanceof YText && schema instanceof RichtextSchema);
+            assert(yValue instanceof YText);
             yValue.delete(...entry.args);
         } else if (entry.type === 'richtext_format') {
-            assert(yValue instanceof YText && schema instanceof RichtextSchema);
+            assert(yValue instanceof YText);
             yValue.format(...entry.args);
         } else {
             assertNever(entry);

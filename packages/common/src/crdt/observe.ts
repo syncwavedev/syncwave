@@ -1,4 +1,4 @@
-import {Richtext} from './richtext';
+import {Richtext} from '../richtext';
 
 interface BaseOpLogEntry<TType extends string> {
     readonly type: TType;

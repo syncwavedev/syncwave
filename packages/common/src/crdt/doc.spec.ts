@@ -1,47 +1,28 @@
 import Delta from 'quill-delta';
 import {describe, expect, it} from 'vitest';
+import {Richtext} from '../richtext';
 import {assert} from '../utils';
 import {Doc} from './doc';
-import {Richtext} from './richtext';
-import {array, boolean, map, nullable, number, object, optional, richtext, string} from './schema';
 
 describe('Doc', () => {
     it('should create new string Doc', () => {
-        const simpleObjSchema = object({
-            a: [1, number()],
-            b: [2, number()],
+        const doc = Doc.create({
+            string: 'one',
+            richtext: new Richtext(new Delta().insert('two')),
+            number: 3,
+            boolean: true,
+            map: new Map([['key', {a: 4, b: 5}]]),
+            array: [
+                {a: 6, b: 7},
+                {a: 8, b: 9},
+            ],
+            object: {
+                a: 14,
+                b: 15,
+            },
+            optional: undefined,
+            nullable: null,
         });
-
-        const doc = Doc.create(
-            object({
-                string: [1, string()],
-                richtext: [2, richtext()],
-                number: [3, number()],
-                boolean: [4, boolean()],
-                map: [5, map(simpleObjSchema)],
-                array: [6, array(simpleObjSchema)],
-                object: [7, simpleObjSchema],
-                optional: [8, optional(simpleObjSchema)],
-                nullable: [9, nullable(simpleObjSchema)],
-            }),
-            {
-                string: 'one',
-                richtext: new Richtext(new Delta().insert('two')),
-                number: 3,
-                boolean: true,
-                map: new Map([['key', {a: 4, b: 5}]]),
-                array: [
-                    {a: 6, b: 7},
-                    {a: 8, b: 9},
-                ],
-                object: {
-                    a: 14,
-                    b: 15,
-                },
-                optional: undefined,
-                nullable: null,
-            }
-        );
 
         expect(doc.snapshot()).toEqual({
             string: 'one',
@@ -64,7 +45,7 @@ describe('Doc', () => {
 
     describe('update', () => {
         it('should update the object', () => {
-            const doc = Doc.create(object({val: [1, number()]}), {val: 111});
+            const doc = Doc.create({val: 111});
             doc.update(x => {
                 x.val = 112;
             });
@@ -73,7 +54,7 @@ describe('Doc', () => {
         });
 
         it('should replace the object', () => {
-            const doc = Doc.create(object({val: [1, number()]}), {val: 111});
+            const doc = Doc.create({val: 111});
             doc.update(() => {
                 return {val: 312};
             });
@@ -82,7 +63,7 @@ describe('Doc', () => {
         });
 
         it('should update string', () => {
-            const doc = Doc.create(object({s: [1, string()]}), {s: 'one'});
+            const doc = Doc.create({s: 'one'});
             doc.update(x => {
                 x.s = 'two';
             });
@@ -90,7 +71,7 @@ describe('Doc', () => {
         });
 
         it('should update array (push)', () => {
-            const doc = Doc.create(object({arr: [1, array(number())]}), {arr: [3, 4, 5]});
+            const doc = Doc.create({arr: [3, 4, 5]});
             doc.update(x => {
                 x.arr.push(6);
             });
@@ -98,7 +79,7 @@ describe('Doc', () => {
         });
 
         it('should update array (unshift)', () => {
-            const doc = Doc.create(object({arr: [1, array(number())]}), {arr: [3, 4, 5]});
+            const doc = Doc.create({arr: [3, 4, 5]});
             doc.update(x => {
                 x.arr.unshift(6, 7);
             });
@@ -106,7 +87,7 @@ describe('Doc', () => {
         });
 
         it('should update array (set)', () => {
-            const doc = Doc.create(object({arr: [1, array(number())]}), {arr: [1, 1, 1, 1]});
+            const doc = Doc.create({arr: [1, 1, 1, 1]});
             doc.update(x => {
                 x.arr[3] = 3;
             });
@@ -114,14 +95,14 @@ describe('Doc', () => {
         });
 
         it('should support root string', () => {
-            const doc = Doc.create(string(), 'init');
+            const doc = Doc.create('init');
             doc.update(() => 'updated');
 
             expect(doc.snapshot()).toEqual('updated');
         });
 
         it('should support richtext (delete)', () => {
-            const doc = Doc.create(richtext(), new Richtext());
+            const doc = Doc.create(new Richtext());
             doc.update(x => {
                 x.insert(0, 'some content');
             });
@@ -133,7 +114,7 @@ describe('Doc', () => {
         });
 
         it('should support richtext (format)', () => {
-            const doc = Doc.create(richtext(), new Richtext(new Delta().insert('some')));
+            const doc = Doc.create(new Richtext(new Delta().insert('some')));
             doc.update(x => {
                 x.format(1, 2, {bold: true});
             });
@@ -144,7 +125,7 @@ describe('Doc', () => {
         });
 
         it('should support richtext (insert)', () => {
-            const doc = Doc.create(richtext(), new Richtext(new Delta().insert('some')));
+            const doc = Doc.create(new Richtext(new Delta().insert('some')));
             doc.update(x => {
                 x.insert(4, ' content');
             });
@@ -153,7 +134,7 @@ describe('Doc', () => {
         });
 
         it('should support richtext (applyDelta)', () => {
-            const doc = Doc.create(richtext(), new Richtext(new Delta().insert('some content')));
+            const doc = Doc.create(new Richtext(new Delta().insert('some content')));
             doc.update(x => {
                 x.applyDelta(new Delta().retain('some content'.length).insert('!!!'));
             });
@@ -162,7 +143,7 @@ describe('Doc', () => {
         });
 
         it('should support boolean update', () => {
-            const doc = Doc.create(object({b: [1, boolean()]}), {b: false});
+            const doc = Doc.create({b: false});
             doc.update(x => {
                 x.b = true;
             });
@@ -172,7 +153,6 @@ describe('Doc', () => {
 
         it('should clear map', () => {
             const doc = Doc.create(
-                map(string()),
                 new Map([
                     ['a', 'one'],
                     ['b', 'two'],
@@ -188,7 +168,6 @@ describe('Doc', () => {
 
         it('should set map item', () => {
             const doc = Doc.create(
-                map(string()),
                 new Map([
                     ['a', 'v1'],
                     ['b', 'v1'],
@@ -208,7 +187,6 @@ describe('Doc', () => {
 
         it('should delete map item', () => {
             const doc = Doc.create(
-                map(string()),
                 new Map([
                     ['a', 'v1'],
                     ['b', 'v1'],
@@ -224,7 +202,7 @@ describe('Doc', () => {
         });
 
         it('should support updating optional schema', () => {
-            const doc = Doc.create(object({val: [1, optional(number())]}), {val: 2});
+            const doc = Doc.create<{val: number | undefined}>({val: 2});
             doc.update(x => {
                 x.val = undefined;
                 assert(x.val === undefined);
@@ -238,7 +216,7 @@ describe('Doc', () => {
         });
 
         it('should support updating optional schema', () => {
-            const doc = Doc.create(object({val: [1, nullable(number())]}), {val: 2});
+            const doc = Doc.create<{val: number | null}>({val: 2});
             doc.update(x => {
                 x.val = null;
                 assert(x.val === null);

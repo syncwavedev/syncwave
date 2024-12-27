@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
-import {assert, wait} from '../utils';
-import {CursorClosedError, InMemoryKeyValueStore} from './in-memory-key-value-store'; // Replace with the correct file path
-import {Entry} from './key-value-store';
+import {assert, wait} from '../../utils';
+import {Entry} from '../key-value-store';
+import {CursorClosedError, InMemoryKeyValueStore} from './in-memory-key-value-store';
 
 function toUint8Array(str: string): Uint8Array {
     return new Uint8Array(Buffer.from(str, 'utf-8'));

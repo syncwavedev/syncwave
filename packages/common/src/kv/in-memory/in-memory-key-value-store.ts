@@ -1,6 +1,6 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
+import {Condition, Cursor, CursorNext, InvalidQueryCondition, KVStore, Transaction} from '../key-value-store';
 import {InMemoryLocker} from './in-memory-locker';
-import {Condition, Cursor, CursorNext, InvalidQueryCondition, KVStore, Transaction} from './key-value-store';
 import {Locker} from './locker';
 
 function compareUint8Array(a: Uint8Array, b: Uint8Array): 1 | 0 | -1 {

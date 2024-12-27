@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {wait} from '../utils';
+import {wait} from '../../utils';
 import {InMemoryLocker} from './in-memory-locker';
 
 describe('InMemoryLocker', () => {

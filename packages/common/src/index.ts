@@ -1,2 +1,2 @@
-export {Crdt as Doc, DocDiff} from './crdt/crdt';
+export {Crdt as Doc, CrdtDiff as DocDiff} from './crdt/crdt';
 export {Richtext} from './richtext';

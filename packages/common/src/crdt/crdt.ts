@@ -4,7 +4,7 @@ import {Richtext} from '../richtext';
 import {assert, assertNever, Brand, zip} from '../utils';
 import {observe, OpLog} from './observe';
 
-export type DocDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
+export type CrdtDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 
 type Unsubscribe = () => void;
 
@@ -24,7 +24,7 @@ export class Crdt<T> {
         return new Crdt(doc);
     }
 
-    static load<T>(diff: DocDiff<T>): Crdt<T> {
+    static load<T>(diff: CrdtDiff<T>): Crdt<T> {
         const doc = new YDoc();
         applyUpdateV2(doc, diff);
 
@@ -46,17 +46,17 @@ export class Crdt<T> {
     }
 
     snapshot(): T {
-        return this.map(x => x);
+        return mapFromYValue(this.yValue);
     }
 
-    state(): DocDiff<T> {
-        return encodeStateAsUpdateV2(this.doc) as DocDiff<T>;
+    state(): CrdtDiff<T> {
+        return encodeStateAsUpdateV2(this.doc) as CrdtDiff<T>;
     }
 
     map<TResult>(mapper: (snapshot: T) => TResult): TResult {
         // for simplicity sake we make full copy of the Doc to create a snapshot,
         // even though not all fields might be needed by the mapper
-        return mapper(mapFromYValue(this.yValue));
+        return mapper(this.snapshot());
     }
 
     // if recipe returns T, then whole doc is overridden with the returned value
@@ -73,12 +73,12 @@ export class Crdt<T> {
         }
     }
 
-    apply(diff: DocDiff<T>, options?: DiffOptions): void {
+    apply(diff: CrdtDiff<T>, options?: DiffOptions): void {
         applyUpdateV2(this.doc, diff, options?.tag);
     }
 
-    subscribe(event: 'update', next: (diff: DocDiff<T>, options: DiffOptions) => void): Unsubscribe {
-        const fn = (state: Uint8Array, tag: string | undefined) => next(state as DocDiff<T>, {tag});
+    subscribe(event: 'update', next: (diff: CrdtDiff<T>, options: DiffOptions) => void): Unsubscribe {
+        const fn = (state: Uint8Array, tag: string | undefined) => next(state as CrdtDiff<T>, {tag: tag ?? undefined});
         this.doc.on('updateV2', fn);
         return () => this.doc.off('updateV2', fn);
     }
@@ -192,7 +192,7 @@ class Locator {
             this.map.set(subject, yValue);
             for (let i = 0; i < subject.length; i += 1) {
                 const subjectItem = subject[i];
-                const yValueItem = (yValue as YArray<any>)[i];
+                const yValueItem = (yValue as YArray<any>).get(i).get('value');
 
                 this.addDeep(subjectItem, yValueItem);
             }
@@ -201,7 +201,6 @@ class Locator {
 
             for (const [key, subjectValue] of Object.entries(subject)) {
                 const yValueValue = (yValue as YMap<any>).get(key);
-
                 this.addDeep(subjectValue, yValueValue);
             }
         } else {

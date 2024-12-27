@@ -1,5 +1,5 @@
 import {assertNever} from '../utils';
-import {Condition, Crud, Cursor, CursorNext, KVStore, Transaction} from './key-value-store';
+import {Condition, Cursor, CursorNext, KVStore, Transaction} from './key-value-store';
 
 export interface Mapper<TPrivate, TPublic> {
     decode(x: TPrivate): TPublic;
@@ -10,21 +10,27 @@ export class MappedTransaction<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePub
     implements Transaction<TKeyPublic, TValuePublic>
 {
     constructor(
-        private transaction: Transaction<TKeyPrivate, TValuePrivate>,
+        private target: Transaction<TKeyPrivate, TValuePrivate>,
         private keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
 
-    get(key: TKeyPublic): Promise<TValuePublic | undefined> {
-        return mapGet(this.transaction, this.keyMapper, this.valueMapper, key);
+    async get(key: TKeyPublic): Promise<TValuePublic | undefined> {
+        const result = await this.target.get(this.keyMapper.encode(key));
+        if (result) {
+            return this.valueMapper.decode(result);
+        } else {
+            return undefined;
+        }
     }
 
-    query(condition: Condition<TKeyPublic>): Promise<Cursor<TKeyPublic, TValuePublic>> {
-        return mapQuery(this.transaction, this.keyMapper, this.valueMapper, condition);
+    async query(condition: Condition<TKeyPublic>): Promise<Cursor<TKeyPublic, TValuePublic>> {
+        const cursor = await this.target.query(projectCondition(condition, this.keyMapper));
+        return new MappedCursor(cursor, this.keyMapper, this.valueMapper);
     }
 
-    put(key: TKeyPublic, value: TValuePublic): Promise<void> {
-        return mapPut(this.transaction, this.keyMapper, this.valueMapper, key, value);
+    async put(key: TKeyPublic, value: TValuePublic): Promise<void> {
+        return await this.target.put(this.keyMapper.encode(key), this.valueMapper.encode(value));
     }
 }
 
@@ -32,13 +38,13 @@ export class MappedCursor<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
     implements Cursor<TKeyPublic, TValuePublic>
 {
     constructor(
-        private cursor: Cursor<TKeyPrivate, TValuePrivate>,
+        private target: Cursor<TKeyPrivate, TValuePrivate>,
         private keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
 
     async next(): Promise<CursorNext<TKeyPublic, TValuePublic>> {
-        const next = await this.cursor.next();
+        const next = await this.target.next();
 
         if (next.type === 'done') {
             return next;
@@ -54,7 +60,7 @@ export class MappedCursor<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
     }
 
     close(): Promise<void> {
-        return this.cursor.close();
+        return this.target.close();
     }
 }
 
@@ -70,52 +76,6 @@ export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
     transaction<TResult>(fn: (txn: Transaction<TKeyPublic, TValuePublic>) => Promise<TResult>): Promise<TResult> {
         return this.store.transaction(txn => fn(new MappedTransaction(txn, this.keyMapper, this.valueMapper)));
     }
-
-    get(key: TKeyPublic): Promise<TValuePublic | undefined> {
-        return mapGet(this.store, this.keyMapper, this.valueMapper, key);
-    }
-
-    query(condition: Condition<TKeyPublic>): Promise<Cursor<TKeyPublic, TValuePublic>> {
-        return mapQuery(this.store, this.keyMapper, this.valueMapper, condition);
-    }
-
-    put(key: TKeyPublic, value: TValuePublic): Promise<void> {
-        return mapPut(this.store, this.keyMapper, this.valueMapper, key, value);
-    }
-}
-
-async function mapGet<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>(
-    crud: Crud<TKeyPrivate, TValuePrivate>,
-    keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
-    valueMapper: Mapper<TValuePrivate, TValuePublic>,
-    key: TKeyPublic
-): Promise<TValuePublic | undefined> {
-    const result = await crud.get(keyMapper.encode(key));
-    if (result) {
-        return valueMapper.decode(result);
-    } else {
-        return undefined;
-    }
-}
-
-async function mapPut<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>(
-    crud: Crud<TKeyPrivate, TValuePrivate>,
-    keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
-    valueMapper: Mapper<TValuePrivate, TValuePublic>,
-    key: TKeyPublic,
-    value: TValuePublic
-): Promise<void> {
-    await crud.put(keyMapper.encode(key), valueMapper.encode(value));
-}
-
-async function mapQuery<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>(
-    crud: Crud<TKeyPrivate, TValuePrivate>,
-    keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
-    valueMapper: Mapper<TValuePrivate, TValuePublic>,
-    condition: Condition<TKeyPublic>
-): Promise<Cursor<TKeyPublic, TValuePublic>> {
-    const cursor = await crud.query(projectCondition(condition, keyMapper));
-    return new MappedCursor(cursor, keyMapper, valueMapper);
 }
 
 function projectCondition<TKeySource, TKeyTarget>(

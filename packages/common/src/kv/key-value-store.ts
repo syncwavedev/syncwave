@@ -69,17 +69,16 @@ export class InvalidQueryCondition extends Error {
     }
 }
 
-export interface Crud<TKey, TValue> {
+export interface Transaction<TKey, TValue> {
     get(key: TKey): Promise<TValue | undefined>;
     query(condition: Condition<TKey>): Promise<Cursor<TKey, TValue>>;
     put(key: TKey, value: TValue): Promise<void>;
 }
 
-export interface Transaction<TKey, TValue> extends Crud<TKey, TValue> {}
-
-export interface KVStore<TKey, TValue> extends Crud<TKey, TValue> {
+export interface KVStore<TKey, TValue> {
     // fn must be called multiple times in case of a conflict (optimistic concurrency)
     transaction<TResult>(fn: (txn: Transaction<TKey, TValue>) => Promise<TResult>): Promise<TResult>;
 }
 
 export type Uint8KVStore = KVStore<Uint8Array, Uint8Array>;
+export type Uint8Transaction = Transaction<Uint8Array, Uint8Array>;

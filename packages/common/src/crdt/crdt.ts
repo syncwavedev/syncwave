@@ -12,7 +12,7 @@ const ROOT_KEY = 'root';
 const ROOT_VALUE = 'value';
 
 export interface DiffOptions {
-    readonly tag?: string;
+    readonly origin?: any;
 }
 
 export class Crdt<T> {
@@ -60,25 +60,28 @@ export class Crdt<T> {
     }
 
     // if recipe returns T, then whole doc is overridden with the returned value
-    update(recipe: (draft: T) => T | void): void {
+    update(recipe: (draft: T) => T | void, options?: DiffOptions): void {
         const snapshot = this.snapshot();
         const locator = new Locator();
         locator.addDeep(snapshot, this.yValue);
 
         const [replacement, log] = observe(snapshot, draft => recipe(draft));
-        if (replacement) {
-            this.yValue = mapToYValue(replacement);
-        } else {
-            replayLog(log, locator);
-        }
+        this.doc.transact(() => {
+            if (replacement) {
+                this.yValue = mapToYValue(replacement);
+            } else {
+                replayLog(log, locator);
+            }
+        }, options?.origin);
     }
 
     apply(diff: CrdtDiff<T>, options?: DiffOptions): void {
-        applyUpdateV2(this.doc, diff, options?.tag);
+        applyUpdateV2(this.doc, diff, options?.origin);
     }
 
     subscribe(event: 'update', next: (diff: CrdtDiff<T>, options: DiffOptions) => void): Unsubscribe {
-        const fn = (state: Uint8Array, tag: string | undefined) => next(state as CrdtDiff<T>, {tag: tag ?? undefined});
+        const fn = (state: Uint8Array, origin: string | undefined) =>
+            next(state as CrdtDiff<T>, {origin: origin ?? undefined});
         this.doc.on('updateV2', fn);
         return () => this.doc.off('updateV2', fn);
     }

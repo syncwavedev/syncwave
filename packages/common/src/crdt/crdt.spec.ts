@@ -493,11 +493,11 @@ describe('Doc', () => {
             const events: string[] = [];
 
             crdt.subscribe('update', (diff, options) => {
-                events.push(options.tag || 'no-tag');
+                events.push(options.origin || 'no-tag');
             });
 
-            crdt.apply(createTestDocDiff({key: 'value1'}), {tag: 'first'});
-            crdt.apply(createTestDocDiff({key: 'value2'}), {tag: 'second'});
+            crdt.apply(createTestDocDiff({key: 'value1'}), {origin: 'first'});
+            crdt.apply(createTestDocDiff({key: 'value2'}), {origin: 'second'});
 
             expect(events).toEqual(['first', 'second']);
         });

@@ -1,7 +1,7 @@
 import {Serializer} from '../serializer';
 import {concatBuffers} from '../utils';
-import {KVStore} from './key-value-store';
-import {MappedKVStore, Mapper} from './mapped-key-value-store';
+import {Transaction} from './key-value-store';
+import {MappedTransaction, Mapper} from './mapped-key-value-store';
 
 function createPrefixMapper(prefix: Uint8Array | string): Mapper<Uint8Array, Uint8Array> {
     const prefixBuf = typeof prefix === 'string' ? encodeString(prefix) : prefix;
@@ -32,22 +32,22 @@ function createSerializationMapper<TData, TEncoding>(
     };
 }
 
-export function withPrefix<TValue>(
+export function withPrefix(
     prefix: Uint8Array | string
-): (store: KVStore<Uint8Array, TValue>) => KVStore<Uint8Array, TValue> {
-    return store => new MappedKVStore(store, createPrefixMapper(prefix), createIdMapper());
+): <TValue>(store: Transaction<Uint8Array, TValue>) => Transaction<Uint8Array, TValue> {
+    return store => new MappedTransaction(store, createPrefixMapper(prefix), createIdMapper());
 }
 
-export function withValueSerializer<TKey, TData, TEncoding>(
+export function withValueSerializer<TData, TEncoding>(
     serializer: Serializer<TData, TEncoding>
-): (store: KVStore<TKey, TEncoding>) => KVStore<TKey, TData> {
-    return store => new MappedKVStore(store, createIdMapper(), createSerializationMapper(serializer));
+): <TKey>(store: Transaction<TKey, TEncoding>) => Transaction<TKey, TData> {
+    return store => new MappedTransaction(store, createIdMapper(), createSerializationMapper(serializer));
 }
 
-export function withKeySerializer<TValue, TData, TEncoding>(
+export function withKeySerializer<TData, TEncoding>(
     serializer: Serializer<TData, TEncoding>
-): (store: KVStore<TEncoding, TValue>) => KVStore<TData, TValue> {
-    return store => new MappedKVStore(store, createSerializationMapper(serializer), createIdMapper());
+): <TValue>(store: Transaction<TEncoding, TValue>) => Transaction<TData, TValue> {
+    return store => new MappedTransaction(store, createSerializationMapper(serializer), createIdMapper());
 }
 
 const decoder = new TextDecoder();

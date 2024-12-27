@@ -18,8 +18,8 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const store = new InMemoryKeyValueStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
-        await mappedStore.put('key1', 'value1');
-        const result = await mappedStore.get('key1');
+        await mappedStore.transaction(txn => txn.put('key1', 'value1'));
+        const result = await mappedStore.transaction(txn => txn.get('key1'));
 
         expect(result).toBe('value1');
     });
@@ -31,8 +31,8 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const store = new InMemoryKeyValueStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
-        await mappedStore.put('key2', 'value2');
-        const result = await mappedStore.get('key2');
+        await mappedStore.transaction(txn => txn.put('key2', 'value2'));
+        const result = await mappedStore.transaction(txn => txn.get('key2'));
 
         expect(result).toBe('value2');
     });
@@ -44,11 +44,11 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const store = new InMemoryKeyValueStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
-        await mappedStore.put('a', 'valueA');
-        await mappedStore.put('b', 'valueB');
-        await mappedStore.put('c', 'valueC');
+        await mappedStore.transaction(txn => txn.put('a', 'valueA'));
+        await mappedStore.transaction(txn => txn.put('b', 'valueB'));
+        await mappedStore.transaction(txn => txn.put('c', 'valueC'));
 
-        const cursor = await mappedStore.query({gte: 'b'});
+        const cursor = await mappedStore.transaction(txn => txn.query({gte: 'b'}));
         const results: Entry<string, string>[] = [];
 
         while (true) {
@@ -76,7 +76,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
             expect(value).toBe('value3');
         });
 
-        const result = await mappedStore.get('key3');
+        const result = await mappedStore.transaction(txn => txn.get('key3'));
         expect(result).toBe('value3');
     });
 
@@ -87,9 +87,9 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const store = new InMemoryKeyValueStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
-        await mappedStore.put('key4', 'value4');
+        await mappedStore.transaction(txn => txn.put('key4', 'value4'));
 
-        const cursor = await mappedStore.query({gte: 'key4'});
+        const cursor = await mappedStore.transaction(txn => txn.query({gte: 'key4'}));
         const next = await cursor.next();
 
         expect(next).toEqual({
@@ -106,7 +106,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const store = new InMemoryKeyValueStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
-        const cursor = await mappedStore.query({gte: 'key5'});
+        const cursor = await mappedStore.transaction(txn => txn.query({gte: 'key5'}));
         await cursor.close();
 
         await expect(cursor.next()).rejects.toThrow();
@@ -119,7 +119,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const store = new InMemoryKeyValueStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
-        const cursor = await mappedStore.query({gte: 'z'});
+        const cursor = await mappedStore.transaction(txn => txn.query({gte: 'z'}));
         const results: Entry<string, string>[] = [];
 
         while (true) {
@@ -155,7 +155,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
         const store = new InMemoryKeyValueStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
-        await mappedStore.put('key7', 'value7');
+        await mappedStore.transaction(txn => txn.put('key7', 'value7'));
 
         await expect(
             mappedStore.transaction(async txn => {
@@ -164,7 +164,7 @@ describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () =
             })
         ).rejects.toThrow('Simulated error');
 
-        const value = await mappedStore.get('key7');
+        const value = await mappedStore.transaction(txn => txn.get('key7'));
         expect(value).toBe('value7');
     });
 });

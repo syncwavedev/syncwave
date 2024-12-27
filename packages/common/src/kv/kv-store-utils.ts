@@ -1,7 +1,7 @@
-import {KVStore} from './contracts/key-value-store';
-import {Serializer} from './contracts/serializer';
+import {Serializer} from '../serializer';
+import {concatBuffers} from '../utils';
+import {KVStore} from './key-value-store';
 import {MappedKVStore, Mapper} from './mapped-key-value-store';
-import {concatBuffers} from './utils';
 
 function createPrefixMapper(prefix: Uint8Array | string): Mapper<Uint8Array, Uint8Array> {
     const prefixBuf = typeof prefix === 'string' ? encodeString(prefix) : prefix;

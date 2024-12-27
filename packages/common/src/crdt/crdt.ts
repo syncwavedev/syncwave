@@ -11,20 +11,24 @@ type Unsubscribe = () => void;
 const ROOT_KEY = 'root';
 const ROOT_VALUE = 'value';
 
-export class Doc<T> {
-    static create<T>(value: T): Doc<T> {
+export interface DiffOptions {
+    readonly tag?: string;
+}
+
+export class Crdt<T> {
+    static from<T>(value: T): Crdt<T> {
         const doc = new YDoc();
         const rootMap = doc.getMap<YValue>(ROOT_KEY);
         rootMap.set(ROOT_VALUE, mapToYValue(value));
 
-        return new Doc(doc);
+        return new Crdt(doc);
     }
 
-    static load<T>(diff: DocDiff<T>): Doc<T> {
+    static load<T>(diff: DocDiff<T>): Crdt<T> {
         const doc = new YDoc();
         applyUpdateV2(doc, diff);
 
-        return new Doc(doc);
+        return new Crdt(doc);
     }
 
     private constructor(private doc: YDoc) {}
@@ -69,17 +73,14 @@ export class Doc<T> {
         }
     }
 
-    apply(diff: DocDiff<T>, options?: {tag: string}): void {
+    apply(diff: DocDiff<T>, options?: DiffOptions): void {
         applyUpdateV2(this.doc, diff, options?.tag);
     }
 
-    subscribe(next: (diff: DocDiff<T>, tag: string | undefined) => void): Unsubscribe {
-        const fn = (state: Uint8Array, tag: string | undefined) => next(state as DocDiff<T>, tag);
-        this.doc.on('updateV2', (diff, tag) => {
-            fn(diff, tag);
-        });
-
-        return () => this.doc.off('update', fn);
+    subscribe(event: 'update', next: (diff: DocDiff<T>, options: DiffOptions) => void): Unsubscribe {
+        const fn = (state: Uint8Array, tag: string | undefined) => next(state as DocDiff<T>, {tag});
+        this.doc.on('updateV2', fn);
+        return () => this.doc.off('updateV2', fn);
     }
 }
 

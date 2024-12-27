@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {wait} from '../utils';
 import {InMemoryLocker} from './in-memory-locker';
-import {wait} from './utils';
 
 describe('InMemoryLocker', () => {
     let locker: InMemoryLocker<string>;

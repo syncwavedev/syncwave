@@ -1,5 +1,5 @@
-import {Condition, Crud, Cursor, CursorNext, KVStore, Transaction} from './contracts/key-value-store';
-import {assertNever} from './utils';
+import {assertNever} from '../utils';
+import {Condition, Crud, Cursor, CursorNext, KVStore, Transaction} from './key-value-store';
 
 export interface Mapper<TPrivate, TPublic> {
     decode(x: TPrivate): TPublic;

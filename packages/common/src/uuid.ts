@@ -1,5 +1,5 @@
 import {parse, stringify, v7} from 'uuid';
-import {Serializer} from './contracts/serializer';
+import {Serializer} from './serializer';
 
 export class Uuid {
     public readonly __type: 'uuid' = 'uuid';

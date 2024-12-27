@@ -1,4 +1,4 @@
-import {Locker} from './contracts/locker';
+import {Locker} from './locker';
 
 export class InMemoryLocker<TKey> implements Locker<TKey> {
     private fnQueueMap: Map<TKey, Array<() => Promise<any>>> = new Map();

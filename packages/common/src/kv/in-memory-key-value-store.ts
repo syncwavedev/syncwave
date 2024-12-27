@@ -1,7 +1,7 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
-import {Condition, Cursor, CursorNext, InvalidQueryCondition, KVStore, Transaction} from './contracts/key-value-store';
-import {Locker} from './contracts/locker';
 import {InMemoryLocker} from './in-memory-locker';
+import {Condition, Cursor, CursorNext, InvalidQueryCondition, KVStore, Transaction} from './key-value-store';
+import {Locker} from './locker';
 
 function compareUint8Array(a: Uint8Array, b: Uint8Array): 1 | 0 | -1 {
     const minLength = Math.min(a.length, b.length);

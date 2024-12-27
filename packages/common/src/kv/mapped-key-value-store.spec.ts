@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {Entry} from './contracts/key-value-store';
 import {InMemoryKeyValueStore} from './in-memory-key-value-store';
+import {Entry} from './key-value-store';
 import {MappedKVStore, Mapper} from './mapped-key-value-store'; // Replace with the correct file path
 
 function createMapper(): Mapper<Uint8Array, string> {

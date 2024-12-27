@@ -1,4 +1,4 @@
-import {Condition, Crud, Cursor, CursorNext, KVStore, Transaction} from './contracts/key-value-store';
+import {Condition, Crud, Cursor, CursorNext, KVStore, Transaction} from './key-value-store';
 
 export class CursorProxy<TKey, TValue> implements Cursor<TKey, TValue> {
     constructor(

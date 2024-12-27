@@ -19,7 +19,7 @@
 	/* Abstractions */
 	--color-bg: oklch(var(--lch-white));
 
-	--color-border: oklch(var(--lch-gray-300));
+	--color-border: oklch(var(--lch-gray-400));
 
 	--color-ink: oklch(var(--lch-black));
 	--color-ink-muted: oklch(var(--lch-gray-500));

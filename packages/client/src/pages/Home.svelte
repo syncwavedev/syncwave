@@ -6,6 +6,8 @@
 	import NavigationStack from '../components/mobile/NavigationStack.svelte';
 	import navigator from '../lib/navigator.js';
 
+	let searchActive = $state(false);
+
 	const onNewBoard = () => {
 		navigator.navigate('/boards/new', {
 			updateBrowserURL: true,
@@ -14,10 +16,7 @@
 	};
 
 	const onSearch = () => {
-		navigator.navigate('/search', {
-			updateBrowserURL: true,
-			updateState: true
-		});
+		searchActive = true;
 	};
 </script>
 
@@ -38,6 +37,12 @@
 	</div>
 {/snippet}
 
-<NavigationStack navigationTitle="Boards" {leading} {bottomToolbar} scrollTopOnTitleClick>
+<NavigationStack
+	navigationTitle="Boards"
+	{leading}
+	{bottomToolbar}
+	bind:searchActive
+	scrollTopOnTitleClick
+>
 	<BoardsList />
 </NavigationStack>

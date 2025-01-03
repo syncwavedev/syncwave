@@ -1,5 +1,9 @@
+root {
+	--input-height: 2.25em;
+}
+
 .input {
-	height: var(--input-height, 2.25em);
+	height: var(--input-height);
 	border-radius: var(--input-border-radius, 0.5em);
 	border: var(--input-border-size, 0px) solid var(--color-border);
 	color: var(--color-ink);

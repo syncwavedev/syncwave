@@ -12,23 +12,24 @@
 	--lch-gray-400: 86% 0 0;
 	--lch-gray-500: 77% 0 0;
 	--lch-gray-600: 63% 0 0;
+	--lch-gray-700: 49% 0 0;
 
 	--lch-always-black: 0% 0 0;
 	--lch-always-white: 100% 0 0;
 
 	/* Abstractions */
-	--color-bg: oklch(var(--lch-white));
+	--color-bg: oklch(var(--lch-gray-100));
 
 	--color-border: oklch(var(--lch-gray-400));
 
 	--color-ink: oklch(var(--lch-black));
 	--color-ink-muted: oklch(var(--lch-gray-500));
-	--color-ink-secondary: oklch(var(--lch-gray-600));
+	--color-ink-secondary: oklch(var(--lch-gray-700));
 	--color-ink-reversed: oklch(var(--lch-white));
 
-	--color-subtle-1: oklch(var(--lch-gray-100));
-	--color-subtle-2: oklch(var(--lch-gray-200));
-	--color-subtle-3: oklch(var(--lch-gray-300));
+	--color-subtle-1: oklch(var(--lch-gray-200));
+	--color-subtle-2: oklch(var(--lch-gray-300));
+	--color-subtle-3: oklch(var(--lch-gray-400));
 
 	--color-always-black: oklch(var(--lch-always-black));
 	--color-always-white: oklch(var(--lch-always-white));
@@ -47,6 +48,7 @@
 		--lch-gray-400: 28% 0 0;
 		--lch-gray-500: 37% 0 0;
 		--lch-gray-600: 51% 0 0;
+		--lch-gray-700: 65% 0 0;
 	}
 }
 

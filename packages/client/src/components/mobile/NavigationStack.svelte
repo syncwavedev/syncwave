@@ -57,18 +57,18 @@
 	{#if hasTopToolbar}
 		<header class="top-bar flex align-end">
 			{#if searchActive}
-				<div class="flex gap-2 align-center search">
+				<div class="flex gap-3 align-center">
 					<input
 						bind:this={searchInput}
 						type="text"
-						class="input"
+						class="input search-input"
 						placeholder="Search"
 						bind:value={searchText}
 						in:fade={{duration: 150, delay: 50}}
 					/>
 					<button
 						type="button"
-						class="btn btn--icon icon--sm"
+						class="btn btn--icon"
 						onclick={searchCancel}
 						in:fade={{duration: 150, delay: 50}}
 					>
@@ -87,11 +87,7 @@
 					</div>
 
 					{#if navigationTitle}
-						<button
-							type="button"
-							class="top-bar__toolbar__title font-semibold"
-							onclick={handleTitleClick}
-						>
+						<button type="button" class="btn btn--plain" onclick={handleTitleClick}>
 							{navigationTitle}
 						</button>
 					{/if}
@@ -149,20 +145,6 @@
 		overflow: hidden;
 	}
 
-	.search {
-		--input-height: 2.2rem;
-	}
-
-	.top-bar__toolbar__title {
-		text-align: center;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		position: absolute;
-		left: 50%;
-		transform: translateX(-50%);
-	}
-
 	.content {
 		flex: 1;
 		overflow-y: auto;
@@ -197,5 +179,9 @@
 
 		background-color: var(--color-subtle-1);
 		/* border-top: 0.5px solid var(--color-border); */
+	}
+
+	.search-input {
+		margin: 0.25rem 0;
 	}
 </style>

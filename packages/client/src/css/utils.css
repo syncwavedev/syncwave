@@ -155,6 +155,9 @@
 .pt-2 {
 	padding-block-start: 0.5rem;
 }
+.pb-1 {
+	padding-block-end: 0.25rem;
+}
 
 /* Flexbox */
 

@@ -22,6 +22,10 @@
 		filter 300ms ease,
 		opacity 300ms ease;
 
+	&.btn--plain {
+		--btn-padding: calc((var(--btn-size) - 1em) / 2);
+	}
+
 	&.btn--icon {
 		--btn-padding: calc((var(--btn-size) - 1.5rem) / 2);
 

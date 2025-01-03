@@ -50,20 +50,20 @@
 
 <style>
 	.avatar-image {
-		inline-size: var(--btn-size);
-		block-size: var(--btn-size);
+		inline-size: 100%;
+		block-size: 100%;
 		border-radius: 50%;
 
 		object-fit: cover;
 	}
 
 	.avatar-placeholder__letter {
-		font-size: max(var(--btn-size) * 0.45, 14px);
+		font-size: max(0.45em, 14px);
 	}
 
 	.avatar-placeholder {
-		inline-size: var(--btn-size);
-		block-size: var(--btn-size);
+		inline-size: 100%;
+		block-size: 100%;
 		display: flex;
 		justify-content: center;
 		align-items: center;

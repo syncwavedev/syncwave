@@ -22,21 +22,8 @@
 		filter 300ms ease,
 		opacity 300ms ease;
 
-	&.btn--secondary {
-		--btn-color: var(--color-ink-secondary);
-	}
-
-	&.btn--block {
-		--btn-padding: 0.5em 1.1em;
-		--btn-background: var(--color-subtle-3);
-
-		border-radius: 0.5em;
-	}
-
-	&.btn--circle {
-		--btn-border-size: 0px;
-		--btn-background: var(--color-subtle-3);
-		--btn-padding: 0.425em;
+	&.btn--icon {
+		--btn-padding: calc((var(--btn-size) - 1.5rem) / 2);
 
 		border-radius: 50%;
 		aspect-ratio: 1;
@@ -48,6 +35,10 @@
 
 		&:hover {
 			background: color-mix(in srgb, var(--btn-background, --color-bg), black 20%);
+		}
+
+		&.icon--sm {
+			--btn-padding: calc((var(--btn-size) - 1.25rem) / 2);
 		}
 	}
 

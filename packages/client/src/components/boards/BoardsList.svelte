@@ -223,7 +223,9 @@
 	}
 
 	.board-avatar {
-		--btn-size: 3.5rem;
+		height: 3.5rem;
+		width: 3.5rem;
+		font-size: 3.5rem;
 		border-radius: 50%;
 		overflow: hidden;
 		flex-shrink: 0;

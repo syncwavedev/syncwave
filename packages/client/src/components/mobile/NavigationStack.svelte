@@ -57,7 +57,7 @@
 	{#if hasTopToolbar}
 		<header class="top-bar flex align-end">
 			{#if searchActive}
-				<div class="flex gap-3 search">
+				<div class="flex gap-2 align-center search">
 					<input
 						bind:this={searchInput}
 						type="text"
@@ -68,7 +68,7 @@
 					/>
 					<button
 						type="button"
-						class="btn btn--circle search-cancel"
+						class="btn btn--icon icon--sm"
 						onclick={searchCancel}
 						in:fade={{duration: 150, delay: 50}}
 					>
@@ -104,7 +104,11 @@
 		</header>
 	{/if}
 
-	<main bind:this={contentElement} class="content" class:with-bottom-bar={bottomToolbar}>
+	<main
+		bind:this={contentElement}
+		class="content"
+		class:with-bottom-bar={bottomToolbar && !searchActive}
+	>
 		{@render children?.()}
 	</main>
 
@@ -117,8 +121,10 @@
 
 <style>
 	:root {
-		--top-bar-height: calc(max(env(safe-area-inset-top), 0.5rem) + 2.2rem + 0.5rem);
-		--bottom-bar-height: calc(max(env(safe-area-inset-bottom), 0.5rem) + var(--btn-size) + 0.5rem);
+		--top-bar-height: calc(env(safe-area-inset-top) + var(--btn-size));
+		--bottom-bar-height: calc(
+			max(env(safe-area-inset-bottom), 0.5rem) + var(--btn-size) + 0.375rem
+		);
 	}
 
 	.navigation-stack {
@@ -126,10 +132,9 @@
 	}
 
 	.top-bar {
-		padding-top: max(env(safe-area-inset-top), 0.5rem);
+		padding-top: env(safe-area-inset-top);
 		padding-left: calc(env(safe-area-inset-left) + 1rem);
 		padding-right: calc(env(safe-area-inset-right) + 1rem);
-		padding-bottom: 0.5rem;
 
 		height: var(--top-bar-height);
 
@@ -139,19 +144,13 @@
 		right: 0;
 		z-index: 10;
 
-		/* background-color: var(--color-subtle-1); */
-		background-color: var(--color-bg);
+		background-color: var(--color-subtle-1);
 		/* border-bottom: 0.5px solid var(--color-border); */
 		overflow: hidden;
 	}
 
 	.search {
-		--btn-size: 2.2rem;
 		--input-height: 2.2rem;
-	}
-
-	.actions {
-		--btn-size: 1.75rem;
 	}
 
 	.top-bar__toolbar__title {
@@ -183,9 +182,9 @@
 	}
 
 	.bottom-bar {
-		padding-top: 0.5rem;
-		padding-left: calc(env(safe-area-inset-left) + 2rem);
-		padding-right: calc(env(safe-area-inset-right) + 2rem);
+		padding-top: 0.375rem;
+		padding-left: calc(env(safe-area-inset-left) + 1rem);
+		padding-right: calc(env(safe-area-inset-right) + 1rem);
 		padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
 
 		height: var(--bottom-bar-height);
@@ -196,8 +195,7 @@
 		right: 0;
 		z-index: 10;
 
-		/* background-color: var(--color-subtle-1); */
-		background-color: var(--color-bg);
-		border-top: 0.5px solid var(--color-border);
+		background-color: var(--color-subtle-1);
+		/* border-top: 0.5px solid var(--color-border); */
 	}
 </style>

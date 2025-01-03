@@ -21,17 +21,17 @@
 </script>
 
 {#snippet leading()}
-	<button onclick={onNewBoard} class="btn">
+	<button onclick={onNewBoard} class="btn btn--icon">
 		<Avatar title="Andrei" />
 	</button>
 {/snippet}
 
 {#snippet bottomToolbar()}
 	<div class="flex align-center justify-between">
-		<button onclick={onSearch} class="btn btn--circle">
+		<button onclick={onSearch} class="btn btn--icon">
 			<Search />
 		</button>
-		<button onclick={onNewBoard} class="btn btn--circle">
+		<button onclick={onNewBoard} class="btn btn--icon">
 			<Plus />
 		</button>
 	</div>

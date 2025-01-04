@@ -17,16 +17,25 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
         return this.tree.get(key) ?? undefined;
     }
 
+    log() {
+        console.log('all', this.tree.keys);
+    }
+
     async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         let iterator: Iterator<Uint8Array, Uint8Array>;
+        let useNext;
         if (condition.gt) {
             iterator = this.tree.gt(condition.gt);
+            useNext = true;
         } else if (condition.gte) {
             iterator = this.tree.ge(condition.gte);
+            useNext = true;
         } else if (condition.lt) {
             iterator = this.tree.lt(condition.lt);
+            useNext = false;
         } else if (condition.lte) {
             iterator = this.tree.le(condition.lte);
+            useNext = false;
         } else {
             throw new InvalidQueryCondition(condition);
         }
@@ -37,8 +46,11 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
                 value: iterator.value!,
             };
 
-            console.log('next');
-            iterator.next();
+            if (useNext) {
+                iterator.next();
+            } else {
+                iterator.prev();
+            }
         }
     }
 

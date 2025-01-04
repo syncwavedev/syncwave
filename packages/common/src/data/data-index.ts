@@ -21,9 +21,6 @@ export interface IndexOptions<TKey extends IndexKey, TValue> {
     readonly unique: boolean;
 }
 
-const UINT8_MAX_VALUE = Math.pow(2, Uint8Array.BYTES_PER_ELEMENT * 8) - 1;
-const ONES_1024 = new Uint8Array(Array(1024).fill(UINT8_MAX_VALUE));
-
 export function createIndex<TKey extends IndexKey, TValue>({
     txn,
     idSelector,
@@ -92,8 +89,8 @@ export function createIndex<TKey extends IndexKey, TValue>({
                     gte: cond => ({gte: keySerializer.encode(cond.gte)}),
                     // we need to add undefined at the end for non-unique indexes (we add document uuid to the end of the index key)
                     // undefined has the largest type tag in bytewise serialization
-                    lt: cond => ({lt: keySerializer.encode([...cond.lt, undefined])}),
-                    lte: cond => ({lte: keySerializer.encode([...cond.lte, undefined])}),
+                    lt: cond => ({lt: keySerializer.encode([...cond.lt, ...Array(16).fill(undefined)])}),
+                    lte: cond => ({lte: keySerializer.encode([...cond.lte, ...Array(16).fill(undefined)])}),
                 })
             );
 

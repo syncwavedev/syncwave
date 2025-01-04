@@ -127,13 +127,15 @@ describe('InMemoryTransaction', () => {
 
         const results: Entry<string, string>[] = [];
 
-        for await (const entry of transaction.query({lte: key2})) {
+        for await (const entry of transaction.query({lte: toUint8Array('d')})) {
             results.push(entry);
         }
 
+        transaction.log();
+
         expect(results).toEqual([
-            {key: key1, value},
             {key: key2, value},
+            {key: key1, value},
         ]);
     });
 });

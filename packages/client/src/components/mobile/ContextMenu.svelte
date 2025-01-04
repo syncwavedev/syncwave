@@ -117,7 +117,7 @@
 				<div class="context-menu__header">
 					{title}
 				</div>
-				{#each options as option, i}
+				{#each options as option}
 					<button class="btn context-menu__item" onclick={() => option.action()} role="menuitem">
 						{#if option.icon}
 							<span class="context-menu__item-icon">{@render option.icon()}</span>

@@ -1,170 +1,131 @@
 import {describe, expect, it} from 'vitest';
+import {Condition, Entry} from '../kv-store';
 import {InMemoryKeyValueStore} from './in-memory/in-memory-key-value-store';
-import {Entry} from './key-value-store';
-import {MappedKVStore, Mapper} from './mapped-key-value-store'; // Replace with the correct file path
+import {MappedKVStore, MappedTransaction, Mapper, projectCondition} from './mapped-key-value-store';
 
-function createMapper(): Mapper<Uint8Array, string> {
-    return {
-        encode: x => new TextEncoder().encode(x),
-        decode: x => new TextDecoder().decode(x),
+describe('MappedTransaction with InMemoryKeyValueStore', () => {
+    const keyMapper: Mapper<Uint8Array, string> = {
+        encode: key => Buffer.from(key).toString('base64'),
+        decode: key => Buffer.from(key, 'base64'),
     };
-}
 
-describe('MappedKeyValueStore and MappedCursor with InMemoryKeyValueStore', () => {
-    it('should map keys and values correctly on get', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
+    const valueMapper: Mapper<Uint8Array, string> = {
+        encode: value => Buffer.from(value).toString('hex'),
+        decode: value => Buffer.from(value, 'hex'),
+    };
 
+    it('should get a value with mapped key and decode the value', async () => {
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
+        await store.transaction(async txn => {
+            await txn.put(Uint8Array.from([1]), Uint8Array.from([42]));
+        });
 
-        await mappedStore.transaction(txn => txn.put('key1', 'value1'));
-        const result = await mappedStore.transaction(txn => txn.get('key1'));
+        const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
 
-        expect(result).toBe('value1');
+        const result = await mappedTxn.get(Buffer.from([1]).toString('base64'));
+        expect(result).toBe(Buffer.from([42]).toString('hex'));
     });
 
-    it('should map keys and values correctly on put', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
-
+    it('should return undefined for a missing key', async () => {
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
+        const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
 
-        await mappedStore.transaction(txn => txn.put('key2', 'value2'));
-        const result = await mappedStore.transaction(txn => txn.get('key2'));
-
-        expect(result).toBe('value2');
+        const result = await mappedTxn.get(Buffer.from([2]).toString('base64'));
+        expect(result).toBeUndefined();
     });
 
-    it('should map conditions correctly on query', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
-
+    it('should query values and decode them', async () => {
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
+        await store.transaction(async txn => {
+            await txn.put(Uint8Array.from([2]), Uint8Array.from([100]));
+            await txn.put(Uint8Array.from([3]), Uint8Array.from([200]));
+        });
 
-        await mappedStore.transaction(txn => txn.put('a', 'valueA'));
-        await mappedStore.transaction(txn => txn.put('b', 'valueB'));
-        await mappedStore.transaction(txn => txn.put('c', 'valueC'));
+        const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
 
-        const cursor = await mappedStore.transaction(txn => txn.query({gte: 'b'}));
+        const condition: Condition<string> = {gt: Buffer.from([2]).toString('base64')};
         const results: Entry<string, string>[] = [];
-
-        while (true) {
-            const next = await cursor.next();
-            if (next.type === 'done') break;
-            results.push({key: next.key, value: next.value});
+        for await (const entry of mappedTxn.query(condition)) {
+            results.push(entry);
         }
 
         expect(results).toEqual([
-            {key: 'b', value: 'valueB'},
-            {key: 'c', value: 'valueC'},
+            {
+                key: Buffer.from([3]).toString('base64'),
+                value: Buffer.from([200]).toString('hex'),
+            },
         ]);
     });
 
-    it('should map transactions correctly', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
-
+    it('should put a value with encoded key and value', async () => {
         const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
+        const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
 
-        await mappedStore.transaction(async txn => {
-            await txn.put('key3', 'value3');
-            const value = await txn.get('key3');
-            expect(value).toBe('value3');
+        await mappedTxn.put(Buffer.from([4]).toString('base64'), Buffer.from([500]).toString('hex'));
+
+        const result = await store.transaction(async txn => {
+            return txn.get(Uint8Array.from([4]));
         });
 
-        const result = await mappedStore.transaction(txn => txn.get('key3'));
-        expect(result).toBe('value3');
+        expect(result).toEqual(Uint8Array.from([500]));
     });
+});
 
-    it('should map entries correctly on next', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
+describe('MappedKVStore with InMemoryKeyValueStore', () => {
+    const keyMapper: Mapper<Uint8Array, string> = {
+        encode: key => Buffer.from(key).toString('base64'),
+        decode: key => Buffer.from(key, 'base64'),
+    };
 
+    const valueMapper: Mapper<Uint8Array, string> = {
+        encode: value => Buffer.from(value).toString('hex'),
+        decode: value => Buffer.from(value, 'hex'),
+    };
+
+    it('should execute a transaction with mapped keys and values', async () => {
         const store = new InMemoryKeyValueStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
-        await mappedStore.transaction(txn => txn.put('key4', 'value4'));
-
-        const cursor = await mappedStore.transaction(txn => txn.query({gte: 'key4'}));
-        const next = await cursor.next();
-
-        expect(next).toEqual({
-            type: 'entry',
-            key: 'key4',
-            value: 'value4',
-        });
-    });
-
-    it('should close the cursor properly', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
-
-        const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
-
-        const cursor = await mappedStore.transaction(txn => txn.query({gte: 'key5'}));
-        await cursor.close();
-
-        await expect(cursor.next()).rejects.toThrow();
-    });
-
-    it('should handle empty query results', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
-
-        const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
-
-        const cursor = await mappedStore.transaction(txn => txn.query({gte: 'z'}));
-        const results: Entry<string, string>[] = [];
-
-        while (true) {
-            const next = await cursor.next();
-            if (next.type === 'done') break;
-            results.push(next);
-        }
-
-        expect(results).toEqual([]);
-    });
-
-    it('should handle overlapping transactions correctly', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
-
-        const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
-
-        await mappedStore.transaction(async txn => {
-            await txn.put('key6', 'value6');
+        const result = await mappedStore.transaction(async txn => {
+            await txn.put(Buffer.from([10]).toString('base64'), Buffer.from([1000]).toString('hex'));
+            return await txn.get(Buffer.from([10]).toString('base64'));
         });
 
-        await mappedStore.transaction(async txn => {
-            const value = await txn.get('key6');
-            expect(value).toBe('value6');
-        });
+        expect(result).toBe(Buffer.from([1000]).toString('hex'));
+    });
+});
+
+describe('projectCondition with InMemoryKeyValueStore', () => {
+    const keyMapper: Mapper<Uint8Array, string> = {
+        encode: key => Buffer.from(key).toString('base64'),
+        decode: key => Buffer.from(key, 'base64'),
+    };
+
+    it('should map gt condition', () => {
+        const condition = {gt: Buffer.from([5]).toString('base64')};
+        const result = projectCondition(condition, keyMapper);
+
+        expect(result).toEqual({gt: Uint8Array.from([5])});
     });
 
-    it('should roll back transaction on error', async () => {
-        const keyMapper = createMapper();
-        const valueMapper = createMapper();
+    it('should map gte condition', () => {
+        const condition = {gte: Buffer.from([10]).toString('base64')};
+        const result = projectCondition(condition, keyMapper);
 
-        const store = new InMemoryKeyValueStore();
-        const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
+        expect(result).toEqual({gte: Uint8Array.from([10])});
+    });
 
-        await mappedStore.transaction(txn => txn.put('key7', 'value7'));
+    it('should map lt condition', () => {
+        const condition = {lt: Buffer.from([15]).toString('base64')};
+        const result = projectCondition(condition, keyMapper);
 
-        await expect(
-            mappedStore.transaction(async txn => {
-                await txn.put('key7', 'value8');
-                throw new Error('Simulated error');
-            })
-        ).rejects.toThrow('Simulated error');
+        expect(result).toEqual({lt: Uint8Array.from([15])});
+    });
 
-        const value = await mappedStore.transaction(txn => txn.get('key7'));
-        expect(value).toBe('value7');
+    it('should map lte condition', () => {
+        const condition = {lte: Buffer.from([20]).toString('base64')};
+        const result = projectCondition(condition, keyMapper);
+
+        expect(result).toEqual({lte: Uint8Array.from([20])});
     });
 });

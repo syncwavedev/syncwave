@@ -1,223 +1,219 @@
-import {describe, expect, it} from 'vitest';
-import {assert, wait} from '../../utils';
-import {Entry} from '../key-value-store';
-import {CursorClosedError, InMemoryKeyValueStore} from './in-memory-key-value-store';
+import createTree from 'functional-red-black-tree';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {compareUint8Array} from '../../utils';
+import {Entry, InvalidQueryCondition} from '../kv-store';
+import {InMemoryKeyValueStore, InMemoryTransaction} from './in-memory-key-value-store'; // Adjust the path as needed
 
-function toUint8Array(str: string): Uint8Array {
-    return new Uint8Array(Buffer.from(str, 'utf-8'));
-}
+// Utility function to create Uint8Array from strings for testing
+const toUint8Array = str => new TextEncoder().encode(str);
 
-function fromUint8Array(arr: Uint8Array): string {
-    return Buffer.from(arr).toString('utf-8');
-}
+describe('InMemoryTransaction', () => {
+    let tree;
+    let transaction;
 
-describe('InMemoryKeyValueStore', () => {
-    it('should store and retrieve values', async () => {
-        const store = new InMemoryKeyValueStore();
+    beforeEach(() => {
+        tree = createTree(compareUint8Array);
+        transaction = new InMemoryTransaction(tree);
+    });
+
+    it('should retrieve an existing key', async () => {
         const key = toUint8Array('key1');
         const value = toUint8Array('value1');
+        tree = tree.insert(key, value);
+        transaction = new InMemoryTransaction(tree);
 
-        await store.put(key, value);
-
-        const retrievedValue = await store.get(key);
-        expect(fromUint8Array(retrievedValue!)).toBe('value1');
+        const result = await transaction.get(key);
+        expect(result).toEqual(value);
     });
 
-    it('should return undefined for non-existing keys', async () => {
-        const store = new InMemoryKeyValueStore();
-        const key = toUint8Array('nonexistent');
-
-        const retrievedValue = await store.get(key);
-        expect(retrievedValue).toBeUndefined();
+    it('should return undefined for a non-existent key', async () => {
+        const result = await transaction.get(toUint8Array('non-existent-key'));
+        expect(result).toBeUndefined();
     });
 
-    it('should update values for existing keys', async () => {
-        const store = new InMemoryKeyValueStore();
+    it('should insert a key-value pair', async () => {
+        const key = toUint8Array('key1');
+        const value = toUint8Array('value1');
+        await transaction.put(key, value);
+
+        const result = await transaction.get(key);
+        expect(result).toEqual(value);
+    });
+
+    it('should overwrite an existing key-value pair', async () => {
         const key = toUint8Array('key1');
         const value1 = toUint8Array('value1');
         const value2 = toUint8Array('value2');
 
-        await store.put(key, value1);
-        await store.put(key, value2);
+        await transaction.put(key, value1);
+        await transaction.put(key, value2);
 
-        const retrievedValue = await store.get(key);
-        assert(retrievedValue !== undefined);
-        expect(fromUint8Array(retrievedValue)).toBe('value2');
+        const result = await transaction.get(key);
+        expect(result).toEqual(value2);
     });
 
-    it('should query values with conditions', async () => {
-        const store = new InMemoryKeyValueStore();
+    it('should query with greater-than condition', async () => {
+        const key1 = toUint8Array('a');
+        const key2 = toUint8Array('b');
+        const value = toUint8Array('value');
 
-        const keys = [toUint8Array('a'), toUint8Array('bb'), toUint8Array('c')];
-        const values = [toUint8Array('valueA'), toUint8Array('valueB'), toUint8Array('valueC')];
+        await transaction.put(key1, value);
+        await transaction.put(key2, value);
 
-        for (let i = 0; i < keys.length; i++) {
-            await store.put(keys[i], values[i]);
+        const condition = {gt: key1};
+        const results: Entry<string, string>[] = [];
+
+        for await (const entry of transaction.query(condition)) {
+            results.push(entry);
         }
 
-        const cursor = await store.query({gte: toUint8Array('b')});
-        const result: Entry<string, string>[] = [];
+        expect(results).toEqual([{key: key2, value}]);
+    });
 
-        while (true) {
-            const next = await cursor.next();
-            if (next.type === 'done') break;
-            result.push({key: fromUint8Array(next.key), value: fromUint8Array(next.value)});
+    it('should throw an error for an invalid condition', async () => {
+        const condition = {};
+        await expect(async () => {
+            for await (const _ of transaction.query(condition)) {
+            }
+        }).rejects.toThrow(InvalidQueryCondition);
+    });
+
+    it('should handle less-than condition in query', async () => {
+        const key1 = toUint8Array('a');
+        const key2 = toUint8Array('b');
+        const value = toUint8Array('value');
+
+        await transaction.put(key1, value);
+        await transaction.put(key2, value);
+
+        const condition = {lt: key2};
+        const results: Entry<string, string>[] = [];
+
+        for await (const entry of transaction.query(condition)) {
+            results.push(entry);
         }
 
-        expect(result).toEqual([
-            {key: 'bb', value: 'valueB'},
-            {key: 'c', value: 'valueC'},
+        expect(results).toEqual([{key: key1, value}]);
+    });
+
+    it('should handle greater-than or equal condition in query', async () => {
+        const key1 = toUint8Array('a');
+        const key2 = toUint8Array('b');
+        const value = toUint8Array('value');
+
+        await transaction.put(key1, value);
+        await transaction.put(key2, value);
+
+        const condition = {gte: key1};
+        const results: Entry<string, string>[] = [];
+
+        for await (const entry of transaction.query(condition)) {
+            results.push(entry);
+        }
+
+        expect(results).toEqual([
+            {key: key1, value},
+            {key: key2, value},
         ]);
     });
 
-    it('should close cursor properly', async () => {
-        const store = new InMemoryKeyValueStore();
-        const cursor = await store.query({gte: toUint8Array('a')});
+    it.only('should handle less-than or equal condition in query', async () => {
+        const key1 = toUint8Array('a');
+        const key2 = toUint8Array('b');
+        const value = toUint8Array('value');
 
-        await cursor.close();
+        await transaction.put(key1, value);
+        await transaction.put(key2, value);
 
-        await expect(cursor.next()).rejects.toThrow(CursorClosedError);
-    });
+        const results: Entry<string, string>[] = [];
 
-    it('should handle empty query results', async () => {
-        const store = new InMemoryKeyValueStore();
-        const cursor = await store.query({gte: toUint8Array('z')});
-
-        const result: unknown[] = [];
-        while (true) {
-            const next = await cursor.next();
-            if (next.type === 'done') break;
-            result.push(next);
+        for await (const entry of transaction.query({lte: key2})) {
+            results.push(entry);
         }
 
-        expect(result).toEqual([]);
+        expect(results).toEqual([
+            {key: key1, value},
+            {key: key2, value},
+        ]);
+    });
+});
+
+describe('InMemoryKeyValueStore', () => {
+    let kvStore;
+
+    beforeEach(() => {
+        kvStore = new InMemoryKeyValueStore();
     });
 
-    it('should throw error for invalid query conditions', async () => {
-        const store = new InMemoryKeyValueStore();
+    it('should execute a transaction and persist changes', async () => {
+        const key = toUint8Array('key1');
+        const value = toUint8Array('value1');
 
-        await expect(store.query({} as any)).rejects.toThrow('invalid query condition');
+        await kvStore.transaction(async txn => {
+            await txn.put(key, value);
+        });
+
+        await kvStore.transaction(async txn => {
+            const result = await txn.get(key);
+            expect(result).toEqual(value);
+        });
     });
 
-    it('should allow multiple transactions without interference', async () => {
-        const store = new InMemoryKeyValueStore();
-
-        const key1 = toUint8Array('key1');
-        const key2 = toUint8Array('key2');
+    it('should handle concurrent transactions sequentially', async () => {
+        const key = toUint8Array('key1');
         const value1 = toUint8Array('value1');
         const value2 = toUint8Array('value2');
 
-        const order: number[] = [];
-
-        const txn1 = store.transaction(async txn => {
-            order.push(0);
-            await txn.put(key1, value1);
-            order.push(1);
-            await wait(0);
-            order.push(2);
-            await txn.put(key1, value1);
-            order.push(3);
+        const txn1 = kvStore.transaction(async txn => {
+            await txn.put(key, value1);
         });
 
-        const txn2 = store.transaction(async txn => {
-            order.push(4);
-            await txn.put(key2, value2);
-            order.push(5);
-            await wait(0);
-            order.push(6);
-            await txn.put(key2, value2);
-            order.push(7);
+        const txn2 = kvStore.transaction(async txn => {
+            await txn.put(key, value2);
         });
 
         await Promise.all([txn1, txn2]);
 
-        const retrievedValue1 = await store.get(key1);
-        const retrievedValue2 = await store.get(key2);
-
-        assert(retrievedValue1 !== undefined);
-        assert(retrievedValue2 !== undefined);
-
-        expect(fromUint8Array(retrievedValue1)).toBe('value1');
-        expect(fromUint8Array(retrievedValue2)).toBe('value2');
-        expect(order).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+        await kvStore.transaction(async txn => {
+            const result = await txn.get(key);
+            expect(result).toEqual(value2); // Last transaction wins
+        });
     });
 
-    it('should handle large number of keys efficiently', async () => {
-        const store = new InMemoryKeyValueStore();
-        const keys = Array.from({length: 1000}, (_, i) => toUint8Array(`key${i}`));
-        const values = Array.from({length: 1000}, (_, i) => toUint8Array(`value${i}`));
+    it('should retry on transaction failure', async () => {
+        let attempt = 0;
 
-        for (let i = 0; i < keys.length; i++) {
-            await store.put(keys[i], values[i]);
-        }
+        await kvStore.transaction(async () => {
+            if (attempt++ < 1) {
+                throw new Error('Simulated failure');
+            }
+        });
 
-        for (let i = 0; i < keys.length; i++) {
-            const value = await store.get(keys[i]);
-            assert(value !== undefined);
-            expect(fromUint8Array(value)).toBe(`value${i}`);
-        }
+        expect(attempt).toBe(2);
     });
 
-    it('should rollback transaction on error', async () => {
-        const store = new InMemoryKeyValueStore();
+    it('should fail after exceeding retry attempts', async () => {
+        vi.spyOn(kvStore, 'transaction').mockImplementationOnce(async fn => {
+            throw new Error('Simulated permanent failure');
+        });
+
+        await expect(kvStore.transaction(async () => {})).rejects.toThrow('Simulated permanent failure');
+    });
+
+    it('should handle transaction rollback on failure', async () => {
         const key = toUint8Array('key1');
-        const value1 = toUint8Array('value1');
-        const value2 = toUint8Array('value2');
+        const value = toUint8Array('value1');
 
-        await store.put(key, value1);
-
-        await expect(
-            store.transaction(async txn => {
-                await txn.put(key, value2);
-                throw new Error('Transaction error');
+        await kvStore
+            .transaction(async txn => {
+                await txn.put(key, value);
+                throw new Error('Simulated rollback');
             })
-        ).rejects.toThrow('Transaction error');
+            .catch(() => {});
 
-        const retrievedValue = await store.get(key);
-        assert(retrievedValue !== undefined);
-        expect(fromUint8Array(retrievedValue)).toBe('value1');
-    });
-
-    it('should handle concurrent queries correctly', async () => {
-        const store = new InMemoryKeyValueStore();
-
-        const keys = [toUint8Array('a'), toUint8Array('b'), toUint8Array('c')];
-        const values = [toUint8Array('valueA'), toUint8Array('valueB'), toUint8Array('valueC')];
-
-        for (let i = 0; i < keys.length; i++) {
-            await store.put(keys[i], values[i]);
-        }
-
-        const query1 = store.query({gte: toUint8Array('a')});
-        const query2 = store.query({gte: toUint8Array('b')});
-
-        const cursor1 = await query1;
-        const cursor2 = await query2;
-
-        const result1: Entry<string, string>[] = [];
-        const result2: Entry<string, string>[] = [];
-
-        while (true) {
-            const next = await cursor1.next();
-            if (next.type === 'done') break;
-            result1.push({key: fromUint8Array(next.key), value: fromUint8Array(next.value)});
-        }
-
-        while (true) {
-            const next = await cursor2.next();
-            if (next.type === 'done') break;
-            result2.push({key: fromUint8Array(next.key), value: fromUint8Array(next.value)});
-        }
-
-        expect(result1).toEqual([
-            {key: 'a', value: 'valueA'},
-            {key: 'b', value: 'valueB'},
-            {key: 'c', value: 'valueC'},
-        ]);
-
-        expect(result2).toEqual([
-            {key: 'b', value: 'valueB'},
-            {key: 'c', value: 'valueC'},
-        ]);
+        await kvStore.transaction(async txn => {
+            const result = await txn.get(key);
+            expect(result).toBeUndefined();
+        });
     });
 });

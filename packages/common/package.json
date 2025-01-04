@@ -51,6 +51,7 @@
     "dependencies": {
         "functional-red-black-tree": "^1.0.1",
         "immer": "^10.1.1",
+        "msgpackr": "^1.11.2",
         "quill-delta": "^5.1.0",
         "ts-pattern": "^5.2.0",
         "uuid": "^11.0.3",

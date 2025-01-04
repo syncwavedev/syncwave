@@ -7,7 +7,7 @@ import {Crdt} from './crdt';
 const createTestDocDiff = data => Crdt.from(data).state();
 
 describe('Doc', () => {
-    it('should create new string Doc', () => {
+    it('should create new Doc', () => {
         const doc = Crdt.from({
             string: 'one',
             richtext: new Richtext(new Delta().insert('two')),

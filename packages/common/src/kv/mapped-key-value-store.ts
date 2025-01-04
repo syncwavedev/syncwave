@@ -1,5 +1,4 @@
-import {assertNever} from '../utils';
-import {Condition, Cursor, CursorNext, KVStore, Transaction} from './key-value-store';
+import {Condition, Entry, KVStore, Transaction} from './kv-store';
 
 export interface Mapper<TPrivate, TPublic> {
     decode(x: TPrivate): TPublic;
@@ -24,43 +23,18 @@ export class MappedTransaction<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePub
         }
     }
 
-    async query(condition: Condition<TKeyPublic>): Promise<Cursor<TKeyPublic, TValuePublic>> {
-        const cursor = await this.target.query(projectCondition(condition, this.keyMapper));
-        return new MappedCursor(cursor, this.keyMapper, this.valueMapper);
+    async *query(condition: Condition<TKeyPublic>): AsyncIterable<Entry<TKeyPublic, TValuePublic>> {
+        for await (const {key, value} of this.target.query(projectCondition(condition, this.keyMapper))) {
+            yield {key: this.keyMapper.decode(key), value: this.valueMapper.decode(value)};
+        }
     }
 
     async put(key: TKeyPublic, value: TValuePublic): Promise<void> {
         return await this.target.put(this.keyMapper.encode(key), this.valueMapper.encode(value));
     }
-}
 
-export class MappedCursor<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
-    implements Cursor<TKeyPublic, TValuePublic>
-{
-    constructor(
-        private target: Cursor<TKeyPrivate, TValuePrivate>,
-        private keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
-        private valueMapper: Mapper<TValuePrivate, TValuePublic>
-    ) {}
-
-    async next(): Promise<CursorNext<TKeyPublic, TValuePublic>> {
-        const next = await this.target.next();
-
-        if (next.type === 'done') {
-            return next;
-        } else if (next.type === 'entry') {
-            return {
-                type: 'entry',
-                key: this.keyMapper.decode(next.key),
-                value: this.valueMapper.decode(next.value),
-            };
-        } else {
-            assertNever(next);
-        }
-    }
-
-    close(): Promise<void> {
-        return this.target.close();
+    async delete(key: TKeyPublic): Promise<void> {
+        await this.target.delete(this.keyMapper.encode(key));
     }
 }
 

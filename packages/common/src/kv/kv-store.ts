@@ -1,6 +1,7 @@
 import {Serializer} from '../serializer';
-import {concatBuffers} from '../utils';
+import {concatBuffers, unreachable} from '../utils';
 import {MappedTransaction, Mapper} from './mapped-key-value-store';
+import {PrefixedTransaction} from './prefixed-kv-store';
 
 export interface GtCondition<TKey> {
     readonly gt: TKey;
@@ -71,6 +72,30 @@ export interface KVStore<TKey, TValue> {
 export type Uint8KVStore = KVStore<Uint8Array, Uint8Array>;
 export type Uint8Transaction = Transaction<Uint8Array, Uint8Array>;
 
+export interface ConditionMapper<TKey, TResult> {
+    gt: (cond: GtCondition<TKey>) => TResult;
+    gte: (cond: GteCondition<TKey>) => TResult;
+    lt: (cond: LtCondition<TKey>) => TResult;
+    lte: (cond: LteCondition<TKey>) => TResult;
+}
+
+export function mapCondition<TKey, TResult>(
+    condition: Condition<TKey>,
+    mapper: ConditionMapper<TKey, TResult>
+): TResult {
+    if (condition.gt) {
+        return mapper.gt(condition as GtCondition<TKey>);
+    } else if (condition.gte) {
+        return mapper.gte(condition as GteCondition<TKey>);
+    } else if (condition.lt) {
+        return mapper.lt(condition as LtCondition<TKey>);
+    } else if (condition.lte) {
+        return mapper.lte(condition as LteCondition<TKey>);
+    } else {
+        return unreachable();
+    }
+}
+
 // utils
 
 function createPrefixMapper(prefix: Uint8Array | string): Mapper<Uint8Array, Uint8Array> {
@@ -105,7 +130,7 @@ function createSerializationMapper<TData, TEncoding>(
 export function withPrefix(
     prefix: Uint8Array | string
 ): <TValue>(store: Transaction<Uint8Array, TValue>) => Transaction<Uint8Array, TValue> {
-    return store => new MappedTransaction(store, createPrefixMapper(prefix), createIdMapper());
+    return store => new PrefixedTransaction(store, prefix);
 }
 
 export function withValueSerializer<TData, TEncoding>(

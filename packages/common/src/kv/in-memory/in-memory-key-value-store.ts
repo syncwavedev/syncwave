@@ -32,7 +32,6 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
         }
 
         while (iterator.valid) {
-            console.log('work', iterator.key);
             yield {
                 key: iterator.key!,
                 value: iterator.value!,
@@ -45,6 +44,10 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
 
     async put(key: Uint8Array, value: Uint8Array): Promise<void> {
         this.tree = this.tree.remove(key).insert(key, value);
+    }
+
+    async delete(key: Uint8Array<ArrayBufferLike>): Promise<void> {
+        this.tree = this.tree.remove(key);
     }
 }
 

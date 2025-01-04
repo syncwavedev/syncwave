@@ -9,6 +9,16 @@ export class Uuid {
     toString() {
         return this.uuid;
     }
+
+    compare(x: Uuid): 1 | 0 | -1 {
+        if (this.uuid < x.uuid) {
+            return -1;
+        } else if (this.uuid > x.uuid) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 }
 
 export function createUuid(): Uuid {

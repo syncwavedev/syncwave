@@ -117,7 +117,7 @@ describe('InMemoryTransaction', () => {
         ]);
     });
 
-    it.only('should handle less-than or equal condition in query', async () => {
+    it('should handle less-than or equal condition in query', async () => {
         const key1 = toUint8Array('a');
         const key2 = toUint8Array('b');
         const value = toUint8Array('value');

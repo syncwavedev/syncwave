@@ -1,4 +1,4 @@
-import {Condition, Entry, KVStore, Transaction} from './kv-store';
+import {Condition, Entry, KVStore, mapCondition, Transaction} from './kv-store';
 
 export interface Mapper<TPrivate, TPublic> {
     decode(x: TPrivate): TPublic;
@@ -56,15 +56,10 @@ function projectCondition<TKeySource, TKeyTarget>(
     condition: Condition<TKeyTarget>,
     keyMapper: Mapper<TKeySource, TKeyTarget>
 ): Condition<TKeySource> {
-    if (condition.gt) {
-        return {gt: keyMapper.encode(condition.gt)};
-    } else if (condition.gte) {
-        return {gte: keyMapper.encode(condition.gte)};
-    } else if (condition.lt) {
-        return {lt: keyMapper.encode(condition.lt)};
-    } else if (condition.lte) {
-        return {lte: keyMapper.encode(condition.lte)};
-    } else {
-        throw new Error('unreachable');
-    }
+    return mapCondition<TKeyTarget, Condition<TKeySource>>(condition, {
+        gt: cond => ({gt: keyMapper.encode(cond.gt)}),
+        gte: cond => ({gte: keyMapper.encode(cond.gte)}),
+        lt: cond => ({lt: keyMapper.encode(cond.lt)}),
+        lte: cond => ({lte: keyMapper.encode(cond.lte)}),
+    });
 }

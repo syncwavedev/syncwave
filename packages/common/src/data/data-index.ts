@@ -1,17 +1,19 @@
-import {Condition, Uint8Transaction} from '../kv/kv-store';
-import {MsgpackrSerializer} from '../msgpackr-serializer';
+import {Condition, mapCondition, Uint8Transaction} from '../kv/kv-store';
+import {unimplemented} from '../utils';
 import {Uuid, UuidSerializer} from '../uuid';
+import {compareIndexKeyPart, IndexKey, KeySerializer} from './key-serializer';
 
 export interface IndexGetOptions {
     order?: 'asc' | 'desc';
 }
 
-export interface Index<TKey, TValue> {
+export interface Index<TValue> {
     sync(prev: TValue | undefined, next: TValue | undefined): Promise<void>;
-    query(condition: Condition<TKey>): AsyncIterable<TValue>;
+    get(key: IndexKey): AsyncIterable<Uuid>;
+    query(condition: Condition<IndexKey>): AsyncIterable<Uuid>;
 }
 
-export interface IndexOptions<TKey extends Array<string | number | Uuid>, TValue> {
+export interface IndexOptions<TKey extends IndexKey, TValue> {
     readonly txn: Uint8Transaction;
     readonly name: string;
     readonly idSelector: (value: TValue) => Uuid;
@@ -19,13 +21,16 @@ export interface IndexOptions<TKey extends Array<string | number | Uuid>, TValue
     readonly unique: boolean;
 }
 
-export function createIndex<TKey extends Array<string | number | Uuid>, TValue>({
+const UINT8_MAX_VALUE = Math.pow(2, Uint8Array.BYTES_PER_ELEMENT * 8) - 1;
+const ONES_1024 = new Uint8Array(Array(1024).fill(UINT8_MAX_VALUE));
+
+export function createIndex<TKey extends IndexKey, TValue>({
     txn,
     idSelector,
     keySelector,
     unique,
-}: IndexOptions<TKey, TValue>): Index<TKey, TValue> {
-    const keySerializer = new MsgpackrSerializer();
+}: IndexOptions<TKey, TValue>): Index<TValue> {
+    const keySerializer = new KeySerializer();
     const uuidSerializer = new UuidSerializer();
 
     return {
@@ -69,10 +74,44 @@ export function createIndex<TKey extends Array<string | number | Uuid>, TValue>(
 
                     await txn.put(keySerializer.encode(nextKey), uuidSerializer.encode(id));
                 } else {
-                    await txn.put(keySerializer.encode([...nextKey, id]), new Uint8Array());
+                    await txn.put(keySerializer.encode([...nextKey, id]), uuidSerializer.encode(id));
                 }
             }
         },
-        query: async function* (key) {},
+        async *query(condition) {
+            const conditionKey = mapCondition(condition, {
+                gt: cond => cond.gt,
+                gte: cond => cond.gte,
+                lt: cond => cond.lt,
+                lte: cond => cond.lte,
+            });
+
+            const iterator = txn.query(
+                mapCondition<IndexKey, Condition<Uint8Array>>(condition, {
+                    gt: cond => ({gt: keySerializer.encode(cond.gt)}),
+                    gte: cond => ({gte: keySerializer.encode(cond.gte)}),
+                    // we need to add undefined at the end for non-unique indexes (we add document uuid to the end of the index key)
+                    // undefined has the largest type tag in bytewise serialization
+                    lt: cond => ({lt: keySerializer.encode([...cond.lt, undefined])}),
+                    lte: cond => ({lte: keySerializer.encode([...cond.lte, undefined])}),
+                })
+            );
+
+            for await (const entry of iterator) {
+                const entryKey = keySerializer.decode(entry.key);
+                for (let i = 0; i < conditionKey.length - 1; i += 1) {
+                    if (compareIndexKeyPart(entryKey[i], conditionKey[i]) !== 0) {
+                        return;
+                    }
+
+                    yield uuidSerializer.decode(entry.value);
+                }
+            }
+
+            unimplemented();
+        },
+        async *get(key) {
+            return this.query({gte: key});
+        },
     };
 }

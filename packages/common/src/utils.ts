@@ -106,6 +106,10 @@ export function compareUint8Array(a: Uint8Array, b: Uint8Array): 1 | 0 | -1 {
     return 0;
 }
 
-export function unreachable() {
+export function unreachable(): never {
     throw new Error('unreachable');
+}
+
+export function unimplemented(): never {
+    throw new Error('unimplemented');
 }

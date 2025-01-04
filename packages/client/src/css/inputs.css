@@ -1,4 +1,4 @@
-root {
+:root {
 	--input-height: 2.25em;
 }
 
@@ -11,11 +11,15 @@ root {
 	inline-size: 100%;
 	line-height: var(--input-line-height, 1.2);
 	max-inline-size: 100%;
-	padding: var(--input-padding, 0.625em 0.626em);
 	resize: none;
-	background: var(--color-subtle-3);
+	background: var(--color-subtle-2);
+	padding: 0 0.8rem;
 
 	outline: var(--outline-size, 0) solid var(--outline-color, transparent);
+
+	&::placeholder {
+		color: var(--color-ink-secondary);
+	}
 
 	&:autofill,
 	&:-webkit-autofill,

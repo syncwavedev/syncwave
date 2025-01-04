@@ -21,7 +21,7 @@
 </script>
 
 {#snippet leading()}
-	<button onclick={onNewBoard} class="btn btn--icon">
+	<button class="btn btn--icon">
 		<Avatar title="Andrei" />
 	</button>
 {/snippet}

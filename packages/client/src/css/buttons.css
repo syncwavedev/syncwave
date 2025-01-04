@@ -15,6 +15,11 @@
 	text-decoration: none;
 	background: var(--btn-background, --color-bg);
 
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+
 	transition:
 		background-color 300ms ease,
 		border 300ms ease,

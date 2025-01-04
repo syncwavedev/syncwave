@@ -100,13 +100,13 @@
 		</header>
 	{/if}
 
-	<main
+	<div
 		bind:this={contentElement}
 		class="content"
 		class:with-bottom-bar={bottomToolbar && !searchActive}
 	>
 		{@render children?.()}
-	</main>
+	</div>
 
 	{#if bottomToolbar && !searchActive}
 		<footer class="bottom-bar" in:slide={{duration: 200}} out:slide={{duration: 200}}>
@@ -153,8 +153,6 @@
 
 		padding-top: var(--top-bar-height);
 		padding-bottom: env(safe-area-inset-bottom);
-		padding-left: calc(env(safe-area-inset-left) + 0.75rem);
-		padding-right: calc(env(safe-area-inset-right) + 0.75rem);
 
 		background-color: var(--color-bg);
 

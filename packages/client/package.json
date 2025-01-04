@@ -34,7 +34,8 @@
     "@tauri-apps/plugin-opener": "^2",
     "ground-common": "*",
     "navaid": "^1.2.0",
-    "navigo": "^8.11.1"
+    "navigo": "^8.11.1",
+    "svelte-portal": "^2.2.1"
   },
   "devDependencies": {
     "@sveltejs/package": "^2.0.0",

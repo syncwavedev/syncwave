@@ -9,6 +9,13 @@
 	color: var(--color-ink-secondary);
 }
 
+.no-select {
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+}
+
 .text-3xl {
 	font-size: var(--text-3xl);
 }
@@ -31,6 +38,9 @@
 	font-size: var(--text-xs);
 }
 
+.font-normal {
+	font-weight: 400;
+}
 .font-medium {
 	font-weight: 500;
 }
@@ -127,6 +137,10 @@
 	margin-inline-end: 1rem;
 }
 
+.my-0 {
+	margin-block-start: 0;
+	margin-block-end: 0;
+}
 .my-2 {
 	margin-block-start: 0.5rem;
 	margin-block-end: 0.5rem;

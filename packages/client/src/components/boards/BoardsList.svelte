@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Avatar from '../Avatar.svelte';
+	import ContextMenu from '../mobile/ContextMenu.svelte';
 
 	// TODO: Add input props for boards
 
@@ -192,19 +193,39 @@
 
 <ul class="boards-list">
 	{#each boards as board}
-		<li class="board-item">
-			<div class="board-avatar mr-2">
-				<Avatar title={board.name} imageUrl={board.avatar} />
-			</div>
-			<div class="board-details">
-				<div class="flex">
-					<p class="font-medium">{board.name}</p>
-					<span class="ml-auto text-xs text-secondary">{formatDate(board.lastAction.date)}</span>
+		<ContextMenu
+			title={board.name}
+			options={[
+				{
+					label: 'Rename',
+					action: () => {}
+				},
+				{
+					label: 'Duplicate',
+					action: () => {}
+				},
+				{
+					label: 'Delete',
+					action: () => {}
+				}
+			]}
+		>
+			<li class="board-item">
+				<div class="board-avatar mr-2">
+					<Avatar title={board.name} imageUrl={board.avatar} />
 				</div>
-				<p class="text-sm leading-tight">{board.lastAction.user}</p>
-				<p class="text-sm text-secondary text-truncate leading-tight">{board.lastAction.action}</p>
-			</div>
-		</li>
+				<div class="board-details">
+					<div class="flex">
+						<p class="font-medium">{board.name}</p>
+						<span class="ml-auto text-xs text-secondary">{formatDate(board.lastAction.date)}</span>
+					</div>
+					<p class="text-sm leading-tight">{board.lastAction.user}</p>
+					<p class="text-sm text-secondary text-truncate leading-tight">
+						{board.lastAction.action}
+					</p>
+				</div>
+			</li>
+		</ContextMenu>
 	{/each}
 </ul>
 
@@ -220,6 +241,17 @@
 		align-items: center;
 		cursor: pointer;
 		margin-bottom: 0.25rem;
+
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		user-select: none;
+
+		padding-left: calc(env(safe-area-inset-left) + 0.75rem);
+		padding-right: calc(env(safe-area-inset-right) + 0.75rem);
+
+		&:active {
+			background-color: var(--color-subtle-2);
+		}
 	}
 
 	.board-avatar {

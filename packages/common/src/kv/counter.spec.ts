@@ -3,14 +3,6 @@ import {Counter} from './counter';
 import {InMemoryKeyValueStore} from './in-memory-kv-store';
 import {Uint8KVStore, withPrefix} from './kv-store';
 
-function encodeNumber(num) {
-    return new Uint8Array(new Uint32Array([num]).buffer);
-}
-
-function decodeNumber(buffer) {
-    return new Uint32Array(buffer.buffer)[0];
-}
-
 describe('Counter', () => {
     let kvStore: Uint8KVStore;
 

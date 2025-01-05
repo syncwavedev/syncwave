@@ -2,10 +2,8 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {InMemoryKeyValueStore} from './in-memory-kv-store';
 import {OptimisticLock} from './optimistic-lock';
 
-const decodeToString = buf => new TextDecoder().decode(buf);
-const encodeFromString = str => new TextEncoder().encode(str);
+const encodeFromString = (str: string) => new TextEncoder().encode(str);
 
-// Test suite for OptimisticLock
 describe('OptimisticLock', () => {
     let kvStore: InMemoryKeyValueStore;
 

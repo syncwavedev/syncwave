@@ -1,4 +1,5 @@
 import {Richtext} from '../richtext';
+import {Uuid} from '../uuid';
 
 interface BaseOpLogEntry<TType extends string> {
     readonly type: TType;
@@ -347,7 +348,8 @@ function createProxy<T>(value: T, log: OpLog): T {
         typeof value === 'string' ||
         typeof value === 'boolean' ||
         value === undefined ||
-        value === null
+        value === null ||
+        value.constructor === Uuid
     ) {
         return value;
     } else if (value.constructor === Map) {

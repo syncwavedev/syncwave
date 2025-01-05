@@ -1,3 +1,5 @@
+import {AsyncStream} from './async-iterable';
+
 export type Brand<T, B> = T & {__brand: B | undefined};
 
 export function assertNever(value: never): never {
@@ -115,11 +117,7 @@ export function unimplemented(): never {
 }
 
 export async function toArrayAsync<T>(iterable: AsyncIterable<T>): Promise<T[]> {
-    const result: T[] = [];
-    for await (const item of iterable) {
-        result.push(item);
-    }
-    return result;
+    return new AsyncStream(iterable).toArray();
 }
 
 export async function* mapStream<TSource, TResult>(
@@ -133,13 +131,13 @@ export async function* mapStream<TSource, TResult>(
         batch.push(item);
 
         if (batch.length >= batchSize) {
-            const result = map(batch);
+            const result = await map(batch);
             batch = [];
-            yield* await result;
+            yield* result;
         }
     }
 
-    if (batch.length >= batchSize) {
+    if (batch.length >= 0) {
         yield* await map(batch);
     }
 }

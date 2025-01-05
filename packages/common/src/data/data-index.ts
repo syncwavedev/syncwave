@@ -10,6 +10,9 @@ export interface Index<TValue> {
     _debug: {
         keys(): Promise<IndexKey[]>;
     };
+    info: {
+        unique: boolean;
+    };
     sync(prev: TValue | undefined, next: TValue | undefined): Promise<void>;
     get(key: IndexKey): AsyncIterable<Uuid>;
     query(condition: Condition<IndexKey>): AsyncIterable<Uuid>;
@@ -61,6 +64,9 @@ export function createIndex<TValue>({txn, idSelector, keySelector, unique}: Inde
     }
 
     return {
+        info: {
+            unique,
+        },
         _debug: {
             async keys() {
                 const result: IndexKey[] = [];
@@ -80,7 +86,7 @@ export function createIndex<TValue>({txn, idSelector, keySelector, unique}: Inde
                 throw new Error('invalid index sync: at least prev or next must be present');
             }
 
-            if (prev && next && prevId !== nextId) {
+            if (prev && next && !prevId!.equals(nextId!)) {
                 throw new Error('invalid index sync: changing id is not allowed');
             }
 

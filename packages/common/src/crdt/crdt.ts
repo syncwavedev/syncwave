@@ -2,6 +2,7 @@ import Delta from 'quill-delta';
 import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
 import {Richtext} from '../richtext';
 import {assert, assertNever, Brand, zip} from '../utils';
+import {Uuid} from '../uuid';
 import {observe, OpLog} from './observe';
 
 export type CrdtDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
@@ -60,12 +61,15 @@ export class Crdt<T> {
     }
 
     // if recipe returns T, then whole doc is overridden with the returned value
-    update(recipe: (draft: T) => T | void, options?: DiffOptions): void {
+    update(recipe: (draft: T) => T | void, options?: DiffOptions): CrdtDiff<T> | undefined {
         const snapshot = this.snapshot();
         const locator = new Locator();
         locator.addDeep(snapshot, this.yValue);
 
         const [replacement, log] = observe(snapshot, draft => recipe(draft));
+        // diff can be undefined if no change were made in recipe
+        let diff: CrdtDiff<T> | undefined = undefined;
+        const unsub = this.subscribe('update', (nextDiff: CrdtDiff<T>) => (diff = nextDiff));
         this.doc.transact(() => {
             if (replacement) {
                 this.yValue = mapToYValue(replacement);
@@ -73,6 +77,10 @@ export class Crdt<T> {
                 replayLog(log, locator);
             }
         }, options?.origin);
+        unsub();
+
+        // todo: add tests for returned diff
+        return diff;
     }
 
     apply(diff: CrdtDiff<T>, options?: DiffOptions): void {
@@ -89,7 +97,7 @@ export class Crdt<T> {
 
 type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string | null | undefined;
 
-const INTERPRET_AS_OBJECT_KEY = '__interpret_as_object__';
+const INTERPRET_AS_KEY = '__interpret_as__';
 
 function mapFromYValue(yValue: YValue): any {
     if (
@@ -103,14 +111,16 @@ function mapFromYValue(yValue: YValue): any {
     } else if (yValue.constructor === YArray) {
         return [...(yValue as YArray<any>).map(item => mapFromYValue(item.get('value')))];
     } else if (yValue.constructor === YMap) {
-        if ((yValue as YMap<any>).get(INTERPRET_AS_OBJECT_KEY) === true) {
+        if ((yValue as YMap<any>).get(INTERPRET_AS_KEY) === 'obj') {
             const result: any = {};
             for (const [key, value] of (yValue as YMap<any>).entries()) {
-                if (key === INTERPRET_AS_OBJECT_KEY) continue;
+                if (key === INTERPRET_AS_KEY) continue;
                 result[key] = mapFromYValue(value);
             }
 
             return result;
+        } else if ((yValue as YMap<any>).get(INTERPRET_AS_KEY) === 'uuid') {
+            return new Uuid((yValue as YMap<any>).get('value'));
         } else {
             return new Map([...(yValue as YMap<any>).entries()].map(([key, value]) => [key, mapFromYValue(value)]));
         }
@@ -146,11 +156,16 @@ function mapToYValue(value: any): YValue {
         return result;
     } else if (value.constructor === Object) {
         const result = new YMap<YValue>();
-        result.set(INTERPRET_AS_OBJECT_KEY, true);
+        result.set(INTERPRET_AS_KEY, 'obj');
         for (const [key, fieldValue] of Object.entries(value)) {
             result.set(key, mapToYValue(fieldValue));
         }
 
+        return result;
+    } else if (value.constructor === Uuid) {
+        const result = new YMap<YValue>();
+        result.set(INTERPRET_AS_KEY, 'uuid');
+        result.set('value', value.toString());
         return result;
     } else {
         throw new Error('cannot map unsupported value to YValue: ' + value);
@@ -178,7 +193,8 @@ class Locator {
             subject === undefined ||
             typeof subject === 'string' ||
             typeof subject === 'number' ||
-            typeof subject === 'boolean'
+            typeof subject === 'boolean' ||
+            subject.constructor === Uuid
         ) {
             return subject;
         } else if (subject.constructor === Map) {

@@ -23,6 +23,10 @@ export class Uuid {
         return this.uuid;
     }
 
+    equals(uuid: Uuid): boolean {
+        return this.uuid === uuid.uuid;
+    }
+
     compare(x: Uuid): 1 | 0 | -1 {
         if (this.uuid < x.uuid) {
             return -1;

@@ -3,10 +3,10 @@ import {StringSerializer} from '../string-serializer';
 import {pipe} from '../utils';
 import {UuidSerializer, createUuid} from '../uuid';
 import {TaskRepository, getTaskStore} from './stores/task-store';
-import {UserRepository, getUserStore} from './stores/user-store';
+import {UserStore} from './stores/user-store';
 
 export interface DataLayerTransaction {
-    readonly users: UserRepository;
+    readonly users: UserStore;
     readonly tasks: TaskRepository;
 
     optimisticLock(key: string): Promise<void>;
@@ -21,7 +21,7 @@ export function getDataLayer(kv: Uint8KVStore): DataLayer {
         transaction(fn) {
             return kv.transaction(txn =>
                 fn({
-                    users: getUserStore(withPrefix('users/')(txn)),
+                    users: new UserStore(withPrefix('users/')(txn), (id, diff) => Promise.resolve()),
                     tasks: getTaskStore(withPrefix('tasks/')(txn)),
                     optimisticLock: key =>
                         pipe(

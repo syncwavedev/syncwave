@@ -18,8 +18,10 @@ describe('KeySerializer', () => {
         {name: '"ab" < "b"', a: ['ab'], b: ['b'], result: -1},
         {name: '[1, 2] < [2, 0]', a: [1, 2], b: [2, 0], result: -1},
         {name: '[1, undefined] > [1, 2]', a: [1, undefined], b: [1, 2], result: 1},
+        {name: '[1, undefined] > [1, 2, 3]', a: [1, undefined], b: [1, 2, 3], result: 1},
         {name: '[1, 2] < [2]', a: [1, 2], b: [2], result: -1},
         {name: '[1, 2, 3] > [1, 2]', a: [1, 2, 3], b: [1, 2], result: 1},
+        {name: '[1, 2, 3] < [2, 2]', a: [1, 2, 3], b: [2, 2], result: -1},
     ];
 
     testcases.forEach(({a, b, name, result}) => {

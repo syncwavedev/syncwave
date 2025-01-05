@@ -10,6 +10,14 @@ export class Uuid {
         return this.uuid;
     }
 
+    valueOf() {
+        return this.uuid;
+    }
+
+    toJSON() {
+        return this.uuid;
+    }
+
     compare(x: Uuid): 1 | 0 | -1 {
         if (this.uuid < x.uuid) {
             return -1;

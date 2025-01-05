@@ -52,7 +52,7 @@ export class KeySerializer implements Serializer<IndexKey, Uint8Array> {
             if (part instanceof Uuid) {
                 return [1, Buffer.from(uuidSerializer.encode(part))];
             } else {
-                return [2, part];
+                return part;
             }
         });
         return new Uint8Array(encode(key));
@@ -61,9 +61,9 @@ export class KeySerializer implements Serializer<IndexKey, Uint8Array> {
     decode(encoding: Uint8Array): IndexKey {
         const key = decode(Buffer.from(encoding));
 
-        return key.map(([type, part]) => {
-            if (type === 1) {
-                return uuidSerializer.decode(part);
+        return key.map(part => {
+            if (Array.isArray(part)) {
+                return uuidSerializer.decode(part[1]);
             } else {
                 return part;
             }

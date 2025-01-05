@@ -1,5 +1,4 @@
 import {Condition, mapCondition, Uint8Transaction} from '../kv/kv-store';
-import {unimplemented} from '../utils';
 import {Uuid, UuidSerializer} from '../uuid';
 import {compareIndexKeyPart, IndexKey, KeySerializer} from './key-serializer';
 
@@ -13,22 +12,46 @@ export interface Index<TValue> {
     query(condition: Condition<IndexKey>): AsyncIterable<Uuid>;
 }
 
-export interface IndexOptions<TKey extends IndexKey, TValue> {
+export interface IndexOptions<TValue> {
     readonly txn: Uint8Transaction;
-    readonly name: string;
     readonly idSelector: (value: TValue) => Uuid;
-    readonly keySelector: (value: TValue) => TKey;
+    readonly keySelector: (value: TValue) => IndexKey;
     readonly unique: boolean;
 }
 
-export function createIndex<TKey extends IndexKey, TValue>({
-    txn,
-    idSelector,
-    keySelector,
-    unique,
-}: IndexOptions<TKey, TValue>): Index<TValue> {
+export function createIndex<TValue>({txn, idSelector, keySelector, unique}: IndexOptions<TValue>): Index<TValue> {
     const keySerializer = new KeySerializer();
     const uuidSerializer = new UuidSerializer();
+
+    async function* queryInternal(condition: Condition<IndexKey>) {
+        const conditionKey = mapCondition(condition, {
+            gt: cond => cond.gt,
+            gte: cond => cond.gte,
+            lt: cond => cond.lt,
+            lte: cond => cond.lte,
+        });
+
+        const queryCondition = mapCondition<IndexKey, Condition<Uint8Array>>(condition, {
+            gt: cond => ({gt: keySerializer.encode(cond.gt)}),
+            gte: cond => ({gte: keySerializer.encode(cond.gte)}),
+            // we need to add undefined at the end for non-unique indexes (we add document uuid to the end of the index key)
+            // undefined has the largest type tag in bytewise serialization
+            lt: cond => ({lt: keySerializer.encode([...cond.lt, ...Array(16).fill(undefined)])}),
+            lte: cond => ({lte: keySerializer.encode([...cond.lte, ...Array(16).fill(undefined)])}),
+        });
+
+        const iterator = txn.query(queryCondition);
+
+        for await (const entry of iterator) {
+            const entryKey = keySerializer.decode(entry.key);
+            for (let i = 0; i < conditionKey.length - 1; i += 1) {
+                if (compareIndexKeyPart(entryKey[i], conditionKey[i]) !== 0) {
+                    return;
+                }
+            }
+            yield entry;
+        }
+    }
 
     return {
         async sync(prev, next) {
@@ -76,39 +99,24 @@ export function createIndex<TKey extends IndexKey, TValue>({
             }
         },
         async *query(condition) {
-            const conditionKey = mapCondition(condition, {
-                gt: cond => cond.gt,
-                gte: cond => cond.gte,
-                lt: cond => cond.lt,
-                lte: cond => cond.lte,
-            });
-
-            const iterator = txn.query(
-                mapCondition<IndexKey, Condition<Uint8Array>>(condition, {
-                    gt: cond => ({gt: keySerializer.encode(cond.gt)}),
-                    gte: cond => ({gte: keySerializer.encode(cond.gte)}),
-                    // we need to add undefined at the end for non-unique indexes (we add document uuid to the end of the index key)
-                    // undefined has the largest type tag in bytewise serialization
-                    lt: cond => ({lt: keySerializer.encode([...cond.lt, ...Array(16).fill(undefined)])}),
-                    lte: cond => ({lte: keySerializer.encode([...cond.lte, ...Array(16).fill(undefined)])}),
-                })
-            );
-
-            for await (const entry of iterator) {
-                const entryKey = keySerializer.decode(entry.key);
-                for (let i = 0; i < conditionKey.length - 1; i += 1) {
-                    if (compareIndexKeyPart(entryKey[i], conditionKey[i]) !== 0) {
-                        return;
-                    }
-
-                    yield uuidSerializer.decode(entry.value);
-                }
+            for await (const entry of queryInternal(condition)) {
+                yield uuidSerializer.decode(entry.value);
             }
-
-            unimplemented();
         },
         async *get(key) {
-            return this.query({gte: key});
+            for await (const entry of queryInternal({gte: key})) {
+                const entryKey = keySerializer.decode(entry.key);
+                for (let i = 0; i < key.length; i += 1) {
+                    if (key.length > 0) {
+                        // all parts up to the last were checked in queryInternal
+                        if (compareIndexKeyPart(entryKey[key.length - 1], key[key.length - 1]) !== 0) {
+                            return;
+                        }
+                    }
+                }
+
+                yield uuidSerializer.decode(entry.value);
+            }
         },
     };
 }

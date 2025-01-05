@@ -121,3 +121,25 @@ export async function toArrayAsync<T>(iterable: AsyncIterable<T>): Promise<T[]> 
     }
     return result;
 }
+
+export async function* mapStream<TSource, TResult>(
+    source: AsyncIterable<TSource>,
+    map: (items: TSource[]) => AsyncIterable<TResult> | Promise<Iterable<TResult>>,
+    batchSize: number
+): AsyncIterable<TResult> {
+    let batch: TSource[] = [];
+
+    for await (const item of source) {
+        batch.push(item);
+
+        if (batch.length >= batchSize) {
+            const result = map(batch);
+            batch = [];
+            yield* await result;
+        }
+    }
+
+    if (batch.length >= batchSize) {
+        yield* await map(batch);
+    }
+}

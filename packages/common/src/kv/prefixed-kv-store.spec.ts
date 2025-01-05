@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {toArrayAsync} from '../utils';
-import {InMemoryKeyValueStore} from './in-memory/in-memory-key-value-store';
+import {InMemoryKeyValueStore} from './in-memory-kv-store';
 import {Entry} from './kv-store';
 import {PrefixedKVStore, PrefixedTransaction} from './prefixed-kv-store';
 

@@ -1,5 +1,5 @@
 import {StringEncoder} from '../encoder';
-import {Uint8KVStore, withKeySerializer, withPrefix, withValueSerializer} from '../kv/kv-store';
+import {Uint8KVStore, withKeyEncoder, withPrefix, withValueEncoder} from '../kv/kv-store';
 import {pipe} from '../utils';
 import {UuidEncoder, createUuid} from '../uuid';
 import {TaskRepository, getTaskStore} from './stores/task-store';
@@ -24,7 +24,7 @@ export function getDataLayer(kv: Uint8KVStore): DataLayer {
                     users: new UserStore(withPrefix('users/')(txn), (id, diff) => Promise.resolve()),
                     tasks: getTaskStore(withPrefix('tasks/')(txn)),
                     optimisticLock: key =>
-                        pipe(txn, withKeySerializer(new StringEncoder()), withValueSerializer(new UuidEncoder())).put(
+                        pipe(txn, withKeyEncoder(new StringEncoder()), withValueEncoder(new UuidEncoder())).put(
                             key,
                             createUuid()
                         ),

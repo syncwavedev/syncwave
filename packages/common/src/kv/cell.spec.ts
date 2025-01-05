@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
-import {InMemoryKeyValueStore} from '../kv/in-memory/in-memory-key-value-store';
-import {withPrefix} from '../kv/kv-store';
 import {Cell} from './cell';
+import {InMemoryKeyValueStore} from './in-memory-kv-store';
+import {withPrefix} from './kv-store';
 
 const initialValue = 42;
 

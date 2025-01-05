@@ -1,10 +1,10 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-import {InMemoryKeyValueStore} from '../kv/in-memory/in-memory-key-value-store';
+import {IndexKey} from '../kv/data-index';
+import {InMemoryKeyValueStore} from '../kv/in-memory-kv-store';
 import {Condition} from '../kv/kv-store';
 import {createUuid, Uuid} from '../uuid';
 import {DocStore, IndexSpec, OnDocChange} from './doc-store';
-import {IndexKey} from './key-serializer';
 
 interface MyDoc {
     id: Uuid;
@@ -173,7 +173,7 @@ describe('DocStore with InMemoryKeyValueStore', () => {
 
         // Suppose we want to find docs whose "byAge" index is >= 15 and <= 25
         // Condition in the store is typed for Condition<IndexKey>, which is basically Uint8Array-based,
-        // but we have helpers that pass raw numbers (due to withValueSerializer, etc).
+        // but we have helpers that pass raw numbers (due to withValueEncoder, etc).
         // So let's see how to do a range query:
         const ageGte15: Condition<IndexKey> = {gte: [15]};
         const ageLte25: Condition<IndexKey> = {lte: [25]};

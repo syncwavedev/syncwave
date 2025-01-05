@@ -1,6 +1,6 @@
 import {MsgpackrEncoder} from '../encoder';
-import {Transaction, Uint8Transaction, withValueSerializer} from '../kv/kv-store';
 import {pipe} from '../utils';
+import {Transaction, Uint8Transaction, withValueEncoder} from './kv-store';
 
 const key = new Uint8Array();
 
@@ -11,7 +11,7 @@ export class Cell<T> {
         txn: Uint8Transaction,
         private readonly initialValue: T
     ) {
-        this.txn = pipe(txn, withValueSerializer(new MsgpackrEncoder()));
+        this.txn = pipe(txn, withValueEncoder(new MsgpackrEncoder()));
     }
 
     async get(): Promise<T> {

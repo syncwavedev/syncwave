@@ -2,7 +2,7 @@ import {decode, encode} from 'msgpackr';
 
 export interface Encoder<TData> {
     encode(data: TData): Uint8Array;
-    decode(encoding: Uint8Array): TData;
+    decode(buf: Uint8Array): TData;
 }
 
 export class MsgpackrEncoder implements Encoder<any> {
@@ -23,7 +23,7 @@ export class StringEncoder implements Encoder<string> {
         return this.encoder.encode(data);
     }
 
-    decode(encoding: Uint8Array<ArrayBufferLike>): string {
-        return this.decoder.decode(encoding);
+    decode(buf: Uint8Array<ArrayBufferLike>): string {
+        return this.decoder.decode(buf);
     }
 }

@@ -1,5 +1,5 @@
-import {Uint8Transaction} from '../kv/kv-store';
 import {Cell} from './cell';
+import {Uint8Transaction} from './kv-store';
 
 export class Counter {
     private readonly cell: Cell<number>;

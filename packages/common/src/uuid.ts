@@ -46,7 +46,7 @@ export class UuidEncoder implements Encoder<Uuid> {
     encode(data: Uuid): Uint8Array {
         return parse(data.toString());
     }
-    decode(encoding: Uint8Array): Uuid {
-        return new Uuid(stringify(encoding));
+    decode(buf: Uint8Array): Uuid {
+        return new Uuid(stringify(buf));
     }
 }

@@ -1,8 +1,6 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
-import {compareUint8Array} from '../../utils';
-import {Condition, Entry, InvalidQueryCondition, KVStore, Transaction} from '../kv-store';
-import {InMemoryLocker} from './in-memory-locker';
-import {Locker} from './locker';
+import {compareUint8Array} from '../utils';
+import {Condition, Entry, InvalidQueryCondition, KVStore, Transaction} from './kv-store';
 
 export class CursorClosedError extends Error {
     constructor() {
@@ -67,7 +65,7 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
 // performance is suboptimal, so this store is intended for testing purposes only
 export class InMemoryKeyValueStore implements KVStore<Uint8Array, Uint8Array> {
     private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
-    private locker: Locker<InMemoryKeyValueStore> = new InMemoryLocker();
+    private locker = new InMemoryLocker();
 
     constructor() {}
 
@@ -92,5 +90,50 @@ export class InMemoryKeyValueStore implements KVStore<Uint8Array, Uint8Array> {
 
             throw new Error('unreachable');
         });
+    }
+}
+
+export class InMemoryLocker<TKey> {
+    private fnQueueMap: Map<TKey, Array<() => Promise<any>>> = new Map();
+
+    async lock<TResult>(key: TKey, fn: () => Promise<TResult>): Promise<TResult> {
+        return new Promise<TResult>((resolve, reject) => {
+            const execute = async () => {
+                try {
+                    const result = await fn();
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                } finally {
+                    this.dequeue(key);
+                }
+            };
+
+            const fnQueue = this.fnQueueMap.get(key);
+
+            if (!fnQueue) {
+                this.fnQueueMap.set(key, []);
+                execute();
+            } else {
+                fnQueue.push(execute);
+            }
+        });
+    }
+
+    private dequeue(key: TKey): void {
+        const fnQueue = this.fnQueueMap.get(key);
+        if (!fnQueue) {
+            return;
+        }
+
+        if (fnQueue.length === 0) {
+            this.fnQueueMap.delete(key);
+            return;
+        }
+
+        const nextFn = fnQueue.shift();
+        if (nextFn) {
+            nextFn();
+        }
     }
 }

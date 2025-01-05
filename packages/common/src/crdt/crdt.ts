@@ -293,7 +293,7 @@ export class CrdtEncoder<T> implements Encoder<Crdt<T>> {
     encode(data: Crdt<T>): Uint8Array {
         return data.state();
     }
-    decode(encoding: Uint8Array): Crdt<T> {
-        return Crdt.load(encoding as CrdtDiff<T>);
+    decode(buf: Uint8Array): Crdt<T> {
+        return Crdt.load(buf as CrdtDiff<T>);
     }
 }

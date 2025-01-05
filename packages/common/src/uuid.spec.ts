@@ -29,13 +29,13 @@ describe('createUuid function', () => {
     });
 });
 
-describe('UuidSerializer class', () => {
-    const serializer = new UuidEncoder();
+describe('UuidEncoder class', () => {
+    const encoder = new UuidEncoder();
 
     it('should encode a Uuid instance into a Uint8Array', () => {
         const testUuid = '123e4567-e89b-12d3-a456-426614174000';
         const uuidInstance = new Uuid(testUuid);
-        const encoded = serializer.encode(uuidInstance);
+        const encoded = encoder.encode(uuidInstance);
         expect(encoded).toBeInstanceOf(Uint8Array);
         expect(encoded).toEqual(parse(testUuid));
     });
@@ -43,20 +43,20 @@ describe('UuidSerializer class', () => {
     it('should decode a Uint8Array back into a Uuid instance', () => {
         const testUuid = '123e4567-e89b-12d3-a456-426614174000';
         const encoded = parse(testUuid);
-        const decoded = serializer.decode(encoded);
+        const decoded = encoder.decode(encoded);
         expect(decoded).toBeInstanceOf(Uuid);
         expect(decoded.toString()).toBe(testUuid);
     });
 
     it('should preserve the UUID value during encode and decode', () => {
         const uuidInstance = createUuid();
-        const encoded = serializer.encode(uuidInstance);
-        const decoded = serializer.decode(encoded);
+        const encoded = encoder.encode(uuidInstance);
+        const decoded = encoder.decode(encoded);
         expect(decoded.toString()).toBe(uuidInstance.toString());
     });
 
     it('should throw an error when decoding an invalid Uint8Array', () => {
         const invalidUint8Array = new Uint8Array([255, 255, 255, 255]);
-        expect(() => serializer.decode(invalidUint8Array)).toThrow();
+        expect(() => encoder.decode(invalidUint8Array)).toThrow();
     });
 });

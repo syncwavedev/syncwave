@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
-import {InMemoryKeyValueStore} from './in-memory/in-memory-key-value-store';
+import {InMemoryKeyValueStore} from './in-memory-kv-store';
 import {Condition, Entry} from './kv-store';
-import {MappedKVStore, MappedTransaction, Mapper} from './mapped-key-value-store';
+import {MappedKVStore, MappedTransaction, Mapper} from './mapped-kv-store';
 
 describe('MappedTransaction with InMemoryKeyValueStore', () => {
     const keyMapper: Mapper<Uint8Array, string> = {

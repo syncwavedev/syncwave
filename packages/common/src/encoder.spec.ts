@@ -17,14 +17,14 @@ const testData = [
     {input: Buffer.from('buffer data'), description: 'Buffer object'},
 ];
 
-describe('MsgpackrSerializer', () => {
-    const serializer = new MsgpackrEncoder();
+describe('MsgpackrEncoder', () => {
+    const encoder = new MsgpackrEncoder();
 
     describe('round-trip', () => {
         testData.forEach(({input, description}) => {
             it(`should correctly encode and decode ${description}`, () => {
-                const encoded = serializer.encode(input);
-                const decoded = serializer.decode(encoded);
+                const encoded = encoder.encode(input);
+                const decoded = encoder.decode(encoded);
                 expect(decoded).toEqual(input);
                 expect(encoded).toBeInstanceOf(Uint8Array);
             });
@@ -34,12 +34,12 @@ describe('MsgpackrSerializer', () => {
     describe('edge cases', () => {
         it('should throw an error for invalid input to decode', () => {
             const invalidData = new Uint8Array([255, 255, 255]);
-            expect(() => serializer.decode(invalidData)).toThrow();
+            expect(() => encoder.decode(invalidData)).toThrow();
         });
 
         it('should handle empty buffer during decode', () => {
             const emptyBuffer = new Uint8Array();
-            expect(() => serializer.decode(emptyBuffer)).toThrow();
+            expect(() => encoder.decode(emptyBuffer)).toThrow();
         });
     });
 });

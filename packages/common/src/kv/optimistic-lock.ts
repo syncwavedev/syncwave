@@ -1,6 +1,6 @@
 import {StringEncoder} from '../encoder';
-import {Uint8Transaction} from '../kv/kv-store';
 import {createUuid, UuidEncoder} from '../uuid';
+import {Uint8Transaction} from './kv-store';
 
 export class OptimisticLock {
     private readonly uuidEncoder = new UuidEncoder();

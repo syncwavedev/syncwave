@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {InMemoryKeyValueStore} from '../kv/in-memory/in-memory-key-value-store';
+import {InMemoryKeyValueStore} from './in-memory-kv-store';
 import {OptimisticLock} from './optimistic-lock';
 
 const decodeToString = buf => new TextDecoder().decode(buf);

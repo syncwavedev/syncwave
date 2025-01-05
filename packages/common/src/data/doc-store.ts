@@ -1,17 +1,9 @@
 import {AsyncStream} from '../async-stream';
 import {Crdt, CrdtDiff, CrdtEncoder} from '../crdt/crdt';
-import {
-    Condition,
-    Transaction,
-    Uint8Transaction,
-    withKeySerializer,
-    withPrefix,
-    withValueSerializer,
-} from '../kv/kv-store';
+import {Index, IndexKey, createIndex} from '../kv/data-index';
+import {Condition, Transaction, Uint8Transaction, withKeyEncoder, withPrefix, withValueEncoder} from '../kv/kv-store';
 import {assert, mapStream, pipe} from '../utils';
 import {Uuid, UuidEncoder} from '../uuid';
-import {Index, createIndex} from './data-index';
-import {IndexKey} from './key-serializer';
 
 export interface Doc {
     id: Uuid;
@@ -60,8 +52,8 @@ export class DocStore<T extends Doc> {
         this.primary = pipe(
             txn,
             withPrefix('d/'),
-            withKeySerializer(new UuidEncoder()),
-            withValueSerializer(new CrdtEncoder())
+            withKeyEncoder(new UuidEncoder()),
+            withValueEncoder(new CrdtEncoder())
         );
         this.onChange = onChange;
     }

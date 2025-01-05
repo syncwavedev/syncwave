@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {InMemoryKeyValueStore} from '../kv/in-memory/in-memory-key-value-store';
-import {Uint8KVStore, withPrefix} from '../kv/kv-store';
 import {Counter} from './counter';
+import {InMemoryKeyValueStore} from './in-memory-kv-store';
+import {Uint8KVStore, withPrefix} from './kv-store';
 
 function encodeNumber(num) {
     return new Uint8Array(new Uint32Array([num]).buffer);

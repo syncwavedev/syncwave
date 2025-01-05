@@ -16,15 +16,20 @@ interface TestUser {
     avatar?: Uint8Array | null | undefined;
 }
 
-describe('data-index', async () => {
-    const store = new InMemoryKeyValueStore();
-    const txn = await store.transaction(async x => x);
-    const idSelector = (x: TestUser) => x.id;
+const idSelector = (x: TestUser) => x.id;
+
+async function getTxn() {
+    const txn = await new InMemoryKeyValueStore().transaction(async x => x);
     await txn.put(Buffer.from('aaa/'), new Uint8Array());
     await txn.put(Buffer.from('kkk/'), new Uint8Array());
     await txn.put(Buffer.from('zzz/'), new Uint8Array());
 
-    describe('uuid', async () => {
+    return txn;
+}
+
+describe('data-index', async () => {
+    async function getHouseIndex() {
+        const txn = await getTxn();
         const houseIndex = createIndex<TestUser>({
             txn: withPrefix('house/')(txn),
             idSelector,
@@ -32,29 +37,27 @@ describe('data-index', async () => {
             unique: false,
         });
 
-        it('should insert doc', async () => {
+        return houseIndex;
+    }
+
+    describe('uuid', () => {
+        it('should insert/update/delete doc', async () => {
+            const houseIndex = await getHouseIndex();
             const id1 = createUuid();
             const id2 = createUuid();
             const id3 = createUuid();
-            await houseIndex.sync(undefined, {
-                id: id1,
-                houseId: null,
-            });
-            await houseIndex.sync(undefined, {
-                id: id2,
-                houseId: createUuid(),
-            });
-            await houseIndex.sync(undefined, {
-                id: id3,
-            });
+            await houseIndex.sync(undefined, {id: id1, houseId: null});
+            await houseIndex.sync(undefined, {id: id2, houseId: createUuid()});
+            await houseIndex.sync(undefined, {id: id3});
 
-            const queryResult = await toArrayAsync(houseIndex.query({gte: [null]}));
-            expect(queryResult).toEqual([id1, id2, id3]);
+            expect(await toArrayAsync(houseIndex.query({gte: [null]}))).toEqual([id1, id2, id3]);
 
-            const getResult = await toArrayAsync(houseIndex.get([null]));
-            expect(getResult).toEqual([id1]);
+            expect(await toArrayAsync(houseIndex.get([null]))).toEqual([id1]);
+
+            await houseIndex.sync({id: id1, houseId: null}, {id: id1});
         });
     });
+
     // describe('number');
     // describe('boolean');
     // describe('string');

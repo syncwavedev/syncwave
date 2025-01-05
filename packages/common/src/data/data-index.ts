@@ -7,6 +7,9 @@ export interface IndexGetOptions {
 }
 
 export interface Index<TValue> {
+    _debug: {
+        keys(): Promise<IndexKey[]>;
+    };
     sync(prev: TValue | undefined, next: TValue | undefined): Promise<void>;
     get(key: IndexKey): AsyncIterable<Uuid>;
     query(condition: Condition<IndexKey>): AsyncIterable<Uuid>;
@@ -31,12 +34,16 @@ export function createIndex<TValue>({txn, idSelector, keySelector, unique}: Inde
             lte: cond => cond.lte,
         });
 
+        // we need to add undefined/null at the end for indexes, because it might me not the last component
+        // of the index, for example:
+        //   condition: {gt: [1]}
+        //   index_key: [1, 2]
+        //   if we don't add undefined: {gt: [1, undefined]}, index_key would match the condition
+        // undefined has the largest type tag in bytewise serialization, null the lowest
         const queryCondition = mapCondition<IndexKey, Condition<Uint8Array>>(condition, {
-            gt: cond => ({gt: keySerializer.encode(cond.gt)}),
+            gt: cond => ({gt: keySerializer.encode([...cond.gt, ...Array(16).fill(undefined)])}),
             gte: cond => ({gte: keySerializer.encode(cond.gte)}),
-            // we need to add undefined at the end for non-unique indexes (we add document uuid to the end of the index key)
-            // undefined has the largest type tag in bytewise serialization
-            lt: cond => ({lt: keySerializer.encode([...cond.lt, ...Array(16).fill(undefined)])}),
+            lt: cond => ({lt: keySerializer.encode(cond.lt)}),
             lte: cond => ({lte: keySerializer.encode([...cond.lte, ...Array(16).fill(undefined)])}),
         });
 
@@ -54,6 +61,16 @@ export function createIndex<TValue>({txn, idSelector, keySelector, unique}: Inde
     }
 
     return {
+        _debug: {
+            async keys() {
+                const result: IndexKey[] = [];
+                for await (const {key} of txn.query({gte: new Uint8Array()})) {
+                    result.push(keySerializer.decode(key));
+                }
+
+                return result;
+            },
+        },
         async sync(prev, next) {
             const prevId = prev && idSelector(prev);
             const nextId = next && idSelector(next);

@@ -1,3 +1,4 @@
+import {inspect} from 'util';
 import {parse, stringify, v7} from 'uuid';
 import {Serializer} from './serializer';
 
@@ -15,6 +16,10 @@ export class Uuid {
     }
 
     toJSON() {
+        return this.uuid;
+    }
+
+    [inspect.custom]() {
         return this.uuid;
     }
 

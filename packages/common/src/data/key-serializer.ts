@@ -3,15 +3,26 @@ import {Serializer} from '../serializer';
 import {compareUint8Array} from '../utils';
 import {Uuid, UuidSerializer} from '../uuid';
 
+/**
+ * bytewise order:
+ * - null
+ * - false
+ * - true
+ * - Number (numeric)
+ * - Date (numeric, epoch offset)
+ * - Buffer (bitwise)
+ * - String (lexicographic)
+ * - Array (componentwise)
+ * - undefined
+ */
+
 const uuidSerializer = new UuidSerializer();
-export type IndexKeyPart = number | boolean | string | Uuid | Uint8Array | null | undefined;
+export type IndexKeyPart = null | boolean | number | string | Uuid | Uint8Array | undefined;
 
 export type IndexKey = readonly IndexKeyPart[];
 
 export function compareIndexKeyPart(a: IndexKeyPart, b: IndexKeyPart): 1 | 0 | -1 {
-    if (a === null && b === null) return 0;
-    if (a === null) return -1;
-    if (b === null) return 1;
+    if (a === b) return 0;
 
     if (typeof a === 'boolean' && typeof b === 'boolean') {
         return a === b ? 0 : a ? 1 : -1;
@@ -51,6 +62,8 @@ export class KeySerializer implements Serializer<IndexKey, Uint8Array> {
         const key = data.map(part => {
             if (part instanceof Uuid) {
                 return [1, Buffer.from(uuidSerializer.encode(part))];
+            } else if (part instanceof Uint8Array) {
+                return Buffer.from(part);
             } else {
                 return part;
             }
@@ -64,9 +77,13 @@ export class KeySerializer implements Serializer<IndexKey, Uint8Array> {
         return key.map(part => {
             if (Array.isArray(part)) {
                 return uuidSerializer.decode(part[1]);
+            } else if (part instanceof Buffer) {
+                return new Uint8Array(part);
             } else {
                 return part;
             }
         });
     }
 }
+
+export const keySer = new KeySerializer();

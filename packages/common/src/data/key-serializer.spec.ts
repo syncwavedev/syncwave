@@ -17,11 +17,13 @@ describe('KeySerializer', () => {
         {name: '"a" < "b"', a: ['a'], b: ['b'], result: -1},
         {name: '"ab" < "b"', a: ['ab'], b: ['b'], result: -1},
         {name: '[1, 2] < [2, 0]', a: [1, 2], b: [2, 0], result: -1},
+        {name: '[1, 2] > [1, null]', a: [1, 2], b: [1, null], result: 1},
         {name: '[1, undefined] > [1, 2]', a: [1, undefined], b: [1, 2], result: 1},
         {name: '[1, undefined] > [1, 2, 3]', a: [1, undefined], b: [1, 2, 3], result: 1},
         {name: '[1, 2] < [2]', a: [1, 2], b: [2], result: -1},
         {name: '[1, 2, 3] > [1, 2]', a: [1, 2, 3], b: [1, 2], result: 1},
         {name: '[1, 2, 3] < [2, 2]', a: [1, 2, 3], b: [2, 2], result: -1},
+        {name: 'buf[1, 2, 3] < buf[2, 2]', a: [new Uint8Array([1, 2, 3])], b: [new Uint8Array([2, 2])], result: -1},
     ];
 
     testcases.forEach(({a, b, name, result}) => {

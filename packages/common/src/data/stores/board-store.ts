@@ -1,5 +1,5 @@
-import {Brand} from '../utils';
-import {Uuid} from '../uuid';
+import {Brand} from '../../utils';
+import {Uuid} from '../../uuid';
 import {UserId} from './user-store';
 
 export type BoardId = Brand<Uuid, 'board_id'>;

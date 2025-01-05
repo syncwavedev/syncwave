@@ -1,9 +1,9 @@
-import {CrdtSerializer} from '../crdt-serializer';
-import {Crdt, CrdtDiff} from '../crdt/crdt';
-import {Uint8Transaction, withKeySerializer, withPrefix, withValueSerializer} from '../kv/kv-store';
-import {StringSerializer} from '../string-serializer';
-import {Brand, pipe} from '../utils';
-import {Uuid, UuidSerializer} from '../uuid';
+import {CrdtSerializer} from '../../crdt-serializer';
+import {Crdt, CrdtDiff} from '../../crdt/crdt';
+import {Uint8Transaction, withKeySerializer, withPrefix, withValueSerializer} from '../../kv/kv-store';
+import {StringSerializer} from '../../string-serializer';
+import {Brand, pipe} from '../../utils';
+import {Uuid, UuidSerializer} from '../../uuid';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 

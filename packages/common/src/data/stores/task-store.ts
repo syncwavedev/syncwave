@@ -1,11 +1,11 @@
-import {CrdtSerializer} from '../crdt-serializer';
-import {Crdt} from '../crdt/crdt';
-import {Uint8Transaction, withKeySerializer, withPrefix, withValueSerializer} from '../kv/kv-store';
-import {Richtext} from '../richtext';
-import {Brand, pipe} from '../utils';
-import {Uuid, UuidSerializer} from '../uuid';
+import {CrdtSerializer} from '../../crdt-serializer';
+import {Crdt} from '../../crdt/crdt';
+import {Uint8Transaction, withKeySerializer, withPrefix, withValueSerializer} from '../../kv/kv-store';
+import {Richtext} from '../../richtext';
+import {Brand, pipe} from '../../utils';
+import {Uuid, UuidSerializer} from '../../uuid';
+import {Timestamp} from '../timestamp';
 import {BoardId} from './board-store';
-import {Timestamp} from './timestamp';
 import {UserId} from './user-store';
 
 type TaskId = Brand<Uuid, 'task_id'>;

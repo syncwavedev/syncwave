@@ -2,8 +2,8 @@ import {Uint8KVStore, withKeySerializer, withPrefix, withValueSerializer} from '
 import {StringSerializer} from '../string-serializer';
 import {pipe} from '../utils';
 import {UuidSerializer, createUuid} from '../uuid';
-import {TaskRepository, getTaskStore} from './task-store';
-import {UserRepository, getUserStore} from './user-store';
+import {TaskRepository, getTaskStore} from './stores/task-store';
+import {UserRepository, getUserStore} from './stores/user-store';
 
 export interface DataLayerTransaction {
     readonly users: UserRepository;

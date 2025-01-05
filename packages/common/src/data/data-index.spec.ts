@@ -130,7 +130,23 @@ describe('data-index', async () => {
         expect(await toArrayAsync(compoundIndex.query({lt: [houseId1, 10]}))).toEqual([]);
         expect(await toArrayAsync(compoundIndex.query({lte: [houseId1, null]}))).toEqual([]);
 
-        // todo: first component tests
+        expect(await toArrayAsync(compoundIndex.query({gte: [null]}))).toEqual([id1, id2, id3, id4, id5]);
+        expect(await toArrayAsync(compoundIndex.query({gt: [null]}))).toEqual([id1, id2, id3, id4, id5]);
+        expect(await toArrayAsync(compoundIndex.query({gte: [houseId1]}))).toEqual([id1, id2, id3, id4, id5]);
+        expect(await toArrayAsync(compoundIndex.query({gt: [houseId1]}))).toEqual([id5]);
+        expect(await toArrayAsync(compoundIndex.query({gte: [houseId2]}))).toEqual([id5]);
+        expect(await toArrayAsync(compoundIndex.query({gt: [houseId2]}))).toEqual([]);
+        expect(await toArrayAsync(compoundIndex.query({gte: [undefined]}))).toEqual([]);
+        expect(await toArrayAsync(compoundIndex.query({gt: [undefined]}))).toEqual([]);
+
+        expect(await toArrayAsync(compoundIndex.query({lte: [undefined]}))).toEqual([id5, id4, id3, id2, id1]);
+        expect(await toArrayAsync(compoundIndex.query({lt: [undefined]}))).toEqual([id5, id4, id3, id2, id1]);
+        expect(await toArrayAsync(compoundIndex.query({lte: [houseId2]}))).toEqual([id5, id4, id3, id2, id1]);
+        expect(await toArrayAsync(compoundIndex.query({lt: [houseId2]}))).toEqual([id4, id3, id2, id1]);
+        expect(await toArrayAsync(compoundIndex.query({lte: [houseId1]}))).toEqual([id4, id3, id2, id1]);
+        expect(await toArrayAsync(compoundIndex.query({lt: [houseId1]}))).toEqual([]);
+        expect(await toArrayAsync(compoundIndex.query({lte: [null]}))).toEqual([]);
+        expect(await toArrayAsync(compoundIndex.query({lt: [null]}))).toEqual([]);
     });
 
     it('should correctly delete entries', async () => {

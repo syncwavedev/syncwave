@@ -1,9 +1,8 @@
-import {CrdtSerializer} from '../../crdt-serializer';
-import {Crdt} from '../../crdt/crdt';
+import {Crdt, CrdtEncoder} from '../../crdt/crdt';
 import {Uint8Transaction, withKeySerializer, withPrefix, withValueSerializer} from '../../kv/kv-store';
 import {Richtext} from '../../richtext';
 import {Brand, pipe} from '../../utils';
-import {Uuid, UuidSerializer} from '../../uuid';
+import {Uuid, UuidEncoder} from '../../uuid';
 import {Timestamp} from '../timestamp';
 import {BoardId} from './board-store';
 import {UserId} from './user-store';
@@ -34,8 +33,8 @@ export function getTaskStore(txn: Uint8Transaction): TaskRepository {
     const primaryIndex = pipe(
         txn,
         withPrefix('tasks/primary/'),
-        withKeySerializer(new UuidSerializer()),
-        withValueSerializer(new CrdtSerializer())
+        withKeySerializer(new UuidEncoder()),
+        withValueSerializer(new CrdtEncoder())
     );
 
     throw new Error('not implemented');

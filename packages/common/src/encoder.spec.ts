@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {MsgpackrSerializer} from './msgpackr-serializer';
+import {MsgpackrEncoder} from './encoder';
 
 // Test data for various scenarios
 const testData = [
@@ -18,7 +18,7 @@ const testData = [
 ];
 
 describe('MsgpackrSerializer', () => {
-    const serializer = new MsgpackrSerializer();
+    const serializer = new MsgpackrEncoder();
 
     describe('round-trip', () => {
         testData.forEach(({input, description}) => {

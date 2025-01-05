@@ -1,6 +1,6 @@
 import {inspect} from 'util';
 import {parse, stringify, v7} from 'uuid';
-import {Serializer} from './serializer';
+import {Encoder} from './encoder';
 
 export class Uuid {
     public readonly __type: 'uuid' = 'uuid';
@@ -42,7 +42,7 @@ export function createUuid(): Uuid {
     return new Uuid(v7());
 }
 
-export class UuidSerializer implements Serializer<Uuid, Uint8Array> {
+export class UuidEncoder implements Encoder<Uuid> {
     encode(data: Uuid): Uint8Array {
         return parse(data.toString());
     }

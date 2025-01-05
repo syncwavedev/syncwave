@@ -1,5 +1,6 @@
 import Delta from 'quill-delta';
 import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
+import {Encoder} from '../encoder';
 import {Richtext} from '../richtext';
 import {assert, assertNever, Brand, zip} from '../utils';
 import {Uuid} from '../uuid';
@@ -285,5 +286,14 @@ function replayLog(log: OpLog, locator: Locator): void {
         } else {
             assertNever(entry);
         }
+    }
+}
+
+export class CrdtEncoder<T> implements Encoder<Crdt<T>> {
+    encode(data: Crdt<T>): Uint8Array {
+        return data.state();
+    }
+    decode(encoding: Uint8Array): Crdt<T> {
+        return Crdt.load(encoding as CrdtDiff<T>);
     }
 }

@@ -1,6 +1,6 @@
 import {parse} from 'uuid';
 import {describe, expect, it} from 'vitest';
-import {Uuid, UuidSerializer, createUuid} from './uuid';
+import {Uuid, UuidEncoder, createUuid} from './uuid';
 
 describe('Uuid class', () => {
     it('should store the correct UUID string', () => {
@@ -30,7 +30,7 @@ describe('createUuid function', () => {
 });
 
 describe('UuidSerializer class', () => {
-    const serializer = new UuidSerializer();
+    const serializer = new UuidEncoder();
 
     it('should encode a Uuid instance into a Uint8Array', () => {
         const testUuid = '123e4567-e89b-12d3-a456-426614174000';

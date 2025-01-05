@@ -1,4 +1,4 @@
-import {Serializer} from '../serializer';
+import {Encoder} from '../encoder';
 import {concatBuffers, unreachable} from '../utils';
 import {MappedTransaction, Mapper} from './mapped-key-value-store';
 import {PrefixedTransaction} from './prefixed-kv-store';
@@ -118,9 +118,7 @@ function createIdMapper<T>(): Mapper<T, T> {
     };
 }
 
-function createSerializationMapper<TData, TEncoding>(
-    serializer: Serializer<TData, TEncoding>
-): Mapper<TEncoding, TData> {
+function createSerializationMapper<TData>(serializer: Encoder<TData>): Mapper<Uint8Array, TData> {
     return {
         encode: serializer.encode.bind(serializer),
         decode: serializer.decode.bind(serializer),
@@ -133,15 +131,15 @@ export function withPrefix(
     return store => new PrefixedTransaction(store, prefix);
 }
 
-export function withValueSerializer<TData, TEncoding>(
-    serializer: Serializer<TData, TEncoding>
-): <TKey>(store: Transaction<TKey, TEncoding>) => Transaction<TKey, TData> {
+export function withValueSerializer<TData>(
+    serializer: Encoder<TData>
+): <TKey>(store: Transaction<TKey, Uint8Array>) => Transaction<TKey, TData> {
     return store => new MappedTransaction(store, createIdMapper(), createSerializationMapper(serializer));
 }
 
-export function withKeySerializer<TData, TEncoding>(
-    serializer: Serializer<TData, TEncoding>
-): <TValue>(store: Transaction<TEncoding, TValue>) => Transaction<TData, TValue> {
+export function withKeySerializer<TData>(
+    serializer: Encoder<TData>
+): <TValue>(store: Transaction<Uint8Array, TValue>) => Transaction<TData, TValue> {
     return store => new MappedTransaction(store, createSerializationMapper(serializer), createIdMapper());
 }
 

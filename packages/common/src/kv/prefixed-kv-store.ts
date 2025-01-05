@@ -1,4 +1,4 @@
-import {StringSerializer} from '../string-serializer';
+import {StringEncoder} from '../encoder';
 import {compareUint8Array, concatBuffers} from '../utils';
 import {Condition, Entry, KVStore, Transaction, mapCondition} from './kv-store';
 
@@ -10,7 +10,7 @@ export class PrefixedTransaction<TValue> implements Transaction<Uint8Array, TVal
         prefix: string | Uint8Array
     ) {
         if (typeof prefix === 'string') {
-            this.prefix = new StringSerializer().encode(prefix);
+            this.prefix = new StringEncoder().encode(prefix);
         } else {
             this.prefix = prefix;
         }
@@ -53,7 +53,7 @@ export class PrefixedKVStore<TValue> implements KVStore<Uint8Array, TValue> {
         prefix: string | Uint8Array
     ) {
         if (typeof prefix === 'string') {
-            this.prefix = new StringSerializer().encode(prefix);
+            this.prefix = new StringEncoder().encode(prefix);
         } else {
             this.prefix = prefix;
         }

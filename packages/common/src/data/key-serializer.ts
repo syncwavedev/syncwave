@@ -1,7 +1,7 @@
 import {decode, encode} from 'bytewise';
-import {Serializer} from '../serializer';
+import {Encoder} from '../encoder';
 import {compareUint8Array} from '../utils';
-import {Uuid, UuidSerializer} from '../uuid';
+import {Uuid, UuidEncoder} from '../uuid';
 
 /**
  * bytewise order:
@@ -16,7 +16,7 @@ import {Uuid, UuidSerializer} from '../uuid';
  * - undefined
  */
 
-const uuidSerializer = new UuidSerializer();
+const uuidSerializer = new UuidEncoder();
 export type IndexKeyPart = null | boolean | number | string | Uuid | Uint8Array | undefined;
 
 export type IndexKey = readonly IndexKeyPart[];
@@ -57,7 +57,7 @@ export function compareIndexKeyPart(a: IndexKeyPart, b: IndexKeyPart): 1 | 0 | -
     return getTypeIndex(a) > getTypeIndex(b) ? 1 : -1;
 }
 
-export class KeySerializer implements Serializer<IndexKey, Uint8Array> {
+export class KeySerializer implements Encoder<IndexKey> {
     encode(data: IndexKey): Uint8Array {
         const key = data.map(part => {
             if (part instanceof Uuid) {

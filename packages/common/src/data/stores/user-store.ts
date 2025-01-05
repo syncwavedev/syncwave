@@ -1,4 +1,4 @@
-import {Uint8Transaction} from '../../kv/kv-store';
+import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Brand} from '../../utils';
 import {Uuid} from '../../uuid';
 import {DocStore, OnDocChange} from '../doc-store';
@@ -16,7 +16,7 @@ export class UserStore {
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<User>) {
         this.store = new DocStore<User>({
-            txn,
+            txn: withPrefix('d/')(txn),
             indexes: {
                 email: {
                     key: x => [x.email],

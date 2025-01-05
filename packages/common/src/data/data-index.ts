@@ -1,5 +1,5 @@
 import {Condition, mapCondition, Uint8Transaction} from '../kv/kv-store';
-import {Uuid, UuidSerializer} from '../uuid';
+import {Uuid, UuidEncoder} from '../uuid';
 import {compareIndexKeyPart, IndexKey, KeySerializer} from './key-serializer';
 
 export interface IndexGetOptions {
@@ -27,7 +27,7 @@ export interface IndexOptions<TValue> {
 
 export function createIndex<TValue>({txn, idSelector, keySelector, unique}: IndexOptions<TValue>): Index<TValue> {
     const keySerializer = new KeySerializer();
-    const uuidSerializer = new UuidSerializer();
+    const uuidSerializer = new UuidEncoder();
 
     async function* queryInternal(condition: Condition<IndexKey>) {
         const conditionKey = mapCondition(condition, {

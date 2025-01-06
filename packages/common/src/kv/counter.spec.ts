@@ -1,13 +1,13 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {Counter} from './counter';
-import {InMemoryKeyValueStore} from './in-memory-kv-store';
+import {InMemoryKVStore} from './in-memory-kv-store';
 import {Uint8KVStore, withPrefix} from './kv-store';
 
 describe('Counter', () => {
     let kvStore: Uint8KVStore;
 
     beforeEach(() => {
-        kvStore = new InMemoryKeyValueStore();
+        kvStore = new InMemoryKVStore();
     });
 
     it('should initialize with the provided initial value', async () => {

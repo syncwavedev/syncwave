@@ -83,13 +83,13 @@ export function mapCondition<TKey, TResult>(
     condition: Condition<TKey>,
     mapper: ConditionMapper<TKey, TResult>
 ): TResult {
-    if (condition.gt) {
+    if (condition.gt !== undefined) {
         return mapper.gt(condition as GtCondition<TKey>);
-    } else if (condition.gte) {
+    } else if (condition.gte !== undefined) {
         return mapper.gte(condition as GteCondition<TKey>);
-    } else if (condition.lt) {
+    } else if (condition.lt !== undefined) {
         return mapper.lt(condition as LtCondition<TKey>);
-    } else if (condition.lte) {
+    } else if (condition.lte !== undefined) {
         return mapper.lte(condition as LteCondition<TKey>);
     } else {
         return unreachable();

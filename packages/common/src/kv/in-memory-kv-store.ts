@@ -59,7 +59,7 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
 
 // this implementation handles one operation at a time because of the single store level lock
 // performance is suboptimal, so this store is intended for testing purposes only
-export class InMemoryKeyValueStore implements KVStore<Uint8Array, Uint8Array> {
+export class InMemoryKVStore implements KVStore<Uint8Array, Uint8Array> {
     private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
     private locker = new InMemoryLocker();
 

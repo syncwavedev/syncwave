@@ -1,7 +1,7 @@
 import createTree from 'functional-red-black-tree';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {compareUint8Array, wait} from '../utils';
-import {InMemoryKeyValueStore, InMemoryLocker, InMemoryTransaction} from './in-memory-kv-store'; // Adjust the path as needed
+import {InMemoryKVStore, InMemoryLocker, InMemoryTransaction} from './in-memory-kv-store'; // Adjust the path as needed
 import {Entry, InvalidQueryCondition} from './kv-store';
 
 // Utility function to create Uint8Array from strings for testing
@@ -142,7 +142,7 @@ describe('InMemoryKeyValueStore', () => {
     let kvStore;
 
     beforeEach(() => {
-        kvStore = new InMemoryKeyValueStore();
+        kvStore = new InMemoryKVStore();
     });
 
     it('should execute a transaction and persist changes', async () => {

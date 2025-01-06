@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {InMemoryKeyValueStore} from './in-memory-kv-store';
+import {InMemoryKVStore} from './in-memory-kv-store';
 import {Condition, Entry} from './kv-store';
 import {MappedKVStore, MappedTransaction, Mapper} from './mapped-kv-store';
 
@@ -15,7 +15,7 @@ describe('MappedTransaction with InMemoryKeyValueStore', () => {
     };
 
     it('should get a value with mapped key and decode the value', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         await store.transaction(async txn => {
             await txn.put(Uint8Array.from([1]), Uint8Array.from([42]));
         });
@@ -27,7 +27,7 @@ describe('MappedTransaction with InMemoryKeyValueStore', () => {
     });
 
     it('should return undefined for a missing key', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
 
         const result = await mappedTxn.get(Buffer.from([2]).toString('base64'));
@@ -35,7 +35,7 @@ describe('MappedTransaction with InMemoryKeyValueStore', () => {
     });
 
     it('should query values and decode them', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         await store.transaction(async txn => {
             await txn.put(Uint8Array.from([2]), Uint8Array.from([100]));
             await txn.put(Uint8Array.from([3]), Uint8Array.from([200]));
@@ -58,7 +58,7 @@ describe('MappedTransaction with InMemoryKeyValueStore', () => {
     });
 
     it('should put a value with encoded key and value', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
 
         await mappedTxn.put(Buffer.from([4]).toString('base64'), Buffer.from([500]).toString('hex'));
@@ -81,7 +81,7 @@ describe('MappedKVStore with InMemoryKeyValueStore', () => {
     };
 
     it('should execute a transaction with mapped keys and values', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         const result = await mappedStore.transaction(async txn => {

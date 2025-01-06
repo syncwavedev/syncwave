@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {toArrayAsync} from '../utils';
-import {InMemoryKeyValueStore} from './in-memory-kv-store';
+import {InMemoryKVStore} from './in-memory-kv-store';
 import {Entry} from './kv-store';
 import {PrefixedKVStore, PrefixedTransaction} from './prefixed-kv-store';
 
@@ -10,7 +10,7 @@ function encodeString(str) {
 
 describe('PrefixedTransaction', () => {
     it('should get a value with the correct prefixed key', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         await store.transaction(async txn => {
             await txn.put(encodeString('key1'), encodeString('value1'));
             await txn.put(encodeString('key3'), encodeString('value3'));
@@ -39,7 +39,7 @@ describe('PrefixedTransaction', () => {
     });
 
     it('should put a value with the correct prefixed key', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         await store.transaction(async txn => {
             const prefixedTxn = new PrefixedTransaction(txn, 'prefix:');
             await prefixedTxn.put(encodeString('key'), encodeString('value'));
@@ -52,7 +52,7 @@ describe('PrefixedTransaction', () => {
     });
 
     it('should delete a value with the correct prefixed key', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         await store.transaction(async txn => {
             await txn.put(encodeString('prefix:key'), encodeString('value'));
         });
@@ -69,7 +69,7 @@ describe('PrefixedTransaction', () => {
     });
 
     it('should query with a prefixed condition', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         await store.transaction(async txn => {
             await txn.put(encodeString('prefix:key1'), encodeString('value1'));
             await txn.put(encodeString('prefix:key2'), encodeString('value2'));
@@ -94,7 +94,7 @@ describe('PrefixedTransaction', () => {
 
 describe('PrefixedKVStore', () => {
     it('should execute a transaction with the correct prefix', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         const prefixedStore = new PrefixedKVStore(store, 'prefix:');
 
         await prefixedStore.transaction(async txn => {
@@ -110,7 +110,7 @@ describe('PrefixedKVStore', () => {
     });
 
     it('should isolate transactions', async () => {
-        const store = new InMemoryKeyValueStore();
+        const store = new InMemoryKVStore();
         const prefixedStore1 = new PrefixedKVStore(store, 'prefix1:');
         const prefixedStore2 = new PrefixedKVStore(store, 'prefix2:');
 

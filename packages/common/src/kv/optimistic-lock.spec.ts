@@ -1,14 +1,14 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {InMemoryKeyValueStore} from './in-memory-kv-store';
+import {InMemoryKVStore} from './in-memory-kv-store';
 import {OptimisticLock} from './optimistic-lock';
 
 const encodeFromString = (str: string) => new TextEncoder().encode(str);
 
 describe('OptimisticLock', () => {
-    let kvStore: InMemoryKeyValueStore;
+    let kvStore: InMemoryKVStore;
 
     beforeEach(() => {
-        kvStore = new InMemoryKeyValueStore();
+        kvStore = new InMemoryKVStore();
     });
 
     it('should create a lock with an empty key if no key is provided', async () => {

@@ -10,7 +10,19 @@ export interface TransportClient {
     connect(): Promise<Connection>;
 }
 
-export type ConnectionSubscribeCallback = (...args: [type: 'close'] | [type: 'message', message: Message]) => void;
+export interface BaseConnectionEvent<TType extends string> {
+    readonly type: TType;
+}
+
+export interface CloseConnectionEvent extends BaseConnectionEvent<'close'> {}
+
+export interface MessageConnectionEvent extends BaseConnectionEvent<'message'> {
+    readonly message: Message;
+}
+
+export type ConnectionEvent = CloseConnectionEvent | MessageConnectionEvent;
+
+export type ConnectionSubscribeCallback = (event: ConnectionEvent) => void;
 
 export interface Connection {
     send(message: Message): Promise<void>;

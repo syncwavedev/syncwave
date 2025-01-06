@@ -318,7 +318,7 @@ describe('Doc', () => {
         it('should observe richtext', () => {
             const doc = Crdt.from({val: new Richtext()});
             const events: {delta: Delta; options: DiffOptions}[] = [];
-            const unsub = doc.observeRichtext(
+            const unsub = doc.observe(
                 x => x.val,
                 (delta, options) => events.push({delta, options})
             );

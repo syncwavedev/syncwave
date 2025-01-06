@@ -18,9 +18,9 @@ describe('MemConnection', () => {
         conn2['open'] = true;
 
         const messageHandler = vi.fn();
-        conn2.subscribe((...args) => {
-            if (args[0] === 'message') {
-                messageHandler(args[1]);
+        conn2.subscribe(event => {
+            if (event.type === 'message') {
+                messageHandler(event.message);
             }
         });
 
@@ -44,11 +44,11 @@ describe('MemConnection', () => {
         const messageHandler = vi.fn();
         const unsubscribe = conn1.subscribe(messageHandler);
 
-        conn1['subs'][0]('message', mockMessage);
-        expect(messageHandler).toHaveBeenCalledWith('message', mockMessage);
+        conn1['subs'][0]({type: 'message', message: mockMessage});
+        expect(messageHandler).toHaveBeenCalledWith({type: 'message', message: mockMessage});
 
         unsubscribe();
-        conn1['subs'][0]?.('message', mockMessage);
+        conn1['subs'][0]?.({type: 'message', message: mockMessage});
         expect(messageHandler).toHaveBeenCalledTimes(1);
     });
 
@@ -60,7 +60,7 @@ describe('MemConnection', () => {
         conn1.subscribe(closeHandler);
 
         await conn1.close();
-        expect(closeHandler).toHaveBeenCalledWith('close');
+        expect(closeHandler).toHaveBeenCalledWith({type: 'close'});
         expect(() => conn1['ensureOpen']()).toThrowError('connection is closed');
     });
 });

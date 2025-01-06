@@ -102,7 +102,7 @@ export class Crdt<T> {
         return () => this.doc.off('updateV2', fn);
     }
 
-    observeRichtext(selector: (value: T) => Richtext, cb: (delta: Delta, options: DiffOptions) => void): Unsubscribe {
+    observe(selector: (value: T) => Richtext, cb: (delta: Delta, options: DiffOptions) => void): Unsubscribe {
         const snapshot = this.snapshot();
         const locator = new Locator();
         locator.addDeep(snapshot, this.yValue);

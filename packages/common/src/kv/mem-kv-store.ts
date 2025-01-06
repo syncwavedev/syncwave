@@ -8,7 +8,7 @@ export class CursorClosedError extends Error {
     }
 }
 
-export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> {
+export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
     constructor(public tree: Tree<Uint8Array, Uint8Array>) {}
 
     async get(key: Uint8Array): Promise<Uint8Array | undefined> {
@@ -59,9 +59,9 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
 
 // this implementation handles one operation at a time because of the single store level lock
 // performance is suboptimal, so this store is intended for testing purposes only
-export class InMemoryKVStore implements KVStore<Uint8Array, Uint8Array> {
+export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
     private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
-    private locker = new InMemoryLocker();
+    private locker = new MemLocker();
 
     constructor() {}
 
@@ -70,7 +70,7 @@ export class InMemoryKVStore implements KVStore<Uint8Array, Uint8Array> {
             const retries = 10;
 
             for (let attempt = 0; attempt <= retries; attempt += 1) {
-                const txn = new InMemoryTransaction(this.tree);
+                const txn = new MemTransaction(this.tree);
                 try {
                     const result = await fn(txn);
 
@@ -89,7 +89,7 @@ export class InMemoryKVStore implements KVStore<Uint8Array, Uint8Array> {
     }
 }
 
-export class InMemoryLocker<TKey> {
+export class MemLocker<TKey> {
     private fnQueueMap: Map<TKey, Array<() => Promise<any>>> = new Map();
 
     async lock<TResult>(key: TKey, fn: () => Promise<TResult>): Promise<TResult> {

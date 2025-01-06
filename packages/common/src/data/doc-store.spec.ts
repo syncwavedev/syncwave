@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {IndexKey} from '../kv/data-index';
-import {InMemoryKVStore} from '../kv/in-memory-kv-store';
 import {Condition} from '../kv/kv-store';
+import {MemKVStore} from '../kv/mem-kv-store';
 import {createUuid, Uuid} from '../uuid';
 import {DocStore, IndexSpec, OnDocChange} from './doc-store';
 
@@ -19,11 +19,11 @@ const indexes: Record<string, IndexSpec<MyDoc>> = {
     byAge: doc => [doc.age],
 };
 
-describe('DocStore with InMemoryKeyValueStore', () => {
-    let store: InMemoryKVStore;
+describe('DocStore with MemKVStore', () => {
+    let store: MemKVStore;
 
     beforeEach(() => {
-        store = new InMemoryKVStore();
+        store = new MemKVStore();
     });
 
     it('should create and retrieve a document by ID', async () => {

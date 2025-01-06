@@ -4,7 +4,7 @@ import {unimplemented} from '../../utils';
 import {rpc, service} from './rpc';
 import {Connection, TransportServer} from './transport';
 
-export class Leader {
+export class Coordinator {
     constructor(
         private readonly transport: TransportServer,
         private readonly kv: Uint8KVStore
@@ -15,7 +15,7 @@ export class Leader {
     }
 }
 
-function createLeaderRpc() {
+function createCoordinatorRpc() {
     return service({
         getUser: rpc({
             schema: z.object({id: z.string()}),
@@ -24,12 +24,12 @@ function createLeaderRpc() {
     });
 }
 
-export type LeaderRpc = ReturnType<typeof createLeaderRpc>;
+export type CoordinatorRpc = ReturnType<typeof createCoordinatorRpc>;
 
-export class LeaderClient {
+export class CoordinatorClient {
     constructor(connection: Connection) {}
 
-    get rpc(): LeaderRpc {
+    get rpc(): CoordinatorRpc {
         return unimplemented();
     }
 }

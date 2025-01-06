@@ -1,5 +1,5 @@
 import {Encoder} from '../encoder';
-import {concatBuffers, unreachable} from '../utils';
+import {unreachable} from '../utils';
 import {MappedTransaction, Mapper} from './mapped-kv-store';
 import {PrefixedTransaction} from './prefixed-kv-store';
 
@@ -97,19 +97,6 @@ export function mapCondition<TKey, TResult>(
 }
 
 // utils
-
-function createPrefixMapper(prefix: Uint8Array | string): Mapper<Uint8Array, Uint8Array> {
-    const prefixBuf = typeof prefix === 'string' ? encodeString(prefix) : prefix;
-
-    return {
-        decode(key) {
-            return key.slice(prefixBuf.length);
-        },
-        encode(key) {
-            return concatBuffers(prefixBuf, key);
-        },
-    };
-}
 
 function createIdMapper<T>(): Mapper<T, T> {
     return {

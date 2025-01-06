@@ -1,13 +1,13 @@
 import {describe, expect, it} from 'vitest';
 import {Cell} from './cell';
-import {InMemoryKVStore} from './in-memory-kv-store';
 import {withPrefix} from './kv-store';
+import {MemKVStore} from './mem-kv-store';
 
 const initialValue = 42;
 
 describe('Cell', () => {
     it('should return the initial value if no value is set', async () => {
-        const store = new InMemoryKVStore();
+        const store = new MemKVStore();
 
         await store.transaction(async txn => {
             const cell = new Cell(txn, initialValue);
@@ -17,7 +17,7 @@ describe('Cell', () => {
     });
 
     it('should store and retrieve a value', async () => {
-        const store = new InMemoryKVStore();
+        const store = new MemKVStore();
 
         await store.transaction(async txn => {
             const cell = new Cell(txn, initialValue);
@@ -28,7 +28,7 @@ describe('Cell', () => {
     });
 
     it('should overwrite the value when put is called again', async () => {
-        const store = new InMemoryKVStore();
+        const store = new MemKVStore();
 
         await store.transaction(async txn => {
             const cell = new Cell(txn, initialValue);
@@ -40,7 +40,7 @@ describe('Cell', () => {
     });
 
     it('should persist the value across transactions', async () => {
-        const store = new InMemoryKVStore();
+        const store = new MemKVStore();
 
         await store.transaction(async txn => {
             const cell = new Cell(txn, initialValue);
@@ -55,7 +55,7 @@ describe('Cell', () => {
     });
 
     it('should handle multiple cells independently', async () => {
-        const store = new InMemoryKVStore();
+        const store = new MemKVStore();
 
         await store.transaction(async txn => {
             const cell1 = new Cell(withPrefix('1/')(txn), initialValue);
@@ -72,7 +72,7 @@ describe('Cell', () => {
     });
 
     it('should return undefined if a key is deleted', async () => {
-        const store = new InMemoryKVStore();
+        const store = new MemKVStore();
 
         await store.transaction(async txn => {
             const cell = new Cell(txn, initialValue);

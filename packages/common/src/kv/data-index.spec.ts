@@ -2,7 +2,7 @@ import {assert, describe, expect, it} from 'vitest';
 import {compareUint8Array, toArrayAsync} from '../utils';
 import {Uuid, createUuid} from '../uuid';
 import {KeyEncoder, createIndex} from './data-index';
-import {InMemoryKVStore} from './in-memory-kv-store';
+import {MemKVStore} from './mem-kv-store';
 
 interface TestUser {
     id: Uuid;
@@ -18,7 +18,7 @@ interface TestUser {
 const idSelector = (x: TestUser) => x.id;
 
 async function getTxn() {
-    const store = new InMemoryKVStore();
+    const store = new MemKVStore();
     const txn = await store.transaction(async x => x);
 
     return {store, txn};

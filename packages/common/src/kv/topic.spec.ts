@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {Encoder} from '../encoder';
-import {InMemoryKVStore} from './in-memory-kv-store';
+import {MemKVStore} from './mem-kv-store';
 import {Topic, TopicEntry} from './topic';
 
 const jsonEncoder: Encoder<any> = {
@@ -9,10 +9,10 @@ const jsonEncoder: Encoder<any> = {
 };
 
 describe('Topic', () => {
-    let store: InMemoryKVStore;
+    let store: MemKVStore;
 
     beforeEach(() => {
-        store = new InMemoryKVStore();
+        store = new MemKVStore();
     });
 
     it('should push data into the topic and retrieve it with the correct offsets', async () => {

@@ -1,6 +1,6 @@
 import {type Brand} from '../../utils';
 import {type Uuid} from '../../uuid';
-import {type LeaderRpc} from './leader';
+import {type CoordinatorRpc} from './coordinator';
 
 export type MessageId = Brand<Uuid, 'message_id'>;
 
@@ -11,11 +11,11 @@ export interface BaseMessage<TType extends string> {
 
 export interface RpcRequestMessage extends BaseMessage<'rpc_request'> {
     readonly payload: {
-        [K in keyof LeaderRpc]: {
+        [K in keyof CoordinatorRpc]: {
             name: K;
-            arg: Parameters<LeaderRpc[K]>[0];
+            arg: Parameters<CoordinatorRpc[K]>[0];
         };
-    }[keyof LeaderRpc];
+    }[keyof CoordinatorRpc];
 }
 
 export interface BaseRpcResponsePayload<TType extends string> {
@@ -24,8 +24,8 @@ export interface BaseRpcResponsePayload<TType extends string> {
 
 export interface SuccessRpcResponsePayload extends BaseRpcResponsePayload<'success'> {
     readonly result: {
-        [K in keyof LeaderRpc]: Awaited<ReturnType<LeaderRpc[K]>>;
-    }[keyof LeaderRpc];
+        [K in keyof CoordinatorRpc]: Awaited<ReturnType<CoordinatorRpc[K]>>;
+    }[keyof CoordinatorRpc];
 }
 
 export interface ErrorRpcResponsePayload extends BaseRpcResponsePayload<'error'> {

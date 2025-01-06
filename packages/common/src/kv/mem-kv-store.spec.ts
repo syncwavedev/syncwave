@@ -1,26 +1,26 @@
 import createTree from 'functional-red-black-tree';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {compareUint8Array, wait} from '../utils';
-import {InMemoryKVStore, InMemoryLocker, InMemoryTransaction} from './in-memory-kv-store'; // Adjust the path as needed
 import {Entry, InvalidQueryCondition} from './kv-store';
+import {MemKVStore, MemLocker, MemTransaction} from './mem-kv-store'; // Adjust the path as needed
 
 // Utility function to create Uint8Array from strings for testing
 const toUint8Array = str => new TextEncoder().encode(str);
 
-describe('InMemoryTransaction', () => {
+describe('MemTransaction', () => {
     let tree;
     let transaction;
 
     beforeEach(() => {
         tree = createTree(compareUint8Array);
-        transaction = new InMemoryTransaction(tree);
+        transaction = new MemTransaction(tree);
     });
 
     it('should retrieve an existing key', async () => {
         const key = toUint8Array('key1');
         const value = toUint8Array('value1');
         tree = tree.insert(key, value);
-        transaction = new InMemoryTransaction(tree);
+        transaction = new MemTransaction(tree);
 
         const result = await transaction.get(key);
         expect(result).toEqual(value);
@@ -138,11 +138,11 @@ describe('InMemoryTransaction', () => {
     });
 });
 
-describe('InMemoryKeyValueStore', () => {
+describe('MemKVStore', () => {
     let kvStore;
 
     beforeEach(() => {
-        kvStore = new InMemoryKVStore();
+        kvStore = new MemKVStore();
     });
 
     it('should execute a transaction and persist changes', async () => {
@@ -218,11 +218,11 @@ describe('InMemoryKeyValueStore', () => {
     });
 });
 
-describe('InMemoryLocker', () => {
-    let locker: InMemoryLocker<string>;
+describe('MemLocker', () => {
+    let locker: MemLocker<string>;
 
     beforeEach(() => {
-        locker = new InMemoryLocker<string>();
+        locker = new MemLocker<string>();
     });
 
     it('executes a single lock correctly', async () => {

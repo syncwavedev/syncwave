@@ -2,7 +2,7 @@ import Delta from 'quill-delta';
 import {describe, expect, it, vi} from 'vitest';
 import {Richtext} from '../richtext';
 import {assert} from '../utils';
-import {Crdt} from './crdt';
+import {Crdt, DiffOptions} from './crdt';
 
 const createTestDocDiff = data => Crdt.from(data).state();
 
@@ -313,6 +313,35 @@ describe('Doc', () => {
                 x.val = 3;
             });
             expect(b.snapshot()).toEqual({val: 2});
+        });
+
+        it('should observe richtext', () => {
+            const doc = Crdt.from({val: new Richtext()});
+            const events: {delta: Delta; options: DiffOptions}[] = [];
+            const unsub = doc.observeRichtext(
+                x => x.val,
+                (delta, options) => events.push({delta, options})
+            );
+
+            doc.update(x => {
+                x.val.insert(0, '123');
+                x.val.format(0, 2, {bold: true});
+            });
+
+            doc.update(x => {
+                x.val.insert(1, 'break');
+            });
+
+            unsub();
+
+            doc.update(x => {
+                x.val.insert(2, 'never');
+            });
+
+            expect(events).toEqual([
+                {delta: new Delta().insert('12', {bold: true}).insert('3'), options: {origin: undefined}},
+                {delta: new Delta().retain(1).insert('break', {bold: true}), options: {origin: undefined}},
+            ]);
         });
     });
 

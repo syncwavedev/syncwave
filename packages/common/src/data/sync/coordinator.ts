@@ -8,9 +8,15 @@ export class Coordinator {
     constructor(
         private readonly transport: TransportServer,
         private readonly kv: Uint8KVStore
-    ) {}
+    ) {
+        this.transport.launch(conn => this.handleConnection(conn));
+    }
 
-    launch(): Promise<void> {
+    close() {
+        this.transport.close();
+    }
+
+    private handleConnection(connection: Connection): void {
         unimplemented();
     }
 }

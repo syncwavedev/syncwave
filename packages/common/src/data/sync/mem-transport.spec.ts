@@ -61,7 +61,7 @@ describe('MemConnection', () => {
 
         await conn1.close();
         expect(closeHandler).toHaveBeenCalledWith('close');
-        expect(() => (conn1 as any).ensureOpen()).toThrowError('connection is closed');
+        expect(() => conn1['ensureOpen']()).toThrowError('connection is closed');
     });
 });
 
@@ -70,7 +70,7 @@ describe('MemTransportServer and MemTransportClient', () => {
         const server = new MemTransportServer();
 
         const connectionHandler = vi.fn();
-        server.listen(connectionHandler);
+        server.launch(connectionHandler);
 
         const client = new MemTransportClient(server);
         const clientConnection = await client.connect();
@@ -90,7 +90,7 @@ describe('MemTransportServer and MemTransportClient', () => {
         const server = new MemTransportServer();
 
         const connectionHandler = vi.fn();
-        const unsubscribe = server.listen(connectionHandler);
+        const unsubscribe = server.launch(connectionHandler);
 
         const mockConnection = {};
         server.accept(mockConnection as MemConnection);
@@ -104,7 +104,7 @@ describe('MemTransportServer and MemTransportClient', () => {
         const server = new MemTransportServer();
 
         const connectionHandler = vi.fn();
-        server.listen(connectionHandler);
+        server.launch(connectionHandler);
 
         await server.close();
 

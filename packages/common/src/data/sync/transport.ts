@@ -2,8 +2,8 @@ import {Unsubscribe} from '../../utils';
 import {Message} from './message';
 
 export interface TransportServer {
-    listen(cb: (connection: Connection) => void): Unsubscribe;
-    close(): Promise<void>;
+    launch(cb: (connection: Connection) => void): void;
+    close(): void;
 }
 
 export interface TransportClient {

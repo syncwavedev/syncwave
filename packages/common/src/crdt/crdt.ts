@@ -1,5 +1,14 @@
 import Delta from 'quill-delta';
-import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
+import {
+    applyUpdateV2,
+    encodeStateAsUpdateV2,
+    Transaction,
+    Array as YArray,
+    Doc as YDoc,
+    Map as YMap,
+    Text as YText,
+    YTextEvent,
+} from 'yjs';
 import {Encoder} from '../encoder';
 import {Richtext} from '../richtext';
 import {assert, assertNever, Brand, Unsubscribe, zip} from '../utils';
@@ -91,6 +100,35 @@ export class Crdt<T> {
             next(state as CrdtDiff<T>, {origin: origin ?? undefined});
         this.doc.on('updateV2', fn);
         return () => this.doc.off('updateV2', fn);
+    }
+
+    observeRichtext(selector: (value: T) => Richtext, cb: (delta: Delta, options: DiffOptions) => void): Unsubscribe {
+        const snapshot = this.snapshot();
+        const locator = new Locator();
+        locator.addDeep(snapshot, this.yValue);
+        const yTarget: YValue = locator.locate(selector(snapshot));
+        if (
+            typeof yTarget === 'string' ||
+            typeof yTarget === 'boolean' ||
+            typeof yTarget === 'number' ||
+            yTarget === null ||
+            typeof yTarget === 'undefined'
+        ) {
+            throw new Error('cannot observe primitive value: ' + yTarget);
+        } else if (yTarget instanceof YArray) {
+            throw new Error('Array observation is not supported');
+        } else if (yTarget instanceof YMap) {
+            throw new Error('Map observation is not supported');
+        } else if (yTarget instanceof YText) {
+            const wrapper = (e: YTextEvent, t: Transaction) => {
+                cb(new Delta({ops: (e.delta as any) ?? []}), {origin: t.origin ?? undefined});
+            };
+            yTarget.observe(wrapper);
+
+            return () => yTarget.unobserve(wrapper);
+        } else {
+            assertNever(yTarget);
+        }
     }
 }
 

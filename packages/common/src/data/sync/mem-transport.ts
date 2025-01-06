@@ -88,7 +88,7 @@ export class MemTransportServer implements TransportServer {
         return new MemTransportClient(this);
     }
 
-    listen(cb: (connection: Connection) => void): Unsubscribe {
+    launch(cb: (connection: Connection) => void): Unsubscribe {
         const wrapper = (conn: Connection) => cb(conn);
         this.subs.push(wrapper);
         return () => (this.subs = this.subs.filter(x => x !== wrapper));

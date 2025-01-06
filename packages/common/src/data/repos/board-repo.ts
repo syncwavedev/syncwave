@@ -1,6 +1,6 @@
 import {Brand} from '../../utils';
 import {Uuid} from '../../uuid';
-import {UserId} from './user-store';
+import {UserId} from './user-repo';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
 

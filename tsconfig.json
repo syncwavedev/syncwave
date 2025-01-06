@@ -1,31 +1,36 @@
 {
-  "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "build",
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    // it was often suggested that libraries compile without esModuleInterop,
-    // since its use in libraries could force users to adopt it too
-    "esModuleInterop": false,
-    "noErrorTruncation": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noImplicitAny": false,
-    "noEmitOnError": false,
-    "skipLibCheck": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "forceConsistentCasingInFileNames": true,
-    "allowSyntheticDefaultImports": true,
-    "lib": ["es2018"],
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "pretty": true,
-    "sourceMap": true,
-    "strict": true,
-    "target": "es2018"
-    // "noPropertyAccessFromIndexSignature": true,
-    // "noUncheckedIndexedAccess": true
-  },
-  "exclude": ["node_modules"]
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "build",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "strictFunctionTypes": true,
+        // it was often suggested that libraries compile without esModuleInterop,
+        // since its use in libraries could force users to adopt it too
+        "esModuleInterop": false,
+        "noErrorTruncation": true,
+        "declaration": true,
+        "declarationMap": true,
+        "noImplicitAny": false,
+        "noEmitOnError": false,
+        "skipLibCheck": true,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
+        "lib": [
+            "es2018"
+        ],
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitReturns": true,
+        "pretty": true,
+        "sourceMap": true,
+        "strict": true,
+        "target": "es2018"
+        // "noPropertyAccessFromIndexSignature": true,
+        // "noUncheckedIndexedAccess": true
+    },
+    "exclude": [
+        "node_modules"
+    ]
 }

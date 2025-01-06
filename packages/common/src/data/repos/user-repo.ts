@@ -11,7 +11,7 @@ export interface User {
     email: string;
 }
 
-export class UserStore {
+export class UserRepo {
     private readonly store: DocStore<User>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<User>) {

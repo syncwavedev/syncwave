@@ -2,6 +2,8 @@ import {AsyncStream} from './async-stream';
 
 export type Brand<T, B> = T & {__brand: B | undefined};
 
+export type Unsubscribe = () => void;
+
 export function assertNever(value: never): never {
     throw new Error('assertNever failed: ' + value);
 }

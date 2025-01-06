@@ -2,13 +2,11 @@ import Delta from 'quill-delta';
 import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
 import {Encoder} from '../encoder';
 import {Richtext} from '../richtext';
-import {assert, assertNever, Brand, zip} from '../utils';
+import {assert, assertNever, Brand, Unsubscribe, zip} from '../utils';
 import {Uuid} from '../uuid';
 import {observe, OpLog} from './observe';
 
 export type CrdtDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
-
-type Unsubscribe = () => void;
 
 const ROOT_KEY = 'root';
 const ROOT_VALUE = 'value';

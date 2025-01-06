@@ -328,9 +328,12 @@ describe('Doc', () => {
                 x.val.format(0, 2, {bold: true});
             });
 
-            doc.update(x => {
-                x.val.insert(1, 'break');
-            });
+            doc.update(
+                x => {
+                    x.val.insert(1, 'break');
+                },
+                {origin: 'test-origin'}
+            );
 
             unsub();
 
@@ -340,7 +343,7 @@ describe('Doc', () => {
 
             expect(events).toEqual([
                 {delta: new Delta().insert('12', {bold: true}).insert('3'), options: {origin: undefined}},
-                {delta: new Delta().retain(1).insert('break', {bold: true}), options: {origin: undefined}},
+                {delta: new Delta().retain(1).insert('break', {bold: true}), options: {origin: 'test-origin'}},
             ]);
         });
     });

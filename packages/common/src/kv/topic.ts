@@ -1,8 +1,8 @@
 import {Encoder} from '../encoder';
-import {Counter} from '../kv/counter';
-import {Transaction, Uint8Transaction, withKeyEncoder, withPrefix, withValueEncoder} from '../kv/kv-store';
-import {NumberEncoder} from '../kv/number-encoder';
 import {pipe} from '../utils';
+import {Counter} from './counter';
+import {Transaction, Uint8Transaction, withKeyEncoder, withPrefix, withValueEncoder} from './kv-store';
+import {NumberEncoder} from './number-encoder';
 
 export interface TopicEntry<T> {
     readonly offset: number;

@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {Encoder} from '../encoder';
-import {InMemoryKVStore} from '../kv/in-memory-kv-store';
+import {InMemoryKVStore} from './in-memory-kv-store';
 import {Topic, TopicEntry} from './topic';
 
 const jsonEncoder: Encoder<any> = {

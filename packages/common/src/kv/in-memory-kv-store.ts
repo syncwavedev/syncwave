@@ -15,10 +15,6 @@ export class InMemoryTransaction implements Transaction<Uint8Array, Uint8Array> 
         return this.tree.get(key) ?? undefined;
     }
 
-    log() {
-        console.log('all', this.tree.keys);
-    }
-
     async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         let iterator: Iterator<Uint8Array, Uint8Array>;
         let useNext;

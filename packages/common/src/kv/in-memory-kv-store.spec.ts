@@ -131,8 +131,6 @@ describe('InMemoryTransaction', () => {
             results.push(entry);
         }
 
-        transaction.log();
-
         expect(results).toEqual([
             {key: key2, value},
             {key: key1, value},

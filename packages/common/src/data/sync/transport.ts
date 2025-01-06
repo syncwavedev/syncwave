@@ -17,7 +17,7 @@ export interface BaseConnectionEvent<TType extends string> {
 export interface CloseConnectionEvent extends BaseConnectionEvent<'close'> {}
 
 export interface MessageConnectionEvent extends BaseConnectionEvent<'message'> {
-    readonly message: Message;
+    readonly msg: Message;
 }
 
 export type ConnectionEvent = CloseConnectionEvent | MessageConnectionEvent;

@@ -1,13 +1,13 @@
-import {TypeOf, ZodType} from 'zod';
+import {TypeOf, ZodObject} from 'zod';
 
 interface Rpc<TRequest, TResponse> {
     (request: TRequest): Promise<TResponse>;
     ['~guard']: 'use rpc({...}) function instead';
 }
 
-interface RpcOptions<TType extends ZodType<any, any, any>, TResponse> {
+interface RpcOptions<TType extends ZodObject<any, any, any>, TResponse> {
     schema: TType;
-    handle: (request: TypeOf<TType>) => Promise<TResponse>;
+    handle: (request: TypeOf<TType>) => PromiseLike<TResponse> | TResponse;
 }
 
 export function service<T extends Record<string, Rpc<any, any>>>(
@@ -16,7 +16,7 @@ export function service<T extends Record<string, Rpc<any, any>>>(
     return def as any;
 }
 
-export function rpc<TType extends ZodType, TResponse>(
+export function rpc<TType extends ZodObject<any, any, any>, TResponse>(
     options: RpcOptions<TType, TResponse>
 ): Rpc<TypeOf<TType>, TResponse> {
     return (async (request: TypeOf<TType>) => {

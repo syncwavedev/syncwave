@@ -13,7 +13,7 @@ export interface BaseMessage<TType extends string> {
     readonly id: MessageId;
 }
 
-export interface RpcRequestMessage extends BaseMessage<'rpc_request'> {
+export interface RpcRequestMessage extends BaseMessage<'req'> {
     readonly payload: {
         [K in keyof CoordinatorRpc]: {
             name: K;
@@ -38,15 +38,15 @@ export interface ErrorRpcResponsePayload extends BaseRpcResponsePayload<'error'>
 
 export type RpcResponsePayload = SuccessRpcResponsePayload | ErrorRpcResponsePayload;
 
-export interface RpcResponseMessage extends BaseMessage<'rpc_response'> {
-    readonly responseFor: MessageId;
+export interface RpcResponseMessage extends BaseMessage<'res'> {
+    readonly reqId: MessageId;
     readonly payload: RpcResponsePayload;
 }
 
 export interface PingMessage extends BaseMessage<'ping'> {}
 
 export interface PongMessage extends BaseMessage<'pong'> {
-    readonly replyFor: MessageId;
+    readonly pingId: MessageId;
 }
 
 export type Message = RpcRequestMessage | RpcResponseMessage | PingMessage | PongMessage;

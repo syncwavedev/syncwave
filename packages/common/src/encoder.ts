@@ -1,9 +1,23 @@
-import {decode, encode} from 'msgpackr';
+import {addExtension, decode, encode} from 'msgpackr';
+import {Uuid, UuidEncoder} from './uuid';
 
 export interface Encoder<TData> {
     encode(data: TData): Uint8Array;
     decode(buf: Uint8Array): TData;
 }
+
+const uuidEncoder = new UuidEncoder();
+
+addExtension({
+    Class: Uuid,
+    type: 1,
+    write(instance: Uuid) {
+        return uuidEncoder.encode(instance);
+    },
+    read(data: Uint8Array) {
+        return uuidEncoder.decode(data);
+    },
+});
 
 export class MsgpackrEncoder implements Encoder<any> {
     encode(data: any): Uint8Array {

@@ -159,7 +159,6 @@ export function createIndex<TValue>({txn, idSelector, keySelector, unique}: Inde
  * - undefined
  */
 
-const uuidSerializer = new UuidEncoder();
 export type IndexKeyPart = null | boolean | number | string | Uuid | Uint8Array | undefined;
 
 export type IndexKey = readonly IndexKeyPart[];
@@ -201,10 +200,12 @@ export function compareIndexKeyPart(a: IndexKeyPart, b: IndexKeyPart): 1 | 0 | -
 }
 
 export class KeyEncoder implements Encoder<IndexKey> {
+    uuidEncoder = new UuidEncoder();
+
     encode(data: IndexKey): Uint8Array {
         const key = data.map(part => {
             if (part instanceof Uuid) {
-                return [1, Buffer.from(uuidSerializer.encode(part))];
+                return [1, Buffer.from(this.uuidEncoder.encode(part))];
             } else if (part instanceof Uint8Array) {
                 return Buffer.from(part);
             } else {
@@ -219,7 +220,7 @@ export class KeyEncoder implements Encoder<IndexKey> {
 
         return key.map(part => {
             if (Array.isArray(part)) {
-                return uuidSerializer.decode(part[1]);
+                return this.uuidEncoder.decode(part[1]);
             } else if (part instanceof Buffer) {
                 return new Uint8Array(part);
             } else {
@@ -228,5 +229,3 @@ export class KeyEncoder implements Encoder<IndexKey> {
         });
     }
 }
-
-const keySer = new KeyEncoder();

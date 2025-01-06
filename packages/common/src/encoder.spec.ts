@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {MsgpackrEncoder, StringEncoder} from './encoder';
+import {Uuid, createUuid} from './uuid';
 
 const testData = [
     {input: null, description: 'null value'},
@@ -14,6 +15,7 @@ const testData = [
     {input: {nested: {key: 'value'}}, description: 'nested object'},
     {input: [true, null, {key: 42}], description: 'mixed array'},
     {input: Buffer.from('buffer data'), description: 'Buffer object'},
+    {input: Buffer.from('buffer data'), description: 'Buffer object'},
 ];
 
 describe('MsgpackrEncoder', () => {
@@ -27,6 +29,15 @@ describe('MsgpackrEncoder', () => {
                 expect(decoded).toEqual(input);
                 expect(encoded).toBeInstanceOf(Uint8Array);
             });
+        });
+
+        it('uuid', () => {
+            const uuid = createUuid();
+            const encoded = encoder.encode({uuid});
+            const {uuid: result} = encoder.decode(encoded);
+
+            expect(result).instanceOf(Uuid);
+            expect(result).toEqual(uuid);
         });
     });
 

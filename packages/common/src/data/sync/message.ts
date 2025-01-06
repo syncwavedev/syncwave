@@ -1,8 +1,12 @@
 import {type Brand} from '../../utils';
-import {type Uuid} from '../../uuid';
+import {createUuid, type Uuid} from '../../uuid';
 import {type CoordinatorRpc} from './coordinator';
 
 export type MessageId = Brand<Uuid, 'message_id'>;
+
+export function createMessageId(): MessageId {
+    return createUuid() as MessageId;
+}
 
 export interface BaseMessage<TType extends string> {
     readonly type: TType;

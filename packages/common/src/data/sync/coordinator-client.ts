@@ -1,4 +1,4 @@
-import {type CoordinatorRpc} from './coordinator';
+import {type CoordinatorApi} from './coordinator';
 import {createRpcClient} from './rpc';
 import {Connection} from './transport';
 
@@ -7,11 +7,11 @@ export class CoordinatorClient {
 
     constructor(private readonly connection: Connection) {}
 
-    setToken(token: string) {
+    setAuthToken(token: string) {
         this.token = token;
     }
 
-    get rpc(): CoordinatorRpc {
+    get rpc(): CoordinatorApi {
         return createRpcClient(this.connection, () => ({auth: this.token}));
     }
 }

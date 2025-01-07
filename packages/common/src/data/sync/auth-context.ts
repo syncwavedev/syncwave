@@ -8,7 +8,11 @@ export interface AuthContext {
 }
 
 export class AuthContextParser {
-    private readonly authContextCache = new LRUCache<string, AuthContext>({max: 1024});
+    private readonly authContextCache: LRUCache<string, AuthContext>;
+
+    constructor(cacheSize: number) {
+        this.authContextCache = new LRUCache<string, AuthContext>({max: cacheSize});
+    }
 
     parse(ctx: TransactionContext, jwtToken: string | undefined): AuthContext {
         if (typeof jwtToken === 'string') {

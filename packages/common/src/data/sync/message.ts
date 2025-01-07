@@ -1,6 +1,6 @@
 import {type Brand} from '../../utils';
 import {createUuid, type Uuid} from '../../uuid';
-import {type CoordinatorRpc} from './coordinator';
+import {type CoordinatorApi} from './coordinator';
 
 export type MessageId = Brand<Uuid, 'message_id'>;
 
@@ -31,8 +31,8 @@ export interface BaseResponsePayload<TType extends string> {
 
 export interface SuccessResponsePayload extends BaseResponsePayload<'success'> {
     readonly result: {
-        [K in keyof CoordinatorRpc]: Awaited<ReturnType<CoordinatorRpc[K]>>;
-    }[keyof CoordinatorRpc];
+        [K in keyof CoordinatorApi]: Awaited<ReturnType<CoordinatorApi[K]>>;
+    }[keyof CoordinatorApi];
 }
 
 export interface ErrorResponsePayload extends BaseResponsePayload<'error'> {
@@ -46,10 +46,4 @@ export interface RpcResponseMessage extends BaseMessage<'response'> {
     readonly payload: ResponsePayload;
 }
 
-export interface PingMessage extends BaseMessage<'ping'> {}
-
-export interface PongMessage extends BaseMessage<'pong'> {
-    readonly pingId: MessageId;
-}
-
-export type Message = RequestMessage | RpcResponseMessage | PingMessage | PongMessage;
+export type Message = RequestMessage | RpcResponseMessage;

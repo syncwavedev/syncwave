@@ -2,12 +2,14 @@ import {TypeOf, ZodObject} from 'zod';
 import {RPC_TIMEOUT_MS} from '../../constants';
 import {Deferred} from '../../deferred';
 import {assertNever, wait} from '../../utils';
-import {MessageHeaders, createMessageId} from './message';
+import {DataLayer, TransactionContext} from '../data-layer';
+import {AuthContext, AuthContextParser} from './auth-context';
+import {Message, MessageHeaders, RequestMessage, createMessageId} from './message';
 import {Connection} from './transport';
 
-interface Rpc<TRequest, TResponse> {
+export interface Handler<TRequest, TResponse> {
     (request: TRequest): Promise<TResponse>;
-    ['~guard']: 'use rpc({...}) function instead';
+    ['~guard']: 'use handler({...}) function instead';
 }
 
 interface RpcOptions<TType extends ZodObject<any, any, any>, TResponse> {
@@ -15,19 +17,19 @@ interface RpcOptions<TType extends ZodObject<any, any, any>, TResponse> {
     handle: (request: TypeOf<TType>) => PromiseLike<TResponse>;
 }
 
-export function service<T extends Record<string, Rpc<any, any>>>(
-    def: T
-): {[K in keyof T]: (...args: Parameters<T[K]>) => ReturnType<T[K]>} {
-    return def as any;
+export type Api = Record<string, Handler<any, any>>;
+
+export function createApi<T extends Api>(def: T): T {
+    return def;
 }
 
-export function rpc<TType extends ZodObject<any, any, any>, TResponse>(
+export function handler<TType extends ZodObject<any, any, any>, TResponse>(
     options: RpcOptions<TType, TResponse>
-): Rpc<TypeOf<TType>, TResponse> {
+): Handler<TypeOf<TType>, TResponse> {
     return (async (request: TypeOf<TType>) => {
         request = options.schema.parse(request);
         return await options.handle(request);
-    }) as Rpc<TypeOf<TType>, TResponse>;
+    }) as Handler<TypeOf<TType>, TResponse>;
 }
 
 export class RpcError extends Error {
@@ -86,7 +88,7 @@ export function createRpcClient(connection: Connection, getHeaders: () => Messag
                         }
                     });
 
-                    connection.send({
+                    await connection.send({
                         id: requestId,
                         type: 'request',
                         headers: getHeaders(),
@@ -98,4 +100,69 @@ export function createRpcClient(connection: Connection, getHeaders: () => Messag
             },
         }
     );
+}
+
+export function setupRpcServer(
+    conn: Connection,
+    dataLayer: DataLayer,
+    createApi: (ctx: TransactionContext, authContext: AuthContext) => Api
+): void {
+    const authContextParser = new AuthContextParser(4);
+
+    conn.subscribe(async ev => {
+        if (ev.type === 'close') {
+            // nothing to do
+        } else if (ev.type === 'message') {
+            await handleMessage(ev.message);
+        } else {
+            assertNever(ev);
+        }
+    });
+
+    async function handleMessage(message: Message) {
+        if (message.type === 'request') {
+            await dataLayer.transaction(async ctx => {
+                await handleRequest(ctx, conn, message, authContextParser);
+            });
+        } else if (message.type === 'response') {
+            // nothing to do
+        } else {
+            assertNever(message);
+        }
+    }
+
+    async function handleRequest(
+        ctx: TransactionContext,
+        conn: Connection,
+        message: RequestMessage,
+        authContextParser: AuthContextParser
+    ) {
+        const authContext = authContextParser.parse(ctx, message.headers?.auth);
+        const server = createApi(ctx, authContext);
+
+        try {
+            const result = await server[message.payload.name](message.payload.arg as any);
+            await conn.send({
+                id: createMessageId(),
+                type: 'response',
+                requestId: message.id,
+                payload: {type: 'success', result},
+            });
+        } catch (err: any) {
+            console.error(err);
+
+            const errorMessage = typeof (err ?? {})['message'] === 'string' ? err['message'] : undefined;
+            const responseMessage = `${err?.constructor.name ?? '<null>'}: ${errorMessage ?? '<null>'}`;
+
+            await conn.send({
+                id: createMessageId(),
+                type: 'response',
+                requestId: message.id,
+                payload: {
+                    type: 'error',
+                    message: process.env.NODE_ENV === 'development' ? responseMessage : undefined,
+                },
+            });
+        }
+    }
 }

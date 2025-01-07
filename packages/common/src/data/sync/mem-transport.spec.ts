@@ -2,7 +2,7 @@ import {describe, expect, it, vi} from 'vitest';
 import {MemConnection, MemTransportClient, MemTransportServer} from './mem-transport';
 import {Message, createMessageId} from './message';
 
-const mockMessage: Message = {type: 'ping', id: createMessageId()};
+const mockMessage: Message = {type: 'request', id: createMessageId(), payload: {name: 'ping', arg: {}}};
 
 describe('MemConnection', () => {
     it('should create a pair of MemConnections', () => {

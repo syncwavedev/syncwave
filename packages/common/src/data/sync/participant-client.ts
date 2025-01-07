@@ -1,11 +1,11 @@
-import {type CoordinatorRpc} from './coordinator';
+import {type CoordinatorApi} from './coordinator';
 import {createRpcClient} from './rpc';
 import {Connection} from './transport';
 
 export class ParticipantClient {
     constructor(private readonly connection: Connection) {}
 
-    get rpc(): CoordinatorRpc {
+    get rpc(): CoordinatorApi {
         return createRpcClient(this.connection, () => ({}));
     }
 }

@@ -1,13 +1,14 @@
 import {z} from 'zod';
-import {rpc, service} from './rpc';
+import {createApi, handler} from './rpc';
+import {Connection} from './transport';
 
 export class Participant {
-    constructor() {}
+    constructor(private readonly connection: Connection) {}
 }
 
 function createParticipantRpc() {
-    return service({
-        echo: rpc({
+    return createApi({
+        echo: handler({
             schema: z.object({message: z.string()}),
             handle: async ({message}) => ({message}),
         }),

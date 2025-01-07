@@ -8,12 +8,17 @@ export function createMessageId(): MessageId {
     return createUuid() as MessageId;
 }
 
+export interface MessageHeaders {
+    readonly auth?: string;
+}
+
 export interface BaseMessage<TType extends string> {
     readonly type: TType;
     readonly id: MessageId;
+    readonly headers?: MessageHeaders;
 }
 
-export interface RpcRequestMessage extends BaseMessage<'req'> {
+export interface RequestMessage extends BaseMessage<'request'> {
     readonly payload: {
         [K in keyof CoordinatorRpc]: {
             name: K;
@@ -22,25 +27,25 @@ export interface RpcRequestMessage extends BaseMessage<'req'> {
     }[keyof CoordinatorRpc];
 }
 
-export interface BaseRpcResponsePayload<TType extends string> {
+export interface BaseResponsePayload<TType extends string> {
     readonly type: TType;
 }
 
-export interface SuccessRpcResponsePayload extends BaseRpcResponsePayload<'success'> {
+export interface SuccessResponsePayload extends BaseResponsePayload<'success'> {
     readonly result: {
         [K in keyof CoordinatorRpc]: Awaited<ReturnType<CoordinatorRpc[K]>>;
     }[keyof CoordinatorRpc];
 }
 
-export interface ErrorRpcResponsePayload extends BaseRpcResponsePayload<'error'> {
+export interface ErrorResponsePayload extends BaseResponsePayload<'error'> {
     readonly message?: string;
 }
 
-export type RpcResponsePayload = SuccessRpcResponsePayload | ErrorRpcResponsePayload;
+export type ResponsePayload = SuccessResponsePayload | ErrorResponsePayload;
 
-export interface RpcResponseMessage extends BaseMessage<'res'> {
-    readonly reqId: MessageId;
-    readonly payload: RpcResponsePayload;
+export interface RpcResponseMessage extends BaseMessage<'response'> {
+    readonly requestId: MessageId;
+    readonly payload: ResponsePayload;
 }
 
 export interface PingMessage extends BaseMessage<'ping'> {}
@@ -49,4 +54,4 @@ export interface PongMessage extends BaseMessage<'pong'> {
     readonly pingId: MessageId;
 }
 
-export type Message = RpcRequestMessage | RpcResponseMessage | PingMessage | PongMessage;
+export type Message = RequestMessage | RpcResponseMessage | PingMessage | PongMessage;

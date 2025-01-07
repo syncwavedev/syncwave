@@ -7,7 +7,7 @@ interface Rpc<TRequest, TResponse> {
 
 interface RpcOptions<TType extends ZodObject<any, any, any>, TResponse> {
     schema: TType;
-    handle: (request: TypeOf<TType>) => PromiseLike<TResponse> | TResponse;
+    handle: (request: TypeOf<TType>) => PromiseLike<TResponse>;
 }
 
 export function service<T extends Record<string, Rpc<any, any>>>(
@@ -23,4 +23,13 @@ export function rpc<TType extends ZodObject<any, any, any>, TResponse>(
         request = options.schema.parse(request);
         return await options.handle(request);
     }) as Rpc<TypeOf<TType>, TResponse>;
+}
+
+export class RpcError extends Error {
+    constructor(
+        public readonly code: string,
+        message?: string
+    ) {
+        super(message);
+    }
 }

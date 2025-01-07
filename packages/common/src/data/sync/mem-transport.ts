@@ -55,7 +55,7 @@ export class MemConnection implements Connection {
     private async receive(message: Message): Promise<void> {
         if (!this.open) return;
 
-        [...this.subs].forEach(cb => cb({type: 'message', msg: message}));
+        [...this.subs].forEach(cb => cb({type: 'message', message: message}));
     }
 
     private ensureOpen() {

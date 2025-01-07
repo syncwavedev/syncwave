@@ -2,11 +2,19 @@ import {CrdtDiff} from '../crdt/crdt';
 import {MsgpackrEncoder} from '../encoder';
 import {Uint8KVStore, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
+import {unimplemented} from '../utils';
+import {IdentityRepo} from './repos/id-repo';
 import {User, UserId, UserRepo} from './repos/user-repo';
+
+export interface Config {
+    readonly jwtSecret: string;
+}
 
 export interface TransactionContext {
     readonly users: UserRepo;
+    readonly identities: IdentityRepo;
     readonly userChangelog: TopicManager<UserChangeEntry>;
+    readonly config: Config;
 }
 
 export interface UserChangeEntry {
@@ -29,8 +37,16 @@ export class DataLayer {
             }
 
             const users = new UserRepo(withPrefix('users/')(txn), handleUserChange);
+            const identities = new IdentityRepo(withPrefix('identities/')(txn), () => Promise.resolve());
 
-            const result = await fn({users, userChangelog});
+            const result = await fn({
+                users,
+                identities,
+                userChangelog,
+                config: {
+                    jwtSecret: unimplemented(),
+                },
+            });
 
             return result;
         });

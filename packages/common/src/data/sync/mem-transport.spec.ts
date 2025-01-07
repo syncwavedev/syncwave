@@ -20,7 +20,7 @@ describe('MemConnection', () => {
         const messageHandler = vi.fn();
         conn2.subscribe(event => {
             if (event.type === 'message') {
-                messageHandler(event.msg);
+                messageHandler(event.message);
             }
         });
 
@@ -44,11 +44,11 @@ describe('MemConnection', () => {
         const messageHandler = vi.fn();
         const unsubscribe = conn1.subscribe(messageHandler);
 
-        conn1['subs'][0]({type: 'message', msg: mockMessage});
+        conn1['subs'][0]({type: 'message', message: mockMessage});
         expect(messageHandler).toHaveBeenCalledWith({type: 'message', message: mockMessage});
 
         unsubscribe();
-        conn1['subs'][0]?.({type: 'message', msg: mockMessage});
+        conn1['subs'][0]?.({type: 'message', message: mockMessage});
         expect(messageHandler).toHaveBeenCalledTimes(1);
     });
 

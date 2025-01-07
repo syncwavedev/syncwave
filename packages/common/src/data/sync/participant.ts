@@ -9,7 +9,7 @@ function createParticipantRpc() {
     return service({
         echo: rpc({
             schema: z.object({message: z.string()}),
-            handle: ({message}) => ({message}),
+            handle: async ({message}) => ({message}),
         }),
     });
 }

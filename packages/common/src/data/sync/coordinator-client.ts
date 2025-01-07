@@ -1,11 +1,17 @@
-import {unimplemented} from '../../utils';
 import {type CoordinatorRpc} from './coordinator';
+import {createRpcClient} from './rpc';
 import {Connection} from './transport';
 
 export class CoordinatorClient {
-    constructor(connection: Connection) {}
+    private token?: string;
+
+    constructor(private readonly connection: Connection) {}
+
+    setToken(token: string) {
+        this.token = token;
+    }
 
     get rpc(): CoordinatorRpc {
-        return unimplemented();
+        return createRpcClient(this.connection, () => ({auth: this.token}));
     }
 }

@@ -1,11 +1,11 @@
-import {unimplemented} from '../../utils';
-import {type ParticipantRpc} from './participant';
+import {type CoordinatorRpc} from './coordinator';
+import {createRpcClient} from './rpc';
 import {Connection} from './transport';
 
 export class ParticipantClient {
-    constructor(connection: Connection) {}
+    constructor(private readonly connection: Connection) {}
 
-    get rpc(): ParticipantRpc {
-        return unimplemented();
+    get rpc(): CoordinatorRpc {
+        return createRpcClient(this.connection, () => ({}));
     }
 }

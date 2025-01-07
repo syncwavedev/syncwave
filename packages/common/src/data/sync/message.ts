@@ -20,11 +20,9 @@ export interface BaseMessage<TType extends string> {
 
 export interface RequestMessage extends BaseMessage<'request'> {
     readonly payload: {
-        [K in keyof CoordinatorRpc]: {
-            name: K;
-            arg: Parameters<CoordinatorRpc[K]>[0];
-        };
-    }[keyof CoordinatorRpc];
+        name: string;
+        arg: any;
+    };
 }
 
 export interface BaseResponsePayload<TType extends string> {

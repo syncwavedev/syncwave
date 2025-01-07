@@ -2,6 +2,7 @@
 	import Home from './pages/Home.svelte';
 	import NewBoard from './pages/NewBoard.svelte';
 	import navigator from './lib/navigator.js';
+	import Board from './pages/Board.svelte';
 
 	let Page: any = $state(Home);
 	let params: any = $state({});
@@ -12,6 +13,9 @@
 		});
 		navigator.on('/boards/new', () => {
 			Page = NewBoard;
+		});
+		navigator.on('/boards/:id', () => {
+			Page = Board;
 		});
 		navigator.resolve();
 	});

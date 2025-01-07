@@ -17,10 +17,13 @@
 	--lch-always-black: 0% 0 0;
 	--lch-always-white: 100% 0 0;
 
+	/* Blue */
+	--lch-blue-300: 56.77% 0.2084 265.45;
+
 	/* Abstractions */
 	--color-bg: oklch(var(--lch-gray-100));
 
-	--color-border: oklch(var(--lch-gray-400));
+	--color-border: oklch(var(--lch-gray-300));
 
 	--color-ink: oklch(var(--lch-black));
 	--color-ink-muted: oklch(var(--lch-gray-500));
@@ -33,6 +36,8 @@
 
 	--color-always-black: oklch(var(--lch-always-black));
 	--color-always-white: oklch(var(--lch-always-white));
+
+	--color-primary: oklch(var(--lch-blue-300));
 
 	@media (prefers-color-scheme: dark) {
 		--lch-black: 100% 0 0;

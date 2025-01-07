@@ -9,9 +9,5 @@
 	stroke="currentColor"
 	class="icon"
 >
-	<path
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-	/>
+	<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
 </svg>

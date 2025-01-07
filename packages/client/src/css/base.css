@@ -34,8 +34,8 @@ body {
 
 hr {
 	border: 0;
+	margin: 0;
 	border-top: 1px solid var(--color-border);
-	margin: 1em 0;
 }
 
 .icon {

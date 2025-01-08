@@ -2,10 +2,15 @@ import {createHash} from 'crypto';
 import {sign} from 'jsonwebtoken';
 import {z} from 'zod';
 import {Uint8KVStore} from '../../kv/kv-store';
+import {unimplemented} from '../../utils';
+import {zUuid} from '../../uuid';
 import {DataLayer, TransactionContext} from '../data-layer';
+import {Db} from '../data-provider';
+import {BoardId} from '../repos/board-repo';
 import {IdentityId} from '../repos/id-repo';
+import {TaskId} from '../repos/task-repo';
 import {UserId} from '../repos/user-repo';
-import {AuthContext} from './auth-context';
+import {AuthContext, AuthContextParser} from './auth-context';
 import {createApi, handler, setupRpcServer} from './rpc';
 import {Connection, TransportServer} from './transport';
 
@@ -25,22 +30,57 @@ export class Coordinator {
     }
 
     private handleConnection(conn: Connection): void {
-        setupRpcServer(conn, this.dataLayer, createCoordinatorApi);
+        const authContextParser = new AuthContextParser(4);
+        setupRpcServer(conn, createCoordinatorApi, async (message, fn) => {
+            await this.dataLayer.transaction(async ctx => {
+                const auth = authContextParser.parse(ctx, message.headers?.auth);
+                await fn({ctx, auth});
+            });
+        });
     }
 }
 
-function createCoordinatorApi(ctx: TransactionContext, auth: AuthContext) {
-    return createApi({
-        me: handler({
+export interface BaseSignInResponse<TType extends string> {
+    readonly type: TType;
+}
+
+export interface SuccessSignInResponse extends BaseSignInResponse<'success'> {
+    readonly token: string;
+}
+
+export interface UserNotFoundSignInResponse extends BaseSignInResponse<'user_not_found'> {}
+
+export interface PasswordInvalidSignInResponse extends BaseSignInResponse<'password_invalid'> {}
+
+export type SignInResponse = SuccessSignInResponse | UserNotFoundSignInResponse | PasswordInvalidSignInResponse;
+
+function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthContext}) {
+    const dataProviderApi = createApi({
+        getMe: handler({
             schema: z.object({}),
-            handle: async ({}) => ({userId: auth.userId}),
+            handle: async () => unimplemented(),
         }),
+        getBoards: handler({
+            schema: z.object({userId: zUuid<UserId>()}),
+            handle: async ({userId}) => unimplemented(),
+        }),
+        getBoardTasks: handler({
+            schema: z.object({boardId: zUuid<BoardId>()}),
+            handle: async ({boardId}) => unimplemented(),
+        }),
+        getTask: handler({
+            schema: z.object({taskId: zUuid<TaskId>()}),
+            handle: async ({taskId}) => unimplemented(),
+        }),
+    } satisfies Db);
+
+    const authApi = createApi({
         signIn: handler({
             schema: z.object({
                 email: z.string(),
                 password: z.string(),
             }),
-            handle: async ({email, password}) => {
+            handle: async ({email, password}): Promise<SignInResponse> => {
                 const identity = await ctx.identities.getByEmail(email);
                 if (!identity) {
                     return {type: 'user_not_found' as const};
@@ -68,6 +108,11 @@ function createCoordinatorApi(ctx: TransactionContext, auth: AuthContext) {
             },
         }),
     });
+
+    return {
+        ...dataProviderApi,
+        ...authApi,
+    };
 }
 
 interface JwtPayload {

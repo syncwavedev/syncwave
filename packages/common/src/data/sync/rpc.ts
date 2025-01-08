@@ -2,8 +2,6 @@ import {TypeOf, ZodObject} from 'zod';
 import {RPC_TIMEOUT_MS} from '../../constants';
 import {Deferred} from '../../deferred';
 import {assertNever, wait} from '../../utils';
-import {DataLayer, TransactionContext} from '../data-layer';
-import {AuthContext, AuthContextParser} from './auth-context';
 import {Message, MessageHeaders, RequestMessage, createMessageId} from './message';
 import {Connection} from './transport';
 
@@ -14,7 +12,7 @@ export interface Handler<TRequest, TResponse> {
 
 interface RpcOptions<TType extends ZodObject<any, any, any>, TResponse> {
     schema: TType;
-    handle: (request: TypeOf<TType>) => PromiseLike<TResponse>;
+    handle: (request: TypeOf<TType>) => Promise<TResponse>;
 }
 
 export type Api = Record<string, Handler<any, any>>;
@@ -41,7 +39,7 @@ export class RpcError extends Error {
     }
 }
 
-export function createRpcClient(connection: Connection, getHeaders: () => MessageHeaders) {
+export function createRpcClient<T = any>(connection: Connection, getHeaders: () => MessageHeaders): T {
     return new Proxy<any>(
         {},
         {
@@ -102,13 +100,11 @@ export function createRpcClient(connection: Connection, getHeaders: () => Messag
     );
 }
 
-export function setupRpcServer(
+export function setupRpcServer<TState>(
     conn: Connection,
-    dataLayer: DataLayer,
-    createApi: (ctx: TransactionContext, authContext: AuthContext) => Api
+    createApi: (state: TState) => Api,
+    transact: (message: RequestMessage, fn: (state: TState) => Promise<void>) => Promise<void>
 ): void {
-    const authContextParser = new AuthContextParser(4);
-
     conn.subscribe(async ev => {
         if (ev.type === 'close') {
             // nothing to do
@@ -121,8 +117,8 @@ export function setupRpcServer(
 
     async function handleMessage(message: Message) {
         if (message.type === 'request') {
-            await dataLayer.transaction(async ctx => {
-                await handleRequest(ctx, conn, message, authContextParser);
+            await transact(message, async ctx => {
+                await handleRequest(ctx, conn, message);
             });
         } else if (message.type === 'response') {
             // nothing to do
@@ -131,14 +127,8 @@ export function setupRpcServer(
         }
     }
 
-    async function handleRequest(
-        ctx: TransactionContext,
-        conn: Connection,
-        message: RequestMessage,
-        authContextParser: AuthContextParser
-    ) {
-        const authContext = authContextParser.parse(ctx, message.headers?.auth);
-        const server = createApi(ctx, authContext);
+    async function handleRequest(txn: TState, conn: Connection, message: RequestMessage) {
+        const server = createApi(txn);
 
         try {
             const result = await server[message.payload.name](message.payload.arg as any);

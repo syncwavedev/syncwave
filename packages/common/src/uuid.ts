@@ -1,11 +1,18 @@
 import {inspect} from 'util';
-import {parse, stringify, v7} from 'uuid';
+import {parse, stringify, v7, validate} from 'uuid';
+import {z} from 'zod';
 import {Encoder} from './encoder';
+
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class Uuid {
     public readonly __type: 'uuid' = 'uuid';
 
-    constructor(private readonly uuid) {}
+    constructor(private readonly uuid: string) {
+        if (!validate(uuid)) {
+            throw new Error('invalid uuid: ' + uuid);
+        }
+    }
 
     toString() {
         return this.uuid;
@@ -36,6 +43,12 @@ export class Uuid {
             return 0;
         }
     }
+}
+
+export function zUuid<TBrand extends Uuid>() {
+    return z.custom<TBrand>(value => value instanceof Uuid, {
+        message: 'Invalid UUID format or incompatible with Uuid class',
+    });
 }
 
 export function createUuid(): Uuid {

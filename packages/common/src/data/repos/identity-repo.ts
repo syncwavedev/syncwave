@@ -17,6 +17,9 @@ export interface Identity extends Doc<IdentityId> {
     passwordHash: string;
 }
 
+const EMAIL_INDEX = 'email';
+const USER_ID_INDEX = 'userId';
+
 export class IdentityRepo {
     private readonly store: DocRepo<Identity>;
 
@@ -24,11 +27,11 @@ export class IdentityRepo {
         this.store = new DocRepo<Identity>({
             txn: withPrefix('d/')(txn),
             indexes: {
-                email: {
+                [EMAIL_INDEX]: {
                     key: x => [x.email],
                     unique: true,
                 },
-                userId: {
+                [USER_ID_INDEX]: {
                     key: x => [x.userId],
                     unique: true,
                 },
@@ -42,11 +45,11 @@ export class IdentityRepo {
     }
 
     getByEmail(email: string): Promise<Identity | undefined> {
-        return this.store.getUnique('email', [email]);
+        return this.store.getUnique(EMAIL_INDEX, [email]);
     }
 
     getByUserId(userId: UserId): Promise<Identity | undefined> {
-        return this.store.getUnique('userId', [userId]);
+        return this.store.getUnique(USER_ID_INDEX, [userId]);
     }
 
     create(user: Identity): Promise<void> {

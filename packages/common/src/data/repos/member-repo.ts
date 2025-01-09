@@ -18,6 +18,9 @@ export interface Member extends Doc<MemberId> {
     boardId: BoardId;
 }
 
+const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
+const BOARD_ID_INDEX = 'boardId';
+
 export class MemberRepo {
     private readonly store: DocRepo<Member>;
 
@@ -26,11 +29,11 @@ export class MemberRepo {
             txn: withPrefix('d/')(txn),
             onChange,
             indexes: {
-                userId_boardId: {
+                [USER_ID_BOARD_ID_INDEX]: {
                     key: x => [x.userId, x.boardId],
                     unique: true,
                 },
-                boardId: x => [x.boardId],
+                [BOARD_ID_INDEX]: x => [x.boardId],
             },
         });
     }
@@ -44,15 +47,15 @@ export class MemberRepo {
     }
 
     getByUserId(userId: UserId): AsyncStream<Member> {
-        return this.store.get('userId_boardId', [userId]);
+        return this.store.get(USER_ID_BOARD_ID_INDEX, [userId]);
     }
 
     getByBoardId(boardId: BoardId): AsyncStream<Member> {
-        return this.store.get('boardId', [boardId]);
+        return this.store.get(BOARD_ID_INDEX, [boardId]);
     }
 
     getByUserIdAndBoardId(userId: UserId, boardId: BoardId): Promise<Member | undefined> {
-        return this.store.getUnique('userId_boardId', [userId, boardId]);
+        return this.store.getUnique(USER_ID_BOARD_ID_INDEX, [userId, boardId]);
     }
 
     update(id: MemberId, recipe: Recipe<Member>): Promise<Member> {

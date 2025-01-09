@@ -1,7 +1,7 @@
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Brand} from '../../utils';
 import {Uuid, createUuid} from '../../uuid';
-import {DocStore, OnDocChange} from '../doc-store';
+import {DocRepo, OnDocChange} from '../doc-repo';
 import {UserId} from './user-repo';
 
 export type IdentityId = Brand<Uuid, 'identity_id'>;
@@ -19,10 +19,10 @@ export interface Identity {
 }
 
 export class IdentityRepo {
-    private readonly store: DocStore<Identity>;
+    private readonly store: DocRepo<Identity>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Identity>) {
-        this.store = new DocStore<Identity>({
+        this.store = new DocRepo<Identity>({
             txn: withPrefix('d/')(txn),
             indexes: {
                 email: {

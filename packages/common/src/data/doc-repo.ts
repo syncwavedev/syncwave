@@ -26,7 +26,7 @@ export interface DocStoreOptions<T extends Doc> {
     onChange: OnDocChange<T>;
 }
 
-export class DocStore<T extends Doc> {
+export class DocRepo<T extends Doc> {
     private readonly indexes: Map<string, Index<T>>;
     private readonly primary: Transaction<Uuid, Crdt<T>>;
     private readonly onChange: OnDocChange<T>;

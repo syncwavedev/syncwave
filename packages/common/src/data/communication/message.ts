@@ -1,6 +1,6 @@
 import {type Brand} from '../../utils';
 import {createUuid, type Uuid} from '../../uuid';
-import {type CoordinatorApi} from './coordinator';
+import {type CoordinatorApi} from '../coordinator';
 
 export type MessageId = Brand<Uuid, 'message_id'>;
 

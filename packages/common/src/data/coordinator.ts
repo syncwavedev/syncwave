@@ -1,18 +1,18 @@
 import {createHash} from 'crypto';
 import {sign} from 'jsonwebtoken';
 import {z} from 'zod';
-import {Uint8KVStore} from '../../kv/kv-store';
-import {unimplemented} from '../../utils';
-import {zUuid} from '../../uuid';
-import {DataLayer, TransactionContext} from '../data-layer';
-import {Db} from '../data-provider';
-import {BoardId} from '../repos/board-repo';
-import {IdentityId} from '../repos/id-repo';
-import {TaskId} from '../repos/task-repo';
-import {UserId} from '../repos/user-repo';
+import {Uint8KVStore} from '../kv/kv-store';
+import {unimplemented} from '../utils';
+import {zUuid} from '../uuid';
 import {AuthContext, AuthContextParser} from './auth-context';
-import {createApi, handler, setupRpcServer} from './rpc';
-import {Connection, TransportServer} from './transport';
+import {createApi, handler, setupRpcServer} from './communication/rpc';
+import {Connection, TransportServer} from './communication/transport';
+import {DataLayer, TransactionContext} from './data-layer';
+import {DataAccessor, Db} from './db';
+import {BoardId} from './repos/board-repo';
+import {IdentityId} from './repos/identity-repo';
+import {TaskId} from './repos/task-repo';
+import {UserId} from './repos/user-repo';
 
 export class Coordinator {
     private readonly dataLayer: DataLayer;
@@ -55,24 +55,26 @@ export interface PasswordInvalidSignInResponse extends BaseSignInResponse<'passw
 export type SignInResponse = SuccessSignInResponse | UserNotFoundSignInResponse | PasswordInvalidSignInResponse;
 
 function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthContext}) {
-    const dataProviderApi = createApi({
+    const db: Db = unimplemented();
+
+    const dbApi = createApi({
         getMe: handler({
             schema: z.object({}),
-            handle: async () => unimplemented(),
+            handle: db.getMe.bind(db),
         }),
         getBoards: handler({
             schema: z.object({userId: zUuid<UserId>()}),
-            handle: async ({userId}) => unimplemented(),
+            handle: db.getBoards.bind(db),
         }),
         getBoardTasks: handler({
             schema: z.object({boardId: zUuid<BoardId>()}),
-            handle: async ({boardId}) => unimplemented(),
+            handle: db.getBoardTasks.bind(db),
         }),
         getTask: handler({
             schema: z.object({taskId: zUuid<TaskId>()}),
-            handle: async ({taskId}) => unimplemented(),
+            handle: db.getTask.bind(db),
         }),
-    } satisfies Db);
+    } satisfies DataAccessor);
 
     const authApi = createApi({
         signIn: handler({
@@ -110,7 +112,7 @@ function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthC
     });
 
     return {
-        ...dataProviderApi,
+        ...dbApi,
         ...authApi,
     };
 }

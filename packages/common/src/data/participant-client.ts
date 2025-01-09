@@ -1,6 +1,6 @@
+import {createRpcClient} from './communication/rpc';
+import {Connection} from './communication/transport';
 import {type CoordinatorApi} from './coordinator';
-import {createRpcClient} from './rpc';
-import {Connection} from './transport';
 
 export class ParticipantClient {
     constructor(private readonly connection: Connection) {}

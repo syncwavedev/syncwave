@@ -3,7 +3,7 @@ import {MsgpackrEncoder} from '../encoder';
 import {Uint8KVStore, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
 import {unimplemented} from '../utils';
-import {IdentityRepo} from './repos/id-repo';
+import {IdentityRepo} from './repos/identity-repo';
 import {User, UserId, UserRepo} from './repos/user-repo';
 
 export interface Config {

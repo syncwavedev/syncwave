@@ -1,12 +1,15 @@
-import {AsyncStream} from '../async-stream';
+import {astream, AsyncStream} from '../async-stream';
 import {Crdt, CrdtDiff, CrdtEncoder} from '../crdt/crdt';
-import {Index, IndexKey, createIndex} from '../kv/data-index';
+import {createIndex, Index, IndexKey} from '../kv/data-index';
 import {Condition, Transaction, Uint8Transaction, withKeyEncoder, withPrefix, withValueEncoder} from '../kv/kv-store';
-import {assert, mapStream, pipe} from '../utils';
+import {getNow, Timestamp} from '../timestamp';
+import {pipe} from '../utils';
 import {Uuid, UuidEncoder} from '../uuid';
 
-export interface Doc {
-    id: Uuid;
+export interface Doc<TId extends Uuid = Uuid> {
+    id: TId;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
 }
 
 export type IndexSpec<T> =
@@ -25,6 +28,8 @@ export interface DocStoreOptions<T extends Doc> {
     indexes?: IndexMap<T>;
     onChange: OnDocChange<T>;
 }
+
+export type Recipe<T> = (doc: T) => T | void;
 
 export class DocRepo<T extends Doc> {
     private readonly indexes: Map<string, Index<T>>;
@@ -63,14 +68,14 @@ export class DocRepo<T extends Doc> {
         return doc?.snapshot();
     }
 
-    get(indexName: string, key: IndexKey): AsyncIterable<T> {
+    get(indexName: string, key: IndexKey): AsyncStream<T> {
         const index = this._index(indexName);
         return this._mapToDocs(index.get(key));
     }
 
     async getUnique(indexName: string, key: IndexKey): Promise<T | undefined> {
         const index = this._index(indexName);
-        const ids = await new AsyncStream(index.get(key)).take(2).toArray();
+        const ids = await astream(index.get(key)).take(2).toArray();
         if (ids.length > 1) {
             throw new Error(`index ${indexName} contains multiple docs for the key: ${key}`);
         } else if (ids.length === 1) {
@@ -80,20 +85,29 @@ export class DocRepo<T extends Doc> {
         }
     }
 
-    query(indexName: string, condition: Condition<IndexKey>): AsyncIterable<T> {
+    query(indexName: string, condition: Condition<IndexKey>): AsyncStream<T> {
         const index = this._index(indexName);
 
         return this._mapToDocs(index.query(condition));
     }
 
-    async update(id: Uuid, recipe: (doc: T) => T | void): Promise<T> {
+    async update(id: Uuid, recipe: Recipe<T>): Promise<T> {
         const doc = await this.primary.get(id);
         if (!doc) {
             throw new Error('doc not found: ' + id);
         }
 
         const prev = doc.snapshot();
-        const diff = doc.update(recipe);
+        const diff = doc.update(draft => {
+            const result = recipe(draft);
+            if (result) {
+                result.updatedAt = getNow();
+            } else {
+                draft.updatedAt = getNow();
+            }
+
+            return result;
+        });
         if (!diff) {
             // no change were made to the document
             return prev;
@@ -111,7 +125,8 @@ export class DocRepo<T extends Doc> {
             throw new Error(`doc ${doc.id} already exists`);
         }
 
-        const crdt = Crdt.from(doc);
+        const now = getNow();
+        const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
         await Promise.all([this.primary.put(doc.id, crdt), this._sync(doc.id, undefined, doc, crdt.state())]);
     }
 
@@ -127,11 +142,10 @@ export class DocRepo<T extends Doc> {
         await Promise.all([...[...this.indexes.values()].map(x => x.sync(prev, next)), this.onChange(id, diff)]);
     }
 
-    private async *_mapToDocs(ids: AsyncIterable<Uuid>): AsyncIterable<T> {
-        const docs = mapStream(ids, batchIds => Promise.all(batchIds.map(id => this.primary.get(id))), 64);
-        for await (const doc of docs) {
-            assert(doc !== undefined);
-            yield doc.snapshot();
-        }
+    private _mapToDocs(ids: AsyncIterable<Uuid>): AsyncStream<T> {
+        return astream(ids)
+            .map(id => this.primary.get(id))
+            .assert(x => x !== undefined)
+            .map(doc => doc.snapshot());
     }
 }

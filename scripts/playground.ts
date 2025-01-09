@@ -1,25 +1,14 @@
-import {Doc, Richtext, object, richtext, string} from 'ground-common';
+import {pushable} from 'it-pushable';
 
-debugger;
+const source = pushable({objectMode: true});
 
-const schema = object({
-    title: [1, string()],
-    description: [2, richtext()],
-});
+setTimeout(() => source.push('hello'), 100);
+setTimeout(() => source.push('world'), 200);
+setTimeout(() => source.end(), 300);
 
-const a = Doc.create(schema, {title: '', description: new Richtext()});
+const start = Date.now();
 
-console.log(a.snapshot());
-
-// const b = Doc.create(schema, {title: '', description: new Richtext()});
-
-// a.subscribe((diff, tag) => {
-//     if (tag !== 'sync') {
-//         b.apply(diff, {tag: 'sync'});
-//     }
-// });
-// b.subscribe((diff, tag) => {
-//     if (tag !== 'sync') {
-//         a.apply(diff, {tag: 'sync'});
-//     }
-// });
+for await (const value of source) {
+    console.log(`got "${value}" after ${Date.now() - start}ms`);
+}
+console.log(`done after ${Date.now() - start}ms`);

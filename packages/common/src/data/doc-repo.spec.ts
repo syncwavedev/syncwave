@@ -1,13 +1,13 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-import {IndexKey} from '../../kv/data-index';
-import {Condition} from '../../kv/kv-store';
-import {MemKVStore} from '../../kv/mem-kv-store';
-import {createUuid, Uuid} from '../../uuid';
-import {DocRepo, IndexSpec, OnDocChange} from '../doc-repo';
+import {IndexKey} from '../kv/data-index';
+import {Condition} from '../kv/kv-store';
+import {MemKVStore} from '../kv/mem-kv-store';
+import {getNow} from '../timestamp';
+import {createUuid, Uuid} from '../uuid';
+import {Doc, DocRepo, IndexSpec, OnDocChange} from './doc-repo';
 
-interface MyDoc {
-    id: Uuid;
+interface MyDoc extends Doc<Uuid> {
     name: string;
     age: number;
 }
@@ -21,6 +21,7 @@ const indexes: Record<string, IndexSpec<MyDoc>> = {
 
 describe('DocStore with MemKVStore', () => {
     let store: MemKVStore;
+    const now = getNow();
 
     beforeEach(() => {
         store = new MemKVStore();
@@ -32,6 +33,8 @@ describe('DocStore with MemKVStore', () => {
             id,
             name: 'Alice',
             age: 30,
+            createdAt: now,
+            updatedAt: now,
         };
 
         let repo: DocRepo<MyDoc> | undefined;
@@ -57,14 +60,16 @@ describe('DocStore with MemKVStore', () => {
             return repo2.getById(id);
         });
 
-        expect(retrieved).toEqual(doc);
+        expect(retrieved).toEqual({...doc, createdAt: expect.any(Number), updatedAt: expect.any(Number)});
+        expect(retrieved?.updatedAt).toBeGreaterThan(doc.updatedAt);
+        expect(retrieved?.updatedAt).toEqual(retrieved?.createdAt);
         // Make sure onChange was called exactly once (on create)
         expect(onChange).toHaveBeenCalledTimes(1);
     });
 
     it('should throw an error if creating a doc with an existing ID', async () => {
         const id = createUuid();
-        const doc: MyDoc = {id, name: 'Bob', age: 22};
+        const doc: MyDoc = {id, name: 'Bob', age: 22, createdAt: now, updatedAt: now};
 
         await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({
@@ -90,7 +95,7 @@ describe('DocStore with MemKVStore', () => {
 
     it('should update a document', async () => {
         const id = createUuid();
-        const doc: MyDoc = {id, name: 'Charlie', age: 40};
+        const doc: MyDoc = {id, name: 'Charlie', age: 40, createdAt: now, updatedAt: now};
         let repo: DocRepo<MyDoc> | undefined;
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
@@ -128,9 +133,9 @@ describe('DocStore with MemKVStore', () => {
         // Insert multiple docs
         await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({txn, indexes, onChange});
-            await repo.create({id: createUuid(), name: 'Dana', age: 20});
-            await repo.create({id: createUuid(), name: 'Dana', age: 25}); // same name
-            await repo.create({id: createUuid(), name: 'Eli', age: 25});
+            await repo.create({id: createUuid(), name: 'Dana', age: 20, createdAt: now, updatedAt: now});
+            await repo.create({id: createUuid(), name: 'Dana', age: 25, createdAt: now, updatedAt: now}); // same name
+            await repo.create({id: createUuid(), name: 'Eli', age: 25, createdAt: now, updatedAt: now});
         });
 
         // Use the "byName" index
@@ -164,11 +169,11 @@ describe('DocStore with MemKVStore', () => {
 
         await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({txn, indexes, onChange});
-            await repo.create({id: createUuid(), name: 'Fiona', age: 10});
-            await repo.create({id: createUuid(), name: 'Gabe', age: 15});
-            await repo.create({id: createUuid(), name: 'Hank', age: 20});
-            await repo.create({id: createUuid(), name: 'Iris', age: 25});
-            await repo.create({id: createUuid(), name: 'Jake', age: 30});
+            await repo.create({id: createUuid(), name: 'Fiona', age: 10, createdAt: now, updatedAt: now});
+            await repo.create({id: createUuid(), name: 'Gabe', age: 15, createdAt: now, updatedAt: now});
+            await repo.create({id: createUuid(), name: 'Hank', age: 20, createdAt: now, updatedAt: now});
+            await repo.create({id: createUuid(), name: 'Iris', age: 25, createdAt: now, updatedAt: now});
+            await repo.create({id: createUuid(), name: 'Jake', age: 30, createdAt: now, updatedAt: now});
         });
 
         // Suppose we want to find docs whose "byAge" index is >= 15 and <= 25
@@ -210,8 +215,8 @@ describe('DocStore with MemKVStore', () => {
         let repo: DocRepo<MyDoc>;
         await store.transaction(async txn => {
             repo = new DocRepo<MyDoc>({txn, indexes, onChange});
-            await repo.create({id: createUuid(), name: 'Zed', age: 55});
-            await repo.create({id: createUuid(), name: 'Zed', age: 60});
+            await repo.create({id: createUuid(), name: 'Zed', age: 55, createdAt: now, updatedAt: now});
+            await repo.create({id: createUuid(), name: 'Zed', age: 60, createdAt: now, updatedAt: now});
         });
 
         // getUnique on 'byName' with 'Zed'
@@ -267,7 +272,7 @@ describe('DocStore with MemKVStore', () => {
         const onChange = vi.fn();
 
         // 1) CREATE
-        const createdDoc: MyDoc = {id: createUuid(), name: 'Alpha', age: 1};
+        const createdDoc: MyDoc = {id: createUuid(), name: 'Alpha', age: 1, createdAt: now, updatedAt: now};
         await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({txn, indexes, onChange});
             await repo.create(createdDoc);

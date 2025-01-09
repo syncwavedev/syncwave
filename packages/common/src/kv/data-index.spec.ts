@@ -1,5 +1,6 @@
 import {assert, describe, expect, it} from 'vitest';
-import {compareUint8Array, toArrayAsync} from '../utils';
+import {astream} from '../async-stream';
+import {compareUint8Array} from '../utils';
 import {Uuid, createUuid} from '../uuid';
 import {KeyEncoder, createIndex} from './data-index';
 import {MemKVStore} from './mem-kv-store';
@@ -40,20 +41,20 @@ describe('data-index', async () => {
         await houseIndex.sync(undefined, {id: id2, houseId: createUuid()});
         await houseIndex.sync(undefined, {id: id3});
 
-        expect(await toArrayAsync(houseIndex.query({gte: [null]}))).toEqual([id1, id2, id3]);
-        expect(await toArrayAsync(houseIndex.get([null]))).toEqual([id1]);
+        expect(await astream(houseIndex.query({gte: [null]})).toArray()).toEqual([id1, id2, id3]);
+        expect(await astream(houseIndex.get([null])).toArray()).toEqual([id1]);
 
         await houseIndex.sync({id: id1, houseId: null}, {id: id1});
 
         // houseId is undefined, so id1 goes after id2
-        expect(await toArrayAsync(houseIndex.query({gte: [null]}))).toEqual([id2, id1, id3]);
-        expect(await toArrayAsync(houseIndex.get([null]))).toEqual([]);
+        expect(await astream(houseIndex.query({gte: [null]})).toArray()).toEqual([id2, id1, id3]);
+        expect(await astream(houseIndex.get([null])).toArray()).toEqual([]);
 
         await houseIndex.sync({id: id1}, {id: id1, houseId: null});
         await houseIndex.sync({id: id3}, undefined);
 
-        expect(await toArrayAsync(houseIndex.query({gte: [null]}))).toEqual([id1, id2]);
-        expect(await toArrayAsync(houseIndex.get([null]))).toEqual([id1]);
+        expect(await astream(houseIndex.query({gte: [null]})).toArray()).toEqual([id1, id2]);
+        expect(await astream(houseIndex.get([null])).toArray()).toEqual([id1]);
     });
 
     it('should enforce unique index constraint', async () => {
@@ -88,7 +89,7 @@ describe('data-index', async () => {
         await index.sync(undefined, {id: id1, houseId: undefined});
         await index.sync(undefined, {id: id2, houseId: null});
 
-        expect(await toArrayAsync(index.query({gte: [null]}))).toEqual([id2, id1]);
+        expect(await astream(index.query({gte: [null]})).toArray()).toEqual([id2, id1]);
     });
 
     it('should support compound index queries', async () => {
@@ -114,39 +115,44 @@ describe('data-index', async () => {
         await compoundIndex.sync(undefined, {id: id4, houseId: houseId1, age: 35});
         await compoundIndex.sync(undefined, {id: id5, houseId: houseId2, age: 35});
 
-        expect(await toArrayAsync(compoundIndex.query({gte: [houseId1, null]}))).toEqual([id1, id2, id3, id4]);
-        expect(await toArrayAsync(compoundIndex.query({gte: [houseId1, 25]}))).toEqual([id1, id2, id3, id4]);
-        expect(await toArrayAsync(compoundIndex.query({gt: [houseId1, 25]}))).toEqual([id2, id3, id4]);
-        expect(await toArrayAsync(compoundIndex.query({gt: [houseId1, 30]}))).toEqual([id4]);
-        expect(await toArrayAsync(compoundIndex.query({gt: [houseId1, 35]}))).toEqual([]);
-        expect(await toArrayAsync(compoundIndex.query({gte: [houseId1, undefined]}))).toEqual([]);
+        expect(await astream(compoundIndex.query({gte: [houseId1, null]})).toArray()).toEqual([id1, id2, id3, id4]);
+        expect(await astream(compoundIndex.query({gte: [houseId1, 25]})).toArray()).toEqual([id1, id2, id3, id4]);
+        expect(await astream(compoundIndex.query({gt: [houseId1, 25]})).toArray()).toEqual([id2, id3, id4]);
+        expect(await astream(compoundIndex.query({gt: [houseId1, 30]})).toArray()).toEqual([id4]);
+        expect(await astream(compoundIndex.query({gt: [houseId1, 35]})).toArray()).toEqual([]);
+        expect(await astream(compoundIndex.query({gte: [houseId1, undefined]})).toArray()).toEqual([]);
 
-        expect(await toArrayAsync(compoundIndex.query({lte: [houseId1, undefined]}))).toEqual([id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lt: [houseId1, undefined]}))).toEqual([id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lte: [houseId1, 36]}))).toEqual([id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lte: [houseId1, 35]}))).toEqual([id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lt: [houseId1, 35]}))).toEqual([id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lt: [houseId1, 30]}))).toEqual([id1]);
-        expect(await toArrayAsync(compoundIndex.query({lt: [houseId1, 10]}))).toEqual([]);
-        expect(await toArrayAsync(compoundIndex.query({lte: [houseId1, null]}))).toEqual([]);
+        expect(await astream(compoundIndex.query({lte: [houseId1, undefined]})).toArray()).toEqual([
+            id4,
+            id3,
+            id2,
+            id1,
+        ]);
+        expect(await astream(compoundIndex.query({lt: [houseId1, undefined]})).toArray()).toEqual([id4, id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lte: [houseId1, 36]})).toArray()).toEqual([id4, id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lte: [houseId1, 35]})).toArray()).toEqual([id4, id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lt: [houseId1, 35]})).toArray()).toEqual([id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lt: [houseId1, 30]})).toArray()).toEqual([id1]);
+        expect(await astream(compoundIndex.query({lt: [houseId1, 10]})).toArray()).toEqual([]);
+        expect(await astream(compoundIndex.query({lte: [houseId1, null]})).toArray()).toEqual([]);
 
-        expect(await toArrayAsync(compoundIndex.query({gte: [null]}))).toEqual([id1, id2, id3, id4, id5]);
-        expect(await toArrayAsync(compoundIndex.query({gt: [null]}))).toEqual([id1, id2, id3, id4, id5]);
-        expect(await toArrayAsync(compoundIndex.query({gte: [houseId1]}))).toEqual([id1, id2, id3, id4, id5]);
-        expect(await toArrayAsync(compoundIndex.query({gt: [houseId1]}))).toEqual([id5]);
-        expect(await toArrayAsync(compoundIndex.query({gte: [houseId2]}))).toEqual([id5]);
-        expect(await toArrayAsync(compoundIndex.query({gt: [houseId2]}))).toEqual([]);
-        expect(await toArrayAsync(compoundIndex.query({gte: [undefined]}))).toEqual([]);
-        expect(await toArrayAsync(compoundIndex.query({gt: [undefined]}))).toEqual([]);
+        expect(await astream(compoundIndex.query({gte: [null]})).toArray()).toEqual([id1, id2, id3, id4, id5]);
+        expect(await astream(compoundIndex.query({gt: [null]})).toArray()).toEqual([id1, id2, id3, id4, id5]);
+        expect(await astream(compoundIndex.query({gte: [houseId1]})).toArray()).toEqual([id1, id2, id3, id4, id5]);
+        expect(await astream(compoundIndex.query({gt: [houseId1]})).toArray()).toEqual([id5]);
+        expect(await astream(compoundIndex.query({gte: [houseId2]})).toArray()).toEqual([id5]);
+        expect(await astream(compoundIndex.query({gt: [houseId2]})).toArray()).toEqual([]);
+        expect(await astream(compoundIndex.query({gte: [undefined]})).toArray()).toEqual([]);
+        expect(await astream(compoundIndex.query({gt: [undefined]})).toArray()).toEqual([]);
 
-        expect(await toArrayAsync(compoundIndex.query({lte: [undefined]}))).toEqual([id5, id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lt: [undefined]}))).toEqual([id5, id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lte: [houseId2]}))).toEqual([id5, id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lt: [houseId2]}))).toEqual([id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lte: [houseId1]}))).toEqual([id4, id3, id2, id1]);
-        expect(await toArrayAsync(compoundIndex.query({lt: [houseId1]}))).toEqual([]);
-        expect(await toArrayAsync(compoundIndex.query({lte: [null]}))).toEqual([]);
-        expect(await toArrayAsync(compoundIndex.query({lt: [null]}))).toEqual([]);
+        expect(await astream(compoundIndex.query({lte: [undefined]})).toArray()).toEqual([id5, id4, id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lt: [undefined]})).toArray()).toEqual([id5, id4, id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lte: [houseId2]})).toArray()).toEqual([id5, id4, id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lt: [houseId2]})).toArray()).toEqual([id4, id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lte: [houseId1]})).toArray()).toEqual([id4, id3, id2, id1]);
+        expect(await astream(compoundIndex.query({lt: [houseId1]})).toArray()).toEqual([]);
+        expect(await astream(compoundIndex.query({lte: [null]})).toArray()).toEqual([]);
+        expect(await astream(compoundIndex.query({lt: [null]})).toArray()).toEqual([]);
     });
 
     it('should correctly delete entries', async () => {
@@ -162,10 +168,10 @@ describe('data-index', async () => {
         const houseId = createUuid();
 
         await index.sync(undefined, {id: id1, houseId});
-        expect(await toArrayAsync(index.get([houseId]))).toEqual([id1]);
+        expect(await astream(index.get([houseId])).toArray()).toEqual([id1]);
 
         await index.sync({id: id1, houseId}, undefined);
-        expect(await toArrayAsync(index.get([houseId]))).toEqual([]);
+        expect(await astream(index.get([houseId])).toArray()).toEqual([]);
     });
 
     it('should handle null and undefined values in compound indexes', async () => {
@@ -183,8 +189,8 @@ describe('data-index', async () => {
         await index.sync(undefined, {id: id1, houseId: null, name: undefined});
         await index.sync(undefined, {id: id2, houseId: undefined, name: 'Alice'});
 
-        expect(await toArrayAsync(index.query({gte: [null, null]}))).toEqual([id1]);
-        expect(await toArrayAsync(index.query({gte: [undefined, null]}))).toEqual([id2]);
+        expect(await astream(index.query({gte: [null, null]})).toArray()).toEqual([id1]);
+        expect(await astream(index.query({gte: [undefined, null]})).toArray()).toEqual([id2]);
     });
 
     it('should handle Uint8Array values', async () => {
@@ -200,8 +206,8 @@ describe('data-index', async () => {
         const avatar = new Uint8Array([1, 2, 3]);
 
         await index.sync(undefined, {id: id1, avatar});
-        expect(await toArrayAsync(index.get([avatar]))).toEqual([id1]);
-        expect(await toArrayAsync(index.get([new Uint8Array([3, 2, 1])]))).toEqual([]);
+        expect(await astream(index.get([avatar])).toArray()).toEqual([id1]);
+        expect(await astream(index.get([new Uint8Array([3, 2, 1])])).toArray()).toEqual([]);
     });
 
     it('should validate id consistency between previous and next values', async () => {

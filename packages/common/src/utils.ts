@@ -1,5 +1,3 @@
-import {AsyncStream} from './async-stream';
-
 export type Brand<T, B> = T & {__brand: B | undefined};
 
 export type Unsubscribe = () => void;
@@ -116,30 +114,4 @@ export function unreachable(): never {
 
 export function unimplemented(): never {
     throw new Error('unimplemented');
-}
-
-export async function toArrayAsync<T>(iterable: AsyncIterable<T>): Promise<T[]> {
-    return new AsyncStream(iterable).toArray();
-}
-
-export async function* mapStream<TSource, TResult>(
-    source: AsyncIterable<TSource>,
-    map: (items: TSource[]) => AsyncIterable<TResult> | Promise<Iterable<TResult>>,
-    batchSize: number
-): AsyncIterable<TResult> {
-    let batch: TSource[] = [];
-
-    for await (const item of source) {
-        batch.push(item);
-
-        if (batch.length >= batchSize) {
-            const result = await map(batch);
-            batch = [];
-            yield* result;
-        }
-    }
-
-    if (batch.length >= 0) {
-        yield* await map(batch);
-    }
 }

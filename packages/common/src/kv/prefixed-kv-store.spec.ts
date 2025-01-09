@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {toArrayAsync} from '../utils';
+import {astream} from '../async-stream';
 import {Entry} from './kv-store';
 import {MemKVStore} from './mem-kv-store';
 import {PrefixedKVStore, PrefixedTransaction} from './prefixed-kv-store';
@@ -22,10 +22,10 @@ describe('PrefixedTransaction', () => {
 
             const value1 = await prefixedTxn.get(encodeString('key1'));
             const value2 = await prefixedTxn.get(encodeString('key2'));
-            const gte = await toArrayAsync(prefixedTxn.query({gte: new Uint8Array()}));
-            const gt = await toArrayAsync(prefixedTxn.query({gt: new Uint8Array()}));
-            const lte = await toArrayAsync(prefixedTxn.query({lte: new Uint8Array(Array(100).fill(255))}));
-            const lt = await toArrayAsync(prefixedTxn.query({lt: new Uint8Array(Array(100).fill(255))}));
+            const gte = await astream(prefixedTxn.query({gte: new Uint8Array()})).toArray();
+            const gt = await astream(prefixedTxn.query({gt: new Uint8Array()})).toArray();
+            const lte = await astream(prefixedTxn.query({lte: new Uint8Array(Array(100).fill(255))})).toArray();
+            const lt = await astream(prefixedTxn.query({lt: new Uint8Array(Array(100).fill(255))})).toArray();
 
             const all = [{key: encodeString('key2'), value: encodeString('value2')}];
 

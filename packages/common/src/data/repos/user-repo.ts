@@ -1,7 +1,7 @@
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Brand} from '../../utils';
 import {Uuid, createUuid} from '../../uuid';
-import {DocRepo, OnDocChange} from '../doc-repo';
+import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 
@@ -9,8 +9,7 @@ export function createUserId(): UserId {
     return createUuid() as UserId;
 }
 
-export interface User {
-    id: UserId;
+export interface User extends Doc<UserId> {
     name: string;
 }
 
@@ -32,7 +31,7 @@ export class UserRepo {
         return this.store.create(user);
     }
 
-    update(id: UserId, recipe: (user: User) => User | undefined): Promise<User> {
+    update(id: UserId, recipe: Recipe<User>): Promise<User> {
         return this.store.update(id, recipe);
     }
 }

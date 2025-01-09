@@ -62,9 +62,9 @@ function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthC
             schema: z.object({}),
             handle: db.getMe.bind(db),
         }),
-        getBoards: handler({
-            schema: z.object({userId: zUuid<UserId>()}),
-            handle: db.getBoards.bind(db),
+        getMyBoards: handler({
+            schema: z.object({}),
+            handle: db.getMyBoards.bind(db),
         }),
         getBoardTasks: handler({
             schema: z.object({boardId: zUuid<BoardId>()}),

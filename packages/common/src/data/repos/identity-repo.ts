@@ -1,7 +1,7 @@
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Brand} from '../../utils';
 import {Uuid, createUuid} from '../../uuid';
-import {DocRepo, OnDocChange} from '../doc-repo';
+import {Doc, DocRepo, OnDocChange} from '../doc-repo';
 import {UserId} from './user-repo';
 
 export type IdentityId = Brand<Uuid, 'identity_id'>;
@@ -10,8 +10,7 @@ export function createIdentityId(): IdentityId {
     return createUuid() as IdentityId;
 }
 
-export interface Identity {
-    id: IdentityId;
+export interface Identity extends Doc<IdentityId> {
     email: string;
     userId: UserId;
     salt: string;

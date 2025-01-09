@@ -1,4 +1,6 @@
+import {Counter} from '../../kv/counter';
 import {UniqueError} from '../../kv/data-index';
+import {Dict} from '../../kv/dict';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Brand} from '../../utils';
 import {Uuid} from '../../uuid';
@@ -19,6 +21,7 @@ const SLUG_INDEX = 'slug';
 
 export class BoardRepo {
     private readonly store: DocRepo<Board>;
+    private readonly counters: Dict<Counter>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Board>) {
         this.store = new DocRepo<Board>({
@@ -36,10 +39,15 @@ export class BoardRepo {
                 ownerId: true,
             }),
         });
+        this.counters = new Dict(withPrefix('c/')(txn), counterTxn => new Counter(txn, 0));
     }
 
-    getById(id: BoardId): Promise<Board | undefined> {
-        return this.store.getById(id);
+    async getById(id: BoardId): Promise<Board | undefined> {
+        return await this.store.getById(id);
+    }
+
+    async incrementBoardCounter(boardId: BoardId): Promise<number> {
+        return await this.counters.get(boardId.toString()).increment();
     }
 
     async checkSlugAvailable(slug: string): Promise<boolean> {

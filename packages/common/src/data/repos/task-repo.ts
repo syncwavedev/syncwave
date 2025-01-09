@@ -2,13 +2,17 @@ import {AsyncStream} from '../../async-stream';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Richtext} from '../../richtext';
 import {Brand} from '../../utils';
-import {Uuid} from '../../uuid';
+import {Uuid, createUuid} from '../../uuid';
 import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
 import {createWriteableChecker} from '../update-checker';
 import {BoardId} from './board-repo';
 import {UserId} from './user-repo';
 
 export type TaskId = Brand<Uuid, 'task_id'>;
+
+export function createTaskId(): TaskId {
+    return createUuid() as TaskId;
+}
 
 export interface Task extends Doc<TaskId> {
     readonly authorId: UserId;

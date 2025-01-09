@@ -74,6 +74,14 @@ function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthC
             schema: z.object({taskId: zUuid<TaskId>()}),
             handle: db.getTask.bind(db),
         }),
+        createTask: handler({
+            schema: z.object({
+                boardId: zUuid<BoardId>(),
+                title: z.string(),
+                text: z.string(),
+            }),
+            handle: db.createTask.bind(db),
+        }),
     } satisfies DataAccessor);
 
     const authApi = createApi({

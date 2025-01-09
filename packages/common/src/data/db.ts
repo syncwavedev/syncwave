@@ -1,20 +1,30 @@
+import Delta from 'quill-delta';
 import {astream} from '../async-stream';
 import {MsgpackrEncoder} from '../encoder';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
+import {Richtext} from '../richtext';
+import {getNow} from '../timestamp';
 import {unimplemented} from '../utils';
 import {AuthContext} from './auth-context';
 import {OnDocChange} from './doc-repo';
 import {Board, BoardId, BoardRepo} from './repos/board-repo';
 import {Member, MemberRepo} from './repos/member-repo';
-import {Task, TaskId, TaskRepo} from './repos/task-repo';
+import {Task, TaskId, TaskRepo, createTaskId} from './repos/task-repo';
 import {User, UserId, UserRepo} from './repos/user-repo';
+
+export interface CreateTaskModel {
+    boardId: BoardId;
+    title: string;
+    text: string;
+}
 
 export interface DataAccessor {
     getMe(input: {}): Promise<User | undefined>;
     getMyBoards(input: {userId: UserId}): Promise<Board[]>;
     getBoardTasks(input: {boardId: BoardId}): Promise<Task[]>;
     getTask(input: {taskId: TaskId}): Promise<Task | undefined>;
+    createTask(input: CreateTaskModel): Promise<Task>;
 }
 
 export class Db implements DataAccessor {
@@ -27,7 +37,8 @@ export class Db implements DataAccessor {
 
     constructor(
         txn: Uint8Transaction,
-        private readonly auth: AuthContext
+        private readonly auth: AuthContext,
+        private readonly mode: 'coordinator' | 'participant'
     ) {
         this.users = new UserRepo(withPrefix('users/')(txn), this.userOnChange.bind(this));
         this.members = new MemberRepo(withPrefix('members/')(txn), this.memberOnChange.bind(this));
@@ -64,6 +75,26 @@ export class Db implements DataAccessor {
             return undefined;
         }
         await this.ensureBoardAccess(task.boardId);
+
+        return task;
+    }
+
+    async createTask({boardId, text, title}: CreateTaskModel): Promise<Task> {
+        const meId = this.ensureAuthenticated();
+        await this.ensureBoardAccess(boardId);
+        const now = getNow();
+        const task: Task = {
+            id: createTaskId(),
+            authorId: meId,
+            boardId: boardId,
+            createdAt: now,
+            updatedAt: now,
+            deleted: false,
+            text: new Richtext(new Delta().insert(text)),
+            title: title,
+            counter: await this.boards.incrementBoardCounter(boardId),
+        };
+        await this.tasks.create(task);
 
         return task;
     }

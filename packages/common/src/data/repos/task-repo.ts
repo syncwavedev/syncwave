@@ -17,7 +17,7 @@ export function createTaskId(): TaskId {
 export interface Task extends Doc<TaskId> {
     readonly authorId: UserId;
     readonly boardId: BoardId;
-    readonly counter: number;
+    readonly counter: number | undefined;
     title: string;
     text: Richtext;
     deleted: boolean;

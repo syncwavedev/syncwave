@@ -5,7 +5,7 @@ import {Uint8Transaction, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
 import {Richtext} from '../richtext';
 import {getNow} from '../timestamp';
-import {unimplemented} from '../utils';
+import {assertNever, unimplemented} from '../utils';
 import {AuthContext} from './auth-context';
 import {OnDocChange} from './doc-repo';
 import {Board, BoardId, BoardRepo} from './repos/board-repo';
@@ -83,6 +83,16 @@ export class Db implements DataAccessor {
         const meId = this.ensureAuthenticated();
         await this.ensureBoardAccess(boardId);
         const now = getNow();
+
+        let counter: number | undefined;
+        if (this.mode === 'coordinator') {
+            counter = await this.boards.incrementBoardCounter(boardId);
+        } else if (this.mode === 'participant') {
+            counter = undefined;
+        } else {
+            assertNever(this.mode);
+        }
+
         const task: Task = {
             id: createTaskId(),
             authorId: meId,
@@ -92,7 +102,7 @@ export class Db implements DataAccessor {
             deleted: false,
             text: new Richtext(new Delta().insert(text)),
             title: title,
-            counter: await this.boards.incrementBoardCounter(boardId),
+            counter,
         };
         await this.tasks.create(task);
 

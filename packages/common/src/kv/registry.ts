@@ -1,6 +1,6 @@
 import {Uint8Transaction, withPrefix} from './kv-store';
 
-export class Dict<T> {
+export class Registry<T> {
     constructor(
         private readonly txn: Uint8Transaction,
         private readonly factory: (txn: Uint8Transaction) => T

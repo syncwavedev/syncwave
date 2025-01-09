@@ -5,6 +5,7 @@ import {Condition, Transaction, Uint8Transaction, withKeyEncoder, withPrefix, wi
 import {getNow, Timestamp} from '../timestamp';
 import {pipe} from '../utils';
 import {Uuid, UuidEncoder} from '../uuid';
+import {combineUpdateCheckers, UpdateChecker} from './update-checker';
 
 export interface Doc<TId extends Uuid = Uuid> {
     id: TId;
@@ -27,7 +28,7 @@ export interface DocStoreOptions<T extends Doc> {
     txn: Uint8Transaction;
     indexes: IndexMap<T>;
     onChange: OnDocChange<T>;
-    updateChecker: (prev: T, next: T) => {errors: string[]} | undefined;
+    updateChecker: UpdateChecker<T> | Array<UpdateChecker<T>>;
 }
 
 export type Recipe<T> = (doc: T) => T | void;
@@ -64,7 +65,7 @@ export class DocRepo<T extends Doc> {
             withValueEncoder(new CrdtEncoder())
         );
         this.onChange = onChange;
-        this.updateChecker = updateChecker ?? (() => undefined);
+        this.updateChecker = combineUpdateCheckers([updateChecker].flat());
     }
 
     async getById(id: Uuid): Promise<T | undefined> {

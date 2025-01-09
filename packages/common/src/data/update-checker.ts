@@ -1,3 +1,5 @@
+export type UpdateChecker<T> = (prev: T, next: T) => {errors: string[]} | void;
+
 type WritableMap<T> = {
     [K in WritableKeys<T>]-?: IfEquals<{[P in K]: T[K]}, {-readonly [P in K]: T[K]}>;
 };
@@ -30,4 +32,22 @@ export function createWriteableChecker<T extends object>(
 
         return;
     };
+}
+export function combineUpdateCheckers<T>(checkers: Array<UpdateChecker<T>>): UpdateChecker<T> {
+    return checkers.reduce<UpdateChecker<T>>(
+        (a, b) => (prev: T, next: T) => {
+            const aResult = a(prev, next);
+            const bResult = b(prev, next);
+            const errors: string[] = [];
+            if (aResult) errors.push(...aResult.errors);
+            if (bResult) errors.push(...bResult.errors);
+
+            if (errors.length > 0) {
+                return {errors};
+            }
+
+            return;
+        },
+        () => {}
+    );
 }

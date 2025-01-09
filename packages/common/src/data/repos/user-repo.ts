@@ -2,6 +2,7 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Brand} from '../../utils';
 import {Uuid, createUuid} from '../../uuid';
 import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
+import {createWriteableChecker} from '../update-checker';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 
@@ -20,6 +21,10 @@ export class UserRepo {
         this.store = new DocRepo<User>({
             txn: withPrefix('d/')(txn),
             onChange,
+            indexes: {},
+            updateChecker: createWriteableChecker({
+                name: true,
+            }),
         });
     }
 

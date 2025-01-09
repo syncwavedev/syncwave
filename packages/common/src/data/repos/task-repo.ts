@@ -1,38 +1,60 @@
 import {AsyncStream} from '../../async-stream';
-import {Uint8Transaction} from '../../kv/kv-store';
+import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Richtext} from '../../richtext';
-import {Timestamp} from '../../timestamp';
-import {Brand, unimplemented} from '../../utils';
+import {Brand} from '../../utils';
 import {Uuid} from '../../uuid';
-import {Doc} from '../doc-repo';
+import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
+import {createWriteableChecker} from '../update-checker';
 import {BoardId} from './board-repo';
 import {UserId} from './user-repo';
 
 export type TaskId = Brand<Uuid, 'task_id'>;
 
 export interface Task extends Doc<TaskId> {
-    authorId: UserId;
-    boardId: BoardId;
+    readonly authorId: UserId;
+    readonly boardId: BoardId;
+    readonly counter: number;
     title: string;
     text: Richtext;
-    meta: TaskMeta;
     deleted: boolean;
 }
 
-export interface TaskMeta {
-    createdAt: Timestamp;
-}
+const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
 
 export class TaskRepo {
-    constructor(private readonly txn: Uint8Transaction) {}
+    private readonly store: DocRepo<Task>;
 
-    getById(taskId: TaskId): Promise<Task | undefined> {
-        unimplemented();
+    constructor(txn: Uint8Transaction, onChange: OnDocChange<Task>) {
+        this.store = new DocRepo<Task>({
+            txn: withPrefix('d/')(txn),
+            onChange,
+            indexes: {
+                [BOARD_ID_COUNTER_INDEX]: {
+                    key: x => [x.boardId, x.counter],
+                    unique: true,
+                },
+            },
+            updateChecker: createWriteableChecker({
+                deleted: true,
+                text: true,
+                title: true,
+            }),
+        });
     }
-    getByAuthorId(authorId: TaskId): AsyncStream<Task> {
-        unimplemented();
+
+    getById(id: TaskId): Promise<Task | undefined> {
+        return this.store.getById(id);
     }
+
     getByBoardId(boardId: BoardId): AsyncStream<Task> {
-        unimplemented();
+        return this.store.get(BOARD_ID_COUNTER_INDEX, [boardId]);
+    }
+
+    create(user: Task): Promise<void> {
+        return this.store.create(user);
+    }
+
+    update(id: TaskId, recipe: Recipe<Task>): Promise<Task> {
+        return this.store.update(id, recipe);
     }
 }

@@ -3,6 +3,7 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Brand} from '../../utils';
 import {Uuid, createUuid} from '../../uuid';
 import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
+import {createWriteableChecker} from '../update-checker';
 import {BoardId} from './board-repo';
 import {UserId} from './user-repo';
 
@@ -13,9 +14,8 @@ export function createMemberId(): MemberId {
 }
 
 export interface Member extends Doc<MemberId> {
-    id: MemberId;
-    userId: UserId;
-    boardId: BoardId;
+    readonly userId: UserId;
+    readonly boardId: BoardId;
 }
 
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
@@ -35,6 +35,10 @@ export class MemberRepo {
                 },
                 [BOARD_ID_INDEX]: x => [x.boardId],
             },
+            updateChecker: createWriteableChecker({
+                boardId: false,
+                userId: false,
+            }),
         });
     }
 

@@ -2,6 +2,7 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Brand} from '../../utils';
 import {Uuid, createUuid} from '../../uuid';
 import {Doc, DocRepo, OnDocChange} from '../doc-repo';
+import {createWriteableChecker} from '../update-checker';
 import {UserId} from './user-repo';
 
 export type IdentityId = Brand<Uuid, 'identity_id'>;
@@ -11,8 +12,8 @@ export function createIdentityId(): IdentityId {
 }
 
 export interface Identity extends Doc<IdentityId> {
+    readonly userId: UserId;
     email: string;
-    userId: UserId;
     salt: string;
     passwordHash: string;
 }
@@ -37,6 +38,11 @@ export class IdentityRepo {
                 },
             },
             onChange,
+            updateChecker: createWriteableChecker({
+                email: true,
+                passwordHash: true,
+                salt: true,
+            }),
         });
     }
 

@@ -25,8 +25,9 @@ export type OnDocChange<T extends Doc> = (id: T['id'], diff: CrdtDiff<T>) => Pro
 
 export interface DocStoreOptions<T extends Doc> {
     txn: Uint8Transaction;
-    indexes?: IndexMap<T>;
+    indexes: IndexMap<T>;
     onChange: OnDocChange<T>;
+    updateChecker: (prev: T, next: T) => {errors: string[]} | undefined;
 }
 
 export type Recipe<T> = (doc: T) => T | void;
@@ -35,21 +36,23 @@ export class DocRepo<T extends Doc> {
     private readonly indexes: Map<string, Index<T>>;
     private readonly primary: Transaction<Uuid, Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
+    private readonly updateChecker: (prev: T, next: T) => {errors: string[]} | void;
 
-    constructor({txn, indexes, onChange}: DocStoreOptions<T>) {
+    constructor({txn, indexes, onChange, updateChecker}: DocStoreOptions<T>) {
         this.indexes = new Map(
-            Object.entries(indexes ?? {}).map(([name, spec]) => {
-                if (name.indexOf('/') !== -1) {
-                    throw new Error('index name cannot contain /: ' + name);
+            Object.entries(indexes).map(([indexName, spec]) => {
+                if (indexName.indexOf('/') !== -1) {
+                    throw new Error('index name cannot contain /: ' + indexName);
                 }
 
                 return [
-                    name,
+                    indexName,
                     createIndex({
-                        txn: withPrefix(`i/${name}/`)(txn),
+                        txn: withPrefix(`i/${indexName}/`)(txn),
                         idSelector: x => x.id,
                         keySelector: typeof spec === 'function' ? spec : spec.key,
                         unique: typeof spec === 'function' ? false : (spec.unique ?? false),
+                        indexName,
                     }),
                 ];
             })
@@ -61,6 +64,7 @@ export class DocRepo<T extends Doc> {
             withValueEncoder(new CrdtEncoder())
         );
         this.onChange = onChange;
+        this.updateChecker = updateChecker ?? (() => undefined);
     }
 
     async getById(id: Uuid): Promise<T | undefined> {
@@ -99,12 +103,14 @@ export class DocRepo<T extends Doc> {
 
         const prev = doc.snapshot();
         const diff = doc.update(draft => {
-            const result = recipe(draft);
-            if (result) {
-                result.updatedAt = getNow();
-            } else {
-                draft.updatedAt = getNow();
+            const result = recipe(draft) ?? draft;
+
+            const errors = this.updateChecker(prev, result);
+            if (errors) {
+                throw new Error('invalid update:\n - ' + errors.errors.join('\n - '));
             }
+
+            result.updatedAt = getNow();
 
             return result;
         });

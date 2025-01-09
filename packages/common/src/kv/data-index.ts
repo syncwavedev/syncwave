@@ -25,9 +25,22 @@ export interface IndexOptions<TValue> {
     readonly idSelector: (value: TValue) => Uuid;
     readonly keySelector: (value: TValue) => IndexKey;
     readonly unique: boolean;
+    readonly indexName: string;
 }
 
-export function createIndex<TValue>({txn, idSelector, keySelector, unique}: IndexOptions<TValue>): Index<TValue> {
+export class UniqueError extends Error {
+    constructor(public readonly indexName: string) {
+        super('unique index constraint violation');
+    }
+}
+
+export function createIndex<TValue>({
+    txn,
+    idSelector,
+    keySelector,
+    unique,
+    indexName,
+}: IndexOptions<TValue>): Index<TValue> {
     const keyEncoder = new KeyEncoder();
     const uuidEncoder = new UuidEncoder();
 
@@ -114,7 +127,7 @@ export function createIndex<TValue>({txn, idSelector, keySelector, unique}: Inde
                 if (unique) {
                     const existing = await txn.get(keyEncoder.encode(nextKey));
                     if (existing) {
-                        throw new Error('unique index constraint violation');
+                        throw new UniqueError(indexName);
                     }
 
                     await txn.put(keyEncoder.encode(nextKey), uuidEncoder.encode(id));

@@ -32,7 +32,7 @@ export class Db implements DataAccessor {
         this.users = new UserRepo(withPrefix('users/')(txn), this.userOnChange.bind(this));
         this.members = new MemberRepo(withPrefix('members/')(txn), this.memberOnChange.bind(this));
         this.boards = new BoardRepo(withPrefix('boards/')(txn), this.boardOnChange.bind(this));
-        this.tasks = new TaskRepo(withPrefix('tasks/')(txn));
+        this.tasks = new TaskRepo(withPrefix('tasks/')(txn), this.taskOnChange.bind(this));
 
         this.changelog = new TopicManager(withPrefix('log/')(txn), new MsgpackrEncoder());
     }
@@ -77,6 +77,10 @@ export class Db implements DataAccessor {
     }
 
     private boardOnChange(...[boardId, diff]: Parameters<OnDocChange<Board>>): never {
+        unimplemented();
+    }
+
+    private taskOnChange(...[taskId, diff]: Parameters<OnDocChange<Task>>): never {
         unimplemented();
     }
 

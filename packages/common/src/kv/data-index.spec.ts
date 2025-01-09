@@ -16,6 +16,8 @@ interface TestUser {
     avatar?: Uint8Array | null | undefined;
 }
 
+const INDEX_NAME = 'some_index_name';
+
 const idSelector = (x: TestUser) => x.id;
 
 async function getTxn() {
@@ -33,6 +35,7 @@ describe('data-index', async () => {
             idSelector,
             keySelector: x => [x.houseId],
             unique: false,
+            indexName: INDEX_NAME,
         });
         const id1 = createUuid();
         const id2 = createUuid();
@@ -64,6 +67,7 @@ describe('data-index', async () => {
             idSelector,
             keySelector: x => [x.houseId],
             unique: true,
+            indexName: INDEX_NAME,
         });
 
         const id1 = createUuid();
@@ -82,6 +86,7 @@ describe('data-index', async () => {
             idSelector,
             keySelector: x => [x.houseId],
             unique: false,
+            indexName: INDEX_NAME,
         });
 
         const id1 = createUuid();
@@ -99,6 +104,7 @@ describe('data-index', async () => {
             idSelector,
             keySelector: x => [x.houseId, x.age],
             unique: false,
+            indexName: INDEX_NAME,
         });
 
         const id1 = createUuid();
@@ -162,6 +168,7 @@ describe('data-index', async () => {
             idSelector,
             keySelector: x => [x.houseId],
             unique: false,
+            indexName: INDEX_NAME,
         });
 
         const id1 = createUuid();
@@ -181,6 +188,7 @@ describe('data-index', async () => {
             idSelector,
             keySelector: x => [x.houseId, x.name],
             unique: false,
+            indexName: INDEX_NAME,
         });
 
         const id1 = createUuid();
@@ -200,6 +208,7 @@ describe('data-index', async () => {
             idSelector,
             keySelector: x => [x.avatar],
             unique: false,
+            indexName: INDEX_NAME,
         });
 
         const id1 = createUuid();
@@ -217,6 +226,7 @@ describe('data-index', async () => {
             idSelector,
             keySelector: x => [x.houseId],
             unique: false,
+            indexName: INDEX_NAME,
         });
 
         const id1 = createUuid();

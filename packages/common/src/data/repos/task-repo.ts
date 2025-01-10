@@ -44,10 +44,6 @@ export class TaskRepo implements SyncTarget<Task> {
                 },
                 [BOARD_ID]: x => [x.boardId, x.counter],
             },
-            updateChecker: createWriteableChecker({
-                deleted: true,
-                title: true,
-            }),
             schema: z.object({
                 id: zUuid<TaskId>(),
                 createdAt: zTimestamp(),
@@ -62,7 +58,14 @@ export class TaskRepo implements SyncTarget<Task> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
-        return await this.store.apply(id, diff);
+        return await this.store.apply(
+            id,
+            diff,
+            createWriteableChecker({
+                deleted: true,
+                title: true,
+            })
+        );
     }
 
     getById(id: TaskId): Promise<Task | undefined> {

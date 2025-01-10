@@ -42,11 +42,6 @@ export class IdentityRepo implements SyncTarget<Identity> {
                 },
             },
             onChange,
-            updateChecker: createWriteableChecker({
-                email: true,
-                passwordHash: true,
-                salt: true,
-            }),
             schema: z.object({
                 id: zUuid<IdentityId>(),
                 createdAt: zTimestamp(),
@@ -60,7 +55,15 @@ export class IdentityRepo implements SyncTarget<Identity> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
-        return await this.store.apply(id, diff);
+        return await this.store.apply(
+            id,
+            diff,
+            createWriteableChecker({
+                email: true,
+                passwordHash: true,
+                salt: true,
+            })
+        );
     }
 
     getById(id: IdentityId): Promise<Identity | undefined> {

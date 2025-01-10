@@ -153,19 +153,14 @@ export class Actor implements DataAccessor {
     async setBoardSlug({boardId, slug}: {boardId: BoardId; slug: string}): Promise<Board> {
         if (this.role.type === 'coordinator') {
             const [board] = await Promise.all([
-                this.boards.update(
-                    boardId,
-                    draft => {
-                        if (draft.slug !== undefined) {
-                            throw new Error('changing board slug is not supported');
-                        }
+                this.boards.update(boardId, draft => {
+                    if (draft.slug !== undefined) {
+                        throw new Error('changing board slug is not supported');
+                    }
 
-                        // remove readonly modifier
-                        (draft as {slug: string}).slug = slug;
-                    },
-                    // slug updates are forbidden, but we allow setting it from undefined
-                    {nocheck: true}
-                ),
+                    // remove readonly modifier
+                    (draft as {slug: string}).slug = slug;
+                }),
                 this.ensureBoardWriteAccess(boardId),
             ]);
 

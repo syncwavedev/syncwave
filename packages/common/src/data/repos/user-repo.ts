@@ -25,9 +25,6 @@ export class UserRepo implements SyncTarget<User> {
             txn: withPrefix('d/')(txn),
             onChange,
             indexes: {},
-            updateChecker: createWriteableChecker({
-                name: true,
-            }),
             schema: z.object({
                 id: zUuid<UserId>(),
                 createdAt: zTimestamp(),
@@ -38,7 +35,13 @@ export class UserRepo implements SyncTarget<User> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {
-        return await this.store.apply(id, diff);
+        return await this.store.apply(
+            id,
+            diff,
+            createWriteableChecker({
+                name: true,
+            })
+        );
     }
 
     getById(id: UserId): Promise<User | undefined> {

@@ -37,11 +37,6 @@ export class BoardRepo implements SyncTarget<Board> {
                     include: x => x.slug !== undefined,
                 },
             },
-            updateChecker: createWriteableChecker({
-                deleted: true,
-                name: true,
-                ownerId: true,
-            }),
             schema: z.object({
                 id: zUuid<BoardId>(),
                 createdAt: zTimestamp(),
@@ -55,7 +50,15 @@ export class BoardRepo implements SyncTarget<Board> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
-        return await this.store.apply(id, diff);
+        return await this.store.apply(
+            id,
+            diff,
+            createWriteableChecker({
+                deleted: true,
+                name: true,
+                ownerId: true,
+            })
+        );
     }
 
     async getById(id: BoardId): Promise<Board | undefined> {
@@ -84,9 +87,9 @@ export class BoardRepo implements SyncTarget<Board> {
         }
     }
 
-    async update(id: BoardId, recipe: Recipe<Board>, options?: {nocheck: boolean}): Promise<Board> {
+    async update(id: BoardId, recipe: Recipe<Board>): Promise<Board> {
         try {
-            return await this.store.update(id, recipe, options);
+            return await this.store.update(id, recipe);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
                 throw new Error(`board with slug already exists`);

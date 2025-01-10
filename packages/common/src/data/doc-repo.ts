@@ -7,7 +7,7 @@ import {Condition, Transaction, Uint8Transaction, withKeyEncoder, withPrefix, wi
 import {getNow, Timestamp} from '../timestamp';
 import {assert, pipe} from '../utils';
 import {Uuid, UuidEncoder} from '../uuid';
-import {combineUpdateCheckers, UpdateChecker} from './update-checker';
+import {UpdateChecker} from './update-checker';
 
 export interface Doc<TId extends Uuid = Uuid> {
     id: TId;
@@ -32,11 +32,6 @@ export interface DocStoreOptions<T extends Doc> {
     indexes: IndexMap<T>;
     schema: ZodType<T>;
     onChange: OnDocChange<T>;
-    updateChecker: UpdateChecker<T> | Array<UpdateChecker<T>>;
-}
-
-export interface DocRepoUpdateOptions {
-    readonly nocheck: boolean;
 }
 
 export type Recipe<T> = (doc: T) => T | void;
@@ -49,10 +44,9 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
     private readonly indexes: Map<string, Index<T>>;
     private readonly primary: Transaction<Uuid, Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
-    private readonly updateChecker: (prev: T, next: T) => {errors: string[]} | void;
     private readonly schema: ZodType<T>;
 
-    constructor({txn, indexes, onChange, updateChecker, schema}: DocStoreOptions<T>) {
+    constructor({txn, indexes, onChange, schema}: DocStoreOptions<T>) {
         this.indexes = new Map(
             Object.entries(indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
@@ -78,7 +72,6 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
             withValueEncoder(new CrdtEncoder())
         );
         this.onChange = onChange;
-        this.updateChecker = combineUpdateCheckers([updateChecker].flat());
         this.schema = schema;
     }
 
@@ -110,7 +103,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         return this._mapToDocs(index.query(condition));
     }
 
-    async update(id: Uuid, recipe: Recipe<T>, options?: DocRepoUpdateOptions): Promise<T> {
+    async update(id: Uuid, recipe: Recipe<T>): Promise<T> {
         const doc = await this.primary.get(id);
         if (!doc) {
             throw new Error('doc not found: ' + id);
@@ -119,14 +112,6 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         const prev = doc.snapshot();
         const diff = doc.update(draft => {
             const result = recipe(draft) ?? draft;
-
-            // todo: add tests
-            if (options?.nocheck !== true) {
-                const errors = this.updateChecker(prev, result);
-                if (errors) {
-                    throw new Error('invalid update:\n - ' + errors.errors.join('\n - '));
-                }
-            }
 
             result.updatedAt = getNow();
 
@@ -144,7 +129,8 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         return next;
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<T>, options?: DocRepoUpdateOptions): Promise<void> {
+    // todo: add tests
+    async apply(id: Uuid, diff: CrdtDiff<T>, updateChecker?: UpdateChecker<T>): Promise<void> {
         let doc: Crdt<T> | undefined = await this.primary.get(id);
         let prev: T | undefined;
         let next: T;
@@ -162,8 +148,8 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
             throw new Error('invalid diff: diff updates id ' + id);
         }
 
-        if (prev && options?.nocheck !== true) {
-            this.updateChecker(prev, next);
+        if (prev && updateChecker) {
+            updateChecker(prev, next);
         }
 
         this.ensureValid(next);

@@ -38,10 +38,6 @@ export class MemberRepo implements SyncTarget<Member> {
                 },
                 [BOARD_ID_INDEX]: x => [x.boardId],
             },
-            updateChecker: createWriteableChecker({
-                boardId: false,
-                userId: false,
-            }),
             schema: z.object({
                 id: zUuid<MemberId>(),
                 createdAt: zTimestamp(),
@@ -53,7 +49,14 @@ export class MemberRepo implements SyncTarget<Member> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
-        return await this.store.apply(id, diff);
+        return await this.store.apply(
+            id,
+            diff,
+            createWriteableChecker({
+                boardId: false,
+                userId: false,
+            })
+        );
     }
 
     create(member: Member): Promise<void> {

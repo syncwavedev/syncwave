@@ -26,7 +26,7 @@ export interface IndexOptions<TValue> {
     readonly keySelector: (value: TValue) => IndexKey;
     readonly unique: boolean;
     readonly indexName: string;
-    readonly include?: (value: TValue) => boolean;
+    readonly filter?: (value: TValue) => boolean;
 }
 
 export class UniqueError extends Error {
@@ -41,12 +41,12 @@ export function createIndex<TValue>({
     keySelector,
     unique,
     indexName,
-    include,
+    filter,
 }: IndexOptions<TValue>): Index<TValue> {
     const keyEncoder = new KeyEncoder();
     const uuidEncoder = new UuidEncoder();
 
-    include = include ?? (() => true);
+    filter = filter ?? (() => true);
 
     async function* queryInternal(condition: Condition<IndexKey>) {
         const conditionKey = mapCondition(condition, {
@@ -112,8 +112,8 @@ export function createIndex<TValue>({
             const prevKey = prev && keySelector(prev);
             const nextKey = next && keySelector(next);
 
-            const prevIncluded = prev && include(prev);
-            const nextIncluded = next && include(next);
+            const prevIncluded = prev && filter(prev);
+            const nextIncluded = next && filter(next);
 
             if (
                 prevKey !== undefined &&

@@ -266,9 +266,11 @@ export class Actor implements DataAccessor {
 
     private async startPullLoop(): Promise<never> {
         while (true) {
-            await wait(PULL_WAIT_MS);
+            const noChanges = unimplemented();
 
-            unimplemented();
+            if (noChanges) {
+                await wait(PULL_WAIT_MS);
+            }
         }
     }
 }

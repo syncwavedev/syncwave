@@ -1,9 +1,11 @@
+import {z} from 'zod';
 import {AsyncStream} from '../../async-stream';
+import {CrdtDiff} from '../../crdt/crdt';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
-import {Richtext} from '../../richtext';
+import {zTimestamp} from '../../timestamp';
 import {Brand} from '../../utils';
-import {Uuid, createUuid} from '../../uuid';
-import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
+import {Uuid, createUuid, zUuid} from '../../uuid';
+import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo';
 import {createWriteableChecker} from '../update-checker';
 import {BoardId} from './board-repo';
 import {UserId} from './user-repo';
@@ -17,9 +19,8 @@ export function createTaskId(): TaskId {
 export interface Task extends Doc<TaskId> {
     readonly authorId: UserId;
     readonly boardId: BoardId;
-    readonly counter: number | undefined;
+    readonly counter: number | null;
     title: string;
-    text: Richtext;
     deleted: boolean;
 }
 
@@ -28,7 +29,7 @@ const BOARD_ID = 'boardId';
 
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
-export class TaskRepo {
+export class TaskRepo implements SyncTarget<Task> {
     private readonly store: DocRepo<Task>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Task>) {
@@ -45,10 +46,23 @@ export class TaskRepo {
             },
             updateChecker: createWriteableChecker({
                 deleted: true,
-                text: true,
                 title: true,
             }),
+            schema: z.object({
+                id: zUuid<TaskId>(),
+                createdAt: zTimestamp(),
+                updatedAt: zTimestamp(),
+                authorId: zUuid<UserId>(),
+                boardId: zUuid<BoardId>(),
+                counter: z.number().nullable(),
+                title: z.string(),
+                deleted: z.boolean(),
+            }),
         });
+    }
+
+    async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
+        return await this.store.apply(id, diff);
     }
 
     getById(id: TaskId): Promise<Task | undefined> {

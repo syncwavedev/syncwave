@@ -1,7 +1,10 @@
+import {z} from 'zod';
+import {CrdtDiff} from '../../crdt/crdt';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
+import {zTimestamp} from '../../timestamp';
 import {Brand} from '../../utils';
-import {Uuid, createUuid} from '../../uuid';
-import {Doc, DocRepo, OnDocChange} from '../doc-repo';
+import {Uuid, createUuid, zUuid} from '../../uuid';
+import {Doc, DocRepo, OnDocChange, SyncTarget} from '../doc-repo';
 import {createWriteableChecker} from '../update-checker';
 import {UserId} from './user-repo';
 
@@ -21,7 +24,7 @@ export interface Identity extends Doc<IdentityId> {
 const EMAIL_INDEX = 'email';
 const USER_ID_INDEX = 'userId';
 
-export class IdentityRepo {
+export class IdentityRepo implements SyncTarget<Identity> {
     private readonly store: DocRepo<Identity>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Identity>) {
@@ -44,7 +47,20 @@ export class IdentityRepo {
                 passwordHash: true,
                 salt: true,
             }),
+            schema: z.object({
+                id: zUuid<IdentityId>(),
+                createdAt: zTimestamp(),
+                updatedAt: zTimestamp(),
+                userId: zUuid<UserId>(),
+                email: z.string(),
+                salt: z.string(),
+                passwordHash: z.string(),
+            }),
         });
+    }
+
+    async apply(id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
+        return await this.store.apply(id, diff);
     }
 
     getById(id: IdentityId): Promise<Identity | undefined> {

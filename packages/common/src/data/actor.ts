@@ -1,12 +1,12 @@
-import Delta from 'quill-delta';
 import {astream} from '../async-stream';
+import {PULL_WAIT_MS} from '../constants';
 import {MsgpackrEncoder} from '../encoder';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
-import {Richtext} from '../richtext';
 import {getNow} from '../timestamp';
-import {assertNever, unimplemented} from '../utils';
+import {assertNever, unimplemented, wait} from '../utils';
 import {AuthContext} from './auth-context';
+import {CoordinatorApi} from './coordinator';
 import {OnDocChange} from './doc-repo';
 import {Board, BoardId, BoardRepo} from './repos/board-repo';
 import {Member, MemberRepo} from './repos/member-repo';
@@ -17,7 +17,6 @@ export interface CreateTaskModel {
     taskId: TaskId;
     boardId: BoardId;
     title: string;
-    text: string;
 }
 
 export interface CreateBoardModel {
@@ -42,7 +41,19 @@ export interface DataAccessor {
     createTask(input: CreateTaskModel): Promise<Task>;
 }
 
-export class Db implements DataAccessor {
+export interface BaseActorRole<TType extends string> {
+    readonly type: TType;
+}
+
+export interface CoordinatorActorRole extends BaseActorRole<'coordinator'> {}
+
+export interface ParticipantActorRole extends BaseActorRole<'participant'> {
+    readonly coordinator: CoordinatorApi;
+}
+
+export type ActorRole = CoordinatorActorRole | ParticipantActorRole;
+
+export class Actor implements DataAccessor {
     private readonly boards: BoardRepo;
     private readonly users: UserRepo;
     private readonly tasks: TaskRepo;
@@ -53,7 +64,7 @@ export class Db implements DataAccessor {
     constructor(
         txn: Uint8Transaction,
         private readonly auth: AuthContext,
-        private readonly mode: 'coordinator' | 'participant'
+        private readonly role: ActorRole
     ) {
         this.users = new UserRepo(withPrefix('users/')(txn), this.userOnChange.bind(this));
         this.members = new MemberRepo(withPrefix('members/')(txn), this.memberOnChange.bind(this));
@@ -61,6 +72,14 @@ export class Db implements DataAccessor {
         this.tasks = new TaskRepo(withPrefix('tasks/')(txn), this.taskOnChange.bind(this));
 
         this.changelog = new TopicManager(withPrefix('log/')(txn), new MsgpackrEncoder());
+
+        if (this.role.type === 'participant') {
+            this.startPullLoop();
+        } else if (this.role.type === 'coordinator') {
+            // participant will push changes, nothing to do on coordinator side
+        } else {
+            assertNever(this.role);
+        }
     }
 
     async getMe(_input: {}): Promise<User | undefined> {
@@ -96,7 +115,14 @@ export class Db implements DataAccessor {
     async createBoard(input: CreateBoardModel): Promise<Board> {
         const now = getNow();
         if (input.slug) {
-            this.ensureCoordinator();
+            if (this.role.type === 'participant') {
+                // participant can't set board slug, escalate
+                return await this.role.coordinator.createBoard(input);
+            } else if (this.role.type === 'coordinator') {
+                // coordinator can set board slug, nothing specific to do
+            } else {
+                assertNever(this.role);
+            }
         }
 
         const board: Board = {
@@ -125,26 +151,31 @@ export class Db implements DataAccessor {
     }
 
     async setBoardSlug({boardId, slug}: {boardId: BoardId; slug: string}): Promise<Board> {
-        this.ensureCoordinator();
+        if (this.role.type === 'coordinator') {
+            const [board] = await Promise.all([
+                this.boards.update(
+                    boardId,
+                    draft => {
+                        if (draft.slug !== undefined) {
+                            throw new Error('changing board slug is not supported');
+                        }
 
-        const [board] = await Promise.all([
-            this.boards.update(
-                boardId,
-                draft => {
-                    if (draft.slug !== undefined) {
-                        throw new Error('changing board slug is not supported');
-                    }
+                        // remove readonly modifier
+                        (draft as {slug: string}).slug = slug;
+                    },
+                    // slug updates are forbidden, but we allow setting it from undefined
+                    {nocheck: true}
+                ),
+                this.ensureBoardWriteAccess(boardId),
+            ]);
 
-                    // remove readonly modifier
-                    (draft as {slug: string}).slug = slug;
-                },
-                // slug updates are forbidden, but we allow setting it from undefined
-                {nocheck: true}
-            ),
-            this.ensureBoardWriteAccess(boardId),
-        ]);
-
-        return board;
+            return board;
+        } else if (this.role.type === 'participant') {
+            // participant can't set board slug, escalate
+            return await this.role.coordinator.setBoardSlug({boardId, slug});
+        } else {
+            assertNever(this.role);
+        }
     }
 
     async getTask({taskId}: {taskId: TaskId}): Promise<Task | undefined> {
@@ -157,18 +188,18 @@ export class Db implements DataAccessor {
         return task;
     }
 
-    async createTask({taskId, boardId, text, title}: CreateTaskModel): Promise<Task> {
+    async createTask({taskId, boardId, title}: CreateTaskModel): Promise<Task> {
         const meId = this.ensureAuthenticated();
         await this.ensureBoardWriteAccess(boardId);
         const now = getNow();
 
-        let counter: number | undefined;
-        if (this.mode === 'coordinator') {
+        let counter: number | null;
+        if (this.role.type === 'coordinator') {
             counter = await this.boards.incrementBoardCounter(boardId);
-        } else if (this.mode === 'participant') {
-            counter = undefined;
+        } else if (this.role.type === 'participant') {
+            counter = null;
         } else {
-            assertNever(this.mode);
+            assertNever(this.role);
         }
 
         const task: Task = {
@@ -178,7 +209,6 @@ export class Db implements DataAccessor {
             createdAt: now,
             updatedAt: now,
             deleted: false,
-            text: new Richtext(new Delta().insert(text)),
             title: title,
             counter,
         };
@@ -234,9 +264,11 @@ export class Db implements DataAccessor {
         return member;
     }
 
-    private ensureCoordinator(): void {
-        if (this.mode !== 'coordinator') {
-            throw new Error('this operation is only supported by coordinator');
+    private async startPullLoop(): Promise<never> {
+        while (true) {
+            await wait(PULL_WAIT_MS);
+
+            unimplemented();
         }
     }
 }

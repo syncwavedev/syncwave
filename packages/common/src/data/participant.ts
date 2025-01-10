@@ -1,9 +1,9 @@
 import {z} from 'zod';
+import {DataAccessor} from './actor';
 import {createApi, handler, setupRpcServer} from './communication/rpc';
 import {Connection} from './communication/transport';
 import {SignInResponse} from './coordinator';
 import {CoordinatorClient} from './coordinator-client';
-import {DataAccessor} from './db';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
 export class Participant {

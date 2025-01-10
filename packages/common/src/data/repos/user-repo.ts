@@ -1,7 +1,10 @@
+import {z} from 'zod';
+import {CrdtDiff} from '../../crdt/crdt';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
+import {zTimestamp} from '../../timestamp';
 import {Brand} from '../../utils';
-import {Uuid, createUuid} from '../../uuid';
-import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
+import {Uuid, createUuid, zUuid} from '../../uuid';
+import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo';
 import {createWriteableChecker} from '../update-checker';
 
 export type UserId = Brand<Uuid, 'user_id'>;
@@ -14,7 +17,7 @@ export interface User extends Doc<UserId> {
     name: string;
 }
 
-export class UserRepo {
+export class UserRepo implements SyncTarget<User> {
     private readonly store: DocRepo<User>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<User>) {
@@ -25,7 +28,17 @@ export class UserRepo {
             updateChecker: createWriteableChecker({
                 name: true,
             }),
+            schema: z.object({
+                id: zUuid<UserId>(),
+                createdAt: zTimestamp(),
+                updatedAt: zTimestamp(),
+                name: z.string(),
+            }),
         });
+    }
+
+    async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {
+        return await this.store.apply(id, diff);
     }
 
     getById(id: UserId): Promise<User | undefined> {

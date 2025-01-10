@@ -1,10 +1,13 @@
+import {z} from 'zod';
+import {CrdtDiff} from '../../crdt/crdt';
 import {Counter} from '../../kv/counter';
 import {UniqueError} from '../../kv/data-index';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Registry} from '../../kv/registry';
+import {zTimestamp} from '../../timestamp';
 import {Brand} from '../../utils';
-import {Uuid} from '../../uuid';
-import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
+import {Uuid, zUuid} from '../../uuid';
+import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo';
 import {createWriteableChecker} from '../update-checker';
 import {UserId} from './user-repo';
 
@@ -19,7 +22,7 @@ export interface Board extends Doc<BoardId> {
 
 const SLUG_INDEX = 'slug';
 
-export class BoardRepo {
+export class BoardRepo implements SyncTarget<Board> {
     private readonly store: DocRepo<Board>;
     private readonly counters: Registry<Counter>;
 
@@ -39,8 +42,20 @@ export class BoardRepo {
                 name: true,
                 ownerId: true,
             }),
+            schema: z.object({
+                id: zUuid<BoardId>(),
+                createdAt: zTimestamp(),
+                updatedAt: zTimestamp(),
+                name: z.string(),
+                ownerId: zUuid<UserId>(),
+                deleted: z.boolean(),
+            }),
         });
         this.counters = new Registry(withPrefix('c/')(txn), counterTxn => new Counter(txn, 0));
+    }
+
+    async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
+        return await this.store.apply(id, diff);
     }
 
     async getById(id: BoardId): Promise<Board | undefined> {

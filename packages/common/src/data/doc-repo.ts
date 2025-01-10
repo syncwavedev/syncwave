@@ -1,9 +1,11 @@
+import deepEqual from 'deep-equal';
+import {ZodType} from 'zod';
 import {astream, AsyncStream} from '../async-stream';
 import {Crdt, CrdtDiff, CrdtEncoder} from '../crdt/crdt';
 import {createIndex, Index, IndexKey} from '../kv/data-index';
 import {Condition, Transaction, Uint8Transaction, withKeyEncoder, withPrefix, withValueEncoder} from '../kv/kv-store';
 import {getNow, Timestamp} from '../timestamp';
-import {pipe} from '../utils';
+import {assert, pipe} from '../utils';
 import {Uuid, UuidEncoder} from '../uuid';
 import {combineUpdateCheckers, UpdateChecker} from './update-checker';
 
@@ -28,6 +30,7 @@ export type OnDocChange<T extends Doc> = (id: T['id'], diff: CrdtDiff<T>) => Pro
 export interface DocStoreOptions<T extends Doc> {
     txn: Uint8Transaction;
     indexes: IndexMap<T>;
+    schema: ZodType<T>;
     onChange: OnDocChange<T>;
     updateChecker: UpdateChecker<T> | Array<UpdateChecker<T>>;
 }
@@ -38,13 +41,18 @@ export interface DocRepoUpdateOptions {
 
 export type Recipe<T> = (doc: T) => T | void;
 
-export class DocRepo<T extends Doc> {
+export interface SyncTarget<T> {
+    apply(id: Uuid, diff: CrdtDiff<T>): Promise<void>;
+}
+
+export class DocRepo<T extends Doc> implements SyncTarget<T> {
     private readonly indexes: Map<string, Index<T>>;
     private readonly primary: Transaction<Uuid, Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
     private readonly updateChecker: (prev: T, next: T) => {errors: string[]} | void;
+    private readonly schema: ZodType<T>;
 
-    constructor({txn, indexes, onChange, updateChecker}: DocStoreOptions<T>) {
+    constructor({txn, indexes, onChange, updateChecker, schema}: DocStoreOptions<T>) {
         this.indexes = new Map(
             Object.entries(indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
@@ -71,6 +79,7 @@ export class DocRepo<T extends Doc> {
         );
         this.onChange = onChange;
         this.updateChecker = combineUpdateCheckers([updateChecker].flat());
+        this.schema = schema;
     }
 
     async getById(id: Uuid): Promise<T | undefined> {
@@ -112,7 +121,7 @@ export class DocRepo<T extends Doc> {
             const result = recipe(draft) ?? draft;
 
             // todo: add tests
-            if (options?.nocheck === true) {
+            if (options?.nocheck !== true) {
                 const errors = this.updateChecker(prev, result);
                 if (errors) {
                     throw new Error('invalid update:\n - ' + errors.errors.join('\n - '));
@@ -128,10 +137,36 @@ export class DocRepo<T extends Doc> {
             return prev;
         }
         const next = doc.snapshot();
+        this.ensureValid(next);
 
         await Promise.all([this.primary.put(id, doc), this._sync(id, prev, next, diff)]);
 
         return next;
+    }
+
+    async apply(id: Uuid, diff: CrdtDiff<T>, options?: DocRepoUpdateOptions): Promise<void> {
+        let doc: Crdt<T> | undefined = await this.primary.get(id);
+        let prev: T | undefined;
+        let next: T;
+        if (doc) {
+            prev = doc.snapshot();
+            doc.apply(diff);
+            next = doc.snapshot();
+        } else {
+            prev = undefined;
+            doc = Crdt.load(diff);
+            next = doc.snapshot();
+        }
+
+        if (next.id !== id) {
+            throw new Error('invalid diff: diff updates id ' + id);
+        }
+
+        if (prev && options?.nocheck !== true) {
+            this.updateChecker(prev, next);
+        }
+
+        this.ensureValid(next);
     }
 
     async create(doc: T): Promise<void> {
@@ -162,5 +197,10 @@ export class DocRepo<T extends Doc> {
             .map(id => this.primary.get(id))
             .assert(x => x !== undefined)
             .map(doc => doc.snapshot());
+    }
+
+    private ensureValid(value: T) {
+        const result = this.schema.parse(value);
+        assert(deepEqual(result, value));
     }
 }

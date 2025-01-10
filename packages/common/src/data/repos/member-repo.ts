@@ -1,8 +1,11 @@
+import {z} from 'zod';
 import {AsyncStream} from '../../async-stream';
+import {CrdtDiff} from '../../crdt/crdt';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
+import {zTimestamp} from '../../timestamp';
 import {Brand} from '../../utils';
-import {Uuid, createUuid} from '../../uuid';
-import {Doc, DocRepo, OnDocChange, Recipe} from '../doc-repo';
+import {Uuid, createUuid, zUuid} from '../../uuid';
+import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo';
 import {createWriteableChecker} from '../update-checker';
 import {BoardId} from './board-repo';
 import {UserId} from './user-repo';
@@ -21,7 +24,7 @@ export interface Member extends Doc<MemberId> {
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
 
-export class MemberRepo {
+export class MemberRepo implements SyncTarget<Member> {
     private readonly store: DocRepo<Member>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Member>) {
@@ -39,7 +42,18 @@ export class MemberRepo {
                 boardId: false,
                 userId: false,
             }),
+            schema: z.object({
+                id: zUuid<MemberId>(),
+                createdAt: zTimestamp(),
+                updatedAt: zTimestamp(),
+                userId: zUuid<UserId>(),
+                boardId: zUuid<BoardId>(),
+            }),
         });
+    }
+
+    async apply(id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
+        return await this.store.apply(id, diff);
     }
 
     create(member: Member): Promise<void> {

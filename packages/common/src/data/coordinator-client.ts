@@ -1,7 +1,7 @@
+import {DataAccessor} from './actor';
 import {createRpcClient} from './communication/rpc';
 import {Connection} from './communication/transport';
 import {type CoordinatorApi} from './coordinator';
-import {DataAccessor} from './db';
 
 export class CoordinatorClient {
     private token?: string;

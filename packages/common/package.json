@@ -42,6 +42,7 @@
     },
     "devDependencies": {
         "@types/bytewise": "^1.1.2",
+        "@types/deep-equal": "^1.0.4",
         "@types/functional-red-black-tree": "^1.0.6",
         "@types/jsonwebtoken": "^9.0.7",
         "@types/node": "^22.10.2",
@@ -52,6 +53,7 @@
     },
     "dependencies": {
         "bytewise": "^1.1.0",
+        "deep-equal": "^2.2.3",
         "functional-red-black-tree": "^1.0.1",
         "it-pushable": "^3.2.3",
         "jsonwebtoken": "^9.0.2",

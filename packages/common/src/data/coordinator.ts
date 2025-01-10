@@ -4,11 +4,11 @@ import {z} from 'zod';
 import {Uint8KVStore} from '../kv/kv-store';
 import {unimplemented} from '../utils';
 import {zUuid} from '../uuid';
+import {Actor, DataAccessor} from './actor';
 import {AuthContext, AuthContextParser} from './auth-context';
 import {createApi, handler, setupRpcServer} from './communication/rpc';
 import {Connection, TransportServer} from './communication/transport';
 import {DataLayer, TransactionContext} from './data-layer';
-import {DataAccessor, Db} from './db';
 import {BoardId} from './repos/board-repo';
 import {IdentityId} from './repos/identity-repo';
 import {TaskId} from './repos/task-repo';
@@ -55,33 +55,32 @@ export interface PasswordInvalidSignInResponse extends BaseSignInResponse<'passw
 export type SignInResponse = SuccessSignInResponse | UserNotFoundSignInResponse | PasswordInvalidSignInResponse;
 
 function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthContext}) {
-    const db: Db = unimplemented();
+    const actor: Actor = unimplemented();
 
     const dbApi = createApi({
         getMe: handler({
             schema: z.object({}),
-            handle: db.getMe.bind(db),
+            handle: actor.getMe.bind(actor),
         }),
         getMyBoards: handler({
             schema: z.object({}),
-            handle: db.getMyBoards.bind(db),
+            handle: actor.getMyBoards.bind(actor),
         }),
         getBoardTasks: handler({
             schema: z.object({boardId: zUuid<BoardId>()}),
-            handle: db.getBoardTasks.bind(db),
+            handle: actor.getBoardTasks.bind(actor),
         }),
         getTask: handler({
             schema: z.object({taskId: zUuid<TaskId>()}),
-            handle: db.getTask.bind(db),
+            handle: actor.getTask.bind(actor),
         }),
         createTask: handler({
             schema: z.object({
                 taskId: zUuid<TaskId>(),
                 boardId: zUuid<BoardId>(),
                 title: z.string(),
-                text: z.string(),
             }),
-            handle: db.createTask.bind(db),
+            handle: actor.createTask.bind(actor),
         }),
         createBoard: handler({
             schema: z.object({
@@ -89,34 +88,34 @@ function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthC
                 name: z.string(),
                 slug: z.string().optional(),
             }),
-            handle: db.createBoard.bind(db),
+            handle: actor.createBoard.bind(actor),
         }),
         getBoard: handler({
             schema: z.object({
                 boardId: zUuid<BoardId>(),
             }),
-            handle: db.getBoard.bind(db),
+            handle: actor.getBoard.bind(actor),
         }),
         setBoardSlug: handler({
             schema: z.object({
                 boardId: zUuid<BoardId>(),
                 slug: z.string(),
             }),
-            handle: db.setBoardSlug.bind(db),
+            handle: actor.setBoardSlug.bind(actor),
         }),
         updateBoardName: handler({
             schema: z.object({
                 boardId: zUuid<BoardId>(),
                 name: z.string(),
             }),
-            handle: db.updateBoardName.bind(db),
+            handle: actor.updateBoardName.bind(actor),
         }),
         updateTaskTitle: handler({
             schema: z.object({
                 taskId: zUuid<TaskId>(),
                 title: z.string(),
             }),
-            handle: db.updateTaskTitle.bind(db),
+            handle: actor.updateTaskTitle.bind(actor),
         }),
     } satisfies DataAccessor);
 

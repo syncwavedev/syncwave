@@ -46,7 +46,7 @@ export class BoardRepo implements SyncTarget<Board> {
                 deleted: z.boolean(),
             }),
         });
-        this.counters = new Registry(withPrefix('c/')(txn), counterTxn => new Counter(txn, 0));
+        this.counters = new Registry(withPrefix('c/')(txn), counterTxn => new Counter(counterTxn, 0));
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {

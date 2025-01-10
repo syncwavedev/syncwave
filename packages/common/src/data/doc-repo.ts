@@ -17,6 +17,7 @@ export type IndexSpec<T> =
     | {
           readonly unique?: boolean | undefined;
           readonly key: (x: T) => IndexKey;
+          readonly include?: (x: T) => boolean;
       }
     | ((x: T) => IndexKey);
 
@@ -29,6 +30,10 @@ export interface DocStoreOptions<T extends Doc> {
     indexes: IndexMap<T>;
     onChange: OnDocChange<T>;
     updateChecker: UpdateChecker<T> | Array<UpdateChecker<T>>;
+}
+
+export interface DocRepoUpdateOptions {
+    readonly nocheck: boolean;
 }
 
 export type Recipe<T> = (doc: T) => T | void;
@@ -96,7 +101,7 @@ export class DocRepo<T extends Doc> {
         return this._mapToDocs(index.query(condition));
     }
 
-    async update(id: Uuid, recipe: Recipe<T>): Promise<T> {
+    async update(id: Uuid, recipe: Recipe<T>, options?: DocRepoUpdateOptions): Promise<T> {
         const doc = await this.primary.get(id);
         if (!doc) {
             throw new Error('doc not found: ' + id);
@@ -106,9 +111,12 @@ export class DocRepo<T extends Doc> {
         const diff = doc.update(draft => {
             const result = recipe(draft) ?? draft;
 
-            const errors = this.updateChecker(prev, result);
-            if (errors) {
-                throw new Error('invalid update:\n - ' + errors.errors.join('\n - '));
+            // todo: add tests
+            if (options?.nocheck === true) {
+                const errors = this.updateChecker(prev, result);
+                if (errors) {
+                    throw new Error('invalid update:\n - ' + errors.errors.join('\n - '));
+                }
             }
 
             result.updatedAt = getNow();

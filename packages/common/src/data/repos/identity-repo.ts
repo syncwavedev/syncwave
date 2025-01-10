@@ -31,6 +31,7 @@ export class IdentityRepo {
                 [EMAIL_INDEX]: {
                     key: x => [x.email],
                     unique: true,
+                    include: x => x.email !== undefined,
                 },
                 [USER_ID_INDEX]: {
                     key: x => [x.userId],

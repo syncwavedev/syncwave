@@ -24,6 +24,9 @@ export interface Task extends Doc<TaskId> {
 }
 
 const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
+const BOARD_ID = 'boardId';
+
+// todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
 export class TaskRepo {
     private readonly store: DocRepo<Task>;
@@ -36,7 +39,9 @@ export class TaskRepo {
                 [BOARD_ID_COUNTER_INDEX]: {
                     key: x => [x.boardId, x.counter],
                     unique: true,
+                    include: x => x.counter !== undefined,
                 },
+                [BOARD_ID]: x => [x.boardId, x.counter],
             },
             updateChecker: createWriteableChecker({
                 deleted: true,
@@ -51,7 +56,7 @@ export class TaskRepo {
     }
 
     getByBoardId(boardId: BoardId): AsyncStream<Task> {
-        return this.store.get(BOARD_ID_COUNTER_INDEX, [boardId]);
+        return this.store.get(BOARD_ID, [boardId]);
     }
 
     create(user: Task): Promise<void> {

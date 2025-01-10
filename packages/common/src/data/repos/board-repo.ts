@@ -11,7 +11,7 @@ import {UserId} from './user-repo';
 export type BoardId = Brand<Uuid, 'board_id'>;
 
 export interface Board extends Doc<BoardId> {
-    readonly slug: string;
+    readonly slug?: string;
     name: string;
     ownerId: UserId;
     deleted: boolean;
@@ -31,6 +31,7 @@ export class BoardRepo {
                 [SLUG_INDEX]: {
                     key: x => [x.slug],
                     unique: true,
+                    include: x => x.slug !== undefined,
                 },
             },
             updateChecker: createWriteableChecker({
@@ -68,7 +69,15 @@ export class BoardRepo {
         }
     }
 
-    update(id: BoardId, recipe: Recipe<Board>): Promise<Board> {
-        return this.store.update(id, recipe);
+    async update(id: BoardId, recipe: Recipe<Board>, options?: {nocheck: boolean}): Promise<Board> {
+        try {
+            return await this.store.update(id, recipe, options);
+        } catch (err) {
+            if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
+                throw new Error(`board with slug already exists`);
+            }
+
+            throw err;
+        }
     }
 }

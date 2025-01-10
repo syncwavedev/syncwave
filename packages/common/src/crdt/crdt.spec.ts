@@ -348,215 +348,213 @@ describe('Doc', () => {
         });
     });
 
-    describe('chatgpt', () => {
-        it('should create a Crdt instance from a plain value', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            expect(crdt.snapshot()).toEqual(value);
+    it('should create a Crdt instance from a plain value', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        expect(crdt.snapshot()).toEqual(value);
+    });
+
+    it('should load a Crdt instance from a DocDiff', () => {
+        const diff = createTestDocDiff({key: 'value'});
+        const crdt = Crdt.load(diff);
+        expect(crdt).toBeInstanceOf(Crdt);
+    });
+
+    it('should return the correct snapshot', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        expect(crdt.snapshot()).toEqual(value);
+    });
+
+    it('should return the correct state as DocDiff', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        const state = crdt.state();
+        expect(state).toBeDefined();
+    });
+
+    it('should map over the Crdt instance', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        const result = crdt.map(snapshot => snapshot.key);
+        expect(result).toBe('value');
+    });
+
+    it('should update the Crdt instance with a recipe function', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        crdt.update(draft => {
+            draft.key = 'updatedValue';
+        });
+        expect(crdt.snapshot()).toEqual({key: 'updatedValue'});
+    });
+
+    it('should support subscribing to updates', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        const callback = vi.fn();
+
+        const unsubscribe = crdt.subscribe('update', callback);
+
+        const diff = createTestDocDiff({key: 'newValue'});
+        crdt.apply(diff);
+
+        expect(callback).toHaveBeenCalledWith(expect.any(Uint8Array), {tag: undefined});
+
+        unsubscribe();
+    });
+
+    it('should unsubscribe from updates', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        const callback = vi.fn();
+
+        const unsubscribe = crdt.subscribe('update', callback);
+        unsubscribe();
+
+        const diff = createTestDocDiff({key: 'newValue'});
+        crdt.apply(diff);
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should handle deeply nested structures in snapshot', () => {
+        const value = {nested: {key: 'value'}};
+        const crdt = Crdt.from(value);
+        expect(crdt.snapshot()).toEqual(value);
+    });
+
+    it('should handle deeply nested structures in update', () => {
+        const value = {nested: {key: 'value'}};
+        const crdt = Crdt.from(value);
+        crdt.update(draft => {
+            draft.nested.key = 'updatedValue';
+        });
+        expect(crdt.snapshot()).toEqual({nested: {key: 'updatedValue'}});
+    });
+
+    it('should throw error if unsupported value type is passed to mapToYValue', () => {
+        const unsupportedValue = new Date();
+        expect(() => Crdt.from(unsupportedValue)).toThrow();
+    });
+
+    it('should throw error if unsupported YValue type is passed to mapFromYValue', () => {
+        const unsupportedYValue = Symbol('unsupported');
+        expect(() => Crdt.from(unsupportedYValue)).toThrow();
+    });
+
+    it('should preserve object references in snapshots', () => {
+        const value = {arr: [{key: 'value'}]};
+        const crdt = Crdt.from(value);
+        expect(crdt.snapshot().arr[0]).toEqual(value.arr[0]);
+    });
+
+    it('should correctly map arrays in updates', () => {
+        const value = {arr: [1, 2, 3]};
+        const crdt = Crdt.from(value);
+        crdt.update(draft => {
+            draft.arr.push(4);
+        });
+        expect(crdt.snapshot()).toEqual({arr: [1, 2, 3, 4]});
+    });
+
+    it('should support string updates with YText', () => {
+        const value = {text: 'initial'};
+        const crdt = Crdt.from(value);
+        crdt.update(draft => {
+            draft.text = 'updated';
+        });
+        expect(crdt.snapshot()).toEqual({text: 'updated'});
+    });
+
+    it('should handle empty object snapshots', () => {
+        const crdt = Crdt.from({});
+        expect(crdt.snapshot()).toEqual({});
+    });
+
+    it('should support empty arrays in snapshots', () => {
+        const crdt = Crdt.from([]);
+        expect(crdt.snapshot()).toEqual([]);
+    });
+
+    it('should maintain separate snapshots for different Crdt instances', () => {
+        const value1 = {key: 'value1'};
+        const value2 = {key: 'value2'};
+
+        const crdt1 = Crdt.from(value1);
+        const crdt2 = Crdt.from(value2);
+
+        expect(crdt1.snapshot()).toEqual(value1);
+        expect(crdt2.snapshot()).toEqual(value2);
+    });
+
+    it('should handle concurrent subscriptions and updates', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        const callback1 = vi.fn();
+        const callback2 = vi.fn();
+
+        const unsubscribe1 = crdt.subscribe('update', callback1);
+        const unsubscribe2 = crdt.subscribe('update', callback2);
+
+        const diff = createTestDocDiff({key: 'newValue'});
+        crdt.apply(diff);
+
+        expect(callback1).toHaveBeenCalled();
+        expect(callback2).toHaveBeenCalled();
+
+        unsubscribe1();
+        unsubscribe2();
+    });
+
+    it('should handle updates with complex structures', () => {
+        const value = {nested: [{key: 'value'}]};
+        const crdt = Crdt.from(value);
+
+        crdt.update(draft => {
+            draft.nested[0].key = 'newValue';
         });
 
-        it('should load a Crdt instance from a DocDiff', () => {
-            const diff = createTestDocDiff({key: 'value'});
-            const crdt = Crdt.load(diff);
-            expect(crdt).toBeInstanceOf(Crdt);
+        expect(crdt.snapshot()).toEqual({nested: [{key: 'newValue'}]});
+    });
+
+    it('should propagate events in correct order', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        const events: string[] = [];
+
+        crdt.subscribe('update', (diff, options) => {
+            events.push(options.origin || 'no-tag');
         });
 
-        it('should return the correct snapshot', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            expect(crdt.snapshot()).toEqual(value);
+        crdt.apply(createTestDocDiff({key: 'value1'}), {origin: 'first'});
+        crdt.apply(createTestDocDiff({key: 'value2'}), {origin: 'second'});
+
+        expect(events).toEqual(['first', 'second']);
+    });
+
+    it('should correctly unsubscribe in concurrent scenarios', () => {
+        const value = {key: 'value'};
+        const crdt = Crdt.from(value);
+        const callback = vi.fn();
+
+        const unsubscribe = crdt.subscribe('update', callback);
+        unsubscribe();
+
+        const diff = createTestDocDiff({key: 'newValue'});
+        crdt.apply(diff);
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should handle large nested structures efficiently', () => {
+        const largeValue = {key: Array.from({length: 1000}, (_, i) => ({id: i, value: `value${i}`}))};
+        const crdt = Crdt.from(largeValue);
+
+        crdt.update(draft => {
+            draft.key[500].value = 'updatedValue';
         });
 
-        it('should return the correct state as DocDiff', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            const state = crdt.state();
-            expect(state).toBeDefined();
-        });
-
-        it('should map over the Crdt instance', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            const result = crdt.map(snapshot => snapshot.key);
-            expect(result).toBe('value');
-        });
-
-        it('should update the Crdt instance with a recipe function', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            crdt.update(draft => {
-                draft.key = 'updatedValue';
-            });
-            expect(crdt.snapshot()).toEqual({key: 'updatedValue'});
-        });
-
-        it('should support subscribing to updates', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            const callback = vi.fn();
-
-            const unsubscribe = crdt.subscribe('update', callback);
-
-            const diff = createTestDocDiff({key: 'newValue'});
-            crdt.apply(diff);
-
-            expect(callback).toHaveBeenCalledWith(expect.any(Uint8Array), {tag: undefined});
-
-            unsubscribe();
-        });
-
-        it('should unsubscribe from updates', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            const callback = vi.fn();
-
-            const unsubscribe = crdt.subscribe('update', callback);
-            unsubscribe();
-
-            const diff = createTestDocDiff({key: 'newValue'});
-            crdt.apply(diff);
-
-            expect(callback).not.toHaveBeenCalled();
-        });
-
-        it('should handle deeply nested structures in snapshot', () => {
-            const value = {nested: {key: 'value'}};
-            const crdt = Crdt.from(value);
-            expect(crdt.snapshot()).toEqual(value);
-        });
-
-        it('should handle deeply nested structures in update', () => {
-            const value = {nested: {key: 'value'}};
-            const crdt = Crdt.from(value);
-            crdt.update(draft => {
-                draft.nested.key = 'updatedValue';
-            });
-            expect(crdt.snapshot()).toEqual({nested: {key: 'updatedValue'}});
-        });
-
-        it('should throw error if unsupported value type is passed to mapToYValue', () => {
-            const unsupportedValue = new Date();
-            expect(() => Crdt.from(unsupportedValue)).toThrow();
-        });
-
-        it('should throw error if unsupported YValue type is passed to mapFromYValue', () => {
-            const unsupportedYValue = Symbol('unsupported');
-            expect(() => Crdt.from(unsupportedYValue)).toThrow();
-        });
-
-        it('should preserve object references in snapshots', () => {
-            const value = {arr: [{key: 'value'}]};
-            const crdt = Crdt.from(value);
-            expect(crdt.snapshot().arr[0]).toEqual(value.arr[0]);
-        });
-
-        it('should correctly map arrays in updates', () => {
-            const value = {arr: [1, 2, 3]};
-            const crdt = Crdt.from(value);
-            crdt.update(draft => {
-                draft.arr.push(4);
-            });
-            expect(crdt.snapshot()).toEqual({arr: [1, 2, 3, 4]});
-        });
-
-        it('should support string updates with YText', () => {
-            const value = {text: 'initial'};
-            const crdt = Crdt.from(value);
-            crdt.update(draft => {
-                draft.text = 'updated';
-            });
-            expect(crdt.snapshot()).toEqual({text: 'updated'});
-        });
-
-        it('should handle empty object snapshots', () => {
-            const crdt = Crdt.from({});
-            expect(crdt.snapshot()).toEqual({});
-        });
-
-        it('should support empty arrays in snapshots', () => {
-            const crdt = Crdt.from([]);
-            expect(crdt.snapshot()).toEqual([]);
-        });
-
-        it('should maintain separate snapshots for different Crdt instances', () => {
-            const value1 = {key: 'value1'};
-            const value2 = {key: 'value2'};
-
-            const crdt1 = Crdt.from(value1);
-            const crdt2 = Crdt.from(value2);
-
-            expect(crdt1.snapshot()).toEqual(value1);
-            expect(crdt2.snapshot()).toEqual(value2);
-        });
-
-        it('should handle concurrent subscriptions and updates', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            const callback1 = vi.fn();
-            const callback2 = vi.fn();
-
-            const unsubscribe1 = crdt.subscribe('update', callback1);
-            const unsubscribe2 = crdt.subscribe('update', callback2);
-
-            const diff = createTestDocDiff({key: 'newValue'});
-            crdt.apply(diff);
-
-            expect(callback1).toHaveBeenCalled();
-            expect(callback2).toHaveBeenCalled();
-
-            unsubscribe1();
-            unsubscribe2();
-        });
-
-        it('should handle updates with complex structures', () => {
-            const value = {nested: [{key: 'value'}]};
-            const crdt = Crdt.from(value);
-
-            crdt.update(draft => {
-                draft.nested[0].key = 'newValue';
-            });
-
-            expect(crdt.snapshot()).toEqual({nested: [{key: 'newValue'}]});
-        });
-
-        it('should propagate events in correct order', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            const events: string[] = [];
-
-            crdt.subscribe('update', (diff, options) => {
-                events.push(options.origin || 'no-tag');
-            });
-
-            crdt.apply(createTestDocDiff({key: 'value1'}), {origin: 'first'});
-            crdt.apply(createTestDocDiff({key: 'value2'}), {origin: 'second'});
-
-            expect(events).toEqual(['first', 'second']);
-        });
-
-        it('should correctly unsubscribe in concurrent scenarios', () => {
-            const value = {key: 'value'};
-            const crdt = Crdt.from(value);
-            const callback = vi.fn();
-
-            const unsubscribe = crdt.subscribe('update', callback);
-            unsubscribe();
-
-            const diff = createTestDocDiff({key: 'newValue'});
-            crdt.apply(diff);
-
-            expect(callback).not.toHaveBeenCalled();
-        });
-
-        it('should handle large nested structures efficiently', () => {
-            const largeValue = {key: Array.from({length: 1000}, (_, i) => ({id: i, value: `value${i}`}))};
-            const crdt = Crdt.from(largeValue);
-
-            crdt.update(draft => {
-                draft.key[500].value = 'updatedValue';
-            });
-
-            expect(crdt.snapshot().key[500].value).toEqual('updatedValue');
-        });
+        expect(crdt.snapshot().key[500].value).toEqual('updatedValue');
     });
 });

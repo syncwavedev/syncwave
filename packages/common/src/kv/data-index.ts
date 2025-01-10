@@ -1,6 +1,6 @@
 import {decode, encode} from 'bytewise';
 import {Encoder} from '../encoder';
-import {compareUint8Array} from '../utils';
+import {assert, compareUint8Array, zip} from '../utils';
 import {Uuid, UuidEncoder} from '../uuid';
 import {Condition, Uint8Transaction, mapCondition} from './kv-store';
 
@@ -26,6 +26,7 @@ export interface IndexOptions<TValue> {
     readonly keySelector: (value: TValue) => IndexKey;
     readonly unique: boolean;
     readonly indexName: string;
+    readonly include?: (value: TValue) => boolean;
 }
 
 export class UniqueError extends Error {
@@ -40,9 +41,12 @@ export function createIndex<TValue>({
     keySelector,
     unique,
     indexName,
+    include,
 }: IndexOptions<TValue>): Index<TValue> {
     const keyEncoder = new KeyEncoder();
     const uuidEncoder = new UuidEncoder();
+
+    include = include ?? (() => true);
 
     async function* queryInternal(condition: Condition<IndexKey>) {
         const conditionKey = mapCondition(condition, {
@@ -108,13 +112,22 @@ export function createIndex<TValue>({
             const prevKey = prev && keySelector(prev);
             const nextKey = next && keySelector(next);
 
-            if (prevKey === nextKey) {
+            const prevIncluded = prev && include(prev);
+            const nextIncluded = next && include(next);
+
+            if (
+                prevKey !== undefined &&
+                nextKey !== undefined &&
+                zip(prevKey, nextKey).every(([a, b]) => compareIndexKeyPart(a, b) === 0) &&
+                prevIncluded === nextIncluded
+            ) {
                 // nothing to do
                 return;
             }
 
             // clean up
-            if (prevKey) {
+            if (prevIncluded) {
+                assert(prevKey !== undefined);
                 if (unique) {
                     await txn.delete(keyEncoder.encode(prevKey));
                 } else {
@@ -123,7 +136,8 @@ export function createIndex<TValue>({
             }
 
             // add
-            if (nextKey) {
+            if (nextIncluded) {
+                assert(nextKey !== undefined);
                 if (unique) {
                     const existing = await txn.get(keyEncoder.encode(nextKey));
                     if (existing) {

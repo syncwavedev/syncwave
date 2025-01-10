@@ -83,7 +83,7 @@ export function distinct<T>(items: T[]): T[] {
     return [...new Set(items).values()];
 }
 
-export function zip<T1, T2>(a: T1[], b: T2[]): [T1, T2][] {
+export function zip<T1, T2>(a: readonly T1[], b: readonly T2[]): [T1, T2][] {
     assert(a.length === b.length);
 
     const result: [T1, T2][] = [];
@@ -114,4 +114,18 @@ export function unreachable(): never {
 
 export function unimplemented(): never {
     throw new Error('unimplemented');
+}
+
+export function arrayEqual<T>(a: T[], b: T[]) {
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    for (let i = 0; i < a.length; i += 1) {
+        if (a[i] !== b[i]) {
+            return false;
+        }
+    }
+
+    return true;
 }

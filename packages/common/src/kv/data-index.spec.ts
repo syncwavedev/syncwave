@@ -276,3 +276,203 @@ describe('KeySerializer', () => {
         expect(uuid).toEqual(result);
     });
 });
+
+describe('data-index with include functionality', async () => {
+    it('should only index items passing the include function', async () => {
+        const {txn} = await getTxn();
+        const includeIndex = createIndex<TestUser>({
+            txn,
+            idSelector,
+            keySelector: x => [x.houseId],
+            unique: false,
+            indexName: INDEX_NAME,
+            include: x => (x.age ?? -1) > 20,
+        });
+
+        const id1 = createUuid();
+        const id2 = createUuid();
+        const id3 = createUuid();
+        const id4 = createUuid();
+
+        await includeIndex.sync(undefined, {id: id1, houseId: null, age: 25});
+        await includeIndex.sync(undefined, {id: id2, houseId: null, age: 20});
+        await includeIndex.sync(undefined, {id: id3, houseId: null, age: undefined});
+        await includeIndex.sync(undefined, {id: id4, houseId: null, age: null});
+
+        const result = await astream(includeIndex.query({gte: [null]})).toArray();
+        expect(result).toEqual([id1]); // Only id1 has age > 20
+    });
+
+    it('should remove items from index if include function no longer applies', async () => {
+        const {txn} = await getTxn();
+        const includeIndex = createIndex<TestUser>({
+            txn,
+            idSelector,
+            keySelector: x => [x.houseId],
+            unique: false,
+            indexName: INDEX_NAME,
+            include: x => (x.age ?? -1) > 20,
+        });
+
+        const id1 = createUuid();
+        const id2 = createUuid();
+
+        await includeIndex.sync(undefined, {id: id1, houseId: null, age: 25});
+        await includeIndex.sync(undefined, {id: id2, houseId: null, age: 30});
+        await includeIndex.sync({id: id1, houseId: null, age: 25}, {id: id1, houseId: null, age: 18});
+
+        const result = await astream(includeIndex.query({gte: [null]})).toArray();
+        expect(result).toEqual([id2]); // id1 is removed after age changed to 18
+    });
+
+    it('should support dynamic include function', async () => {
+        const {txn} = await getTxn();
+        const dynamicIncludeIndex = createIndex<TestUser>({
+            txn,
+            idSelector,
+            keySelector: x => [x.houseId],
+            unique: false,
+            indexName: INDEX_NAME,
+            include: x => x.ready === true,
+        });
+
+        const id1 = createUuid();
+        const id2 = createUuid();
+
+        await dynamicIncludeIndex.sync(undefined, {id: id1, houseId: null, ready: true});
+        await dynamicIncludeIndex.sync(undefined, {id: id2, houseId: null, ready: false});
+
+        let result = await astream(dynamicIncludeIndex.query({gte: [null]})).toArray();
+        expect(result).toEqual([id1]); // Only id1 is indexed initially
+
+        // Change ready status
+        await dynamicIncludeIndex.sync({id: id2, houseId: null, ready: false}, {id: id2, houseId: null, ready: true});
+
+        result = await astream(dynamicIncludeIndex.query({gte: [null]})).toArray();
+        expect(result).toEqual([id1, id2]); // Now id2 is included
+    });
+
+    it('should enforce unique constraint for included items', async () => {
+        const {txn} = await getTxn();
+        const uniqueIncludeIndex = createIndex<TestUser>({
+            txn,
+            idSelector,
+            keySelector: x => [x.houseId],
+            unique: true,
+            indexName: INDEX_NAME,
+            include: x => (x.age ?? -1) > 20,
+        });
+
+        const id1 = createUuid();
+        const id2 = createUuid();
+        const id3 = createUuid();
+        const houseId = createUuid();
+
+        await uniqueIncludeIndex.sync(undefined, {id: id1, houseId, age: 25});
+        uniqueIncludeIndex.sync(undefined, {id: id2, houseId, age: 15});
+
+        // Attempt to add another item with the same key that satisfies the include function
+        await expect(uniqueIncludeIndex.sync(undefined, {id: id3, houseId, age: 30})).rejects.toThrow(
+            'unique index constraint violation'
+        );
+    });
+
+    it('should allow multiple items with the same key if excluded by include function', async () => {
+        const {txn} = await getTxn();
+        const uniqueIncludeIndex = createIndex<TestUser>({
+            txn,
+            idSelector,
+            keySelector: x => [x.houseId],
+            unique: true,
+            indexName: INDEX_NAME,
+            include: x => (x.age ?? -1) > 20,
+        });
+
+        const id1 = createUuid();
+        const id2 = createUuid();
+        const houseId = createUuid();
+
+        await uniqueIncludeIndex.sync(undefined, {id: id1, houseId, age: 25}); // Included
+        await uniqueIncludeIndex.sync(undefined, {id: id2, houseId, age: 20}); // Excluded
+
+        const result = await astream(uniqueIncludeIndex.query({gte: [null]})).toArray();
+        expect(result).toEqual([id1]); // Only id1 is indexed
+    });
+
+    it('should handle updates where include condition changes dynamically', async () => {
+        const {txn} = await getTxn();
+        const uniqueIncludeIndex = createIndex<TestUser>({
+            txn,
+            idSelector,
+            keySelector: x => [x.houseId],
+            unique: true,
+            indexName: INDEX_NAME,
+            include: x => x.ready === true,
+        });
+
+        const id1 = createUuid();
+        const id2 = createUuid();
+        const houseId = createUuid();
+
+        await uniqueIncludeIndex.sync(undefined, {id: id1, houseId, ready: true}); // Included
+
+        // Try adding another item with the same key
+        await expect(uniqueIncludeIndex.sync(undefined, {id: id2, houseId, ready: true})).rejects.toThrow(
+            'unique index constraint violation'
+        );
+
+        // Update id1 to no longer be included
+        await uniqueIncludeIndex.sync({id: id1, houseId, ready: true}, {id: id1, houseId, ready: false});
+
+        // Now id2 should be allowed
+        await uniqueIncludeIndex.sync(undefined, {id: id2, houseId, ready: true});
+
+        const result = await astream(uniqueIncludeIndex.query({gte: [null]})).toArray();
+        expect(result).toEqual([id2]); // Only id2 is indexed after id1 is excluded
+    });
+
+    it('should delete excluded items from unique index', async () => {
+        const {txn} = await getTxn();
+        const uniqueIncludeIndex = createIndex<TestUser>({
+            txn,
+            idSelector,
+            keySelector: x => [x.houseId],
+            unique: true,
+            indexName: INDEX_NAME,
+            include: x => (x.age ?? -1) > 20,
+        });
+
+        const id1 = createUuid();
+        const houseId = createUuid();
+
+        await uniqueIncludeIndex.sync(undefined, {id: id1, houseId, age: 25}); // Included
+
+        // Update id1 to be excluded
+        await uniqueIncludeIndex.sync({id: id1, houseId, age: 25}, {id: id1, houseId, age: 18}); // Excluded
+
+        const result = await astream(uniqueIncludeIndex.query({gte: [null]})).toArray();
+        expect(result).toEqual([]); // id1 is removed from the index
+    });
+
+    it('should re-add items if they satisfy the include condition again', async () => {
+        const {txn} = await getTxn();
+        const uniqueIncludeIndex = createIndex<TestUser>({
+            txn,
+            idSelector,
+            keySelector: x => [x.houseId],
+            unique: true,
+            indexName: INDEX_NAME,
+            include: x => (x.age ?? -1) > 20,
+        });
+
+        const id1 = createUuid();
+        const houseId = createUuid();
+
+        await uniqueIncludeIndex.sync(undefined, {id: id1, houseId, age: 25}); // Included
+        await uniqueIncludeIndex.sync({id: id1, houseId, age: 25}, {id: id1, houseId, age: 18}); // Excluded
+        await uniqueIncludeIndex.sync({id: id1, houseId, age: 18}, {id: id1, houseId, age: 30}); // Re-added
+
+        const result = await astream(uniqueIncludeIndex.query({gte: [null]})).toArray();
+        expect(result).toEqual([id1]); // id1 is re-added after satisfying the condition again
+    });
+});

@@ -76,11 +76,47 @@ function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthC
         }),
         createTask: handler({
             schema: z.object({
+                taskId: zUuid<TaskId>(),
                 boardId: zUuid<BoardId>(),
                 title: z.string(),
                 text: z.string(),
             }),
             handle: db.createTask.bind(db),
+        }),
+        createBoard: handler({
+            schema: z.object({
+                boardId: zUuid<BoardId>(),
+                name: z.string(),
+                slug: z.string().optional(),
+            }),
+            handle: db.createBoard.bind(db),
+        }),
+        getBoard: handler({
+            schema: z.object({
+                boardId: zUuid<BoardId>(),
+            }),
+            handle: db.getBoard.bind(db),
+        }),
+        setBoardSlug: handler({
+            schema: z.object({
+                boardId: zUuid<BoardId>(),
+                slug: z.string(),
+            }),
+            handle: db.setBoardSlug.bind(db),
+        }),
+        updateBoardName: handler({
+            schema: z.object({
+                boardId: zUuid<BoardId>(),
+                name: z.string(),
+            }),
+            handle: db.updateBoardName.bind(db),
+        }),
+        updateTaskTitle: handler({
+            schema: z.object({
+                taskId: zUuid<TaskId>(),
+                title: z.string(),
+            }),
+            handle: db.updateTaskTitle.bind(db),
         }),
     } satisfies DataAccessor);
 

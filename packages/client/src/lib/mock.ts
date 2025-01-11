@@ -1,6 +1,6 @@
 import type {Board, Task} from './models';
 
-export const columns = ['To Do', 'In Progress', 'Done'];
+export const columns = ['To Do', 'In Progress', 'Review', 'Done'];
 export const tasks: Task[] = Array(1)
 	.fill(null)
 	.flatMap(() => [
@@ -45,6 +45,36 @@ export const tasks: Task[] = Array(1)
 			content: 'Richtext',
 			column: 'In Progress',
 			user: 'Andrei'
+		},
+		{
+			id: 123,
+			content: 'Code Review for Board screen',
+			column: 'Review',
+			user: 'Dima'
+		},
+		{
+			id: 124,
+			content: 'Review Data layer (Sync) v01',
+			column: 'Review',
+			user: 'Andrei'
+		},
+		{
+			id: 125,
+			content: 'Review Server setup',
+			column: 'Review',
+			user: 'Dima'
+		},
+		{
+			id: 126,
+			content: 'Review Auth implementation',
+			column: 'Review',
+			user: 'Andrei'
+		},
+		{
+			id: 127,
+			content: 'Review Mobile App Design 1.0',
+			column: 'Review',
+			user: 'Dima'
 		},
 		{
 			id: 81,

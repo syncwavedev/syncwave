@@ -8,9 +8,9 @@
 
 <div class="columns">
 	{#each columns as column, i}
-		<div class="column">
-			<div class="py-2 ml-4">
-				<h3 class="text-sm text-secondary font-medium">{column}</h3>
+		<div>
+			<div class="mt-4 mb-1 ml-4">
+				<h3 class="font-semibold">{column}</h3>
 			</div>
 			<ul class="column__tasks" transition:slide={{duration: 150}}>
 				{#each tasks.filter(x => x.column == column) as task}
@@ -54,7 +54,7 @@
 			</ul>
 		</div>
 		{#if i < columns.length - 1}
-			<hr />
+			<!-- <hr /> -->
 		{/if}
 	{/each}
 </div>

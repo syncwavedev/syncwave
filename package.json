@@ -10,7 +10,7 @@
         "test": "npm test --workspaces",
         "build": "npm run build --workspaces",
         "dev": "run-p dev:*",
-        "dev:ground-common": "npm run dev --workspace=qustar"
+        "dev:ground-data": "npm run dev --workspace=qustar"
     },
     "devDependencies": {
         "concurrently": "^8.2.2",

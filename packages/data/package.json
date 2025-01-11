@@ -1,5 +1,5 @@
 {
-    "name": "ground-common",
+    "name": "ground-data",
     "version": "0.1.0",
     "description": "TypeScript SQL query builder",
     "license": "MIT",

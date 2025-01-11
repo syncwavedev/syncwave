@@ -32,7 +32,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-haptics": "^2.2.0",
     "@tauri-apps/plugin-opener": "^2",
-    "ground-common": "*",
+    "ground-data": "*",
     "navaid": "^1.2.0",
     "navigo": "^8.11.1",
     "svelte-portal": "^2.2.1"

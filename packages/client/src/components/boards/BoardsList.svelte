@@ -65,12 +65,13 @@
 					</div>
 					<div class="flex flex-col flex-1 leading-snug">
 						<div class="flex">
-							<p class="font-medium">{board.name}</p>
-							<span class="ml-auto text-xs text-secondary">{formatDate(board.lastAction.date)}</span
+							<p class="text-truncate font-medium">{board.name}</p>
+							<span class="flex-shrink-0 ml-auto text-xs text-secondary"
+								>{formatDate(board.lastAction.date)}</span
 							>
 						</div>
-						<p class="text-sm">{board.lastAction.user}</p>
-						<p class="text-sm text-secondary text-truncate">
+						<p class="text-truncate text-sm">{board.lastAction.user}</p>
+						<p class="text-truncate text-sm text-secondary text-truncate">
 							{board.lastAction.action}
 						</p>
 					</div>

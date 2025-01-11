@@ -9,6 +9,9 @@
 <div class="columns">
 	{#each columns as column, i}
 		<div class="column">
+			<div class="py-2 ml-4">
+				<h3 class="text-sm text-secondary font-medium">{column}</h3>
+			</div>
 			<ul class="column__tasks" transition:slide={{duration: 150}}>
 				{#each tasks.filter(x => x.column == column) as task}
 					<ContextMenu
@@ -33,8 +36,8 @@
 								<button class="btn btn--icon">
 									<ColumnIcon percentage={(i * 100) / (columns.length - 1)} />
 								</button>
-								<span class="text-sm text-secondary mr-1">{task.id} –</span>
-								<span class="text-trucate">{task.content}</span>
+								<span class="flex-shrink-0 text-sm text-secondary mr-1">{task.id} –</span>
+								<span class="text-truncate">{task.content}</span>
 								<button class="ml-auto btn btn--icon">
 									<Avatar title={task.user} />
 								</button>

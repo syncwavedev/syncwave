@@ -55,20 +55,20 @@
 
 <div class="navigation-stack flex flex-col">
 	{#if hasTopToolbar}
-		<header class="top-bar flex align-end">
+		<header class="top-bar flex flex-1 align-end" class:border-b={!searchActive}>
 			{#if searchActive}
-				<div class="flex gap-3 align-center">
+				<div class="flex flex-1 gap-2 align-center pb-1">
 					<input
 						bind:this={searchInput}
 						type="text"
-						class="input search-input"
+						class="input"
 						placeholder="Search"
 						bind:value={searchText}
 						in:fade={{duration: 150, delay: 50}}
 					/>
 					<button
 						type="button"
-						class="btn btn--icon"
+						class="btn btn--circle"
 						onclick={searchCancel}
 						in:fade={{duration: 150, delay: 50}}
 					>
@@ -76,10 +76,10 @@
 					</button>
 				</div>
 			{:else}
-				<div class="flex align-center">
-					<div class="flex align-center gap-3 actions">
+				<div class="flex flex-1 align-center">
+					<div class="flex flex-1 align-center gap-3 actions">
 						{#if backButton}
-							<button onclick={onBackClick} class="btn btn--circle">
+							<button onclick={onBackClick} class="btn btn--icon">
 								<ChevronLeft />
 							</button>
 						{/if}
@@ -87,12 +87,12 @@
 					</div>
 
 					{#if navigationTitle}
-						<button type="button" class="btn btn--plain" onclick={handleTitleClick}>
+						<button type="button" class="btn btn--plain font-semibold" onclick={handleTitleClick}>
 							{navigationTitle}
 						</button>
 					{/if}
 
-					<div class="flex align-center justify-end gap-3 ml-auto actions">
+					<div class="flex flex-1 align-center justify-end gap-3 ml-auto actions">
 						{@render trailing?.()}
 					</div>
 				</div>
@@ -109,7 +109,7 @@
 	</div>
 
 	{#if bottomToolbar && !searchActive}
-		<footer class="bottom-bar" in:slide={{duration: 200}} out:slide={{duration: 200}}>
+		<footer class="bottom-bar border-t" in:slide={{duration: 200}} out:slide={{duration: 200}}>
 			{@render bottomToolbar?.()}
 		</footer>
 	{/if}
@@ -117,10 +117,8 @@
 
 <style>
 	:root {
-		--top-bar-height: calc(env(safe-area-inset-top) + var(--btn-size));
-		--bottom-bar-height: calc(
-			max(env(safe-area-inset-bottom), 0.5rem) + var(--btn-size) + 0.375rem
-		);
+		--top-bar-height: calc(env(safe-area-inset-top) + var(--btn-size) + 0.25rem);
+		--bottom-bar-height: calc(max(env(safe-area-inset-bottom), 0.5rem) + var(--btn-size) + 0.25rem);
 	}
 
 	.navigation-stack {
@@ -129,8 +127,8 @@
 
 	.top-bar {
 		padding-top: env(safe-area-inset-top);
-		padding-left: calc(env(safe-area-inset-left) + 1rem);
-		padding-right: calc(env(safe-area-inset-right) + 1rem);
+		padding-left: calc(env(safe-area-inset-left) + 0.25rem);
+		padding-right: calc(env(safe-area-inset-right) + 0.25rem);
 
 		height: var(--top-bar-height);
 
@@ -141,7 +139,6 @@
 		z-index: 10;
 
 		background-color: var(--color-subtle-1);
-		/* border-bottom: 0.5px solid var(--color-border); */
 		overflow: hidden;
 	}
 
@@ -162,7 +159,7 @@
 	}
 
 	.bottom-bar {
-		padding-top: 0.375rem;
+		padding-top: 0.25rem;
 		padding-left: calc(env(safe-area-inset-left) + 1rem);
 		padding-right: calc(env(safe-area-inset-right) + 1rem);
 		padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
@@ -176,10 +173,5 @@
 		z-index: 10;
 
 		background-color: var(--color-subtle-1);
-		/* border-top: 0.5px solid var(--color-border); */
-	}
-
-	.search-input {
-		margin: 0.25rem 0;
 	}
 </style>

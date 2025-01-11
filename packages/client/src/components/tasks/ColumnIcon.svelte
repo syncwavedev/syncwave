@@ -25,11 +25,11 @@
 			cx="12"
 			cy="12"
 			r="10"
-			stroke="currentColor"
+			stroke={percentage < 100 ? 'var(--color-pending)' : 'var(--color-success)'}
 			stroke-width="2"
 			fill="none"
-			stroke-dasharray={63 * Math.PI}
-			stroke-dashoffset={(100 - percentage) * (63 * Math.PI) * 0.01}
+			stroke-dasharray={20 * Math.PI}
+			stroke-dashoffset={(100 - percentage) * (20 * Math.PI) * 0.01}
 			style="transform: rotate(-90deg); transform-origin: 50% 50%;"
 		/>
 	{/if}

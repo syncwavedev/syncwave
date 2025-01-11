@@ -11,5 +11,5 @@
 	stroke-width="1.5"
 	stroke-linecap="round"
 	stroke-linejoin="round"
-	class="icon"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg
+	class="icon"><path d="m7 15 5 5 5-5" /><path d="m7 9 5-5 5 5" /></svg
 >

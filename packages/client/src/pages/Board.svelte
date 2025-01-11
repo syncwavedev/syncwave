@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Avatar from '../components/Avatar.svelte';
+	import Inbox from '../components/icons/Inbox.svelte';
 	import Plus from '../components/icons/Plus.svelte';
 	import Search from '../components/icons/Search.svelte';
 	import NavigationStack from '../components/mobile/NavigationStack.svelte';
@@ -33,6 +34,9 @@
 	<div class="flex align-center justify-between">
 		<button onclick={onSearch} class="btn btn--icon">
 			<Search />
+		</button>
+		<button class="btn btn--icon">
+			<Inbox />
 		</button>
 		<button class="btn btn--icon">
 			<Plus />

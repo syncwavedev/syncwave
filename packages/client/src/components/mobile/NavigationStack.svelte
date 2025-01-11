@@ -55,9 +55,9 @@
 
 <div class="navigation-stack flex flex-col">
 	{#if hasTopToolbar}
-		<header class="top-bar flex flex-1 align-end" class:border-b={!searchActive}>
+		<header class="top-bar flex flex-1 align-center" class:border-b={!searchActive}>
 			{#if searchActive}
-				<div class="flex flex-1 gap-2 align-center pb-1">
+				<div class="flex flex-1 gap-2 align-center">
 					<input
 						bind:this={searchInput}
 						type="text"
@@ -76,25 +76,23 @@
 					</button>
 				</div>
 			{:else}
-				<div class="flex flex-1 align-center">
-					<div class="flex flex-1 align-center gap-3 actions">
-						{#if backButton}
-							<button onclick={onBackClick} class="btn btn--icon">
-								<ChevronLeft />
-							</button>
-						{/if}
-						{@render leading?.()}
-					</div>
-
-					{#if navigationTitle}
-						<button type="button" class="btn btn--plain font-semibold" onclick={handleTitleClick}>
-							{navigationTitle}
+				<div class="flex flex-1 align-center gap-3 actions">
+					{#if backButton}
+						<button onclick={onBackClick} class="btn btn--icon">
+							<ChevronLeft />
 						</button>
 					{/if}
+					{@render leading?.()}
+				</div>
 
-					<div class="flex flex-1 align-center justify-end gap-3 ml-auto actions">
-						{@render trailing?.()}
-					</div>
+				{#if navigationTitle}
+					<button type="button" class="btn btn--plain font-semibold" onclick={handleTitleClick}>
+						{navigationTitle}
+					</button>
+				{/if}
+
+				<div class="flex flex-1 align-center justify-end gap-3 ml-auto actions">
+					{@render trailing?.()}
 				</div>
 			{/if}
 		</header>
@@ -117,8 +115,8 @@
 
 <style>
 	:root {
-		--top-bar-height: calc(env(safe-area-inset-top) + var(--btn-size) + 0.25rem);
-		--bottom-bar-height: calc(max(env(safe-area-inset-bottom), 0.5rem) + var(--btn-size) + 0.25rem);
+		--top-bar-height: calc(env(safe-area-inset-top) + var(--btn-size));
+		--bottom-bar-height: calc(max(env(safe-area-inset-bottom), 0.5rem) + var(--btn-size));
 	}
 
 	.navigation-stack {
@@ -159,7 +157,6 @@
 	}
 
 	.bottom-bar {
-		padding-top: 0.25rem;
 		padding-left: calc(env(safe-area-inset-left) + 1rem);
 		padding-right: calc(env(safe-area-inset-right) + 1rem);
 		padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);

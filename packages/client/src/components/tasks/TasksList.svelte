@@ -32,11 +32,17 @@
 						]}
 					>
 						<li>
-							<div class="column__tasks__item flex align-center" role="button" tabindex="0">
+							<div
+								class="column__tasks__item flex align-center leading-none"
+								role="button"
+								tabindex="0"
+							>
 								<button class="btn btn--icon">
 									<ColumnIcon percentage={(i * 100) / (columns.length - 1)} />
 								</button>
-								<span class="flex-shrink-0 text-sm text-secondary mr-1">{task.id} –</span>
+								<span class="flex-shrink-0 column__tasks__item__number text-secondary"
+									>{task.id}</span
+								>
 								<span class="text-truncate">{task.content}</span>
 								<button class="ml-auto btn btn--icon">
 									<Avatar title={task.user} />
@@ -64,5 +70,9 @@
 	.column__tasks__item {
 		padding-left: calc(env(safe-area-inset-left) + 0.275rem);
 		padding-right: calc(env(safe-area-inset-right) + 0.275rem);
+	}
+
+	.column__tasks__item__number {
+		margin-right: 0.625rem;
 	}
 </style>

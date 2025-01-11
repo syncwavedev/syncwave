@@ -5,25 +5,25 @@ export const tasks: Task[] = Array(1)
 	.fill(null)
 	.flatMap(() => [
 		{
-			id: 103,
+			id: 1,
 			content: 'Build Board screen',
 			column: 'To Do',
 			user: 'Dima'
 		},
 		{
-			id: 245,
+			id: 45,
 			content: 'Data layer (Sync) v01',
 			column: 'To Do',
 			user: 'Dima'
 		},
 		{
-			id: 367,
+			id: 67,
 			content: 'Server is ready for basic use',
 			column: 'To Do',
 			user: 'Dima'
 		},
 		{
-			id: 489,
+			id: 89,
 			content: 'Auth',
 			column: 'To Do',
 			user: 'Andrei'
@@ -41,31 +41,31 @@ export const tasks: Task[] = Array(1)
 			user: 'Dima'
 		},
 		{
-			id: 789,
+			id: 7,
 			content: 'Richtext',
 			column: 'In Progress',
 			user: 'Andrei'
 		},
 		{
-			id: 891,
+			id: 81,
 			content: 'We use Ground for Ground development internally (web + ios)',
 			column: 'Done',
 			user: 'Dima'
 		},
 		{
-			id: 912,
+			id: 12,
 			content: 'QA + Polish',
 			column: 'Done',
 			user: 'Dima'
 		},
 		{
-			id: 934,
+			id: 93,
 			content: 'Simple landing',
 			column: 'Done',
 			user: 'Andrei'
 		},
 		{
-			id: 956,
+			id: 95,
 			content: 'Release',
 			column: 'Done',
 			user: 'Andrei'

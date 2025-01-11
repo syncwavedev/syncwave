@@ -1,25 +1,25 @@
 import {addExtension, decode, encode} from 'msgpackr';
-import {Uuid, UuidEncoder} from './uuid';
+import {Uuid, UuidCodec} from './uuid';
 
-export interface Encoder<TData> {
+export interface Codec<TData> {
     encode(data: TData): Uint8Array;
     decode(buf: Uint8Array): TData;
 }
 
-const uuidEncoder = new UuidEncoder();
+const uuidCodec = new UuidCodec();
 
 addExtension({
     Class: Uuid,
     type: 1,
     write(instance: Uuid) {
-        return uuidEncoder.encode(instance);
+        return uuidCodec.encode(instance);
     },
     read(data: Uint8Array) {
-        return uuidEncoder.decode(data);
+        return uuidCodec.decode(data);
     },
 });
 
-export class MsgpackrEncoder implements Encoder<any> {
+export class MsgpackrCodec implements Codec<any> {
     encode(data: any): Uint8Array {
         return encode(data);
     }
@@ -29,7 +29,7 @@ export class MsgpackrEncoder implements Encoder<any> {
     }
 }
 
-export class StringEncoder implements Encoder<string> {
+export class StringCodec implements Codec<string> {
     private encoder = new TextEncoder();
     private decoder = new TextDecoder();
 
@@ -39,5 +39,14 @@ export class StringEncoder implements Encoder<string> {
 
     decode(buf: Uint8Array<ArrayBufferLike>): string {
         return this.decoder.decode(buf);
+    }
+}
+
+export class NumberCodec implements Codec<number> {
+    encode(data: number): Uint8Array {
+        return new Uint8Array(encode(data));
+    }
+    decode(buf: Uint8Array): number {
+        return decode(Buffer.from(buf));
     }
 }

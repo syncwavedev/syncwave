@@ -1,8 +1,10 @@
 import {beforeEach, describe, expect, it} from 'vitest';
+import {StringCodec} from '../codec';
 import {MemKVStore} from './mem-kv-store';
 import {OptimisticLock} from './optimistic-lock';
 
-const encodeFromString = (str: string) => new TextEncoder().encode(str);
+const stringCodec = new StringCodec();
+const encodeFromString = (str: string) => stringCodec.encode(str);
 
 describe('OptimisticLock', () => {
     let kvStore: MemKVStore;

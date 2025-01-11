@@ -1,7 +1,7 @@
 import {decode, encode} from 'bytewise';
-import {Encoder} from '../encoder';
+import {Codec} from '../codec';
 import {assert, compareUint8Array, zip} from '../utils';
-import {Uuid, UuidEncoder} from '../uuid';
+import {Uuid, UuidCodec} from '../uuid';
 import {Condition, Uint8Transaction, mapCondition} from './kv-store';
 
 export interface IndexGetOptions {
@@ -43,8 +43,8 @@ export function createIndex<TValue>({
     indexName,
     filter,
 }: IndexOptions<TValue>): Index<TValue> {
-    const keyEncoder = new KeyEncoder();
-    const uuidEncoder = new UuidEncoder();
+    const keyCodec = new IndexKeyCodec();
+    const uuidCodec = new UuidCodec();
 
     filter = filter ?? (() => true);
 
@@ -63,16 +63,16 @@ export function createIndex<TValue>({
         //   if we don't add undefined: {gt: [1, undefined]}, index_key would match the condition
         // undefined has the largest type tag in bytewise serialization, null the lowest
         const queryCondition = mapCondition<IndexKey, Condition<Uint8Array>>(condition, {
-            gt: cond => ({gt: keyEncoder.encode([...cond.gt, ...Array(16).fill(undefined)])}),
-            gte: cond => ({gte: keyEncoder.encode(cond.gte)}),
-            lt: cond => ({lt: keyEncoder.encode(cond.lt)}),
-            lte: cond => ({lte: keyEncoder.encode([...cond.lte, ...Array(16).fill(undefined)])}),
+            gt: cond => ({gt: keyCodec.encode([...cond.gt, ...Array(16).fill(undefined)])}),
+            gte: cond => ({gte: keyCodec.encode(cond.gte)}),
+            lt: cond => ({lt: keyCodec.encode(cond.lt)}),
+            lte: cond => ({lte: keyCodec.encode([...cond.lte, ...Array(16).fill(undefined)])}),
         });
 
         const iterator = txn.query(queryCondition);
 
         for await (const entry of iterator) {
-            const entryKey = keyEncoder.decode(entry.key);
+            const entryKey = keyCodec.decode(entry.key);
             for (let i = 0; i < conditionKey.length - 1; i += 1) {
                 if (compareIndexKeyPart(entryKey[i], conditionKey[i]) !== 0) {
                     return;
@@ -90,7 +90,7 @@ export function createIndex<TValue>({
             async keys() {
                 const result: IndexKey[] = [];
                 for await (const {key} of txn.query({gte: new Uint8Array()})) {
-                    result.push(keyEncoder.decode(key));
+                    result.push(keyCodec.decode(key));
                 }
 
                 return result;
@@ -129,9 +129,9 @@ export function createIndex<TValue>({
             if (prevIncluded) {
                 assert(prevKey !== undefined);
                 if (unique) {
-                    await txn.delete(keyEncoder.encode(prevKey));
+                    await txn.delete(keyCodec.encode(prevKey));
                 } else {
-                    await txn.delete(keyEncoder.encode([...prevKey, id]));
+                    await txn.delete(keyCodec.encode([...prevKey, id]));
                 }
             }
 
@@ -139,25 +139,25 @@ export function createIndex<TValue>({
             if (nextIncluded) {
                 assert(nextKey !== undefined);
                 if (unique) {
-                    const existing = await txn.get(keyEncoder.encode(nextKey));
+                    const existing = await txn.get(keyCodec.encode(nextKey));
                     if (existing) {
                         throw new UniqueError(indexName);
                     }
 
-                    await txn.put(keyEncoder.encode(nextKey), uuidEncoder.encode(id));
+                    await txn.put(keyCodec.encode(nextKey), uuidCodec.encode(id));
                 } else {
-                    await txn.put(keyEncoder.encode([...nextKey, id]), uuidEncoder.encode(id));
+                    await txn.put(keyCodec.encode([...nextKey, id]), uuidCodec.encode(id));
                 }
             }
         },
         async *query(condition) {
             for await (const entry of queryInternal(condition)) {
-                yield uuidEncoder.decode(entry.value);
+                yield uuidCodec.decode(entry.value);
             }
         },
         async *get(key) {
             for await (const entry of queryInternal({gte: key})) {
-                const entryKey = keyEncoder.decode(entry.key);
+                const entryKey = keyCodec.decode(entry.key);
                 for (let i = 0; i < key.length; i += 1) {
                     if (key.length > 0) {
                         // all parts up to the last were checked in queryInternal
@@ -167,7 +167,7 @@ export function createIndex<TValue>({
                     }
                 }
 
-                yield uuidEncoder.decode(entry.value);
+                yield uuidCodec.decode(entry.value);
             }
         },
     };
@@ -226,13 +226,13 @@ export function compareIndexKeyPart(a: IndexKeyPart, b: IndexKeyPart): 1 | 0 | -
     return getTypeIndex(a) > getTypeIndex(b) ? 1 : -1;
 }
 
-export class KeyEncoder implements Encoder<IndexKey> {
-    uuidEncoder = new UuidEncoder();
+export class IndexKeyCodec implements Codec<IndexKey> {
+    uuidCodec = new UuidCodec();
 
     encode(data: IndexKey): Uint8Array {
         const key = data.map(part => {
             if (part instanceof Uuid) {
-                return [1, Buffer.from(this.uuidEncoder.encode(part))];
+                return [1, Buffer.from(this.uuidCodec.encode(part))];
             } else if (part instanceof Uint8Array) {
                 return Buffer.from(part);
             } else {
@@ -247,7 +247,7 @@ export class KeyEncoder implements Encoder<IndexKey> {
 
         return key.map(part => {
             if (Array.isArray(part)) {
-                return this.uuidEncoder.decode(part[1]);
+                return this.uuidCodec.decode(part[1]);
             } else if (part instanceof Buffer) {
                 return new Uint8Array(part);
             } else {

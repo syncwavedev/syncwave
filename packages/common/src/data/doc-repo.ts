@@ -1,12 +1,12 @@
 import deepEqual from 'deep-equal';
 import {ZodType} from 'zod';
 import {astream, AsyncStream} from '../async-stream';
-import {Crdt, CrdtDiff, CrdtEncoder} from '../crdt/crdt';
+import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt';
 import {createIndex, Index, IndexKey} from '../kv/data-index';
-import {Condition, Transaction, Uint8Transaction, withKeyEncoder, withPrefix, withValueEncoder} from '../kv/kv-store';
+import {Condition, Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from '../kv/kv-store';
 import {getNow, Timestamp} from '../timestamp';
 import {assert, pipe} from '../utils';
-import {Uuid, UuidEncoder} from '../uuid';
+import {Uuid, UuidCodec} from '../uuid';
 import {UpdateChecker} from './update-checker';
 
 export interface Doc<TId extends Uuid = Uuid> {
@@ -65,12 +65,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
                 ];
             })
         );
-        this.primary = pipe(
-            txn,
-            withPrefix('d/'),
-            withKeyEncoder(new UuidEncoder()),
-            withValueEncoder(new CrdtEncoder())
-        );
+        this.primary = pipe(txn, withPrefix('d/'), withKeyCodec(new UuidCodec()), withValueCodec(new CrdtCodec()));
         this.onChange = onChange;
         this.schema = schema;
     }

@@ -1,5 +1,5 @@
+import {MsgpackrCodec} from '../codec';
 import {CrdtDiff} from '../crdt/crdt';
-import {MsgpackrEncoder} from '../encoder';
 import {Uint8KVStore, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
 import {unimplemented} from '../utils';
@@ -29,7 +29,7 @@ export class DataLayer {
         return await this.kv.transaction(async txn => {
             const userChangelog = new TopicManager<UserChangeEntry>(
                 withPrefix('topics/users/')(txn),
-                new MsgpackrEncoder()
+                new MsgpackrCodec()
             );
 
             async function handleUserChange(userId: UserId, diff: CrdtDiff<User>): Promise<void> {

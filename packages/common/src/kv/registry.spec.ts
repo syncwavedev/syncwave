@@ -1,9 +1,11 @@
 import {beforeEach, describe, expect, it} from 'vitest';
+import {StringCodec} from '../codec';
 import {Uint8Transaction} from './kv-store';
 import {MemKVStore} from './mem-kv-store';
 import {Registry} from './registry';
 
-const createUint8Array = (input: string): Uint8Array => new TextEncoder().encode(input);
+const stringCodec = new StringCodec();
+const createUint8Array = (input: string): Uint8Array => stringCodec.encode(input);
 
 const sampleFactory = (txn: Uint8Transaction) => ({
     async getKey(key: string): Promise<Uint8Array | undefined> {

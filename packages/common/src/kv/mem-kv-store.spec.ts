@@ -1,11 +1,13 @@
 import createTree from 'functional-red-black-tree';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {StringCodec} from '../codec';
 import {compareUint8Array, wait} from '../utils';
 import {Entry, InvalidQueryCondition} from './kv-store';
 import {MemKVStore, MemLocker, MemTransaction} from './mem-kv-store'; // Adjust the path as needed
 
+const stringCodec = new StringCodec();
 // Utility function to create Uint8Array from strings for testing
-const toUint8Array = str => new TextEncoder().encode(str);
+const toUint8Array = (str: string) => stringCodec.encode(str);
 
 describe('MemTransaction', () => {
     let tree;

@@ -1,11 +1,11 @@
-import {MsgpackrEncoder} from '../../encoder';
+import {MsgpackrCodec} from '../../codec';
 import {Unsubscribe} from '../../utils';
 import {Message} from './message';
 import {Connection, ConnectionSubscribeCallback, TransportClient, TransportServer} from './transport';
 
 function clone<T>(value: T): T {
-    const encoder = new MsgpackrEncoder();
-    return encoder.decode(encoder.encode(value));
+    const codec = new MsgpackrCodec();
+    return codec.decode(codec.encode(value));
 }
 
 export class MemConnection implements Connection {

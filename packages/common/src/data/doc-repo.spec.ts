@@ -234,7 +234,7 @@ describe('DocStore with MemKVStore', () => {
 
         // Suppose we want to find docs whose "byAge" index is >= 15 and <= 25
         // Condition in the store is typed for Condition<IndexKey>, which is basically Uint8Array-based,
-        // but we have helpers that pass raw numbers (due to withValueEncoder, etc).
+        // but we have helpers that pass raw numbers (due to withValueCodec, etc).
         // So let's see how to do a range query:
         const ageGte15: Condition<IndexKey> = {gte: [15]};
         const ageLte25: Condition<IndexKey> = {lte: [25]};

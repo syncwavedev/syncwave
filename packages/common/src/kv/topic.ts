@@ -1,8 +1,7 @@
-import {Encoder} from '../encoder';
+import {Codec, NumberCodec} from '../codec';
 import {pipe} from '../utils';
 import {Counter} from './counter';
-import {Transaction, Uint8Transaction, withKeyEncoder, withPrefix, withValueEncoder} from './kv-store';
-import {NumberEncoder} from './number-encoder';
+import {Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from './kv-store';
 
 export interface TopicEntry<T> {
     readonly offset: number;
@@ -13,9 +12,9 @@ export class Topic<T> {
     private readonly counter: Counter;
     private readonly log: Transaction<number, T>;
 
-    constructor(txn: Uint8Transaction, dataEncoder: Encoder<T>) {
+    constructor(txn: Uint8Transaction, codec: Codec<T>) {
         this.counter = new Counter(pipe(txn, withPrefix('i/')), 0);
-        this.log = pipe(txn, withPrefix('l/'), withKeyEncoder(new NumberEncoder()), withValueEncoder(dataEncoder));
+        this.log = pipe(txn, withPrefix('l/'), withKeyCodec(new NumberCodec()), withValueCodec(codec));
     }
 
     async push(...data: T[]): Promise<void> {

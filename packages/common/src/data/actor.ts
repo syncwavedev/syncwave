@@ -1,6 +1,6 @@
 import {astream} from '../async-stream';
+import {MsgpackrCodec} from '../codec';
 import {PULL_WAIT_MS} from '../constants';
-import {MsgpackrEncoder} from '../encoder';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
 import {getNow} from '../timestamp';
@@ -71,7 +71,7 @@ export class Actor implements DataAccessor {
         this.boards = new BoardRepo(withPrefix('boards/')(txn), this.boardOnChange.bind(this));
         this.tasks = new TaskRepo(withPrefix('tasks/')(txn), this.taskOnChange.bind(this));
 
-        this.changelog = new TopicManager(withPrefix('log/')(txn), new MsgpackrEncoder());
+        this.changelog = new TopicManager(withPrefix('log/')(txn), new MsgpackrCodec());
 
         if (this.role.type === 'participant') {
             this.startPullLoop();

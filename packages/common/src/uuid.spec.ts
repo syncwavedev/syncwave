@@ -1,6 +1,6 @@
 import {parse} from 'uuid';
 import {describe, expect, it} from 'vitest';
-import {Uuid, UuidEncoder, createUuid} from './uuid';
+import {Uuid, UuidCodec, createUuid} from './uuid';
 
 describe('Uuid class', () => {
     it('should store the correct UUID string', () => {
@@ -29,13 +29,13 @@ describe('createUuid function', () => {
     });
 });
 
-describe('UuidEncoder class', () => {
-    const encoder = new UuidEncoder();
+describe('UuidCodec class', () => {
+    const codec = new UuidCodec();
 
     it('should encode a Uuid instance into a Uint8Array', () => {
         const testUuid = '123e4567-e89b-12d3-a456-426614174000';
         const uuidInstance = new Uuid(testUuid);
-        const encoded = encoder.encode(uuidInstance);
+        const encoded = codec.encode(uuidInstance);
         expect(encoded).toBeInstanceOf(Uint8Array);
         expect(encoded).toEqual(parse(testUuid));
     });
@@ -43,20 +43,20 @@ describe('UuidEncoder class', () => {
     it('should decode a Uint8Array back into a Uuid instance', () => {
         const testUuid = '123e4567-e89b-12d3-a456-426614174000';
         const encoded = parse(testUuid);
-        const decoded = encoder.decode(encoded);
+        const decoded = codec.decode(encoded);
         expect(decoded).toBeInstanceOf(Uuid);
         expect(decoded.toString()).toBe(testUuid);
     });
 
     it('should preserve the UUID value during encode and decode', () => {
         const uuidInstance = createUuid();
-        const encoded = encoder.encode(uuidInstance);
-        const decoded = encoder.decode(encoded);
+        const encoded = codec.encode(uuidInstance);
+        const decoded = codec.decode(encoded);
         expect(decoded.toString()).toBe(uuidInstance.toString());
     });
 
     it('should throw an error when decoding an invalid Uint8Array', () => {
         const invalidUint8Array = new Uint8Array([255, 255, 255, 255]);
-        expect(() => encoder.decode(invalidUint8Array)).toThrow();
+        expect(() => codec.decode(invalidUint8Array)).toThrow();
     });
 });

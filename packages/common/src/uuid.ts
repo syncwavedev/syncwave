@@ -1,7 +1,7 @@
 import {inspect} from 'util';
 import {parse, stringify, v7, validate} from 'uuid';
 import {z} from 'zod';
-import {Encoder} from './encoder';
+import {Codec} from './codec';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -55,7 +55,7 @@ export function createUuid(): Uuid {
     return new Uuid(v7());
 }
 
-export class UuidEncoder implements Encoder<Uuid> {
+export class UuidCodec implements Codec<Uuid> {
     encode(data: Uuid): Uint8Array {
         return parse(data.toString());
     }

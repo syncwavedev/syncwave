@@ -2,7 +2,7 @@ import {assert, describe, expect, it} from 'vitest';
 import {astream} from '../async-stream';
 import {compareUint8Array} from '../utils';
 import {Uuid, createUuid} from '../uuid';
-import {KeyEncoder, createIndex} from './data-index';
+import {IndexKeyCodec, createIndex} from './data-index';
 import {MemKVStore} from './mem-kv-store';
 
 interface TestUser {
@@ -239,7 +239,7 @@ describe('data-index', async () => {
 });
 
 describe('KeySerializer', () => {
-    const serializer = new KeyEncoder();
+    const serializer = new IndexKeyCodec();
 
     interface Testcase {
         name: string;

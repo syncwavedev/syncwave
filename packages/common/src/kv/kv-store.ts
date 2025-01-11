@@ -1,4 +1,4 @@
-import {Encoder} from '../encoder';
+import {Codec} from '../codec';
 import {unreachable} from '../utils';
 import {MappedTransaction, Mapper} from './mapped-kv-store';
 import {PrefixedTransaction} from './prefixed-kv-store';
@@ -105,10 +105,10 @@ function createIdMapper<T>(): Mapper<T, T> {
     };
 }
 
-function createEncodingMapper<TData>(encoder: Encoder<TData>): Mapper<Uint8Array, TData> {
+function createEncodingMapper<TData>(codec: Codec<TData>): Mapper<Uint8Array, TData> {
     return {
-        encode: encoder.encode.bind(encoder),
-        decode: encoder.decode.bind(encoder),
+        encode: codec.encode.bind(codec),
+        decode: codec.decode.bind(codec),
     };
 }
 
@@ -118,24 +118,14 @@ export function withPrefix(
     return store => new PrefixedTransaction(store, prefix);
 }
 
-export function withValueEncoder<TData>(
-    encoder: Encoder<TData>
+export function withValueCodec<TData>(
+    codec: Codec<TData>
 ): <TKey>(store: Transaction<TKey, Uint8Array>) => Transaction<TKey, TData> {
-    return store => new MappedTransaction(store, createIdMapper(), createEncodingMapper(encoder));
+    return store => new MappedTransaction(store, createIdMapper(), createEncodingMapper(codec));
 }
 
-export function withKeyEncoder<TData>(
-    encoder: Encoder<TData>
+export function withKeyCodec<TData>(
+    codec: Codec<TData>
 ): <TValue>(store: Transaction<Uint8Array, TValue>) => Transaction<TData, TValue> {
-    return store => new MappedTransaction(store, createEncodingMapper(encoder), createIdMapper());
-}
-
-const decoder = new TextDecoder();
-export function decodeString(buffer: Uint8Array) {
-    return decoder.decode(buffer);
-}
-
-const encoder = new TextEncoder();
-export function encodeString(s: string) {
-    return encoder.encode(s);
+    return store => new MappedTransaction(store, createEncodingMapper(codec), createIdMapper());
 }

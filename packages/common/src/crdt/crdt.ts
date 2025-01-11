@@ -9,7 +9,7 @@ import {
     Text as YText,
     YTextEvent,
 } from 'yjs';
-import {Encoder} from '../encoder';
+import {Codec} from '../codec';
 import {Richtext} from '../richtext';
 import {assert, assertNever, Brand, Unsubscribe, zip} from '../utils';
 import {Uuid} from '../uuid';
@@ -325,7 +325,7 @@ function replayLog(log: OpLog, locator: Locator): void {
     }
 }
 
-export class CrdtEncoder<T> implements Encoder<Crdt<T>> {
+export class CrdtCodec<T> implements Codec<Crdt<T>> {
     encode(data: Crdt<T>): Uint8Array {
         return data.state();
     }

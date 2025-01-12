@@ -3,13 +3,6 @@
     "version": "0.1.0",
     "description": "TypeScript SQL query builder",
     "license": "MIT",
-    "keywords": [
-        "sql",
-        "typescript",
-        "db",
-        "query",
-        "orm"
-    ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/tilyupo/qustar.git",

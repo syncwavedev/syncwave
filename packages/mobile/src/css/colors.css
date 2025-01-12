@@ -43,7 +43,7 @@
 	--color-white-90: oklch(100% 0 0 / 0.9);
 
 	/* Semantic colors */
-	--color-bg: var(--color-gray-50);
+	--color-bg: var(--color-white);
 	--color-border: var(--color-gray-150);
 
 	--color-ink: var(--color-black);

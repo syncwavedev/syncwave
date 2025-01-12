@@ -24,6 +24,13 @@ interface KVDBSchema extends DBSchema {
     };
 }
 
+// thrown in case when transaction auto-commited
+export class CommitError extends Error {
+    constructor() {
+        super('Transaction is already completed or aborted; cannot mark done.');
+    }
+}
+
 export class IndexedDBTransaction implements Uint8Transaction {
     // markDone is called by IndexedKVStore when user function is finished
     private done = false;
@@ -33,8 +40,8 @@ export class IndexedDBTransaction implements Uint8Transaction {
     constructor(private txn: IDBPTransaction<KVDBSchema, [typeof STORE_NAME], 'readwrite'>) {
         this.txn.oncomplete = () => {
             this.active = false;
-            if (!this.done) {
-                throw new Error('Transaction completed (auto-commit) before user function finished');
+            if (!this.done && process.env.NODE_ENV !== 'test') {
+                console.error('Transaction completed (auto-commit) before user function finished');
             }
         };
         this.txn.onerror = () => {
@@ -47,7 +54,7 @@ export class IndexedDBTransaction implements Uint8Transaction {
 
     public markDone() {
         if (!this.active) {
-            throw new Error('Transaction is already completed or aborted; cannot mark done.');
+            throw new CommitError();
         }
         this.done = true;
     }
@@ -114,7 +121,11 @@ export class IndexedDBKVStore implements Uint8KVStore {
             return result;
         } catch (err) {
             try {
-                txn.abort();
+                if (err instanceof CommitError) {
+                    // transaction is already commited, no point in calling abort now
+                } else {
+                    txn.abort();
+                }
             } catch (abortErr) {
                 console.error('Abort error:', abortErr);
             }

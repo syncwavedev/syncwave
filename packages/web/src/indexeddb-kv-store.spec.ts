@@ -37,6 +37,16 @@ describe('IndexedDBKVStore', () => {
         });
     });
 
+    it('should throw if transaction auto-commited before user txn', async () => {
+        const store = new IndexedDBKVStore(dbName);
+        await expect(
+            store.transaction(async txn => {
+                await txn.put(key1, value1);
+                await new Promise(setImmediate);
+            })
+        ).rejects.toThrowError(/transaction is already completed or aborted/i);
+    });
+
     it('should return undefined for a non-existent key', async () => {
         const store = new IndexedDBKVStore(dbName);
         await store.transaction(async txn => {

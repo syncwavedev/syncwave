@@ -24,7 +24,7 @@ interface KVDBSchema extends DBSchema {
     };
 }
 
-class IndexedDBTransaction implements Uint8Transaction {
+export class IndexedDBTransaction implements Uint8Transaction {
     // markDone is called by IndexedKVStore when user function is finished
     private done = false;
     // set to false when transaction is either commits or fails
@@ -69,7 +69,10 @@ class IndexedDBTransaction implements Uint8Transaction {
     public async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         this.assertActive();
         const keyRange = createKeyRange(condition);
-        yield* this.txn.objectStore(STORE_NAME).iterate(keyRange);
+
+        for await (const {key, value} of this.txn.objectStore(STORE_NAME).iterate(keyRange)) {
+            yield {key: new Uint8Array(key), value: new Uint8Array(value)};
+        }
     }
 
     public async put(key: Uint8Array, value: Uint8Array): Promise<void> {
@@ -99,11 +102,12 @@ export class IndexedDBKVStore implements Uint8KVStore {
     public async transaction<TResult>(fn: (txn: Uint8Transaction) => Promise<TResult>): Promise<TResult> {
         const db = await this.dbPromise;
         const txn = db.transaction(STORE_NAME, 'readwrite');
-        const enforcedTxn = new IndexedDBTransaction(txn);
+        const wrappedTxn = new IndexedDBTransaction(txn);
 
         try {
-            const result = await fn(enforcedTxn);
-            enforcedTxn.markDone();
+            txn.done.catch(() => {});
+            const result = await fn(wrappedTxn);
+            wrappedTxn.markDone();
             txn.commit();
             await txn.done;
 
@@ -114,7 +118,7 @@ export class IndexedDBKVStore implements Uint8KVStore {
             } catch (abortErr) {
                 console.error('Abort error:', abortErr);
             }
-            enforcedTxn.markDone();
+            wrappedTxn.markDone();
             throw err;
         }
     }

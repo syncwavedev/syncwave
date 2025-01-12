@@ -10,7 +10,8 @@
         "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
     },
     "dependencies": {
-        "ground-data": "*"
+        "ground-data": "*",
+        "idb": "^8.0.1"
     },
     "devDependencies": {
         "@sveltejs/vite-plugin-svelte": "^5.0.3",

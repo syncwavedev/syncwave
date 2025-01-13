@@ -1,5 +1,17 @@
 import type {Board, Task} from './models';
 
+export const board: Board = {
+	id: 1,
+	name: 'Ground Dev',
+	username: 'GRND',
+	lastAction: {
+		user: 'John',
+
+		action: 'Created new task',
+		date: new Date('2024-01-15')
+	}
+};
+
 export const columns = ['To Do', 'In Progress', 'Review', 'Done'];
 export const tasks: Task[] = Array(1)
 	.fill(null)

@@ -5,17 +5,7 @@
 	import Search from '../components/icons/Search.svelte';
 	import NavigationStack from '../components/mobile/NavigationStack.svelte';
 	import TasksList from '../components/tasks/TasksList.svelte';
-
-	const board = {
-		id: 1,
-		name: 'Ground Dev',
-		lastAction: {
-			user: 'John',
-
-			action: 'Created new task',
-			date: new Date('2024-01-15')
-		}
-	};
+	import {board} from '../lib/mock';
 
 	let searchActive = $state(false);
 
@@ -52,5 +42,5 @@
 	bind:searchActive
 	scrollTopOnTitleClick
 >
-	<TasksList />
+	<TasksList {board} />
 </NavigationStack>

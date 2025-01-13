@@ -1,6 +1,7 @@
 export interface Board {
 	id: number;
 	name: string;
+	username: string;
 	avatar?: string;
 	lastAction: {
 		user: string;

@@ -4,10 +4,9 @@
 	import ColumnIcon from './ColumnIcon.svelte';
 	import {slide} from 'svelte/transition';
 	import {tasks, columns} from '../../lib/mock.js';
+	import type {Board} from '../../lib/models.js';
 
-	const formatNumber = (number: number): string => {
-		return number.toString().padStart(3, '0');
-	};
+	const {board}: {board: Board} = $props();
 </script>
 
 <div class="columns">
@@ -37,17 +36,20 @@
 					>
 						<li>
 							<div
-								class="column__tasks__item flex align-center leading-none"
+								class="column__tasks__item flex align-center leading-tight"
 								role="button"
 								tabindex="0"
 							>
 								<button class="btn btn--icon">
 									<ColumnIcon percentage={(i * 100) / (columns.length - 1)} />
 								</button>
-								<span class="flex-shrink-0 column__tasks__item__number text-secondary"
-									>{formatNumber(task.id)}</span
-								>
-								<span class="text-truncate">{task.content}</span>
+
+								<div class="overflow-hidden">
+									<span class="text-truncate">{task.content}</span>
+									<span class="flex-shrink-0 column__tasks__item__number text-secondary text-sm">
+										{board.username}–{task.id}
+									</span>
+								</div>
 								<button class="ml-auto btn btn--icon">
 									<Avatar title={task.user} />
 								</button>

@@ -4,6 +4,10 @@
 	import ColumnIcon from './ColumnIcon.svelte';
 	import {slide} from 'svelte/transition';
 	import {tasks, columns} from '../../lib/mock.js';
+
+	const formatNumber = (number: number): string => {
+		return number.toString().padStart(3, '0');
+	};
 </script>
 
 <div class="columns">
@@ -41,7 +45,7 @@
 									<ColumnIcon percentage={(i * 100) / (columns.length - 1)} />
 								</button>
 								<span class="flex-shrink-0 column__tasks__item__number text-secondary"
-									>{task.id}</span
+									>{formatNumber(task.id)}</span
 								>
 								<span class="text-truncate">{task.content}</span>
 								<button class="ml-auto btn btn--icon">

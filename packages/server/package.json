@@ -48,7 +48,8 @@
         "vitest": "^1.6.0"
     },
     "dependencies": {
-        "ts-pattern": "^5.2.0",
-        "ground-data": "*"
+        "foundationdb": "^2.0.1",
+        "ground-data": "*",
+        "ts-pattern": "^5.2.0"
     }
 }

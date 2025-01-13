@@ -1,0 +1,22 @@
+# Init db:
+#
+# docker compose exec foundationdb bash -c "fdbcli --exec 'configure new single ssd'"
+
+# env:
+#
+# FDB_CLUSTER_FILE
+
+services:
+    foundationdb:
+        image: foundationdb/foundationdb:6.3.25
+        container_name: foundationdb
+        # FoundationDB requires CAP_SYS_NICE for priority-based processes
+        cap_add:
+            - SYS_NICE
+        ports:
+            - '4500:4500'
+        volumes:
+            - fdb-data:/var/fdb/data
+
+volumes:
+    fdb-data:

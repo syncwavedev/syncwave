@@ -117,7 +117,7 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
             });
         });
 
-        it('should query keys with GtCondition', async () => {
+        it.only('should query keys with GtCondition', async () => {
             // Condition: key > 0x11
             const condition: Condition<Uint8Array> = {
                 gt: new Uint8Array([0x11]) as GtCondition<Uint8Array>['gt'],

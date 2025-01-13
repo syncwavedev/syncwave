@@ -11,7 +11,7 @@ import {
     mapCondition,
 } from 'ground-data';
 
-fdb.setAPIVersion(630);
+fdb.setAPIVersion(620, 620);
 
 export class FoundationDBUint8Transaction implements Uint8Transaction {
     private readonly txn: fdb.Transaction;

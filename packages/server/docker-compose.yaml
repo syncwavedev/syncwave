@@ -8,7 +8,7 @@
 
 services:
     foundationdb:
-        image: foundationdb/foundationdb:6.3.25
+        image: foundationdb/foundationdb:6.2.30
         container_name: foundationdb
         # FoundationDB requires CAP_SYS_NICE for priority-based processes
         cap_add:

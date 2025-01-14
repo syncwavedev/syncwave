@@ -14,7 +14,7 @@ describe('Deferred', () => {
         deferred.resolve(value);
 
         expect(deferred.state).toBe('resolved');
-        expect(deferred.promise).resolves.toBe(value);
+        await expect(deferred.promise).resolves.toBe(value);
     });
 
     it('should reject with the given error', async () => {
@@ -24,7 +24,7 @@ describe('Deferred', () => {
         deferred.reject(error);
 
         expect(deferred.state).toBe('rejected');
-        expect(deferred.promise).rejects.toThrow(error);
+        await expect(deferred.promise).rejects.toThrow(error);
     });
 
     it('should not resolve again after being resolved', async () => {
@@ -36,7 +36,7 @@ describe('Deferred', () => {
         deferred.resolve(secondValue);
 
         expect(deferred.state).toBe('resolved');
-        expect(deferred.promise).resolves.toBe(firstValue);
+        await expect(deferred.promise).resolves.toBe(firstValue);
     });
 
     it('should not reject again after being rejected', async () => {
@@ -48,7 +48,7 @@ describe('Deferred', () => {
         deferred.reject(secondError);
 
         expect(deferred.state).toBe('rejected');
-        expect(deferred.promise).rejects.toThrow(firstError);
+        await expect(deferred.promise).rejects.toThrow(firstError);
     });
 
     it('should not resolve after being rejected', async () => {
@@ -60,7 +60,7 @@ describe('Deferred', () => {
         deferred.resolve(value);
 
         expect(deferred.state).toBe('rejected');
-        expect(deferred.promise).rejects.toThrow(error);
+        await expect(deferred.promise).rejects.toThrow(error);
     });
 
     it('should not reject after being resolved', async () => {
@@ -72,7 +72,7 @@ describe('Deferred', () => {
         deferred.reject(error);
 
         expect(deferred.state).toBe('resolved');
-        expect(deferred.promise).resolves.toBe(value);
+        await expect(deferred.promise).resolves.toBe(value);
     });
 
     it('should execute resolve callback when resolved', async () => {

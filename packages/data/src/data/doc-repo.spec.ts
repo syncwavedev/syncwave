@@ -155,7 +155,7 @@ describe('DocStore with MemKVStore', () => {
             await repo.create(doc);
         });
 
-        expect(
+        await expect(
             store.transaction(async txn => {
                 repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
                 return repo.update(id, current => {
@@ -164,7 +164,7 @@ describe('DocStore with MemKVStore', () => {
             })
         ).rejects.toThrowError(/assertion failed/);
 
-        expect(
+        await expect(
             store.transaction(async txn => {
                 repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
                 return repo.update(id, current => {
@@ -173,7 +173,7 @@ describe('DocStore with MemKVStore', () => {
             })
         ).rejects.toThrowError(/assertion failed/);
 
-        expect(
+        await expect(
             store.transaction(async txn => {
                 repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
                 return repo.update(id, current => {

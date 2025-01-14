@@ -29,24 +29,23 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
     }
 
     async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
-        const [selector, reverse] = mapCondition<Uint8Array, [selector: fdb.KeySelector<Buffer>, reverse: boolean]>(
-            condition,
-            {
-                gt: (cond: GtCondition<Uint8Array>) => [fdb.keySelector.firstGreaterThan(Buffer.from(cond.gt)), false],
-                gte: (cond: GteCondition<Uint8Array>) => [
-                    fdb.keySelector.firstGreaterOrEqual(Buffer.from(cond.gte)),
-                    false,
-                ],
-                lt: (cond: LtCondition<Uint8Array>) => [fdb.keySelector.lastLessThan(Buffer.from(cond.lt)), true],
-                lte: (cond: LteCondition<Uint8Array>) => [fdb.keySelector.lastLessOrEqual(Buffer.from(cond.lte)), true],
-            }
-        );
+        const [key, reverse, open] = mapCondition<Uint8Array, [Uint8Array, boolean, boolean]>(condition, {
+            gt: (cond: GtCondition<Uint8Array>) => [cond.gt, false, true],
+            gte: (cond: GteCondition<Uint8Array>) => [cond.gte, false, false],
+            lt: (cond: LtCondition<Uint8Array>) => [cond.lt, true, true],
+            lte: (cond: LteCondition<Uint8Array>) => [cond.lte, true, false],
+        });
 
-        for await (const [kBuf, vBuf] of this.txn.getRange(selector, undefined, {reverse})) {
-            yield {
-                key: new Uint8Array(kBuf),
-                value: new Uint8Array(vBuf),
-            };
+        let skippedFirst = false;
+        for await (const [kBuf, vBuf] of this.txn.getRange(Buffer.from(key), undefined, {reverse})) {
+            if (!open || skippedFirst || !kBuf.equals(key)) {
+                yield {
+                    key: new Uint8Array(kBuf),
+                    value: new Uint8Array(vBuf),
+                };
+            } else {
+                skippedFirst = true;
+            }
         }
     }
 

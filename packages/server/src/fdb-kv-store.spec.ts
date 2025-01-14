@@ -1,13 +1,25 @@
-import {Condition, GtCondition, GteCondition, LtCondition, LteCondition} from 'ground-data';
+import {StreamingMode} from 'foundationdb';
+import {
+    Condition,
+    Deferred,
+    GtCondition,
+    GteCondition,
+    LtCondition,
+    LteCondition,
+    PrefixedKVStore,
+    Uint8KVStore,
+    astream,
+} from 'ground-data';
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
-
 import {FoundationDBUint8KVStore} from './fdb-kv-store';
 
 describe('FoundationDBUint8KVStore (localhost:4500)', () => {
-    let store: FoundationDBUint8KVStore;
+    let store: Uint8KVStore;
+    let fdbStore: FoundationDBUint8KVStore;
 
     beforeAll(() => {
-        store = new FoundationDBUint8KVStore();
+        fdbStore = new FoundationDBUint8KVStore();
+        store = new PrefixedKVStore(fdbStore, '\x00');
     });
 
     // clean up
@@ -117,20 +129,83 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
             });
         });
 
-        it.only('should query keys with GtCondition', async () => {
+        it('should query keys with GtCondition', async () => {
             // Condition: key > 0x11
             const condition: Condition<Uint8Array> = {
                 gt: new Uint8Array([0x11]) as GtCondition<Uint8Array>['gt'],
             };
 
-            const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
-            await store.transaction(async txn => {
-                for await (const kv of txn.query(condition)) {
-                    results.push(kv);
-                }
+            const results = await store.transaction(txn => astream(txn.query(condition)).toArray());
+
+            const all = await fdbStore['db'].getRangeAll('\x00');
+
+            console.log('all', all);
+
+            const some = await fdbStore['db'].doTransaction(async tx => {
+                return await astream(
+                    tx.getRange(Buffer.from([0x00, 0x11]), undefined, {
+                        limit: 1000,
+                        streamingMode: StreamingMode.WantAll,
+                        targetBytes: 123,
+                    })
+                ).toArray();
             });
 
+            console.log({some});
+
             expect(results.map(r => Array.from(r.key))).toEqual([[0x12], [0x13]]);
+        });
+
+        it.only('test conflicts', async () => {
+            const db = fdbStore['db'];
+
+            let total = 0;
+            await db.doTransaction(async tx => {
+                tx.clearRange('\x31', '\xff');
+
+                for (let i = 1 << 17; i < 1 << 18; i += 1) {
+                    total += 1;
+                    tx.set(Buffer.from(i.toString()), '1');
+                    // console.log(Buffer.from(i.toString()));
+                }
+
+                tx.set(Buffer.from('\x32'), 'val');
+
+                console.log('insert');
+            });
+
+            const signal = new Deferred();
+
+            const query = db.doTransaction(async tx => {
+                let counter = 0;
+                let lastKey: any;
+                let lastVal: any;
+                const startTime = performance.now();
+                for await (const [key, value] of tx.getRange('\x31', '\xff')) {
+                    // console.log(key);
+                    counter += 1;
+                    lastKey = key;
+                    lastVal = value;
+                }
+
+                console.log({
+                    counter,
+                    total,
+                    time: performance.now() - startTime,
+                    lastKey,
+                    lastStr: lastKey?.toString(),
+                    lastVal,
+                });
+            });
+
+            // await db.doTransaction(async tx => {
+            //     for (let i = 0; i < 20; i += 1) {
+            //         tx.set(Buffer.from(i.toString()), '2');
+            //         tx.set(Buffer.from(i.toString()), '2');
+            //     }
+            // });
+
+            await query;
         });
 
         it('should query keys with GteCondition', async () => {

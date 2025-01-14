@@ -169,14 +169,18 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
                     // console.log(Buffer.from(i.toString()));
                 }
 
-                tx.set(Buffer.from('\x32'), 'val');
-
                 console.log('insert');
             });
 
-            const signal = new Deferred();
+            const signalA = new Deferred();
+            const signalB = new Deferred();
+
+            let attempts = 0;
 
             const query = db.doTransaction(async tx => {
+                attempts += 1;
+                console.log('start');
+
                 let counter = 0;
                 let lastKey: any;
                 let lastVal: any;
@@ -186,26 +190,39 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
                     counter += 1;
                     lastKey = key;
                     lastVal = value;
+
+                    // break;
                 }
+
+                signalA.resolve(1);
+                await signalB.promise;
+
+                tx.set(Buffer.from('162142'), lastVal);
 
                 console.log({
                     counter,
                     total,
                     time: performance.now() - startTime,
                     lastKey,
-                    lastStr: lastKey?.toString(),
+                    lastKeyStr: lastKey?.toString(),
                     lastVal,
+                    lastValStr: lastVal?.toString(),
                 });
             });
 
-            // await db.doTransaction(async tx => {
-            //     for (let i = 0; i < 20; i += 1) {
-            //         tx.set(Buffer.from(i.toString()), '2');
-            //         tx.set(Buffer.from(i.toString()), '2');
-            //     }
-            // });
+            await db.doTransaction(async tx => {
+                await signalA.promise;
+
+                tx.set(Buffer.from('262143'), '4');
+            });
+            console.log('finish');
+            signalB.resolve(1);
 
             await query;
+
+            await db.doTransaction(async tx => {
+                console.log({result: (await tx.get(Buffer.from('262142')))?.toString(), attempts});
+            });
         });
 
         it('should query keys with GteCondition', async () => {

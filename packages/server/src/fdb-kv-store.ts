@@ -29,23 +29,39 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
     }
 
     async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
-        const [key, reverse, open] = mapCondition<Uint8Array, [Uint8Array, boolean, boolean]>(condition, {
-            gt: (cond: GtCondition<Uint8Array>) => [cond.gt, false, true],
-            gte: (cond: GteCondition<Uint8Array>) => [cond.gte, false, false],
-            lt: (cond: LtCondition<Uint8Array>) => [cond.lt, true, true],
-            lte: (cond: LteCondition<Uint8Array>) => [cond.lte, true, false],
+        const bigKey = Buffer.from(new Uint8Array(Array(32).fill(255)));
+        const smallKey = Buffer.from(new Uint8Array([0]));
+        const [start, end, reverse] = mapCondition<
+            Uint8Array,
+            [fdb.KeySelector<Buffer>, fdb.KeySelector<Buffer>, boolean]
+        >(condition, {
+            gt: (cond: GtCondition<Uint8Array>) => [
+                fdb.keySelector.firstGreaterThan(Buffer.from(cond.gt)),
+                fdb.keySelector.firstGreaterThan(bigKey),
+                false,
+            ],
+            gte: (cond: GteCondition<Uint8Array>) => [
+                fdb.keySelector.firstGreaterOrEqual(Buffer.from(cond.gte)),
+                fdb.keySelector.firstGreaterThan(bigKey),
+                false,
+            ],
+            lt: (cond: LtCondition<Uint8Array>) => [
+                fdb.keySelector.firstGreaterOrEqual(smallKey),
+                fdb.keySelector.firstGreaterOrEqual(Buffer.from(cond.lt)),
+                true,
+            ],
+            lte: (cond: LteCondition<Uint8Array>) => [
+                fdb.keySelector.firstGreaterOrEqual(smallKey),
+                fdb.keySelector.firstGreaterThan(Buffer.from(cond.lte)),
+                true,
+            ],
         });
 
-        let skippedFirst = false;
-        for await (const [kBuf, vBuf] of this.txn.getRange(Buffer.from(key), undefined, {reverse})) {
-            if (!open || skippedFirst || !kBuf.equals(key)) {
-                yield {
-                    key: new Uint8Array(kBuf),
-                    value: new Uint8Array(vBuf),
-                };
-            } else {
-                skippedFirst = true;
-            }
+        for await (const [kBuf, vBuf] of this.txn.getRange(start, end, {reverse})) {
+            yield {
+                key: new Uint8Array(kBuf),
+                value: new Uint8Array(vBuf),
+            };
         }
     }
 

@@ -29,20 +29,20 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
     }
 
     async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
-        const bigKey = Buffer.from(new Uint8Array(Array(32).fill(255)));
-        const smallKey = Buffer.from(new Uint8Array([0]));
+        const bigKey = Buffer.from([255]);
+        const smallKey = Buffer.from(new Uint8Array([]));
         const [start, end, reverse] = mapCondition<
             Uint8Array,
             [fdb.KeySelector<Buffer>, fdb.KeySelector<Buffer>, boolean]
         >(condition, {
             gt: (cond: GtCondition<Uint8Array>) => [
                 fdb.keySelector.firstGreaterThan(Buffer.from(cond.gt)),
-                fdb.keySelector.firstGreaterThan(bigKey),
+                fdb.keySelector.firstGreaterOrEqual(bigKey),
                 false,
             ],
             gte: (cond: GteCondition<Uint8Array>) => [
                 fdb.keySelector.firstGreaterOrEqual(Buffer.from(cond.gte)),
-                fdb.keySelector.firstGreaterThan(bigKey),
+                fdb.keySelector.firstGreaterOrEqual(bigKey),
                 false,
             ],
             lt: (cond: LtCondition<Uint8Array>) => [

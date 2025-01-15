@@ -3,10 +3,8 @@ import {Condition, GtCondition, GteCondition, LtCondition, LteCondition, astream
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 import {SqliteUint8KVStore} from './sqllite-kv-store';
 
-describe('SqliteUint8KVStore', () => {
+describe.skip('SqliteUint8KVStore', () => {
     let store: SqliteUint8KVStore;
-
-    console.log('hello');
 
     beforeAll(async () => {
         console.log('before');

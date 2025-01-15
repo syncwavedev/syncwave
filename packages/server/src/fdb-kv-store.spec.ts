@@ -1,7 +1,5 @@
-import {StreamingMode} from 'foundationdb';
 import {
     Condition,
-    Deferred,
     GtCondition,
     GteCondition,
     LtCondition,
@@ -10,20 +8,19 @@ import {
     Uint8KVStore,
     astream,
 } from 'ground-data';
-import {afterAll, beforeAll, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {FoundationDBUint8KVStore} from './fdb-kv-store';
 
-describe.skip('FoundationDBUint8KVStore (localhost:4500)', () => {
+describe('FoundationDBUint8KVStore (localhost:4500)', () => {
     let store: Uint8KVStore;
-    let fdbStore: FoundationDBUint8KVStore;
 
-    beforeAll(() => {
-        fdbStore = new FoundationDBUint8KVStore();
-        store = new PrefixedKVStore(fdbStore, '\x00');
+    beforeEach(() => {
+        const fdbStore = new FoundationDBUint8KVStore();
+        store = new PrefixedKVStore(fdbStore, '\x01');
     });
 
     // clean up
-    afterAll(async () => {
+    afterEach(async () => {
         await store.transaction(async txn => {
             for await (const {key} of txn.query({gte: new Uint8Array()})) {
                 await txn.delete(key);
@@ -121,7 +118,7 @@ describe.skip('FoundationDBUint8KVStore (localhost:4500)', () => {
             [new Uint8Array([0x13]), new Uint8Array([0x13])],
         ];
 
-        beforeAll(async () => {
+        beforeEach(async () => {
             await store.transaction(async txn => {
                 for (const [k, v] of keysAndValues) {
                     await txn.put(k, v);
@@ -137,92 +134,7 @@ describe.skip('FoundationDBUint8KVStore (localhost:4500)', () => {
 
             const results = await store.transaction(txn => astream(txn.query(condition)).toArray());
 
-            const all = await fdbStore['db'].getRangeAll('\x00');
-
-            console.log('all', all);
-
-            const some = await fdbStore['db'].doTransaction(async tx => {
-                return await astream(
-                    tx.getRange(Buffer.from([0x00, 0x11]), undefined, {
-                        limit: 1000,
-                        streamingMode: StreamingMode.WantAll,
-                        targetBytes: 123,
-                    })
-                ).toArray();
-            });
-
-            console.log({some});
-
             expect(results.map(r => Array.from(r.key))).toEqual([[0x12], [0x13]]);
-        });
-
-        it.only('test conflicts', async () => {
-            const db = fdbStore['db'];
-
-            let total = 0;
-            await db.doTransaction(async tx => {
-                tx.clearRange('\x31', '\xff');
-
-                for (let i = 1 << 17; i < 1 << 18; i += 1) {
-                    total += 1;
-                    tx.set(Buffer.from(i.toString()), '1');
-                    // console.log(Buffer.from(i.toString()));
-                }
-
-                console.log('insert');
-            });
-
-            const signalA = new Deferred();
-            const signalB = new Deferred();
-
-            let attempts = 0;
-
-            const query = db.doTransaction(async tx => {
-                attempts += 1;
-                console.log('start');
-
-                let counter = 0;
-                let lastKey: any;
-                let lastVal: any;
-                const startTime = performance.now();
-                for await (const [key, value] of tx.getRange('\x31', '\xff')) {
-                    // console.log(key);
-                    counter += 1;
-                    lastKey = key;
-                    lastVal = value;
-
-                    // break;
-                }
-
-                signalA.resolve(1);
-                await signalB.promise;
-
-                tx.set(Buffer.from('162142'), lastVal);
-
-                console.log({
-                    counter,
-                    total,
-                    time: performance.now() - startTime,
-                    lastKey,
-                    lastKeyStr: lastKey?.toString(),
-                    lastVal,
-                    lastValStr: lastVal?.toString(),
-                });
-            });
-
-            await db.doTransaction(async tx => {
-                await signalA.promise;
-
-                tx.set(Buffer.from('262143'), '4');
-            });
-            console.log('finish');
-            signalB.resolve(1);
-
-            await query;
-
-            await db.doTransaction(async tx => {
-                console.log({result: (await tx.get(Buffer.from('262142')))?.toString(), attempts});
-            });
         });
 
         it('should query keys with GteCondition', async () => {

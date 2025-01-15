@@ -13,7 +13,7 @@ import {
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 import {FoundationDBUint8KVStore} from './fdb-kv-store';
 
-describe('FoundationDBUint8KVStore (localhost:4500)', () => {
+describe.skip('FoundationDBUint8KVStore (localhost:4500)', () => {
     let store: Uint8KVStore;
     let fdbStore: FoundationDBUint8KVStore;
 

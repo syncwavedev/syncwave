@@ -9,9 +9,12 @@ import {
     Uint8KVStore,
     Uint8Transaction,
     mapCondition,
+    withPrefix,
 } from 'ground-data';
 
 fdb.setAPIVersion(620, 620);
+
+const MAGIC_BYTE = 174;
 
 export class FoundationDBUint8Transaction implements Uint8Transaction {
     private readonly txn: fdb.Transaction;
@@ -84,7 +87,13 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
     async transaction<TResult>(fn: (txn: Uint8Transaction) => Promise<TResult>): Promise<TResult> {
         return this.db.doTransaction(async nativeTxn => {
             const wrappedTxn = new FoundationDBUint8Transaction(nativeTxn);
-            return fn(wrappedTxn);
+            // we use prefix to avoid reserved range starting with 0xff
+            const prefixedTxn = withPrefix(new Uint8Array([MAGIC_BYTE]))(wrappedTxn);
+            return fn(prefixedTxn);
         });
+    }
+
+    async close(): Promise<void> {
+        this.db.close();
     }
 }

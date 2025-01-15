@@ -19,7 +19,6 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
         store = new PrefixedKVStore(fdbStore, '\x01');
     });
 
-    // clean up
     afterEach(async () => {
         await store.transaction(async txn => {
             for await (const {key} of txn.query({gte: new Uint8Array()})) {

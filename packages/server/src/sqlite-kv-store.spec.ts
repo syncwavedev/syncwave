@@ -1,19 +1,16 @@
 import {rm} from 'fs/promises';
 import {Condition, GtCondition, GteCondition, LtCondition, LteCondition, astream} from 'ground-data';
-import {afterAll, beforeAll, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {SqliteUint8KVStore} from './sqllite-kv-store';
 
-describe.skip('SqliteUint8KVStore', () => {
+describe('FoundationDBUint8KVStore (localhost:4500)', () => {
     let store: SqliteUint8KVStore;
 
-    beforeAll(async () => {
-        console.log('before');
+    beforeEach(() => {
         store = new SqliteUint8KVStore('./test.sqlite');
-        console.log('before ready');
     });
 
-    // clean up
-    afterAll(async () => {
+    afterEach(async () => {
         await store.close();
         await rm('./test.sqlite');
     });
@@ -108,7 +105,7 @@ describe.skip('SqliteUint8KVStore', () => {
             [new Uint8Array([0x13]), new Uint8Array([0x13])],
         ];
 
-        beforeAll(async () => {
+        beforeEach(async () => {
             await store.transaction(async txn => {
                 for (const [k, v] of keysAndValues) {
                     await txn.put(k, v);

@@ -65,22 +65,24 @@ export class SqliteUint8KVStore implements Uint8KVStore {
     public async transaction<TResult>(fn: (txn: Uint8Transaction) => Promise<TResult>): Promise<TResult> {
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
             this.db.exec('BEGIN');
-            let result: TResult;
 
             try {
                 const txn = new SqliteTransaction(this.db);
-                result = await fn(txn);
+                const result = await fn(txn);
 
                 this.db.exec('COMMIT');
+
+                return result;
             } catch (error) {
                 this.db.exec('ROLLBACK');
-                throw error;
-            }
 
-            return result;
+                if (attempt === TXN_RETRIES_COUNT) {
+                    throw error;
+                }
+            }
         }
 
-        throw new Error('maximum number of attempts reached for transaction');
+        throw new Error('unreachable');
     }
 
     public async close(): Promise<void> {

@@ -1,3 +1,1 @@
-import {f} from 'ground-data';
-
-f();
+export const noop = 1;

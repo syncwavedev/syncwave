@@ -1,4 +1,5 @@
 export {astream} from './async-stream';
+export * from './constants';
 export {Crdt} from './crdt/crdt';
 export type {CrdtDiff} from './crdt/crdt';
 export type {Connection, TransportClient, TransportServer} from './data/communication/transport';

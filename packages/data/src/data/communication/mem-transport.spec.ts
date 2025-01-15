@@ -1,4 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
+import {MsgpackrCodec} from '../../codec';
 import {MemConnection, MemTransportClient, MemTransportServer} from './mem-transport';
 import {Message, createMessageId} from './message';
 
@@ -6,14 +7,14 @@ const mockMessage: Message = {type: 'request', id: createMessageId(), payload: {
 
 describe('MemConnection', () => {
     it('should create a pair of MemConnections', () => {
-        const [conn1, conn2] = MemConnection.create();
+        const [conn1, conn2] = MemConnection.create<Message>(new MsgpackrCodec());
         expect(conn1).toBeDefined();
         expect(conn2).toBeDefined();
         expect(() => conn1.send(mockMessage)).not.toThrowError();
     });
 
     it('should send and receive messages between peers', async () => {
-        const [conn1, conn2] = MemConnection.create();
+        const [conn1, conn2] = MemConnection.create<Message>(new MsgpackrCodec());
         conn1['open'] = true;
         conn2['open'] = true;
 
@@ -29,7 +30,7 @@ describe('MemConnection', () => {
     });
 
     it('should throw error if send is called on a closed connection', async () => {
-        const [conn1, conn2] = MemConnection.create();
+        const [conn1, conn2] = MemConnection.create<Message>(new MsgpackrCodec());
         conn1['open'] = false;
         conn2['open'] = true;
 
@@ -37,7 +38,7 @@ describe('MemConnection', () => {
     });
 
     it('should allow subscribing and unsubscribing', () => {
-        const [conn1, conn2] = MemConnection.create();
+        const [conn1, conn2] = MemConnection.create<Message>(new MsgpackrCodec());
         conn1['open'] = true;
         conn2['open'] = true;
 
@@ -53,7 +54,7 @@ describe('MemConnection', () => {
     });
 
     it('should close the connection and notify subscribers', async () => {
-        const [conn1] = MemConnection.create();
+        const [conn1] = MemConnection.create<Message>(new MsgpackrCodec());
         conn1['open'] = true;
 
         const closeHandler = vi.fn();
@@ -67,12 +68,12 @@ describe('MemConnection', () => {
 
 describe('MemTransportServer and MemTransportClient', () => {
     it('should accept connections from clients', async () => {
-        const server = new MemTransportServer();
+        const server = new MemTransportServer(new MsgpackrCodec());
 
         const connectionHandler = vi.fn();
         server.launch(connectionHandler);
 
-        const client = new MemTransportClient(server);
+        const client = new MemTransportClient(server, new MsgpackrCodec());
         const clientConnection = await client.connect();
 
         expect(connectionHandler).toHaveBeenCalledTimes(1);
@@ -80,28 +81,28 @@ describe('MemTransportServer and MemTransportClient', () => {
     });
 
     it('should throw an error if no listeners are active', async () => {
-        const server = new MemTransportServer();
-        const client = new MemTransportClient(server);
+        const server = new MemTransportServer(new MsgpackrCodec());
+        const client = new MemTransportClient(server, new MsgpackrCodec());
 
         await expect(client.connect()).rejects.toThrowError('server is not active');
     });
 
     it('should allow subscribing and unsubscribing to server listeners', () => {
-        const server = new MemTransportServer();
+        const server = new MemTransportServer(new MsgpackrCodec());
 
         const connectionHandler = vi.fn();
         const unsubscribe = server.launch(connectionHandler);
 
         const mockConnection = {};
-        server.accept(mockConnection as MemConnection);
+        server.accept(mockConnection as MemConnection<Message>);
         expect(connectionHandler).toHaveBeenCalledWith(mockConnection);
 
         unsubscribe();
-        expect(() => server.accept(mockConnection as MemConnection)).toThrowError();
+        expect(() => server.accept(mockConnection as MemConnection<Message>)).toThrowError();
     });
 
     it('should close the server and clear subscriptions', async () => {
-        const server = new MemTransportServer();
+        const server = new MemTransportServer(new MsgpackrCodec());
 
         const connectionHandler = vi.fn();
         server.launch(connectionHandler);

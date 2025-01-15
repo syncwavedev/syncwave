@@ -1,17 +1,11 @@
-import {MsgpackrCodec} from '../../codec';
+import {Codec} from '../../codec';
 import {Unsubscribe} from '../../utils';
-import {Message} from './message';
 import {Connection, ConnectionSubscribeCallback, TransportClient, TransportServer} from './transport';
 
-function clone<T>(value: T): T {
-    const codec = new MsgpackrCodec();
-    return codec.decode(codec.encode(value));
-}
-
-export class MemConnection implements Connection {
-    static create(): [MemConnection, MemConnection] {
-        const a = new MemConnection();
-        const b = new MemConnection();
+export class MemConnection<T> implements Connection<T> {
+    static create<T>(codec: Codec<T>): [MemConnection<T>, MemConnection<T>] {
+        const a = new MemConnection<T>(codec);
+        const b = new MemConnection<T>(codec);
 
         a.peer = b;
         b.peer = a;
@@ -19,24 +13,24 @@ export class MemConnection implements Connection {
         return [a, b];
     }
 
-    private peer!: MemConnection;
+    private peer!: MemConnection<T>;
     private open = true;
 
-    private subs: Array<ConnectionSubscribeCallback> = [];
+    private subs: Array<ConnectionSubscribeCallback<T>> = [];
 
-    private constructor() {}
+    private constructor(private readonly codec: Codec<T>) {}
 
-    async send(message: Message): Promise<void> {
+    async send(message: T): Promise<void> {
         this.ensureOpen();
 
         // don't wait for peer to respond
-        this.peer.receive(clone(message));
+        this.peer.receive(this.codec.decode(this.codec.encode(message)));
     }
 
-    subscribe(cb: ConnectionSubscribeCallback): Unsubscribe {
+    subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
         this.ensureOpen();
 
-        const wrapper: ConnectionSubscribeCallback = (...args) => cb(...args);
+        const wrapper: ConnectionSubscribeCallback<T> = (...args) => cb(...args);
         this.subs.push(wrapper);
 
         return () => {
@@ -52,7 +46,7 @@ export class MemConnection implements Connection {
         }
     }
 
-    private async receive(message: Message): Promise<void> {
+    private async receive(message: T): Promise<void> {
         if (!this.open) return;
 
         [...this.subs].forEach(cb => cb({type: 'message', message: message}));
@@ -65,36 +59,39 @@ export class MemConnection implements Connection {
     }
 }
 
-export class MemTransportClient implements TransportClient {
-    constructor(private readonly server: MemTransportServer) {}
+export class MemTransportClient<T> implements TransportClient<T> {
+    constructor(
+        private readonly server: MemTransportServer<T>,
+        private readonly codec: Codec<T>
+    ) {}
 
-    async connect(): Promise<Connection> {
-        const [a, b] = MemConnection.create();
+    async connect(): Promise<Connection<T>> {
+        const [a, b] = MemConnection.create<T>(this.codec);
         this.server.accept(a);
         return b;
     }
 }
 
-export class MemTransportServer implements TransportServer {
-    private subs: Array<(connection: Connection) => void> = [];
+export class MemTransportServer<T> implements TransportServer<T> {
+    private subs: Array<(connection: Connection<T>) => void> = [];
 
-    constructor() {}
+    constructor(private readonly codec: Codec<T>) {}
 
     async close(): Promise<void> {
         this.subs = [];
     }
 
     createClient() {
-        return new MemTransportClient(this);
+        return new MemTransportClient(this, this.codec);
     }
 
-    launch(cb: (connection: Connection) => void): Unsubscribe {
-        const wrapper = (conn: Connection) => cb(conn);
+    launch(cb: (connection: Connection<T>) => void): Unsubscribe {
+        const wrapper = (conn: Connection<T>) => cb(conn);
         this.subs.push(wrapper);
         return () => (this.subs = this.subs.filter(x => x !== wrapper));
     }
 
-    accept(connection: MemConnection): void {
+    accept(connection: MemConnection<T>): void {
         if (this.subs.length === 0) {
             throw new Error('server is not active');
         }

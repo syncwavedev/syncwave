@@ -1,13 +1,12 @@
 import {Unsubscribe} from '../../utils';
-import {Message} from './message';
 
-export interface TransportServer {
-    launch(cb: (connection: Connection) => void): void;
+export interface TransportServer<T> {
+    launch(cb: (connection: Connection<T>) => void): void;
     close(): void;
 }
 
-export interface TransportClient {
-    connect(): Promise<Connection>;
+export interface TransportClient<T> {
+    connect(): Promise<Connection<T>>;
 }
 
 export interface BaseConnectionEvent<TType extends string> {
@@ -16,16 +15,16 @@ export interface BaseConnectionEvent<TType extends string> {
 
 export interface CloseConnectionEvent extends BaseConnectionEvent<'close'> {}
 
-export interface MessageConnectionEvent extends BaseConnectionEvent<'message'> {
-    readonly message: Message;
+export interface MessageConnectionEvent<T> extends BaseConnectionEvent<'message'> {
+    readonly message: T;
 }
 
-export type ConnectionEvent = CloseConnectionEvent | MessageConnectionEvent;
+export type ConnectionEvent<T> = CloseConnectionEvent | MessageConnectionEvent<T>;
 
-export type ConnectionSubscribeCallback = (event: ConnectionEvent) => void;
+export type ConnectionSubscribeCallback<T> = (event: ConnectionEvent<T>) => void;
 
-export interface Connection {
-    send(message: Message): Promise<void>;
-    subscribe(cb: ConnectionSubscribeCallback): Unsubscribe;
+export interface Connection<T> {
+    send(message: T): Promise<void>;
+    subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe;
     close(): Promise<void>;
 }

@@ -57,7 +57,7 @@ export function createRpcClient<T = any>(connection: Connection<Message>, getHea
                         if (ev.type === 'close') {
                             result.reject(new Error('connection to coordinator closed'));
                         } else if (ev.type === 'message') {
-                            if (ev.message.type === 'response' && ev.message.requestId === requestId) {
+                            if (ev.message.type === 'response' && ev.message.requestId.equals(requestId)) {
                                 try {
                                     if (ev.message.payload.type === 'error') {
                                         result.reject(

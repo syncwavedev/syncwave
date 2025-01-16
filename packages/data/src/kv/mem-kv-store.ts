@@ -52,7 +52,7 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
         this.tree = this.tree.remove(key).insert(key, value);
     }
 
-    async delete(key: Uint8Array<ArrayBufferLike>): Promise<void> {
+    async delete(key: Uint8Array): Promise<void> {
         this.tree = this.tree.remove(key);
     }
 }

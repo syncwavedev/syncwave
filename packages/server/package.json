@@ -36,6 +36,7 @@
     },
     "dependencies": {
         "better-sqlite3": "^11.8.0",
+        "bufferutil": "^4.0.9",
         "foundationdb": "1",
         "ground-data": "*",
         "jsonwebtoken": "^9.0.2",

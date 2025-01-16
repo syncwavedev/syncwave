@@ -41,12 +41,12 @@ export function createIndex<TValue>({
     keySelector,
     unique,
     indexName,
-    filter,
+    filter: originalFilter,
 }: IndexOptions<TValue>): Index<TValue> {
     const keyCodec = new IndexKeyCodec();
     const uuidCodec = new UuidCodec();
 
-    filter = filter ?? (() => true);
+    const filter = originalFilter ?? (() => true);
 
     async function* queryInternal(condition: Condition<IndexKey>) {
         const conditionKey = mapCondition(condition, {

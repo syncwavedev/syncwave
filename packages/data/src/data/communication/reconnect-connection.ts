@@ -1,10 +1,13 @@
-import {Deferred} from '../../deferred';
-import {assertNever, Unsubscribe} from '../../utils';
-import {Connection, ConnectionSubscribeCallback, TransportClient} from './transport';
+import {RECONNECT_WAIT_MS} from '../../constants';
+import {assertNever, Subject, Unsubscribe, wait} from '../../utils';
+import {Connection, ConnectionEvent, ConnectionSubscribeCallback, TransportClient} from './transport';
 
 export class ReconnectConnection<T> implements Connection<T> {
-    private connection?: Connection<T>;
+    // if we already initiated connection process, then we want subsequent sends to wait until the
+    // initial connect is done
+    private connection?: Promise<Connection<T>>;
     private closed = false;
+    private subject = new Subject<ConnectionEvent<T>>();
 
     constructor(private readonly transport: TransportClient<T>) {}
 
@@ -19,58 +22,60 @@ export class ReconnectConnection<T> implements Connection<T> {
 
     subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
         this.assertOpen();
+        this.getConnection();
 
-        const unsubSignal = new Deferred<void>();
-
-        (async () => {
-            const connection = await this.getConnection();
-            if (connection === 'closed_during_connect') {
-                return;
-            }
-
-            const unsub = connection.subscribe(cb);
-
-            unsubSignal.promise.then(unsub);
-        })();
-
-        return () => {
-            unsubSignal.resolve();
-        };
+        return this.subject.subscribe(cb);
     }
 
     async close(): Promise<void> {
         this.closed = true;
         if (this.connection) {
-            this.connection.close();
+            const connection = this.connection;
             this.connection = undefined;
+
+            await connection.then(x => x.close());
         }
     }
 
-    private async getConnection() {
+    private async getConnection(): Promise<Connection<T> | 'closed_during_connect'> {
         this.assertOpen();
 
         if (this.connection === undefined) {
-            this.connection = await this.transport.connect();
-
-            if (this.closed) {
-                this.connection.close();
-                // connection closed during transport.connect
-                this.connection = undefined;
-                return 'closed_during_connect';
-            }
-
-            this.connection.subscribe(event => {
-                if (event.type === 'message') {
-                    // do nothing
-                } else if (event.type === 'close') {
-                    this.connection = undefined;
-                } else {
-                    assertNever(event);
+            this.connection = (async () => {
+                while (true) {
+                    try {
+                        return await this.transport.connect();
+                    } catch {
+                        await wait(RECONNECT_WAIT_MS);
+                    }
                 }
+            })().then(conn => {
+                conn.subscribe(event => {
+                    if (event.type === 'message') {
+                        this.subject.next(event);
+                    } else if (event.type === 'close') {
+                        this.connection = undefined;
+                        // reconnect
+                        this.getConnection();
+                    } else {
+                        assertNever(event);
+                    }
+                });
+
+                return conn;
             });
         }
 
-        return this.connection;
+        const connection = await this.connection;
+
+        if (this.closed) {
+            connection.close();
+            // connection closed during transport.connect
+            this.connection = undefined;
+            return 'closed_during_connect';
+        }
+
+        return connection;
     }
 
     private assertOpen() {

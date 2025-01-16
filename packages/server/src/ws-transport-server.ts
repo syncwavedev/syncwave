@@ -4,6 +4,7 @@ import {
     ConnectionEvent,
     ConnectionSubscribeCallback,
     Deferred,
+    Logger,
     Subject,
     TransportServer,
     Unsubscribe,
@@ -13,20 +14,21 @@ import {WebSocket, WebSocketServer} from 'ws';
 export interface WsTransportServerOptions<T> {
     readonly port: number;
     readonly codec: Codec<T>;
+    readonly logger: Logger;
 }
 
 export class WsTransportServer<T> implements TransportServer<T> {
     private wss: WebSocketServer | undefined;
 
-    constructor(private readonly options: WsTransportServerOptions<T>) {}
+    constructor(private readonly opt: WsTransportServerOptions<T>) {}
 
     launch(cb: (connection: Connection<T>) => void): Promise<void> {
-        this.wss = new WebSocketServer({port: this.options.port});
+        this.wss = new WebSocketServer({port: this.opt.port});
 
         const listening = new Deferred<void>();
 
         this.wss.on('connection', (ws: WebSocket) => {
-            const connection = new WsConnection<T>(ws, this.options.codec);
+            const connection = new WsConnection<T>(ws, this.opt.codec, this.opt.logger);
             cb(connection);
         });
 
@@ -47,7 +49,8 @@ export class WsConnection<T> implements Connection<T> {
 
     constructor(
         private readonly ws: WebSocket,
-        private readonly codec: Codec<T>
+        private readonly codec: Codec<T>,
+        private readonly logger: Logger
     ) {
         this.setupListeners();
     }
@@ -78,7 +81,7 @@ export class WsConnection<T> implements Connection<T> {
             try {
                 message = this.codec.decode(rawData);
             } catch (err) {
-                console.error(err);
+                this.logger.error(err?.toString() ?? 'undefined error');
                 return;
             }
 

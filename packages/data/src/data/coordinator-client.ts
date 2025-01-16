@@ -1,4 +1,5 @@
 import {DataAccessor} from './actor';
+import {Message} from './communication/message';
 import {createRpcClient} from './communication/rpc';
 import {Connection} from './communication/transport';
 import {type CoordinatorApi} from './coordinator';
@@ -6,7 +7,7 @@ import {type CoordinatorApi} from './coordinator';
 export class CoordinatorClient {
     private token?: string;
 
-    constructor(private readonly connection: Connection) {}
+    constructor(private readonly connection: Connection<Message>) {}
 
     authenticate(authToken: string) {
         this.token = authToken;

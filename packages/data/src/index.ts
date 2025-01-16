@@ -38,5 +38,6 @@ export {
 } from './kv/kv-store';
 export {MappedKVStore} from './kv/mapped-kv-store';
 export {PrefixedKVStore} from './kv/prefixed-kv-store';
+export {ConsoleLogger, type Logger} from './logger';
 export {Richtext} from './richtext';
 export {Subject, assert, type Unsubscribe} from './utils';

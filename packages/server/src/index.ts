@@ -1,19 +1,25 @@
 import {createHash} from 'crypto';
-import {Coordinator, Crypto, JwtPayload, JwtService, MsgpackrCodec} from 'ground-data';
+import {ConsoleLogger, Coordinator, Crypto, JwtPayload, JwtService, MsgpackrCodec, Uint8KVStore} from 'ground-data';
 import jwt from 'jsonwebtoken';
 import {SqliteUint8KVStore} from './sqlite-kv-store';
 import {WsTransportServer} from './ws-transport-server';
 
-const IS_DARWIN = process.platform === 'darwin';
+const isProduction = process.env.NODE_ENV !== 'development';
 const PORT = 4567;
 
 // todo: read from env
 const JWT_SECRET = 'test_secret';
 
 async function launch() {
-    const kvStore = await (IS_DARWIN
-        ? new SqliteUint8KVStore('./dev.sqlite')
-        : import('./fdb-kv-store').then(x => new x.FoundationDBUint8KVStore()));
+    let kvStore: Uint8KVStore;
+
+    if (isProduction) {
+        console.log('using FoundationDB as primary store');
+        kvStore = await import('./fdb-kv-store').then(x => new x.FoundationDBUint8KVStore());
+    } else {
+        console.log('using SQLite as primary store');
+        kvStore = new SqliteUint8KVStore('./dev.sqlite');
+    }
 
     const jwtService: JwtService = {
         verify: (token, secret) => jwt.verify(token, secret) as JwtPayload,
@@ -25,7 +31,11 @@ async function launch() {
     };
 
     const coordinator = new Coordinator(
-        new WsTransportServer({port: PORT, codec: new MsgpackrCodec()}),
+        new WsTransportServer({
+            port: PORT,
+            codec: new MsgpackrCodec(),
+            logger: new ConsoleLogger(),
+        }),
         kvStore,
         jwtService,
         crypto,

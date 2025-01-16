@@ -5,6 +5,7 @@ import {
     type Connection,
     type ConnectionEvent,
     type ConnectionSubscribeCallback,
+    type Logger,
     type TransportClient,
     type Unsubscribe,
 } from 'ground-data';
@@ -12,18 +13,19 @@ import {
 export interface WsTransportClientOptions<T> {
     readonly url: string;
     readonly codec: Codec<T>;
+    readonly logger: Logger;
 }
 
 export class WsTransportClient<T> implements TransportClient<T> {
-    constructor(private readonly options: WsTransportClientOptions<T>) {}
+    constructor(private readonly opt: WsTransportClientOptions<T>) {}
 
     connect(): Promise<Connection<T>> {
         return new Promise((resolve, reject) => {
-            const ws = new WebSocket(this.options.url);
+            const ws = new WebSocket(this.opt.url);
             ws.binaryType = 'arraybuffer';
 
             ws.addEventListener('open', () => {
-                const connection = new WsClientConnection<T>(ws, this.options.codec);
+                const connection = new WsClientConnection<T>(ws, this.opt.codec, this.opt.logger);
                 resolve(connection);
             });
 
@@ -39,7 +41,8 @@ export class WsClientConnection<T> implements Connection<T> {
 
     constructor(
         private readonly ws: WebSocket,
-        private readonly codec: Codec<T>
+        private readonly codec: Codec<T>,
+        private readonly logger: Logger
     ) {
         this.setupListeners();
     }
@@ -64,7 +67,7 @@ export class WsClientConnection<T> implements Connection<T> {
                 const message = this.codec.decode(new Uint8Array(event.data));
                 this.subject.next({type: 'message', message});
             } catch (err) {
-                console.error('Failed to decode message:', err);
+                this.logger.error('Failed to decode message:', err);
             }
         });
 

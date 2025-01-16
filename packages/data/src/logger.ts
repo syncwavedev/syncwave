@@ -3,7 +3,7 @@ export interface Logger {
     debug(message: string): void;
     info(message: string): void;
     warn(message: string): void;
-    error(message: string): void;
+    error(message: string, error?: any): void;
 }
 
 export class ConsoleLogger implements Logger {
@@ -19,7 +19,11 @@ export class ConsoleLogger implements Logger {
     warn(message: string): void {
         console.warn(message);
     }
-    error(message: string): void {
-        console.error(message);
+    error(message: string, error?: any): void {
+        if (error) {
+            console.error(message, error);
+        } else {
+            console.error(message);
+        }
     }
 }

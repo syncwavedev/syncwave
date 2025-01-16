@@ -33,11 +33,11 @@ export class StringCodec implements Codec<string> {
     private encoder = new TextEncoder();
     private decoder = new TextDecoder();
 
-    encode(data: string): Uint8Array<ArrayBufferLike> {
+    encode(data: string): Uint8Array {
         return this.encoder.encode(data);
     }
 
-    decode(buf: Uint8Array<ArrayBufferLike>): string {
+    decode(buf: Uint8Array): string {
         return this.decoder.decode(buf);
     }
 }

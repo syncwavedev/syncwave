@@ -1,7 +1,7 @@
 import {rm} from 'fs/promises';
 import {Condition, GtCondition, GteCondition, LtCondition, LteCondition, astream} from 'ground-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
-import {SqliteUint8KVStore} from './sqllite-kv-store';
+import {SqliteUint8KVStore} from './sqlite-kv-store';
 
 describe('FoundationDBUint8KVStore (localhost:4500)', () => {
     let store: SqliteUint8KVStore;

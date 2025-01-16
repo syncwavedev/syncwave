@@ -35,6 +35,7 @@ export class ReconnectConnection<T> implements Connection<T> {
 
             await connection.then(x => x.close());
         }
+        this.subject.next({type: 'close'});
     }
 
     private async getConnection(): Promise<Connection<T> | 'closed_during_connect'> {

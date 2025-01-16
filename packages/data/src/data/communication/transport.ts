@@ -1,7 +1,7 @@
 import {Unsubscribe} from '../../utils';
 
 export interface TransportServer<T> {
-    launch(cb: (connection: Connection<T>) => void): void;
+    launch(cb: (connection: Connection<T>) => void): Promise<void>;
     close(): void;
 }
 

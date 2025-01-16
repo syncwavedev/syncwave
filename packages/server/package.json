@@ -1,20 +1,6 @@
 {
     "name": "ground-server",
     "version": "0.0.1",
-    "description": "TypeScript SQL query builder",
-    "license": "MIT",
-    "keywords": [
-        "sql",
-        "typescript",
-        "db",
-        "query",
-        "orm"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/tilyupo/qustar.git",
-        "directory": "packages/qustar"
-    },
     "main": "dist/cjs/src/index.js",
     "module": "dist/esm/src/index.js",
     "types": "dist/esm/src/index.d.ts",

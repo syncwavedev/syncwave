@@ -73,29 +73,28 @@ export class MemTransportClient<T> implements TransportClient<T> {
 }
 
 export class MemTransportServer<T> implements TransportServer<T> {
-    private subs: Array<(connection: Connection<T>) => void> = [];
+    private listener?: (connection: Connection<T>) => void;
 
     constructor(private readonly codec: Codec<T>) {}
 
     async close(): Promise<void> {
-        this.subs = [];
+        this.listener = undefined;
     }
 
     createClient() {
         return new MemTransportClient(this, this.codec);
     }
 
-    launch(cb: (connection: Connection<T>) => void): Unsubscribe {
-        const wrapper = (conn: Connection<T>) => cb(conn);
-        this.subs.push(wrapper);
-        return () => (this.subs = this.subs.filter(x => x !== wrapper));
+    launch(cb: (connection: Connection<T>) => void): Promise<void> {
+        this.listener = cb;
+        return Promise.resolve();
     }
 
     accept(connection: MemConnection<T>): void {
-        if (this.subs.length === 0) {
+        if (this.listener === undefined) {
             throw new Error('server is not active');
         }
 
-        [...this.subs].forEach(cb => cb(connection));
+        this.listener(connection);
     }
 }

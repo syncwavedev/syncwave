@@ -6,6 +6,7 @@ import {unimplemented} from '../utils';
 import {zUuid} from '../uuid';
 import {Actor, DataAccessor} from './actor';
 import {AuthContext, AuthContextParser} from './auth-context';
+import {Message} from './communication/message';
 import {createApi, handler, setupRpcServer} from './communication/rpc';
 import {Connection, TransportServer} from './communication/transport';
 import {DataLayer, TransactionContext} from './data-layer';
@@ -18,18 +19,21 @@ export class Coordinator {
     private readonly dataLayer: DataLayer;
 
     constructor(
-        private readonly transport: TransportServer,
+        private readonly transport: TransportServer<Message>,
         kv: Uint8KVStore
     ) {
-        this.transport.launch(conn => this.handleConnection(conn));
         this.dataLayer = new DataLayer(kv);
+    }
+
+    async launch(): Promise<void> {
+        await this.transport.launch(conn => this.handleConnection(conn));
     }
 
     close() {
         this.transport.close();
     }
 
-    private handleConnection(conn: Connection): void {
+    private handleConnection(conn: Connection<Message>): void {
         const authContextParser = new AuthContextParser(4);
         setupRpcServer(conn, createCoordinatorApi, async (message, fn) => {
             await this.dataLayer.transaction(async ctx => {

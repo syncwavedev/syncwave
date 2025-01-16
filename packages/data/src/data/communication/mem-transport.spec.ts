@@ -87,28 +87,15 @@ describe('MemTransportServer and MemTransportClient', () => {
         await expect(client.connect()).rejects.toThrowError('server is not active');
     });
 
-    it('should allow subscribing and unsubscribing to server listeners', () => {
-        const server = new MemTransportServer(new MsgpackrCodec());
-
-        const connectionHandler = vi.fn();
-        const unsubscribe = server.launch(connectionHandler);
-
-        const mockConnection = {};
-        server.accept(mockConnection as MemConnection<Message>);
-        expect(connectionHandler).toHaveBeenCalledWith(mockConnection);
-
-        unsubscribe();
-        expect(() => server.accept(mockConnection as MemConnection<Message>)).toThrowError();
-    });
-
     it('should close the server and clear subscriptions', async () => {
         const server = new MemTransportServer(new MsgpackrCodec());
+        const client = server.createClient();
 
         const connectionHandler = vi.fn();
         server.launch(connectionHandler);
 
         await server.close();
 
-        expect(server['subs']).toHaveLength(0);
+        await expect(() => client.connect()).rejects.toThrow(/server is not active/);
     });
 });

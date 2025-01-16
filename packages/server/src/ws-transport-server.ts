@@ -1,4 +1,4 @@
-import {Codec, Connection, ConnectionSubscribeCallback, TransportServer, Unsubscribe} from 'ground-data';
+import {Codec, Connection, ConnectionSubscribeCallback, Deferred, TransportServer, Unsubscribe} from 'ground-data';
 import {WebSocket, WebSocketServer} from 'ws';
 
 export interface WsTransportServerOptions<T> {
@@ -11,13 +11,21 @@ export class WsTransportServer<T> implements TransportServer<T> {
 
     constructor(private readonly options: WsTransportServerOptions<T>) {}
 
-    launch(cb: (connection: Connection<T>) => void): void {
+    launch(cb: (connection: Connection<T>) => void): Promise<void> {
         this.wss = new WebSocketServer({port: this.options.port});
+
+        const listening = new Deferred<void>();
 
         this.wss.on('connection', (ws: WebSocket) => {
             const connection = new WsConnection<T>(ws, this.options.codec);
             cb(connection);
         });
+
+        this.wss.on('listening', () => {
+            listening.resolve();
+        });
+
+        return listening.promise;
     }
 
     close(): void {

@@ -4,6 +4,7 @@ export * from './constants';
 export {Crdt} from './crdt/crdt';
 export type {CrdtDiff} from './crdt/crdt';
 export type {Message} from './data/communication/message';
+export {ReconnectConnection} from './data/communication/reconnect-connection';
 export type {
     Connection,
     ConnectionSubscribeCallback,

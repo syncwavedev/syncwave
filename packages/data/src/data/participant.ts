@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {DataAccessor} from './actor';
+import {Message} from './communication/message';
 import {createApi, handler, setupRpcServer} from './communication/rpc';
 import {Connection} from './communication/transport';
 import {SignInResponse} from './coordinator';
@@ -9,7 +10,7 @@ import {CoordinatorClient} from './coordinator-client';
 export class Participant {
     private client: CoordinatorClient;
 
-    private constructor(private readonly connection: Connection) {
+    constructor(private readonly connection: Connection<Message>) {
         this.client = new CoordinatorClient(this.connection);
         setupRpcServer(this.connection, createParticipantRpc, (_message, fn) => fn({}));
     }

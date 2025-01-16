@@ -1,6 +1,6 @@
+import type {Entry} from 'ground-data';
 import {type Condition, type Uint8KVStore, type Uint8Transaction} from 'ground-data';
 import {openDB, type DBSchema, type IDBPDatabase, type IDBPTransaction} from 'idb';
-import type {Entry} from '../../data/dist/esm/src/kv/kv-store';
 
 function createKeyRange(condition: Condition<Uint8Array>): IDBKeyRange {
     if (condition.gt !== undefined) {

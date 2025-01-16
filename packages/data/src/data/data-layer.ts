@@ -1,8 +1,7 @@
 import {MsgpackrCodec} from '../codec';
 import {CrdtDiff} from '../crdt/crdt';
-import {Uint8KVStore, withPrefix} from '../kv/kv-store';
+import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
-import {unimplemented} from '../utils';
 import {IdentityRepo} from './repos/identity-repo';
 import {User, UserId, UserRepo} from './repos/user-repo';
 
@@ -15,6 +14,7 @@ export interface TransactionContext {
     readonly identities: IdentityRepo;
     readonly userChangelog: TopicManager<UserChangeEntry>;
     readonly config: Config;
+    readonly txn: Uint8Transaction;
 }
 
 export interface UserChangeEntry {
@@ -23,7 +23,10 @@ export interface UserChangeEntry {
 }
 
 export class DataLayer {
-    constructor(private readonly kv: Uint8KVStore) {}
+    constructor(
+        private readonly kv: Uint8KVStore,
+        private readonly jwtSecret: string
+    ) {}
 
     async transaction<T>(fn: (txn: TransactionContext) => Promise<T>): Promise<T> {
         return await this.kv.transaction(async txn => {
@@ -44,8 +47,9 @@ export class DataLayer {
                 identities,
                 userChangelog,
                 config: {
-                    jwtSecret: unimplemented(),
+                    jwtSecret: this.jwtSecret,
                 },
+                txn,
             });
 
             return result;

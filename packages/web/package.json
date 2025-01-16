@@ -10,6 +10,7 @@
         "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
     },
     "dependencies": {
+        "buffer": "^6.0.3",
         "ground-data": "*",
         "idb": "^8.0.1"
     },

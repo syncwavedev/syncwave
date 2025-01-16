@@ -1,4 +1,4 @@
-import {decode, encode} from 'bytewise';
+import * as bytewise from 'bytewise';
 import {Codec} from '../codec';
 import {assert, compareUint8Array, zip} from '../utils';
 import {Uuid, UuidCodec} from '../uuid';
@@ -239,11 +239,11 @@ export class IndexKeyCodec implements Codec<IndexKey> {
                 return part;
             }
         });
-        return new Uint8Array(encode(key));
+        return new Uint8Array(bytewise.encode(key));
     }
 
     decode(buf: Uint8Array): IndexKey {
-        const key = decode(Buffer.from(buf));
+        const key = bytewise.decode(Buffer.from(buf));
 
         return key.map(part => {
             if (Array.isArray(part)) {

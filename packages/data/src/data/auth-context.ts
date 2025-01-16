@@ -1,6 +1,7 @@
-import {JwtPayload, verify} from 'jsonwebtoken';
+import {JwtPayload} from 'jsonwebtoken';
 import {LRUCache} from 'lru-cache';
 import {TransactionContext} from './data-layer';
+import {JwtService} from './jwt-service';
 import {UserId} from './repos/user-repo';
 
 export interface AuthContext {
@@ -10,7 +11,10 @@ export interface AuthContext {
 export class AuthContextParser {
     private readonly authContextCache: LRUCache<string, AuthContext>;
 
-    constructor(cacheSize: number) {
+    constructor(
+        cacheSize: number,
+        private readonly jwt: JwtService
+    ) {
         this.authContextCache = new LRUCache<string, AuthContext>({max: cacheSize});
     }
 
@@ -21,7 +25,7 @@ export class AuthContextParser {
                 return result;
             }
 
-            const jwtPayload: JwtPayload = verify(jwtToken, ctx.config.jwtSecret) as any;
+            const jwtPayload: JwtPayload = this.jwt.verify(jwtToken, ctx.config.jwtSecret);
             const authContext: AuthContext = {
                 userId: jwtPayload.user_id,
             };

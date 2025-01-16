@@ -6,12 +6,16 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {Registry} from '../../kv/registry';
 import {zTimestamp} from '../../timestamp';
 import {Brand} from '../../utils';
-import {Uuid, zUuid} from '../../uuid';
+import {Uuid, createUuid, zUuid} from '../../uuid';
 import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo';
 import {createWriteableChecker} from '../update-checker';
 import {UserId} from './user-repo';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
+
+export function createBoardId(): BoardId {
+    return createUuid() as BoardId;
+}
 
 export interface Board extends Doc<BoardId> {
     readonly slug?: string;

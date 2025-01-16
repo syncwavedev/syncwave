@@ -1,5 +1,4 @@
-import {Participant, ReconnectConnection} from 'ground-data';
-import {MsgpackrCodec} from '../../data/dist/esm/src/codec';
+import {MsgpackrCodec, Participant, ReconnectConnection} from 'ground-data';
 import {WsTransportClient} from './ws-transport-client';
 
 function createParticipant() {

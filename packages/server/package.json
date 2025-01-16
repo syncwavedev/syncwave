@@ -21,13 +21,12 @@
     "type": "module",
     "scripts": {
         "clean": "rimraf dist",
-        "build": "tsx ../../scripts/build.ts",
-        "dev": "tsc -w",
-        "deploy": "cp ../../README.md ./ && tsx ../../scripts/deploy.ts && rm ./README.md",
+        "dev": "tsx watch ./src/index.ts",
         "test": "vitest run"
     },
     "devDependencies": {
         "@types/better-sqlite3": "^7.6.12",
+        "@types/jsonwebtoken": "^9.0.7",
         "@types/node": "^22.10.2",
         "@types/ws": "^8.5.13",
         "rimraf": "^6.0.1",
@@ -39,6 +38,7 @@
         "better-sqlite3": "^11.8.0",
         "foundationdb": "1",
         "ground-data": "*",
+        "jsonwebtoken": "^9.0.2",
         "ws": "^8.18.0"
     }
 }

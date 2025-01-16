@@ -1,5 +1,5 @@
 export {astream} from './async-stream';
-export type {Codec} from './codec';
+export {MsgpackrCodec, NumberCodec, StringCodec, type Codec} from './codec';
 export * from './constants';
 export {Crdt} from './crdt/crdt';
 export type {CrdtDiff} from './crdt/crdt';
@@ -12,7 +12,14 @@ export type {
     TransportServer,
 } from './data/communication/transport';
 export {Coordinator} from './data/coordinator';
+export {Crypto} from './data/crypto';
+export {JwtPayload, JwtService} from './data/jwt-service';
 export {Participant} from './data/participant';
+export {Board, createBoardId} from './data/repos/board-repo';
+export {Identity, createIdentityId} from './data/repos/identity-repo';
+export {Member, createMemberId} from './data/repos/member-repo';
+export {Task, createTaskId} from './data/repos/task-repo';
+export {User, createUserId} from './data/repos/user-repo';
 export {Deferred} from './deferred';
 export {
     mapCondition,

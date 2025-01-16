@@ -1,4 +1,3 @@
-import {inspect} from 'util';
 import {parse, stringify, v7, validate} from 'uuid';
 import {z} from 'zod';
 import {Codec} from './codec';
@@ -23,10 +22,6 @@ export class Uuid {
     }
 
     toJSON() {
-        return this.uuid;
-    }
-
-    [inspect.custom]() {
         return this.uuid;
     }
 

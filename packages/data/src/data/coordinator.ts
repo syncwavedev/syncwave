@@ -1,17 +1,15 @@
-import {createHash} from 'crypto';
-import {sign} from 'jsonwebtoken';
 import {z} from 'zod';
 import {Uint8KVStore} from '../kv/kv-store';
-import {unimplemented} from '../utils';
 import {zUuid} from '../uuid';
 import {Actor, DataAccessor} from './actor';
 import {AuthContext, AuthContextParser} from './auth-context';
 import {Message} from './communication/message';
 import {createApi, handler, setupRpcServer} from './communication/rpc';
 import {Connection, TransportServer} from './communication/transport';
+import {Crypto} from './crypto';
 import {DataLayer, TransactionContext} from './data-layer';
+import {JwtService} from './jwt-service';
 import {BoardId} from './repos/board-repo';
-import {IdentityId} from './repos/identity-repo';
 import {TaskId} from './repos/task-repo';
 import {UserId} from './repos/user-repo';
 
@@ -20,9 +18,12 @@ export class Coordinator {
 
     constructor(
         private readonly transport: TransportServer<Message>,
-        kv: Uint8KVStore
+        kv: Uint8KVStore,
+        private readonly jwt: JwtService,
+        private readonly crypto: Crypto,
+        jwtSecret: string
     ) {
-        this.dataLayer = new DataLayer(kv);
+        this.dataLayer = new DataLayer(kv, jwtSecret);
     }
 
     async launch(): Promise<void> {
@@ -34,11 +35,11 @@ export class Coordinator {
     }
 
     private handleConnection(conn: Connection<Message>): void {
-        const authContextParser = new AuthContextParser(4);
+        const authContextParser = new AuthContextParser(4, this.jwt);
         setupRpcServer(conn, createCoordinatorApi, async (message, fn) => {
             await this.dataLayer.transaction(async ctx => {
                 const auth = authContextParser.parse(ctx, message.headers?.auth);
-                await fn({ctx, auth});
+                await fn({ctx, auth, jwt: this.jwt, crypto: this.crypto});
             });
         });
     }
@@ -58,8 +59,18 @@ export interface PasswordInvalidSignInResponse extends BaseSignInResponse<'passw
 
 export type SignInResponse = SuccessSignInResponse | UserNotFoundSignInResponse | PasswordInvalidSignInResponse;
 
-function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthContext}) {
-    const actor: Actor = unimplemented();
+function createCoordinatorApi({
+    ctx,
+    auth,
+    jwt,
+    crypto,
+}: {
+    ctx: TransactionContext;
+    auth: AuthContext;
+    jwt: JwtService;
+    crypto: Crypto;
+}) {
+    const actor: Actor = new Actor(ctx.txn, auth, {type: 'coordinator'});
 
     const dbApi = createApi({
         getMe: handler({
@@ -135,7 +146,7 @@ function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthC
                     return {type: 'user_not_found' as const};
                 }
 
-                const passwordHash = computePasswordHash(identity.salt, password);
+                const passwordHash = computePasswordHash(crypto, identity.salt, password);
                 if (identity.passwordHash !== passwordHash) {
                     return {type: 'password_invalid' as const};
                 }
@@ -145,9 +156,9 @@ function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthC
 
                 return {
                     type: 'success' as const,
-                    token: sign(
+                    token: jwt.sign(
                         {
-                            sub: identity.id,
+                            sub: identity.id.toString(),
                             exp: Math.trunc(exp.getTime() / 1000),
                             user_id: identity.userId,
                         } satisfies JwtPayload,
@@ -165,13 +176,13 @@ function createCoordinatorApi({ctx, auth}: {ctx: TransactionContext; auth: AuthC
 }
 
 interface JwtPayload {
-    sub: IdentityId;
+    sub: string;
     exp: number;
     user_id: UserId;
 }
 
-function computePasswordHash(salt: string, password: string) {
-    return createHash('sha256').update(`${salt}:${password}`).digest('hex');
+function computePasswordHash(crypto: Crypto, salt: string, password: string) {
+    return crypto.sha256(`${salt}:${password}`);
 }
 
 export type CoordinatorApi = ReturnType<typeof createCoordinatorApi>;

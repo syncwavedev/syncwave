@@ -54,7 +54,7 @@ export class ReconnectConnection<T> implements Connection<T> {
 
             if (this.closed) {
                 this.connection.close();
-                // connection closed during transport.connection
+                // connection closed during transport.connect
                 this.connection = undefined;
                 return 'closed_during_connect';
             }

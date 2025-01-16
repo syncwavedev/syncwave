@@ -39,7 +39,7 @@ export class RpcError extends Error {
     }
 }
 
-export function createRpcClient<T = any>(connection: Connection, getHeaders: () => MessageHeaders): T {
+export function createRpcClient<T = any>(connection: Connection<Message>, getHeaders: () => MessageHeaders): T {
     return new Proxy<any>(
         {},
         {
@@ -101,7 +101,7 @@ export function createRpcClient<T = any>(connection: Connection, getHeaders: () 
 }
 
 export function setupRpcServer<TState>(
-    conn: Connection,
+    conn: Connection<Message>,
     createApi: (state: TState) => Api,
     transact: (message: RequestMessage, fn: (state: TState) => Promise<void>) => Promise<void>
 ): void {
@@ -127,7 +127,7 @@ export function setupRpcServer<TState>(
         }
     }
 
-    async function handleRequest(txn: TState, conn: Connection, message: RequestMessage) {
+    async function handleRequest(txn: TState, conn: Connection<Message>, message: RequestMessage) {
         const server = createApi(txn);
 
         try {

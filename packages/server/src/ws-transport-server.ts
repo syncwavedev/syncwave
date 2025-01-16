@@ -1,4 +1,13 @@
-import {Codec, Connection, ConnectionSubscribeCallback, Deferred, TransportServer, Unsubscribe} from 'ground-data';
+import {
+    Codec,
+    Connection,
+    ConnectionEvent,
+    ConnectionSubscribeCallback,
+    Deferred,
+    Subject,
+    TransportServer,
+    Unsubscribe,
+} from 'ground-data';
 import {WebSocket, WebSocketServer} from 'ws';
 
 export interface WsTransportServerOptions<T> {
@@ -34,7 +43,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
 }
 
 export class WsConnection<T> implements Connection<T> {
-    private callbacks: ConnectionSubscribeCallback<T>[] = [];
+    private subject = new Subject<ConnectionEvent<T>>();
 
     constructor(
         private readonly ws: WebSocket,
@@ -56,13 +65,7 @@ export class WsConnection<T> implements Connection<T> {
     }
 
     subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
-        // wrap if the same cb is used twice for subscription, so unsubscribe wouldn't filter both out
-        const uniqueCb: ConnectionSubscribeCallback<T> = (...args) => cb(...args);
-        this.callbacks.push(uniqueCb);
-
-        return () => {
-            this.callbacks = this.callbacks.filter(x => x !== uniqueCb);
-        };
+        return this.subject.subscribe(cb);
     }
 
     async close(): Promise<void> {
@@ -79,16 +82,11 @@ export class WsConnection<T> implements Connection<T> {
                 return;
             }
 
-            this.callbacks.forEach(cb =>
-                cb({
-                    type: 'message',
-                    message,
-                })
-            );
+            this.subject.next({type: 'message', message});
         });
 
         this.ws.on('close', () => {
-            this.callbacks.forEach(cb => cb({type: 'close'}));
+            this.subject.next({type: 'close'});
         });
     }
 }

@@ -2,6 +2,27 @@ export type Brand<T, B> = T & {__brand: B | undefined};
 
 export type Unsubscribe = () => void;
 
+export class Subject<T> {
+    private subs: Array<(value: T) => void> = [];
+
+    subscribe(subscriber: (value: T) => void): Unsubscribe {
+        const originalSubscriber = subscriber;
+        // wrap if the same cb is used twice for subscription, so unsubscribe wouldn't filter both out
+        subscriber = (...args) => originalSubscriber(...args);
+
+        this.subs.push(subscriber);
+
+        return () => {
+            this.subs = this.subs.filter(x => x !== subscriber);
+        };
+    }
+
+    next(value: T): void {
+        // copy in case if new subscribers are added/removed during notification
+        [...this.subs].forEach(cb => cb(value));
+    }
+}
+
 export function assertNever(value: never): never {
     throw new Error('assertNever failed: ' + value);
 }

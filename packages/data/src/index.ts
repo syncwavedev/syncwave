@@ -7,6 +7,7 @@ export type {Message} from './data/communication/message';
 export {ReconnectConnection} from './data/communication/reconnect-connection';
 export type {
     Connection,
+    ConnectionEvent,
     ConnectionSubscribeCallback,
     TransportClient,
     TransportServer,
@@ -38,4 +39,4 @@ export {
 export {MappedKVStore} from './kv/mapped-kv-store';
 export {PrefixedKVStore} from './kv/prefixed-kv-store';
 export {Richtext} from './richtext';
-export {assert, type Unsubscribe} from './utils';
+export {Subject, assert, type Unsubscribe} from './utils';

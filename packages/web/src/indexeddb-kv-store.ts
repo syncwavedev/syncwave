@@ -1,5 +1,5 @@
 import type {Entry} from 'ground-data';
-import {type Condition, type Uint8KVStore, type Uint8Transaction} from 'ground-data';
+import {ENVIRONMENT, type Condition, type Uint8KVStore, type Uint8Transaction} from 'ground-data';
 import {openDB, type DBSchema, type IDBPDatabase, type IDBPTransaction} from 'idb';
 
 function createKeyRange(condition: Condition<Uint8Array>): IDBKeyRange {
@@ -40,7 +40,7 @@ export class IndexedDBTransaction implements Uint8Transaction {
     constructor(private txn: IDBPTransaction<KVDBSchema, [typeof STORE_NAME], 'readwrite'>) {
         this.txn.oncomplete = () => {
             this.active = false;
-            if (!this.done && process.env.NODE_ENV !== 'test') {
+            if (!this.done && ENVIRONMENT !== 'test') {
                 console.error('Transaction completed (auto-commit) before user function finished');
             }
         };

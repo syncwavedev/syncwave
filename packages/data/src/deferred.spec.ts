@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from 'vitest';
+import {assert, describe, expect, it, vi} from 'vitest';
 import {Deferred} from './deferred';
 
 describe('Deferred', () => {
@@ -13,7 +13,7 @@ describe('Deferred', () => {
 
         deferred.resolve(value);
 
-        expect(deferred.state).toBe('resolved');
+        expect(deferred.state).toBe('fulfilled');
         await expect(deferred.promise).resolves.toBe(value);
     });
 
@@ -27,7 +27,7 @@ describe('Deferred', () => {
         await expect(deferred.promise).rejects.toThrow(error);
     });
 
-    it('should not resolve again after being resolved', async () => {
+    it('should not resolve again after being fulfilled', async () => {
         const deferred = new Deferred();
         const firstValue = 'firstValue';
         const secondValue = 'secondValue';
@@ -35,7 +35,7 @@ describe('Deferred', () => {
         deferred.resolve(firstValue);
         deferred.resolve(secondValue);
 
-        expect(deferred.state).toBe('resolved');
+        expect(deferred.state).toBe('fulfilled');
         await expect(deferred.promise).resolves.toBe(firstValue);
     });
 
@@ -63,7 +63,7 @@ describe('Deferred', () => {
         await expect(deferred.promise).rejects.toThrow(error);
     });
 
-    it('should not reject after being resolved', async () => {
+    it('should not reject after being fulfilled', async () => {
         const deferred = new Deferred();
         const value = 'testValue';
         const error = new Error('testError');
@@ -71,11 +71,11 @@ describe('Deferred', () => {
         deferred.resolve(value);
         deferred.reject(error);
 
-        expect(deferred.state).toBe('resolved');
+        expect(deferred.state).toBe('fulfilled');
         await expect(deferred.promise).resolves.toBe(value);
     });
 
-    it('should execute resolve callback when resolved', async () => {
+    it('should execute resolve callback when fulfilled', async () => {
         const deferred = new Deferred();
         const value = 'testValue';
         const onResolved = vi.fn();
@@ -105,14 +105,15 @@ describe('Deferred', () => {
         expect(onRejected).toHaveBeenCalledWith(error);
     });
 
-    it('should maintain the resolved value after resolution', async () => {
+    it('should maintain the fulfilled value after resolution', async () => {
         const deferred = new Deferred();
         const value = 'testValue';
 
         deferred.resolve(value);
 
-        expect(deferred.state).toBe('resolved');
-        expect((deferred as any)._state.value).toBe(value);
+        expect(deferred.state).toBe('fulfilled');
+        assert(deferred['_state'].type === 'fulfilled');
+        expect(deferred['_state'].value).toBe(value);
     });
 
     it('should maintain the rejection error after rejection', async () => {
@@ -124,6 +125,7 @@ describe('Deferred', () => {
         deferred.promise.catch(() => {});
 
         expect(deferred.state).toBe('rejected');
-        expect((deferred as any)._state.error).toBe(error);
+        assert(deferred['_state'].type === 'rejected');
+        expect(deferred['_state'].reason).toBe(error);
     });
 });

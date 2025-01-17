@@ -1,10 +1,18 @@
 import {createHash} from 'crypto';
-import {ConsoleLogger, Coordinator, Crypto, JwtPayload, JwtService, MsgpackrCodec, Uint8KVStore} from 'ground-data';
+import {
+    ConsoleLogger,
+    Coordinator,
+    Crypto,
+    ENVIRONMENT,
+    JwtPayload,
+    JwtService,
+    MsgpackrCodec,
+    Uint8KVStore,
+} from 'ground-data';
 import jwt from 'jsonwebtoken';
 import {SqliteUint8KVStore} from './sqlite-kv-store';
 import {WsTransportServer} from './ws-transport-server';
 
-const isProduction = process.env.NODE_ENV === 'production';
 const PORT = 4567;
 
 // todo: read from env
@@ -13,7 +21,7 @@ const JWT_SECRET = 'test_secret';
 async function launch() {
     let kvStore: Uint8KVStore;
 
-    if (isProduction) {
+    if (ENVIRONMENT === 'prod') {
         console.log('using FoundationDB as a primary store');
         kvStore = await import('./fdb-kv-store').then(x => new x.FoundationDBUint8KVStore());
     } else {

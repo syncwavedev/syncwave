@@ -3,4 +3,5 @@ export const MAX_LOOKAHEAD_COUNT = 32;
 export const PULL_WAIT_MS = 1000;
 export const TXN_RETRIES_COUNT = 32;
 export const RECONNECT_WAIT_MS = 1000;
-export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+export const ENVIRONMENT: 'prod' | 'dev' | 'test' =
+    process.env.NODE_ENV === 'production' ? 'prod' : process.env.NODE_ENV === 'test' ? 'test' : 'dev';

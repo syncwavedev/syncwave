@@ -1,6 +1,5 @@
 import bytewise from 'bytewise';
 import {Codec} from '../codec';
-import {BusinessError} from '../errors';
 import {assert, compareUint8Array, zip} from '../utils';
 import {Uuid, UuidCodec} from '../uuid';
 import {Condition, Uint8Transaction, mapCondition} from './kv-store';
@@ -30,7 +29,7 @@ export interface IndexOptions<TValue> {
     readonly filter?: (value: TValue) => boolean;
 }
 
-export class UniqueError extends BusinessError {
+export class UniqueError extends Error {
     constructor(public readonly indexName: string) {
         super('unique index constraint violation');
     }

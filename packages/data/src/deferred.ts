@@ -1,5 +1,5 @@
 type DeferredState<T> =
-    | {readonly type: 'resolved'; readonly value: T}
+    | {readonly type: 'fulfilled'; readonly value: T}
     | {readonly type: 'pending'}
     | {readonly type: 'rejected'; readonly error: unknown};
 
@@ -24,7 +24,7 @@ export class Deferred<T> {
 
     resolve(value: T) {
         if (this._state.type === 'pending') {
-            this._state = {type: 'resolved', value};
+            this._state = {type: 'fulfilled', value};
             this._resolve(value);
         }
     }

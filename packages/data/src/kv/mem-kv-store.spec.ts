@@ -1,7 +1,7 @@
 import createTree from 'functional-red-black-tree';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {StringCodec} from '../codec';
-import {compareUint8Array, wait} from '../utils';
+import {compareUint8Array, wait, whenAll} from '../utils';
 import {Entry, InvalidQueryCondition} from './kv-store';
 import {MemKVStore, MemLocker, MemTransaction} from './mem-kv-store'; // Adjust the path as needed
 
@@ -174,7 +174,7 @@ describe('MemKVStore', () => {
             await txn.put(key, value2);
         });
 
-        await Promise.all([txn1, txn2]);
+        await whenAll([txn1, txn2]);
 
         await kvStore.transaction(async txn => {
             const result = await txn.get(key);
@@ -267,7 +267,7 @@ describe('MemLocker', () => {
         const promise2 = locker.lock('key1', fn2);
         const promise3 = locker.lock('key1', fn3);
 
-        const results = await Promise.all([promise1, promise2, promise3]);
+        const results = await whenAll([promise1, promise2, promise3]);
 
         expect(fn1).toHaveBeenCalledTimes(1);
         expect(fn2).toHaveBeenCalledTimes(1);
@@ -297,7 +297,7 @@ describe('MemLocker', () => {
         const promise1 = locker.lock('key1', fn1);
         const promise2 = locker.lock('key2', fn2);
 
-        const results = await Promise.all([promise1, promise2]);
+        const results = await whenAll([promise1, promise2]);
 
         expect(fn1).toHaveBeenCalledTimes(1);
         expect(fn2).toHaveBeenCalledTimes(1);
@@ -366,7 +366,7 @@ describe('MemLocker', () => {
         const promise2 = locker.lock('key2', fn2);
         const promise3 = locker.lock('key1', fn3);
 
-        const results = await Promise.all([promise1, promise2, promise3]);
+        const results = await whenAll([promise1, promise2, promise3]);
 
         expect(fn1).toHaveBeenCalledTimes(1);
         expect(fn2).toHaveBeenCalledTimes(1);
@@ -392,7 +392,7 @@ describe('MemLocker', () => {
             promises.push(locker.lock('key1', () => fn(i)));
         }
 
-        const results = await Promise.all(promises);
+        const results = await whenAll(promises);
 
         expect(fn).toHaveBeenCalledTimes(5);
         expect(executionOrder).toEqual([1, 101, 2, 102, 3, 103, 4, 104, 5, 105]);

@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {Uint8KVStore} from '../kv/kv-store';
+import {getNow} from '../timestamp';
 import {zUuid} from '../uuid';
 import {Actor, DataAccessor} from './actor';
 import {AuthContext, AuthContextParser} from './auth-context';
@@ -10,8 +11,9 @@ import {Crypto} from './crypto';
 import {DataLayer, TransactionContext} from './data-layer';
 import {JwtService} from './jwt-service';
 import {BoardId} from './repos/board-repo';
+import {EmailTakenIdentityRepoError, Identity, createIdentityId} from './repos/identity-repo';
 import {TaskId} from './repos/task-repo';
-import {UserId} from './repos/user-repo';
+import {UserId, createUserId} from './repos/user-repo';
 
 export class Coordinator {
     private readonly dataLayer: DataLayer;
@@ -37,9 +39,9 @@ export class Coordinator {
     private handleConnection(conn: Connection<Message>): void {
         const authContextParser = new AuthContextParser(4, this.jwt);
         setupRpcServer(conn, createCoordinatorApi, async (message, fn) => {
-            await this.dataLayer.transaction(async ctx => {
+            return await this.dataLayer.transaction(async ctx => {
                 const auth = authContextParser.parse(ctx, message.headers?.auth);
-                await fn({ctx, auth, jwt: this.jwt, crypto: this.crypto});
+                return await fn({ctx, auth, jwt: this.jwt, crypto: this.crypto});
             });
         });
     }
@@ -58,6 +60,20 @@ export interface UserNotFoundSignInResponse extends BaseSignInResponse<'user_not
 export interface PasswordInvalidSignInResponse extends BaseSignInResponse<'password_invalid'> {}
 
 export type SignInResponse = SuccessSignInResponse | UserNotFoundSignInResponse | PasswordInvalidSignInResponse;
+
+export interface BaseSignUpResponse<TType extends string> {
+    readonly type: TType;
+}
+
+export interface SuccessSignUpResponse extends BaseSignUpResponse<'success'> {
+    readonly token: string;
+}
+
+export interface EmailTakenSignUpResponse extends BaseSignUpResponse<'email_taken'> {}
+
+export interface PasswordTooShortSignUpResponse extends BaseSignUpResponse<'password_too_short'> {}
+
+export type SignUpResponse = SuccessSignUpResponse | EmailTakenSignUpResponse | PasswordTooShortSignUpResponse;
 
 function createCoordinatorApi({
     ctx,
@@ -135,6 +151,13 @@ function createCoordinatorApi({
     } satisfies DataAccessor);
 
     const authApi = createApi({
+        debug: handler({
+            schema: z.object({}),
+            handle: async () => {
+                const identities = ctx.identities.getByEmail('tilyupo@gmail.com');
+                return identities;
+            },
+        }),
         signIn: handler({
             schema: z.object({
                 email: z.string(),
@@ -151,19 +174,55 @@ function createCoordinatorApi({
                     return {type: 'password_invalid' as const};
                 }
 
-                const exp = new Date();
-                exp.setFullYear(exp.getFullYear() + 20);
+                return {
+                    type: 'success' as const,
+                    token: createToken(jwt, identity, ctx.config.jwtSecret),
+                };
+            },
+        }),
+        signUp: handler({
+            schema: z.object({
+                email: z.string(),
+                password: z.string(),
+            }),
+            handle: async ({email, password}): Promise<SignUpResponse> => {
+                if (password.length < 6) {
+                    return {type: 'password_too_short'};
+                }
+
+                const salt = Math.random().toString().split('.')[1];
+                const passwordHash = computePasswordHash(crypto, salt, password);
+
+                const now = getNow();
+                const userId = createUserId();
+
+                const identity: Identity = {
+                    id: createIdentityId(),
+                    createdAt: now,
+                    updatedAt: now,
+                    email,
+                    salt,
+                    passwordHash,
+                    userId,
+                };
+                try {
+                    await ctx.identities.create(identity);
+                } catch (err) {
+                    if (err instanceof EmailTakenIdentityRepoError) {
+                        return {type: 'email_taken'};
+                    }
+                }
+
+                await ctx.users.create({
+                    id: userId,
+                    createdAt: now,
+                    updatedAt: now,
+                    name: 'anon',
+                });
 
                 return {
                     type: 'success' as const,
-                    token: jwt.sign(
-                        {
-                            sub: identity.id.toString(),
-                            exp: Math.trunc(exp.getTime() / 1000),
-                            user_id: identity.userId,
-                        } satisfies JwtPayload,
-                        ctx.config.jwtSecret
-                    ),
+                    token: createToken(jwt, identity, ctx.config.jwtSecret),
                 };
             },
         }),
@@ -179,6 +238,20 @@ interface JwtPayload {
     sub: string;
     exp: number;
     user_id: UserId;
+}
+
+function createToken(jwt: JwtService, identity: Identity, jwtSecret: string) {
+    const exp = new Date();
+    exp.setFullYear(exp.getFullYear() + 50);
+
+    return jwt.sign(
+        {
+            sub: identity.id.toString(),
+            exp: Math.trunc(exp.getTime() / 1000),
+            user_id: identity.userId,
+        } satisfies JwtPayload,
+        jwtSecret
+    );
 }
 
 function computePasswordHash(crypto: Crypto, salt: string, password: string) {

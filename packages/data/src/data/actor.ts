@@ -1,15 +1,16 @@
 import {astream} from '../async-stream';
 import {MsgpackrCodec} from '../codec';
 import {PULL_WAIT_MS} from '../constants';
+import {BusinessError} from '../errors';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store';
 import {TopicManager} from '../kv/topic-manager';
 import {getNow} from '../timestamp';
-import {assertNever, unimplemented, wait} from '../utils';
+import {assertNever, unimplemented, wait, whenAll} from '../utils';
 import {AuthContext} from './auth-context';
 import {CoordinatorApi} from './coordinator';
 import {OnDocChange} from './doc-repo';
 import {Board, BoardId, BoardRepo} from './repos/board-repo';
-import {Member, MemberRepo} from './repos/member-repo';
+import {Member, MemberRepo, createMemberId} from './repos/member-repo';
 import {Task, TaskId, TaskRepo} from './repos/task-repo';
 import {User, UserId, UserRepo} from './repos/user-repo';
 
@@ -28,7 +29,7 @@ export interface CreateBoardModel {
 export interface DataAccessor {
     getMe(input: {}): Promise<User | undefined>;
 
-    getMyBoards(input: {userId: UserId}): Promise<Board[]>;
+    getMyBoards(input: {}): Promise<Board[]>;
     getBoard(input: {boardId: BoardId}): Promise<Board | undefined>;
     getBoardTasks(input: {boardId: BoardId}): Promise<Task[]>;
     createBoard(input: CreateBoardModel): Promise<Board>;
@@ -95,16 +96,13 @@ export class Actor implements DataAccessor {
     }
 
     async getBoard(input: {boardId: BoardId}): Promise<Board | undefined> {
-        const [board] = await Promise.all([
-            this.boards.getById(input.boardId),
-            this.ensureBoardReadAccess(input.boardId),
-        ]);
+        const [board] = await whenAll([this.boards.getById(input.boardId), this.ensureBoardReadAccess(input.boardId)]);
 
         return board;
     }
 
     async getBoardTasks({boardId}: {boardId: BoardId}): Promise<Task[]> {
-        const [tasks] = await Promise.all([
+        const [tasks] = await whenAll([
             this.tasks.getByBoardId(boardId).toArray(),
             this.ensureBoardReadAccess(boardId),
         ]);
@@ -125,22 +123,31 @@ export class Actor implements DataAccessor {
             }
         }
 
+        const userId = this.ensureAuthenticated();
+
         const board: Board = {
             id: input.boardId,
             createdAt: now,
             updatedAt: now,
             deleted: false,
             name: input.name,
-            ownerId: this.ensureAuthenticated(),
+            ownerId: userId,
             slug: input.slug,
         };
         await this.boards.create(board);
+        await this.members.create({
+            id: createMemberId(),
+            boardId: board.id,
+            createdAt: now,
+            updatedAt: now,
+            userId: userId,
+        });
 
         return board;
     }
 
     async updateBoardName({boardId, name}: {boardId: BoardId; name: string}): Promise<Board> {
-        const [board] = await Promise.all([
+        const [board] = await whenAll([
             this.boards.update(boardId, draft => {
                 draft.name = name;
             }),
@@ -152,10 +159,10 @@ export class Actor implements DataAccessor {
 
     async setBoardSlug({boardId, slug}: {boardId: BoardId; slug: string}): Promise<Board> {
         if (this.role.type === 'coordinator') {
-            const [board] = await Promise.all([
+            const [board] = await whenAll([
                 this.boards.update(boardId, draft => {
                     if (draft.slug !== undefined) {
-                        throw new Error('changing board slug is not supported');
+                        throw new BusinessError('changing board slug is not supported');
                     }
 
                     // remove readonly modifier
@@ -221,25 +228,25 @@ export class Actor implements DataAccessor {
         return task;
     }
 
-    private userOnChange(...[userId, diff]: Parameters<OnDocChange<User>>): never {
-        unimplemented();
+    private async userOnChange(...[userId, diff]: Parameters<OnDocChange<User>>): Promise<void> {
+        // unimplemented();
     }
 
-    private memberOnChange(...[memberId, diff]: Parameters<OnDocChange<Member>>): never {
-        unimplemented();
+    private async memberOnChange(...[memberId, diff]: Parameters<OnDocChange<Member>>): Promise<void> {
+        // unimplemented();
     }
 
-    private boardOnChange(...[boardId, diff]: Parameters<OnDocChange<Board>>): never {
-        unimplemented();
+    private async boardOnChange(...[boardId, diff]: Parameters<OnDocChange<Board>>): Promise<void> {
+        // unimplemented();
     }
 
-    private taskOnChange(...[taskId, diff]: Parameters<OnDocChange<Task>>): never {
-        unimplemented();
+    private async taskOnChange(...[taskId, diff]: Parameters<OnDocChange<Task>>): Promise<void> {
+        // unimplemented();
     }
 
     private ensureAuthenticated(): UserId {
         if (this.auth.userId === undefined) {
-            throw new Error('user is not authenticated');
+            throw new BusinessError('user is not authenticated');
         }
 
         return this.auth.userId;
@@ -253,7 +260,7 @@ export class Actor implements DataAccessor {
         const meId = this.ensureAuthenticated();
         const member = await this.members.getByUserIdAndBoardId(meId, boardId);
         if (!member) {
-            throw new Error(`user ${meId} does not have access to board ${boardId}`);
+            throw new BusinessError(`user ${meId} does not have access to board ${boardId}`);
         }
 
         return member;

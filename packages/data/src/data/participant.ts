@@ -3,7 +3,7 @@ import {DataAccessor} from './actor';
 import {Message} from './communication/message';
 import {createApi, handler, setupRpcServer} from './communication/rpc';
 import {Connection} from './communication/transport';
-import {SignInResponse} from './coordinator';
+import {SignInResponse, SignUpResponse} from './coordinator';
 import {CoordinatorClient} from './coordinator-client';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
@@ -17,6 +17,14 @@ export class Participant {
 
     async signIn(email: string, password: string): Promise<SignInResponse> {
         return await this.client.rpc.signIn({email, password});
+    }
+
+    async signUp(email: string, password: string): Promise<SignUpResponse> {
+        return await this.client.rpc.signUp({email, password});
+    }
+
+    async debug() {
+        return await this.client.rpc.debug({});
     }
 
     authenticate(authToken: string): void {

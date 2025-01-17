@@ -22,6 +22,7 @@ export {Member, createMemberId} from './data/repos/member-repo';
 export {Task, createTaskId} from './data/repos/task-repo';
 export {User, createUserId} from './data/repos/user-repo';
 export {Deferred} from './deferred';
+export {AggregateBusinessError, AggregateError, BusinessError, getReadableError} from './errors';
 export {
     mapCondition,
     withKeyCodec,
@@ -40,4 +41,4 @@ export {MappedKVStore} from './kv/mapped-kv-store';
 export {PrefixedKVStore} from './kv/prefixed-kv-store';
 export {ConsoleLogger, type Logger} from './logger';
 export {Richtext} from './richtext';
-export {Subject, assert, type Unsubscribe} from './utils';
+export {Subject, assert, whenAll, type Unsubscribe} from './utils';

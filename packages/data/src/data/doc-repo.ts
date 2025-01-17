@@ -5,7 +5,7 @@ import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt';
 import {createIndex, Index, IndexKey} from '../kv/data-index';
 import {Condition, Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from '../kv/kv-store';
 import {getNow, Timestamp} from '../timestamp';
-import {assert, pipe} from '../utils';
+import {assert, pipe, whenAll} from '../utils';
 import {Uuid, UuidCodec} from '../uuid';
 import {UpdateChecker} from './update-checker';
 
@@ -92,6 +92,10 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         }
     }
 
+    getAll(): AsyncStream<T> {
+        return astream(this.primary.query({gte: Uuid.min})).map(x => x.value.snapshot());
+    }
+
     query(indexName: string, condition: Condition<IndexKey>): AsyncStream<T> {
         const index = this._index(indexName);
 
@@ -119,7 +123,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         const next = doc.snapshot();
         this.ensureValid(next);
 
-        await Promise.all([this.primary.put(id, doc), this._sync(id, prev, next, diff)]);
+        await whenAll([this.primary.put(id, doc), this._sync(id, prev, next, diff)]);
 
         return next;
     }
@@ -158,7 +162,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
 
         const now = getNow();
         const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
-        await Promise.all([this.primary.put(doc.id, crdt), this._sync(doc.id, undefined, doc, crdt.state())]);
+        await whenAll([this.primary.put(doc.id, crdt), this._sync(doc.id, undefined, doc, crdt.state())]);
     }
 
     private _index(indexName: string): Index<T> {
@@ -170,7 +174,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
     }
 
     private async _sync(id: Uuid, prev: T | undefined, next: T | undefined, diff: CrdtDiff<T>): Promise<void> {
-        await Promise.all([...[...this.indexes.values()].map(x => x.sync(prev, next)), this.onChange(id, diff)]);
+        await whenAll([...[...this.indexes.values()].map(x => x.sync(prev, next)), this.onChange(id, diff)]);
     }
 
     private _mapToDocs(ids: AsyncIterable<Uuid>): AsyncStream<T> {

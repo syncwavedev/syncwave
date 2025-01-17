@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import {SqliteUint8KVStore} from './sqlite-kv-store';
 import {WsTransportServer} from './ws-transport-server';
 
-const isProduction = process.env.NODE_ENV !== 'development';
+const isProduction = process.env.NODE_ENV === 'production';
 const PORT = 4567;
 
 // todo: read from env
@@ -14,7 +14,7 @@ async function launch() {
     let kvStore: Uint8KVStore;
 
     if (isProduction) {
-        console.log('using FoundationDB as primary store');
+        console.log('using FoundationDB as a primary store');
         kvStore = await import('./fdb-kv-store').then(x => new x.FoundationDBUint8KVStore());
     } else {
         console.log('using SQLite as primary store');

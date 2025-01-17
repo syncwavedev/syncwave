@@ -1,6 +1,7 @@
 import {TypeOf, ZodObject} from 'zod';
 import {RPC_TIMEOUT_MS} from '../../constants';
 import {Deferred} from '../../deferred';
+import {BusinessError, getReadableError} from '../../errors';
 import {assertNever, wait} from '../../utils';
 import {Message, MessageHeaders, RequestMessage, createMessageId} from './message';
 import {Connection} from './transport';
@@ -100,10 +101,15 @@ export function createRpcClient<T = any>(connection: Connection<Message>, getHea
     );
 }
 
+export type Transact<TState> = <TResult>(
+    message: RequestMessage,
+    fn: (state: TState) => Promise<TResult>
+) => Promise<TResult>;
+
 export function setupRpcServer<TState>(
     conn: Connection<Message>,
     createApi: (state: TState) => Api,
-    transact: (message: RequestMessage, fn: (state: TState) => Promise<void>) => Promise<void>
+    transact: Transact<TState>
 ): void {
     conn.subscribe(async ev => {
         if (ev.type === 'close') {
@@ -117,9 +123,7 @@ export function setupRpcServer<TState>(
 
     async function handleMessage(message: Message) {
         if (message.type === 'request') {
-            await transact(message, async ctx => {
-                await handleRequest(ctx, conn, message);
-            });
+            await handleRequest(transact, conn, message);
         } else if (message.type === 'response') {
             // nothing to do
         } else {
@@ -127,11 +131,12 @@ export function setupRpcServer<TState>(
         }
     }
 
-    async function handleRequest(txn: TState, conn: Connection<Message>, message: RequestMessage) {
-        const server = createApi(txn);
-
+    async function handleRequest(transact: Transact<TState>, connection: Connection<Message>, message: RequestMessage) {
         try {
-            const result = await server[message.payload.name](message.payload.arg as any);
+            const result = await transact(message, async ctx => {
+                const server = createApi(ctx);
+                return await server[message.payload.name](message.payload.arg as any);
+            });
             await conn.send({
                 id: createMessageId(),
                 type: 'response',
@@ -139,10 +144,13 @@ export function setupRpcServer<TState>(
                 payload: {type: 'success', result},
             });
         } catch (err: any) {
-            console.error(err);
+            if (err instanceof BusinessError) {
+                console.warn('[WRN] Error during PRC handle:', getReadableError(err));
+            } else {
+                console.error('[ERR] Error during PRC handle:', err);
+            }
 
-            const errorMessage = typeof (err ?? {})['message'] === 'string' ? err['message'] : undefined;
-            const responseMessage = `${err?.constructor.name ?? '<null>'}: ${errorMessage ?? '<null>'}`;
+            const errorMessage = getReadableError(err);
 
             await conn.send({
                 id: createMessageId(),
@@ -150,7 +158,7 @@ export function setupRpcServer<TState>(
                 requestId: message.id,
                 payload: {
                     type: 'error',
-                    message: process.env.NODE_ENV === 'development' ? responseMessage : undefined,
+                    message: errorMessage,
                 },
             });
         }

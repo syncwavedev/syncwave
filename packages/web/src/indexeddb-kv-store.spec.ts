@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import {deleteDB, openDB} from 'idb';
 import {beforeEach, describe, expect, it} from 'vitest';
+import {whenAll} from '../../data/dist/esm/src/utils';
 import {IndexedDBKVStore, IndexedDBTransaction} from './indexeddb-kv-store';
 
 let dbName = 'test-db';
@@ -156,7 +157,7 @@ describe('IndexedDBKVStore', () => {
     it('should perform concurrent transactions', async () => {
         const store = new IndexedDBKVStore(dbName);
 
-        await Promise.all([
+        await whenAll([
             store.transaction(async txn => {
                 await txn.put(key1, value1);
             }),

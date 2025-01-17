@@ -1,5 +1,7 @@
 import {z} from 'zod';
 import {CrdtDiff} from '../../crdt/crdt';
+import {BusinessError} from '../../errors';
+import {UniqueError} from '../../kv/data-index';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
 import {zTimestamp} from '../../timestamp';
 import {Brand} from '../../utils';
@@ -23,6 +25,8 @@ export interface Identity extends Doc<IdentityId> {
 
 const EMAIL_INDEX = 'email';
 const USER_ID_INDEX = 'userId';
+
+export class EmailTakenIdentityRepoError extends BusinessError {}
 
 export class IdentityRepo implements SyncTarget<Identity> {
     private readonly store: DocRepo<Identity>;
@@ -78,8 +82,16 @@ export class IdentityRepo implements SyncTarget<Identity> {
         return this.store.getUnique(USER_ID_INDEX, [userId]);
     }
 
-    create(user: Identity): Promise<void> {
-        return this.store.create(user);
+    async create(identity: Identity): Promise<void> {
+        try {
+            return await this.store.create(identity);
+        } catch (err) {
+            if (err instanceof UniqueError && err.indexName === EMAIL_INDEX) {
+                throw new EmailTakenIdentityRepoError(`board with slug ${identity.email} already exists`);
+            }
+
+            throw err;
+        }
     }
 
     update(id: IdentityId, recipe: (user: Identity) => Identity | undefined): Promise<Identity> {

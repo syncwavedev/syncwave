@@ -7,6 +7,9 @@ const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 export class Uuid {
     public readonly __type: 'uuid' = 'uuid';
 
+    public static min = new Uuid('00000000-0000-0000-0000-000000000000');
+    public static max = new Uuid('ffffffff-ffff-ffff-ffff-ffffffffffff');
+
     constructor(private readonly uuid: string) {
         if (!validate(uuid)) {
             throw new Error('invalid uuid: ' + uuid);

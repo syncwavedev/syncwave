@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {CrdtDiff} from '../../crdt/crdt';
+import {BusinessError} from '../../errors';
 import {Counter} from '../../kv/counter';
 import {UniqueError} from '../../kv/data-index';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
@@ -83,8 +84,9 @@ export class BoardRepo implements SyncTarget<Board> {
         try {
             return await this.store.create(board);
         } catch (err) {
+            // todo: map errors in AggregateError
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
-                throw new Error(`board with slug ${board.slug} already exists`);
+                throw new BusinessError(`board with slug ${board.slug} already exists`);
             }
 
             throw err;
@@ -96,7 +98,7 @@ export class BoardRepo implements SyncTarget<Board> {
             return await this.store.update(id, recipe);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
-                throw new Error(`board with slug already exists`);
+                throw new BusinessError(`board with slug already exists`);
             }
 
             throw err;

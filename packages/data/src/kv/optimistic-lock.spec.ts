@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {StringCodec} from '../codec';
+import {whenAll} from '../utils';
 import {MemKVStore} from './mem-kv-store';
 import {OptimisticLock} from './optimistic-lock';
 
@@ -103,7 +104,7 @@ describe('OptimisticLock', () => {
         const key1 = 'key1';
         const key2 = 'key2';
 
-        await Promise.all([
+        await whenAll([
             kvStore.transaction(async txn => {
                 const lock = new OptimisticLock(txn);
                 await lock.lock(key1);

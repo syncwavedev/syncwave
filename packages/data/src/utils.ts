@@ -1,3 +1,5 @@
+import {AggregateBusinessError, AggregateError, BusinessError} from './errors';
+
 export type Brand<T, B> = T & {__brand: B | undefined};
 
 export type Unsubscribe = () => void;
@@ -149,4 +151,24 @@ export function arrayEqual<T>(a: T[], b: T[]) {
     }
 
     return true;
+}
+
+/**
+ * In contrast to Promise.all, whenAll waits for all rejections and combines them into AggregateError
+ */
+export async function whenAll<const T extends Promise<any>[]>(promises: T): ReturnType<typeof Promise.all<T>> {
+    const result = await Promise.allSettled(promises);
+    const rejected = result.filter(x => x.status === 'rejected');
+
+    if (rejected.length === 0) {
+        return result.filter(x => x.status === 'fulfilled').map(x => x.value) as any;
+    } else if (rejected.length === 1) {
+        throw rejected[0].reason;
+    } else {
+        if (rejected.every(x => x instanceof BusinessError)) {
+            throw new AggregateBusinessError(rejected.map(x => x.reason));
+        } else {
+            throw new AggregateError(rejected.map(x => x.reason));
+        }
+    }
 }

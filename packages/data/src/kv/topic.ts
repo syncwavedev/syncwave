@@ -1,5 +1,5 @@
 import {Codec, NumberCodec} from '../codec';
-import {pipe} from '../utils';
+import {pipe, whenAll} from '../utils';
 import {Counter} from './counter';
 import {Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from './kv-store';
 
@@ -19,7 +19,7 @@ export class Topic<T> {
 
     async push(...data: T[]): Promise<void> {
         const offset = (await this.counter.increment(data.length)) - data.length;
-        await Promise.all(data.map((x, idx) => this.log.put(offset + idx, x)));
+        await whenAll(data.map((x, idx) => this.log.put(offset + idx, x)));
     }
 
     async *list(start: number, end: number): AsyncIterable<TopicEntry<T>> {

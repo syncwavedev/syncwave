@@ -22,6 +22,7 @@ export class ReconnectConnection<T> implements Connection<T> {
 
     subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
         this.assertOpen();
+        // connect if not already
         this.getConnection();
 
         return this.subject.subscribe(cb);
@@ -70,9 +71,7 @@ export class ReconnectConnection<T> implements Connection<T> {
         const connection = await this.connection;
 
         if (this.closed) {
-            connection.close();
             // connection closed during transport.connect
-            this.connection = undefined;
             return 'closed_during_connect';
         }
 

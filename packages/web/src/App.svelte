@@ -9,12 +9,11 @@
         assert(token.type === 'success');
         participant.authenticate(token.token);
 
-        await participant.db.createBoard({
-            boardId: createBoardId(),
-            name: 'test',
-            slug: 'super slug 10',
-        });
-
+        // await participant.db.createBoard({
+        //     boardId: createBoardId(),
+        //     name: 'test',
+        //     slug: 'super slug 10',
+        // });
         const me = await participant.db.getMe({});
         const board = await participant.db.getMyBoards({});
         console.log({board});

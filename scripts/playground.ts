@@ -1,5 +1,5 @@
 import {pushable} from 'it-pushable';
-import {x} from './file';
+import {x} from './file.js';
 
 const source = pushable({objectMode: true});
 

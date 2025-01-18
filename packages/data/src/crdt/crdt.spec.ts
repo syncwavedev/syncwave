@@ -1,8 +1,6 @@
-import Delta from 'quill-delta';
 import {describe, expect, it, vi} from 'vitest';
-import {Richtext} from '../richtext.js';
 import {assert} from '../utils.js';
-import {Crdt, DiffOptions} from './crdt.js';
+import {Crdt} from './crdt.js';
 
 const createTestDocDiff = data => Crdt.from(data).state();
 
@@ -10,7 +8,6 @@ describe('Doc', () => {
     it('should create new Doc', () => {
         const doc = Crdt.from({
             string: 'one',
-            richtext: new Richtext(new Delta().insert('two')),
             number: 3,
             boolean: true,
             map: new Map([['key', {a: 4, b: 5}]]),
@@ -28,7 +25,6 @@ describe('Doc', () => {
 
         expect(doc.snapshot()).toEqual({
             string: 'one',
-            richtext: new Richtext(new Delta().insert('two')),
             number: 3,
             boolean: true,
             map: new Map([['key', {a: 4, b: 5}]]),
@@ -126,59 +122,6 @@ describe('Doc', () => {
             doc.update(() => 'updated');
 
             expect(doc.snapshot()).toEqual('updated');
-            expect(doc.snapshot()).toEqual(replica.snapshot());
-        });
-
-        it('should support richtext (delete)', () => {
-            const doc = Crdt.from(new Richtext());
-
-            const replica = createReplica(doc);
-            doc.update(x => {
-                x.insert(0, 'some content');
-            });
-            doc.update(x => {
-                x.delete(2, 2);
-            });
-
-            expect(doc.snapshot().toString()).toEqual('so content');
-            expect(doc.snapshot()).toEqual(replica.snapshot());
-        });
-
-        it('should support richtext (format)', () => {
-            const doc = Crdt.from(new Richtext(new Delta().insert('some')));
-
-            const replica = createReplica(doc);
-            doc.update(x => {
-                x.format(1, 2, {bold: true});
-            });
-
-            expect(doc.snapshot().toDelta()).toEqual(
-                new Delta().insert('some').compose(new Delta().retain(1).retain(2, {bold: true}))
-            );
-            expect(doc.snapshot()).toEqual(replica.snapshot());
-        });
-
-        it('should support richtext (insert)', () => {
-            const doc = Crdt.from(new Richtext(new Delta().insert('some')));
-
-            const replica = createReplica(doc);
-            doc.update(x => {
-                x.insert(4, ' content');
-            });
-
-            expect(doc.snapshot().toString()).toEqual('some content');
-            expect(doc.snapshot()).toEqual(replica.snapshot());
-        });
-
-        it('should support richtext (applyDelta)', () => {
-            const doc = Crdt.from(new Richtext(new Delta().insert('some content')));
-
-            const replica = createReplica(doc);
-            doc.update(x => {
-                x.applyDelta(new Delta().retain('some content'.length).insert('!!!'));
-            });
-
-            expect(doc.snapshot().toString()).toEqual('some content!!!');
             expect(doc.snapshot()).toEqual(replica.snapshot());
         });
 
@@ -313,38 +256,6 @@ describe('Doc', () => {
                 x.val = 3;
             });
             expect(b.snapshot()).toEqual({val: 2});
-        });
-
-        it('should observe richtext', () => {
-            const doc = Crdt.from({val: new Richtext()});
-            const events: {delta: Delta; options: DiffOptions}[] = [];
-            const unsub = doc.observe(
-                x => x.val,
-                (delta, options) => events.push({delta, options})
-            );
-
-            doc.update(x => {
-                x.val.insert(0, '123');
-                x.val.format(0, 2, {bold: true});
-            });
-
-            doc.update(
-                x => {
-                    x.val.insert(1, 'break');
-                },
-                {origin: 'test-origin'}
-            );
-
-            unsub();
-
-            doc.update(x => {
-                x.val.insert(2, 'never');
-            });
-
-            expect(events).toEqual([
-                {delta: new Delta().insert('12', {bold: true}).insert('3'), options: {origin: undefined}},
-                {delta: new Delta().retain(1).insert('break', {bold: true}), options: {origin: 'test-origin'}},
-            ]);
         });
     });
 

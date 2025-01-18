@@ -1,4 +1,3 @@
-import {Richtext} from '../richtext.js';
 import {Uuid} from '../uuid.js';
 
 interface BaseOpLogEntry<TType extends string> {
@@ -43,19 +42,6 @@ interface ObjectDeleteLog extends BaseOpLogEntry<'object_delete'> {
     readonly prop: string;
 }
 
-interface BaseRichtextLog<TMethod extends Extract<Method<typeof Richtext>, string>>
-    extends BaseOpLogEntry<`richtext_${TMethod}`> {
-    readonly args: Parameters<(typeof Richtext.prototype)[TMethod]>;
-}
-
-interface RichtextApplyDeltaLog extends BaseRichtextLog<'applyDelta'> {}
-
-interface RichtextDeleteLog extends BaseRichtextLog<'delete'> {}
-
-interface RichtextInsertLog extends BaseRichtextLog<'insert'> {}
-
-interface RichtextFormatLog extends BaseRichtextLog<'format'> {}
-
 export type OpLogEntry =
     | ArrayPushLog
     | ArrayUnshiftLog
@@ -64,11 +50,7 @@ export type OpLogEntry =
     | MapDeleteLog
     | MapClearLog
     | ObjectSetLog
-    | ObjectDeleteLog
-    | RichtextApplyDeltaLog
-    | RichtextDeleteLog
-    | RichtextInsertLog
-    | RichtextFormatLog;
+    | ObjectDeleteLog;
 export type OpLog = OpLogEntry[];
 
 function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
@@ -280,67 +262,6 @@ function createObjectProxy<T extends object>(subject: T, log: OpLog): T {
     });
 }
 
-function createRichtextProxy(subject: Richtext, log: OpLog): Richtext {
-    return new Proxy(subject, {
-        get(target, prop, receiver) {
-            const original = Reflect.get(target, prop, receiver);
-
-            const method = prop as keyof Richtext;
-
-            if (method === 'length' || method === 'toDelta' || method === 'toString') {
-                // read methods, no logs needed
-                return original;
-            } else if (method === 'applyDelta') {
-                return (...args: any) => {
-                    log.push({
-                        type: 'richtext_applyDelta',
-                        subject,
-                        args,
-                    });
-                    return original.apply(target, args);
-                };
-            } else if (method === 'delete') {
-                return (...args: any) => {
-                    log.push({
-                        type: 'richtext_delete',
-                        subject,
-                        args,
-                    });
-                    return original.apply(target, args);
-                };
-            } else if (method === 'insert') {
-                return (...args: any) => {
-                    log.push({
-                        type: 'richtext_insert',
-                        subject,
-                        args,
-                    });
-                    return original.apply(target, args);
-                };
-            } else if (method === 'format') {
-                return (...args: any) => {
-                    log.push({
-                        type: 'richtext_format',
-                        subject,
-                        args,
-                    });
-                    return original.apply(target, args);
-                };
-            } else {
-                const _: never = method;
-            }
-
-            return original;
-        },
-        set(target, prop, newValue, receiver) {
-            throw new Error('unsupported modification: direct set of property ' + prop.toString());
-        },
-        deleteProperty(target, prop) {
-            throw new Error('unsupported richtext modification: delete of property ' + prop.toString());
-        },
-    });
-}
-
 function createProxy<T>(value: T, log: OpLog): T {
     if (
         typeof value === 'number' ||
@@ -358,8 +279,6 @@ function createProxy<T>(value: T, log: OpLog): T {
         return createArrayProxy(value, log) as T;
     } else if (value.constructor === Object) {
         return createObjectProxy(value, log) as T;
-    } else if (value.constructor === Richtext) {
-        return createRichtextProxy(value, log) as T;
     } else {
         throw new Error('unsupported value for proxy: ' + value);
     }

@@ -1,6 +1,4 @@
-import Delta from 'quill-delta';
 import {describe, expect, it} from 'vitest';
-import {Richtext} from '../richtext.js';
 import {assert} from '../utils.js';
 import {OpLog, observe} from './observe.js';
 
@@ -92,50 +90,6 @@ describe('observe', () => {
             ]),
             x => x.clear(),
             x => [{type: 'map_clear', subject: x, args: []}]
-        ),
-        tc(
-            new Richtext(),
-            x => x.applyDelta(new Delta({ops: [{delete: 2}]})),
-            x => [
-                {
-                    type: 'richtext_applyDelta',
-                    subject: x,
-                    args: [new Delta({ops: [{delete: 2}]})],
-                },
-            ]
-        ),
-        tc(
-            new Richtext(),
-            x => x.delete(1, 3),
-            x => [
-                {
-                    type: 'richtext_delete',
-                    subject: x,
-                    args: [1, 3],
-                },
-            ]
-        ),
-        tc(
-            new Richtext(),
-            x => x.insert(1, 'some str', {}),
-            x => [
-                {
-                    type: 'richtext_insert',
-                    subject: x,
-                    args: [1, 'some str', {}],
-                },
-            ]
-        ),
-        tc(
-            new Richtext(),
-            x => x.format(1, 4, {bold: true}),
-            x => [
-                {
-                    type: 'richtext_format',
-                    subject: x,
-                    args: [1, 4, {bold: true}],
-                },
-            ]
         ),
     ];
 
@@ -253,32 +207,6 @@ describe('observe function', () => {
         expect(log[1].args).toEqual(['b']);
         assert(log[2].type === 'map_clear');
         expect(log[2].args).toEqual([]);
-    });
-
-    it('should observe Richtext method calls', () => {
-        const initialDelta = new Delta().insert('Hello');
-        const rt = new Richtext(initialDelta);
-
-        const [result, log] = observe(rt, r => {
-            r.insert(5, ' World');
-            r.format(0, 5, {bold: true});
-            r.delete(0, 2);
-            r.applyDelta(new Delta().retain(3).insert('X'));
-            return r;
-        });
-
-        // Validate final result
-        expect(result.toString()).toBe('lloX World');
-        // Validate we have the expected logs
-        expect(log.length).toBe(4);
-        assert(log[0].type === 'richtext_insert');
-        expect(log[0].args).toEqual([5, ' World']);
-        assert(log[1].type === 'richtext_format');
-        expect(log[1].args).toEqual([0, 5, {bold: true}]);
-        assert(log[2].type === 'richtext_delete');
-        expect(log[2].args).toEqual([0, 2]);
-        assert(log[3].type === 'richtext_applyDelta');
-        expect(log[3].args[0].ops).toEqual([{retain: 3}, {insert: 'X'}]);
     });
 
     it("should return the recipe's return value and the log", () => {

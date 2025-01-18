@@ -1,4 +1,4 @@
-import * as bytewise from 'bytewise';
+import bytewise from 'bytewise';
 import {Codec} from '../codec.js';
 import {assert, compareUint8Array, zip} from '../utils.js';
 import {Uuid, UuidCodec} from '../uuid.js';

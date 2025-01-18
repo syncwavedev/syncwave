@@ -1,16 +1,5 @@
-import Delta from 'quill-delta';
-import {
-    applyUpdateV2,
-    encodeStateAsUpdateV2,
-    Transaction,
-    Array as YArray,
-    Doc as YDoc,
-    Map as YMap,
-    Text as YText,
-    YTextEvent,
-} from 'yjs';
+import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
 import {Codec} from '../codec.js';
-import {Richtext} from '../richtext.js';
 import {assert, assertNever, Brand, Unsubscribe, zip} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {observe, OpLog} from './observe.js';
@@ -101,35 +90,6 @@ export class Crdt<T> {
         this.doc.on('updateV2', fn);
         return () => this.doc.off('updateV2', fn);
     }
-
-    observe(selector: (value: T) => Richtext, cb: (delta: Delta, options: DiffOptions) => void): Unsubscribe {
-        const snapshot = this.snapshot();
-        const locator = new Locator();
-        locator.addDeep(snapshot, this.yValue);
-        const yTarget: YValue = locator.locate(selector(snapshot));
-        if (
-            typeof yTarget === 'string' ||
-            typeof yTarget === 'boolean' ||
-            typeof yTarget === 'number' ||
-            yTarget === null ||
-            typeof yTarget === 'undefined'
-        ) {
-            throw new Error('cannot observe primitive value: ' + yTarget);
-        } else if (yTarget instanceof YArray) {
-            throw new Error('Array observation is not supported');
-        } else if (yTarget instanceof YMap) {
-            throw new Error('Map observation is not supported');
-        } else if (yTarget instanceof YText) {
-            const wrapper = (e: YTextEvent, t: Transaction) => {
-                cb(new Delta({ops: (e.delta as any) ?? []}), {origin: t.origin ?? undefined});
-            };
-            yTarget.observe(wrapper);
-
-            return () => yTarget.unobserve(wrapper);
-        } else {
-            assertNever(yTarget);
-        }
-    }
 }
 
 type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string | null | undefined;
@@ -161,8 +121,6 @@ function mapFromYValue(yValue: YValue): any {
         } else {
             return new Map([...(yValue as YMap<any>).entries()].map(([key, value]) => [key, mapFromYValue(value)]));
         }
-    } else if (yValue.constructor === YText) {
-        return new Richtext(new Delta({ops: (yValue as YText).toDelta()}));
     } else {
         throw new Error('cannot map unsupported YValue: ' + yValue);
     }
@@ -181,11 +139,6 @@ function mapToYValue(value: any): YValue {
     } else if (value.constructor === Map) {
         const entries = [...value.entries()].map(([key, value]) => [key, mapToYValue(value)] as const);
         return new YMap(entries);
-    } else if (value.constructor === Richtext) {
-        const delta = (value as Richtext).toDelta();
-        const result = new YText();
-        result.applyDelta(delta.ops, {sanitize: false});
-        return result;
     } else if (value.constructor === Array) {
         const result = new YArray<YValue>();
         result.push(value.map(x => new YMap<YValue>([['value', mapToYValue(x)]])));
@@ -242,8 +195,6 @@ class Locator {
 
                 this.addDeep(subjectValue, yValueValue);
             }
-        } else if (subject.constructor === Richtext) {
-            this.map.set(subject, yValue);
         } else if (subject.constructor === Array) {
             this.map.set(subject, yValue);
             for (let i = 0; i < subject.length; i += 1) {
@@ -307,18 +258,6 @@ function replayLog(log: OpLog, locator: Locator): void {
             const yMapValue = mapToYValue(entry.value);
             yValue.set(entry.prop, yMapValue);
             locator.addDeep(entry.value, yMapValue);
-        } else if (entry.type === 'richtext_insert') {
-            assert(yValue instanceof YText);
-            yValue.insert(...entry.args);
-        } else if (entry.type === 'richtext_applyDelta') {
-            assert(yValue instanceof YText);
-            yValue.applyDelta(entry.args[0].ops);
-        } else if (entry.type === 'richtext_delete') {
-            assert(yValue instanceof YText);
-            yValue.delete(...entry.args);
-        } else if (entry.type === 'richtext_format') {
-            assert(yValue instanceof YText);
-            yValue.format(...entry.args);
         } else {
             assertNever(entry);
         }

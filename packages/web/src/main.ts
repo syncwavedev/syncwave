@@ -1,7 +1,7 @@
 import './polyfills';
 
 import {mount} from 'svelte';
-import App from './App.svelte.js.js';
+import App from './App.svelte';
 import './app.css';
 
 const app = mount(App, {

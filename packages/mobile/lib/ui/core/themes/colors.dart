@@ -17,7 +17,7 @@ class Colors {
   late final Color border = gray[200]!;
 
   late final Color ink = black;
-  late final Color inkSecondary = gray[400]!;
+  late final Color inkSecondary = gray[600]!; // Darker for better contrast
   late final Color inkMuted = gray[500]!;
   late final Color inkReversed = white;
 
@@ -34,11 +34,12 @@ class Colors {
   factory Colors.light() {
     return Colors._(
       gray: {
-        100: const Color(0xFFF4F4F4),
-        200: const Color(0xFFE4E4E4),
-        300: const Color(0xFFD4D4D4),
-        400: const Color(0xFFA0A0A0),
-        500: const Color(0xFF727272),
+        100: const Color(0xFFF7F7F7),
+        200: const Color(0xFFE5E5E5),
+        300: const Color(0xFFC9C9C9),
+        400: const Color(0xFF8F8F8F),
+        500: const Color(0xFF666666),
+        600: const Color(0xFF4D4D4D), // Added darker gray for better contrast
       },
       black: const Color(0xFF000000),
       white: const Color(0xFFFFFFFF),
@@ -48,11 +49,12 @@ class Colors {
   factory Colors.dark() {
     return Colors._(
       gray: {
-        100: const Color(0xFF121212),
-        200: const Color(0xFF181818),
-        300: const Color(0xFF1f1f1f),
-        400: const Color(0xFF272727),
-        500: const Color(0xFF404040),
+        100: const Color(0xFF1A1A1A),
+        200: const Color(0xFF242424),
+        300: const Color(0xFF2E2E2E),
+        400: const Color(0xFF666666), // Lightened for better contrast
+        500: const Color(0xFF888888), // Lightened for better contrast
+        600: const Color(0xFFAAAAAA), // Added lighter gray for better contrast
       },
       black: const Color(0xFFFFFFFF),
       white: const Color(0xFF000000),

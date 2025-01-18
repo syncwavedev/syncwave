@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:ground/ui/core/themes/colors.dart';
+import 'package:ground/ui/core/themes/icons.dart';
 import 'package:ground/ui/core/themes/radius.dart';
 import 'package:ground/ui/core/themes/spacing.dart';
 import 'package:ground/ui/core/themes/typography.dart';
@@ -10,12 +11,14 @@ class Theme {
   final Spacing spacing;
   final Radius radius;
   final Typography typography;
+  final Icons icons;
 
   const Theme._({
     required this.colors,
     required this.spacing,
     required this.radius,
     required this.typography,
+    required this.icons,
   });
 
   factory Theme({required bool isDark}) {
@@ -25,6 +28,7 @@ class Theme {
       spacing: Spacing.regular,
       radius: Radius.regular,
       typography: Typography(defaultColor: colors.ink),
+      icons: Icons.regular,
     );
   }
 
@@ -35,9 +39,10 @@ class Theme {
         other.typography == typography &&
         other.colors == colors &&
         other.spacing == spacing &&
-        other.radius == radius;
+        other.radius == radius &&
+        other.icons == icons;
   }
 
   @override
-  int get hashCode => Object.hash(colors, spacing, radius, typography);
+  int get hashCode => Object.hash(colors, spacing, radius, typography, icons);
 }

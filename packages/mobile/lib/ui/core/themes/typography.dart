@@ -4,12 +4,14 @@ import 'package:flutter/widgets.dart';
 class Typography {
   final TextStyle title;
   final TextStyle body;
+  final TextStyle caption;
   final TextStyle label;
   final TextStyle small;
 
   const Typography._({
     required this.title,
     required this.body,
+    required this.caption,
     required this.label,
     required this.small,
   });
@@ -26,6 +28,14 @@ class Typography {
         height: 1.4,
         letterSpacing: -0.1,
       ),
+      label: TextStyle(
+        fontFamily: baseFontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: defaultColor,
+        height: 1.5,
+        letterSpacing: 0.1,
+      ),
       body: TextStyle(
         fontFamily: baseFontFamily,
         fontSize: 16,
@@ -33,10 +43,10 @@ class Typography {
         color: defaultColor,
         height: 1.5,
       ),
-      label: TextStyle(
+      caption: TextStyle(
         fontFamily: baseFontFamily,
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.normal,
         color: defaultColor,
         height: 1.4,
         letterSpacing: 0.1,

@@ -7,6 +7,7 @@ import 'spacing.dart';
 import 'theme.dart';
 import 'colors.dart';
 import 'typography.dart';
+import 'icons.dart';
 
 extension BuildContextThemeX on BuildContext {
   Theme get theme => watch<ThemeController>().theme;
@@ -14,4 +15,5 @@ extension BuildContextThemeX on BuildContext {
   Spacing get spacing => theme.spacing;
   Radius get radius => theme.radius;
   Typography get text => theme.typography;
+  Icons get icons => theme.icons;
 }

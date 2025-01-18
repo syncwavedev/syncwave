@@ -1,5 +1,5 @@
 import {assert, describe, expect, it, vi} from 'vitest';
-import {Deferred} from './deferred';
+import {Deferred} from './deferred.js';
 
 describe('Deferred', () => {
     it('should initialize with a pending state', () => {

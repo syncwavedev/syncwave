@@ -1,9 +1,9 @@
 import {assert, describe, expect, it} from 'vitest';
-import {astream} from '../async-stream';
-import {compareUint8Array} from '../utils';
-import {Uuid, createUuid} from '../uuid';
-import {IndexKeyCodec, createIndex} from './data-index';
-import {MemKVStore} from './mem-kv-store';
+import {astream} from '../async-stream.js';
+import {compareUint8Array} from '../utils.js';
+import {Uuid, createUuid} from '../uuid.js';
+import {IndexKeyCodec, createIndex} from './data-index.js';
+import {MemKVStore} from './mem-kv-store.js';
 
 interface TestUser {
     id: Uuid;

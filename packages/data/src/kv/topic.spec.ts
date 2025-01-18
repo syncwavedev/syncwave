@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {Codec, StringCodec} from '../codec';
-import {MemKVStore} from './mem-kv-store';
-import {Topic, TopicEntry} from './topic';
+import {Codec, StringCodec} from '../codec.js';
+import {MemKVStore} from './mem-kv-store.js';
+import {Topic, TopicEntry} from './topic.js';
 
 const stringCodec = new StringCodec();
 const jsonCodec: Codec<any> = {

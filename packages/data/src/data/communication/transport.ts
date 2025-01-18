@@ -1,4 +1,4 @@
-import {Unsubscribe} from '../../utils';
+import {Unsubscribe} from '../../utils.js';
 
 export interface TransportServer<T> {
     launch(cb: (connection: Connection<T>) => void): Promise<void>;

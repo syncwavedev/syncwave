@@ -1,6 +1,6 @@
-import {Codec} from '../../codec';
-import {Unsubscribe} from '../../utils';
-import {Connection, ConnectionSubscribeCallback, TransportClient, TransportServer} from './transport';
+import {Codec} from '../../codec.js';
+import {Unsubscribe} from '../../utils.js';
+import {Connection, ConnectionSubscribeCallback, TransportClient, TransportServer} from './transport.js';
 
 export class MemConnection<T> implements Connection<T> {
     static create<T>(codec: Codec<T>): [MemConnection<T>, MemConnection<T>] {

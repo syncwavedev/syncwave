@@ -1,7 +1,7 @@
-import {Message} from './communication/message';
-import {createRpcClient} from './communication/rpc';
-import {Connection} from './communication/transport';
-import {type CoordinatorApi} from './coordinator';
+import {Message} from './communication/message.js';
+import {createRpcClient} from './communication/rpc.js';
+import {Connection} from './communication/transport.js';
+import {type CoordinatorApi} from './coordinator.js';
 
 export class ParticipantClient {
     constructor(private readonly connection: Connection<Message>) {}

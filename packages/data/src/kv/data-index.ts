@@ -1,8 +1,8 @@
-import bytewise from 'bytewise';
-import {Codec} from '../codec';
-import {assert, compareUint8Array, zip} from '../utils';
-import {Uuid, UuidCodec} from '../uuid';
-import {Condition, Uint8Transaction, mapCondition} from './kv-store';
+import * as bytewise from 'bytewise';
+import {Codec} from '../codec.js';
+import {assert, compareUint8Array, zip} from '../utils.js';
+import {Uuid, UuidCodec} from '../uuid.js';
+import {Condition, Uint8Transaction, mapCondition} from './kv-store.js';
 
 export interface IndexGetOptions {
     order?: 'asc' | 'desc';

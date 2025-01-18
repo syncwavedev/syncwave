@@ -1,5 +1,5 @@
-import {Richtext} from '../richtext';
-import {Uuid} from '../uuid';
+import {Richtext} from '../richtext.js';
+import {Uuid} from '../uuid.js';
 
 interface BaseOpLogEntry<TType extends string> {
     readonly type: TType;

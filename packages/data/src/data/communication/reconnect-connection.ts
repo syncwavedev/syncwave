@@ -1,6 +1,6 @@
-import {RECONNECT_WAIT_MS} from '../../constants';
-import {assertNever, Subject, Unsubscribe, wait} from '../../utils';
-import {Connection, ConnectionEvent, ConnectionSubscribeCallback, TransportClient} from './transport';
+import {RECONNECT_WAIT_MS} from '../../constants.js';
+import {assertNever, Subject, Unsubscribe, wait} from '../../utils.js';
+import {Connection, ConnectionEvent, ConnectionSubscribeCallback, TransportClient} from './transport.js';
 
 export class ReconnectConnection<T> implements Connection<T> {
     // if we already initiated connection process, then we want subsequent sends to wait until the

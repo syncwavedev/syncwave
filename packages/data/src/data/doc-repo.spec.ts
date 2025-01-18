@@ -1,12 +1,12 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {z} from 'zod';
-import {IndexKey} from '../kv/data-index';
-import {Condition} from '../kv/kv-store';
-import {MemKVStore} from '../kv/mem-kv-store';
-import {getNow, zTimestamp} from '../timestamp';
-import {Uuid, createUuid, zUuid} from '../uuid';
-import {Doc, DocRepo, IndexSpec, OnDocChange} from './doc-repo';
+import {IndexKey} from '../kv/data-index.js';
+import {Condition} from '../kv/kv-store.js';
+import {MemKVStore} from '../kv/mem-kv-store.js';
+import {getNow, zTimestamp} from '../timestamp.js';
+import {Uuid, createUuid, zUuid} from '../uuid.js';
+import {Doc, DocRepo, IndexSpec, OnDocChange} from './doc-repo.js';
 
 interface MyDoc extends Doc<Uuid> {
     name: string;

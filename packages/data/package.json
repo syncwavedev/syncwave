@@ -21,7 +21,7 @@
     "type": "module",
     "scripts": {
         "clean": "rimraf dist",
-        "build": "tsx ../../scripts/build.ts",
+        "build": "tsc",
         "dev": "tsc -w",
         "deploy": "cp ../../README.md ./ && tsx ../../scripts/deploy.ts && rm ./README.md",
         "test": "vitest run"

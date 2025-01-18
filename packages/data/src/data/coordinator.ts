@@ -1,19 +1,19 @@
 import {z} from 'zod';
-import {Uint8KVStore} from '../kv/kv-store';
-import {getNow} from '../timestamp';
-import {zUuid} from '../uuid';
-import {Actor, DataAccessor} from './actor';
-import {AuthContext, AuthContextParser} from './auth-context';
-import {Message} from './communication/message';
-import {createApi, handler, setupRpcServer} from './communication/rpc';
-import {Connection, TransportServer} from './communication/transport';
-import {Crypto} from './crypto';
-import {DataLayer, TransactionContext} from './data-layer';
-import {JwtService} from './jwt-service';
-import {BoardId} from './repos/board-repo';
-import {EmailTakenIdentityRepoError, Identity, createIdentityId} from './repos/identity-repo';
-import {TaskId} from './repos/task-repo';
-import {UserId, createUserId} from './repos/user-repo';
+import {Uint8KVStore} from '../kv/kv-store.js';
+import {getNow} from '../timestamp.js';
+import {zUuid} from '../uuid.js';
+import {Actor, DataAccessor} from './actor.js';
+import {AuthContext, AuthContextParser} from './auth-context.js';
+import {Message} from './communication/message.js';
+import {createApi, handler, setupRpcServer} from './communication/rpc.js';
+import {Connection, TransportServer} from './communication/transport.js';
+import {Crypto} from './crypto.js';
+import {DataLayer, TransactionContext} from './data-layer.js';
+import {JwtService} from './jwt-service.js';
+import {BoardId} from './repos/board-repo.js';
+import {EmailTakenIdentityRepoError, Identity, createIdentityId} from './repos/identity-repo.js';
+import {TaskId} from './repos/task-repo.js';
+import {UserId, createUserId} from './repos/user-repo.js';
 
 export class Coordinator {
     private readonly dataLayer: DataLayer;

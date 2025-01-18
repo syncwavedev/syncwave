@@ -1,6 +1,6 @@
 <script lang="ts">
     import Counter from './lib/Counter.svelte';
-    import {participant} from './participant';
+    import {participant} from './participant.js';
     import {assert, ConsoleLogger, createBoardId, createTaskId} from 'ground-data';
 
     (async () => {

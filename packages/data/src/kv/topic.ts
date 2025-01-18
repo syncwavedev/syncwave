@@ -1,7 +1,7 @@
-import {Codec, NumberCodec} from '../codec';
-import {pipe, whenAll} from '../utils';
-import {Counter} from './counter';
-import {Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from './kv-store';
+import {Codec, NumberCodec} from '../codec.js';
+import {pipe, whenAll} from '../utils.js';
+import {Counter} from './counter.js';
+import {Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from './kv-store.js';
 
 export interface TopicEntry<T> {
     readonly offset: number;

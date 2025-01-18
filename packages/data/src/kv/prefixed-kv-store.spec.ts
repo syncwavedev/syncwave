@@ -1,9 +1,9 @@
 import {describe, expect, it} from 'vitest';
-import {astream} from '../async-stream';
-import {StringCodec} from '../codec';
-import {Entry} from './kv-store';
-import {MemKVStore} from './mem-kv-store';
-import {PrefixedKVStore, PrefixedTransaction} from './prefixed-kv-store';
+import {astream} from '../async-stream.js';
+import {StringCodec} from '../codec.js';
+import {Entry} from './kv-store.js';
+import {MemKVStore} from './mem-kv-store.js';
+import {PrefixedKVStore, PrefixedTransaction} from './prefixed-kv-store.js';
 
 const stringCodec = new StringCodec();
 function encodeString(str: string) {

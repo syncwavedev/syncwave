@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {MsgpackrCodec, StringCodec} from './codec';
-import {Uuid, createUuid} from './uuid';
+import {MsgpackrCodec, StringCodec} from './codec.js';
+import {Uuid, createUuid} from './uuid.js';
 
 const testData = [
     {input: null, description: 'null value'},

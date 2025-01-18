@@ -1,6 +1,6 @@
 import {parse} from 'uuid';
 import {describe, expect, it} from 'vitest';
-import {Uuid, UuidCodec, createUuid} from './uuid';
+import {Uuid, UuidCodec, createUuid} from './uuid.js';
 
 describe('Uuid class', () => {
     it('should store the correct UUID string', () => {

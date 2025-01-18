@@ -1,9 +1,9 @@
-import {MsgpackrCodec} from '../codec';
-import {CrdtDiff} from '../crdt/crdt';
-import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store';
-import {TopicManager} from '../kv/topic-manager';
-import {IdentityRepo} from './repos/identity-repo';
-import {User, UserId, UserRepo} from './repos/user-repo';
+import {MsgpackrCodec} from '../codec.js';
+import {CrdtDiff} from '../crdt/crdt.js';
+import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
+import {TopicManager} from '../kv/topic-manager.js';
+import {IdentityRepo} from './repos/identity-repo.js';
+import {User, UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
     readonly jwtSecret: string;

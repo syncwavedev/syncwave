@@ -1,6 +1,6 @@
-import {StringCodec} from '../codec';
-import {compareUint8Array, concatBuffers} from '../utils';
-import {Condition, Entry, KVStore, Transaction, mapCondition} from './kv-store';
+import {StringCodec} from '../codec.js';
+import {compareUint8Array, concatBuffers} from '../utils.js';
+import {Condition, Entry, KVStore, Transaction, mapCondition} from './kv-store.js';
 
 export class PrefixedTransaction<TValue> implements Transaction<Uint8Array, TValue> {
     private readonly prefix: Uint8Array;

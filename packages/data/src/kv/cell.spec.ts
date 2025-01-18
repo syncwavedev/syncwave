@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
-import {Cell} from './cell';
-import {withPrefix} from './kv-store';
-import {MemKVStore} from './mem-kv-store';
+import {Cell} from './cell.js';
+import {withPrefix} from './kv-store.js';
+import {MemKVStore} from './mem-kv-store.js';
 
 const initialValue = 42;
 

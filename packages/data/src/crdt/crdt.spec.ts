@@ -1,8 +1,8 @@
 import Delta from 'quill-delta';
 import {describe, expect, it, vi} from 'vitest';
-import {Richtext} from '../richtext';
-import {assert} from '../utils';
-import {Crdt, DiffOptions} from './crdt';
+import {Richtext} from '../richtext.js';
+import {assert} from '../utils.js';
+import {Crdt, DiffOptions} from './crdt.js';
 
 const createTestDocDiff = data => Crdt.from(data).state();
 

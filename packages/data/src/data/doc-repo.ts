@@ -1,13 +1,13 @@
 import deepEqual from 'deep-equal';
 import {ZodType} from 'zod';
-import {astream, AsyncStream} from '../async-stream';
-import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt';
-import {createIndex, Index, IndexKey} from '../kv/data-index';
-import {Condition, Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from '../kv/kv-store';
-import {getNow, Timestamp} from '../timestamp';
-import {assert, pipe, whenAll} from '../utils';
-import {Uuid, UuidCodec} from '../uuid';
-import {UpdateChecker} from './update-checker';
+import {astream, AsyncStream} from '../async-stream.js';
+import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
+import {createIndex, Index, IndexKey} from '../kv/data-index.js';
+import {Condition, Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from '../kv/kv-store.js';
+import {getNow, Timestamp} from '../timestamp.js';
+import {assert, pipe, whenAll} from '../utils.js';
+import {Uuid, UuidCodec} from '../uuid.js';
+import {UpdateChecker} from './update-checker.js';
 
 export interface Doc<TId extends Uuid = Uuid> {
     id: TId;

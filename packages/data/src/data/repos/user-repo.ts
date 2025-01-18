@@ -1,11 +1,11 @@
 import {z} from 'zod';
-import {CrdtDiff} from '../../crdt/crdt';
-import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
-import {zTimestamp} from '../../timestamp';
-import {Brand} from '../../utils';
-import {Uuid, createUuid, zUuid} from '../../uuid';
-import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo';
-import {createWriteableChecker} from '../update-checker';
+import {CrdtDiff} from '../../crdt/crdt.js';
+import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {zTimestamp} from '../../timestamp.js';
+import {Brand} from '../../utils.js';
+import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo.js';
+import {createWriteableChecker} from '../update-checker.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 

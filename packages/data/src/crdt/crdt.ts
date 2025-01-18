@@ -9,11 +9,11 @@ import {
     Text as YText,
     YTextEvent,
 } from 'yjs';
-import {Codec} from '../codec';
-import {Richtext} from '../richtext';
-import {assert, assertNever, Brand, Unsubscribe, zip} from '../utils';
-import {Uuid} from '../uuid';
-import {observe, OpLog} from './observe';
+import {Codec} from '../codec.js';
+import {Richtext} from '../richtext.js';
+import {assert, assertNever, Brand, Unsubscribe, zip} from '../utils.js';
+import {Uuid} from '../uuid.js';
+import {observe, OpLog} from './observe.js';
 
 export type CrdtDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
 

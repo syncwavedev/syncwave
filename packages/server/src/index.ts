@@ -10,8 +10,7 @@ import {
     Uint8KVStore,
 } from 'ground-data';
 import jwt from 'jsonwebtoken';
-import {SqliteUint8KVStore} from './sqlite-kv-store';
-import {WsTransportServer} from './ws-transport-server';
+import {WsTransportServer} from './ws-transport-server.js';
 
 const PORT = 4567;
 
@@ -23,10 +22,10 @@ async function launch() {
 
     if (ENVIRONMENT === 'prod') {
         console.log('using FoundationDB as a primary store');
-        kvStore = await import('./fdb-kv-store').then(x => new x.FoundationDBUint8KVStore());
+        kvStore = await import('./fdb-kv-store.js').then(x => new x.FoundationDBUint8KVStore());
     } else {
         console.log('using SQLite as primary store');
-        kvStore = new SqliteUint8KVStore('./dev.sqlite');
+        kvStore = await import('./sqlite-kv-store.js').then(x => new x.SqliteUint8KVStore('./dev.sqlite'));
     }
 
     const jwtService: JwtService = {

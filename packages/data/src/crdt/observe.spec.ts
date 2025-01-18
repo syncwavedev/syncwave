@@ -1,8 +1,8 @@
 import Delta from 'quill-delta';
 import {describe, expect, it} from 'vitest';
-import {Richtext} from '../richtext';
-import {assert} from '../utils';
-import {OpLog, observe} from './observe';
+import {Richtext} from '../richtext.js';
+import {assert} from '../utils.js';
+import {OpLog, observe} from './observe.js';
 
 describe('observe', () => {
     interface Testcase<T> {

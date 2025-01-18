@@ -1,4 +1,4 @@
-import {Condition, Entry, KVStore, mapCondition, Transaction} from './kv-store';
+import {Condition, Entry, KVStore, mapCondition, Transaction} from './kv-store.js';
 
 export interface Mapper<TPrivate, TPublic> {
     decode(x: TPrivate): TPublic;

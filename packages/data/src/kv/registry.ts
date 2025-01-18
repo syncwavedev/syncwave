@@ -1,4 +1,4 @@
-import {Uint8Transaction, withPrefix} from './kv-store';
+import {Uint8Transaction, withPrefix} from './kv-store.js';
 
 export class Registry<T> {
     constructor(

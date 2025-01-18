@@ -1,14 +1,14 @@
 import {z} from 'zod';
-import {AsyncStream} from '../../async-stream';
-import {CrdtDiff} from '../../crdt/crdt';
-import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
-import {zTimestamp} from '../../timestamp';
-import {Brand} from '../../utils';
-import {Uuid, createUuid, zUuid} from '../../uuid';
-import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo';
-import {createWriteableChecker} from '../update-checker';
-import {BoardId} from './board-repo';
-import {UserId} from './user-repo';
+import {AsyncStream} from '../../async-stream.js';
+import {CrdtDiff} from '../../crdt/crdt.js';
+import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {zTimestamp} from '../../timestamp.js';
+import {Brand} from '../../utils.js';
+import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo.js';
+import {createWriteableChecker} from '../update-checker.js';
+import {BoardId} from './board-repo.js';
+import {UserId} from './user-repo.js';
 
 export type TaskId = Brand<Uuid, 'task_id'>;
 

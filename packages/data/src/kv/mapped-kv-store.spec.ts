@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
-import {Condition, Entry} from './kv-store';
-import {MappedKVStore, MappedTransaction, Mapper} from './mapped-kv-store';
-import {MemKVStore} from './mem-kv-store';
+import {Condition, Entry} from './kv-store.js';
+import {MappedKVStore, MappedTransaction, Mapper} from './mapped-kv-store.js';
+import {MemKVStore} from './mem-kv-store.js';
 
 describe('MappedTransaction with MemKVStore', () => {
     const keyMapper: Mapper<Uint8Array, string> = {

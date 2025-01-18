@@ -1,10 +1,10 @@
 import {z} from 'zod';
-import {DataAccessor} from './actor';
-import {Message} from './communication/message';
-import {createApi, handler, setupRpcServer} from './communication/rpc';
-import {Connection} from './communication/transport';
-import {SignInResponse, SignUpResponse} from './coordinator';
-import {CoordinatorClient} from './coordinator-client';
+import {DataAccessor} from './actor.js';
+import {Message} from './communication/message.js';
+import {createApi, handler, setupRpcServer} from './communication/rpc.js';
+import {Connection} from './communication/transport.js';
+import {CoordinatorClient} from './coordinator-client.js';
+import {SignInResponse, SignUpResponse} from './coordinator.js';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
 export class Participant {

@@ -1,8 +1,8 @@
 import {JwtPayload} from 'jsonwebtoken';
 import {LRUCache} from 'lru-cache';
-import {TransactionContext} from './data-layer';
-import {JwtService} from './jwt-service';
-import {UserId} from './repos/user-repo';
+import {TransactionContext} from './data-layer.js';
+import {JwtService} from './jwt-service.js';
+import {UserId} from './repos/user-repo.js';
 
 export interface AuthContext {
     readonly userId?: UserId;

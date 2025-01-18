@@ -1,16 +1,16 @@
 import {z} from 'zod';
-import {CrdtDiff} from '../../crdt/crdt';
-import {BusinessError} from '../../errors';
-import {Counter} from '../../kv/counter';
-import {UniqueError} from '../../kv/data-index';
-import {Uint8Transaction, withPrefix} from '../../kv/kv-store';
-import {Registry} from '../../kv/registry';
-import {zTimestamp} from '../../timestamp';
-import {Brand} from '../../utils';
-import {Uuid, createUuid, zUuid} from '../../uuid';
-import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo';
-import {createWriteableChecker} from '../update-checker';
-import {UserId} from './user-repo';
+import {CrdtDiff} from '../../crdt/crdt.js';
+import {BusinessError} from '../../errors.js';
+import {Counter} from '../../kv/counter.js';
+import {UniqueError} from '../../kv/data-index.js';
+import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {Registry} from '../../kv/registry.js';
+import {zTimestamp} from '../../timestamp.js';
+import {Brand} from '../../utils.js';
+import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo.js';
+import {createWriteableChecker} from '../update-checker.js';
+import {UserId} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
 

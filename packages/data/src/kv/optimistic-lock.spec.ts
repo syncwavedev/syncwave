@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {StringCodec} from '../codec';
-import {whenAll} from '../utils';
-import {MemKVStore} from './mem-kv-store';
-import {OptimisticLock} from './optimistic-lock';
+import {StringCodec} from '../codec.js';
+import {whenAll} from '../utils.js';
+import {MemKVStore} from './mem-kv-store.js';
+import {OptimisticLock} from './optimistic-lock.js';
 
 const stringCodec = new StringCodec();
 const encodeFromString = (str: string) => stringCodec.encode(str);

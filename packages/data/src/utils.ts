@@ -1,4 +1,4 @@
-import {AggregateBusinessError, AggregateError, BusinessError} from './errors';
+import {AggregateBusinessError, AggregateError, BusinessError} from './errors.js';
 
 export type Brand<T, B> = T & {__brand: B | undefined};
 

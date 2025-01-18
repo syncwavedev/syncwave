@@ -1,6 +1,6 @@
 import {parse, stringify, v7, validate} from 'uuid';
 import {z} from 'zod';
-import {Codec} from './codec';
+import {Codec} from './codec.js';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

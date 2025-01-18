@@ -1,6 +1,6 @@
 import Delta, {AttributeMap} from 'quill-delta';
 import {describe, expect, it} from 'vitest';
-import {Richtext} from './richtext';
+import {Richtext} from './richtext.js';
 
 describe('Richtext', () => {
     it('should instantiate with an empty delta by default', () => {

@@ -1,6 +1,6 @@
 import {pushable} from 'it-pushable';
-import {MAX_LOOKAHEAD_COUNT} from './constants';
-import {assert} from './utils';
+import {MAX_LOOKAHEAD_COUNT} from './constants.js';
+import {assert} from './utils.js';
 
 export class DeferredAsyncIterator<T> implements AsyncIterator<T, any, any> {
     next(...[value]: [] | [any]): Promise<IteratorResult<T, any>> {

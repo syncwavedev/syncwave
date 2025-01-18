@@ -1,5 +1,5 @@
 import {addExtension, decode, encode} from 'msgpackr';
-import {Uuid, UuidCodec} from './uuid';
+import {Uuid, UuidCodec} from './uuid.js';
 
 export interface Codec<TData> {
     encode(data: TData): Uint8Array;

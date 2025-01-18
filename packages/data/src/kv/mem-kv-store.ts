@@ -1,6 +1,6 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
-import {compareUint8Array} from '../utils';
-import {Condition, Entry, InvalidQueryCondition, KVStore, Transaction} from './kv-store';
+import {compareUint8Array} from '../utils.js';
+import {Condition, Entry, InvalidQueryCondition, KVStore, Transaction} from './kv-store.js';
 
 export class CursorClosedError extends Error {
     constructor() {

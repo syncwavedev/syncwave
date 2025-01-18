@@ -1,7 +1,7 @@
-import {Codec} from '../codec';
-import {Uint8Transaction} from './kv-store';
-import {Registry} from './registry';
-import {Topic} from './topic';
+import {Codec} from '../codec.js';
+import {Uint8Transaction} from './kv-store.js';
+import {Registry} from './registry.js';
+import {Topic} from './topic.js';
 
 export class TopicManager<T> {
     private readonly topics: Registry<Topic<T>>;

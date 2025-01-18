@@ -1,7 +1,7 @@
-import {Codec} from '../codec';
-import {unreachable} from '../utils';
-import {MappedTransaction, Mapper} from './mapped-kv-store';
-import {PrefixedTransaction} from './prefixed-kv-store';
+import {Codec} from '../codec.js';
+import {unreachable} from '../utils.js';
+import {MappedTransaction, Mapper} from './mapped-kv-store.js';
+import {PrefixedTransaction} from './prefixed-kv-store.js';
 
 export interface GtCondition<TKey> {
     readonly gt: TKey;

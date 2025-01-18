@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {Counter} from './counter';
-import {Uint8KVStore, withPrefix} from './kv-store';
-import {MemKVStore} from './mem-kv-store';
+import {Counter} from './counter.js';
+import {Uint8KVStore, withPrefix} from './kv-store.js';
+import {MemKVStore} from './mem-kv-store.js';
 
 describe('Counter', () => {
     let kvStore: Uint8KVStore;

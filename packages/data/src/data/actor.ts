@@ -1,18 +1,18 @@
-import {astream} from '../async-stream';
-import {MsgpackrCodec} from '../codec';
-import {PULL_WAIT_MS} from '../constants';
-import {BusinessError} from '../errors';
-import {Uint8Transaction, withPrefix} from '../kv/kv-store';
-import {TopicManager} from '../kv/topic-manager';
-import {getNow} from '../timestamp';
-import {assertNever, unimplemented, wait, whenAll} from '../utils';
-import {AuthContext} from './auth-context';
-import {CoordinatorApi} from './coordinator';
-import {OnDocChange} from './doc-repo';
-import {Board, BoardId, BoardRepo} from './repos/board-repo';
-import {Member, MemberRepo, createMemberId} from './repos/member-repo';
-import {Task, TaskId, TaskRepo} from './repos/task-repo';
-import {User, UserId, UserRepo} from './repos/user-repo';
+import {astream} from '../async-stream.js';
+import {MsgpackrCodec} from '../codec.js';
+import {PULL_WAIT_MS} from '../constants.js';
+import {BusinessError} from '../errors.js';
+import {Uint8Transaction, withPrefix} from '../kv/kv-store.js';
+import {TopicManager} from '../kv/topic-manager.js';
+import {getNow} from '../timestamp.js';
+import {assertNever, unimplemented, wait, whenAll} from '../utils.js';
+import {AuthContext} from './auth-context.js';
+import {CoordinatorApi} from './coordinator.js';
+import {OnDocChange} from './doc-repo.js';
+import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
+import {Member, MemberRepo, createMemberId} from './repos/member-repo.js';
+import {Task, TaskId, TaskRepo} from './repos/task-repo.js';
+import {User, UserId, UserRepo} from './repos/user-repo.js';
 
 export interface CreateTaskModel {
     taskId: TaskId;

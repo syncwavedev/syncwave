@@ -1,7 +1,7 @@
 import {describe, expect, it, vi} from 'vitest';
-import {MsgpackrCodec} from '../../codec';
-import {MemConnection, MemTransportClient, MemTransportServer} from './mem-transport';
-import {Message, createMessageId} from './message';
+import {MsgpackrCodec} from '../../codec.js';
+import {MemConnection, MemTransportClient, MemTransportServer} from './mem-transport.js';
+import {Message, createMessageId} from './message.js';
 
 const mockMessage: Message = {type: 'request', id: createMessageId(), payload: {name: 'ping', arg: {}}};
 

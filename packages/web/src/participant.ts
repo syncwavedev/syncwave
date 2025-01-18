@@ -1,5 +1,5 @@
 import {ConsoleLogger, MsgpackrCodec, Participant, ReconnectConnection} from 'ground-data';
-import {WsTransportClient} from './ws-transport-client';
+import {WsTransportClient} from './ws-transport-client.js.js';
 
 function createParticipant() {
     const transport = new WsTransportClient({

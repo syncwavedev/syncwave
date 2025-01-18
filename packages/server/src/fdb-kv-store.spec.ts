@@ -9,7 +9,7 @@ import {
     astream,
 } from 'ground-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
-import {FoundationDBUint8KVStore} from './fdb-kv-store';
+import {FoundationDBUint8KVStore} from './fdb-kv-store.js';
 
 describe('FoundationDBUint8KVStore (localhost:4500)', () => {
     let store: Uint8KVStore;

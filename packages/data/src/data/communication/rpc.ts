@@ -1,10 +1,10 @@
 import {TypeOf, ZodObject} from 'zod';
-import {RPC_TIMEOUT_MS} from '../../constants';
-import {Deferred} from '../../deferred';
-import {BusinessError, getReadableError} from '../../errors';
-import {assertNever, wait} from '../../utils';
-import {Message, MessageHeaders, RequestMessage, createMessageId} from './message';
-import {Connection} from './transport';
+import {RPC_TIMEOUT_MS} from '../../constants.js';
+import {Deferred} from '../../deferred.js';
+import {BusinessError, getReadableError} from '../../errors.js';
+import {assertNever, wait} from '../../utils.js';
+import {Message, MessageHeaders, RequestMessage, createMessageId} from './message.js';
+import {Connection} from './transport.js';
 
 export interface Handler<TRequest, TResponse> {
     (request: TRequest): Promise<TResponse>;

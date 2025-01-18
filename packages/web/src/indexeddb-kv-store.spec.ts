@@ -1,8 +1,8 @@
 import 'fake-indexeddb/auto';
+import {whenAll} from 'ground-data';
 import {deleteDB, openDB} from 'idb';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {whenAll} from '../../data/dist/esm/src/utils';
-import {IndexedDBKVStore, IndexedDBTransaction} from './indexeddb-kv-store';
+import {IndexedDBKVStore, IndexedDBTransaction} from './indexeddb-kv-store.js';
 
 let dbName = 'test-db';
 

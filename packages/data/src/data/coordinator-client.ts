@@ -1,8 +1,8 @@
-import {DataAccessor} from './actor';
-import {Message} from './communication/message';
-import {createRpcClient} from './communication/rpc';
-import {Connection} from './communication/transport';
-import {type CoordinatorApi} from './coordinator';
+import {DataAccessor} from './actor.js';
+import {Message} from './communication/message.js';
+import {createRpcClient} from './communication/rpc.js';
+import {Connection} from './communication/transport.js';
+import {type CoordinatorApi} from './coordinator.js';
 
 export class CoordinatorClient {
     private token?: string;

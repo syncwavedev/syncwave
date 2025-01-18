@@ -1,6 +1,6 @@
-import {StringCodec} from '../codec';
-import {createUuid, UuidCodec} from '../uuid';
-import {Uint8Transaction} from './kv-store';
+import {StringCodec} from '../codec.js';
+import {createUuid, UuidCodec} from '../uuid.js';
+import {Uint8Transaction} from './kv-store.js';
 
 export class OptimisticLock {
     private readonly uuidCodec = new UuidCodec();

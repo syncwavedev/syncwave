@@ -1,6 +1,9 @@
 import {pushable} from 'it-pushable';
+import {x} from './file';
 
 const source = pushable({objectMode: true});
+
+console.log(x);
 
 setTimeout(() => source.push('hello'), 100);
 setTimeout(() => source.push('world'), 200);

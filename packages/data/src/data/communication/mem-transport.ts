@@ -24,7 +24,9 @@ export class MemConnection<T> implements Connection<T> {
         this.ensureOpen();
 
         // don't wait for peer to respond
-        this.peer.receive(this.codec.decode(this.codec.encode(message)));
+        this.peer.receive(this.codec.decode(this.codec.encode(message))).catch(err => {
+            console.error('error during peer receive', err);
+        });
     }
 
     subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {

@@ -95,7 +95,7 @@ export function pipe<T>(x: T, ...fns: Function[]): any {
 }
 
 export function concatBuffers(a: Uint8Array, b: Uint8Array): Uint8Array {
-    var mergedArray = new Uint8Array(a.length + b.length);
+    const mergedArray = new Uint8Array(a.length + b.length);
     mergedArray.set(a);
     mergedArray.set(b, a.length);
 

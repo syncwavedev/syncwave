@@ -98,7 +98,7 @@ export class BoardRepo implements SyncTarget<Board> {
             return await this.store.update(id, recipe);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
-                throw new BusinessError(`board with slug already exists`);
+                throw new BusinessError('board with slug already exists');
             }
 
             throw err;

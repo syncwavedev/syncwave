@@ -80,12 +80,16 @@ export function createRpcClient<T = any>(connection: Connection<Message>, getHea
                         }
                     });
 
-                    wait(RPC_TIMEOUT_MS).then(() => {
-                        if (result.state === 'pending') {
-                            unsub();
-                            result.reject(new Error('rpc call failed: timeout'));
-                        }
-                    });
+                    wait(RPC_TIMEOUT_MS)
+                        .then(() => {
+                            if (result.state === 'pending') {
+                                unsub();
+                                result.reject(new Error('rpc call failed: timeout'));
+                            }
+                        })
+                        .catch(err => {
+                            console.error('unexpected error after rpc timed out', err);
+                        });
 
                     await connection.send({
                         id: requestId,

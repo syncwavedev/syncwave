@@ -23,7 +23,9 @@ export class ReconnectConnection<T> implements Connection<T> {
     subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
         this.assertOpen();
         // connect if not already
-        this.getConnection();
+        this.getConnection().catch(err => {
+            console.error('error while connection to the server: ', err);
+        });
 
         return this.subject.subscribe(cb);
     }
@@ -44,6 +46,7 @@ export class ReconnectConnection<T> implements Connection<T> {
 
         if (this.connection === undefined) {
             this.connection = (async () => {
+                // eslint-disable-next-line no-constant-condition
                 while (true) {
                     try {
                         return await this.transport.connect();
@@ -58,7 +61,9 @@ export class ReconnectConnection<T> implements Connection<T> {
                     } else if (event.type === 'close') {
                         this.connection = undefined;
                         // reconnect
-                        this.getConnection();
+                        this.getConnection().catch(err => {
+                            console.error('error while reconnection to the server: ', err);
+                        });
                     } else {
                         assertNever(event);
                     }

@@ -109,7 +109,9 @@ export class MemLocker<TKey> {
 
             if (!fnQueue) {
                 this.fnQueueMap.set(key, []);
-                execute();
+                execute().catch(err => {
+                    console.error('unexpected error during execute inside mem-locker: ', err);
+                });
             } else {
                 fnQueue.push(execute);
             }
@@ -129,7 +131,9 @@ export class MemLocker<TKey> {
 
         const nextFn = fnQueue.shift();
         if (nextFn) {
-            nextFn();
+            nextFn().catch(err => {
+                console.error('unexpected error during nextFn in mem-locker: ', err);
+            });
         }
     }
 }

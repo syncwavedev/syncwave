@@ -2,18 +2,6 @@ import {pushable} from 'it-pushable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {assert} from './utils.js';
 
-export class DeferredAsyncIterator<T> implements AsyncIterator<T, any, any> {
-    next(...[value]: [] | [any]): Promise<IteratorResult<T, any>> {
-        throw new Error('Method not implemented.');
-    }
-    return?(value?: any): Promise<IteratorResult<T, any>> {
-        throw new Error('Method not implemented.');
-    }
-    throw?(e?: any): Promise<IteratorResult<T, any>> {
-        throw new Error('Method not implemented.');
-    }
-}
-
 export class DeferredStream<T> implements AsyncIterable<T> {
     constructor(private readonly executor: (next: (value: T) => void, end: () => void) => void) {}
 

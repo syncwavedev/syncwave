@@ -369,7 +369,7 @@ describe('partial indexes', async () => {
         const houseId = createUuid();
 
         await uniquePartialIndex.sync(undefined, {id: id1, houseId, age: 25});
-        uniquePartialIndex.sync(undefined, {id: id2, houseId, age: 15});
+        await uniquePartialIndex.sync(undefined, {id: id2, houseId, age: 15});
 
         // Attempt to add another item with the same key that satisfies the filter function
         await expect(uniquePartialIndex.sync(undefined, {id: id3, houseId, age: 30})).rejects.toThrow(

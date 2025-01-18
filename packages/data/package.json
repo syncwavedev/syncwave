@@ -4,6 +4,9 @@
     "main": "dist/cjs/src/index.js",
     "module": "dist/esm/src/index.js",
     "types": "dist/esm/src/index.d.ts",
+    "engines": {
+        "node": ">=20.0.0"
+    },
     "files": [
         "dist/esm/src",
         "dist/esm/package.json",

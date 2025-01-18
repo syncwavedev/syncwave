@@ -80,7 +80,7 @@ describe('Deferred', () => {
         const value = 'testValue';
         const onResolved = vi.fn();
 
-        deferred.promise.then(onResolved);
+        deferred.promise.then(onResolved).catch(() => {});
         deferred.resolve(value);
 
         await deferred.promise;

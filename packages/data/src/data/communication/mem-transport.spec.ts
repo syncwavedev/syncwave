@@ -71,7 +71,7 @@ describe('MemTransportServer and MemTransportClient', () => {
         const server = new MemTransportServer(new MsgpackrCodec());
 
         const connectionHandler = vi.fn();
-        server.launch(connectionHandler);
+        await server.launch(connectionHandler);
 
         const client = new MemTransportClient(server, new MsgpackrCodec());
         const clientConnection = await client.connect();
@@ -92,7 +92,7 @@ describe('MemTransportServer and MemTransportClient', () => {
         const client = server.createClient();
 
         const connectionHandler = vi.fn();
-        server.launch(connectionHandler);
+        await server.launch(connectionHandler);
 
         await server.close();
 

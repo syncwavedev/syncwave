@@ -76,6 +76,7 @@ describe('MemTransaction', () => {
         const condition = {};
         await expect(async () => {
             for await (const _ of transaction.query(condition)) {
+                // do nothing
             }
         }).rejects.toThrow(InvalidQueryCondition);
     });
@@ -195,7 +196,7 @@ describe('MemKVStore', () => {
     });
 
     it('should fail after exceeding retry attempts', async () => {
-        vi.spyOn(kvStore, 'transaction').mockImplementationOnce(async fn => {
+        vi.spyOn(kvStore, 'transaction').mockImplementationOnce(async () => {
             throw new Error('Simulated permanent failure');
         });
 

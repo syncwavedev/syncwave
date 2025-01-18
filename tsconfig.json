@@ -24,6 +24,8 @@
         "pretty": true,
         "sourceMap": true,
         "strict": true,
+        "alwaysStrict": true,
+        "strictNullChecks": true,
         "target": "es2018"
         // "noPropertyAccessFromIndexSignature": true,
         // "noUncheckedIndexedAccess": true

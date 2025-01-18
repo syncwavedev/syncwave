@@ -75,7 +75,9 @@ export class Actor implements DataAccessor {
         this.changelog = new TopicManager(withPrefix('log/')(txn), new MsgpackrCodec());
 
         if (this.role.type === 'participant') {
-            this.startPullLoop();
+            this.startPullLoop().catch(err => {
+                console.error('error during pull loop: ', err);
+            });
         } else if (this.role.type === 'coordinator') {
             // participant will push changes, nothing to do on coordinator side
         } else {
@@ -267,6 +269,7 @@ export class Actor implements DataAccessor {
     }
 
     private async startPullLoop(): Promise<never> {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const noChanges = unimplemented();
 

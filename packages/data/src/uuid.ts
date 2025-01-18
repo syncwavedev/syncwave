@@ -2,10 +2,8 @@ import {parse, stringify, v7, validate} from 'uuid';
 import {z} from 'zod';
 import {Codec} from './codec.js';
 
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export class Uuid {
-    public readonly __type: 'uuid' = 'uuid';
+    public readonly __type = 'uuid' as const;
 
     public static min = new Uuid('00000000-0000-0000-0000-000000000000');
     public static max = new Uuid('ffffffff-ffff-ffff-ffff-ffffffffffff');

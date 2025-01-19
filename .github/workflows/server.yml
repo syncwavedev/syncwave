@@ -56,15 +56,12 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: debug
-              run: ls
-
             - uses: docker/build-push-action@v2
               with:
                   push: true
                   tags: ghcr.io/grounhq/ground-server:${{ steps.config.outputs.tag }}
                   context: '.'
-                  dockerfile: ./packages/server/Dockerfile
+                  file: ./packages/server/Dockerfile
                   cache-from: type=registry,ref=ghcr.io/groundhq/ground-server:cache
                   cache-to: type=registry,mode=max,ref=ghcr.io/groundhq/ground-server:cache
 

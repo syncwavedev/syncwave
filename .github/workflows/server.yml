@@ -15,10 +15,6 @@ on:
 name: server
 concurrency: ${{ github.workflow }}_${{ github.event.inputs.stage || 'prod' }}
 
-permissions:
-    contents: read
-    packages: write
-
 jobs:
     deploy:
         name: Deploy
@@ -75,7 +71,6 @@ jobs:
               with:
                   host: ${{ vars.HOST }}
                   username: ${{ secrets.HOST_USERNAME }}
-                  password: ${{ secrets.HOST_PASSWORD }}
                   key: ${{ secrets.HOST_KEY }}
                   port: 22
                   script_stop: true

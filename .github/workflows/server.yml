@@ -15,13 +15,14 @@ on:
 name: server
 concurrency: ${{ github.workflow }}_${{ github.event.inputs.stage || 'prod' }}
 
+permissions:
+    contents: read
+    packages: write
+
 jobs:
     deploy:
         name: Deploy
         runs-on: ubuntu-latest
-
-        permissions:
-            packages: write
 
         steps:
             - uses: AutoModality/action-clean@v1
@@ -62,7 +63,7 @@ jobs:
             - uses: docker/build-push-action@v2
               with:
                   push: true
-                  tags: ghcr.io/grounhq/ground-server:${{ steps.config.outputs.tag }}
+                  tags: ghcr.io/groundhq/ground-server:${{ steps.config.outputs.tag }}
                   context: '.'
                   file: ./packages/server/Dockerfile
                   cache-from: type=registry,ref=ghcr.io/groundhq/ground-server:cache

@@ -5,4 +5,3 @@ export const TXN_RETRIES_COUNT = 32;
 export const RECONNECT_WAIT_MS = 1000;
 export const ENVIRONMENT: 'prod' | 'dev' | 'test' =
     process.env.NODE_ENV === 'production' ? 'prod' : process.env.NODE_ENV === 'test' ? 'test' : 'dev';
-export const STAGE: string = process.env.STAGE ?? 'local';

@@ -93,6 +93,5 @@ jobs:
                         -e NODE_ENV=production \
                         -e STATE=${{ steps.config.outputs.stage }} \
                         -d \
-                        --network phoenix \
                         --restart unless-stopped \
                         ghcr.io/groundhq/ground-web:${{ steps.config.outputs.tag }}

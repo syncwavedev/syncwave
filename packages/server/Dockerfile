@@ -31,5 +31,7 @@ RUN npm run build
 
 EXPOSE 4567
 
+# todo: add healthcheck (see web Dockerfile)
+
 # Run the built application
 CMD ["node", "dist/esm/src/index.js"]

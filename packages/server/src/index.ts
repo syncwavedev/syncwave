@@ -7,12 +7,14 @@ import {
     JwtPayload,
     JwtService,
     MsgpackrCodec,
+    PrefixedKVStore,
+    STAGE,
     Uint8KVStore,
 } from 'ground-data';
 import jwt from 'jsonwebtoken';
 import {WsTransportServer} from './ws-transport-server.js';
 
-const PORT = 4567;
+const PORT = ENVIRONMENT === 'prod' ? 80 : 4567;
 
 // todo: read from env
 const JWT_SECRET = 'test_secret';
@@ -23,6 +25,7 @@ async function launch() {
     if (ENVIRONMENT === 'prod') {
         console.log('using FoundationDB as a primary store');
         kvStore = await import('./fdb-kv-store.js').then(x => new x.FoundationDBUint8KVStore());
+        kvStore = new PrefixedKVStore(kvStore, `/ground-${STAGE}/`);
     } else {
         console.log('using SQLite as primary store');
         kvStore = await import('./sqlite-kv-store.js').then(x => new x.SqliteUint8KVStore('./dev.sqlite'));

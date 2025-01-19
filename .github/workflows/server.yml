@@ -1,0 +1,94 @@
+on:
+    push:
+        branches: [main]
+        paths:
+            - packages/server/**
+            - packages/data/**
+            - .github/workflows/server.yml
+    workflow_dispatch:
+        inputs:
+            stage:
+                description: 'Stage to deploy (dev|prod)'
+                required: true
+                default: 'prod'
+
+name: server
+concurrency: ${{ github.workflow }}_${{ github.event.inputs.stage || 'prod' }}
+
+jobs:
+    deploy:
+        name: Deploy
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: AutoModality/action-clean@v1
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - name: Evaluate stage config
+              id: config
+              run: |
+                  if [ -z "${{ github.event.inputs.stage }}" ]; then
+                    STAGE=prod
+                  else
+                    STAGE=${{ github.event.inputs.stage }}
+                  fi
+
+                  echo "stage=$STAGE" >> $GITHUB_OUTPUT
+                  echo "tag=${{ github.run_number }}-${{ github.run_attempt }}-$STAGE" >> $GITHUB_OUTPUT
+
+                  if [ "dev" == "$STAGE" ]; then
+                    echo "port=7202" >> $GITHUB_OUTPUT
+                  elif [ "prod" == "$STAGE" ]; then
+                    echo "port=7201" >> $GITHUB_OUTPUT
+                  else
+                    echo "Unknown stage: $STAGE"
+                    exit 1
+                  fi
+
+            - name: Setup docker
+              uses: docker/setup-buildx-action@v1
+
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v2
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - uses: docker/build-push-action@v2
+              with:
+                  push: true
+                  tags: ghcr.io/grounhq/ground-server:${{ steps.config.outputs.tag }}
+                  context: '.'
+                  dockerfile: ./packages/server/Dockerfile
+                  cache-from: type=registry,ref=ghcr.io/groundhq/ground-server:cache
+                  cache-to: type=registry,mode=max,ref=ghcr.io/groundhq/ground-server:cache
+
+            - name: Deploy containers
+              if: success()
+              uses: appleboy/ssh-action@v0.1.7
+              with:
+                  host: ${{ vars.HOST }}
+                  username: ${{ secrets.HOST_USERNAME }}
+                  password: ${{ secrets.HOST_PASSWORD }}
+                  key: ${{ secrets.HOST_KEY }}
+                  port: 22
+                  script_stop: true
+                  script: |
+                      docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
+                      docker system prune -af --filter until=30m
+
+                      docker pull ghcr.io/groundhq/ground-server:${{ steps.config.outputs.tag }}
+
+                      docker stop ground-server-${{ steps.config.outputs.stage }} || true
+                      docker rm ground-server-${{ steps.config.outputs.stage }} || true
+                      docker run \
+                        --name ground-server-${{ steps.config.outputs.stage }} \
+                        -p ${{ steps.config.outputs.port }}:80 \
+                        -e NODE_ENV=production \
+                        -e STATE=${{ steps.config.outputs.stage }} \
+                        -d \
+                        --restart unless-stopped \
+                        ghcr.io/groundhq/ground-server:${{ steps.config.outputs.tag }}

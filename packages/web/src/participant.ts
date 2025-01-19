@@ -3,7 +3,7 @@ import {WsTransportClient} from './ws-transport-client.js';
 
 function createParticipant() {
     const transport = new WsTransportClient({
-        url: 'wss://ground-dev.edme.io:443',
+        url: 'wss://api-ground-dev.edme.io:443',
         codec: new MsgpackrCodec(),
         logger: new ConsoleLogger(),
     });

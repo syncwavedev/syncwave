@@ -1,26 +1,32 @@
-FROM node:18 AS base
-RUN npm install -g npm@9.7.1
+# Use a Node.js base image
+FROM node:22-bullseye AS builder
 
-# Install dependencies only when needed
-FROM base AS deps
+# Install additional dependencies
+RUN apt-get update
+RUN apt-get install -y python3 make g++ curl
+RUN rm -rf /var/lib/apt/lists/*
+
+# Install FoundationDB clients
+RUN curl -L -o foundationdb-clients.deb https://github.com/apple/foundationdb/releases/download/7.3.43/foundationdb-clients_7.3.43-1_amd64.deb
+RUN dpkg -i foundationdb-clients.deb
+RUN rm foundationdb-clients.deb
+
+# Set the working directory
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
-
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy the entire repository
 COPY . .
 
+# Install dependencies
+WORKDIR /app
+RUN npm ci
+
+# Build common data package
+WORKDIR /app/packages/data
+RUN npm run build
+
+# Build the server
+WORKDIR /app/packages/web
 RUN npm run build
 
 ENV NODE_ENV production
@@ -30,4 +36,5 @@ ENV PORT 3000
 
 HEALTHCHECK --interval=10s --timeout=10s --start-period=1m CMD curl -f --retry 1 --max-time 3 "http://localhost:3000" || bash -c 'kill -s 15 -1 && (sleep 10; kill -s 9 -1)'
 
+# Run the built application
 CMD ["npm", "run", "serve"]

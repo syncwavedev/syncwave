@@ -22,7 +22,7 @@ const JWT_SECRET = 'test_secret';
 async function launch() {
     let kvStore: Uint8KVStore;
 
-    if (ENVIRONMENT === 'prod' || true) {
+    if (STAGE !== 'local') {
         console.log('using FoundationDB as a primary store');
         kvStore = await import('./fdb-kv-store.js').then(x => new x.FoundationDBUint8KVStore(`./fdb.${STAGE}.cluster`));
         kvStore = new PrefixedKVStore(kvStore, `/ground-${STAGE}/`);

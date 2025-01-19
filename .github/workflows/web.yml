@@ -42,9 +42,9 @@ jobs:
                   echo "tag=${{ github.run_number }}-${{ github.run_attempt }}-$STAGE" >> $GITHUB_OUTPUT
 
                   if [ "dev" == "$STAGE" ]; then
-                    echo "port=7202" >> $GITHUB_OUTPUT
+                    echo "port=7212" >> $GITHUB_OUTPUT
                   elif [ "prod" == "$STAGE" ]; then
-                    echo "port=7201" >> $GITHUB_OUTPUT
+                    echo "port=7211" >> $GITHUB_OUTPUT
                   else
                     echo "Unknown stage: $STAGE"
                     exit 1

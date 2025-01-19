@@ -89,7 +89,7 @@ jobs:
                       docker rm ground-web-${{ steps.config.outputs.stage }} || true
                       docker run \
                         --name ground-web-${{ steps.config.outputs.stage }} \
-                        -p ${{ steps.config.outputs.port }}:80 \
+                        -p ${{ steps.config.outputs.port }}:3000 \
                         -e NODE_ENV=production \
                         -e STATE=${{ steps.config.outputs.stage }} \
                         -d \

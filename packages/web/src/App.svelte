@@ -1,7 +1,9 @@
 <script lang="ts">
-    import Counter from './lib/Counter.svelte';
+    import './app.css';
+    import {Button} from '$lib/components/ui/button';
     import {participant} from './participant.js';
     import {assert, ConsoleLogger, createBoardId, createTaskId} from 'ground-data';
+    import {ModeWatcher} from 'mode-watcher';
 
     (async () => {
         await participant.signUp('tilyupo@gmail.com', '123456');
@@ -20,9 +22,10 @@
     })();
 </script>
 
+<ModeWatcher />
 <main>
     <div class="card">
-        <Counter />
+        <Button>Hello</Button>
     </div>
 </main>
 

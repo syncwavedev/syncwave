@@ -16,15 +16,24 @@
     "dependencies": {
         "buffer": "^6.0.3",
         "ground-data": "*",
-        "idb": "^8.0.1"
+        "idb": "^8.0.1",
+        "mode-watcher": "^0.5.0",
+        "tailwindcss": "^3.4.17"
     },
     "devDependencies": {
         "@sveltejs/vite-plugin-svelte": "^5.0.3",
+        "@tailwindcss/container-queries": "^0.1.1",
         "@tsconfig/svelte": "^5.0.4",
+        "autoprefixer": "^10.4.20",
+        "bits-ui": "^1.0.0-next.78",
+        "clsx": "^2.1.1",
         "fake-indexeddb": "^6.0.0",
         "serve": "^14.2.4",
         "svelte": "^5.15.0",
         "svelte-check": "^4.1.1",
+        "tailwind-merge": "^2.6.0",
+        "tailwind-variants": "^0.3.1",
+        "tailwindcss-animate": "^1.0.7",
         "typescript": "~5.6.2",
         "vite": "^6.0.5",
         "vitest": "^3.0.2"

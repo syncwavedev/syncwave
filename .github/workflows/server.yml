@@ -13,7 +13,7 @@ on:
                 default: 'prod'
 
 name: server
-concurrency: ${{ github.workflow }}_${{ github.event.inputs.stage || 'prod' }}
+concurrency: ${{ github.workflow }}_${{ github.event.inputs.stage || 'dev' }}
 
 permissions:
     contents: read
@@ -33,7 +33,7 @@ jobs:
               id: config
               run: |
                   if [ -z "${{ github.event.inputs.stage }}" ]; then
-                    STAGE=prod
+                    STAGE=dev
                   else
                     STAGE=${{ github.event.inputs.stage }}
                   fi

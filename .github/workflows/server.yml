@@ -91,7 +91,7 @@ jobs:
                         --name ground-server-${{ steps.config.outputs.stage }} \
                         -p ${{ steps.config.outputs.port }}:80 \
                         -e NODE_ENV=production \
-                        -e STATE=${{ steps.config.outputs.stage }} \
+                        -e STAGE=${{ steps.config.outputs.stage }} \
                         -d \
                         --network phoenix \
                         --restart unless-stopped \

@@ -15,14 +15,13 @@ on:
 name: server
 concurrency: ${{ github.workflow }}_${{ github.event.inputs.stage || 'prod' }}
 
-permissions:
-    contents: read
-    packages: write
-
 jobs:
     deploy:
         name: Deploy
         runs-on: ubuntu-latest
+
+        permissions:
+            packages: write
 
         steps:
             - uses: AutoModality/action-clean@v1

@@ -1,7 +1,6 @@
-# Use a Node.js base image
 FROM node:22-bullseye AS builder
 
-# Install additional dependencies
+# We need those for C bindings (foundationdb / sqlite)
 RUN apt-get update
 RUN apt-get install -y python3 make g++ curl
 RUN rm -rf /var/lib/apt/lists/*
@@ -26,15 +25,14 @@ WORKDIR /app/packages/data
 RUN npm run build
 
 # Build the server
-WORKDIR /app/packages/web
+WORKDIR /app/packages/server
 RUN npm run build
 
-ENV NODE_ENV production
+# Delete source code files that were used to build the app that are no longer needed
+RUN rm -rf src/ static/ emailTemplates/ docker-compose.yml
 
-EXPOSE 3000
-ENV PORT 3000
+# The USER instruction sets the user name to use as the default user for the remainder of the current stage
+USER node:node
 
-HEALTHCHECK --interval=10s --timeout=10s --start-period=1m CMD curl -f --retry 1 --max-time 3 "http://localhost:3000" || bash -c 'kill -s 15 -1 && (sleep 10; kill -s 9 -1)'
-
-# Run the built application
-CMD ["npm", "run", "serve"]
+# This is the command that will be run inside the image when you tell Docker to start the container
+CMD ["node","build/index.js"]

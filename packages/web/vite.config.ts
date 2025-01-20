@@ -1,13 +1,16 @@
-import {svelte} from '@sveltejs/vite-plugin-svelte';
-import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vitest/config';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
-// https://vite.dev/config/
 export default defineConfig({
-    plugins: [svelte()],
-    resolve: {
-        alias: {
-            $lib: path.resolve('./src/lib'),
-        },
-    },
+	plugins: [
+		sveltekit(),
+		nodePolyfills({
+			include: ['buffer']
+		})
+	],
+
+	test: {
+		include: ['src/**/*.{test,spec}.{js,ts}']
+	}
 });

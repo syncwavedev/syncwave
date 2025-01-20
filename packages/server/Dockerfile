@@ -1,7 +1,6 @@
-# Use a Node.js base image
 FROM node:22-bullseye AS builder
 
-# Install additional dependencies
+# We need those for C bindings (foundationdb / sqlite)
 RUN apt-get update
 RUN apt-get install -y python3 make g++ curl
 RUN rm -rf /var/lib/apt/lists/*
@@ -31,7 +30,4 @@ RUN npm run build
 
 EXPOSE 4567
 
-# todo: add healthcheck (see web Dockerfile)
-
-# Run the built application
 CMD ["node", "dist/esm/src/index.js"]

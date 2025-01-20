@@ -5,6 +5,7 @@
 
 	import { ConsoleLogger, MsgpackrCodec, Participant, ReconnectConnection } from 'ground-data';
 	import { WsTransportClient } from '../ws-transport-client.js';
+	import { browser } from '$app/environment';
 
 	function createParticipant() {
 		const transport = new WsTransportClient({
@@ -12,7 +13,7 @@
 			codec: new MsgpackrCodec(),
 			logger: new ConsoleLogger()
 		});
-		const participant = new Participant(transport);
+		const participant = new Participant(transport, browser ? 'local' : 'proxy');
 
 		return participant;
 	}

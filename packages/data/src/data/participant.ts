@@ -9,33 +9,36 @@ import {SignInResponse, SignUpResponse} from './coordinator.js';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
 export class Participant {
-    private client: CoordinatorClient;
+    private coordinator: CoordinatorClient;
     private readonly connection: Connection<Message>;
 
-    constructor(transport: TransportClient<Message>) {
+    constructor(
+        transport: TransportClient<Message>,
+        private readonly mode: 'proxy' | 'local'
+    ) {
         this.connection = new ReconnectConnection(transport);
-        this.client = new CoordinatorClient(this.connection);
+        this.coordinator = new CoordinatorClient(this.connection);
         setupRpcServer(this.connection, createParticipantRpc, (_message, fn) => fn({}));
     }
 
     async signIn(email: string, password: string): Promise<SignInResponse> {
-        return await this.client.rpc.signIn({email, password});
+        return await this.coordinator.rpc.signIn({email, password});
     }
 
     async signUp(email: string, password: string): Promise<SignUpResponse> {
-        return await this.client.rpc.signUp({email, password});
+        return await this.coordinator.rpc.signUp({email, password});
     }
 
     async debug() {
-        return await this.client.rpc.debug({});
+        return await this.coordinator.rpc.debug({});
     }
 
     authenticate(authToken: string): void {
-        this.client.authenticate(authToken);
+        this.coordinator.authenticate(authToken);
     }
 
     public get db(): DataAccessor {
-        return this.client.rpc;
+        return this.coordinator.rpc;
     }
 
     async close(): Promise<void> {

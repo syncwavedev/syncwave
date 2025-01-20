@@ -24,8 +24,8 @@ RUN npm ci
 WORKDIR /app/packages/data
 RUN npm run build
 
-# Build the server
-WORKDIR /app/packages/server
+# Build the web
+WORKDIR /app/packages/web
 RUN npm run build
 
 # Delete source code files that were used to build the app that are no longer needed
@@ -35,4 +35,4 @@ RUN rm -rf src/ static/ emailTemplates/ docker-compose.yml
 USER node:node
 
 # This is the command that will be run inside the image when you tell Docker to start the container
-CMD ["node","build/index.js"]
+CMD ["node", "build/index.js"]

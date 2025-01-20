@@ -1,18 +1,17 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:ground/ui/core/themes/colors.dart';
 import 'package:ground/ui/core/themes/icons.dart';
 import 'package:ground/ui/core/themes/radius.dart';
 import 'package:ground/ui/core/themes/spacing.dart';
 import 'package:ground/ui/core/themes/typography.dart';
 
+/// Defines the visual properties for the application.
+///
+/// This class combines various theme aspects like colors, spacing, typography,
+/// and icons into a single, cohesive theme definition. It supports both light
+/// and dark modes through the [isDark] parameter in its factory constructor.
 @immutable
-class Theme {
-  final Colors colors;
-  final Spacing spacing;
-  final Radius radius;
-  final Typography typography;
-  final Icons icons;
-
+final class Theme with Diagnosticable {
   const Theme._({
     required this.colors,
     required this.spacing,
@@ -22,7 +21,8 @@ class Theme {
   });
 
   factory Theme({required bool isDark}) {
-    final colors = isDark ? Colors.dark() : Colors.light();
+    final colors = ColorScheme(isDark: isDark);
+
     return Theme._(
       colors: colors,
       spacing: Spacing.regular,
@@ -32,9 +32,16 @@ class Theme {
     );
   }
 
+  final ColorScheme colors;
+  final Spacing spacing;
+  final Radius radius;
+  final Typography typography;
+  final Icons icons;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
+
     return other is Theme &&
         other.typography == typography &&
         other.colors == colors &&
@@ -45,4 +52,15 @@ class Theme {
 
   @override
   int get hashCode => Object.hash(colors, spacing, radius, typography, icons);
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('colors', colors))
+      ..add(DiagnosticsProperty('spacing', spacing))
+      ..add(DiagnosticsProperty('radius', radius))
+      ..add(DiagnosticsProperty('typography', typography))
+      ..add(DiagnosticsProperty('icons', icons));
+  }
 }

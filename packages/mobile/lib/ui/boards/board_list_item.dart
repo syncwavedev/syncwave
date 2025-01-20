@@ -44,7 +44,7 @@ class BoardListItem extends StatelessWidget {
                           board.name,
                           style: context.text.body.copyWith(
                             fontWeight: FontWeight.w500,
-                            height: 1.2,
+                            height: context.text.tight,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -62,6 +62,7 @@ class BoardListItem extends StatelessWidget {
                     '${board.lastAction.user} ${board.lastAction.action}',
                     style: context.text.caption.copyWith(
                       color: context.colors.inkSecondary,
+                      height: context.text.tight,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

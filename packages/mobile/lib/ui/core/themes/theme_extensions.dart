@@ -11,7 +11,7 @@ import 'icons.dart';
 
 extension BuildContextThemeX on BuildContext {
   Theme get theme => watch<ThemeController>().theme;
-  Colors get colors => theme.colors;
+  ColorScheme get colors => theme.colors;
   Spacing get spacing => theme.spacing;
   Radius get radius => theme.radius;
   Typography get text => theme.typography;

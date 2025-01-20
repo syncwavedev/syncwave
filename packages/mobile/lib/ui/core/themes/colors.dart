@@ -1,95 +1,86 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-typedef ColorScale = Map<int, Color>;
-
+/// A color scheme that adapts based on the current theme mode (light/dark).
+///
+/// This color scheme provides semantic color tokens that automatically adapt
+/// to the current theme mode. Use these tokens instead of hard-coded colors
+/// to ensure consistent theming across your application.
 @immutable
-class Colors {
-  final ColorScale gray;
-  final Color black;
-  final Color white;
+final class ColorScheme with Diagnosticable {
+  const ColorScheme({required this.isDark});
 
-  // Constants
-  static const Color alwaysBlack = Color(0xFF000000);
-  static const Color alwaysWhite = Color(0xFFFFFFFF);
+  final bool isDark;
 
-  // Semantic colors
-  late final Color bg = white;
-  late final Color border = gray[200]!;
+  Color get black => isDark ? ColorsDark.black : ColorsLight.black;
+  Color get white => isDark ? ColorsDark.white : ColorsLight.white;
 
-  late final Color ink = black;
-  late final Color inkSecondary = gray[600]!; // Darker for better contrast
-  late final Color inkMuted = gray[500]!;
-  late final Color inkReversed = white;
+  Color get alwaysBlack =>
+      isDark ? ColorsDark.alwaysBlack : ColorsLight.alwaysBlack;
+  Color get alwaysWhite =>
+      isDark ? ColorsDark.alwaysWhite : ColorsLight.alwaysWhite;
 
-  late final Color subtle1 = gray[100]!;
-  late final Color subtle2 = gray[200]!;
-  late final Color subtle3 = gray[300]!;
+  Color get bg => isDark ? ColorsDark.bg : ColorsLight.bg;
+  Color get border => isDark ? ColorsDark.border : ColorsLight.border;
 
-  Colors._({
-    required this.gray,
-    required this.black,
-    required this.white,
-  });
+  Color get ink => isDark ? ColorsDark.ink : ColorsLight.ink;
+  Color get inkSecondary =>
+      isDark ? ColorsDark.inkSecondary : ColorsLight.inkSecondary;
+  Color get inkMuted => isDark ? ColorsDark.inkMuted : ColorsLight.inkMuted;
+  Color get inkReversed =>
+      isDark ? ColorsDark.inkReversed : ColorsLight.inkReversed;
 
-  factory Colors.light() {
-    return Colors._(
-      gray: {
-        100: const Color(0xFFF7F7F7),
-        200: const Color(0xFFE5E5E5),
-        300: const Color(0xFFC9C9C9),
-        400: const Color(0xFF8F8F8F),
-        500: const Color(0xFF666666),
-        600: const Color(0xFF4D4D4D), // Added darker gray for better contrast
-      },
-      black: const Color(0xFF000000),
-      white: const Color(0xFFFFFFFF),
-    );
-  }
-
-  factory Colors.dark() {
-    return Colors._(
-      gray: {
-        100: const Color(0xFF1A1A1A),
-        200: const Color(0xFF242424),
-        300: const Color(0xFF2E2E2E),
-        400: const Color(0xFF666666), // Lightened for better contrast
-        500: const Color(0xFF888888), // Lightened for better contrast
-        600: const Color(0xFFAAAAAA), // Added lighter gray for better contrast
-      },
-      black: const Color(0xFFFFFFFF),
-      white: const Color(0xFF000000),
-    );
-  }
+  Color get subtle1 => isDark ? ColorsDark.subtle1 : ColorsLight.subtle1;
+  Color get subtle2 => isDark ? ColorsDark.subtle2 : ColorsLight.subtle2;
+  Color get subtle3 => isDark ? ColorsDark.subtle3 : ColorsLight.subtle3;
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is Colors &&
-        other.black == black &&
-        other.white == white &&
-        other.bg == bg &&
-        other.border == border &&
-        other.ink == ink &&
-        other.inkSecondary == inkSecondary &&
-        other.inkMuted == inkMuted &&
-        other.inkReversed == inkReversed &&
-        other.subtle1 == subtle1 &&
-        other.subtle2 == subtle2 &&
-        other.subtle3 == subtle3;
+    return other is ColorScheme && other.isDark == isDark;
   }
 
   @override
-  int get hashCode => Object.hash(
-        black,
-        white,
-        bg,
-        border,
-        ink,
-        inkSecondary,
-        inkMuted,
-        inkReversed,
-        subtle1,
-        subtle2,
-        subtle3,
-      );
+  int get hashCode => isDark.hashCode;
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(FlagProperty('isDark',
+        value: isDark, ifTrue: 'dark mode', ifFalse: 'light mode'));
+  }
+}
+
+@immutable
+abstract final class ColorsLight {
+  static const Color black = Color.fromRGBO(0, 0, 0, 1);
+  static const Color white = Color.fromRGBO(255, 255, 255, 1);
+  static const Color alwaysBlack = Color.fromRGBO(0, 0, 0, 1);
+  static const Color alwaysWhite = Color.fromRGBO(255, 255, 255, 1);
+  static const Color bg = white;
+  static const Color border = Color.fromRGBO(229, 229, 229, 1);
+  static const Color ink = black;
+  static const Color inkSecondary = Color.fromRGBO(77, 77, 77, 1);
+  static const Color inkMuted = Color.fromRGBO(102, 102, 102, 1);
+  static const Color inkReversed = white;
+  static const Color subtle1 = Color.fromRGBO(247, 247, 247, 1);
+  static const Color subtle2 = Color.fromRGBO(229, 229, 229, 1);
+  static const Color subtle3 = Color.fromRGBO(201, 201, 201, 1);
+}
+
+@immutable
+abstract final class ColorsDark {
+  static const Color black = Color.fromRGBO(255, 255, 255, 1);
+  static const Color white = Color.fromRGBO(0, 0, 0, 1);
+  static const Color alwaysBlack = Color.fromRGBO(0, 0, 0, 1);
+  static const Color alwaysWhite = Color.fromRGBO(255, 255, 255, 1);
+  static const Color bg = white;
+  static const Color border = Color.fromRGBO(36, 36, 36, 1);
+  static const Color ink = black;
+  static const Color inkSecondary = Color.fromRGBO(170, 170, 170, 1);
+  static const Color inkMuted = Color.fromRGBO(136, 136, 136, 1);
+  static const Color inkReversed = white;
+  static const Color subtle1 = Color.fromRGBO(26, 26, 26, 1);
+  static const Color subtle2 = Color.fromRGBO(36, 36, 36, 1);
+  static const Color subtle3 = Color.fromRGBO(46, 46, 46, 1);
 }

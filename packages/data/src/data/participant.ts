@@ -1,16 +1,19 @@
 import {z} from 'zod';
 import {DataAccessor} from './actor.js';
 import {Message} from './communication/message.js';
+import {ReconnectConnection} from './communication/reconnect-connection.js';
 import {createApi, handler, setupRpcServer} from './communication/rpc.js';
-import {Connection} from './communication/transport.js';
+import {Connection, TransportClient} from './communication/transport.js';
 import {CoordinatorClient} from './coordinator-client.js';
 import {SignInResponse, SignUpResponse} from './coordinator.js';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
 export class Participant {
     private client: CoordinatorClient;
+    private readonly connection: Connection<Message>;
 
-    constructor(private readonly connection: Connection<Message>) {
+    constructor(transport: TransportClient<Message>) {
+        this.connection = new ReconnectConnection(transport);
         this.client = new CoordinatorClient(this.connection);
         setupRpcServer(this.connection, createParticipantRpc, (_message, fn) => fn({}));
     }
@@ -33,6 +36,10 @@ export class Participant {
 
     public get db(): DataAccessor {
         return this.client.rpc;
+    }
+
+    async close(): Promise<void> {
+        await this.connection.close();
     }
 }
 

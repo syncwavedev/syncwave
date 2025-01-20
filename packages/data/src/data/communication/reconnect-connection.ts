@@ -59,11 +59,13 @@ export class ReconnectConnection<T> implements Connection<T> {
                     if (event.type === 'message') {
                         this.subject.next(event);
                     } else if (event.type === 'close') {
-                        this.connection = undefined;
-                        // reconnect
-                        this.getConnection().catch(err => {
-                            console.error('error while reconnection to the server: ', err);
-                        });
+                        if (!this.closed) {
+                            this.connection = undefined;
+                            // reconnect
+                            this.getConnection().catch(err => {
+                                console.error('error while reconnection to the server: ', err);
+                            });
+                        }
                     } else {
                         assertNever(event);
                     }

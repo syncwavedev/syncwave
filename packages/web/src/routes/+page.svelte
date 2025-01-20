@@ -5,12 +5,11 @@
 
 	import { ConsoleLogger, MsgpackrCodec, Participant, ReconnectConnection } from 'ground-data';
 	import { WsTransportClient } from '../ws-transport-client.js';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 
 	function createParticipant() {
 		const transport = new WsTransportClient({
-			url: 'wss://api-ground-dev.edme.io:443',
-			// url: 'ws://localhost:4567',
+			url: dev ? 'ws://localhost:4567' : 'wss://api-ground-dev.edme.io:443',
 			codec: new MsgpackrCodec(),
 			logger: new ConsoleLogger()
 		});

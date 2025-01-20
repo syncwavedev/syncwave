@@ -39,8 +39,10 @@
         "vitest": "^1.6.0"
     },
     "dependencies": {
+        "@aws-sdk/client-ses": "^3.731.1",
         "better-sqlite3": "^11.8.0",
         "bufferutil": "^4.0.9",
+        "dotenv": "^16.4.7",
         "foundationdb": "1",
         "ground-data": "*",
         "jsonwebtoken": "^9.0.2",

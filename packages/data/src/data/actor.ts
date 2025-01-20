@@ -164,7 +164,10 @@ export class Actor implements DataAccessor {
             const [board] = await whenAll([
                 this.boards.update(boardId, draft => {
                     if (draft.slug !== undefined) {
-                        throw new BusinessError('changing board slug is not supported');
+                        throw new BusinessError(
+                            'changing board slug is not supported',
+                            'board_change_slug_not_supported'
+                        );
                     }
 
                     // remove readonly modifier
@@ -248,7 +251,7 @@ export class Actor implements DataAccessor {
 
     private ensureAuthenticated(): UserId {
         if (this.auth.userId === undefined) {
-            throw new BusinessError('user is not authenticated');
+            throw new BusinessError('user is not authenticated', 'not_authenticated');
         }
 
         return this.auth.userId;
@@ -262,14 +265,13 @@ export class Actor implements DataAccessor {
         const meId = this.ensureAuthenticated();
         const member = await this.members.getByUserIdAndBoardId(meId, boardId);
         if (!member) {
-            throw new BusinessError(`user ${meId} does not have access to board ${boardId}`);
+            throw new BusinessError(`user ${meId} does not have access to board ${boardId}`, 'forbidden');
         }
 
         return member;
     }
 
     private async startPullLoop(): Promise<never> {
-        // eslint-disable-next-line no-constant-condition
         while (true) {
             const noChanges = unimplemented();
 

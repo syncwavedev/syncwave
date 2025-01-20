@@ -1,6 +1,6 @@
 import {LRUCache} from 'lru-cache';
 import {TransactionContext} from './data-layer.js';
-import {JwtPayload, JwtService} from './jwt-service.js';
+import {JwtPayload, JwtService} from './infra.js';
 import {UserId} from './repos/user-repo.js';
 
 export interface AuthContext {

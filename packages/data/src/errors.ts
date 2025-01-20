@@ -1,8 +1,23 @@
-export class BusinessError extends Error {}
+export type ErrorCode =
+    | 'board_slug_taken'
+    | 'identity_email_taken'
+    | 'forbidden'
+    | 'not_authenticated'
+    | 'board_change_slug_not_supported'
+    | 'aggregate';
+
+export class BusinessError extends Error {
+    constructor(
+        message: string,
+        public readonly code: ErrorCode
+    ) {
+        super(message);
+    }
+}
 
 export class AggregateBusinessError extends BusinessError {
     constructor(public readonly errors: any[]) {
-        super(`${errors.length} errors occurred:\n - ` + errors.map(getReadableError).join('\n - '));
+        super(`${errors.length} errors occurred:\n - ` + errors.map(getReadableError).join('\n - '), 'aggregate');
     }
 }
 

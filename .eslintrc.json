@@ -10,6 +10,14 @@
                 "allowModules": ["vitest"]
             }
         ],
+        "no-restricted-syntax": [
+            "error",
+            {
+                "selector": "CallExpression[callee.object.name='Promise'][callee.property.name='all']",
+                "message": "use whenAll instead (it awaits all errors)."
+            }
+        ],
+        "no-constant-condition": "off",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-namespace": "off",

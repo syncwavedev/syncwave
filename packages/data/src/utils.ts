@@ -35,6 +35,14 @@ export function assert(expression: boolean): asserts expression {
     }
 }
 
+export function assertDefined<T>(value: T | undefined | null): T {
+    if (value === null || value === undefined) {
+        throw new Error('assertion failed: value is not defined');
+    }
+
+    return value;
+}
+
 export function wait(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }

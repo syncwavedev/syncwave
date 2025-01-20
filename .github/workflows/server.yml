@@ -43,8 +43,10 @@ jobs:
 
                   if [ "dev" == "$STAGE" ]; then
                     echo "port=7202" >> $GITHUB_OUTPUT
+                    echo "jwt_secret=${{ secrets.DEV_JWT_SECRET }}"
                   elif [ "prod" == "$STAGE" ]; then
                     echo "port=7201" >> $GITHUB_OUTPUT
+                    echo "jwt_secret=${{ secrets.PROD_JWT_SECRET }}"
                   else
                     echo "Unknown stage: $STAGE"
                     exit 1
@@ -92,6 +94,10 @@ jobs:
                         -p ${{ steps.config.outputs.port }}:80 \
                         -e NODE_ENV=production \
                         -e STAGE=${{ steps.config.outputs.stage }} \
+                        -e JWT_SECRET=${{ steps.config.outputs.jwt_secret }}
+                        -e AWS_DEFAULT_REGION=${{ vars.AWS_DEFAULT_REGION }} \
+                        -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                        -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
                         -d \
                         --network phoenix \
                         --restart unless-stopped \

@@ -3,7 +3,7 @@ import {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {zTimestamp} from '../../timestamp.js';
+import {Timestamp, zTimestamp} from '../../timestamp.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, SyncTarget} from '../doc-repo.js';
@@ -16,11 +16,15 @@ export function createIdentityId(): IdentityId {
     return createUuid() as IdentityId;
 }
 
+export interface VerificationCode {
+    readonly code: number[];
+    readonly expires: Timestamp;
+}
+
 export interface Identity extends Doc<IdentityId> {
     readonly userId: UserId;
     email: string;
-    salt: string;
-    passwordHash: string;
+    verificationCode?: VerificationCode;
 }
 
 const EMAIL_INDEX = 'email';
@@ -52,8 +56,12 @@ export class IdentityRepo implements SyncTarget<Identity> {
                 updatedAt: zTimestamp(),
                 userId: zUuid<UserId>(),
                 email: z.string(),
-                salt: z.string(),
-                passwordHash: z.string(),
+                verificationCode: z
+                    .object({
+                        code: z.array(z.number()),
+                        expires: zTimestamp(),
+                    })
+                    .optional(),
             }),
         });
     }
@@ -64,8 +72,7 @@ export class IdentityRepo implements SyncTarget<Identity> {
             diff,
             createWriteableChecker({
                 email: true,
-                passwordHash: true,
-                salt: true,
+                verificationCode: true,
             })
         );
     }
@@ -87,14 +94,17 @@ export class IdentityRepo implements SyncTarget<Identity> {
             return await this.store.create(identity);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === EMAIL_INDEX) {
-                throw new EmailTakenIdentityRepoError(`board with slug ${identity.email} already exists`);
+                throw new EmailTakenIdentityRepoError(
+                    `user with email ${identity.email} already exists`,
+                    'identity_email_taken'
+                );
             }
 
             throw err;
         }
     }
 
-    update(id: IdentityId, recipe: (user: Identity) => Identity | undefined): Promise<Identity> {
+    update(id: IdentityId, recipe: (user: Identity) => Identity | void): Promise<Identity> {
         return this.store.update(id, recipe);
     }
 }

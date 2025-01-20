@@ -13,3 +13,12 @@ export interface JwtService {
     verify(token: string, secret: string): JwtPayload;
     sign(payload: JwtPayload, secret: string): string;
 }
+
+export interface CryptoService {
+    sha256(text: string): string;
+    randomBytes(length: number): Promise<Uint8Array>;
+}
+
+export interface EmailService {
+    send(recipientEmail: string, text: string): Promise<void>;
+}

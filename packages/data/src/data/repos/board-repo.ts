@@ -86,7 +86,7 @@ export class BoardRepo implements SyncTarget<Board> {
         } catch (err) {
             // todo: map errors in AggregateError
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
-                throw new BusinessError(`board with slug ${board.slug} already exists`);
+                throw new BusinessError(`board with slug ${board.slug} already exists`, 'board_slug_taken');
             }
 
             throw err;
@@ -98,7 +98,7 @@ export class BoardRepo implements SyncTarget<Board> {
             return await this.store.update(id, recipe);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
-                throw new BusinessError('board with slug already exists');
+                throw new BusinessError('board with slug already exists', 'board_slug_taken');
             }
 
             throw err;

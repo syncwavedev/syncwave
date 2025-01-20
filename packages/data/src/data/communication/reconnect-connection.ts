@@ -46,7 +46,6 @@ export class ReconnectConnection<T> implements Connection<T> {
 
         if (this.connection === undefined) {
             this.connection = (async () => {
-                // eslint-disable-next-line no-constant-condition
                 while (true) {
                     try {
                         return await this.transport.connect();

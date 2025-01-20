@@ -1,11 +1,10 @@
-import deepEqual from 'deep-equal';
 import {ZodType} from 'zod';
 import {astream, AsyncStream} from '../async-stream.js';
 import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
 import {createIndex, Index, IndexKey} from '../kv/data-index.js';
 import {Condition, Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from '../kv/kv-store.js';
 import {getNow, Timestamp} from '../timestamp.js';
-import {assert, pipe, whenAll} from '../utils.js';
+import {pipe, whenAll} from '../utils.js';
 import {Uuid, UuidCodec} from '../uuid.js';
 import {UpdateChecker} from './update-checker.js';
 
@@ -185,7 +184,6 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
     }
 
     private ensureValid(value: T) {
-        const result = this.schema.parse(value);
-        assert(deepEqual(result, value));
+        this.schema.parse(value);
     }
 }

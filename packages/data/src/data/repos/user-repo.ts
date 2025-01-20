@@ -13,9 +13,7 @@ export function createUserId(): UserId {
     return createUuid() as UserId;
 }
 
-export interface User extends Doc<UserId> {
-    name: string;
-}
+export interface User extends Doc<UserId> {}
 
 export class UserRepo implements SyncTarget<User> {
     private readonly store: DocRepo<User>;

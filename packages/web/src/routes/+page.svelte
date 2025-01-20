@@ -10,6 +10,7 @@
 	function createParticipant() {
 		const transport = new WsTransportClient({
 			url: 'wss://api-ground-dev.edme.io:443',
+			// url: 'ws://localhost:4567',
 			codec: new MsgpackrCodec(),
 			logger: new ConsoleLogger()
 		});
@@ -21,20 +22,13 @@
 	export const participant = createParticipant();
 
 	$effect(() => {
-		(async () => {
-			await participant.signUp('tilyupo@gmail.com', '123456');
-			const token = await participant.signIn('tilyupo@gmail.com', '123456');
-			assert(token.type === 'success');
-			participant.authenticate(token.token);
-
-			// await participant.db.createBoard({
-			//     boardId: createBoardId(),
-			//     name: 'test',
-			//     slug: 'super slug 10',
-			// });
-			const board = await participant.db.getMyBoards({});
-			console.log({ board });
-		})();
+		// participant.sendSignInEmail('tilyupo@gmail.com');
+		participant
+			.verifySignInCode(
+				'tilyupo@gmail.com',
+				'236550'.split('').map((x) => +x)
+			)
+			.then((x) => console.log(x));
 	});
 
 	onDestroy(() => {

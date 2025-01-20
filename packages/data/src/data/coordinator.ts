@@ -1,17 +1,17 @@
 import {z} from 'zod';
 import {Uint8KVStore} from '../kv/kv-store.js';
-import {getNow} from '../timestamp.js';
+import {addHours, getNow} from '../timestamp.js';
+import {arrayEqual, whenAll} from '../utils.js';
 import {zUuid} from '../uuid.js';
 import {Actor, DataAccessor} from './actor.js';
 import {AuthContext, AuthContextParser} from './auth-context.js';
 import {Message} from './communication/message.js';
 import {createApi, handler, setupRpcServer} from './communication/rpc.js';
 import {Connection, TransportServer} from './communication/transport.js';
-import {Crypto} from './crypto.js';
 import {DataLayer, TransactionContext} from './data-layer.js';
-import {JwtService} from './jwt-service.js';
+import {CryptoService, EmailService, JwtService} from './infra.js';
 import {BoardId} from './repos/board-repo.js';
-import {EmailTakenIdentityRepoError, Identity, createIdentityId} from './repos/identity-repo.js';
+import {Identity, VerificationCode, createIdentityId} from './repos/identity-repo.js';
 import {TaskId} from './repos/task-repo.js';
 import {UserId, createUserId} from './repos/user-repo.js';
 
@@ -22,7 +22,8 @@ export class Coordinator {
         private readonly transport: TransportServer<Message>,
         kv: Uint8KVStore,
         private readonly jwt: JwtService,
-        private readonly crypto: Crypto,
+        private readonly crypto: CryptoService,
+        private readonly email: EmailService,
         jwtSecret: string
     ) {
         this.dataLayer = new DataLayer(kv, jwtSecret);
@@ -39,52 +40,56 @@ export class Coordinator {
     private handleConnection(conn: Connection<Message>): void {
         const authContextParser = new AuthContextParser(4, this.jwt);
         setupRpcServer(conn, createCoordinatorApi, async (message, fn) => {
-            return await this.dataLayer.transaction(async ctx => {
+            let effects: Array<() => Promise<void>> = [];
+            const result = await this.dataLayer.transaction(async ctx => {
+                effects = [];
                 const auth = authContextParser.parse(ctx, message.headers?.auth);
-                return await fn({ctx, auth, jwt: this.jwt, crypto: this.crypto});
+                return await fn({
+                    ctx,
+                    auth,
+                    jwt: this.jwt,
+                    crypto: this.crypto,
+                    emailService: this.email,
+                    enqueueEffect: effect => effects.push(effect),
+                });
             });
+            await whenAll(effects.map(effect => effect()));
+            return result;
         });
     }
 }
 
-export interface BaseSignInResponse<TType extends string> {
+export interface BaseVerifySignInCodeResponse<TType extends string> {
     readonly type: TType;
 }
 
-export interface SuccessSignInResponse extends BaseSignInResponse<'success'> {
+export interface SuccessVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'success'> {
     readonly token: string;
 }
 
-export interface UserNotFoundSignInResponse extends BaseSignInResponse<'user_not_found'> {}
+export interface InvalidCodeVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'invalid_code'> {}
 
-export interface PasswordInvalidSignInResponse extends BaseSignInResponse<'password_invalid'> {}
+export interface CodeExpiredVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'code_expired'> {}
 
-export type SignInResponse = SuccessSignInResponse | UserNotFoundSignInResponse | PasswordInvalidSignInResponse;
-
-export interface BaseSignUpResponse<TType extends string> {
-    readonly type: TType;
-}
-
-export interface SuccessSignUpResponse extends BaseSignUpResponse<'success'> {
-    readonly token: string;
-}
-
-export interface EmailTakenSignUpResponse extends BaseSignUpResponse<'email_taken'> {}
-
-export interface PasswordTooShortSignUpResponse extends BaseSignUpResponse<'password_too_short'> {}
-
-export type SignUpResponse = SuccessSignUpResponse | EmailTakenSignUpResponse | PasswordTooShortSignUpResponse;
+export type VerifySignInCodeResponse =
+    | SuccessVerifySignInCodeResponse
+    | InvalidCodeVerifySignInCodeResponse
+    | CodeExpiredVerifySignInCodeResponse;
 
 function createCoordinatorApi({
     ctx,
     auth,
     jwt,
     crypto,
+    emailService,
+    enqueueEffect,
 }: {
     ctx: TransactionContext;
     auth: AuthContext;
     jwt: JwtService;
-    crypto: Crypto;
+    crypto: CryptoService;
+    emailService: EmailService;
+    enqueueEffect: (cb: () => Promise<void>) => void;
 }) {
     const actor: Actor = new Actor(ctx.txn, auth, {type: 'coordinator'});
 
@@ -158,70 +163,85 @@ function createCoordinatorApi({
                 return identities;
             },
         }),
-        signIn: handler({
+        sendSignInEmail: handler({
             schema: z.object({
                 email: z.string(),
-                password: z.string(),
             }),
-            handle: async ({email, password}): Promise<SignInResponse> => {
+            handle: async ({email}): Promise<{}> => {
+                const buf = await crypto.randomBytes(6);
+                const verificationCode: VerificationCode = {
+                    code: Array.from(buf).map(x => x % 10),
+                    // verification token expires after one hour
+                    expires: addHours(getNow(), 1),
+                };
+
                 const identity = await ctx.identities.getByEmail(email);
-                if (!identity) {
-                    return {type: 'user_not_found' as const};
+                if (identity) {
+                    await ctx.identities.update(identity.id, x => {
+                        x.verificationCode = verificationCode;
+                    });
+                } else {
+                    const now = getNow();
+                    const userId = createUserId();
+                    await whenAll([
+                        ctx.users.create({
+                            id: userId,
+                            createdAt: now,
+                            updatedAt: now,
+                        }),
+                        ctx.identities.create({
+                            id: createIdentityId(),
+                            createdAt: now,
+                            updatedAt: now,
+                            email,
+                            userId,
+                            verificationCode,
+                        }),
+                    ]);
                 }
 
-                const passwordHash = computePasswordHash(crypto, identity.salt, password);
-                if (identity.passwordHash !== passwordHash) {
-                    return {type: 'password_invalid' as const};
-                }
+                enqueueEffect(async () => {
+                    await emailService.send(
+                        email,
+                        `Hi,
+There was a request to sign into your Ground account!
 
-                return {
-                    type: 'success' as const,
-                    token: createToken(jwt, identity, ctx.config.jwtSecret),
-                };
-            },
-        }),
-        signUp: handler({
-            schema: z.object({
-                email: z.string(),
-                password: z.string(),
-            }),
-            handle: async ({email, password}): Promise<SignUpResponse> => {
-                if (password.length < 6) {
-                    return {type: 'password_too_short'};
-                }
+If you did not make this request then please ignore this email.
 
-                const salt = Math.random().toString().split('.')[1];
-                const passwordHash = computePasswordHash(crypto, salt, password);
-
-                const now = getNow();
-                const userId = createUserId();
-
-                const identity: Identity = {
-                    id: createIdentityId(),
-                    createdAt: now,
-                    updatedAt: now,
-                    email,
-                    salt,
-                    passwordHash,
-                    userId,
-                };
-                try {
-                    await ctx.identities.create(identity);
-                } catch (err) {
-                    if (err instanceof EmailTakenIdentityRepoError) {
-                        return {type: 'email_taken'};
-                    }
-                }
-
-                await ctx.users.create({
-                    id: userId,
-                    createdAt: now,
-                    updatedAt: now,
-                    name: 'anon',
+Your one-time code is: ${verificationCode.code.join('')}`
+                    );
                 });
 
+                return {};
+            },
+        }),
+        verifySignInCode: handler({
+            schema: z.object({
+                email: z.string(),
+                code: z.array(z.number()),
+            }),
+            handle: async ({email, code}): Promise<VerifySignInCodeResponse> => {
+                const identity = await ctx.identities.getByEmail(email);
+                if (!identity) {
+                    throw new Error('invalid email, no identity found');
+                }
+
+                console.log({code, verificationCode: identity.verificationCode});
+
+                if (identity.verificationCode === undefined) {
+                    throw new Error('verification code was not requested');
+                }
+
+                if (getNow() > identity.verificationCode.expires) {
+                    return {type: 'code_expired'};
+                }
+
+                if (!arrayEqual(code, identity.verificationCode.code)) {
+                    return {type: 'invalid_code'};
+                }
+
                 return {
-                    type: 'success' as const,
+                    type: 'success',
                     token: createToken(jwt, identity, ctx.config.jwtSecret),
                 };
             },
@@ -252,10 +272,6 @@ function createToken(jwt: JwtService, identity: Identity, jwtSecret: string) {
         } satisfies JwtPayload,
         jwtSecret
     );
-}
-
-function computePasswordHash(crypto: Crypto, salt: string, password: string) {
-    return crypto.sha256(`${salt}:${password}`);
 }
 
 export type CoordinatorApi = ReturnType<typeof createCoordinatorApi>;

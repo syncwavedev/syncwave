@@ -20,15 +20,15 @@ export const appConfig: AppConfig = (() => {
 		return {
 			googleClientId:
 				'848724615154-dt9ejfs9rfu1vfhkvlk19pg6rbvnue9u.apps.googleusercontent.com',
-			apiUrl: 'http://localhost:4567',
-			serverWsUrl: 'ws://localhost:4567'
+			apiUrl: 'https://api-ground-dev.edme.io',
+			serverWsUrl: 'wss://api-ground-dev.edme.io'
 		};
 	} else if (PUBLIC_STAGE === 'prod') {
 		return {
 			googleClientId:
 				'848724615154-0ln8g1cq9iiddeqtlgv1qfcqf0snbrng.apps.googleusercontent.com',
-			apiUrl: 'http://localhost:4567',
-			serverWsUrl: 'ws://localhost:4567'
+			apiUrl: 'https://api-ground-prod.edme.io',
+			serverWsUrl: 'wss://api-ground-prod.edme.io'
 		};
 	} else {
 		throw new Error(`unknown stage: ${PUBLIC_STAGE}`);

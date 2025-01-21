@@ -24,6 +24,9 @@ RUN npm ci
 WORKDIR /app/packages/data
 RUN npm run build
 
+# Build the web
+WORKDIR /app/packages/web
+
 ARG STAGE
 RUN if [ -z "$STAGE" ]; then \
       echo "Error: STAGE argument is required."; \
@@ -31,8 +34,6 @@ RUN if [ -z "$STAGE" ]; then \
     fi && \
     echo "PUBLIC_STAGE=$STAGE" > /app/.env
 
-# Build the web
-WORKDIR /app/packages/web
 RUN npm run build
 
 # Delete source code files that were used to build the app that are no longer needed

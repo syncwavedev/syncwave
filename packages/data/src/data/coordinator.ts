@@ -226,8 +226,6 @@ Your one-time code is: ${verificationCode.code.join('')}`
                     throw new Error('invalid email, no identity found');
                 }
 
-                console.log({code, verificationCode: identity.verificationCode});
-
                 if (identity.verificationCode === undefined) {
                     throw new Error('verification code was not requested');
                 }

@@ -13,7 +13,9 @@
         "test": "npm test --workspaces",
         "build": "npm run build --workspaces",
         "dev": "run-p dev:*",
-        "dev:ground-data": "npm run dev --workspace=qustar"
+        "dev:server": "npm run dev --workspace=ground-server",
+        "dev:web": "npm run dev --workspace=ground-web",
+        "dev:data": "npm run dev --workspace=ground-data"
     },
     "devDependencies": {
         "concurrently": "^8.2.2",
@@ -29,7 +31,6 @@
         "vitest": "^2.0.5"
     },
     "dependencies": {
-        "it-pushable": "^3.2.3",
-        "ts-node": "^10.9.2"
+        "it-pushable": "^3.2.3"
     }
 }

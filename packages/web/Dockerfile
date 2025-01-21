@@ -31,8 +31,8 @@ ARG STAGE
 RUN if [ -z "$STAGE" ]; then \
       echo "Error: STAGE argument is required."; \
       exit 1; \
-    fi && \
-    echo "PUBLIC_STAGE=$STAGE" > /app/.env
+    fi
+ENV PUBLIC_STAGE=$STAGE
 
 RUN npm run build
 

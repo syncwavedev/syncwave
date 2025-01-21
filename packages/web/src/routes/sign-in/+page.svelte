@@ -3,9 +3,8 @@
 
 	const state = { redirectUrl: '/' };
 	const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
-	const apiUrl = 'http://localhost:4567';
 	const options = {
-		redirect_uri: `${apiUrl}/callbacks/google`,
+		redirect_uri: `${appConfig.apiUrl}/callbacks/google`,
 		client_id: appConfig.googleClientId,
 		access_type: 'offline',
 		response_type: 'code',

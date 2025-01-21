@@ -13,17 +13,21 @@ class HomeScreen extends StatelessWidget {
     return NavigationStack(
       title: 'Boards',
       leading: Avatar(name: 'Andrei', size: context.icons.lg),
-      bottomBar: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: context.spacing.md,
-          vertical: context.spacing.sm,
-        ),
-        child: Text(
-          '30 boards',
-          style: context.text.small.copyWith(
-            color: context.colors.inkSecondary,
+      bottomBar: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.spacing.md,
+              vertical: context.spacing.sm,
+            ),
+            child: Text(
+              '30 boards',
+              style: context.text.small.copyWith(
+                color: context.colors.inkSecondary,
+              ),
+            ),
           ),
-        ),
+        ],
       ),
       // trailing: const [ThemeToggleButton()],
       child: BoardList(

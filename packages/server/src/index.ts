@@ -39,8 +39,8 @@ const {APP_URL, GOOGLE_REDIRECT_URL} = (() => {
         };
     } else if (STAGE === 'prod') {
         return {
-            APP_URL: 'https://www-ground-prod.edme.io',
-            GOOGLE_REDIRECT_URL: 'https://api-ground-prod.edme.io' + GOOGLE_CALLBACK_PATH,
+            APP_URL: 'https://www-ground.edme.io',
+            GOOGLE_REDIRECT_URL: 'https://api-ground.edme.io' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'local') {
         return {

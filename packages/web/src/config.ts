@@ -27,8 +27,8 @@ export const appConfig: AppConfig = (() => {
 		return {
 			googleClientId:
 				'848724615154-0ln8g1cq9iiddeqtlgv1qfcqf0snbrng.apps.googleusercontent.com',
-			apiUrl: 'https://api-ground-prod.edme.io',
-			serverWsUrl: 'wss://api-ground-prod.edme.io'
+			apiUrl: 'https://api-ground.edme.io',
+			serverWsUrl: 'wss://api-ground.edme.io'
 		};
 	} else {
 		throw new Error(`unknown stage: ${PUBLIC_STAGE}`);

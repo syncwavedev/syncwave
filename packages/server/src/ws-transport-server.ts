@@ -9,12 +9,13 @@ import {
     TransportServer,
     Unsubscribe,
 } from 'ground-data';
+import {Server} from 'http';
 import {WebSocket, WebSocketServer} from 'ws';
 
 export interface WsTransportServerOptions<T> {
-    readonly port: number;
     readonly codec: Codec<T>;
     readonly logger: Logger;
+    readonly server: Server;
 }
 
 export class WsTransportServer<T> implements TransportServer<T> {
@@ -23,14 +24,14 @@ export class WsTransportServer<T> implements TransportServer<T> {
     constructor(private readonly opt: WsTransportServerOptions<T>) {}
 
     launch(cb: (connection: Connection<T>) => void): Promise<void> {
-        this.wss = new WebSocketServer({port: this.opt.port});
-
-        const listening = new Deferred<void>();
+        this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', (ws: WebSocket) => {
             const connection = new WsConnection<T>(ws, this.opt.codec, this.opt.logger);
             cb(connection);
         });
+
+        const listening = new Deferred<void>();
 
         this.wss.on('listening', () => {
             listening.resolve();

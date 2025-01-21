@@ -7,13 +7,13 @@ on:
             - .github/workflows/web.yml
     workflow_dispatch:
         inputs:
-            stage:
+            STAGE:
                 description: 'Stage to deploy (dev|prod)'
                 required: true
                 default: 'prod'
 
 name: web
-concurrency: ${{ github.workflow }}_${{ github.event.inputs.stage || 'dev' }}
+concurrency: ${{ github.workflow }}_${{ github.event.inputs.STAGE || 'dev' }}
 
 permissions:
     contents: read
@@ -32,21 +32,21 @@ jobs:
             - name: Evaluate stage config
               id: config
               run: |
-                  if [ -z "${{ github.event.inputs.stage }}" ]; then
+                  if [ -z "${{ github.event.inputs.STAGE }}" ]; then
                     STAGE=dev
                   else
-                    STAGE=${{ github.event.inputs.stage }}
+                    STAGE=${{ github.event.inputs.STAGE }}
                   fi
 
-                  echo "stage=$STAGE" >> $GITHUB_OUTPUT
-                  echo "tag=${{ github.run_number }}-${{ github.run_attempt }}-$STAGE" >> $GITHUB_OUTPUT
+                  echo "STAGE=$STAGE" >> $GITHUB_OUTPUT
+                  echo "TAG=${{ github.run_number }}-${{ github.run_attempt }}-$STAGE" >> $GITHUB_OUTPUT
 
                   if [ "dev" == "$STAGE" ]; then
-                    echo "port=7212" >> $GITHUB_OUTPUT
+                    echo "PORT=7212" >> $GITHUB_OUTPUT
                   elif [ "prod" == "$STAGE" ]; then
-                    echo "port=7211" >> $GITHUB_OUTPUT
+                    echo "PORT=7211" >> $GITHUB_OUTPUT
                   else
-                    echo "Unknown stage: $STAGE"
+                    echo "Unknown STAGE: $STAGE"
                     exit 1
                   fi
 
@@ -63,9 +63,10 @@ jobs:
             - uses: docker/build-push-action@v2
               with:
                   push: true
-                  tags: ghcr.io/groundhq/ground-web:${{ steps.config.outputs.tag }}
+                  tags: ghcr.io/groundhq/ground-web:${{ steps.config.outputs.TAG }}
                   context: '.'
                   file: ./packages/web/Dockerfile
+                  build-args: STAGE=${{ steps.config.outputs.STAGE }}
                   cache-from: type=registry,ref=ghcr.io/groundhq/ground-web:cache
                   cache-to: type=registry,mode=max,ref=ghcr.io/groundhq/ground-web:cache
 
@@ -73,7 +74,7 @@ jobs:
               if: success()
               uses: appleboy/ssh-action@v0.1.7
               with:
-                  host: ${{ vars.HOST }}
+                  host: ${{ secrets.HOST }}
                   username: ${{ secrets.HOST_USERNAME }}
                   key: ${{ secrets.HOST_KEY }}
                   port: 22
@@ -83,15 +84,15 @@ jobs:
 
                       docker system prune -af --filter until=30m
 
-                      docker pull ghcr.io/groundhq/ground-web:${{ steps.config.outputs.tag }}
+                      docker pull ghcr.io/groundhq/ground-web:${{ steps.config.outputs.TAG }}
 
-                      docker stop ground-web-${{ steps.config.outputs.stage }} || true
-                      docker rm ground-web-${{ steps.config.outputs.stage }} || true
+                      docker stop ground-web-${{ steps.config.outputs.STAGE }} || true
+                      docker rm ground-web-${{ steps.config.outputs.STAGE }} || true
                       docker run \
-                        --name ground-web-${{ steps.config.outputs.stage }} \
-                        -p ${{ steps.config.outputs.port }}:3000 \
+                        --name ground-web-${{ steps.config.outputs.STAGE }} \
+                        -p ${{ steps.config.outputs.PORT }}:3000 \
                         -e NODE_ENV=production \
-                        -e STATE=${{ steps.config.outputs.stage }} \
+                        -e PUBLIC_STATE=${{ steps.config.outputs.STAGE }} \
                         -d \
                         --restart unless-stopped \
-                        ghcr.io/groundhq/ground-web:${{ steps.config.outputs.tag }}
+                        ghcr.io/groundhq/ground-web:${{ steps.config.outputs.TAG }}

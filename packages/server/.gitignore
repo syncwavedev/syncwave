@@ -1,4 +1,4 @@
 test.sqlite
 dev.sqlite
 /.env
-!/.env.sample
+!/.env.example

@@ -1,1 +1,1 @@
-docker build --platform linux/amd64 -t tilyupo/test -f ./Dockerfile ../..
+docker build --platform linux/amd64 --build-arg STAGE=dev -t tilyupo/test -f ./Dockerfile ../..

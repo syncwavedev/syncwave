@@ -31,6 +31,13 @@ RUN npm run build
 # Delete source code files that were used to build the app that are no longer needed
 RUN rm -rf src/ static/ emailTemplates/ docker-compose.yml
 
+ARG STAGE
+RUN if [ -z "$STAGE" ]; then \
+      echo "Error: STAGE argument is required."; \
+      exit 1; \
+    fi && \
+    echo "PUBLIC_STAGE=$STAGE" > /app/.env
+
 # The USER instruction sets the user name to use as the default user for the remainder of the current stage
 USER node:node
 

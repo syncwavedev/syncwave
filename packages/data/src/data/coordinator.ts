@@ -24,7 +24,7 @@ export class Coordinator {
         private readonly jwt: JwtService,
         private readonly crypto: CryptoService,
         private readonly email: EmailService,
-        jwtSecret: string
+        private readonly jwtSecret: string
     ) {
         this.dataLayer = new DataLayer(kv, jwtSecret);
     }
@@ -35,6 +35,26 @@ export class Coordinator {
 
     close() {
         this.transport.close();
+    }
+
+    async issueJwtByUserEmail(email: string): Promise<string> {
+        return await this.dataLayer.transaction(async ctx => {
+            let identity = await ctx.identities.getByEmail(email);
+            if (!identity) {
+                const userId = createUserId();
+                const now = getNow();
+                identity = {
+                    id: createIdentityId(),
+                    createdAt: now,
+                    email,
+                    updatedAt: now,
+                    userId,
+                };
+                await ctx.identities.create(identity);
+            }
+
+            return signJwtToken(this.jwt, identity, this.jwtSecret);
+        });
     }
 
     private handleConnection(conn: Connection<Message>): void {
@@ -240,7 +260,7 @@ Your one-time code is: ${verificationCode.code.join('')}`
 
                 return {
                     type: 'success',
-                    token: createToken(jwt, identity, ctx.config.jwtSecret),
+                    token: signJwtToken(jwt, identity, ctx.config.jwtSecret),
                 };
             },
         }),
@@ -255,18 +275,21 @@ Your one-time code is: ${verificationCode.code.join('')}`
 interface JwtPayload {
     sub: string;
     exp: number;
-    user_id: UserId;
+    uid: UserId;
+    iat: number;
 }
 
-function createToken(jwt: JwtService, identity: Identity, jwtSecret: string) {
-    const exp = new Date();
+function signJwtToken(jwt: JwtService, identity: Identity, jwtSecret: string) {
+    const now = new Date();
+    const exp = new Date(now.getTime());
     exp.setFullYear(exp.getFullYear() + 50);
 
     return jwt.sign(
         {
             sub: identity.id.toString(),
             exp: Math.trunc(exp.getTime() / 1000),
-            user_id: identity.userId,
+            uid: identity.userId,
+            iat: Math.trunc(now.getDate() / 1000),
         } satisfies JwtPayload,
         jwtSecret
     );

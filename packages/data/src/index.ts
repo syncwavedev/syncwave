@@ -1,4 +1,5 @@
 export {astream} from './async-stream.js';
+export {GetGoogleUserResult, GoogleOptions, GoogleUser, getGoogleUser} from './auth/google.js';
 export {MsgpackrCodec, NumberCodec, StringCodec, type Codec} from './codec.js';
 export * from './constants.js';
 export {Crdt} from './crdt/crdt.js';
@@ -39,4 +40,4 @@ export {
 export {MappedKVStore} from './kv/mapped-kv-store.js';
 export {PrefixedKVStore} from './kv/prefixed-kv-store.js';
 export {ConsoleLogger, type Logger} from './logger.js';
-export {Subject, assert, assertDefined, assertNever, whenAll, type Unsubscribe} from './utils.js';
+export {Subject, assert, assertDefined, assertNever, unimplemented, whenAll, type Unsubscribe} from './utils.js';

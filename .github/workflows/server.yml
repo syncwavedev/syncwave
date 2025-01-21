@@ -7,13 +7,13 @@ on:
             - .github/workflows/server.yml
     workflow_dispatch:
         inputs:
-            stage:
+            STAGE:
                 description: 'Stage to deploy (dev|prod)'
                 required: true
                 default: 'prod'
 
 name: server
-concurrency: ${{ github.workflow }}_${{ github.event.inputs.stage || 'dev' }}
+concurrency: ${{ github.workflow }}_${{ github.event.inputs.STAGE || 'dev' }}
 
 permissions:
     contents: read
@@ -32,23 +32,35 @@ jobs:
             - name: Evaluate stage config
               id: config
               run: |
-                  if [ -z "${{ github.event.inputs.stage }}" ]; then
+                  if [ -z "${{ github.event.inputs.STAGE }}" ]; then
                     STAGE=dev
                   else
-                    STAGE=${{ github.event.inputs.stage }}
+                    STAGE=${{ github.event.inputs.STAGE }}
                   fi
 
-                  echo "stage=$STAGE" >> $GITHUB_OUTPUT
-                  echo "tag=${{ github.run_number }}-${{ github.run_attempt }}-$STAGE" >> $GITHUB_OUTPUT
+                  echo "STAGE=$STAGE" >> $GITHUB_OUTPUT
+                  echo "TAG=${{ github.run_number }}-${{ github.run_attempt }}-$STAGE" >> $GITHUB_OUTPUT
 
                   if [ "dev" == "$STAGE" ]; then
-                    echo "port=7202" >> $GITHUB_OUTPUT
-                    echo "jwt_secret=${{ secrets.DEV_JWT_SECRET }}" >> $GITHUB_OUTPUT
+                    echo "PORT=7202" >> $GITHUB_OUTPUT
+                    echo "JWT_SECRET=${{ secrets.JWT_SECRET_DEV }}" >> $GITHUB_OUTPUT
+                    echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
+                    echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_DEV }}" >> $GITHUB_OUTPUT
+
+                    echo "AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> $GITHUB_OUTPUT
+                    echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+                    echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
                   elif [ "prod" == "$STAGE" ]; then
-                    echo "port=7201" >> $GITHUB_OUTPUT
-                    echo "jwt_secret=${{ secrets.PROD_JWT_SECRET }}" >> $GITHUB_OUTPUT
+                    echo "PORT=7201" >> $GITHUB_OUTPUT
+                    echo "JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}" >> $GITHUB_OUTPUT
+                    echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PROD }}" >> $GITHUB_OUTPUT
+                    echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}" >> $GITHUB_OUTPUT
+
+                    echo "AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> $GITHUB_OUTPUT
+                    echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+                    echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
                   else
-                    echo "Unknown stage: $STAGE"
+                    echo "Unknown STAGE: $STAGE"
                     exit 1
                   fi
 
@@ -65,7 +77,7 @@ jobs:
             - uses: docker/build-push-action@v2
               with:
                   push: true
-                  tags: ghcr.io/groundhq/ground-server:${{ steps.config.outputs.tag }}
+                  tags: ghcr.io/groundhq/ground-server:${{ steps.config.outputs.TAG }}
                   context: '.'
                   file: ./packages/server/Dockerfile
                   cache-from: type=registry,ref=ghcr.io/groundhq/ground-server:cache
@@ -75,7 +87,7 @@ jobs:
               if: success()
               uses: appleboy/ssh-action@v0.1.7
               with:
-                  host: ${{ vars.HOST }}
+                  host: ${{ secrets.HOST }}
                   username: ${{ secrets.HOST_USERNAME }}
                   key: ${{ secrets.HOST_KEY }}
                   port: 22
@@ -85,20 +97,22 @@ jobs:
 
                       docker system prune -af --filter until=30m
 
-                      docker pull ghcr.io/groundhq/ground-server:${{ steps.config.outputs.tag }}
+                      docker pull ghcr.io/groundhq/ground-server:${{ steps.config.outputs.TAG }}
 
-                      docker stop ground-server-${{ steps.config.outputs.stage }} || true
-                      docker rm ground-server-${{ steps.config.outputs.stage }} || true
+                      docker stop ground-server-${{ steps.config.outputs.STAGE }} || true
+                      docker rm ground-server-${{ steps.config.outputs.STAGE }} || true
                       docker run \
-                        --name ground-server-${{ steps.config.outputs.stage }} \
-                        -p ${{ steps.config.outputs.port }}:80 \
+                        --name ground-server-${{ steps.config.outputs.STAGE }} \
+                        -p ${{ steps.config.outputs.PORT }}:80 \
                         -e NODE_ENV=production \
-                        -e STAGE=${{ steps.config.outputs.stage }} \
-                        -e JWT_SECRET=${{ steps.config.outputs.jwt_secret }} \
-                        -e AWS_DEFAULT_REGION=${{ vars.AWS_DEFAULT_REGION }} \
-                        -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-                        -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                        -e STAGE=${{ steps.config.outputs.STAGE }} \
+                        -e JWT_SECRET=${{ steps.config.outputs.JWT_SECRET }} \
+                        -e GOOGLE_CLIENT_ID=${{ steps.config.outputs.GOOGLE_CLIENT_ID }} \
+                        -e GOOGLE_CLIENT_SECRET=${{ steps.config.outputs.GOOGLE_CLIENT_SECRET }} \
+                        -e AWS_DEFAULT_REGION=${{ steps.config.outputs.AWS_DEFAULT_REGION }} \
+                        -e AWS_ACCESS_KEY_ID=${{ steps.config.outputs.AWS_ACCESS_KEY_ID }} \
+                        -e AWS_SECRET_ACCESS_KEY=${{ steps.config.outputs.AWS_SECRET_ACCESS_KEY }} \
                         -d \
                         --network phoenix \
                         --restart unless-stopped \
-                        ghcr.io/groundhq/ground-server:${{ steps.config.outputs.tag }}
+                        ghcr.io/groundhq/ground-server:${{ steps.config.outputs.TAG }}

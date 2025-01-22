@@ -1,9 +1,16 @@
 {
+	"bracketSpacing": false,
+	"arrowParens": "avoid",
+
 	"useTabs": true,
 	"singleQuote": true,
-	"trailingComma": "none",
+	"trailingComma": "es5",
 	"printWidth": 100,
-	"plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
+	"plugins": [
+		"prettier-plugin-svelte",
+		"prettier-plugin-tailwindcss",
+		"prettier-plugin-organize-imports"
+	],
 	"overrides": [
 		{
 			"files": "*.svelte",

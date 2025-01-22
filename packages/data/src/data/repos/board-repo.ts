@@ -80,7 +80,7 @@ export class BoardRepo implements SyncTarget<Board> {
         return existingBoard === undefined;
     }
 
-    async create(board: Board): Promise<void> {
+    async create(board: Board): Promise<Board> {
         try {
             return await this.store.create(board);
         } catch (err) {

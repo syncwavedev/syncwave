@@ -181,7 +181,7 @@ function createCoordinatorApi({
         }),
     } satisfies DataAccessor);
 
-    async function checkNeedsCooldown(identity: Identity): Promise<boolean> {
+    async function needsCooldown(identity: Identity): Promise<boolean> {
         const cutoff = addHours(getNow(), -AUTH_ACTIVITY_WINDOW_HOURS);
         const actions = identity.authActivityLog.filter(x => x > cutoff);
         return actions.length >= AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT;
@@ -231,7 +231,7 @@ function createCoordinatorApi({
                     ]);
                 }
 
-                if (await checkNeedsCooldown(identity)) {
+                if (await needsCooldown(identity)) {
                     return {type: 'cooldown'};
                 }
 
@@ -241,15 +241,29 @@ function createCoordinatorApi({
                 });
 
                 enqueueEffect(async () => {
-                    await emailService.send(
-                        email,
-                        `Hi,
-There was a request to sign into your Ground account!
+                    await emailService.send({
+                        recipient: email,
+                        html: `<p>
+                                    Hi there!<br />
+                                    <br />
+                                    We noticed a request to sign into your Ground account.<br />
+                                    If this wasn’t you, no worries—just ignore this email.<br />
+                                    <br />
+                                    Your one-time code is: <strong>${verificationCode.code}</strong><br />
+                                    <br />
+                                    Have a great day!<br />
+                                    The Ground Team
+                                </p>`,
+                        subject: 'Your Ground Account Sign-In Code',
+                        text: `Hi there!
+                    
+We noticed a request to sign into your Ground account. If this wasn't you, no worries—just ignore this email.
 
-If you did not make this request then please ignore this email.
+Your one-time code is: ${verificationCode.code}
 
-Your one-time code is: ${verificationCode.code}`
-                    );
+Have a great day!
+The Ground Team`,
+                    });
                 });
 
                 return {type: 'success'};
@@ -267,7 +281,7 @@ Your one-time code is: ${verificationCode.code}`
                     throw new Error('invalid email, no identity found');
                 }
 
-                if (await checkNeedsCooldown(identity)) {
+                if (await needsCooldown(identity)) {
                     return {type: 'cooldown'};
                 }
 

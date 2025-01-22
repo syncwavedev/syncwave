@@ -19,6 +19,13 @@ export interface CryptoService {
     randomBytes(length: number): Promise<Uint8Array>;
 }
 
+export interface EmailMessage {
+    recipient: string;
+    subject: string;
+    text: string;
+    html: string;
+}
+
 export interface EmailService {
-    send(recipientEmail: string, text: string): Promise<void>;
+    send(message: EmailMessage): Promise<void>;
 }

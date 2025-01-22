@@ -14,7 +14,7 @@ export type {
     TransportServer,
 } from './data/communication/transport.js';
 export {Coordinator} from './data/coordinator.js';
-export type {CryptoService, EmailService, JwtPayload, JwtService} from './data/infra.js';
+export type {CryptoService, EmailMessage, EmailService, JwtPayload, JwtService} from './data/infra.js';
 export {Participant} from './data/participant.js';
 export {Board, createBoardId} from './data/repos/board-repo.js';
 export {Identity, createIdentityId} from './data/repos/identity-repo.js';

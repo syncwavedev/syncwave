@@ -76,7 +76,7 @@ export class TaskRepo implements SyncTarget<Task> {
         return this.store.get(BOARD_ID, [boardId]);
     }
 
-    create(user: Task): Promise<void> {
+    create(user: Task): Promise<Task> {
         return this.store.create(user);
     }
 

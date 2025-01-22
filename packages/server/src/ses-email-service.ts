@@ -1,5 +1,5 @@
 import {SendEmailCommand, SESClient} from '@aws-sdk/client-ses';
-import {EmailService} from 'ground-data';
+import {EmailMessage, EmailService} from 'ground-data';
 
 export class SesEmailService implements EmailService {
     private readonly ses: SESClient;
@@ -10,20 +10,23 @@ export class SesEmailService implements EmailService {
         });
     }
 
-    async send(recipientEmail: string, text: string): Promise<void> {
+    async send({html, recipient, subject, text}: EmailMessage): Promise<void> {
         await this.ses.send(
             new SendEmailCommand({
                 Destination: {
-                    ToAddresses: [recipientEmail],
+                    ToAddresses: [recipient],
                 },
                 Source: 'Ground <noreply@edme.io>',
                 Message: {
                     Subject: {
-                        Data: 'Sign in into your account',
+                        Data: subject,
                     },
                     Body: {
                         Text: {
                             Data: text,
+                        },
+                        Html: {
+                            Data: html,
                         },
                     },
                 },

@@ -59,7 +59,7 @@ export class MemberRepo implements SyncTarget<Member> {
         );
     }
 
-    create(member: Member): Promise<void> {
+    create(member: Member): Promise<Member> {
         return this.store.create(member);
     }
 

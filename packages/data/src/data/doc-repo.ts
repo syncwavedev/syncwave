@@ -153,7 +153,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         this.ensureValid(next);
     }
 
-    async create(doc: T): Promise<void> {
+    async create(doc: T): Promise<T> {
         const existing = await this.primary.get(doc.id);
         if (existing) {
             throw new Error(`doc ${doc.id} already exists`);
@@ -162,6 +162,8 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         const now = getNow();
         const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
         await whenAll([this.primary.put(doc.id, crdt), this._sync(doc.id, undefined, doc, crdt.state())]);
+
+        return crdt.snapshot();
     }
 
     private _index(indexName: string): Index<T> {

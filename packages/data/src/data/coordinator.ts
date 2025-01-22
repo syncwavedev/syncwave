@@ -1,8 +1,8 @@
 import {z} from 'zod';
-import {COOLDOWN_HOURS, ONE_TIME_CODE_ATTEMPTS} from '../constants.js';
+import {AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT, AUTH_ACTIVITY_WINDOW_HOURS} from '../constants.js';
 import {Uint8KVStore} from '../kv/kv-store.js';
-import {Timestamp, addHours, getNow} from '../timestamp.js';
-import {assertNever, whenAll} from '../utils.js';
+import {addHours, getNow} from '../timestamp.js';
+import {whenAll} from '../utils.js';
 import {zUuid} from '../uuid.js';
 import {Actor, DataAccessor} from './actor.js';
 import {AuthContext, AuthContextParser} from './auth-context.js';
@@ -50,7 +50,8 @@ export class Coordinator {
                     email,
                     updatedAt: now,
                     userId,
-                    verificationAttemptsLeft: ONE_TIME_CODE_ATTEMPTS,
+                    verificationCode: await createVerificationCode(this.crypto),
+                    authActivityLog: [],
                 };
                 await ctx.identities.create(identity);
             }
@@ -93,9 +94,7 @@ export interface InvalidCodeVerifySignInCodeResponse extends BaseVerifySignInCod
 
 export interface CodeExpiredVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'code_expired'> {}
 
-export interface CooldownVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'cooldown'> {
-    readonly until: Timestamp;
-}
+export interface CooldownVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'cooldown'> {}
 
 export type VerifySignInCodeResponse =
     | SuccessVerifySignInCodeResponse
@@ -182,23 +181,17 @@ function createCoordinatorApi({
         }),
     } satisfies DataAccessor);
 
-    async function checkIdentityCooldown(
-        identity: Identity
-    ): Promise<{type: 'cooldown'; until: Timestamp} | {type: 'ok'; identity: Identity}> {
-        if (identity.cooldownUntil) {
-            if (identity.cooldownUntil > getNow()) {
-                return {type: 'cooldown', until: identity.cooldownUntil};
-            } else {
-                const updatedIdentity = await ctx.identities.update(identity.id, x => {
-                    x.cooldownUntil = undefined;
-                    x.verificationAttemptsLeft = ONE_TIME_CODE_ATTEMPTS;
-                });
+    async function checkNeedsCooldown(identity: Identity): Promise<boolean> {
+        const cutoff = addHours(getNow(), -AUTH_ACTIVITY_WINDOW_HOURS);
+        const actions = identity.authActivityLog.filter(x => x > cutoff);
+        return actions.length >= AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT;
+    }
 
-                return {type: 'ok', identity: updatedIdentity};
-            }
+    function pushActivityLog(x: Identity) {
+        x.authActivityLog.push(getNow());
+        if (x.authActivityLog.length > AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT) {
+            x.authActivityLog = x.authActivityLog.slice(-AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT);
         }
-
-        return {type: 'ok', identity};
     }
 
     const authApi = createApi({
@@ -212,39 +205,15 @@ function createCoordinatorApi({
             schema: z.object({
                 email: z.string(),
             }),
-            handle: async ({email}): Promise<{type: 'success'} | {type: 'cooldown'; until: Timestamp}> => {
-                const buf = await crypto.randomBytes(6);
-                const verificationCode: VerificationCode = {
-                    code: Array.from(buf)
-                        .map(x => x % 10)
-                        .join(''),
-                    // verification token expires after one hour
-                    expires: addHours(getNow(), 1),
-                };
+            handle: async ({email}): Promise<{type: 'success'} | {type: 'cooldown'}> => {
+                const verificationCode = await createVerificationCode(crypto);
 
                 let identity = await ctx.identities.getByEmail(email);
-                if (identity) {
-                    const result = await checkIdentityCooldown(identity);
-                    if (result.type === 'ok') {
-                        identity = result.identity;
-                    } else if (result.type === 'cooldown') {
-                        return result;
-                    } else {
-                        assertNever(result);
-                    }
-
-                    await ctx.identities.update(identity.id, x => {
-                        x.verificationCode = verificationCode;
-                    });
-                } else {
+                if (!identity) {
                     const now = getNow();
                     const userId = createUserId();
-                    await whenAll([
-                        ctx.users.create({
-                            id: userId,
-                            createdAt: now,
-                            updatedAt: now,
-                        }),
+
+                    [identity] = await whenAll([
                         ctx.identities.create({
                             id: createIdentityId(),
                             createdAt: now,
@@ -252,10 +221,24 @@ function createCoordinatorApi({
                             email,
                             userId,
                             verificationCode,
-                            verificationAttemptsLeft: ONE_TIME_CODE_ATTEMPTS,
+                            authActivityLog: [],
+                        }),
+                        ctx.users.create({
+                            id: userId,
+                            createdAt: now,
+                            updatedAt: now,
                         }),
                     ]);
                 }
+
+                if (await checkNeedsCooldown(identity)) {
+                    return {type: 'cooldown'};
+                }
+
+                await ctx.identities.update(identity.id, x => {
+                    x.verificationCode = verificationCode;
+                    pushActivityLog(x);
+                });
 
                 enqueueEffect(async () => {
                     await emailService.send(
@@ -279,18 +262,13 @@ Your one-time code is: ${verificationCode.code}`
             }),
             handle: async ({email, code}): Promise<VerifySignInCodeResponse> => {
                 console.log({email, code});
-                let identity = await ctx.identities.getByEmail(email);
+                const identity = await ctx.identities.getByEmail(email);
                 if (!identity) {
                     throw new Error('invalid email, no identity found');
                 }
 
-                const result = await checkIdentityCooldown(identity);
-                if (result.type === 'ok') {
-                    identity = result.identity;
-                } else if (result.type === 'cooldown') {
-                    return result;
-                } else {
-                    assertNever(result);
+                if (await checkNeedsCooldown(identity)) {
+                    return {type: 'cooldown'};
                 }
 
                 if (identity.verificationCode === undefined) {
@@ -301,16 +279,8 @@ Your one-time code is: ${verificationCode.code}`
                     return {type: 'code_expired'};
                 }
 
-                if (identity.verificationAttemptsLeft <= 0) {
-                    const cooldownUntil = addHours(getNow(), COOLDOWN_HOURS);
-                    await ctx.identities.update(identity.id, x => {
-                        x.cooldownUntil = cooldownUntil;
-                    });
-                    return {type: 'cooldown', until: cooldownUntil};
-                }
-
                 await ctx.identities.update(identity.id, x => {
-                    x.verificationAttemptsLeft -= 1;
+                    pushActivityLog(x);
                 });
 
                 if (code !== identity.verificationCode.code) {
@@ -352,6 +322,17 @@ async function signJwtToken(jwt: JwtService, identity: Identity, jwtSecret: stri
         } satisfies JwtPayload,
         jwtSecret
     );
+}
+
+async function createVerificationCode(crypto: CryptoService): Promise<VerificationCode> {
+    const buf = await crypto.randomBytes(6);
+    return {
+        code: Array.from(buf)
+            .map(x => x % 10)
+            .join(''),
+        // verification token expires after one hour
+        expires: addHours(getNow(), 1),
+    };
 }
 
 export type CoordinatorApi = ReturnType<typeof createCoordinatorApi>;

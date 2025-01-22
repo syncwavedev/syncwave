@@ -46,7 +46,7 @@ export class UserRepo implements SyncTarget<User> {
         return this.store.getById(id);
     }
 
-    create(user: User): Promise<void> {
+    async create(user: User): Promise<User> {
         return this.store.create(user);
     }
 

@@ -24,9 +24,8 @@ export interface VerificationCode {
 export interface Identity extends Doc<IdentityId> {
     readonly userId: UserId;
     email: string;
-    verificationCode?: VerificationCode;
-    verificationAttemptsLeft: number;
-    cooldownUntil?: Timestamp;
+    verificationCode: VerificationCode;
+    authActivityLog: Timestamp[];
 }
 
 const EMAIL_INDEX = 'email';
@@ -58,14 +57,11 @@ export class IdentityRepo implements SyncTarget<Identity> {
                 updatedAt: zTimestamp(),
                 userId: zUuid<UserId>(),
                 email: z.string(),
-                verificationCooldownUntil: zTimestamp().optional(),
-                verificationAttemptsLeft: z.number(),
-                verificationCode: z
-                    .object({
-                        code: z.string(),
-                        expires: zTimestamp(),
-                    })
-                    .optional(),
+                authActivityLog: z.array(zTimestamp()),
+                verificationCode: z.object({
+                    code: z.string(),
+                    expires: zTimestamp(),
+                }),
             }),
         });
     }
@@ -77,8 +73,7 @@ export class IdentityRepo implements SyncTarget<Identity> {
             createWriteableChecker({
                 email: true,
                 verificationCode: true,
-                verificationAttemptsLeft: true,
-                cooldownUntil: true,
+                authActivityLog: true,
             })
         );
     }
@@ -95,7 +90,7 @@ export class IdentityRepo implements SyncTarget<Identity> {
         return this.store.getUnique(USER_ID_INDEX, [userId]);
     }
 
-    async create(identity: Identity): Promise<void> {
+    async create(identity: Identity): Promise<Identity> {
         try {
             return await this.store.create(identity);
         } catch (err) {

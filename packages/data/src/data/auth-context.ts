@@ -1,6 +1,6 @@
 import {LRUCache} from 'lru-cache';
 import {TransactionContext} from './data-layer.js';
-import {JwtPayload, JwtService} from './infra.js';
+import {JwtService} from './infra.js';
 import {UserId} from './repos/user-repo.js';
 
 export interface AuthContext {
@@ -17,14 +17,14 @@ export class AuthContextParser {
         this.authContextCache = new LRUCache<string, AuthContext>({max: cacheSize});
     }
 
-    parse(ctx: TransactionContext, jwtToken: string | undefined): AuthContext {
+    async parse(ctx: TransactionContext, jwtToken: string | undefined): Promise<AuthContext> {
         if (typeof jwtToken === 'string') {
             const result = this.authContextCache.get(jwtToken);
             if (result) {
                 return result;
             }
 
-            const jwtPayload: JwtPayload = this.jwt.verify(jwtToken, ctx.config.jwtSecret);
+            const jwtPayload = await this.jwt.verify(jwtToken, ctx.config.jwtSecret);
             const authContext: AuthContext = {
                 userId: jwtPayload.user_id,
             };

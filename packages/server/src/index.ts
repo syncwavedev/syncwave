@@ -73,8 +73,23 @@ const crypto: CryptoService = {
 };
 
 const jwtService: JwtService = {
-    verify: (token, secret) => jwt.verify(token, secret) as JwtPayload,
-    sign: (payload, secret) => jwt.sign(payload, secret),
+    verify: (token, secret) =>
+        new Promise((resolve, reject) => {
+            jwt.verify(token, secret, (err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                resolve(result as JwtPayload);
+            });
+        }),
+    sign: (payload, secret) =>
+        new Promise((resolve, reject) => {
+            jwt.sign(payload, secret, (err, result) => {
+                if (err) return reject(err);
+                resolve(result!);
+            });
+        }),
 };
 
 async function getKVStore(): Promise<Uint8KVStore> {

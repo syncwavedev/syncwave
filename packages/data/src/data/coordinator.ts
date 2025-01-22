@@ -65,7 +65,7 @@ export class Coordinator {
             let effects: Array<() => Promise<void>> = [];
             const result = await this.dataLayer.transaction(async ctx => {
                 effects = [];
-                const auth = authContextParser.parse(ctx, message.headers?.auth);
+                const auth = await authContextParser.parse(ctx, message.headers?.auth);
                 return await fn({
                     ctx,
                     auth,
@@ -319,7 +319,7 @@ Your one-time code is: ${verificationCode.code}`
 
                 return {
                     type: 'success',
-                    token: signJwtToken(jwt, identity, ctx.config.jwtSecret),
+                    token: await signJwtToken(jwt, identity, ctx.config.jwtSecret),
                 };
             },
         }),
@@ -338,12 +338,12 @@ interface JwtPayload {
     iat: number;
 }
 
-function signJwtToken(jwt: JwtService, identity: Identity, jwtSecret: string) {
+async function signJwtToken(jwt: JwtService, identity: Identity, jwtSecret: string) {
     const now = new Date();
     const exp = new Date(now.getTime());
     exp.setFullYear(exp.getFullYear() + 50);
 
-    return jwt.sign(
+    return await jwt.sign(
         {
             sub: identity.id.toString(),
             exp: Math.trunc(exp.getTime() / 1000),

@@ -237,7 +237,6 @@ describe('DocStore with MemKVStore', () => {
         // but we have helpers that pass raw numbers (due to withValueCodec, etc).
         // So let's see how to do a range query:
         const ageGte15: Condition<IndexKey> = {gte: [15]};
-        const ageLte25: Condition<IndexKey> = {lte: [25]};
 
         const docsBetween15And25 = await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});

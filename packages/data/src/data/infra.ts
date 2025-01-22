@@ -10,8 +10,8 @@ export interface JwtPayload {
 }
 
 export interface JwtService {
-    verify(token: string, secret: string): JwtPayload;
-    sign(payload: JwtPayload, secret: string): string;
+    verify(token: string, secret: string): Promise<JwtPayload>;
+    sign(payload: JwtPayload, secret: string): Promise<string>;
 }
 
 export interface CryptoService {

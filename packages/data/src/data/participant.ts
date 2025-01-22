@@ -5,7 +5,6 @@ import {ReconnectConnection} from './communication/reconnect-connection.js';
 import {createApi, handler, setupRpcServer} from './communication/rpc.js';
 import {Connection, TransportClient} from './communication/transport.js';
 import {CoordinatorClient} from './coordinator-client.js';
-import {VerifySignInCodeResponse} from './coordinator.js';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
 export class Participant {
@@ -21,11 +20,11 @@ export class Participant {
         setupRpcServer(this.connection, createParticipantRpc, (_message, fn) => fn({}));
     }
 
-    async sendSignInEmail(email: string): Promise<void> {
-        await this.coordinator.rpc.sendSignInEmail({email});
+    async sendSignInEmail(email: string) {
+        return await this.coordinator.rpc.sendSignInEmail({email});
     }
 
-    async verifySignInCode(email: string, code: number[]): Promise<VerifySignInCodeResponse> {
+    async verifySignInCode(email: string, code: string) {
         return await this.coordinator.rpc.verifySignInCode({email, code});
     }
 

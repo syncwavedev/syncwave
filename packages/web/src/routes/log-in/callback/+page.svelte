@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { unimplemented } from 'ground-data';
-	import { goto } from '$app/navigation';
-	import { getUniversalStore } from '$lib/utils';
+	import type {PageProps} from './$types';
+	import {unimplemented} from 'ground-data';
+	import {goto} from '$app/navigation';
+	import {getUniversalStore, showErrorToast} from '$lib/utils';
 
-	const { data }: PageProps = $props();
-	const { token, redirectUrl } = data;
+	const {data}: PageProps = $props();
+	const {token, redirectUrl} = data;
 
 	if (token) {
 		const store = getUniversalStore();
@@ -17,6 +17,7 @@
 	if (redirectUrl) {
 		goto(redirectUrl);
 	} else {
-		unimplemented();
+		goto(`/log-in?redirectUrl=${encodeURIComponent(redirectUrl ?? '/')}`);
+		showErrorToast();
 	}
 </script>

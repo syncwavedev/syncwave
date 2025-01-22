@@ -17,7 +17,7 @@ export function createIdentityId(): IdentityId {
 }
 
 export interface VerificationCode {
-    readonly code: number[];
+    readonly code: string;
     readonly expires: Timestamp;
 }
 
@@ -25,6 +25,8 @@ export interface Identity extends Doc<IdentityId> {
     readonly userId: UserId;
     email: string;
     verificationCode?: VerificationCode;
+    verificationAttemptsLeft: number;
+    cooldownUntil?: Timestamp;
 }
 
 const EMAIL_INDEX = 'email';
@@ -56,9 +58,11 @@ export class IdentityRepo implements SyncTarget<Identity> {
                 updatedAt: zTimestamp(),
                 userId: zUuid<UserId>(),
                 email: z.string(),
+                verificationCooldownUntil: zTimestamp().optional(),
+                verificationAttemptsLeft: z.number(),
                 verificationCode: z
                     .object({
-                        code: z.array(z.number()),
+                        code: z.string(),
                         expires: zTimestamp(),
                     })
                     .optional(),
@@ -73,6 +77,8 @@ export class IdentityRepo implements SyncTarget<Identity> {
             createWriteableChecker({
                 email: true,
                 verificationCode: true,
+                verificationAttemptsLeft: true,
+                cooldownUntil: true,
             })
         );
     }

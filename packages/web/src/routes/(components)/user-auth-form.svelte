@@ -1,10 +1,13 @@
 <script lang="ts">
-	import {LoaderCircle} from 'lucide-svelte';
+	import {CircleAlert, LoaderCircle} from 'lucide-svelte';
 	import {Button} from '$lib/components/ui/button/index.js';
 	import {Input} from '$lib/components/ui/input/index.js';
 	import {Label} from '$lib/components/ui/label/index.js';
 	import {cn, getSdk} from '$lib/utils.js';
-	import {appConfig} from '../../config';
+	import {appConfig} from '../../lib/config';
+	import AuthFooter from './auth-footer.svelte';
+	import {goto} from '$app/navigation';
+	import * as Alert from '$lib/components/ui/alert/index.js';
 
 	const googleSignInUrl = (() => {
 		const authState = {redirectUrl: '/'};
@@ -27,9 +30,10 @@
 
 	interface Props {
 		variant: 'log-in' | 'sign-up';
+		redirectUrl: string;
 	}
 
-	const {variant}: Props = $props();
+	const {variant, redirectUrl}: Props = $props();
 	const titleText = variant === 'log-in' ? 'Welcome back!' : 'Create an account';
 	const descText =
 		variant === 'log-in'
@@ -39,16 +43,23 @@
 	const sdk = getSdk();
 
 	let email = $state('');
+	let error: 'cooldown' | undefined = $state();
 
 	let isLoading = $state(false);
 	async function onSubmit(e: Event) {
 		e.preventDefault();
-
-		const timeoutId = setTimeout(() => (isLoading = true), 500);
+		isLoading = true;
+		error = undefined;
 		try {
-			await sdk.sendSignInEmail(email);
+			const result = await sdk.sendSignInEmail(email);
+			if (result.type === 'success') {
+				goto(
+					`/log-in/code?redirectUrl=${encodeURIComponent(redirectUrl)}&email=${encodeURIComponent(email)}`
+				);
+			} else {
+				error = result.type;
+			}
 		} finally {
-			clearTimeout(timeoutId);
 			isLoading = false;
 		}
 	}
@@ -88,6 +99,16 @@
 			</Button>
 		</div>
 	</form>
+
+	{#if error === 'cooldown'}
+		<Alert.Root variant="destructive">
+			<CircleAlert class="size-4" />
+			<Alert.Description
+				>Oops! Too many attempts. Please wait a few hours before trying again.</Alert.Description
+			>
+		</Alert.Root>
+	{/if}
+
 	<div class="relative">
 		<div class="absolute inset-0 flex items-center">
 			<span class="w-full border-t"></span>
@@ -106,10 +127,4 @@
 	</Button>
 </div>
 
-<p class="text-muted-foreground px-8 text-center text-sm">
-	By clicking continue, you agree to our
-	<a href="/terms" class="hover:text-primary underline underline-offset-4"> Terms of Service </a>
-	and
-	<a href="/privacy" class="hover:text-primary underline underline-offset-4"> Privacy Policy </a>
-	.
-</p>
+<AuthFooter />

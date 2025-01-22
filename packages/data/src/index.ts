@@ -40,4 +40,4 @@ export {
 export {MappedKVStore} from './kv/mapped-kv-store.js';
 export {PrefixedKVStore} from './kv/prefixed-kv-store.js';
 export {ConsoleLogger, type Logger} from './logger.js';
-export {Subject, assert, assertDefined, assertNever, unimplemented, whenAll, type Unsubscribe} from './utils.js';
+export {Subject, assert, assertDefined, assertNever, unimplemented, wait, whenAll, type Unsubscribe} from './utils.js';

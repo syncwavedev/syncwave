@@ -142,8 +142,6 @@ function setupRouter(coordinator: () => Coordinator, router: Router) {
     router.get('/callbacks/google', async ctx => {
         const {code, state} = ctx.query;
 
-        console.log({code, state});
-
         if (typeof code !== 'string') {
             return ctx.redirect(`${APP_URL}/log-in/failed`);
         }

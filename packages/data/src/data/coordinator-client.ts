@@ -14,6 +14,8 @@ export class CoordinatorClient {
     }
 
     get rpc(): CoordinatorApi {
-        return createRpcClient<CoordinatorApi>(this.connection, () => ({auth: this.token})) satisfies DataAccessor;
+        return createRpcClient<CoordinatorApi>(this.connection, () => ({
+            auth: this.token,
+        })) satisfies DataAccessor;
     }
 }

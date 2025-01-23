@@ -1,12 +1,12 @@
-import {Uuid} from '../uuid.js';
-
 interface BaseOpLogEntry<TType extends string> {
     readonly type: TType;
     readonly subject: any;
 }
 
 type Method<T extends {prototype: any}> = {
-    [K in keyof T['prototype']]: T['prototype'][K] extends (...args: any) => any ? K : never;
+    [K in keyof T['prototype']]: T['prototype'][K] extends (...args: any) => any
+        ? K
+        : never;
 }[keyof T['prototype']];
 
 interface BaseArrayLog<TMethod extends Extract<Method<typeof Array>, string>>
@@ -23,7 +23,8 @@ interface ArraySetLog extends BaseOpLogEntry<'array_set'> {
     readonly value: any;
 }
 
-interface BaseMapLog<TMethod extends Extract<Method<typeof Map>, string>> extends BaseOpLogEntry<`map_${TMethod}`> {
+interface BaseMapLog<TMethod extends Extract<Method<typeof Map>, string>>
+    extends BaseOpLogEntry<`map_${TMethod}`> {
     readonly args: Parameters<(typeof Map.prototype)[TMethod]>;
 }
 
@@ -65,7 +66,10 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     return original;
                 }
 
-                const method = prop as Exclude<Extract<keyof Array<any>, string | symbol>, 'length'>;
+                const method = prop as Exclude<
+                    Extract<keyof Array<any>, string | symbol>,
+                    'length'
+                >;
 
                 if (
                     method === Symbol.iterator ||
@@ -107,7 +111,9 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     method === 'sort' ||
                     method === 'splice'
                 ) {
-                    throw new Error('unsupported array modification: ' + method);
+                    throw new Error(
+                        'unsupported array modification: ' + method
+                    );
                 } else if (method === 'push') {
                     return (...args: any[]) => {
                         log.push({type: 'array_push', args, subject});
@@ -132,7 +138,9 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
             },
             set(target, prop, value, receiver) {
                 if (typeof prop !== 'string' || !Number.isInteger(+prop)) {
-                    throw new Error('unsupported array modification: set ' + prop.toString());
+                    throw new Error(
+                        'unsupported array modification: set ' + prop.toString()
+                    );
                 }
 
                 const index = +prop.toString();
@@ -148,7 +156,12 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     value,
                 });
 
-                return Reflect.set(target, prop, createProxy(value, log), receiver);
+                return Reflect.set(
+                    target,
+                    prop,
+                    createProxy(value, log),
+                    receiver
+                );
             },
             deleteProperty(target, prop) {
                 throw new Error('delete is an unsupported array modification');
@@ -157,68 +170,88 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
     );
 }
 
-function createMapProxy<T>(subject: Map<string, T>, log: OpLog): Map<string, T> {
-    return new Proxy(new Map([...subject.entries()].map(([key, value]) => [key, createProxy(value, log)])), {
-        get(target, prop) {
-            // skip receiver because of the private fields in Map
-            const original = Reflect.get(target, prop);
+function createMapProxy<T>(
+    subject: Map<string, T>,
+    log: OpLog
+): Map<string, T> {
+    return new Proxy(
+        new Map(
+            [...subject.entries()].map(([key, value]) => [
+                key,
+                createProxy(value, log),
+            ])
+        ),
+        {
+            get(target, prop) {
+                // skip receiver because of the private fields in Map
+                const original = Reflect.get(target, prop);
 
-            const method = prop as Exclude<keyof Map<string, T>, 'size'>;
+                const method = prop as Exclude<keyof Map<string, T>, 'size'>;
 
-            if (
-                method === Symbol.iterator ||
-                method === Symbol.toStringTag ||
-                method === 'get' ||
-                method === 'has' ||
-                method === 'entries' ||
-                method === 'keys' ||
-                method === 'values' ||
-                method === 'forEach'
-            ) {
-                // read methods, no logs needed
-                return (...args: any) => {
-                    return original.apply(target, args);
-                };
-            } else if (method === 'set') {
-                return (key: string, value: any) => {
-                    log.push({
-                        type: 'map_set',
-                        subject,
-                        args: [key, value],
-                    });
-                    return original.apply(target, [key, createProxy(value, log)]);
-                };
-            } else if (method === 'delete') {
-                return (...args: [string]) => {
-                    log.push({
-                        type: 'map_delete',
-                        subject,
-                        args,
-                    });
-                    return original.apply(target, args);
-                };
-            } else if (method === 'clear') {
-                return (...args: []) => {
-                    log.push({
-                        type: 'map_clear',
-                        subject,
-                        args,
-                    });
-                    return original.apply(target, args);
-                };
-            } else {
-                const _: never = method;
-            }
+                if (
+                    method === Symbol.iterator ||
+                    method === Symbol.toStringTag ||
+                    method === 'get' ||
+                    method === 'has' ||
+                    method === 'entries' ||
+                    method === 'keys' ||
+                    method === 'values' ||
+                    method === 'forEach'
+                ) {
+                    // read methods, no logs needed
+                    return (...args: any) => {
+                        return original.apply(target, args);
+                    };
+                } else if (method === 'set') {
+                    return (key: string, value: any) => {
+                        log.push({
+                            type: 'map_set',
+                            subject,
+                            args: [key, value],
+                        });
+                        return original.apply(target, [
+                            key,
+                            createProxy(value, log),
+                        ]);
+                    };
+                } else if (method === 'delete') {
+                    return (...args: [string]) => {
+                        log.push({
+                            type: 'map_delete',
+                            subject,
+                            args,
+                        });
+                        return original.apply(target, args);
+                    };
+                } else if (method === 'clear') {
+                    return (...args: []) => {
+                        log.push({
+                            type: 'map_clear',
+                            subject,
+                            args,
+                        });
+                        return original.apply(target, args);
+                    };
+                } else {
+                    const _: never = method;
+                }
 
-            return original;
-        },
-        set(target, prop, newValue, receiver) {
-            throw new Error('unsupported map modification: direct set of property ' + prop.toString());
-        },
-        deleteProperty(target, prop) {
-            throw new Error('unsupported map modification: delete of property ' + prop.toString());
-        },
-    });
+                return original;
+            },
+            set(target, prop, newValue, receiver) {
+                throw new Error(
+                    'unsupported map modification: direct set of property ' +
+                        prop.toString()
+                );
+            },
+            deleteProperty(target, prop) {
+                throw new Error(
+                    'unsupported map modification: delete of property ' +
+                        prop.toString()
+                );
+            },
+        }
+    );
 }
 
 function createObjectProxy<T extends object>(subject: T, log: OpLog): T {
@@ -229,7 +262,12 @@ function createObjectProxy<T extends object>(subject: T, log: OpLog): T {
 
     return new Proxy(proxySubject, {
         set(target, prop, value, receiver) {
-            const result = Reflect.set(target, prop, createProxy(value, log), receiver);
+            const result = Reflect.set(
+                target,
+                prop,
+                createProxy(value, log),
+                receiver
+            );
 
             if (typeof prop === 'symbol') {
                 throw new Error('symbols as object keys are not supported');
@@ -269,8 +307,7 @@ function createProxy<T>(value: T, log: OpLog): T {
         typeof value === 'string' ||
         typeof value === 'boolean' ||
         value === undefined ||
-        value === null ||
-        value.constructor === Uuid
+        value === null
     ) {
         return value;
     } else if (value.constructor === Map) {

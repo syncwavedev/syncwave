@@ -200,7 +200,9 @@ describe('MemKVStore', () => {
             throw new Error('Simulated permanent failure');
         });
 
-        await expect(kvStore.transaction(async () => {})).rejects.toThrow('Simulated permanent failure');
+        await expect(kvStore.transaction(async () => {})).rejects.toThrow(
+            'Simulated permanent failure'
+        );
     });
 
     it('should handle transaction rollback on failure', async () => {
@@ -303,7 +305,12 @@ describe('MemLocker', () => {
         expect(fn1).toHaveBeenCalledTimes(1);
         expect(fn2).toHaveBeenCalledTimes(1);
 
-        expect(executionOrder).toEqual(['fn1_start', 'fn2_start', 'fn2_end', 'fn1_end']);
+        expect(executionOrder).toEqual([
+            'fn1_start',
+            'fn2_start',
+            'fn2_end',
+            'fn1_end',
+        ]);
 
         expect(results).toEqual(['result1', 'result2']);
     });
@@ -373,7 +380,14 @@ describe('MemLocker', () => {
         expect(fn2).toHaveBeenCalledTimes(1);
         expect(fn3).toHaveBeenCalledTimes(1);
 
-        expect(executionOrder).toEqual(['fn1_start', 'fn2_start', 'fn2_end', 'fn1_end', 'fn3_start', 'fn3_end']);
+        expect(executionOrder).toEqual([
+            'fn1_start',
+            'fn2_start',
+            'fn2_end',
+            'fn1_end',
+            'fn3_start',
+            'fn3_end',
+        ]);
 
         expect(results).toEqual(['result1', 'result2', 'result3']);
     });
@@ -396,7 +410,15 @@ describe('MemLocker', () => {
         const results = await whenAll(promises);
 
         expect(fn).toHaveBeenCalledTimes(5);
-        expect(executionOrder).toEqual([1, 101, 2, 102, 3, 103, 4, 104, 5, 105]);
-        expect(results).toEqual(['result1', 'result2', 'result3', 'result4', 'result5']);
+        expect(executionOrder).toEqual([
+            1, 101, 2, 102, 3, 103, 4, 104, 5, 105,
+        ]);
+        expect(results).toEqual([
+            'result1',
+            'result2',
+            'result3',
+            'result4',
+            'result5',
+        ]);
     });
 });

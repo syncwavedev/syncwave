@@ -91,7 +91,9 @@ describe('Topic', () => {
         await store.transaction(async txn => {
             const topic = new Topic(txn, jsonCodec);
 
-            await topic.push(...Array.from({length: 1000}, (_, i) => ({value: i})));
+            await topic.push(
+                ...Array.from({length: 1000}, (_, i) => ({value: i}))
+            );
 
             const results: TopicEntry<any>[] = [];
             for await (const entry of topic.list(990, 1000)) {

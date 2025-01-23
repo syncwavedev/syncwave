@@ -11,12 +11,21 @@ export interface GoogleUser {
     readonly picture?: unknown;
 }
 
-export type GetGoogleUserResult = {type: 'success'; user: GoogleUser} | {type: 'error'};
+export type GetGoogleUserResult =
+    | {type: 'success'; user: GoogleUser}
+    | {type: 'error'};
 
-export async function getGoogleUser(code: string, options: GoogleOptions): Promise<GetGoogleUserResult> {
+export async function getGoogleUser(
+    code: string,
+    options: GoogleOptions
+): Promise<GetGoogleUserResult> {
     const {clientId, clientSecret, redirectUri} = options;
     try {
-        const tokens = await getTokens(code, {clientId, clientSecret, redirectUri});
+        const tokens = await getTokens(code, {
+            clientId,
+            clientSecret,
+            redirectUri,
+        });
         const user = await fetch(
             `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${tokens.access_token}`,
             {

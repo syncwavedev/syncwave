@@ -1,8 +1,16 @@
 import {StringCodec} from '../codec.js';
 import {compareUint8Array, concatBuffers} from '../utils.js';
-import {Condition, Entry, KVStore, Transaction, mapCondition} from './kv-store.js';
+import {
+    Condition,
+    Entry,
+    KVStore,
+    Transaction,
+    mapCondition,
+} from './kv-store.js';
 
-export class PrefixedTransaction<TValue> implements Transaction<Uint8Array, TValue> {
+export class PrefixedTransaction<TValue>
+    implements Transaction<Uint8Array, TValue>
+{
     private readonly prefix: Uint8Array;
 
     constructor(
@@ -20,15 +28,25 @@ export class PrefixedTransaction<TValue> implements Transaction<Uint8Array, TVal
         return this.target.get(concatBuffers(this.prefix, key));
     }
 
-    async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, TValue>> {
-        const prefixedCondition = mapCondition<Uint8Array, Condition<Uint8Array>>(condition, {
+    async *query(
+        condition: Condition<Uint8Array>
+    ): AsyncIterable<Entry<Uint8Array, TValue>> {
+        const prefixedCondition = mapCondition<
+            Uint8Array,
+            Condition<Uint8Array>
+        >(condition, {
             gt: cond => ({gt: concatBuffers(this.prefix, cond.gt)}),
             gte: cond => ({gte: concatBuffers(this.prefix, cond.gte)}),
             lt: cond => ({lt: concatBuffers(this.prefix, cond.lt)}),
             lte: cond => ({lte: concatBuffers(this.prefix, cond.lte)}),
         });
         for await (const {key, value} of this.target.query(prefixedCondition)) {
-            if (compareUint8Array(key.slice(0, this.prefix.length), this.prefix) !== 0) {
+            if (
+                compareUint8Array(
+                    key.slice(0, this.prefix.length),
+                    this.prefix
+                ) !== 0
+            ) {
                 return;
             }
 
@@ -59,7 +77,11 @@ export class PrefixedKVStore<TValue> implements KVStore<Uint8Array, TValue> {
         }
     }
 
-    async transaction<TResult>(fn: (txn: Transaction<Uint8Array, TValue>) => Promise<TResult>): Promise<TResult> {
-        return await this.target.transaction(txn => fn(new PrefixedTransaction(txn, this.prefix)));
+    async transaction<TResult>(
+        fn: (txn: Transaction<Uint8Array, TValue>) => Promise<TResult>
+    ): Promise<TResult> {
+        return await this.target.transaction(txn =>
+            fn(new PrefixedTransaction(txn, this.prefix))
+        );
     }
 }

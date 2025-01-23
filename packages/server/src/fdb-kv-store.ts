@@ -31,7 +31,9 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
         return new Uint8Array(val);
     }
 
-    async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
+    async *query(
+        condition: Condition<Uint8Array>
+    ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         const bigKey = Buffer.from([255]);
         const smallKey = Buffer.from(new Uint8Array([]));
         const [start, end, reverse] = mapCondition<
@@ -60,7 +62,9 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
             ],
         });
 
-        for await (const [kBuf, vBuf] of this.txn.getRange(start, end, {reverse})) {
+        for await (const [kBuf, vBuf] of this.txn.getRange(start, end, {
+            reverse,
+        })) {
             yield {
                 key: new Uint8Array(kBuf),
                 value: new Uint8Array(vBuf),
@@ -84,11 +88,15 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
         this.db = fdb.open(clusterFilePath);
     }
 
-    async transaction<TResult>(fn: (txn: Uint8Transaction) => Promise<TResult>): Promise<TResult> {
+    async transaction<TResult>(
+        fn: (txn: Uint8Transaction) => Promise<TResult>
+    ): Promise<TResult> {
         return this.db.doTransaction(async nativeTxn => {
             const wrappedTxn = new FoundationDBUint8Transaction(nativeTxn);
             // we use prefix to avoid reserved range starting with 0xff
-            const prefixedTxn = withPrefix(new Uint8Array([MAGIC_BYTE]))(wrappedTxn);
+            const prefixedTxn = withPrefix(new Uint8Array([MAGIC_BYTE]))(
+                wrappedTxn
+            );
             return fn(prefixedTxn);
         });
     }

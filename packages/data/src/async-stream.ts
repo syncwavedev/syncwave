@@ -3,7 +3,12 @@ import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {assert} from './utils.js';
 
 export class DeferredStream<T> implements AsyncIterable<T> {
-    constructor(private readonly executor: (next: (value: T) => void, end: () => void) => void) {}
+    constructor(
+        private readonly executor: (
+            next: (value: T) => void,
+            end: () => void
+        ) => void
+    ) {}
 
     [Symbol.asyncIterator](): AsyncIterator<T, any, any> {
         const result = pushable<T>({objectMode: true});
@@ -59,7 +64,9 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return astream(this._filter(predicate)) as AsyncStream<S>;
     }
 
-    map<TResult>(mapper: (value: T) => TResult | Promise<TResult>): AsyncStream<TResult> {
+    map<TResult>(
+        mapper: (value: T) => TResult | Promise<TResult>
+    ): AsyncStream<TResult> {
         return astream(
             new DeferredStream(async (next, end) => {
                 let left = 0;

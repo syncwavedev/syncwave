@@ -1,6 +1,12 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
 import {compareUint8Array} from '../utils.js';
-import {Condition, Entry, InvalidQueryCondition, KVStore, Transaction} from './kv-store.js';
+import {
+    Condition,
+    Entry,
+    InvalidQueryCondition,
+    KVStore,
+    Transaction,
+} from './kv-store.js';
 
 export class CursorClosedError extends Error {
     constructor() {
@@ -15,7 +21,9 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
         return this.tree.get(key) ?? undefined;
     }
 
-    async *query(condition: Condition<Uint8Array>): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
+    async *query(
+        condition: Condition<Uint8Array>
+    ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         let iterator: Iterator<Uint8Array, Uint8Array>;
         let useNext;
         if (condition.gt) {
@@ -65,7 +73,9 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
 
     constructor() {}
 
-    async transaction<TResult>(fn: (txn: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>): Promise<TResult> {
+    async transaction<TResult>(
+        fn: (txn: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>
+    ): Promise<TResult> {
         return await this.locker.lock(this, async () => {
             const retries = 10;
 
@@ -92,7 +102,10 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
 export class MemLocker<TKey> {
     private fnQueueMap: Map<TKey, Array<() => Promise<any>>> = new Map();
 
-    async lock<TResult>(key: TKey, fn: () => Promise<TResult>): Promise<TResult> {
+    async lock<TResult>(
+        key: TKey,
+        fn: () => Promise<TResult>
+    ): Promise<TResult> {
         return new Promise<TResult>((resolve, reject) => {
             const execute = async () => {
                 try {
@@ -110,7 +123,10 @@ export class MemLocker<TKey> {
             if (!fnQueue) {
                 this.fnQueueMap.set(key, []);
                 execute().catch(err => {
-                    console.error('unexpected error during execute inside mem-locker: ', err);
+                    console.error(
+                        'unexpected error during execute inside mem-locker: ',
+                        err
+                    );
                 });
             } else {
                 fnQueue.push(execute);
@@ -132,7 +148,10 @@ export class MemLocker<TKey> {
         const nextFn = fnQueue.shift();
         if (nextFn) {
             nextFn().catch(err => {
-                console.error('unexpected error during nextFn in mem-locker: ', err);
+                console.error(
+                    'unexpected error during nextFn in mem-locker: ',
+                    err
+                );
             });
         }
     }

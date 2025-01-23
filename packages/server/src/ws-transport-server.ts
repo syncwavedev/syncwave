@@ -27,7 +27,11 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', (ws: WebSocket) => {
-            const connection = new WsConnection<T>(ws, this.opt.codec, this.opt.logger);
+            const connection = new WsConnection<T>(
+                ws,
+                this.opt.codec,
+                this.opt.logger
+            );
             cb(connection);
         });
 

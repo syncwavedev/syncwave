@@ -105,7 +105,10 @@ export class IdentityRepo implements SyncTarget<Identity> {
         }
     }
 
-    update(id: IdentityId, recipe: (user: Identity) => Identity | void): Promise<Identity> {
+    update(
+        id: IdentityId,
+        recipe: (user: Identity) => Identity | void
+    ): Promise<Identity> {
         return this.store.update(id, recipe);
     }
 }

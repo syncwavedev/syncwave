@@ -1,4 +1,8 @@
-import {AggregateBusinessError, AggregateError, BusinessError} from './errors.js';
+import {
+    AggregateBusinessError,
+    AggregateError,
+    BusinessError,
+} from './errors.js';
 
 export type Brand<T, B> = T & {__brand: B | undefined};
 
@@ -49,7 +53,12 @@ export function wait(ms: number): Promise<void> {
 
 export function pipe<T, R>(x: T, fn1: (x: T) => R): R;
 export function pipe<T, A, R>(x: T, fn1: (x: T) => A, fn2: (arg: A) => R): R;
-export function pipe<T, A, B, R>(x: T, fn1: (x: T) => A, fn2: (arg: A) => B, fn3: (arg: B) => R): R;
+export function pipe<T, A, B, R>(
+    x: T,
+    fn1: (x: T) => A,
+    fn2: (arg: A) => B,
+    fn3: (arg: B) => R
+): R;
 export function pipe<T, A, B, C, R>(
     x: T,
     fn1: (x: T) => A,
@@ -164,12 +173,16 @@ export function arrayEqual<T>(a: T[], b: T[]) {
 /**
  * In contrast to Promise.all, whenAll waits for all rejections and combines them into AggregateError
  */
-export async function whenAll<const T extends Promise<any>[]>(promises: T): ReturnType<typeof Promise.all<T>> {
+export async function whenAll<const T extends Promise<any>[]>(
+    promises: T
+): ReturnType<typeof Promise.all<T>> {
     const result = await Promise.allSettled(promises);
     const rejected = result.filter(x => x.status === 'rejected');
 
     if (rejected.length === 0) {
-        return result.filter(x => x.status === 'fulfilled').map(x => x.value) as any;
+        return result
+            .filter(x => x.status === 'fulfilled')
+            .map(x => x.value) as any;
     } else if (rejected.length === 1) {
         throw rejected[0].reason;
     } else {

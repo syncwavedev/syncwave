@@ -5,7 +5,8 @@ import {MemKVStore} from './mem-kv-store.js';
 import {Registry} from './registry.js';
 
 const stringCodec = new StringCodec();
-const createUint8Array = (input: string): Uint8Array => stringCodec.encode(input);
+const createUint8Array = (input: string): Uint8Array =>
+    stringCodec.encode(input);
 
 const sampleFactory = (txn: Uint8Transaction) => ({
     async getKey(key: string): Promise<Uint8Array | undefined> {
@@ -37,7 +38,9 @@ describe('Registry', () => {
         await kvStore.transaction(async txn => {
             const registry = new Registry(txn, sampleFactory);
 
-            expect(() => registry.get('invalid/name')).toThrowError('invalid item name, / is not allowed');
+            expect(() => registry.get('invalid/name')).toThrowError(
+                'invalid item name, / is not allowed'
+            );
         });
     });
 

@@ -1,23 +1,9 @@
-import {addExtension, decode, encode} from 'msgpackr';
-import {Uuid, UuidCodec} from './uuid.js';
+import {decode, encode} from 'msgpackr';
 
 export interface Codec<TData> {
     encode(data: TData): Uint8Array;
     decode(buf: Uint8Array): TData;
 }
-
-const uuidCodec = new UuidCodec();
-
-addExtension({
-    Class: Uuid,
-    type: 1,
-    write(instance: Uuid) {
-        return uuidCodec.encode(instance);
-    },
-    read(data: Uint8Array) {
-        return uuidCodec.decode(data);
-    },
-});
 
 export class MsgpackrCodec implements Codec<any> {
     encode(data: any): Uint8Array {

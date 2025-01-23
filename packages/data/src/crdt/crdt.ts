@@ -1,4 +1,11 @@
-import {applyUpdateV2, encodeStateAsUpdateV2, Array as YArray, Doc as YDoc, Map as YMap, Text as YText} from 'yjs';
+import {
+    applyUpdateV2,
+    encodeStateAsUpdateV2,
+    Array as YArray,
+    Doc as YDoc,
+    Map as YMap,
+    Text as YText,
+} from 'yjs';
 import {Codec} from '../codec.js';
 import {assert, assertNever, Brand, Unsubscribe, zip} from '../utils.js';
 import {Uuid} from '../uuid.js';
@@ -58,7 +65,10 @@ export class Crdt<T> {
     }
 
     // if recipe returns T, then whole doc is overridden with the returned value
-    update(recipe: (draft: T) => T | void, options?: DiffOptions): CrdtDiff<T> | undefined {
+    update(
+        recipe: (draft: T) => T | void,
+        options?: DiffOptions
+    ): CrdtDiff<T> | undefined {
         const snapshot = this.snapshot();
         const locator = new Locator();
         locator.addDeep(snapshot, this.yValue);
@@ -66,7 +76,10 @@ export class Crdt<T> {
         const [replacement, log] = observe(snapshot, draft => recipe(draft));
         // diff can be undefined if no change were made in recipe
         let diff: CrdtDiff<T> | undefined = undefined;
-        const unsub = this.subscribe('update', (nextDiff: CrdtDiff<T>) => (diff = nextDiff));
+        const unsub = this.subscribe(
+            'update',
+            (nextDiff: CrdtDiff<T>) => (diff = nextDiff)
+        );
         this.doc.transact(() => {
             if (replacement) {
                 this.yValue = mapToYValue(replacement);
@@ -84,7 +97,10 @@ export class Crdt<T> {
         applyUpdateV2(this.doc, diff, options?.origin);
     }
 
-    subscribe(event: 'update', next: (diff: CrdtDiff<T>, options: DiffOptions) => void): Unsubscribe {
+    subscribe(
+        event: 'update',
+        next: (diff: CrdtDiff<T>, options: DiffOptions) => void
+    ): Unsubscribe {
         const fn = (state: Uint8Array, origin: string | undefined) =>
             next(state as CrdtDiff<T>, {origin: origin ?? undefined});
         this.doc.on('updateV2', fn);
@@ -92,7 +108,15 @@ export class Crdt<T> {
     }
 }
 
-type YValue = YMap<YValue> | YArray<YValue> | YText | number | boolean | string | null | undefined;
+type YValue =
+    | YMap<YValue>
+    | YArray<YValue>
+    | YText
+    | number
+    | boolean
+    | string
+    | null
+    | undefined;
 
 const INTERPRET_AS_KEY = '__interpret_as__';
 
@@ -106,7 +130,11 @@ function mapFromYValue(yValue: YValue): any {
     ) {
         return yValue;
     } else if (yValue.constructor === YArray) {
-        return [...(yValue as YArray<any>).map(item => mapFromYValue(item.get('value')))];
+        return [
+            ...(yValue as YArray<any>).map(item =>
+                mapFromYValue(item.get('value'))
+            ),
+        ];
     } else if (yValue.constructor === YMap) {
         if ((yValue as YMap<any>).get(INTERPRET_AS_KEY) === 'obj') {
             const result: any = {};
@@ -116,10 +144,13 @@ function mapFromYValue(yValue: YValue): any {
             }
 
             return result;
-        } else if ((yValue as YMap<any>).get(INTERPRET_AS_KEY) === 'uuid') {
-            return new Uuid((yValue as YMap<any>).get('value'));
         } else {
-            return new Map([...(yValue as YMap<any>).entries()].map(([key, value]) => [key, mapFromYValue(value)]));
+            return new Map(
+                [...(yValue as YMap<any>).entries()].map(([key, value]) => [
+                    key,
+                    mapFromYValue(value),
+                ])
+            );
         }
     } else {
         throw new Error('cannot map unsupported YValue: ' + yValue);
@@ -137,11 +168,15 @@ function mapToYValue(value: any): YValue {
     ) {
         return value;
     } else if (value.constructor === Map) {
-        const entries = [...value.entries()].map(([key, value]) => [key, mapToYValue(value)] as const);
+        const entries = [...value.entries()].map(
+            ([key, value]) => [key, mapToYValue(value)] as const
+        );
         return new YMap(entries);
     } else if (value.constructor === Array) {
         const result = new YArray<YValue>();
-        result.push(value.map(x => new YMap<YValue>([['value', mapToYValue(x)]])));
+        result.push(
+            value.map(x => new YMap<YValue>([['value', mapToYValue(x)]]))
+        );
 
         return result;
     } else if (value.constructor === Object) {
@@ -211,7 +246,9 @@ class Locator {
                 this.addDeep(subjectValue, yValueValue);
             }
         } else {
-            throw new Error('cannot add unsupported subject to Locator: ' + subject);
+            throw new Error(
+                'cannot add unsupported subject to Locator: ' + subject
+            );
         }
     }
 }
@@ -223,21 +260,32 @@ function replayLog(log: OpLog, locator: Locator): void {
         if (entry.type === 'array_push') {
             assert(yValue instanceof YArray);
 
-            const yArgs = entry.args.map(x => new YMap<YValue>([['value', mapToYValue(x)]]));
+            const yArgs = entry.args.map(
+                x => new YMap<YValue>([['value', mapToYValue(x)]])
+            );
             yValue.push(yArgs);
 
-            zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg));
+            zip(entry.args, yArgs).forEach(([arg, yArg]) =>
+                locator.addDeep(arg, yArg)
+            );
         } else if (entry.type === 'array_unshift') {
             assert(yValue instanceof YArray);
 
-            const yArgs = entry.args.map(x => new YMap<YValue>([['value', mapToYValue(x)]]));
+            const yArgs = entry.args.map(
+                x => new YMap<YValue>([['value', mapToYValue(x)]])
+            );
             yValue.unshift(yArgs);
 
-            zip(entry.args, yArgs).forEach(([arg, yArg]) => locator.addDeep(arg, yArg));
+            zip(entry.args, yArgs).forEach(([arg, yArg]) =>
+                locator.addDeep(arg, yArg)
+            );
         } else if (entry.type === 'array_set') {
             assert(yValue instanceof YArray);
 
-            (yValue.get(entry.index) as YMap<YValue>).set('value', mapToYValue(entry.value));
+            (yValue.get(entry.index) as YMap<YValue>).set(
+                'value',
+                mapToYValue(entry.value)
+            );
             locator.addDeep(entry.value, yValue[entry.index]);
         } else if (entry.type === 'map_clear') {
             assert(yValue instanceof YMap);

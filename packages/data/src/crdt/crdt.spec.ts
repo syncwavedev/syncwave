@@ -310,7 +310,9 @@ describe('Doc', () => {
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
 
-        expect(callback).toHaveBeenCalledWith(expect.any(Uint8Array), {tag: undefined});
+        expect(callback).toHaveBeenCalledWith(expect.any(Uint8Array), {
+            tag: undefined,
+        });
 
         unsubscribe();
     });
@@ -459,7 +461,12 @@ describe('Doc', () => {
     });
 
     it('should handle large nested structures efficiently', () => {
-        const largeValue = {key: Array.from({length: 1000}, (_, i) => ({id: i, value: `value${i}`}))};
+        const largeValue = {
+            key: Array.from({length: 1000}, (_, i) => ({
+                id: i,
+                value: `value${i}`,
+            })),
+        };
         const crdt = Crdt.from(largeValue);
 
         crdt.update(draft => {

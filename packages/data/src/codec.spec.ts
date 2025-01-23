@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {MsgpackrCodec, StringCodec} from './codec.js';
-import {Uuid, createUuid} from './uuid.js';
+import {createUuid} from './uuid.js';
 
 const testData = [
     {input: null, description: 'null value'},
@@ -36,7 +36,6 @@ describe('MsgpackrCodec', () => {
             const encoded = codec.encode({uuid});
             const {uuid: result} = codec.decode(encoded);
 
-            expect(result).instanceOf(Uuid);
             expect(result).toEqual(uuid);
         });
     });
@@ -144,7 +143,8 @@ describe('StringCodec', () => {
         });
 
         it('should handle mixed content', () => {
-            const data = 'Hello 🌍! Here are some special characters: 你好, мир, ñ, å, 🚀';
+            const data =
+                'Hello 🌍! Here are some special characters: 你好, мир, ñ, å, 🚀';
             const encoded = codec.encode(data);
             const decoded = codec.decode(encoded);
             expect(decoded).toBe(data);

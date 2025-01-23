@@ -11,7 +11,7 @@ export abstract class DataNode {
         private readonly store: Uint8KVStore
     ) {}
 
-    abstract children(after: Uint8Array): AsyncIterable<DataNode>;
+    abstract children(prefix: Uint8Array): AsyncIterable<DataNode>;
     abstract visit<T>(visitor: DataNodeVisitor<T>): T;
 
     async clear(): Promise<void> {
@@ -32,7 +32,7 @@ export class RepoDataNode<T extends Doc> extends DataNode {
         super(name, store);
     }
 
-    children(after: Uint8Array): AsyncIterable<DataNode> {
+    children(_prefix: Uint8Array): AsyncIterable<DataNode> {
         throw new Error('Method not implemented.');
     }
 

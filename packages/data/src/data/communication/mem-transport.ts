@@ -1,6 +1,11 @@
 import {Codec} from '../../codec.js';
 import {Unsubscribe} from '../../utils.js';
-import {Connection, ConnectionSubscribeCallback, TransportClient, TransportServer} from './transport.js';
+import {
+    Connection,
+    ConnectionSubscribeCallback,
+    TransportClient,
+    TransportServer,
+} from './transport.js';
 
 export class MemConnection<T> implements Connection<T> {
     static create<T>(codec: Codec<T>): [MemConnection<T>, MemConnection<T>] {
@@ -24,15 +29,18 @@ export class MemConnection<T> implements Connection<T> {
         this.ensureOpen();
 
         // don't wait for peer to respond
-        this.peer.receive(this.codec.decode(this.codec.encode(message))).catch(err => {
-            console.error('error during peer receive', err);
-        });
+        this.peer
+            .receive(this.codec.decode(this.codec.encode(message)))
+            .catch(err => {
+                console.error('error during peer receive', err);
+            });
     }
 
     subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
         this.ensureOpen();
 
-        const wrapper: ConnectionSubscribeCallback<T> = (...args) => cb(...args);
+        const wrapper: ConnectionSubscribeCallback<T> = (...args) =>
+            cb(...args);
         this.subs.push(wrapper);
 
         return () => {

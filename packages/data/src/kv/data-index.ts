@@ -62,12 +62,25 @@ export function createIndex<TValue>({
         //   index_key: [1, 2]
         //   if we don't add undefined: {gt: [1, undefined]}, index_key would match the condition
         // undefined has the largest type tag in bytewise serialization, null the lowest
-        const queryCondition = mapCondition<IndexKey, Condition<Uint8Array>>(condition, {
-            gt: cond => ({gt: keyCodec.encode([...cond.gt, ...Array(16).fill(undefined)])}),
-            gte: cond => ({gte: keyCodec.encode(cond.gte)}),
-            lt: cond => ({lt: keyCodec.encode(cond.lt)}),
-            lte: cond => ({lte: keyCodec.encode([...cond.lte, ...Array(16).fill(undefined)])}),
-        });
+        const queryCondition = mapCondition<IndexKey, Condition<Uint8Array>>(
+            condition,
+            {
+                gt: cond => ({
+                    gt: keyCodec.encode([
+                        ...cond.gt,
+                        ...Array(16).fill(undefined),
+                    ]),
+                }),
+                gte: cond => ({gte: keyCodec.encode(cond.gte)}),
+                lt: cond => ({lt: keyCodec.encode(cond.lt)}),
+                lte: cond => ({
+                    lte: keyCodec.encode([
+                        ...cond.lte,
+                        ...Array(16).fill(undefined),
+                    ]),
+                }),
+            }
+        );
 
         const iterator = txn.query(queryCondition);
 
@@ -102,11 +115,15 @@ export function createIndex<TValue>({
             const id = prevId ?? nextId;
 
             if (!id) {
-                throw new Error('invalid index sync: at least prev or next must be present');
+                throw new Error(
+                    'invalid index sync: at least prev or next must be present'
+                );
             }
 
-            if (prev && next && !prevId!.equals(nextId!)) {
-                throw new Error('invalid index sync: changing id is not allowed');
+            if (prev && next && prevId !== nextId) {
+                throw new Error(
+                    'invalid index sync: changing id is not allowed'
+                );
             }
 
             const prevKey = prev && keySelector(prev);
@@ -118,7 +135,9 @@ export function createIndex<TValue>({
             if (
                 prevKey !== undefined &&
                 nextKey !== undefined &&
-                zip(prevKey, nextKey).every(([a, b]) => compareIndexKeyPart(a, b) === 0) &&
+                zip(prevKey, nextKey).every(
+                    ([a, b]) => compareIndexKeyPart(a, b) === 0
+                ) &&
                 prevIncluded === nextIncluded
             ) {
                 // nothing to do
@@ -144,9 +163,15 @@ export function createIndex<TValue>({
                         throw new UniqueError(indexName);
                     }
 
-                    await txn.put(keyCodec.encode(nextKey), uuidCodec.encode(id));
+                    await txn.put(
+                        keyCodec.encode(nextKey),
+                        uuidCodec.encode(id)
+                    );
                 } else {
-                    await txn.put(keyCodec.encode([...nextKey, id]), uuidCodec.encode(id));
+                    await txn.put(
+                        keyCodec.encode([...nextKey, id]),
+                        uuidCodec.encode(id)
+                    );
                 }
             }
         },
@@ -161,7 +186,12 @@ export function createIndex<TValue>({
                 for (let i = 0; i < key.length; i += 1) {
                     if (key.length > 0) {
                         // all parts up to the last were checked in queryInternal
-                        if (compareIndexKeyPart(entryKey[key.length - 1], key[key.length - 1]) !== 0) {
+                        if (
+                            compareIndexKeyPart(
+                                entryKey[key.length - 1],
+                                key[key.length - 1]
+                            ) !== 0
+                        ) {
                             return;
                         }
                     }
@@ -186,11 +216,21 @@ export function createIndex<TValue>({
  * - undefined
  */
 
-export type IndexKeyPart = null | boolean | number | string | Uuid | Uint8Array | undefined;
+export type IndexKeyPart =
+    | null
+    | boolean
+    | number
+    | string
+    | Uuid
+    | Uint8Array
+    | undefined;
 
 export type IndexKey = readonly IndexKeyPart[];
 
-export function compareIndexKeyPart(a: IndexKeyPart, b: IndexKeyPart): 1 | 0 | -1 {
+export function compareIndexKeyPart(
+    a: IndexKeyPart,
+    b: IndexKeyPart
+): 1 | 0 | -1 {
     if (a === b) return 0;
 
     if (typeof a === 'boolean' && typeof b === 'boolean') {
@@ -205,23 +245,24 @@ export function compareIndexKeyPart(a: IndexKeyPart, b: IndexKeyPart): 1 | 0 | -
         return a === b ? 0 : a > b ? 1 : -1;
     }
 
-    if (a instanceof Uuid && b instanceof Uuid) {
-        return a.compare(b);
-    }
-
     if (a instanceof Uint8Array && b instanceof Uint8Array) {
         return compareUint8Array(a, b);
     }
 
-    const typeOrder = ['null', 'boolean', 'number', 'Uuid', 'Uint8Array', 'string', 'undefined'];
+    const typeOrder = [
+        'null',
+        'boolean',
+        'number',
+        'Uint8Array',
+        'string',
+        'undefined',
+    ];
     const getTypeIndex = (val: IndexKeyPart): number =>
         val === null
             ? typeOrder.indexOf('null')
-            : val instanceof Uuid
-              ? typeOrder.indexOf('Uuid')
-              : val instanceof Uint8Array
-                ? typeOrder.indexOf('Uint8Array')
-                : typeOrder.indexOf(typeof val);
+            : val instanceof Uint8Array
+              ? typeOrder.indexOf('Uint8Array')
+              : typeOrder.indexOf(typeof val);
 
     return getTypeIndex(a) > getTypeIndex(b) ? 1 : -1;
 }
@@ -231,9 +272,7 @@ export class IndexKeyCodec implements Codec<IndexKey> {
 
     encode(data: IndexKey): Uint8Array {
         const key = data.map(part => {
-            if (part instanceof Uuid) {
-                return [1, Buffer.from(this.uuidCodec.encode(part))];
-            } else if (part instanceof Uint8Array) {
+            if (part instanceof Uint8Array) {
                 return Buffer.from(part);
             } else {
                 return part;
@@ -246,9 +285,7 @@ export class IndexKeyCodec implements Codec<IndexKey> {
         const key = bytewise.decode(Buffer.from(buf));
 
         return key.map(part => {
-            if (Array.isArray(part)) {
-                return this.uuidCodec.decode(part[1]);
-            } else if (part instanceof Buffer) {
+            if (part instanceof Buffer) {
                 return new Uint8Array(part);
             } else {
                 return part;

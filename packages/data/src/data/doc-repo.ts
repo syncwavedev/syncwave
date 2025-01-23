@@ -2,7 +2,14 @@ import {ZodType} from 'zod';
 import {astream, AsyncStream} from '../async-stream.js';
 import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
 import {createIndex, Index, IndexKey} from '../kv/data-index.js';
-import {Condition, Transaction, Uint8Transaction, withKeyCodec, withPrefix, withValueCodec} from '../kv/kv-store.js';
+import {
+    Condition,
+    Transaction,
+    Uint8Transaction,
+    withKeyCodec,
+    withPrefix,
+    withValueCodec,
+} from '../kv/kv-store.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {pipe, whenAll} from '../utils.js';
 import {Uuid, UuidCodec} from '../uuid.js';
@@ -24,7 +31,10 @@ export type IndexSpec<T> =
 
 export type IndexMap<T> = Record<string, IndexSpec<T>>;
 
-export type OnDocChange<T extends Doc> = (id: T['id'], diff: CrdtDiff<T>) => Promise<void>;
+export type OnDocChange<T extends Doc> = (
+    id: T['id'],
+    diff: CrdtDiff<T>
+) => Promise<void>;
 
 export interface DocStoreOptions<T extends Doc> {
     txn: Uint8Transaction;
@@ -49,7 +59,9 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         this.indexes = new Map(
             Object.entries(indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
-                    throw new Error('index name cannot contain /: ' + indexName);
+                    throw new Error(
+                        'index name cannot contain /: ' + indexName
+                    );
                 }
 
                 return [
@@ -57,14 +69,23 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
                     createIndex({
                         txn: withPrefix(`i/${indexName}/`)(txn),
                         idSelector: x => x.id,
-                        keySelector: typeof spec === 'function' ? spec : spec.key,
-                        unique: typeof spec === 'function' ? false : (spec.unique ?? false),
+                        keySelector:
+                            typeof spec === 'function' ? spec : spec.key,
+                        unique:
+                            typeof spec === 'function'
+                                ? false
+                                : (spec.unique ?? false),
                         indexName,
                     }),
                 ];
             })
         );
-        this.primary = pipe(txn, withPrefix('d/'), withKeyCodec(new UuidCodec()), withValueCodec(new CrdtCodec()));
+        this.primary = pipe(
+            txn,
+            withPrefix('d/'),
+            withKeyCodec(new UuidCodec()),
+            withValueCodec(new CrdtCodec())
+        );
         this.onChange = onChange;
         this.schema = schema;
     }
@@ -83,7 +104,9 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         const index = this._index(indexName);
         const ids = await astream(index.get(key)).take(2).toArray();
         if (ids.length > 1) {
-            throw new Error(`index ${indexName} contains multiple docs for the key: ${key}`);
+            throw new Error(
+                `index ${indexName} contains multiple docs for the key: ${key}`
+            );
         } else if (ids.length === 1) {
             return await this.getById(ids[0]);
         } else {
@@ -92,7 +115,9 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
     }
 
     getAll(): AsyncStream<T> {
-        return astream(this.primary.query({gte: Uuid.min})).map(x => x.value.snapshot());
+        return astream(this.primary.query({gte: Uuid.min})).map(x =>
+            x.value.snapshot()
+        );
     }
 
     query(indexName: string, condition: Condition<IndexKey>): AsyncStream<T> {
@@ -122,13 +147,20 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         const next = doc.snapshot();
         this.ensureValid(next);
 
-        await whenAll([this.primary.put(id, doc), this._sync(id, prev, next, diff)]);
+        await whenAll([
+            this.primary.put(id, doc),
+            this._sync(id, prev, next, diff),
+        ]);
 
         return next;
     }
 
     // todo: add tests
-    async apply(id: Uuid, diff: CrdtDiff<T>, updateChecker?: UpdateChecker<T>): Promise<void> {
+    async apply(
+        id: Uuid,
+        diff: CrdtDiff<T>,
+        updateChecker?: UpdateChecker<T>
+    ): Promise<void> {
         let doc: Crdt<T> | undefined = await this.primary.get(id);
         let prev: T | undefined;
         let next: T;
@@ -161,7 +193,10 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
 
         const now = getNow();
         const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
-        await whenAll([this.primary.put(doc.id, crdt), this._sync(doc.id, undefined, doc, crdt.state())]);
+        await whenAll([
+            this.primary.put(doc.id, crdt),
+            this._sync(doc.id, undefined, doc, crdt.state()),
+        ]);
 
         return crdt.snapshot();
     }
@@ -174,8 +209,16 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         return index;
     }
 
-    private async _sync(id: Uuid, prev: T | undefined, next: T | undefined, diff: CrdtDiff<T>): Promise<void> {
-        await whenAll([...[...this.indexes.values()].map(x => x.sync(prev, next)), this.onChange(id, diff)]);
+    private async _sync(
+        id: Uuid,
+        prev: T | undefined,
+        next: T | undefined,
+        diff: CrdtDiff<T>
+    ): Promise<void> {
+        await whenAll([
+            ...[...this.indexes.values()].map(x => x.sync(prev, next)),
+            this.onChange(id, diff),
+        ]);
     }
 
     private _mapToDocs(ids: AsyncIterable<Uuid>): AsyncStream<T> {

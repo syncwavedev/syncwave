@@ -1,12 +1,22 @@
-import {Condition, Entry, KVStore, mapCondition, Transaction} from './kv-store.js';
+import {
+    Condition,
+    Entry,
+    KVStore,
+    mapCondition,
+    Transaction,
+} from './kv-store.js';
 
 export interface Mapper<TPrivate, TPublic> {
     decode(x: TPrivate): TPublic;
     encode(x: TPublic): TPrivate;
 }
 
-export class MappedTransaction<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
-    implements Transaction<TKeyPublic, TValuePublic>
+export class MappedTransaction<
+    TKeyPrivate,
+    TKeyPublic,
+    TValuePrivate,
+    TValuePublic,
+> implements Transaction<TKeyPublic, TValuePublic>
 {
     constructor(
         private target: Transaction<TKeyPrivate, TValuePrivate>,
@@ -23,14 +33,24 @@ export class MappedTransaction<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePub
         }
     }
 
-    async *query(condition: Condition<TKeyPublic>): AsyncIterable<Entry<TKeyPublic, TValuePublic>> {
-        for await (const {key, value} of this.target.query(projectCondition(condition, this.keyMapper))) {
-            yield {key: this.keyMapper.decode(key), value: this.valueMapper.decode(value)};
+    async *query(
+        condition: Condition<TKeyPublic>
+    ): AsyncIterable<Entry<TKeyPublic, TValuePublic>> {
+        for await (const {key, value} of this.target.query(
+            projectCondition(condition, this.keyMapper)
+        )) {
+            yield {
+                key: this.keyMapper.decode(key),
+                value: this.valueMapper.decode(value),
+            };
         }
     }
 
     async put(key: TKeyPublic, value: TValuePublic): Promise<void> {
-        return await this.target.put(this.keyMapper.encode(key), this.valueMapper.encode(value));
+        return await this.target.put(
+            this.keyMapper.encode(key),
+            this.valueMapper.encode(value)
+        );
     }
 
     async delete(key: TKeyPublic): Promise<void> {
@@ -47,8 +67,12 @@ export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
 
-    transaction<TResult>(fn: (txn: Transaction<TKeyPublic, TValuePublic>) => Promise<TResult>): Promise<TResult> {
-        return this.store.transaction(txn => fn(new MappedTransaction(txn, this.keyMapper, this.valueMapper)));
+    transaction<TResult>(
+        fn: (txn: Transaction<TKeyPublic, TValuePublic>) => Promise<TResult>
+    ): Promise<TResult> {
+        return this.store.transaction(txn =>
+            fn(new MappedTransaction(txn, this.keyMapper, this.valueMapper))
+        );
     }
 }
 

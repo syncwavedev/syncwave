@@ -1,4 +1,4 @@
-import {Uuid, type JwtPayload, type UserId} from 'ground-data';
+import {type JwtPayload, type UserId} from 'ground-data';
 import type {UniversalStore} from './universal-store.js';
 
 function parseJwt(token: string): unknown {
@@ -42,7 +42,7 @@ export class AuthManager {
 		}
 
 		return {
-			userId: new Uuid(payload.sub) as UserId,
+			userId: payload.sub as UserId,
 		};
 	}
 

@@ -75,7 +75,10 @@ export class MemberRepo implements SyncTarget<Member> {
         return this.store.get(BOARD_ID_INDEX, [boardId]);
     }
 
-    getByUserIdAndBoardId(userId: UserId, boardId: BoardId): Promise<Member | undefined> {
+    getByUserIdAndBoardId(
+        userId: UserId,
+        boardId: BoardId
+    ): Promise<Member | undefined> {
         return this.store.getUnique(USER_ID_BOARD_ID_INDEX, [userId, boardId]);
     }
 

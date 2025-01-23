@@ -1,5 +1,8 @@
 import {z} from 'zod';
-import {AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT, AUTH_ACTIVITY_WINDOW_HOURS} from '../constants.js';
+import {
+    AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
+    AUTH_ACTIVITY_WINDOW_HOURS,
+} from '../constants.js';
 import {Uint8KVStore} from '../kv/kv-store.js';
 import {addHours, getNow} from '../timestamp.js';
 import {whenAll} from '../utils.js';
@@ -12,7 +15,11 @@ import {Connection, TransportServer} from './communication/transport.js';
 import {DataLayer, TransactionContext} from './data-layer.js';
 import {CryptoService, EmailService, JwtService} from './infra.js';
 import {BoardId} from './repos/board-repo.js';
-import {Identity, VerificationCode, createIdentityId} from './repos/identity-repo.js';
+import {
+    Identity,
+    VerificationCode,
+    createIdentityId,
+} from './repos/identity-repo.js';
 import {TaskId} from './repos/task-repo.js';
 import {UserId, createUserId} from './repos/user-repo.js';
 
@@ -66,7 +73,10 @@ export class Coordinator {
             let effects: Array<() => Promise<void>> = [];
             const result = await this.dataLayer.transaction(async ctx => {
                 effects = [];
-                const auth = await authContextParser.parse(ctx, message.headers?.auth);
+                const auth = await authContextParser.parse(
+                    ctx,
+                    message.headers?.auth
+                );
                 return await fn({
                     ctx,
                     auth,
@@ -86,15 +96,19 @@ export interface BaseVerifySignInCodeResponse<TType extends string> {
     readonly type: TType;
 }
 
-export interface SuccessVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'success'> {
+export interface SuccessVerifySignInCodeResponse
+    extends BaseVerifySignInCodeResponse<'success'> {
     readonly token: string;
 }
 
-export interface InvalidCodeVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'invalid_code'> {}
+export interface InvalidCodeVerifySignInCodeResponse
+    extends BaseVerifySignInCodeResponse<'invalid_code'> {}
 
-export interface CodeExpiredVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'code_expired'> {}
+export interface CodeExpiredVerifySignInCodeResponse
+    extends BaseVerifySignInCodeResponse<'code_expired'> {}
 
-export interface CooldownVerifySignInCodeResponse extends BaseVerifySignInCodeResponse<'cooldown'> {}
+export interface CooldownVerifySignInCodeResponse
+    extends BaseVerifySignInCodeResponse<'cooldown'> {}
 
 export type VerifySignInCodeResponse =
     | SuccessVerifySignInCodeResponse
@@ -189,8 +203,13 @@ function createCoordinatorApi({
 
     function pushActivityLog(x: Identity) {
         x.authActivityLog.push(getNow());
-        if (x.authActivityLog.length > AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT) {
-            x.authActivityLog = x.authActivityLog.slice(-AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT);
+        if (
+            x.authActivityLog.length >
+            AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT
+        ) {
+            x.authActivityLog = x.authActivityLog.slice(
+                -AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT
+            );
         }
     }
 
@@ -205,7 +224,9 @@ function createCoordinatorApi({
             schema: z.object({
                 email: z.string(),
             }),
-            handle: async ({email}): Promise<{type: 'success'} | {type: 'cooldown'}> => {
+            handle: async ({
+                email,
+            }): Promise<{type: 'success'} | {type: 'cooldown'}> => {
                 const verificationCode = await createVerificationCode(crypto);
 
                 let identity = await ctx.identities.getByEmail(email);
@@ -247,7 +268,7 @@ function createCoordinatorApi({
                                     Hi there!<br />
                                     <br />
                                     We noticed a request to sign into your Ground account.<br />
-                                    If this wasn’t you, no worries—just ignore this email.<br />
+                                    If this wasn't you, no worries—just ignore this email.<br />
                                     <br />
                                     Your one-time code is: <strong>${verificationCode.code}</strong><br />
                                     <br />
@@ -274,7 +295,10 @@ The Ground Team`,
                 email: z.string(),
                 code: z.string(),
             }),
-            handle: async ({email, code}): Promise<VerifySignInCodeResponse> => {
+            handle: async ({
+                email,
+                code,
+            }): Promise<VerifySignInCodeResponse> => {
                 const identity = await ctx.identities.getByEmail(email);
                 if (!identity) {
                     throw new Error('invalid email, no identity found');
@@ -302,7 +326,11 @@ The Ground Team`,
 
                 return {
                     type: 'success',
-                    token: await signJwtToken(jwt, identity, ctx.config.jwtSecret),
+                    token: await signJwtToken(
+                        jwt,
+                        identity,
+                        ctx.config.jwtSecret
+                    ),
                 };
             },
         }),
@@ -321,7 +349,11 @@ interface JwtPayload {
     iat: number;
 }
 
-async function signJwtToken(jwt: JwtService, identity: Identity, jwtSecret: string) {
+async function signJwtToken(
+    jwt: JwtService,
+    identity: Identity,
+    jwtSecret: string
+) {
     const now = new Date();
     const exp = new Date(now.getTime());
     exp.setFullYear(exp.getFullYear() + 50);
@@ -337,7 +369,9 @@ async function signJwtToken(jwt: JwtService, identity: Identity, jwtSecret: stri
     );
 }
 
-async function createVerificationCode(crypto: CryptoService): Promise<VerificationCode> {
+async function createVerificationCode(
+    crypto: CryptoService
+): Promise<VerificationCode> {
     const buf = await crypto.randomBytes(6);
     return {
         code: Array.from(buf)

@@ -17,7 +17,9 @@ export class Participant {
     ) {
         this.connection = new ReconnectConnection(transport);
         this.coordinator = new CoordinatorClient(this.connection);
-        setupRpcServer(this.connection, createParticipantRpc, (_message, fn) => fn({}));
+        setupRpcServer(this.connection, createParticipantRpc, (_message, fn) =>
+            fn({})
+        );
     }
 
     async sendSignInEmail(email: string) {

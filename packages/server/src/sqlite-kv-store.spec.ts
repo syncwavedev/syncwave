@@ -1,5 +1,12 @@
 import {rm} from 'fs/promises';
-import {Condition, GtCondition, GteCondition, LtCondition, LteCondition, astream} from 'ground-data';
+import {
+    Condition,
+    GtCondition,
+    GteCondition,
+    LtCondition,
+    LteCondition,
+    astream,
+} from 'ground-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {SqliteUint8KVStore} from './sqlite-kv-store.js';
 
@@ -119,9 +126,14 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
                 gt: new Uint8Array([0x11]) as GtCondition<Uint8Array>['gt'],
             };
 
-            const results = await store.transaction(txn => astream(txn.query(condition)).toArray());
+            const results = await store.transaction(txn =>
+                astream(txn.query(condition)).toArray()
+            );
 
-            expect(results.map(r => Array.from(r.key))).toEqual([[0x12], [0x13]]);
+            expect(results.map(r => Array.from(r.key))).toEqual([
+                [0x12],
+                [0x13],
+            ]);
         });
 
         it('should query keys with GteCondition', async () => {
@@ -137,7 +149,11 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
                 }
             });
 
-            expect(results.map(r => Array.from(r.key))).toEqual([[0x11], [0x12], [0x13]]);
+            expect(results.map(r => Array.from(r.key))).toEqual([
+                [0x11],
+                [0x12],
+                [0x13],
+            ]);
         });
 
         it('should query keys with LtCondition', async () => {
@@ -153,7 +169,10 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
                 }
             });
 
-            expect(results.map(r => Array.from(r.key))).toEqual([[0x11], [0x10]]);
+            expect(results.map(r => Array.from(r.key))).toEqual([
+                [0x11],
+                [0x10],
+            ]);
         });
 
         it('should query keys with LteCondition', async () => {
@@ -169,7 +188,11 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
                 }
             });
 
-            expect(results.map(r => Array.from(r.key))).toEqual([[0x12], [0x11], [0x10]]);
+            expect(results.map(r => Array.from(r.key))).toEqual([
+                [0x12],
+                [0x11],
+                [0x10],
+            ]);
         });
     });
 });

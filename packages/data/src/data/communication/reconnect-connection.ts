@@ -1,6 +1,11 @@
 import {RECONNECT_WAIT_MS} from '../../constants.js';
 import {assertNever, Subject, Unsubscribe, wait} from '../../utils.js';
-import {Connection, ConnectionEvent, ConnectionSubscribeCallback, TransportClient} from './transport.js';
+import {
+    Connection,
+    ConnectionEvent,
+    ConnectionSubscribeCallback,
+    TransportClient,
+} from './transport.js';
 
 export class ReconnectConnection<T> implements Connection<T> {
     // if we already initiated connection process, then we want subsequent sends to wait until the
@@ -41,7 +46,9 @@ export class ReconnectConnection<T> implements Connection<T> {
         this.subject.next({type: 'close'});
     }
 
-    private async getConnection(): Promise<Connection<T> | 'closed_during_connect'> {
+    private async getConnection(): Promise<
+        Connection<T> | 'closed_during_connect'
+    > {
         this.assertOpen();
 
         if (this.connection === undefined) {
@@ -62,7 +69,10 @@ export class ReconnectConnection<T> implements Connection<T> {
                             this.connection = undefined;
                             // reconnect
                             this.getConnection().catch(err => {
-                                console.error('error while reconnection to the server: ', err);
+                                console.error(
+                                    'error while reconnection to the server: ',
+                                    err
+                                );
                             });
                         }
                     } else {

@@ -9,7 +9,11 @@ describe('observe', () => {
         expected: OpLog;
     }
 
-    function tc(subject: any, recipe: (value: any) => void, expected: (subject: any) => OpLog): Testcase<any> {
+    function tc(
+        subject: any,
+        recipe: (value: any) => void,
+        expected: (subject: any) => OpLog
+    ): Testcase<any> {
         return {
             subject,
             recipe,
@@ -53,7 +57,9 @@ describe('observe', () => {
         tc(
             [{}],
             x => (x[0].val = 'new'),
-            x => [{type: 'object_set', subject: x[0], prop: 'val', value: 'new'}]
+            x => [
+                {type: 'object_set', subject: x[0], prop: 'val', value: 'new'},
+            ]
         ),
         tc(
             [1, 2, 3],

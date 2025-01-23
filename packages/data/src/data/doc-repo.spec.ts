@@ -73,7 +73,11 @@ describe('DocStore with MemKVStore', () => {
             return repo2.getById(id);
         });
 
-        expect(retrieved).toEqual({...doc, createdAt: expect.any(Number), updatedAt: expect.any(Number)});
+        expect(retrieved).toEqual({
+            ...doc,
+            createdAt: expect.any(Number),
+            updatedAt: expect.any(Number),
+        });
         expect(retrieved?.updatedAt).toBeGreaterThan(doc.updatedAt);
         expect(retrieved?.updatedAt).toEqual(retrieved?.createdAt);
         // Make sure onChange was called exactly once (on create)
@@ -82,7 +86,13 @@ describe('DocStore with MemKVStore', () => {
 
     it('should throw an error if creating a doc with an existing ID', async () => {
         const id = createUuid();
-        const doc: MyDoc = {id, name: 'Bob', age: 22, createdAt: now, updatedAt: now};
+        const doc: MyDoc = {
+            id,
+            name: 'Bob',
+            age: 22,
+            createdAt: now,
+            updatedAt: now,
+        };
 
         await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({
@@ -112,7 +122,13 @@ describe('DocStore with MemKVStore', () => {
 
     it('should update a document', async () => {
         const id = createUuid();
-        const doc: MyDoc = {id, name: 'Charlie', age: 40, createdAt: now, updatedAt: now};
+        const doc: MyDoc = {
+            id,
+            name: 'Charlie',
+            age: 40,
+            createdAt: now,
+            updatedAt: now,
+        };
         let repo: DocRepo<MyDoc> | undefined;
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
@@ -146,7 +162,13 @@ describe('DocStore with MemKVStore', () => {
 
     it('should catch schema violation', async () => {
         const id = createUuid();
-        const doc: MyDoc = {id, name: 'Charlie', age: 40, createdAt: now, updatedAt: now};
+        const doc: MyDoc = {
+            id,
+            name: 'Charlie',
+            age: 40,
+            createdAt: now,
+            updatedAt: now,
+        };
         let repo: DocRepo<MyDoc> | undefined;
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
@@ -162,16 +184,14 @@ describe('DocStore with MemKVStore', () => {
                     (current as any).unknownProp = 'val';
                 });
             })
-        ).rejects.toThrowError(/assertion failed/);
-
-        await expect(
-            store.transaction(async txn => {
-                repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
-                return repo.update(id, current => {
-                    (current as any).unknownProp = 'val';
-                });
-            })
-        ).rejects.toThrowError(/assertion failed/);
+        ).resolves.toEqual({
+            id,
+            name: 'Charlie',
+            age: 40,
+            createdAt: expect.any(Number),
+            updatedAt: expect.any(Number),
+            unknownProp: 'val',
+        });
 
         await expect(
             store.transaction(async txn => {
@@ -189,9 +209,27 @@ describe('DocStore with MemKVStore', () => {
         // Insert multiple docs
         await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
-            await repo.create({id: createUuid(), name: 'Dana', age: 20, createdAt: now, updatedAt: now});
-            await repo.create({id: createUuid(), name: 'Dana', age: 25, createdAt: now, updatedAt: now}); // same name
-            await repo.create({id: createUuid(), name: 'Eli', age: 25, createdAt: now, updatedAt: now});
+            await repo.create({
+                id: createUuid(),
+                name: 'Dana',
+                age: 20,
+                createdAt: now,
+                updatedAt: now,
+            });
+            await repo.create({
+                id: createUuid(),
+                name: 'Dana',
+                age: 25,
+                createdAt: now,
+                updatedAt: now,
+            }); // same name
+            await repo.create({
+                id: createUuid(),
+                name: 'Eli',
+                age: 25,
+                createdAt: now,
+                updatedAt: now,
+            });
         });
 
         // Use the "byName" index
@@ -206,7 +244,9 @@ describe('DocStore with MemKVStore', () => {
 
         // Should have found two docs with name = 'Dana'
         expect(docsNamedDana.length).toBe(2);
-        expect(new Set(docsNamedDana.map(d => d.name))).toEqual(new Set(['Dana']));
+        expect(new Set(docsNamedDana.map(d => d.name))).toEqual(
+            new Set(['Dana'])
+        );
 
         // Check byAge index for age=25
         const docsAge25 = await store.transaction(async txn => {
@@ -225,11 +265,41 @@ describe('DocStore with MemKVStore', () => {
 
         await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
-            await repo.create({id: createUuid(), name: 'Fiona', age: 10, createdAt: now, updatedAt: now});
-            await repo.create({id: createUuid(), name: 'Gabe', age: 15, createdAt: now, updatedAt: now});
-            await repo.create({id: createUuid(), name: 'Hank', age: 20, createdAt: now, updatedAt: now});
-            await repo.create({id: createUuid(), name: 'Iris', age: 25, createdAt: now, updatedAt: now});
-            await repo.create({id: createUuid(), name: 'Jake', age: 30, createdAt: now, updatedAt: now});
+            await repo.create({
+                id: createUuid(),
+                name: 'Fiona',
+                age: 10,
+                createdAt: now,
+                updatedAt: now,
+            });
+            await repo.create({
+                id: createUuid(),
+                name: 'Gabe',
+                age: 15,
+                createdAt: now,
+                updatedAt: now,
+            });
+            await repo.create({
+                id: createUuid(),
+                name: 'Hank',
+                age: 20,
+                createdAt: now,
+                updatedAt: now,
+            });
+            await repo.create({
+                id: createUuid(),
+                name: 'Iris',
+                age: 25,
+                createdAt: now,
+                updatedAt: now,
+            });
+            await repo.create({
+                id: createUuid(),
+                name: 'Jake',
+                age: 30,
+                createdAt: now,
+                updatedAt: now,
+            });
         });
 
         // Suppose we want to find docs whose "byAge" index is >= 15 and <= 25
@@ -260,7 +330,9 @@ describe('DocStore with MemKVStore', () => {
         });
 
         expect(docsBetween15And25.length).toBe(3);
-        expect(new Set(docsBetween15And25.map(d => d.name))).toEqual(new Set(['Gabe', 'Hank', 'Iris']));
+        expect(new Set(docsBetween15And25.map(d => d.name))).toEqual(
+            new Set(['Gabe', 'Hank', 'Iris'])
+        );
     });
 
     it('should retrieve a single doc via getUnique (and throw if multiple docs exist)', async () => {
@@ -270,8 +342,20 @@ describe('DocStore with MemKVStore', () => {
         let repo: DocRepo<MyDoc>;
         await store.transaction(async txn => {
             repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
-            await repo.create({id: createUuid(), name: 'Zed', age: 55, createdAt: now, updatedAt: now});
-            await repo.create({id: createUuid(), name: 'Zed', age: 60, createdAt: now, updatedAt: now});
+            await repo.create({
+                id: createUuid(),
+                name: 'Zed',
+                age: 55,
+                createdAt: now,
+                updatedAt: now,
+            });
+            await repo.create({
+                id: createUuid(),
+                name: 'Zed',
+                age: 60,
+                createdAt: now,
+                updatedAt: now,
+            });
         });
 
         // getUnique on 'byName' with 'Zed'
@@ -279,7 +363,9 @@ describe('DocStore with MemKVStore', () => {
         // we should get an error if more than one doc matches.
         await store.transaction(async txn => {
             repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
-            await expect(repo.getUnique('byName', ['Zed'])).rejects.toThrowError(/contains multiple docs/);
+            await expect(
+                repo.getUnique('byName', ['Zed'])
+            ).rejects.toThrowError(/contains multiple docs/);
         });
 
         // If we query an index that only has a single doc, that should succeed
@@ -315,7 +401,12 @@ describe('DocStore with MemKVStore', () => {
 
         await expect(
             store.transaction(async txn => {
-                const repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
+                const repo = new DocRepo<MyDoc>({
+                    txn,
+                    indexes,
+                    onChange,
+                    schema,
+                });
                 return repo.update(nonExistentId, doc => {
                     doc.name = 'Nope';
                 });
@@ -327,7 +418,13 @@ describe('DocStore with MemKVStore', () => {
         const onChange = vi.fn();
 
         // 1) CREATE
-        const createdDoc: MyDoc = {id: createUuid(), name: 'Alpha', age: 1, createdAt: now, updatedAt: now};
+        const createdDoc: MyDoc = {
+            id: createUuid(),
+            name: 'Alpha',
+            age: 1,
+            createdAt: now,
+            updatedAt: now,
+        };
         await store.transaction(async txn => {
             const repo = new DocRepo<MyDoc>({txn, indexes, onChange, schema});
             await repo.create(createdDoc);

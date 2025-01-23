@@ -15,7 +15,9 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
     let store: Uint8KVStore;
 
     beforeEach(() => {
-        const fdbStore = new FoundationDBUint8KVStore();
+        const fdbStore = new FoundationDBUint8KVStore(
+            './fdb/fdb.local.cluster'
+        );
         store = new PrefixedKVStore(fdbStore, '\x01');
     });
 
@@ -131,9 +133,14 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
                 gt: new Uint8Array([0x11]) as GtCondition<Uint8Array>['gt'],
             };
 
-            const results = await store.transaction(txn => astream(txn.query(condition)).toArray());
+            const results = await store.transaction(txn =>
+                astream(txn.query(condition)).toArray()
+            );
 
-            expect(results.map(r => Array.from(r.key))).toEqual([[0x12], [0x13]]);
+            expect(results.map(r => Array.from(r.key))).toEqual([
+                [0x12],
+                [0x13],
+            ]);
         });
 
         it('should query keys with GteCondition', async () => {
@@ -149,7 +156,11 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
                 }
             });
 
-            expect(results.map(r => Array.from(r.key))).toEqual([[0x11], [0x12], [0x13]]);
+            expect(results.map(r => Array.from(r.key))).toEqual([
+                [0x11],
+                [0x12],
+                [0x13],
+            ]);
         });
 
         it('should query keys with LtCondition', async () => {
@@ -165,7 +176,10 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
                 }
             });
 
-            expect(results.map(r => Array.from(r.key))).toEqual([[0x11], [0x10]]);
+            expect(results.map(r => Array.from(r.key))).toEqual([
+                [0x11],
+                [0x10],
+            ]);
         });
 
         it('should query keys with LteCondition', async () => {
@@ -181,7 +195,11 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
                 }
             });
 
-            expect(results.map(r => Array.from(r.key))).toEqual([[0x12], [0x11], [0x10]]);
+            expect(results.map(r => Array.from(r.key))).toEqual([
+                [0x12],
+                [0x11],
+                [0x10],
+            ]);
         });
     });
 });

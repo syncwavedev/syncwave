@@ -35,12 +35,14 @@ const {APP_URL, GOOGLE_REDIRECT_URL} = (() => {
     if (STAGE === 'dev') {
         return {
             APP_URL: 'https://www-ground-dev.edme.io',
-            GOOGLE_REDIRECT_URL: 'https://api-ground-dev.edme.io' + GOOGLE_CALLBACK_PATH,
+            GOOGLE_REDIRECT_URL:
+                'https://api-ground-dev.edme.io' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'prod') {
         return {
             APP_URL: 'https://www-ground.edme.io',
-            GOOGLE_REDIRECT_URL: 'https://api-ground.edme.io' + GOOGLE_CALLBACK_PATH,
+            GOOGLE_REDIRECT_URL:
+                'https://api-ground.edme.io' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'local') {
         return {
@@ -95,11 +97,13 @@ const jwtService: JwtService = {
 async function getKVStore(): Promise<Uint8KVStore> {
     if (STAGE === 'local') {
         console.log('using SQLite as primary store');
-        return await import('./sqlite-kv-store.js').then(x => new x.SqliteUint8KVStore('./dev.sqlite'));
+        return await import('./sqlite-kv-store.js').then(
+            x => new x.SqliteUint8KVStore('./dev.sqlite')
+        );
     } else {
         console.log('using FoundationDB as a primary store');
         const fdbStore = await import('./fdb-kv-store.js').then(
-            x => new x.FoundationDBUint8KVStore(`./fdb.${STAGE}.cluster`)
+            x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
         );
         return new PrefixedKVStore(fdbStore, `/ground-${STAGE}/`);
     }
@@ -156,11 +160,15 @@ function setupRouter(coordinator: () => Coordinator, router: Router) {
         }
 
         if (!result.user.verified_email || !result.user.email) {
-            console.warn(`Google user has unverified email: ${result.user.email}`);
+            console.warn(
+                `Google user has unverified email: ${result.user.email}`
+            );
             return ctx.redirect(`${APP_URL}/log-in/failed`);
         }
 
-        const jwtToken = await coordinator().issueJwtByUserEmail(result.user.email);
+        const jwtToken = await coordinator().issueJwtByUserEmail(
+            result.user.email
+        );
         const jwtTokenComponent = encodeURIComponent(jwtToken);
         const redirectUrlComponent = encodeURIComponent(
             JSON.parse(decodeURIComponent(state as string)).redirectUrl ?? ''

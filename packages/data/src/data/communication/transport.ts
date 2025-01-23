@@ -15,13 +15,18 @@ export interface BaseConnectionEvent<TType extends string> {
 
 export interface CloseConnectionEvent extends BaseConnectionEvent<'close'> {}
 
-export interface MessageConnectionEvent<T> extends BaseConnectionEvent<'message'> {
+export interface MessageConnectionEvent<T>
+    extends BaseConnectionEvent<'message'> {
     readonly message: T;
 }
 
-export type ConnectionEvent<T> = CloseConnectionEvent | MessageConnectionEvent<T>;
+export type ConnectionEvent<T> =
+    | CloseConnectionEvent
+    | MessageConnectionEvent<T>;
 
-export type ConnectionSubscribeCallback<T> = (event: ConnectionEvent<T>) => void;
+export type ConnectionSubscribeCallback<T> = (
+    event: ConnectionEvent<T>
+) => void;
 
 export interface Connection<T> {
     send(message: T): Promise<void>;

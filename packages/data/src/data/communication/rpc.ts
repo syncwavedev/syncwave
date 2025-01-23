@@ -3,7 +3,12 @@ import {RPC_TIMEOUT_MS} from '../../constants.js';
 import {Deferred} from '../../deferred.js';
 import {BusinessError, getReadableError} from '../../errors.js';
 import {assertNever, wait} from '../../utils.js';
-import {Message, MessageHeaders, RequestMessage, createMessageId} from './message.js';
+import {
+    Message,
+    MessageHeaders,
+    RequestMessage,
+    createMessageId,
+} from './message.js';
 import {Connection} from './transport.js';
 
 export interface Handler<TRequest, TResponse> {
@@ -40,7 +45,10 @@ export class RpcError extends Error {
     }
 }
 
-export function createRpcClient<T = any>(connection: Connection<Message>, getHeaders: () => MessageHeaders): T {
+export function createRpcClient<T = any>(
+    connection: Connection<Message>,
+    getHeaders: () => MessageHeaders
+): T {
     return new Proxy<any>(
         {},
         {
@@ -56,18 +64,30 @@ export function createRpcClient<T = any>(connection: Connection<Message>, getHea
 
                     const unsub = connection.subscribe(ev => {
                         if (ev.type === 'close') {
-                            result.reject(new Error('connection to coordinator closed'));
+                            result.reject(
+                                new Error('connection to coordinator closed')
+                            );
                         } else if (ev.type === 'message') {
-                            if (ev.message.type === 'response' && ev.message.requestId.equals(requestId)) {
+                            if (
+                                ev.message.type === 'response' &&
+                                ev.message.requestId === requestId
+                            ) {
                                 try {
                                     if (ev.message.payload.type === 'error') {
                                         result.reject(
                                             new Error(
-                                                'rpc call failed: ' + (ev.message.payload.message ?? '<no message>')
+                                                'rpc call failed: ' +
+                                                    (ev.message.payload
+                                                        .message ??
+                                                        '<no message>')
                                             )
                                         );
-                                    } else if (ev.message.payload.type === 'success') {
-                                        result.resolve(ev.message.payload.result);
+                                    } else if (
+                                        ev.message.payload.type === 'success'
+                                    ) {
+                                        result.resolve(
+                                            ev.message.payload.result
+                                        );
                                     } else {
                                         assertNever(ev.message.payload);
                                     }
@@ -84,11 +104,16 @@ export function createRpcClient<T = any>(connection: Connection<Message>, getHea
                         .then(() => {
                             if (result.state === 'pending') {
                                 unsub();
-                                result.reject(new Error('rpc call failed: timeout'));
+                                result.reject(
+                                    new Error('rpc call failed: timeout')
+                                );
                             }
                         })
                         .catch(err => {
-                            console.error('unexpected error after rpc timed out', err);
+                            console.error(
+                                'unexpected error after rpc timed out',
+                                err
+                            );
                         });
 
                     await connection.send({
@@ -135,11 +160,17 @@ export function setupRpcServer<TState>(
         }
     }
 
-    async function handleRequest(transact: Transact<TState>, connection: Connection<Message>, message: RequestMessage) {
+    async function handleRequest(
+        transact: Transact<TState>,
+        connection: Connection<Message>,
+        message: RequestMessage
+    ) {
         try {
             const result = await transact(message, async ctx => {
                 const server = createApi(ctx);
-                return await server[message.payload.name](message.payload.arg as any);
+                return await server[message.payload.name](
+                    message.payload.arg as any
+                );
             });
             await conn.send({
                 id: createMessageId(),
@@ -149,7 +180,10 @@ export function setupRpcServer<TState>(
             });
         } catch (err: any) {
             if (err instanceof BusinessError) {
-                console.warn('[WRN] Error during PRC handle:', getReadableError(err));
+                console.warn(
+                    '[WRN] Error during PRC handle:',
+                    getReadableError(err)
+                );
             } else {
                 console.error('[ERR] Error during PRC handle:', err);
             }

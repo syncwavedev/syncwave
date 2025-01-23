@@ -24,12 +24,22 @@ describe('PrefixedTransaction', () => {
 
             const value1 = await prefixedTxn.get(encodeString('key1'));
             const value2 = await prefixedTxn.get(encodeString('key2'));
-            const gte = await astream(prefixedTxn.query({gte: new Uint8Array()})).toArray();
-            const gt = await astream(prefixedTxn.query({gt: new Uint8Array()})).toArray();
-            const lte = await astream(prefixedTxn.query({lte: new Uint8Array(Array(100).fill(255))})).toArray();
-            const lt = await astream(prefixedTxn.query({lt: new Uint8Array(Array(100).fill(255))})).toArray();
+            const gte = await astream(
+                prefixedTxn.query({gte: new Uint8Array()})
+            ).toArray();
+            const gt = await astream(
+                prefixedTxn.query({gt: new Uint8Array()})
+            ).toArray();
+            const lte = await astream(
+                prefixedTxn.query({lte: new Uint8Array(Array(100).fill(255))})
+            ).toArray();
+            const lt = await astream(
+                prefixedTxn.query({lt: new Uint8Array(Array(100).fill(255))})
+            ).toArray();
 
-            const all = [{key: encodeString('key2'), value: encodeString('value2')}];
+            const all = [
+                {key: encodeString('key2'), value: encodeString('value2')},
+            ];
 
             expect(value1).toBeUndefined();
             expect(value2).toEqual(encodeString('value2'));
@@ -82,7 +92,9 @@ describe('PrefixedTransaction', () => {
             const prefixedTxn = new PrefixedTransaction(txn, 'prefix:');
             const results: Entry<Uint8Array, Uint8Array>[] = [];
 
-            for await (const entry of prefixedTxn.query({gte: encodeString('key1')})) {
+            for await (const entry of prefixedTxn.query({
+                gte: encodeString('key1'),
+            })) {
                 results.push(entry);
             }
 

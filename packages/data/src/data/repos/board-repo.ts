@@ -51,7 +51,10 @@ export class BoardRepo implements SyncTarget<Board> {
                 deleted: z.boolean(),
             }),
         });
-        this.counters = new Registry(withPrefix('c/')(txn), counterTxn => new Counter(counterTxn, 0));
+        this.counters = new Registry(
+            withPrefix('c/')(txn),
+            counterTxn => new Counter(counterTxn, 0)
+        );
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
@@ -86,7 +89,10 @@ export class BoardRepo implements SyncTarget<Board> {
         } catch (err) {
             // todo: map errors in AggregateError
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
-                throw new BusinessError(`board with slug ${board.slug} already exists`, 'board_slug_taken');
+                throw new BusinessError(
+                    `board with slug ${board.slug} already exists`,
+                    'board_slug_taken'
+                );
             }
 
             throw err;
@@ -98,7 +104,10 @@ export class BoardRepo implements SyncTarget<Board> {
             return await this.store.update(id, recipe);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
-                throw new BusinessError('board with slug already exists', 'board_slug_taken');
+                throw new BusinessError(
+                    'board with slug already exists',
+                    'board_slug_taken'
+                );
             }
 
             throw err;

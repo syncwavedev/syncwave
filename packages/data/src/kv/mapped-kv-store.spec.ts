@@ -20,7 +20,11 @@ describe('MappedTransaction with MemKVStore', () => {
             await txn.put(Uint8Array.from([1]), Uint8Array.from([42]));
         });
 
-        const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
+        const mappedTxn = new MappedTransaction(
+            await store.transaction(async txn => txn),
+            keyMapper,
+            valueMapper
+        );
 
         const result = await mappedTxn.get(Buffer.from([1]).toString('base64'));
         expect(result).toBe(Buffer.from([42]).toString('hex'));
@@ -28,7 +32,11 @@ describe('MappedTransaction with MemKVStore', () => {
 
     it('should return undefined for a missing key', async () => {
         const store = new MemKVStore();
-        const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
+        const mappedTxn = new MappedTransaction(
+            await store.transaction(async txn => txn),
+            keyMapper,
+            valueMapper
+        );
 
         const result = await mappedTxn.get(Buffer.from([2]).toString('base64'));
         expect(result).toBeUndefined();
@@ -41,9 +49,15 @@ describe('MappedTransaction with MemKVStore', () => {
             await txn.put(Uint8Array.from([3]), Uint8Array.from([200]));
         });
 
-        const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
+        const mappedTxn = new MappedTransaction(
+            await store.transaction(async txn => txn),
+            keyMapper,
+            valueMapper
+        );
 
-        const condition: Condition<string> = {gt: Buffer.from([2]).toString('base64')};
+        const condition: Condition<string> = {
+            gt: Buffer.from([2]).toString('base64'),
+        };
         const results: Entry<string, string>[] = [];
         for await (const entry of mappedTxn.query(condition)) {
             results.push(entry);
@@ -59,9 +73,16 @@ describe('MappedTransaction with MemKVStore', () => {
 
     it('should put a value with encoded key and value', async () => {
         const store = new MemKVStore();
-        const mappedTxn = new MappedTransaction(await store.transaction(async txn => txn), keyMapper, valueMapper);
+        const mappedTxn = new MappedTransaction(
+            await store.transaction(async txn => txn),
+            keyMapper,
+            valueMapper
+        );
 
-        await mappedTxn.put(Buffer.from([4]).toString('base64'), Buffer.from([500]).toString('hex'));
+        await mappedTxn.put(
+            Buffer.from([4]).toString('base64'),
+            Buffer.from([500]).toString('hex')
+        );
 
         const result = await mappedTxn.get(Buffer.from([4]).toString('base64'));
 
@@ -85,7 +106,10 @@ describe('MappedKVStore with MemKVStore', () => {
         const mappedStore = new MappedKVStore(store, keyMapper, valueMapper);
 
         const result = await mappedStore.transaction(async txn => {
-            await txn.put(Buffer.from([10]).toString('base64'), Buffer.from([1000]).toString('hex'));
+            await txn.put(
+                Buffer.from([10]).toString('base64'),
+                Buffer.from([1000]).toString('hex')
+            );
             return await txn.get(Buffer.from([10]).toString('base64'));
         });
 

@@ -10,7 +10,11 @@ export class OptimisticLock {
 
     async lock(key?: string | Uint8Array): Promise<void> {
         const keyBuf =
-            key === undefined ? new Uint8Array() : typeof key === 'string' ? this.stringCodec.encode(key) : key;
+            key === undefined
+                ? new Uint8Array()
+                : typeof key === 'string'
+                  ? this.stringCodec.encode(key)
+                  : key;
         await this.txn.put(keyBuf, this.uuidCodec.encode(createUuid()));
     }
 }

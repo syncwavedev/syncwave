@@ -28,19 +28,32 @@ export class DataLayer {
         private readonly jwtSecret: string
     ) {}
 
-    async transaction<T>(fn: (txn: TransactionContext) => Promise<T>): Promise<T> {
+    async transaction<T>(
+        fn: (txn: TransactionContext) => Promise<T>
+    ): Promise<T> {
         return await this.kv.transaction(async txn => {
             const userChangelog = new TopicManager<UserChangeEntry>(
                 withPrefix('topics/users/')(txn),
                 new MsgpackrCodec()
             );
 
-            async function handleUserChange(userId: UserId, diff: CrdtDiff<User>): Promise<void> {
-                await userChangelog.topic(userId.toString()).push({userId, diff});
+            async function handleUserChange(
+                userId: UserId,
+                diff: CrdtDiff<User>
+            ): Promise<void> {
+                await userChangelog
+                    .topic(userId.toString())
+                    .push({userId, diff});
             }
 
-            const users = new UserRepo(withPrefix('users/')(txn), handleUserChange);
-            const identities = new IdentityRepo(withPrefix('identities/')(txn), () => Promise.resolve());
+            const users = new UserRepo(
+                withPrefix('users/')(txn),
+                handleUserChange
+            );
+            const identities = new IdentityRepo(
+                withPrefix('identities/')(txn),
+                () => Promise.resolve()
+            );
 
             const result = await fn({
                 users,

@@ -47,9 +47,15 @@ export interface Entry<TKey, TValue> {
     readonly value: TValue;
 }
 
-export type Mutation<TKey, TValue> = PutMutation<TKey, TValue> | DeleteMutation<TKey>;
+export type Mutation<TKey, TValue> =
+    | PutMutation<TKey, TValue>
+    | DeleteMutation<TKey>;
 
-export type Condition<TKey> = GtCondition<TKey> | GteCondition<TKey> | LtCondition<TKey> | LteCondition<TKey>;
+export type Condition<TKey> =
+    | GtCondition<TKey>
+    | GteCondition<TKey>
+    | LtCondition<TKey>
+    | LteCondition<TKey>;
 
 export class InvalidQueryCondition extends Error {
     constructor(public readonly condition) {
@@ -66,7 +72,9 @@ export interface Transaction<TKey, TValue> {
 
 export interface KVStore<TKey, TValue> {
     // fn must be called multiple times in case of a conflict (optimistic concurrency)
-    transaction<TResult>(fn: (txn: Transaction<TKey, TValue>) => Promise<TResult>): Promise<TResult>;
+    transaction<TResult>(
+        fn: (txn: Transaction<TKey, TValue>) => Promise<TResult>
+    ): Promise<TResult>;
 }
 
 export type Uint8KVStore = KVStore<Uint8Array, Uint8Array>;
@@ -105,7 +113,9 @@ function createIdMapper<T>(): Mapper<T, T> {
     };
 }
 
-function createEncodingMapper<TData>(codec: Codec<TData>): Mapper<Uint8Array, TData> {
+function createEncodingMapper<TData>(
+    codec: Codec<TData>
+): Mapper<Uint8Array, TData> {
     return {
         encode: codec.encode.bind(codec),
         decode: codec.decode.bind(codec),
@@ -114,18 +124,32 @@ function createEncodingMapper<TData>(codec: Codec<TData>): Mapper<Uint8Array, TD
 
 export function withPrefix(
     prefix: Uint8Array | string
-): <TValue>(store: Transaction<Uint8Array, TValue>) => Transaction<Uint8Array, TValue> {
+): <TValue>(
+    store: Transaction<Uint8Array, TValue>
+) => Transaction<Uint8Array, TValue> {
     return store => new PrefixedTransaction(store, prefix);
 }
 
 export function withValueCodec<TData>(
     codec: Codec<TData>
 ): <TKey>(store: Transaction<TKey, Uint8Array>) => Transaction<TKey, TData> {
-    return store => new MappedTransaction(store, createIdMapper(), createEncodingMapper(codec));
+    return store =>
+        new MappedTransaction(
+            store,
+            createIdMapper(),
+            createEncodingMapper(codec)
+        );
 }
 
 export function withKeyCodec<TData>(
     codec: Codec<TData>
-): <TValue>(store: Transaction<Uint8Array, TValue>) => Transaction<TData, TValue> {
-    return store => new MappedTransaction(store, createEncodingMapper(codec), createIdMapper());
+): <TValue>(
+    store: Transaction<Uint8Array, TValue>
+) => Transaction<TData, TValue> {
+    return store =>
+        new MappedTransaction(
+            store,
+            createEncodingMapper(codec),
+            createIdMapper()
+        );
 }

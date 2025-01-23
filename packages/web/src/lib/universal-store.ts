@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import {browser} from '$app/environment';
 
 export class UniversalStore {
 	constructor(private readonly serverCookies: Map<string, string>) {}
@@ -10,13 +10,13 @@ export class UniversalStore {
 
 		return document.cookie
 			.split(';')
-			.map((cookieString) => {
+			.map(cookieString => {
 				const [key, value] = cookieString
 					.split('=')
-					.map((part) => decodeURIComponent(part.trim()));
-				return { key, value };
+					.map(part => decodeURIComponent(part.trim()));
+				return {key, value};
 			})
-			.find((cookie) => cookie.key === key)?.value;
+			.find(cookie => cookie.key === key)?.value;
 	}
 
 	set(key: string, value: string): void {

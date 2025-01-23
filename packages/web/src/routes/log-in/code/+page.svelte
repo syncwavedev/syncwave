@@ -3,7 +3,7 @@
 	import {Button} from '$lib/components/ui/button/index.js';
 	import {Input} from '$lib/components/ui/input/index.js';
 	import {Label} from '$lib/components/ui/label/index.js';
-	import {cn, getSdk, getUniversalStore, showErrorToast} from '$lib/utils.js';
+	import {cn, getSdk, getAuthManager, showErrorToast} from '$lib/utils.js';
 	import {appConfig} from '$lib/config';
 	import AuthHeader from '../../(components)/auth-header.svelte';
 	import AuthFooter from '../../(components)/auth-footer.svelte';
@@ -47,7 +47,7 @@
 		}
 	});
 
-	const store = getUniversalStore();
+	const store = getAuthManager();
 	async function signIn() {
 		isLoading = true;
 		error = undefined;
@@ -56,7 +56,7 @@
 		try {
 			const result = await sdk.verifySignInCode(email ?? '', code);
 			if (result.type === 'success') {
-				store.set('jwt', result.token);
+				store.logIn(result.token);
 
 				if (redirectUrl) {
 					goto(redirectUrl);

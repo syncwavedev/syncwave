@@ -2,14 +2,14 @@
 	import type {PageProps} from './$types';
 	import {unimplemented} from 'ground-data';
 	import {goto} from '$app/navigation';
-	import {getUniversalStore, showErrorToast} from '$lib/utils';
+	import {getAuthManager, showErrorToast} from '$lib/utils';
 
 	const {data}: PageProps = $props();
 	const {token, redirectUrl} = data;
 
 	if (token) {
-		const store = getUniversalStore();
-		store.set('jwt', token);
+		const store = getAuthManager();
+		store.logIn(token);
 	} else {
 		unimplemented();
 	}

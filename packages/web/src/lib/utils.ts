@@ -1,9 +1,9 @@
-import {type ClassValue, clsx} from 'clsx';
+import {clsx, type ClassValue} from 'clsx';
 import {Participant} from 'ground-data';
 import {getContext} from 'svelte';
 import {toast} from 'svelte-sonner';
 import {twMerge} from 'tailwind-merge';
-import {UniversalStore} from './universal-store';
+import {AuthManager} from './auth-manager';
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -13,8 +13,8 @@ export function getSdk() {
 	return getContext<Participant>(Participant);
 }
 
-export function getUniversalStore() {
-	return getContext<UniversalStore>(UniversalStore);
+export function getAuthManager() {
+	return getContext<AuthManager>(AuthManager);
 }
 
 export function showErrorToast() {

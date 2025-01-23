@@ -275,7 +275,6 @@ The Ground Team`,
                 code: z.string(),
             }),
             handle: async ({email, code}): Promise<VerifySignInCodeResponse> => {
-                console.log({email, code});
                 const identity = await ctx.identities.getByEmail(email);
                 if (!identity) {
                     throw new Error('invalid email, no identity found');

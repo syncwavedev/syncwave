@@ -9,11 +9,14 @@
 	import {appConfig} from '../lib/config';
 	import {WsTransportClient} from '../ws-transport-client';
 	import {Toaster} from '$lib/components/ui/sonner/index.js';
+	import {AuthManager} from '$lib/auth-manager';
 
 	let {children, data}: LayoutProps = $props();
 
 	const cookieMap = new Map(data.serverCookies.map(({name, value}) => [name, value]));
-	setContext(UniversalStore, new UniversalStore(cookieMap));
+	const universalStore = new UniversalStore(cookieMap);
+	setContext(UniversalStore, universalStore);
+	setContext(AuthManager, new AuthManager(universalStore));
 
 	function createParticipant() {
 		const transport = new WsTransportClient({

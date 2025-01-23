@@ -30,48 +30,55 @@
 				name: 'Design Engineering',
 				description: 'Innovative solutions and product designs.',
 				url: '#',
+				time: '13:45',
 			},
 			{
 				name: 'Sales & Marketing',
 				description: 'Strategies to drive growth and customer engagement.',
 				url: '#',
+				time: '13:45',
 			},
 			{
 				name: 'Travel',
 				description: 'Exploring new destinations and experiences.',
 				url: '#',
+				time: '13:45',
 			},
 			{
 				name: 'Product Development',
 				description: 'Building user-centric products and features.',
 				url: '#',
+				time: '13:45',
 			},
 			{
 				name: 'Finance & Operations',
 				description: 'Managing budgets and streamlining processes.',
 				url: '#',
+				time: '13:45',
 			},
 			{
 				name: 'Customer Support',
 				description: 'Providing top-notch service and solutions.',
 				url: '#',
+				time: '13:45',
 			},
 			{
 				name: 'Human Resources',
 				description: 'Managing talent and building a strong team.',
 				url: '#',
+				time: '13:45',
 			},
 			{
 				name: 'Research & Development',
 				description: 'Pushing the boundaries of innovation and technology.',
 				url: '#',
+				time: '13:45',
 			},
 		],
 	};
 </script>
 
 <script lang="ts">
-	import NavMain from './nav-main.svelte';
 	import NavBoards from './nav-boards.svelte';
 	import NavUser from './nav-user.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';

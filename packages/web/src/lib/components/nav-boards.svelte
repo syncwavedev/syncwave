@@ -17,6 +17,7 @@
 			description: string;
 			url: string;
 			avatar?: string;
+			time: string;
 		}[];
 	} = $props();
 
@@ -71,6 +72,7 @@
 							>
 								{#snippet child({props})}
 									{@const {avatar, color} = generateAvatar(item.name)}
+
 									<a href={item.url} {...props}>
 										<Avatar.Root class="h-8 w-8 rounded-lg">
 											{#if item.avatar}
@@ -79,11 +81,21 @@
 											<Avatar.Fallback
 												class="rounded-lg"
 												style={{backgroundColor: color}}
-												>{avatar}</Avatar.Fallback
 											>
+												{avatar}
+											</Avatar.Fallback>
 										</Avatar.Root>
+
 										<div class="grid flex-1 text-left text-sm leading-tight">
-											<span class="truncate font-semibold">{item.name}</span>
+											<div class="flex items-center justify-between gap-2">
+												<span class="flex-1 truncate font-semibold">
+													{item.name}
+												</span>
+												<span class="flex-none text-xs">
+													{item.time}
+												</span>
+											</div>
+
 											<span class="truncate text-xs">{item.description}</span>
 										</div>
 									</a>

@@ -192,11 +192,11 @@ function createCoordinatorApi({
     });
 
     const inspectorApi = wrapApi(
-        createDataInspectorApi(ctx.tx, ctx.dataNode, auth),
+        createDataInspectorApi(ctx.tx, ctx.dataNode),
         async (req, next) => {
-            if (!auth.superAdmin) {
+            if (!auth.superadmin) {
                 throw new BusinessError(
-                    'only super admins can use inspector api',
+                    'only superadmins can use inspector api',
                     'forbidden'
                 );
             }

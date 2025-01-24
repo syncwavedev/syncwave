@@ -1,5 +1,5 @@
 import {LRUCache} from 'lru-cache';
-import {SUPER_ADMIN_IDS} from '../constants.js';
+import {SUPERADMIN_IDS} from '../constants.js';
 import {TransactionContext} from './data-layer.js';
 import {JwtService} from './infra.js';
 import {IdentityId} from './repos/identity-repo.js';
@@ -8,7 +8,7 @@ import {UserId} from './repos/user-repo.js';
 export interface AuthContext {
     readonly userId: UserId | undefined;
     readonly identityId: IdentityId | undefined;
-    readonly superAdmin: boolean;
+    readonly superadmin: boolean;
 }
 
 export class AuthContextParser {
@@ -40,7 +40,7 @@ export class AuthContextParser {
             const authContext: AuthContext = {
                 identityId: jwtPayload.sub as UserId | undefined,
                 userId: jwtPayload.uid as UserId | undefined,
-                superAdmin: SUPER_ADMIN_IDS.includes(jwtPayload.sub ?? ''),
+                superadmin: SUPERADMIN_IDS.includes(jwtPayload.sub ?? ''),
             };
             this.authContextCache.set(jwtToken, authContext);
             return authContext;
@@ -48,7 +48,7 @@ export class AuthContextParser {
             return {
                 userId: undefined,
                 identityId: undefined,
-                superAdmin: false,
+                superadmin: false,
             };
         }
     }

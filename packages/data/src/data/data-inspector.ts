@@ -4,7 +4,6 @@ import {decodeString, encodeString} from '../codec.js';
 import {Uint8Transaction} from '../kv/kv-store.js';
 import {zUint8Array} from '../utils.js';
 import {decodeUuid} from '../uuid.js';
-import {AuthContext} from './auth-context.js';
 import {createApi, handler} from './communication/rpc.js';
 import {AggregateDataNode, DataNode, DataNodeVisitor} from './data-node.js';
 
@@ -54,8 +53,7 @@ export type DataNodeInfo = {type: 'doc'} | {type: 'aggregate'} | {type: 'repo'};
 
 export function createDataInspectorApi(
     rootTx: Uint8Transaction,
-    dataNode: DataNode,
-    auth: AuthContext
+    dataNode: DataNode
 ) {
     return createApi({
         getDbTree: handler({

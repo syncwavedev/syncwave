@@ -81,7 +81,7 @@ export class DocDataNode<T extends Doc> extends DataNode {
         super();
     }
 
-    async *queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild> {
+    async *queryChildren(): AsyncIterable<DataNodeChild> {
         // no children
     }
 

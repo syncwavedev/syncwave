@@ -30,6 +30,32 @@ export class Subject<T> {
     }
 }
 
+export class State<T> {
+    private readonly subject = new Subject<T>();
+
+    constructor(private _value: T) {}
+
+    get value() {
+        return this._value;
+    }
+
+    subscribe(callback: (value: any) => void): () => void {
+        const unsub = this.subject.subscribe(value => {
+            this._value = value;
+            callback(value);
+        });
+
+        callback(this._value);
+
+        return unsub;
+    }
+
+    next(value: T) {
+        this._value = value;
+        this.subject.next(value);
+    }
+}
+
 export function assertNever(value: never): never {
     throw new Error('assertNever failed: ' + value);
 }
@@ -52,6 +78,7 @@ export function wait(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+export function pipe<T>(x: T): T;
 export function pipe<T, R>(x: T, fn1: (x: T) => R): R;
 export function pipe<T, A, R>(x: T, fn1: (x: T) => A, fn2: (arg: A) => R): R;
 export function pipe<T, A, B, R>(
@@ -192,7 +219,7 @@ export async function whenAll<const T extends Promise<any>[]>(
     } else if (rejected.length === 1) {
         throw rejected[0].reason;
     } else {
-        if (rejected.every(x => x instanceof BusinessError)) {
+        if (rejected.every(x => x.reason instanceof BusinessError)) {
             throw new AggregateBusinessError(rejected.map(x => x.reason));
         } else {
             throw new AggregateError(rejected.map(x => x.reason));

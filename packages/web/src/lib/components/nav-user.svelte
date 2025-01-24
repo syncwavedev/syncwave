@@ -3,6 +3,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import {useSidebar} from '$lib/components/ui/sidebar/index.js';
+	import {getAuthManager} from '$lib/utils';
 	import BadgeCheck from 'lucide-svelte/icons/badge-check';
 	import Bell from 'lucide-svelte/icons/bell';
 	import ChevronsUpDown from 'lucide-svelte/icons/chevrons-up-down';
@@ -12,6 +13,7 @@
 
 	let {user}: {user: {name: string; email: string; avatar: string}} = $props();
 	const sidebar = useSidebar();
+	const authManager = getAuthManager();
 </script>
 
 <Sidebar.Menu>
@@ -77,7 +79,7 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item>
+				<DropdownMenu.Item onclick={() => authManager.logOut()}>
 					<LogOut />
 					Log out
 				</DropdownMenu.Item>

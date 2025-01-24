@@ -12,13 +12,11 @@
 	import {AuthManager} from '$lib/auth-manager';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import DevTools from '$lib/dev-tools/dev-tools.svelte';
+	import {createAuthManager} from './utils';
 
 	let {children, data}: LayoutProps = $props();
 
-	const cookieMap = new Map(data.serverCookies.map(({name, value}) => [name, value]));
-	const universalStore = new UniversalStore(cookieMap);
-	const authManager = new AuthManager(universalStore);
-	setContext(UniversalStore, universalStore);
+	const authManager = createAuthManager(data.serverCookies);
 	setContext(AuthManager, authManager);
 
 	function createParticipant() {

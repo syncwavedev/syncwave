@@ -100,12 +100,12 @@ const jwtService: JwtService = {
 
 async function getKVStore(): Promise<Uint8KVStore> {
     if (STAGE === 'local') {
-        console.log('using SQLite as primary store');
+        console.log('[INF] using SQLite as primary store');
         return await import('./sqlite-kv-store.js').then(
             x => new x.SqliteUint8KVStore('./dev.sqlite')
         );
     } else {
-        console.log('using FoundationDB as a primary store');
+        console.log('[INF] using FoundationDB as a primary store');
         const fdbStore = await import('./fdb-kv-store.js').then(
             x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
         );
@@ -196,7 +196,7 @@ function setupRouter(coordinator: () => Coordinator, router: Router) {
 
         if (!result.user.verified_email || !result.user.email) {
             console.warn(
-                `Google user has unverified email: ${result.user.email}`
+                `[WRN] Google user has unverified email: ${result.user.email}`
             );
             return ctx.redirect(`${APP_URL}/log-in/failed`);
         }
@@ -217,8 +217,8 @@ function setupRouter(coordinator: () => Coordinator, router: Router) {
 
 launch()
     .then(() => {
-        console.log(`coordinator is running on port ${PORT}`);
+        console.log(`[INF] coordinator is running on port ${PORT}`);
     })
     .catch(err => {
-        console.error(err);
+        console.error('[ERR]', err);
     });

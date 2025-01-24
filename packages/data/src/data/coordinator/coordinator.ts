@@ -196,7 +196,7 @@ function createCoordinatorApi({
         async (req, next) => {
             if (!auth.superadmin) {
                 throw new BusinessError(
-                    'only superadmins can use inspector api',
+                    `only superadmins can use inspector api. id = ${auth.identityId}`,
                     'forbidden'
                 );
             }

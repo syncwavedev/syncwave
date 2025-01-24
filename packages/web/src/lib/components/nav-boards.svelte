@@ -86,17 +86,19 @@
 											</Avatar.Fallback>
 										</Avatar.Root>
 
-										<div class="grid flex-1 text-left text-sm leading-tight">
-											<div class="flex items-center justify-between gap-2">
-												<span class="flex-1 truncate font-semibold">
+										<div class="min-w-0">
+											<div class="flex justify-between">
+												<div class="truncate font-semibold">
 													{item.name}
-												</span>
-												<span class="flex-none text-xs">
-													{item.time}
-												</span>
-											</div>
+												</div>
 
-											<span class="truncate text-xs">{item.description}</span>
+												<div class="text-xs">
+													{item.time}
+												</div>
+											</div>
+											<div class="max-w-full truncate text-ellipsis text-xs">
+												{item.description}
+											</div>
 										</div>
 									</a>
 								{/snippet}

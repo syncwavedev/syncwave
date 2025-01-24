@@ -65,7 +65,6 @@
 <Dialog.Root bind:open={devToolsOpen}>
 	<Dialog.Content class="max-w-[1000px]">
 		<Dialog.Header>
-			<Dialog.Title>DevTools</Dialog.Title>
 			<Dialog.Description>
 				<DevTools />
 			</Dialog.Description>

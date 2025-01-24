@@ -3,7 +3,10 @@ import {CrdtDiff} from '../crdt/crdt.js';
 import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {TopicManager} from '../kv/topic-manager.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
+import {BoardRepo} from './repos/board-repo.js';
 import {IdentityRepo} from './repos/identity-repo.js';
+import {MemberRepo} from './repos/member-repo.js';
+import {TaskRepo} from './repos/task-repo.js';
 import {User, UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
@@ -56,10 +59,22 @@ export class DataLayer {
                 withPrefix('identities/')(tx),
                 () => Promise.resolve()
             );
+            const members = new MemberRepo(withPrefix('members/')(tx), () =>
+                Promise.resolve()
+            );
+            const boards = new BoardRepo(withPrefix('boards/')(tx), () =>
+                Promise.resolve()
+            );
+            const tasks = new TaskRepo(withPrefix('tasks/')(tx), () =>
+                Promise.resolve()
+            );
 
             const dataNode = new AggregateDataNode({
                 identities: new RepoDataNode(identities.rawRepo),
                 users: new RepoDataNode(users.rawRepo),
+                boards: new RepoDataNode(boards.rawRepo),
+                tasks: new RepoDataNode(tasks.rawRepo),
+                members: new RepoDataNode(members.rawRepo),
             });
 
             const result = await fn({

@@ -30,10 +30,10 @@ const BOARD_ID = 'boardId';
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
 export class TaskRepo implements SyncTarget<Task> {
-    private readonly store: DocRepo<Task>;
+    public readonly rawRepo: DocRepo<Task>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Task>) {
-        this.store = new DocRepo<Task>({
+        this.rawRepo = new DocRepo<Task>({
             txn: withPrefix('d/')(txn),
             onChange,
             indexes: {
@@ -58,7 +58,7 @@ export class TaskRepo implements SyncTarget<Task> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
-        return await this.store.apply(
+        return await this.rawRepo.apply(
             id,
             diff,
             createWriteableChecker({
@@ -69,18 +69,18 @@ export class TaskRepo implements SyncTarget<Task> {
     }
 
     getById(id: TaskId): Promise<Task | undefined> {
-        return this.store.getById(id);
+        return this.rawRepo.getById(id);
     }
 
     getByBoardId(boardId: BoardId): AsyncStream<Task> {
-        return this.store.get(BOARD_ID, [boardId]);
+        return this.rawRepo.get(BOARD_ID, [boardId]);
     }
 
     create(user: Task): Promise<Task> {
-        return this.store.create(user);
+        return this.rawRepo.create(user);
     }
 
     update(id: TaskId, recipe: Recipe<Task>): Promise<Task> {
-        return this.store.update(id, recipe);
+        return this.rawRepo.update(id, recipe);
     }
 }

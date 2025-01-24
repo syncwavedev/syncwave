@@ -28,11 +28,11 @@ export interface Board extends Doc<BoardId> {
 const SLUG_INDEX = 'slug';
 
 export class BoardRepo implements SyncTarget<Board> {
-    private readonly store: DocRepo<Board>;
+    public readonly rawRepo: DocRepo<Board>;
     private readonly counters: Registry<Counter>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Board>) {
-        this.store = new DocRepo<Board>({
+        this.rawRepo = new DocRepo<Board>({
             txn: withPrefix('d/')(txn),
             onChange,
             indexes: {
@@ -58,7 +58,7 @@ export class BoardRepo implements SyncTarget<Board> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
-        return await this.store.apply(
+        return await this.rawRepo.apply(
             id,
             diff,
             createWriteableChecker({
@@ -70,7 +70,7 @@ export class BoardRepo implements SyncTarget<Board> {
     }
 
     async getById(id: BoardId): Promise<Board | undefined> {
-        return await this.store.getById(id);
+        return await this.rawRepo.getById(id);
     }
 
     async incrementBoardCounter(boardId: BoardId): Promise<number> {
@@ -78,14 +78,14 @@ export class BoardRepo implements SyncTarget<Board> {
     }
 
     async checkSlugAvailable(slug: string): Promise<boolean> {
-        const existingBoard = await this.store.getUnique(SLUG_INDEX, [slug]);
+        const existingBoard = await this.rawRepo.getUnique(SLUG_INDEX, [slug]);
 
         return existingBoard === undefined;
     }
 
     async create(board: Board): Promise<Board> {
         try {
-            return await this.store.create(board);
+            return await this.rawRepo.create(board);
         } catch (err) {
             // todo: map errors in AggregateError
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
@@ -101,7 +101,7 @@ export class BoardRepo implements SyncTarget<Board> {
 
     async update(id: BoardId, recipe: Recipe<Board>): Promise<Board> {
         try {
-            return await this.store.update(id, recipe);
+            return await this.rawRepo.update(id, recipe);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
                 throw new BusinessError(

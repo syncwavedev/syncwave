@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {DataAccessor} from './actor.js';
 import {Message} from './communication/message.js';
 import {ReconnectConnection} from './communication/reconnect-connection.js';
 import {createApi, handler, setupRpcServer} from './communication/rpc.js';
@@ -35,6 +36,10 @@ export class Participant {
 
     authenticate(authToken: string): void {
         this.coordinator.authenticate(authToken);
+    }
+
+    public get data(): DataAccessor {
+        return this.coordinator.rpc;
     }
 
     public get coordinatorRpc() {

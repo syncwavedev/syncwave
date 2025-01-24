@@ -25,10 +25,10 @@ const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
 
 export class MemberRepo implements SyncTarget<Member> {
-    private readonly store: DocRepo<Member>;
+    public readonly rawRepo: DocRepo<Member>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Member>) {
-        this.store = new DocRepo<Member>({
+        this.rawRepo = new DocRepo<Member>({
             txn: withPrefix('d/')(txn),
             onChange,
             indexes: {
@@ -49,7 +49,7 @@ export class MemberRepo implements SyncTarget<Member> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
-        return await this.store.apply(
+        return await this.rawRepo.apply(
             id,
             diff,
             createWriteableChecker({
@@ -60,29 +60,32 @@ export class MemberRepo implements SyncTarget<Member> {
     }
 
     create(member: Member): Promise<Member> {
-        return this.store.create(member);
+        return this.rawRepo.create(member);
     }
 
     getById(id: MemberId): Promise<Member | undefined> {
-        return this.store.getById(id);
+        return this.rawRepo.getById(id);
     }
 
     getByUserId(userId: UserId): AsyncStream<Member> {
-        return this.store.get(USER_ID_BOARD_ID_INDEX, [userId]);
+        return this.rawRepo.get(USER_ID_BOARD_ID_INDEX, [userId]);
     }
 
     getByBoardId(boardId: BoardId): AsyncStream<Member> {
-        return this.store.get(BOARD_ID_INDEX, [boardId]);
+        return this.rawRepo.get(BOARD_ID_INDEX, [boardId]);
     }
 
     getByUserIdAndBoardId(
         userId: UserId,
         boardId: BoardId
     ): Promise<Member | undefined> {
-        return this.store.getUnique(USER_ID_BOARD_ID_INDEX, [userId, boardId]);
+        return this.rawRepo.getUnique(USER_ID_BOARD_ID_INDEX, [
+            userId,
+            boardId,
+        ]);
     }
 
     update(id: MemberId, recipe: Recipe<Member>): Promise<Member> {
-        return this.store.update(id, recipe);
+        return this.rawRepo.update(id, recipe);
     }
 }

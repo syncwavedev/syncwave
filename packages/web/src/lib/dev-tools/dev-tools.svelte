@@ -26,8 +26,7 @@
 	let detailsPromise: Promise<string> | undefined = $state(undefined);
 </script>
 
-<div class="text-2xl font-semibold">Store</div>
-<!-- <Button onclick={() => sdk.coordinatorRpc.truncateDb({})}>Reset store</Button> -->
+<!-- <Button variant="destructive" onclick={() => sdk.coordinatorRpc.truncateDb({})}>Reset store</Button> -->
 <div class="flex gap-8">
 	<div>
 		{#if itemsPromise}
@@ -49,7 +48,7 @@
 									<Dot />
 								{/if}
 								<Button variant="ghost" onclick={() => openDetails(path)}>
-									[{item.type}] {item.name}
+									{item.name} <span class="text-gray-400">[{item.type}]</span>
 								</Button>
 							</div>
 							<Collapsible.Content>

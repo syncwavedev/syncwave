@@ -1,10 +1,9 @@
 import {z} from 'zod';
-import {DataAccessor} from './actor.js';
 import {Message} from './communication/message.js';
 import {ReconnectConnection} from './communication/reconnect-connection.js';
 import {createApi, handler, setupRpcServer} from './communication/rpc.js';
 import {Connection, TransportClient} from './communication/transport.js';
-import {CoordinatorClient} from './coordinator-client.js';
+import {CoordinatorClient} from './coordinator/coordinator-client.js';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
 export class Participant {
@@ -38,7 +37,7 @@ export class Participant {
         this.coordinator.authenticate(authToken);
     }
 
-    public get db(): DataAccessor {
+    public get coordinatorRpc() {
         return this.coordinator.rpc;
     }
 

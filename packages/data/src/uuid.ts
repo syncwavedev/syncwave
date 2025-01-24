@@ -22,7 +22,7 @@ export function createUuid(): Uuid {
 
 export class UuidCodec implements Codec<Uuid> {
     encode(data: Uuid): Uint8Array {
-        return parse(data.toString());
+        return parse(data);
     }
     decode(buf: Uint8Array): Uuid {
         const uuid = stringify(buf) as Uuid;
@@ -33,3 +33,7 @@ export class UuidCodec implements Codec<Uuid> {
         return uuid;
     }
 }
+
+const uuidCodec = new UuidCodec();
+export const encodeUuid = (data: Uuid) => uuidCodec.encode(data);
+export const decodeUuid = (buf: Uint8Array) => uuidCodec.decode(buf);

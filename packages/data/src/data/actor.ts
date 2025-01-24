@@ -7,7 +7,7 @@ import {TopicManager} from '../kv/topic-manager.js';
 import {getNow} from '../timestamp.js';
 import {assertNever, unimplemented, wait, whenAll} from '../utils.js';
 import {AuthContext} from './auth-context.js';
-import {CoordinatorApi} from './coordinator.js';
+import {CoordinatorApi} from './coordinator/coordinator.js';
 import {OnDocChange} from './doc-repo.js';
 import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
 import {Member, MemberRepo, createMemberId} from './repos/member-repo.js';

@@ -1,3 +1,4 @@
+import {z} from 'zod';
 import {
     AggregateBusinessError,
     AggregateError,
@@ -148,6 +149,11 @@ export function compareUint8Array(a: Uint8Array, b: Uint8Array): 1 | 0 | -1 {
     return 0;
 }
 
+export function bufStartsWith(buf: Uint8Array, prefix: Uint8Array): boolean {
+    const bufPrefix = buf.slice(0, prefix.length);
+    return compareUint8Array(bufPrefix, prefix) === 0;
+}
+
 export function unreachable(): never {
     throw new Error('unreachable');
 }
@@ -192,4 +198,10 @@ export async function whenAll<const T extends Promise<any>[]>(
             throw new AggregateError(rejected.map(x => x.reason));
         }
     }
+}
+
+export function zUint8Array() {
+    return z.custom<Uint8Array>(x => x instanceof Uint8Array, {
+        message: 'Uint8Array expected',
+    });
 }

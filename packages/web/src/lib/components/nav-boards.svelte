@@ -62,7 +62,7 @@
 <Sidebar.Menu>
 	{#each boards as item, idx (item.name)}
 		<Collapsible.Root open={idx === 0} class="group/collapsible">
-			{#snippet child({props})}
+			{#snippet child({props}: any)}
 				<ContextMenu.Root>
 					<ContextMenu.Trigger>
 						<Sidebar.MenuItem {...props}>
@@ -70,7 +70,7 @@
 								size="lg"
 								class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 							>
-								{#snippet child({props})}
+								{#snippet child({props}: any)}
 									{@const {avatar, color} = generateAvatar(item.name)}
 
 									<a href={item.url} {...props}>

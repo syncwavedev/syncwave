@@ -29,8 +29,12 @@ export class AuthManager {
 		return this.getIdentityInfo() !== undefined;
 	}
 
+	getJwt() {
+		return this.store.get(JWT_KEY);
+	}
+
 	getIdentityInfo(): IdentityInfo | undefined {
-		const token = this.store.get(JWT_KEY);
+		const token = this.getJwt();
 		if (!token) {
 			return undefined;
 		}

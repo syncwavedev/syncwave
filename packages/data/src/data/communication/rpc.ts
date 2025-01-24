@@ -27,6 +27,20 @@ export function createApi<T extends Api>(def: T): T {
     return def;
 }
 
+export function wrapApi<T extends Api>(
+    def: T,
+    decorator: (request: unknown, next: Handler<unknown, any>) => Promise<any>
+): T {
+    const result: any = {};
+    for (const key of Object.keys(def)) {
+        result[key] = async (request: any) => {
+            return await decorator(request, def[key]);
+        };
+    }
+
+    return result;
+}
+
 export function handler<TType extends ZodObject<any, any, any>, TResponse>(
     options: RpcOptions<TType, TResponse>
 ): Handler<TypeOf<TType>, TResponse> {

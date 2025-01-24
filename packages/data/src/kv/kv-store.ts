@@ -1,5 +1,6 @@
+import {astream, AsyncStream} from '../async-stream.js';
 import {Codec} from '../codec.js';
-import {unreachable} from '../utils.js';
+import {bufStartsWith, unreachable} from '../utils.js';
 import {MappedTransaction, Mapper} from './mapped-kv-store.js';
 import {PrefixedTransaction} from './prefixed-kv-store.js';
 
@@ -46,6 +47,8 @@ export interface Entry<TKey, TValue> {
     readonly key: TKey;
     readonly value: TValue;
 }
+
+export type Uint8Entry = Entry<Uint8Array, Uint8Array>;
 
 export type Mutation<TKey, TValue> =
     | PutMutation<TKey, TValue>
@@ -152,4 +155,24 @@ export function withKeyCodec<TData>(
             createEncodingMapper(codec),
             createIdMapper()
         );
+}
+
+export function queryStartsWith<T>(
+    tx: Transaction<Uint8Array, T>,
+    prefix: Uint8Array
+): AsyncStream<Entry<Uint8Array, T>> {
+    return astream(_queryStartsWith(tx, prefix));
+}
+
+async function* _queryStartsWith<T>(
+    tx: Transaction<Uint8Array, T>,
+    prefix: Uint8Array
+): AsyncIterable<Entry<Uint8Array, T>> {
+    for await (const entry of tx.query({gte: prefix})) {
+        if (!bufStartsWith(entry.key, prefix)) {
+            return;
+        }
+
+        yield entry;
+    }
 }

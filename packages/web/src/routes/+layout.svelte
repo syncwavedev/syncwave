@@ -17,8 +17,9 @@
 
 	const cookieMap = new Map(data.serverCookies.map(({name, value}) => [name, value]));
 	const universalStore = new UniversalStore(cookieMap);
+	const authManager = new AuthManager(universalStore);
 	setContext(UniversalStore, universalStore);
-	setContext(AuthManager, new AuthManager(universalStore));
+	setContext(AuthManager, authManager);
 
 	function createParticipant() {
 		const transport = new WsTransportClient({
@@ -27,6 +28,10 @@
 			logger: new ConsoleLogger(),
 		});
 		const participant = new Participant(transport, browser ? 'local' : 'proxy');
+		const jwt = authManager.getJwt();
+		if (jwt) {
+			participant.authenticate(jwt);
+		}
 
 		return participant;
 	}

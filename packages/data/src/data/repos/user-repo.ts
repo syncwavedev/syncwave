@@ -16,10 +16,10 @@ export function createUserId(): UserId {
 export interface User extends Doc<UserId> {}
 
 export class UserRepo implements SyncTarget<User> {
-    private readonly store: DocRepo<User>;
+    public readonly rawRepo: DocRepo<User>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<User>) {
-        this.store = new DocRepo<User>({
+        this.rawRepo = new DocRepo<User>({
             txn: withPrefix('d/')(txn),
             onChange,
             indexes: {},
@@ -33,7 +33,7 @@ export class UserRepo implements SyncTarget<User> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {
-        return await this.store.apply(
+        return await this.rawRepo.apply(
             id,
             diff,
             createWriteableChecker({
@@ -43,14 +43,14 @@ export class UserRepo implements SyncTarget<User> {
     }
 
     getById(id: UserId): Promise<User | undefined> {
-        return this.store.getById(id);
+        return this.rawRepo.getById(id);
     }
 
     async create(user: User): Promise<User> {
-        return this.store.create(user);
+        return this.rawRepo.create(user);
     }
 
     update(id: UserId, recipe: Recipe<User>): Promise<User> {
-        return this.store.update(id, recipe);
+        return this.rawRepo.update(id, recipe);
     }
 }

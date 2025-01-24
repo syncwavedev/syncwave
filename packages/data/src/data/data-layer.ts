@@ -2,6 +2,7 @@ import {MsgpackrCodec} from '../codec.js';
 import {CrdtDiff} from '../crdt/crdt.js';
 import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {TopicManager} from '../kv/topic-manager.js';
+import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import {IdentityRepo} from './repos/identity-repo.js';
 import {User, UserId, UserRepo} from './repos/user-repo.js';
 
@@ -14,7 +15,8 @@ export interface TransactionContext {
     readonly identities: IdentityRepo;
     readonly userChangelog: TopicManager<UserChangeEntry>;
     readonly config: Config;
-    readonly txn: Uint8Transaction;
+    readonly tx: Uint8Transaction;
+    readonly dataNode: DataNode;
 }
 
 export interface UserChangeEntry {
@@ -31,9 +33,9 @@ export class DataLayer {
     async transaction<T>(
         fn: (txn: TransactionContext) => Promise<T>
     ): Promise<T> {
-        return await this.kv.transaction(async txn => {
+        return await this.kv.transaction(async tx => {
             const userChangelog = new TopicManager<UserChangeEntry>(
-                withPrefix('topics/users/')(txn),
+                withPrefix('topics/users/')(tx),
                 new MsgpackrCodec()
             );
 
@@ -47,13 +49,18 @@ export class DataLayer {
             }
 
             const users = new UserRepo(
-                withPrefix('users/')(txn),
+                withPrefix('users/')(tx),
                 handleUserChange
             );
             const identities = new IdentityRepo(
-                withPrefix('identities/')(txn),
+                withPrefix('identities/')(tx),
                 () => Promise.resolve()
             );
+
+            const dataNode = new AggregateDataNode({
+                identities: new RepoDataNode(identities.rawRepo),
+                users: new RepoDataNode(users.rawRepo),
+            });
 
             const result = await fn({
                 users,
@@ -62,7 +69,8 @@ export class DataLayer {
                 config: {
                     jwtSecret: this.jwtSecret,
                 },
-                txn,
+                tx: tx,
+                dataNode,
             });
 
             return result;

@@ -1,10 +1,14 @@
 import {LRUCache} from 'lru-cache';
+import {SUPER_ADMIN_IDS} from '../constants.js';
 import {TransactionContext} from './data-layer.js';
 import {JwtService} from './infra.js';
+import {IdentityId} from './repos/identity-repo.js';
 import {UserId} from './repos/user-repo.js';
 
 export interface AuthContext {
-    readonly userId?: UserId;
+    readonly userId: UserId | undefined;
+    readonly identityId: IdentityId | undefined;
+    readonly superAdmin: boolean;
 }
 
 export class AuthContextParser {
@@ -34,12 +38,18 @@ export class AuthContextParser {
                 ctx.config.jwtSecret
             );
             const authContext: AuthContext = {
-                userId: jwtPayload.user_id,
+                identityId: jwtPayload.sub as UserId | undefined,
+                userId: jwtPayload.uid as UserId | undefined,
+                superAdmin: SUPER_ADMIN_IDS.includes(jwtPayload.sub ?? ''),
             };
             this.authContextCache.set(jwtToken, authContext);
             return authContext;
         } else {
-            return {};
+            return {
+                userId: undefined,
+                identityId: undefined,
+                superAdmin: false,
+            };
         }
     }
 }

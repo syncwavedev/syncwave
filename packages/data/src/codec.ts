@@ -28,6 +28,10 @@ export class StringCodec implements Codec<string> {
     }
 }
 
+const stringCodec = new StringCodec();
+export const encodeString = (data: string) => stringCodec.encode(data);
+export const decodeString = (buf: Uint8Array) => stringCodec.decode(buf);
+
 export class NumberCodec implements Codec<number> {
     encode(data: number): Uint8Array {
         return new Uint8Array(encode(data));
@@ -36,3 +40,7 @@ export class NumberCodec implements Codec<number> {
         return decode(Buffer.from(buf));
     }
 }
+
+const numberCodec = new NumberCodec();
+export const encodeNumber = (data: number) => numberCodec.encode(data);
+export const decodeNumber = (buf: Uint8Array) => numberCodec.decode(buf);

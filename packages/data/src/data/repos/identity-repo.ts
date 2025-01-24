@@ -34,10 +34,10 @@ const USER_ID_INDEX = 'userId';
 export class EmailTakenIdentityRepoError extends BusinessError {}
 
 export class IdentityRepo implements SyncTarget<Identity> {
-    private readonly store: DocRepo<Identity>;
+    public readonly rawRepo: DocRepo<Identity>;
 
     constructor(txn: Uint8Transaction, onChange: OnDocChange<Identity>) {
-        this.store = new DocRepo<Identity>({
+        this.rawRepo = new DocRepo<Identity>({
             txn: withPrefix('d/')(txn),
             indexes: {
                 [EMAIL_INDEX]: {
@@ -67,7 +67,7 @@ export class IdentityRepo implements SyncTarget<Identity> {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
-        return await this.store.apply(
+        return await this.rawRepo.apply(
             id,
             diff,
             createWriteableChecker({
@@ -79,20 +79,20 @@ export class IdentityRepo implements SyncTarget<Identity> {
     }
 
     getById(id: IdentityId): Promise<Identity | undefined> {
-        return this.store.getById(id);
+        return this.rawRepo.getById(id);
     }
 
     getByEmail(email: string): Promise<Identity | undefined> {
-        return this.store.getUnique(EMAIL_INDEX, [email]);
+        return this.rawRepo.getUnique(EMAIL_INDEX, [email]);
     }
 
     getByUserId(userId: UserId): Promise<Identity | undefined> {
-        return this.store.getUnique(USER_ID_INDEX, [userId]);
+        return this.rawRepo.getUnique(USER_ID_INDEX, [userId]);
     }
 
     async create(identity: Identity): Promise<Identity> {
         try {
-            return await this.store.create(identity);
+            return await this.rawRepo.create(identity);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === EMAIL_INDEX) {
                 throw new EmailTakenIdentityRepoError(
@@ -109,6 +109,6 @@ export class IdentityRepo implements SyncTarget<Identity> {
         id: IdentityId,
         recipe: (user: Identity) => Identity | void
     ): Promise<Identity> {
-        return this.store.update(id, recipe);
+        return this.rawRepo.update(id, recipe);
     }
 }

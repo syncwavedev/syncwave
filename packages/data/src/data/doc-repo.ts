@@ -4,6 +4,7 @@ import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
 import {createIndex, Index, IndexKey} from '../kv/data-index.js';
 import {
     Condition,
+    queryStartsWith,
     Transaction,
     Uint8Transaction,
     withKeyCodec,
@@ -52,6 +53,7 @@ export interface SyncTarget<T> {
 export class DocRepo<T extends Doc> implements SyncTarget<T> {
     private readonly indexes: Map<string, Index<T>>;
     private readonly primary: Transaction<Uuid, Crdt<T>>;
+    private readonly primaryKeyRaw: Transaction<Uint8Array, Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
 
@@ -80,12 +82,12 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
                 ];
             })
         );
-        this.primary = pipe(
+        this.primaryKeyRaw = pipe(
             txn,
             withPrefix('d/'),
-            withKeyCodec(new UuidCodec()),
             withValueCodec(new CrdtCodec())
         );
+        this.primary = withKeyCodec(new UuidCodec())(this.primaryKeyRaw);
         this.onChange = onChange;
         this.schema = schema;
     }
@@ -114,10 +116,10 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         }
     }
 
-    getAll(): AsyncStream<T> {
-        return astream(this.primary.query({gte: Uuid.min})).map(x =>
-            x.value.snapshot()
-        );
+    getAll(prefix?: Uint8Array): AsyncStream<T> {
+        return astream(
+            queryStartsWith(this.primaryKeyRaw, prefix ?? new Uint8Array())
+        ).map(x => x.value.snapshot());
     }
 
     query(indexName: string, condition: Condition<IndexKey>): AsyncStream<T> {

@@ -4,10 +4,14 @@ import Router from '@koa/router';
 import {createHash, randomBytes} from 'crypto';
 import {
     assertDefined,
+    astream,
     ConsoleLogger,
     Coordinator,
     CryptoService,
+    decodeNumber,
     Deferred,
+    encodeNumber,
+    encodeString,
     ENVIRONMENT,
     getGoogleUser,
     JwtPayload,
@@ -109,8 +113,39 @@ async function getKVStore(): Promise<Uint8KVStore> {
     }
 }
 
+async function upgradeKVStore(kvStore: Uint8KVStore) {
+    const versionKey = encodeString('version');
+    const version = await kvStore.transaction(async tx => {
+        const ver = await tx.get(versionKey);
+        if (ver) {
+            return decodeNumber(ver);
+        } else {
+            return 0;
+        }
+    });
+
+    if (!version) {
+        await kvStore.transaction(async tx => {
+            const keys = await astream(tx.query({gte: new Uint8Array()}))
+                .map(x => x.key)
+                .toArray();
+
+            if (keys.length > 1000) {
+                throw new Error('too many keys to truncate the database');
+            }
+
+            for (const key of keys) {
+                await tx.delete(key);
+            }
+
+            await tx.put(versionKey, encodeNumber(1));
+        });
+    }
+}
+
 async function launch() {
     const kvStore = await getKVStore();
+    await upgradeKVStore(kvStore);
 
     const router = new Router();
     setupRouter(() => coordinator, router);

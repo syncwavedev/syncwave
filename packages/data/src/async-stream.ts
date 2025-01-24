@@ -6,7 +6,8 @@ export class DeferredStream<T> implements AsyncIterable<T> {
     constructor(
         private readonly executor: (
             next: (value: T) => void,
-            end: () => void
+            end: () => void,
+            reject: (error: any) => void
         ) => void
     ) {}
 
@@ -14,14 +15,26 @@ export class DeferredStream<T> implements AsyncIterable<T> {
         const result = pushable<T>({objectMode: true});
         this.executor(
             value => result.push(value),
-            () => result.end()
+            () => result.end(),
+            error => result.throw(error)
         );
 
         return result;
     }
 }
 
-export function astream<T>(source: AsyncIterable<T>): AsyncStream<T> {
+export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
+    if (Array.isArray(source)) {
+        return new AsyncStream(
+            new DeferredStream((next, end) => {
+                for (const item of source) {
+                    next(item);
+                }
+                end();
+            })
+        );
+    }
+
     return new AsyncStream(source);
 }
 
@@ -60,8 +73,12 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return false;
     }
 
-    filter<S extends T>(predicate: (value: T) => value is S): AsyncStream<S> {
-        return astream(this._filter(predicate)) as AsyncStream<S>;
+    filter<S extends T>(predicate: (value: T) => value is S): AsyncStream<S>;
+    filter(predicate: (value: T) => boolean): AsyncStream<T>;
+    filter(
+        predicate: ((value: T) => boolean) | ((value: T) => value is T)
+    ): AsyncStream<T> {
+        return astream(this._filter(predicate)) as AsyncStream<any>;
     }
 
     map<TResult>(
@@ -119,9 +136,9 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     private async *_filter(predicate: (value: T) => boolean) {
         for await (const item of this.source) {
-            assert(predicate(item));
-
-            yield item;
+            if (predicate(item)) {
+                yield item;
+            }
         }
     }
 

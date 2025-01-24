@@ -35,7 +35,7 @@ export class State<T> {
 
     constructor(private _value: T) {}
 
-    get value() {
+    get snapshot() {
         return this._value;
     }
 

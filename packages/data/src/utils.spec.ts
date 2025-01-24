@@ -260,7 +260,7 @@ describe('State', () => {
     it('should initialize with the given value', () => {
         const state = new State<number>(42);
 
-        expect(state.value).toBe(42);
+        expect(state.snapshot).toBe(42);
     });
 
     it('should allow subscription and emit the initial value immediately', () => {
@@ -290,7 +290,7 @@ describe('State', () => {
 
         state.next(100);
 
-        expect(state.value).toBe(100);
+        expect(state.snapshot).toBe(100);
     });
 
     it('should stop notifying after unsubscribe', () => {

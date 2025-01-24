@@ -1,10 +1,15 @@
-import {z} from 'zod';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {zTimestamp} from '../../timestamp.js';
 import {Brand} from '../../utils.js';
-import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo.js';
+import {Uuid, createUuid} from '../../uuid.js';
+import {
+    Doc,
+    DocRepo,
+    OnDocChange,
+    Recipe,
+    SyncTarget,
+    zDoc,
+} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
@@ -15,6 +20,10 @@ export function createUserId(): UserId {
 
 export interface User extends Doc<UserId> {}
 
+export function zUser() {
+    return zDoc<UserId>().extend({});
+}
+
 export class UserRepo implements SyncTarget<User> {
     public readonly rawRepo: DocRepo<User>;
 
@@ -23,12 +32,7 @@ export class UserRepo implements SyncTarget<User> {
             txn: withPrefix('d/')(txn),
             onChange,
             indexes: {},
-            schema: z.object({
-                id: zUuid<UserId>(),
-                createdAt: zTimestamp(),
-                updatedAt: zTimestamp(),
-                name: z.string(),
-            }),
+            schema: zUser(),
         });
     }
 

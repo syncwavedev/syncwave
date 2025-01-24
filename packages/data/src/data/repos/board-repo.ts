@@ -5,10 +5,16 @@ import {Counter} from '../../kv/counter.js';
 import {UniqueError} from '../../kv/data-index.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Registry} from '../../kv/registry.js';
-import {zTimestamp} from '../../timestamp.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo.js';
+import {
+    Doc,
+    DocRepo,
+    OnDocChange,
+    Recipe,
+    SyncTarget,
+    zDoc,
+} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 import {UserId} from './user-repo.js';
 
@@ -27,6 +33,14 @@ export interface Board extends Doc<BoardId> {
 
 const SLUG_INDEX = 'slug';
 
+export function zBoard() {
+    return zDoc<BoardId>().extend({
+        name: z.string(),
+        ownerId: zUuid<UserId>(),
+        deleted: z.boolean(),
+    });
+}
+
 export class BoardRepo implements SyncTarget<Board> {
     public readonly rawRepo: DocRepo<Board>;
     private readonly counters: Registry<Counter>;
@@ -42,14 +56,7 @@ export class BoardRepo implements SyncTarget<Board> {
                     include: x => x.slug !== undefined,
                 },
             },
-            schema: z.object({
-                id: zUuid<BoardId>(),
-                createdAt: zTimestamp(),
-                updatedAt: zTimestamp(),
-                name: z.string(),
-                ownerId: zUuid<UserId>(),
-                deleted: z.boolean(),
-            }),
+            schema: zBoard(),
         });
         this.counters = new Registry(
             withPrefix('c/')(txn),

@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, expectTypeOf, it, vi} from 'vitest';
 
 import {z} from 'zod';
 import {IndexKey} from '../kv/data-index.js';
@@ -6,7 +6,7 @@ import {Condition} from '../kv/kv-store.js';
 import {MemKVStore} from '../kv/mem-kv-store.js';
 import {getNow, zTimestamp} from '../timestamp.js';
 import {Uuid, createUuid, zUuid} from '../uuid.js';
-import {Doc, DocRepo, IndexSpec, OnDocChange} from './doc-repo.js';
+import {Doc, DocRepo, IndexSpec, OnDocChange, zDoc} from './doc-repo.js';
 
 interface MyDoc extends Doc<Uuid> {
     name: string;
@@ -34,6 +34,12 @@ describe('DocStore with MemKVStore', () => {
 
     beforeEach(() => {
         store = new MemKVStore();
+    });
+
+    it('should have valid schema', () => {
+        expectTypeOf({} as Doc<Uuid>).toEqualTypeOf<
+            z.infer<ReturnType<typeof zDoc<Uuid>>>
+        >();
     });
 
     it('should create and retrieve a document by ID', async () => {

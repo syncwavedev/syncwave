@@ -11,4 +11,7 @@ export const ENVIRONMENT: 'prod' | 'dev' | 'test' =
           : 'dev';
 export const AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT = 20;
 export const AUTH_ACTIVITY_WINDOW_HOURS = 1;
-export const SUPERADMIN_IDS = ['01949768-e65c-73e5-ac64-fe7c77c94c49'];
+export const SUPERADMIN_IDS = [
+    '01949768-e65c-73e5-ac64-fe7c77c94c49',
+    '01949936-78b4-72eb-a04c-9e6f6f810509',
+];

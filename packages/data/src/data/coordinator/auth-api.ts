@@ -17,126 +17,131 @@ import {
 import {createUserId, UserId, UserRepo} from '../repos/user-repo.js';
 import {VerifySignInCodeResponse} from './coordinator.js';
 
-export function createAuthApi({
-    ctx,
-    jwt,
-    crypto,
-    emailService,
-    enqueueEffect,
-}: {
+export interface AuthApiState {
     ctx: TransactionContext;
     jwt: JwtService;
     crypto: CryptoService;
     emailService: EmailService;
     enqueueEffect: (cb: () => Promise<void>) => void;
-}) {
-    return createApi({
-        debug: handler({
-            schema: z.object({}),
-            handle: async () => {
-                return {};
-            },
+}
+
+export const authApi = createApi<AuthApiState>()({
+    debug: handler({
+        request: z.object({}),
+        response: z.object({}),
+        handle: async () => {
+            return {};
+        },
+    }),
+    sendSignInEmail: handler({
+        request: z.object({
+            email: z.string(),
         }),
-        sendSignInEmail: handler({
-            schema: z.object({
-                email: z.string(),
-            }),
-            handle: async ({
+        response: z.discriminatedUnion('type', [
+            z.object({type: z.literal('success')}),
+            z.object({type: z.literal('cooldown')}),
+        ]),
+        handle: async (
+            {ctx, crypto, enqueueEffect, emailService},
+            {email}
+        ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
+            const verificationCode = await createVerificationCode(crypto);
+
+            const identity = await getIdentity(
+                ctx.identities,
+                ctx.users,
                 email,
-            }): Promise<{type: 'success'} | {type: 'cooldown'}> => {
-                const verificationCode = await createVerificationCode(crypto);
+                crypto
+            );
 
-                const identity = await getIdentity(
-                    ctx.identities,
-                    ctx.users,
-                    email,
-                    crypto
-                );
+            if (await needsCooldown(identity)) {
+                return {type: 'cooldown'};
+            }
 
-                if (await needsCooldown(identity)) {
-                    return {type: 'cooldown'};
-                }
+            await ctx.identities.update(identity.id, x => {
+                x.verificationCode = verificationCode;
+                pushActivityLog(x);
+            });
 
-                await ctx.identities.update(identity.id, x => {
-                    x.verificationCode = verificationCode;
-                    pushActivityLog(x);
-                });
-
-                enqueueEffect(async () => {
-                    await emailService.send({
-                        recipient: email,
-                        html: `<p>
-                                    Hi there!<br />
-                                    <br />
-                                    We noticed a request to sign into your Ground account.<br />
-                                    If this wasn't you, no worries—just ignore this email.<br />
-                                    <br />
-                                    Your one-time code is: <strong>${verificationCode.code}</strong><br />
-                                    <br />
-                                    Have a great day!<br />
-                                    The Ground Team
-                                </p>`,
-                        subject: 'Your Ground Account Sign-In Code',
-                        text: `Hi there!
-                    
+            enqueueEffect(async () => {
+                await emailService.send({
+                    recipient: email,
+                    html: `<p>
+                                Hi there!<br />
+                                <br />
+                                We noticed a request to sign into your Ground account.<br />
+                                If this wasn't you, no worries—just ignore this email.<br />
+                                <br />
+                                Your one-time code is: <strong>${verificationCode.code}</strong><br />
+                                <br />
+                                Have a great day!<br />
+                                The Ground Team
+                            </p>`,
+                    subject: 'Your Ground Account Sign-In Code',
+                    text: `Hi there!
+                
 We noticed a request to sign into your Ground account. If this wasn't you, no worries—just ignore this email.
 
 Your one-time code is: ${verificationCode.code}
 
 Have a great day!
 The Ground Team`,
-                    });
                 });
+            });
 
-                return {type: 'success'};
-            },
+            return {type: 'success'};
+        },
+    }),
+    verifySignInCode: handler({
+        request: z.object({
+            email: z.string(),
+            code: z.string(),
         }),
-        verifySignInCode: handler({
-            schema: z.object({
-                email: z.string(),
-                code: z.string(),
+        response: z.discriminatedUnion('type', [
+            z.object({
+                type: z.literal('success'),
+                token: z.string(),
             }),
-            handle: async ({
-                email,
-                code,
-            }): Promise<VerifySignInCodeResponse> => {
-                const identity = await ctx.identities.getByEmail(email);
-                if (!identity) {
-                    throw new Error('invalid email, no identity found');
-                }
+            z.object({type: z.literal('invalid_code')}),
+            z.object({type: z.literal('code_expired')}),
+            z.object({type: z.literal('cooldown')}),
+        ]),
+        handle: async (
+            {ctx, jwt},
+            {email, code}
+        ): Promise<VerifySignInCodeResponse> => {
+            const identity = await ctx.identities.getByEmail(email);
+            if (!identity) {
+                throw new Error('invalid email, no identity found');
+            }
 
-                if (await needsCooldown(identity)) {
-                    return {type: 'cooldown'};
-                }
+            if (await needsCooldown(identity)) {
+                return {type: 'cooldown'};
+            }
 
-                if (identity.verificationCode === undefined) {
-                    throw new Error('verification code was not requested');
-                }
+            if (identity.verificationCode === undefined) {
+                throw new Error('verification code was not requested');
+            }
 
-                if (getNow() > identity.verificationCode.expires) {
-                    return {type: 'code_expired'};
-                }
+            if (getNow() > identity.verificationCode.expires) {
+                return {type: 'code_expired'};
+            }
 
-                await ctx.identities.update(identity.id, x => {
-                    pushActivityLog(x);
-                });
+            await ctx.identities.update(identity.id, x => {
+                pushActivityLog(x);
+            });
 
-                if (code !== identity.verificationCode.code) {
-                    return {type: 'invalid_code'};
-                }
+            if (code !== identity.verificationCode.code) {
+                return {type: 'invalid_code'};
+            }
 
-                return {
-                    type: 'success',
-                    token: await signJwtToken(
-                        jwt,
-                        identity,
-                        ctx.config.jwtSecret
-                    ),
-                };
-            },
-        }),
-    });
-}
+            return {
+                type: 'success',
+                token: await signJwtToken(jwt, identity, ctx.config.jwtSecret),
+            };
+        },
+    }),
+});
 
 export async function createVerificationCode(
     crypto: CryptoService

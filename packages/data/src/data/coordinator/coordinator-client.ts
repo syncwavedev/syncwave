@@ -2,7 +2,7 @@ import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
 import {createRpcClient} from '../communication/rpc.js';
 import {Connection} from '../communication/transport.js';
-import {type CoordinatorApi} from './coordinator.js';
+import {coordinatorApi} from './coordinator-api.js';
 
 export class CoordinatorClient {
     private token?: string;
@@ -13,8 +13,8 @@ export class CoordinatorClient {
         this.token = authToken;
     }
 
-    get rpc(): CoordinatorApi {
-        return createRpcClient<CoordinatorApi>(this.connection, () => ({
+    get rpc() {
+        return createRpcClient(coordinatorApi, this.connection, () => ({
             auth: this.token,
         })) satisfies DataAccessor;
     }

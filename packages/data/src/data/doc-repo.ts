@@ -1,4 +1,4 @@
-import {ZodType} from 'zod';
+import {z, ZodType} from 'zod';
 import {astream, AsyncStream} from '../async-stream.js';
 import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
 import {createIndex, Index, IndexKey} from '../kv/data-index.js';
@@ -11,15 +11,23 @@ import {
     withPrefix,
     withValueCodec,
 } from '../kv/kv-store.js';
-import {getNow, Timestamp} from '../timestamp.js';
+import {getNow, Timestamp, zTimestamp} from '../timestamp.js';
 import {pipe, whenAll} from '../utils.js';
-import {Uuid, UuidCodec} from '../uuid.js';
+import {Uuid, UuidCodec, zUuid} from '../uuid.js';
 import {UpdateChecker} from './update-checker.js';
 
 export interface Doc<TId extends Uuid = Uuid> {
     id: TId;
     createdAt: Timestamp;
     updatedAt: Timestamp;
+}
+
+export function zDoc<TId extends Uuid>() {
+    return z.object({
+        id: zUuid<TId>(),
+        createdAt: zTimestamp(),
+        updatedAt: zTimestamp(),
+    });
 }
 
 export type IndexSpec<T> =

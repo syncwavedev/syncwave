@@ -1,24 +1,13 @@
-import {z} from 'zod';
-import {BusinessError} from '../../errors.js';
 import {Uint8KVStore} from '../../kv/kv-store.js';
 import {whenAll} from '../../utils.js';
-import {zUuid} from '../../uuid.js';
-import {Actor, DataAccessor} from '../actor.js';
-import {AuthContext, AuthContextParser} from '../auth-context.js';
+import {AuthContextParser} from '../auth-context.js';
 import {Message} from '../communication/message.js';
-import {
-    createApi,
-    handler,
-    setupRpcServer,
-    wrapApi,
-} from '../communication/rpc.js';
+import {setupRpcServer} from '../communication/rpc.js';
 import {Connection, TransportServer} from '../communication/transport.js';
-import {createDataInspectorApi} from '../data-inspector.js';
-import {DataLayer, TransactionContext} from '../data-layer.js';
+import {DataLayer} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
-import {BoardId} from '../repos/board-repo.js';
-import {TaskId} from '../repos/task-repo.js';
-import {createAuthApi, getIdentity, signJwtToken} from './auth-api.js';
+import {getIdentity, signJwtToken} from './auth-api.js';
+import {coordinatorApi} from './coordinator-api.js';
 
 export class Coordinator {
     private readonly dataLayer: DataLayer;
@@ -57,7 +46,7 @@ export class Coordinator {
 
     private handleConnection(conn: Connection<Message>): void {
         const authContextParser = new AuthContextParser(4, this.jwt);
-        setupRpcServer(conn, createCoordinatorApi, async (message, fn) => {
+        setupRpcServer(conn, coordinatorApi, async (message, fn) => {
             let effects: Array<() => Promise<void>> = [];
             const result = await this.dataLayer.transaction(async ctx => {
                 effects = [];
@@ -103,113 +92,3 @@ export type VerifySignInCodeResponse =
     | InvalidCodeVerifySignInCodeResponse
     | CodeExpiredVerifySignInCodeResponse
     | CooldownVerifySignInCodeResponse;
-
-function createCoordinatorApi({
-    ctx,
-    auth,
-    jwt,
-    crypto,
-    emailService,
-    enqueueEffect,
-}: {
-    ctx: TransactionContext;
-    auth: AuthContext;
-    jwt: JwtService;
-    crypto: CryptoService;
-    emailService: EmailService;
-    enqueueEffect: (cb: () => Promise<void>) => void;
-}) {
-    const actor: Actor = new Actor(ctx.tx, auth, {type: 'coordinator'});
-
-    const dbApi = createApi({
-        getMe: handler({
-            schema: z.object({}),
-            handle: actor.getMe.bind(actor),
-        }),
-        getMyBoards: handler({
-            schema: z.object({}),
-            handle: actor.getMyBoards.bind(actor),
-        }),
-        getBoardTasks: handler({
-            schema: z.object({boardId: zUuid<BoardId>()}),
-            handle: actor.getBoardTasks.bind(actor),
-        }),
-        getTask: handler({
-            schema: z.object({taskId: zUuid<TaskId>()}),
-            handle: actor.getTask.bind(actor),
-        }),
-        createTask: handler({
-            schema: z.object({
-                taskId: zUuid<TaskId>(),
-                boardId: zUuid<BoardId>(),
-                title: z.string(),
-            }),
-            handle: actor.createTask.bind(actor),
-        }),
-        createBoard: handler({
-            schema: z.object({
-                boardId: zUuid<BoardId>(),
-                name: z.string(),
-                slug: z.string().optional(),
-            }),
-            handle: actor.createBoard.bind(actor),
-        }),
-        getBoard: handler({
-            schema: z.object({
-                boardId: zUuid<BoardId>(),
-            }),
-            handle: actor.getBoard.bind(actor),
-        }),
-        setBoardSlug: handler({
-            schema: z.object({
-                boardId: zUuid<BoardId>(),
-                slug: z.string(),
-            }),
-            handle: actor.setBoardSlug.bind(actor),
-        }),
-        updateBoardName: handler({
-            schema: z.object({
-                boardId: zUuid<BoardId>(),
-                name: z.string(),
-            }),
-            handle: actor.updateBoardName.bind(actor),
-        }),
-        updateTaskTitle: handler({
-            schema: z.object({
-                taskId: zUuid<TaskId>(),
-                title: z.string(),
-            }),
-            handle: actor.updateTaskTitle.bind(actor),
-        }),
-    } satisfies DataAccessor);
-
-    const authApi = createAuthApi({
-        ctx,
-        crypto,
-        emailService,
-        enqueueEffect,
-        jwt,
-    });
-
-    const inspectorApi = wrapApi(
-        createDataInspectorApi(ctx.tx, ctx.dataNode),
-        async (req, next) => {
-            if (!auth.superadmin) {
-                throw new BusinessError(
-                    `only superadmins can use inspector api. id = ${auth.identityId}`,
-                    'forbidden'
-                );
-            }
-
-            return await next(req);
-        }
-    );
-
-    return {
-        ...dbApi,
-        ...authApi,
-        ...inspectorApi,
-    };
-}
-
-export type CoordinatorApi = ReturnType<typeof createCoordinatorApi>;

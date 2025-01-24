@@ -6,7 +6,7 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Timestamp, zTimestamp} from '../../timestamp.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, SyncTarget} from '../doc-repo.js';
+import {Doc, DocRepo, OnDocChange, SyncTarget, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 import {UserId} from './user-repo.js';
 
@@ -33,6 +33,18 @@ const USER_ID_INDEX = 'userId';
 
 export class EmailTakenIdentityRepoError extends BusinessError {}
 
+export function zIdentity() {
+    return zDoc<IdentityId>().extend({
+        userId: zUuid<UserId>(),
+        email: z.string(),
+        authActivityLog: z.array(zTimestamp()),
+        verificationCode: z.object({
+            code: z.string(),
+            expires: zTimestamp(),
+        }),
+    });
+}
+
 export class IdentityRepo implements SyncTarget<Identity> {
     public readonly rawRepo: DocRepo<Identity>;
 
@@ -51,18 +63,7 @@ export class IdentityRepo implements SyncTarget<Identity> {
                 },
             },
             onChange,
-            schema: z.object({
-                id: zUuid<IdentityId>(),
-                createdAt: zTimestamp(),
-                updatedAt: zTimestamp(),
-                userId: zUuid<UserId>(),
-                email: z.string(),
-                authActivityLog: z.array(zTimestamp()),
-                verificationCode: z.object({
-                    code: z.string(),
-                    expires: zTimestamp(),
-                }),
-            }),
+            schema: zIdentity(),
         });
     }
 

@@ -54,7 +54,7 @@ export class Participant {
 function createParticipantRpc() {
     return createApi({
         echo: handler({
-            schema: z.object({message: z.string()}),
+            request: z.object({message: z.string()}),
             handle: async ({message}) => ({message}),
         }),
     });

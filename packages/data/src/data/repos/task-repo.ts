@@ -2,15 +2,20 @@ import {z} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {zTimestamp} from '../../timestamp.js';
-import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo.js';
+import {
+    Doc,
+    DocRepo,
+    OnDocChange,
+    Recipe,
+    SyncTarget,
+    zDoc,
+} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 import {BoardId} from './board-repo.js';
 import {UserId} from './user-repo.js';
 
-export type TaskId = Brand<Uuid, 'task_id'>;
+export type TaskId = Uuid & {__task_id: true | undefined};
 
 export function createTaskId(): TaskId {
     return createUuid() as TaskId;
@@ -29,6 +34,16 @@ const BOARD_ID = 'boardId';
 
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
+export function zTask() {
+    return zDoc<TaskId>().extend({
+        authorId: zUuid<UserId>(),
+        boardId: zUuid<BoardId>(),
+        counter: z.number().nullable(),
+        title: z.string(),
+        deleted: z.boolean(),
+    });
+}
+
 export class TaskRepo implements SyncTarget<Task> {
     public readonly rawRepo: DocRepo<Task>;
 
@@ -44,16 +59,7 @@ export class TaskRepo implements SyncTarget<Task> {
                 },
                 [BOARD_ID]: x => [x.boardId, x.counter],
             },
-            schema: z.object({
-                id: zUuid<TaskId>(),
-                createdAt: zTimestamp(),
-                updatedAt: zTimestamp(),
-                authorId: zUuid<UserId>(),
-                boardId: zUuid<BoardId>(),
-                counter: z.number().nullable(),
-                title: z.string(),
-                deleted: z.boolean(),
-            }),
+            schema: zTask(),
         });
     }
 

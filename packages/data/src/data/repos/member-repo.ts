@@ -1,11 +1,16 @@
-import {z} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {zTimestamp} from '../../timestamp.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, Recipe, SyncTarget} from '../doc-repo.js';
+import {
+    Doc,
+    DocRepo,
+    OnDocChange,
+    Recipe,
+    SyncTarget,
+    zDoc,
+} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 import {BoardId} from './board-repo.js';
 import {UserId} from './user-repo.js';
@@ -24,6 +29,13 @@ export interface Member extends Doc<MemberId> {
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
 
+export function zMember() {
+    return zDoc<MemberId>().extend({
+        userId: zUuid<UserId>(),
+        boardId: zUuid<BoardId>(),
+    });
+}
+
 export class MemberRepo implements SyncTarget<Member> {
     public readonly rawRepo: DocRepo<Member>;
 
@@ -38,13 +50,7 @@ export class MemberRepo implements SyncTarget<Member> {
                 },
                 [BOARD_ID_INDEX]: x => [x.boardId],
             },
-            schema: z.object({
-                id: zUuid<MemberId>(),
-                createdAt: zTimestamp(),
-                updatedAt: zTimestamp(),
-                userId: zUuid<UserId>(),
-                boardId: zUuid<BoardId>(),
-            }),
+            schema: zMember(),
         });
     }
 

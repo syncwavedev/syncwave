@@ -1,10 +1,9 @@
 import {
     Codec,
     Connection,
-    ConnectionEvent,
-    ConnectionSubscribeCallback,
     Deferred,
     Logger,
+    Observer,
     Subject,
     TransportServer,
     Unsubscribe,
@@ -50,7 +49,8 @@ export class WsTransportServer<T> implements TransportServer<T> {
 }
 
 export class WsConnection<T> implements Connection<T> {
-    private subject = new Subject<ConnectionEvent<T>>();
+    private subject = new Subject<T>();
+    private closedSignal = new Deferred<void>();
 
     constructor(
         private readonly ws: WebSocket,
@@ -63,38 +63,42 @@ export class WsConnection<T> implements Connection<T> {
     async send(message: T): Promise<void> {
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
-            this.ws.send(data, (err?: Error) => {
-                if (err) {
-                    return reject(err);
+            this.ws.send(data, (error?: Error) => {
+                if (error) {
+                    return reject(error);
                 }
                 resolve();
             });
         });
     }
 
-    subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
-        return this.subject.subscribe(cb);
+    subscribe(observer: Observer<T>): Unsubscribe {
+        return this.subject.subscribe(observer);
     }
 
     async close(): Promise<void> {
         this.ws.close();
+        await this.closedSignal.promise;
     }
 
     private setupListeners(): void {
-        this.ws.on('message', (rawData: Buffer) => {
-            let message: T;
+        this.ws.on('message', async (rawData: Buffer) => {
             try {
-                message = this.codec.decode(rawData);
-            } catch (err) {
-                this.logger.error(err?.toString() ?? 'undefined error');
-                return;
-            }
+                const message = this.codec.decode(rawData);
 
-            this.subject.next({type: 'message', message});
+                await this.subject.next(message);
+            } catch (error) {
+                console.error('[ERR] error during ws message', error);
+            }
         });
 
-        this.ws.on('close', () => {
-            this.subject.next({type: 'close'});
+        this.ws.on('close', async () => {
+            try {
+                await this.subject.close();
+                this.closedSignal.resolve();
+            } catch (error) {
+                this.closedSignal.reject(error);
+            }
         });
     }
 }

@@ -1,7 +1,7 @@
 import {Channel} from 'async-channel';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Deferred} from './deferred.js';
-import {assert} from './utils.js';
+import {assert, assertNever} from './utils.js';
 
 export interface DeferredStreamExecutor<T> {
     next: (value: T) => Promise<void>;
@@ -39,6 +39,47 @@ export class DeferredStream<T> implements AsyncIterable<T> {
                 cancellation.resolve();
             }
         }
+    }
+}
+
+export class CancellationStream<T> implements AsyncIterable<T> {
+    constructor(
+        private readonly source: AsyncIterable<T>,
+        private readonly cancellation: Promise<void>
+    ) {}
+
+    [Symbol.asyncIterator](): AsyncIterator<T, any, any> {
+        const iterator = this.source[Symbol.asyncIterator]();
+        return {
+            next: async (value: any) => {
+                const result = await Promise.race([
+                    iterator
+                        .next(value)
+                        .then(value => ({type: 'next' as const, value})),
+                    this.cancellation.then(() => ({
+                        type: 'cancellation' as const,
+                    })),
+                ]);
+
+                if (result.type === 'next') {
+                    return result.value;
+                } else if (result.type === 'cancellation') {
+                    return {done: true, value: undefined};
+                } else {
+                    assertNever(result);
+                }
+            },
+            return: iterator.return
+                ? async (value: any) => {
+                      return await iterator.return!(value);
+                  }
+                : undefined,
+            throw: iterator.throw
+                ? async (error: any) => {
+                      return await iterator.throw!(error);
+                  }
+                : undefined,
+        };
     }
 }
 

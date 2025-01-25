@@ -1,18 +1,13 @@
 import {RECONNECT_WAIT_MS} from '../../constants.js';
-import {assertNever, Subject, Unsubscribe, wait} from '../../utils.js';
-import {
-    Connection,
-    ConnectionEvent,
-    ConnectionSubscribeCallback,
-    TransportClient,
-} from './transport.js';
+import {Observer, Subject, Unsubscribe, wait} from '../../utils.js';
+import {Connection, TransportClient} from './transport.js';
 
 export class ReconnectConnection<T> implements Connection<T> {
     // if we already initiated connection process, then we want subsequent sends to wait until the
     // initial connect is done
     private connection?: Promise<Connection<T>>;
     private closed = false;
-    private subject = new Subject<ConnectionEvent<T>>();
+    private subject = new Subject<T>();
 
     constructor(private readonly transport: TransportClient<T>) {}
 
@@ -25,7 +20,7 @@ export class ReconnectConnection<T> implements Connection<T> {
         await connection.send(message);
     }
 
-    subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
+    subscribe(cb: Observer<T>): Unsubscribe {
         this.assertOpen();
         // connect if not already
         this.getConnection().catch(err => {
@@ -43,7 +38,7 @@ export class ReconnectConnection<T> implements Connection<T> {
 
             await connection.then(x => x.close());
         }
-        this.subject.next({type: 'close'});
+        await this.subject.close();
     }
 
     private async getConnection(): Promise<
@@ -61,10 +56,11 @@ export class ReconnectConnection<T> implements Connection<T> {
                     }
                 }
             })().then(conn => {
-                conn.subscribe(event => {
-                    if (event.type === 'message') {
-                        this.subject.next(event);
-                    } else if (event.type === 'close') {
+                conn.subscribe({
+                    next: async event => {
+                        await this.subject.next(event);
+                    },
+                    close: async () => {
                         if (!this.closed) {
                             this.connection = undefined;
                             // reconnect
@@ -75,9 +71,7 @@ export class ReconnectConnection<T> implements Connection<T> {
                                 );
                             });
                         }
-                    } else {
-                        assertNever(event);
-                    }
+                    },
                 });
 
                 return conn;

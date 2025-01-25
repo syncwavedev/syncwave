@@ -1,8 +1,8 @@
-import {Unsubscribe} from '../../utils.js';
+import {Observer, Unsubscribe} from '../../utils.js';
 
 export interface TransportServer<T> {
     launch(cb: (connection: Connection<T>) => void): Promise<void>;
-    close(): void;
+    close(): Promise<void>;
 }
 
 export interface TransportClient<T> {
@@ -20,16 +20,8 @@ export interface MessageConnectionEvent<T>
     readonly message: T;
 }
 
-export type ConnectionEvent<T> =
-    | CloseConnectionEvent
-    | MessageConnectionEvent<T>;
-
-export type ConnectionSubscribeCallback<T> = (
-    event: ConnectionEvent<T>
-) => void;
-
 export interface Connection<T> {
     send(message: T): Promise<void>;
-    subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe;
+    subscribe(observer: Observer<T>): Unsubscribe;
     close(): Promise<void>;
 }

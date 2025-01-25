@@ -1,11 +1,6 @@
 import {Codec} from '../../codec.js';
-import {Unsubscribe} from '../../utils.js';
-import {
-    Connection,
-    ConnectionSubscribeCallback,
-    TransportClient,
-    TransportServer,
-} from './transport.js';
+import {Observer, Subject, Unsubscribe} from '../../utils.js';
+import {Connection, TransportClient, TransportServer} from './transport.js';
 
 export class MemConnection<T> implements Connection<T> {
     static create<T>(codec: Codec<T>): [MemConnection<T>, MemConnection<T>] {
@@ -19,53 +14,33 @@ export class MemConnection<T> implements Connection<T> {
     }
 
     private peer!: MemConnection<T>;
-    private open = true;
-
-    private subs: Array<ConnectionSubscribeCallback<T>> = [];
+    private subject = new Subject<T>();
 
     private constructor(private readonly codec: Codec<T>) {}
 
     async send(message: T): Promise<void> {
-        this.ensureOpen();
-
         // don't wait for peer to respond
-        this.peer
-            .receive(this.codec.decode(this.codec.encode(message)))
-            .catch(err => {
-                console.error('error during peer receive', err);
-            });
+        this.peer.receive(this.codec.encode(message)).catch(err => {
+            console.error('error during peer receive', err);
+        });
     }
 
-    subscribe(cb: ConnectionSubscribeCallback<T>): Unsubscribe {
-        this.ensureOpen();
-
-        const wrapper: ConnectionSubscribeCallback<T> = (...args) =>
-            cb(...args);
-        this.subs.push(wrapper);
-
-        return () => {
-            this.subs = this.subs.filter(x => x !== wrapper);
-        };
+    subscribe(observer: Observer<T>): Unsubscribe {
+        return this.subject.subscribe(observer);
     }
 
     async close(): Promise<void> {
-        if (this.open) {
-            this.open = false;
-
-            [...this.subs].forEach(cb => cb({type: 'close'}));
+        await this.subject.close();
+        if (this.peer.subject.open) {
+            // don't wait for peer to respond
+            this.peer.close().catch(err => {
+                console.error('error during peer receive', err);
+            });
         }
     }
 
-    private async receive(message: T): Promise<void> {
-        if (!this.open) return;
-
-        [...this.subs].forEach(cb => cb({type: 'message', message: message}));
-    }
-
-    private ensureOpen() {
-        if (!this.open) {
-            throw new Error('connection is closed');
-        }
+    private async receive(message: Uint8Array): Promise<void> {
+        await this.subject.next(this.codec.decode(message));
     }
 }
 

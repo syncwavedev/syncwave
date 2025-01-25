@@ -11,10 +11,9 @@
 
 	$effect(() => {
 		(async () => {
-			const stream = sdk.coordinatorRpc.getStream({intervalMs: 1000});
 			try {
 				console.log('stream start');
-				for await (const item of stream) {
+				for await (const item of sdk.coordinatorRpc.getStream({intervalMs: 1000})) {
 					console.log('stream item', item.index);
 
 					if (cancelled) {

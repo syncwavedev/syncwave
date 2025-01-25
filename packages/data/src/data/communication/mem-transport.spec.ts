@@ -31,10 +31,13 @@ describe('MemConnection', () => {
         conn2['open'] = true;
 
         const messageHandler = vi.fn();
-        conn2.subscribe(event => {
-            if (event.type === 'message') {
-                messageHandler(event.message);
-            }
+        conn2.subscribe({
+            next: async message => {
+                messageHandler(message);
+            },
+            close: async () => {
+                throw new Error('unexpectedly closed');
+            },
         });
 
         await conn1.send(mockMessage);
@@ -53,7 +56,7 @@ describe('MemConnection', () => {
         );
     });
 
-    it('should allow subscribing and unsubscribing', () => {
+    it('should allow subscribing and unsubscribing', async () => {
         const [conn1, conn2] = MemConnection.create<Message>(
             new MsgpackrCodec()
         );
@@ -61,16 +64,21 @@ describe('MemConnection', () => {
         conn2['open'] = true;
 
         const messageHandler = vi.fn();
-        const unsubscribe = conn1.subscribe(messageHandler);
+        const unsubscribe = conn1.subscribe({
+            next: async message => messageHandler(message),
+            close: () => {
+                throw new Error('unexpectedly closed');
+            },
+        });
 
-        conn1['subs'][0]({type: 'message', message: mockMessage});
+        await conn1['subs'][0]({type: 'message', message: mockMessage});
         expect(messageHandler).toHaveBeenCalledWith({
             type: 'message',
             message: mockMessage,
         });
 
         unsubscribe();
-        conn1['subs'][0]?.({type: 'message', message: mockMessage});
+        await conn1['subs'][0]?.({type: 'message', message: mockMessage});
         expect(messageHandler).toHaveBeenCalledTimes(1);
     });
 
@@ -79,7 +87,12 @@ describe('MemConnection', () => {
         conn1['open'] = true;
 
         const closeHandler = vi.fn();
-        conn1.subscribe(closeHandler);
+        conn1.subscribe({
+            next: () => {
+                throw new Error('unexpected message');
+            },
+            close: async () => closeHandler(),
+        });
 
         await conn1.close();
         expect(closeHandler).toHaveBeenCalledWith({type: 'close'});

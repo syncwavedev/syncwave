@@ -26,8 +26,8 @@ export class Coordinator {
         await this.transport.launch(conn => this.handleConnection(conn));
     }
 
-    close() {
-        this.transport.close();
+    async close() {
+        await this.transport.close();
     }
 
     async issueJwtByUserEmail(email: string): Promise<string> {

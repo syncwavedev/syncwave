@@ -9,50 +9,51 @@ export type Brand<T, B> = T & {__brand: B | undefined};
 
 export type Unsubscribe = () => void;
 
+export interface Observer<T> {
+    next: (value: T) => Promise<void>;
+    close: () => Promise<void>;
+}
+
 export class Subject<T> {
-    private subs: Array<(value: T) => void> = [];
+    private subs: Array<{observer: Observer<T>}> = [];
+    private _open = true;
 
-    subscribe(subscriber: (value: T) => void): Unsubscribe {
-        const originalSubscriber = subscriber;
-        // wrap if the same cb is used twice for subscription, so unsubscribe wouldn't filter both out
-        subscriber = (...args) => originalSubscriber(...args);
+    get open() {
+        return this._open;
+    }
 
-        this.subs.push(subscriber);
+    subscribe(observer: Observer<T>): Unsubscribe {
+        this.ensureOpen();
+
+        // wrap if the same observer is used twice for subscription, so unsubscribe wouldn't filter both out
+        const sub = {observer};
+
+        this.subs.push(sub);
 
         return () => {
-            this.subs = this.subs.filter(x => x !== subscriber);
+            this.subs = this.subs.filter(x => x !== sub);
         };
     }
 
-    next(value: T): void {
+    async next(value: T): Promise<void> {
+        this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
-        [...this.subs].forEach(cb => cb(value));
-    }
-}
-
-export class State<T> {
-    private readonly subject = new Subject<T>();
-
-    constructor(private _value: T) {}
-
-    get snapshot() {
-        return this._value;
+        await whenAll([...this.subs].map(sub => sub.observer.next(value)));
     }
 
-    subscribe(callback: (value: any) => void): () => void {
-        const unsub = this.subject.subscribe(value => {
-            this._value = value;
-            callback(value);
-        });
-
-        callback(this._value);
-
-        return unsub;
+    async close(): Promise<void> {
+        if (this._open) {
+            // copy in case if new subscribers are added/removed during notification
+            await whenAll([...this.subs].map(sub => sub.observer.close()));
+        } else {
+            console.warn('[WRN] subject already closed');
+        }
     }
 
-    next(value: T) {
-        this._value = value;
-        this.subject.next(value);
+    private ensureOpen() {
+        if (!this._open) {
+            throw new Error('connection is closed');
+        }
     }
 }
 

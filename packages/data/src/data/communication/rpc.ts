@@ -235,21 +235,20 @@ export function createRpcClient<TApi extends Api<any>>(
             executor: Deferred<any> | DeferredStreamExecutor<any>,
             requestId: MessageId
         ) {
-            const unsub = connection.subscribe(ev => {
-                if (ev.type === 'close') {
-                    const error = new Error('connection to coordinator closed');
-                    executor.reject(error);
-                } else if (ev.type === 'message') {
+            const unsub = connection.subscribe({
+                next: async message => {
                     handleMessageClient(
                         connection,
-                        ev.message,
+                        message,
                         unsub,
                         executor,
                         requestId
                     );
-                } else {
-                    assertNever(ev);
-                }
+                },
+                close: async () => {
+                    const error = new Error('connection to coordinator closed');
+                    executor.reject(error);
+                },
             });
 
             if (executor instanceof Deferred) {
@@ -328,20 +327,13 @@ export function setupRpcServer<TState>(
     conn: Connection<Message>,
     state: TState
 ): void {
-    conn.subscribe(async ev => {
-        try {
-            if (ev.type === 'close') {
-                runningStreams.forEach(streamId =>
-                    streamIdCancelQueue.add(streamId)
-                );
-            } else if (ev.type === 'message') {
-                await handleMessageServer(ev.message);
-            } else {
-                assertNever(ev);
-            }
-        } catch (err) {
-            console.error('[ERR] unhandled error', err);
-        }
+    conn.subscribe({
+        next: async message => await handleMessageServer(message),
+        close: async () => {
+            runningStreams.forEach(streamId =>
+                streamIdCancelQueue.add(streamId)
+            );
+        },
     });
 
     const streamIdCancelQueue = new Set<MessageId>();
@@ -361,103 +353,121 @@ export function setupRpcServer<TState>(
         }
     }
 
-    async function handleRequest(message: RequestMessage) {
+    async function handleRequestHandler(
+        handler: Handler<ProcessorContext<TState>, any, any>,
+        message: RequestMessage
+    ) {
+        const result = await handler.handle(
+            {message, state},
+            message.payload.arg
+        );
+        await conn.send({
+            id: createMessageId(),
+            type: 'response',
+            requestId: message.id,
+            payload: {type: 'success', result},
+        });
+    }
+
+    async function handleRequestStreamer(
+        processor: Streamer<ProcessorContext<TState>, any, any>,
+        message: RequestMessage
+    ) {
+        const streamId = message.id;
+        runningStreams.add(streamId);
         try {
-            const processor = api[message.payload.name];
-            const req = message.payload.arg;
-            if (processor.type === 'handler') {
-                const result = await processor.handle({message, state}, req);
+            for await (const item of processor.stream(
+                {message, state},
+                message.payload.arg
+            )) {
+                // we need to check at the beginning, because processor.stream might resolved
+                // after connection already closed
+
+                // note:
+                //   because we check for cancellation only after stream yielded next item,
+                //   we can optimize this part to stop waiting for process.stream after cancellation happened
+                //   current situation:
+                //     stream start
+                //     stream item 1
+                //     stream item 2
+                //     stream item 3
+                //     stream item 4
+                //     stream item 5
+                //     stream cancelled
+                //     stream item 6
+                //     stream closed
+                if (streamIdCancelQueue.has(streamId)) {
+                    // client requested finish of the stream
+                    runningStreams.delete(streamId);
+                    streamIdCancelQueue.delete(streamId);
+                    break;
+                }
+
+                const itemMessageId = createMessageId();
+
+                // we must subscribe before sending the message
+                const ack = new Deferred<void>();
+                const ackUnsub = conn.subscribe({
+                    next: async message => {
+                        if (
+                            message.type === 'ack' &&
+                            message.itemId === itemMessageId
+                        ) {
+                            ack.resolve();
+                            ackUnsub();
+                        }
+                    },
+                    close: async () => {
+                        // do nothing
+                    },
+                });
+                await conn.send({
+                    id: itemMessageId,
+                    type: 'response',
+                    requestId: streamId,
+                    payload: {type: 'item', item},
+                });
+
+                wait(STREAM_ITEM_ACK_TIMEOUT_MS)
+                    .then(() => {
+                        if (streamIdCancelQueue.has(streamId)) {
+                            ack.resolve();
+                        } else if (ack.state === 'pending') {
+                            ack.reject(new Error('ack call failed: timeout'));
+                        }
+                    })
+                    .catch(err => {
+                        console.error(
+                            'unexpected error after rpc timed out',
+                            err
+                        );
+                    });
+
+                await ack.promise;
+            }
+
+            if (runningStreams.has(streamId)) {
                 await conn.send({
                     id: createMessageId(),
                     type: 'response',
-                    requestId: message.id,
-                    payload: {type: 'success', result},
+                    requestId: streamId,
+                    payload: {
+                        type: 'end',
+                    },
                 });
+            }
+        } finally {
+            runningStreams.delete(streamId);
+        }
+    }
+
+    async function handleRequest(message: RequestMessage) {
+        try {
+            const processor = api[message.payload.name];
+            if (processor.type === 'handler') {
+                await handleRequestHandler(processor, message);
             } else if (processor.type === 'streamer') {
-                const streamId = message.id;
-                runningStreams.add(streamId);
-                try {
-                    for await (const item of processor.stream(
-                        {message, state},
-                        req
-                    )) {
-                        // we need to check at the beginning, because processor.stream might resolved
-                        // after connection already closed
-
-                        // note:
-                        //   because we check for cancellation only after stream yielded next item,
-                        //   we can optimize this part to stop waiting for process.stream after cancellation happened
-                        //   current situation:
-                        //     stream start
-                        //     stream item 1
-                        //     stream item 2
-                        //     stream item 3
-                        //     stream item 4
-                        //     stream item 5
-                        //     stream cancelled
-                        //     stream item 6
-                        //     stream closed
-                        if (streamIdCancelQueue.has(streamId)) {
-                            // client requested finish of the stream
-                            runningStreams.delete(streamId);
-                            streamIdCancelQueue.delete(streamId);
-                            break;
-                        }
-
-                        const itemMessageId = createMessageId();
-
-                        // we must subscribe before sending the message
-                        const ack = new Deferred<void>();
-                        const ackUnsub = conn.subscribe(ev => {
-                            if (
-                                ev.type === 'message' &&
-                                ev.message.type === 'ack' &&
-                                ev.message.itemId === itemMessageId
-                            ) {
-                                ack.resolve();
-                                ackUnsub();
-                            }
-                        });
-                        await conn.send({
-                            id: itemMessageId,
-                            type: 'response',
-                            requestId: streamId,
-                            payload: {type: 'item', item},
-                        });
-
-                        wait(STREAM_ITEM_ACK_TIMEOUT_MS)
-                            .then(() => {
-                                if (streamIdCancelQueue.has(streamId)) {
-                                    ack.resolve();
-                                } else if (ack.state === 'pending') {
-                                    ack.reject(
-                                        new Error('ack call failed: timeout')
-                                    );
-                                }
-                            })
-                            .catch(err => {
-                                console.error(
-                                    'unexpected error after rpc timed out',
-                                    err
-                                );
-                            });
-
-                        await ack.promise;
-                    }
-
-                    if (runningStreams.has(streamId)) {
-                        await conn.send({
-                            id: createMessageId(),
-                            type: 'response',
-                            requestId: streamId,
-                            payload: {
-                                type: 'end',
-                            },
-                        });
-                    }
-                } finally {
-                    runningStreams.delete(streamId);
-                }
+                await handleRequestStreamer(processor, message);
             }
         } catch (err: any) {
             if (err instanceof BusinessError) {

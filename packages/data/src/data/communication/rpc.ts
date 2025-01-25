@@ -259,9 +259,11 @@ export function createRpcClient<TApi extends Api<any>>(
                 exe.throw(
                     new Error('connection to coordinator lost [reconnect]')
                 );
+                unsub();
             },
             close: async () => {
                 exe.throw(new Error('connection to coordinator lost [close]'));
+                unsub();
             },
         });
 
@@ -342,8 +344,17 @@ export function createRpcClient<TApi extends Api<any>>(
                     assertNever(msg.payload);
                 }
             },
+            reconnect: async () => {
+                result.reject(
+                    new Error('connection to coordinator lost [reconnect]')
+                );
+                unsub();
+            },
             close: async () => {
-                result.reject(new Error('connection to coordinator closed'));
+                result.reject(
+                    new Error('connection to coordinator lost [close]')
+                );
+                unsub();
             },
         });
 
@@ -433,8 +444,13 @@ async function waitMessage<S extends Message>(
                 unsub();
             }
         },
+        reconnect: async () => {
+            result.resolve(undefined);
+            unsub();
+        },
         close: async () => {
             result.resolve(undefined);
+            unsub();
         },
     });
 

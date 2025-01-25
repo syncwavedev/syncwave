@@ -40,10 +40,10 @@
         "vitest": "^1.6.0"
     },
     "dependencies": {
+        "async-channel": "^0.2.0",
         "bytewise": "^1.1.0",
         "deep-equal": "^2.2.3",
         "functional-red-black-tree": "^1.0.1",
-        "it-pushable": "^3.2.3",
         "lru-cache": "^11.0.2",
         "msgpackr": "^1.11.2",
         "uuid": "^11.0.3",

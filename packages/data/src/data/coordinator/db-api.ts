@@ -8,6 +8,7 @@ import {TaskId, zTask} from '../repos/task-repo.js';
 import {zUser} from '../repos/user-repo.js';
 
 export const dbApi = createApi<Actor>()({
+    // streaming example
     getStream: streamer({
         request: z.object({intervalMs: z.number()}),
         item: z.object({index: z.number()}),
@@ -15,8 +16,8 @@ export const dbApi = createApi<Actor>()({
             console.log('stream start');
             try {
                 let index = 1;
-                while (true) {
-                    console.log('stream item');
+                while (index < 10) {
+                    console.log('stream item', index);
                     yield {index};
                     index += 1;
                     await wait(request.intervalMs);

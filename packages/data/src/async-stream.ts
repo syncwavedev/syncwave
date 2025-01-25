@@ -1,11 +1,13 @@
-import {pushable} from 'it-pushable';
+import {Channel} from 'async-channel';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
+import {Deferred} from './deferred.js';
 import {assert} from './utils.js';
 
 export interface DeferredStreamExecutor<T> {
     next: (value: T) => Promise<void>;
     end: () => void;
     reject: (error: any) => void;
+    cancellation: Promise<void>;
 }
 
 export class DeferredStream<T> implements AsyncIterable<T> {
@@ -13,18 +15,30 @@ export class DeferredStream<T> implements AsyncIterable<T> {
         private readonly execute: (executor: DeferredStreamExecutor<T>) => void
     ) {}
 
-    [Symbol.asyncIterator](): AsyncIterator<T, any, any> {
-        const result = pushable<T>({objectMode: true});
+    async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
+        const chan = new Channel<T>(0);
+
+        const cancellation = new Deferred<void>();
+
         this.execute({
-            next: value => {
-                result.push(value);
-                return Promise.resolve();
-            },
-            end: () => result.end(),
-            reject: error => result.throw(error),
+            end: () => chan.close(),
+            next: value => chan.push(value),
+            reject: error => chan.throw(error),
+            cancellation: cancellation.promise,
         });
 
-        return result;
+        let complete = false;
+        try {
+            for await (const item of chan) {
+                yield item;
+            }
+
+            complete = true;
+        } finally {
+            if (!complete) {
+                cancellation.resolve();
+            }
+        }
     }
 }
 

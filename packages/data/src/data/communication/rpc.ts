@@ -158,7 +158,7 @@ export function wrapApi<TStateA, TStateB, TApi extends Api<TStateA>>(
     return result as any;
 }
 
-function handleMessage(
+function handleMessageClient(
     conn: Connection<Message>,
     message: Message,
     unsub: Unsubscribe,
@@ -232,16 +232,15 @@ export function createRpcClient<TApi extends Api<any>>(
 
         async function listen(
             arg: any,
-            executor: Deferred<any> | DeferredStreamExecutor<any>
+            executor: Deferred<any> | DeferredStreamExecutor<any>,
+            requestId: MessageId
         ) {
-            const requestId = createMessageId();
-
             const unsub = connection.subscribe(ev => {
                 if (ev.type === 'close') {
                     const error = new Error('connection to coordinator closed');
                     executor.reject(error);
                 } else if (ev.type === 'message') {
-                    handleMessage(
+                    handleMessageClient(
                         connection,
                         ev.message,
                         unsub,
@@ -280,15 +279,28 @@ export function createRpcClient<TApi extends Api<any>>(
         }
 
         return (arg: any) => {
+            const requestId = createMessageId();
             if (processor.type === 'handler') {
                 const result = new Deferred<any>();
                 return (async () => {
-                    await listen(arg, result);
+                    await listen(arg, result, requestId);
                     return await result.promise;
                 })();
             } else if (processor.type === 'streamer') {
                 return new DeferredStream(executor => {
-                    listen(arg, executor).catch(error =>
+                    executor.cancellation
+                        .then(() => {
+                            return connection.send({
+                                id: createMessageId(),
+                                type: 'cancel',
+                                requestId,
+                                headers: {},
+                            });
+                        })
+                        .catch(error => {
+                            console.error('failed to cancel request: ', error);
+                        });
+                    listen(arg, executor, requestId).catch(error =>
                         executor.reject(error)
                     );
                 });
@@ -320,10 +332,10 @@ export function setupRpcServer<TState>(
         try {
             if (ev.type === 'close') {
                 runningStreams.forEach(streamId =>
-                    streamIdFinishQueue.add(streamId)
+                    streamIdCancelQueue.add(streamId)
                 );
             } else if (ev.type === 'message') {
-                await handleMessage(ev.message);
+                await handleMessageServer(ev.message);
             } else {
                 assertNever(ev);
             }
@@ -332,18 +344,18 @@ export function setupRpcServer<TState>(
         }
     });
 
-    const streamIdFinishQueue = new Set<MessageId>();
+    const streamIdCancelQueue = new Set<MessageId>();
     const runningStreams = new Set<MessageId>();
 
-    async function handleMessage(message: Message) {
+    async function handleMessageServer(message: Message) {
         if (message.type === 'request') {
             await handleRequest(message);
         } else if (message.type === 'response') {
             // nothing to do
         } else if (message.type === 'ack') {
             // nothing to do
-        } else if (message.type === 'finish') {
-            streamIdFinishQueue.add(message.streamId);
+        } else if (message.type === 'cancel') {
+            streamIdCancelQueue.add(message.requestId);
         } else {
             assertNever(message);
         }
@@ -362,7 +374,8 @@ export function setupRpcServer<TState>(
                     payload: {type: 'success', result},
                 });
             } else if (processor.type === 'streamer') {
-                runningStreams.add(message.id);
+                const streamId = message.id;
+                runningStreams.add(streamId);
                 try {
                     for await (const item of processor.stream(
                         {message, state},
@@ -370,9 +383,24 @@ export function setupRpcServer<TState>(
                     )) {
                         // we need to check at the beginning, because processor.stream might resolved
                         // after connection already closed
-                        if (streamIdFinishQueue.has(message.id)) {
+
+                        // note:
+                        //   because we check for cancellation only after stream yielded next item,
+                        //   we can optimize this part to stop waiting for process.stream after cancellation happened
+                        //   current situation:
+                        //     stream start
+                        //     stream item 1
+                        //     stream item 2
+                        //     stream item 3
+                        //     stream item 4
+                        //     stream item 5
+                        //     stream cancelled
+                        //     stream item 6
+                        //     stream closed
+                        if (streamIdCancelQueue.has(streamId)) {
                             // client requested finish of the stream
-                            streamIdFinishQueue.delete(message.id);
+                            runningStreams.delete(streamId);
+                            streamIdCancelQueue.delete(streamId);
                             break;
                         }
 
@@ -393,14 +421,13 @@ export function setupRpcServer<TState>(
                         await conn.send({
                             id: itemMessageId,
                             type: 'response',
-                            requestId: message.id,
-                            // streamId is id of the request message
-                            payload: {type: 'item', item, streamId: message.id},
+                            requestId: streamId,
+                            payload: {type: 'item', item},
                         });
 
                         wait(STREAM_ITEM_ACK_TIMEOUT_MS)
                             .then(() => {
-                                if (streamIdFinishQueue.has(message.id)) {
+                                if (streamIdCancelQueue.has(streamId)) {
                                     ack.resolve();
                                 } else if (ack.state === 'pending') {
                                     ack.reject(
@@ -417,8 +444,19 @@ export function setupRpcServer<TState>(
 
                         await ack.promise;
                     }
+
+                    if (runningStreams.has(streamId)) {
+                        await conn.send({
+                            id: createMessageId(),
+                            type: 'response',
+                            requestId: streamId,
+                            payload: {
+                                type: 'end',
+                            },
+                        });
+                    }
                 } finally {
-                    runningStreams.delete(message.id);
+                    runningStreams.delete(streamId);
                 }
             }
         } catch (err: any) {

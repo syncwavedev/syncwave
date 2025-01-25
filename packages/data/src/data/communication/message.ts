@@ -28,8 +28,8 @@ export interface AckMessage extends BaseMessage<'ack'> {
     readonly itemId: MessageId;
 }
 
-export interface FinishMessage extends BaseMessage<'finish'> {
-    readonly streamId: MessageId;
+export interface CancelMessage extends BaseMessage<'cancel'> {
+    readonly requestId: MessageId;
 }
 
 export interface BaseResponsePayload<TType extends string> {
@@ -42,7 +42,6 @@ export interface SuccessResponsePayload extends BaseResponsePayload<'success'> {
 
 export interface ItemResponsePayload extends BaseResponsePayload<'item'> {
     readonly item: unknown;
-    readonly streamId: MessageId;
 }
 
 export interface EndResponsePayload extends BaseResponsePayload<'end'> {}
@@ -65,5 +64,5 @@ export interface ResponseMessage extends BaseMessage<'response'> {
 export type Message =
     | RequestMessage
     | AckMessage
-    | FinishMessage
+    | CancelMessage
     | ResponseMessage;

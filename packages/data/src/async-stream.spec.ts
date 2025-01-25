@@ -20,7 +20,7 @@ describe('DeferredStream', () => {
 
     it('should propagate errors from the executor', async () => {
         const error = new Error('Test error');
-        const stream = new DeferredStream<number>(({reject}) => {
+        const stream = new DeferredStream<number>(({throw: reject}) => {
             reject(error);
         });
 

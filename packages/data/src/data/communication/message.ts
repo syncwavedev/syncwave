@@ -44,6 +44,8 @@ export interface ItemResponsePayload extends BaseResponsePayload<'item'> {
     readonly item: unknown;
 }
 
+export interface StartResponsePayload extends BaseResponsePayload<'start'> {}
+
 export interface EndResponsePayload extends BaseResponsePayload<'end'> {}
 
 export interface ErrorResponsePayload extends BaseResponsePayload<'error'> {
@@ -54,6 +56,7 @@ export type ResponsePayload =
     | SuccessResponsePayload
     | ErrorResponsePayload
     | ItemResponsePayload
+    | StartResponsePayload
     | EndResponsePayload;
 
 export interface ResponseMessage extends BaseMessage<'response'> {

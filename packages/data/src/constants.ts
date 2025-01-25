@@ -1,5 +1,5 @@
-export const RPC_TIMEOUT_MS = 2_000;
-export const STREAM_ITEM_ACK_TIMEOUT_MS = 2_000;
+export const RPC_CALL_TIMEOUT_MS = 5_000;
+export const RPC_ACK_TIMEOUT_MS = 5_000;
 export const MAX_LOOKAHEAD_COUNT = 32;
 export const PULL_WAIT_MS = 1000;
 export const TXN_RETRIES_COUNT = 1;

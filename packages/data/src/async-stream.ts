@@ -6,7 +6,7 @@ import {assert, assertNever} from './utils.js';
 export interface DeferredStreamExecutor<T> {
     next: (value: T) => Promise<void>;
     end: () => void;
-    reject: (error: any) => void;
+    throw: (error: any) => void;
     cancellation: Promise<void>;
 }
 
@@ -23,7 +23,7 @@ export class DeferredStream<T> implements AsyncIterable<T> {
         this.execute({
             end: () => chan.close(),
             next: value => chan.push(value),
-            reject: error => chan.throw(error),
+            throw: error => chan.throw(error),
             cancellation: cancellation.promise,
         });
 

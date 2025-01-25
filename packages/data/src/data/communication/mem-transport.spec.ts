@@ -13,14 +13,27 @@ const mockMessage: Message = {
     payload: {name: 'ping', arg: {}},
 };
 
-describe('MemConnection', () => {
-    it('should create a pair of MemConnections', () => {
+describe('MemConnection', async () => {
+    it('should create a pair of MemConnections', async () => {
+        console.log('hello');
         const [conn1, conn2] = MemConnection.create<Message>(
             new MsgpackrCodec()
         );
         expect(conn1).toBeDefined();
         expect(conn2).toBeDefined();
-        expect(() => conn1.send(mockMessage)).not.toThrowError();
+        let value: any = undefined;
+        const unsub = conn2.subscribe({
+            next: async message => {
+                value = message;
+            },
+            close: async () => {
+                // do nothing
+            },
+        });
+        await conn1.send(mockMessage);
+        unsub();
+
+        expect(value).toEqual(mockMessage);
     });
 
     it('should send and receive messages between peers', async () => {
@@ -48,8 +61,7 @@ describe('MemConnection', () => {
         const [conn1, conn2] = MemConnection.create<Message>(
             new MsgpackrCodec()
         );
-        conn1['open'] = false;
-        conn2['open'] = true;
+        await conn2.close();
 
         await expect(conn1.send(mockMessage)).rejects.toThrowError(
             'connection is closed'
@@ -60,25 +72,20 @@ describe('MemConnection', () => {
         const [conn1, conn2] = MemConnection.create<Message>(
             new MsgpackrCodec()
         );
-        conn1['open'] = true;
-        conn2['open'] = true;
 
         const messageHandler = vi.fn();
-        const unsubscribe = conn1.subscribe({
+        const unsubscribe = conn2.subscribe({
             next: async message => messageHandler(message),
             close: () => {
                 throw new Error('unexpectedly closed');
             },
         });
 
-        await conn1['subs'][0]({type: 'message', message: mockMessage});
-        expect(messageHandler).toHaveBeenCalledWith({
-            type: 'message',
-            message: mockMessage,
-        });
+        await conn1.send(mockMessage);
+        expect(messageHandler).toHaveBeenCalledWith(mockMessage);
 
         unsubscribe();
-        await conn1['subs'][0]?.({type: 'message', message: mockMessage});
+        await conn1.send(mockMessage);
         expect(messageHandler).toHaveBeenCalledTimes(1);
     });
 
@@ -95,7 +102,7 @@ describe('MemConnection', () => {
         });
 
         await conn1.close();
-        expect(closeHandler).toHaveBeenCalledWith({type: 'close'});
+        expect(closeHandler).toHaveBeenCalledWith();
         expect(() => conn1['ensureOpen']()).toThrowError(
             'connection is closed'
         );

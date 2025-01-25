@@ -43,6 +43,7 @@ export class Subject<T> {
 
     async close(): Promise<void> {
         if (this._open) {
+            this._open = false;
             // copy in case if new subscribers are added/removed during notification
             await whenAll([...this.subs].map(sub => sub.observer.close()));
         } else {
@@ -52,7 +53,7 @@ export class Subject<T> {
 
     private ensureOpen() {
         if (!this._open) {
-            throw new Error('connection is closed');
+            throw new Error('subject is closed');
         }
     }
 }

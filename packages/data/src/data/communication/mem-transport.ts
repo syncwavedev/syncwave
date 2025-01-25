@@ -19,6 +19,8 @@ export class MemConnection<T> implements Connection<T> {
     private constructor(private readonly codec: Codec<T>) {}
 
     async send(message: T): Promise<void> {
+        this.ensureOpen();
+
         // don't wait for peer to respond
         this.peer.receive(this.codec.encode(message)).catch(err => {
             console.error('error during peer receive', err);
@@ -26,6 +28,8 @@ export class MemConnection<T> implements Connection<T> {
     }
 
     subscribe(observer: Observer<T>): Unsubscribe {
+        this.ensureOpen();
+
         return this.subject.subscribe(observer);
     }
 
@@ -41,6 +45,12 @@ export class MemConnection<T> implements Connection<T> {
 
     private async receive(message: Uint8Array): Promise<void> {
         await this.subject.next(this.codec.decode(message));
+    }
+
+    private ensureOpen() {
+        if (!this.subject.open) {
+            throw new Error('connection is closed');
+        }
     }
 }
 

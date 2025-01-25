@@ -7,6 +7,7 @@ import {
     Subject,
     TransportServer,
     Unsubscribe,
+    whenAll,
 } from 'ground-data';
 import {Server} from 'http';
 import {WebSocket, WebSocketServer} from 'ws';
@@ -19,6 +20,8 @@ export interface WsTransportServerOptions<T> {
 
 export class WsTransportServer<T> implements TransportServer<T> {
     private wss: WebSocketServer | undefined;
+    private conns: WsConnection<T>[] = [];
+    private readonly closeSignal = new Deferred<void>();
 
     constructor(private readonly opt: WsTransportServerOptions<T>) {}
 
@@ -26,12 +29,21 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', (ws: WebSocket) => {
-            const connection = new WsConnection<T>(
+            const conn = new WsConnection<T>(
                 ws,
                 this.opt.codec,
                 this.opt.logger
             );
-            cb(connection);
+
+            conn.subscribe({
+                next: () => Promise.resolve(),
+                close: async () => {
+                    this.conns = this.conns.filter(x => x !== conn);
+                },
+            });
+            this.conns.push(conn);
+
+            cb(conn);
         });
 
         const listening = new Deferred<void>();
@@ -40,11 +52,29 @@ export class WsTransportServer<T> implements TransportServer<T> {
             listening.resolve();
         });
 
+        this.wss.on('close', async () => {
+            try {
+                await this.closeConns();
+                this.closeSignal.resolve();
+            } catch (error) {
+                this.closeSignal.reject(error);
+            }
+        });
+
         return listening.promise;
     }
 
-    close(): void {
-        this.wss?.close();
+    async close(): Promise<void> {
+        if (this.wss) {
+            await this.closeConns();
+            this.wss.close();
+            await this.closeSignal.promise;
+        }
+    }
+
+    private async closeConns() {
+        await whenAll(this.conns.map(x => x.close()));
+        this.conns = [];
     }
 }
 

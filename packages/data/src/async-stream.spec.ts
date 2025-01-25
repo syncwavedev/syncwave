@@ -5,7 +5,7 @@ import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 describe('DeferredStream', () => {
     it('should emit values using the executor', async () => {
         const values = [1, 2, 3];
-        const stream = new DeferredStream<number>((next, end) => {
+        const stream = new DeferredStream<number>(({next, end}) => {
             values.forEach(next);
             end();
         });
@@ -20,12 +20,12 @@ describe('DeferredStream', () => {
 
     it('should propagate errors from the executor', async () => {
         const error = new Error('Test error');
-        const stream = new DeferredStream<number>((next, end, reject) => {
+        const stream = new DeferredStream<number>(({reject}) => {
             reject(error);
         });
 
         await expect(async () => {
-            for await (const value of stream) {
+            for await (const _value of stream) {
                 // Iterate over the stream to trigger the executor.
             }
         }).rejects.toThrow(error);

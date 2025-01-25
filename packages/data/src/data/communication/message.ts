@@ -24,6 +24,14 @@ export interface RequestMessage extends BaseMessage<'request'> {
     };
 }
 
+export interface AckMessage extends BaseMessage<'ack'> {
+    readonly itemId: MessageId;
+}
+
+export interface FinishMessage extends BaseMessage<'finish'> {
+    readonly streamId: MessageId;
+}
+
 export interface BaseResponsePayload<TType extends string> {
     readonly type: TType;
 }
@@ -34,6 +42,7 @@ export interface SuccessResponsePayload extends BaseResponsePayload<'success'> {
 
 export interface ItemResponsePayload extends BaseResponsePayload<'item'> {
     readonly item: unknown;
+    readonly streamId: MessageId;
 }
 
 export interface EndResponsePayload extends BaseResponsePayload<'end'> {}
@@ -42,13 +51,19 @@ export interface ErrorResponsePayload extends BaseResponsePayload<'error'> {
     readonly message?: string;
 }
 
-export type ResponsePayload = SuccessResponsePayload | ErrorResponsePayload;
-// | ItemResponsePayload
-// | EndResponsePayload
+export type ResponsePayload =
+    | SuccessResponsePayload
+    | ErrorResponsePayload
+    | ItemResponsePayload
+    | EndResponsePayload;
 
-export interface RpcResponseMessage extends BaseMessage<'response'> {
+export interface ResponseMessage extends BaseMessage<'response'> {
     readonly requestId: MessageId;
     readonly payload: ResponsePayload;
 }
 
-export type Message = RequestMessage | RpcResponseMessage;
+export type Message =
+    | RequestMessage
+    | AckMessage
+    | FinishMessage
+    | ResponseMessage;

@@ -9,7 +9,7 @@ export * from './data/communication/transport.js';
 export * from './data/coordinator/coordinator.js';
 export * from './data/data-inspector.js';
 export * from './data/infra.js';
-export * from './data/participant.js';
+export * from './data/participant/participant.js';
 export * from './data/repos/board-repo.js';
 export * from './data/repos/identity-repo.js';
 export * from './data/repos/member-repo.js';

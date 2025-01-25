@@ -1,5 +1,4 @@
 import {Uint8KVStore} from '../../kv/kv-store.js';
-import {whenAll} from '../../utils.js';
 import {AuthContextParser} from '../auth-context.js';
 import {Message} from '../communication/message.js';
 import {setupRpcServer} from '../communication/rpc.js';
@@ -46,25 +45,12 @@ export class Coordinator {
 
     private handleConnection(conn: Connection<Message>): void {
         const authContextParser = new AuthContextParser(4, this.jwt);
-        setupRpcServer(conn, coordinatorApi, async (message, fn) => {
-            let effects: Array<() => Promise<void>> = [];
-            const result = await this.dataLayer.transaction(async ctx => {
-                effects = [];
-                const auth = await authContextParser.parse(
-                    ctx,
-                    message.headers?.auth
-                );
-                return await fn({
-                    ctx,
-                    auth,
-                    jwt: this.jwt,
-                    crypto: this.crypto,
-                    emailService: this.email,
-                    enqueueEffect: effect => effects.push(effect),
-                });
-            });
-            await whenAll(effects.map(effect => effect()));
-            return result;
+        setupRpcServer(coordinatorApi, conn, {
+            authContextParser,
+            dataLayer: this.dataLayer,
+            jwt: this.jwt,
+            crypto: this.crypto,
+            emailService: this.email,
         });
     }
 }

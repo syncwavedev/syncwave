@@ -2,22 +2,27 @@ import {pushable} from 'it-pushable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {assert} from './utils.js';
 
+export interface DeferredStreamExecutor<T> {
+    next: (value: T) => Promise<void>;
+    end: () => void;
+    reject: (error: any) => void;
+}
+
 export class DeferredStream<T> implements AsyncIterable<T> {
     constructor(
-        private readonly executor: (
-            next: (value: T) => void,
-            end: () => void,
-            reject: (error: any) => void
-        ) => void
+        private readonly execute: (executor: DeferredStreamExecutor<T>) => void
     ) {}
 
     [Symbol.asyncIterator](): AsyncIterator<T, any, any> {
         const result = pushable<T>({objectMode: true});
-        this.executor(
-            value => result.push(value),
-            () => result.end(),
-            error => result.throw(error)
-        );
+        this.execute({
+            next: value => {
+                result.push(value);
+                return Promise.resolve();
+            },
+            end: () => result.end(),
+            reject: error => result.throw(error),
+        });
 
         return result;
     }
@@ -26,9 +31,9 @@ export class DeferredStream<T> implements AsyncIterable<T> {
 export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
     if (Array.isArray(source)) {
         return new AsyncStream(
-            new DeferredStream((next, end) => {
+            new DeferredStream(async ({next, end}) => {
                 for (const item of source) {
-                    next(item);
+                    await next(item);
                 }
                 end();
             })
@@ -85,7 +90,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         mapper: (value: T) => TResult | Promise<TResult>
     ): AsyncStream<TResult> {
         return astream(
-            new DeferredStream(async (next, end) => {
+            new DeferredStream(async ({next, end}) => {
                 let left = 0;
                 let right = 0;
                 const pending = new Map<number, Promise<TResult> | TResult>();
@@ -93,7 +98,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
                 for await (const item of this.source) {
                     if (pending.size >= MAX_LOOKAHEAD_COUNT) {
                         assert(pending.has(left));
-                        next(await pending.get(left)!);
+                        await next(await pending.get(left)!);
                         pending.delete(left);
                         left += 1;
                     }
@@ -104,7 +109,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
                 for (; left < right; left += 1) {
                     assert(pending.has(left));
-                    next(await pending.get(left)!);
+                    await next(await pending.get(left)!);
                     pending.delete(left);
                 }
 

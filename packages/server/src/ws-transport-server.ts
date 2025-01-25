@@ -2,7 +2,6 @@ import {
     Codec,
     Connection,
     Deferred,
-    Logger,
     Observer,
     Subject,
     TransportServer,
@@ -14,7 +13,6 @@ import {WebSocket, WebSocketServer} from 'ws';
 
 export interface WsTransportServerOptions<T> {
     readonly codec: Codec<T>;
-    readonly logger: Logger;
     readonly server: Server;
 }
 
@@ -29,11 +27,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', (ws: WebSocket) => {
-            const conn = new WsConnection<T>(
-                ws,
-                this.opt.codec,
-                this.opt.logger
-            );
+            const conn = new WsConnection<T>(ws, this.opt.codec);
 
             conn.subscribe({
                 next: () => Promise.resolve(),
@@ -84,8 +78,7 @@ export class WsConnection<T> implements Connection<T> {
 
     constructor(
         private readonly ws: WebSocket,
-        private readonly codec: Codec<T>,
-        private readonly logger: Logger
+        private readonly codec: Codec<T>
     ) {
         this.setupListeners();
     }

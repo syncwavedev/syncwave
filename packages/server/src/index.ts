@@ -5,7 +5,6 @@ import {createHash, randomBytes} from 'crypto';
 import {
     assertDefined,
     astream,
-    ConsoleLogger,
     Coordinator,
     CryptoService,
     decodeNumber,
@@ -158,7 +157,6 @@ async function launch() {
     const coordinator = new Coordinator(
         new WsTransportServer({
             codec: new MsgpackrCodec(),
-            logger: new ConsoleLogger(),
             server: httpServer,
         }),
         kvStore,

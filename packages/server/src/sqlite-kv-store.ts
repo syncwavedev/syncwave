@@ -84,14 +84,14 @@ export class SqliteUint8KVStore implements Uint8KVStore {
     }
 
     public async transaction<TResult>(
-        fn: (txn: Uint8Transaction) => Promise<TResult>
+        fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
             this.db.exec('BEGIN');
 
             try {
-                const txn = new SqliteTransaction(this.db);
-                const result = await fn(txn);
+                const tx = new SqliteTransaction(this.db);
+                const result = await fn(tx);
 
                 this.db.exec('COMMIT');
 

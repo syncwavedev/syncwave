@@ -17,8 +17,8 @@ describe('Topic', () => {
     });
 
     it('should push data into the topic and retrieve it with the correct offsets', async () => {
-        await store.transaction(async txn => {
-            const topic = new Topic(txn, jsonCodec);
+        await store.transaction(async tx => {
+            const topic = new Topic(tx, jsonCodec);
 
             await topic.push({value: 'A'}, {value: 'B'}, {value: 'C'});
 
@@ -36,8 +36,8 @@ describe('Topic', () => {
     });
 
     it('should handle pushing data multiple times and retrieving by ranges', async () => {
-        await store.transaction(async txn => {
-            const topic = new Topic(txn, jsonCodec);
+        await store.transaction(async tx => {
+            const topic = new Topic(tx, jsonCodec);
 
             await topic.push({value: 'X'}, {value: 'Y'});
             await topic.push({value: 'Z'});
@@ -55,8 +55,8 @@ describe('Topic', () => {
     });
 
     it('should return an empty list if the range is outside the offsets', async () => {
-        await store.transaction(async txn => {
-            const topic = new Topic(txn, jsonCodec);
+        await store.transaction(async tx => {
+            const topic = new Topic(tx, jsonCodec);
 
             await topic.push({value: 'A'});
 
@@ -70,8 +70,8 @@ describe('Topic', () => {
     });
 
     it('should handle overlapping ranges correctly', async () => {
-        await store.transaction(async txn => {
-            const topic = new Topic(txn, jsonCodec);
+        await store.transaction(async tx => {
+            const topic = new Topic(tx, jsonCodec);
 
             await topic.push({value: 'D'}, {value: 'E'}, {value: 'F'});
 
@@ -88,8 +88,8 @@ describe('Topic', () => {
     });
 
     it('should support querying with large ranges', async () => {
-        await store.transaction(async txn => {
-            const topic = new Topic(txn, jsonCodec);
+        await store.transaction(async tx => {
+            const topic = new Topic(tx, jsonCodec);
 
             await topic.push(
                 ...Array.from({length: 1000}, (_, i) => ({value: i}))
@@ -107,18 +107,18 @@ describe('Topic', () => {
     });
 
     it('should increment offset correctly across transactions', async () => {
-        await store.transaction(async txn => {
-            const topic = new Topic(txn, jsonCodec);
+        await store.transaction(async tx => {
+            const topic = new Topic(tx, jsonCodec);
             await topic.push({value: 'First'});
         });
 
-        await store.transaction(async txn => {
-            const topic = new Topic(txn, jsonCodec);
+        await store.transaction(async tx => {
+            const topic = new Topic(tx, jsonCodec);
             await topic.push({value: 'Second'});
         });
 
-        await store.transaction(async txn => {
-            const topic = new Topic(txn, jsonCodec);
+        await store.transaction(async tx => {
+            const topic = new Topic(tx, jsonCodec);
 
             const results: TopicEntry<any>[] = [];
             for await (const entry of topic.list(0, 3)) {

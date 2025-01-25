@@ -5,20 +5,20 @@ import {Transaction, Uint8Transaction, withValueCodec} from './kv-store.js';
 const key = new Uint8Array();
 
 export class Cell<T> {
-    private readonly txn: Transaction<Uint8Array, T>;
+    private readonly tx: Transaction<Uint8Array, T>;
 
     constructor(
-        txn: Uint8Transaction,
+        tx: Uint8Transaction,
         private readonly initialValue: T
     ) {
-        this.txn = pipe(txn, withValueCodec(new MsgpackrCodec()));
+        this.tx = pipe(tx, withValueCodec(new MsgpackrCodec()));
     }
 
     async get(): Promise<T> {
-        return (await this.txn.get(key)) ?? this.initialValue;
+        return (await this.tx.get(key)) ?? this.initialValue;
     }
 
     async put(value: T): Promise<void> {
-        await this.txn.put(key, value);
+        await this.tx.put(key, value);
     }
 }

@@ -6,7 +6,7 @@ export class OptimisticLock {
     private readonly uuidCodec = new UuidCodec();
     private readonly stringCodec = new StringCodec();
 
-    constructor(private readonly txn: Uint8Transaction) {}
+    constructor(private readonly tx: Uint8Transaction) {}
 
     async lock(key?: string | Uint8Array): Promise<void> {
         const keyBuf =
@@ -15,6 +15,6 @@ export class OptimisticLock {
                 : typeof key === 'string'
                   ? this.stringCodec.encode(key)
                   : key;
-        await this.txn.put(keyBuf, this.uuidCodec.encode(createUuid()));
+        await this.tx.put(keyBuf, this.uuidCodec.encode(createUuid()));
     }
 }

@@ -11,16 +11,16 @@ describe('Counter', () => {
     });
 
     it('should initialize with the provided initial value', async () => {
-        await kvStore.transaction(async txn => {
-            const counter = new Counter(txn, 5);
+        await kvStore.transaction(async tx => {
+            const counter = new Counter(tx, 5);
             const value = await counter.get();
             expect(value).toBe(5);
         });
     });
 
     it('should increment the value', async () => {
-        await kvStore.transaction(async txn => {
-            const counter = new Counter(txn, 5);
+        await kvStore.transaction(async tx => {
+            const counter = new Counter(tx, 5);
 
             const newValue = await counter.increment();
             expect(newValue).toBe(6);
@@ -31,8 +31,8 @@ describe('Counter', () => {
     });
 
     it('should increment multiple times correctly', async () => {
-        await kvStore.transaction(async txn => {
-            const counter = new Counter(txn, 0);
+        await kvStore.transaction(async tx => {
+            const counter = new Counter(tx, 0);
 
             await counter.increment();
             await counter.increment();
@@ -43,9 +43,9 @@ describe('Counter', () => {
     });
 
     it('should handle concurrent transactions correctly', async () => {
-        await kvStore.transaction(async txn => {
-            const counter1 = new Counter(withPrefix('1/')(txn), 10);
-            const counter2 = new Counter(withPrefix('2/')(txn), 10);
+        await kvStore.transaction(async tx => {
+            const counter1 = new Counter(withPrefix('1/')(tx), 10);
+            const counter2 = new Counter(withPrefix('2/')(tx), 10);
 
             const value1 = await counter1.increment();
             const value2 = await counter2.increment();
@@ -56,21 +56,21 @@ describe('Counter', () => {
     });
 
     it('should persist value across transactions', async () => {
-        await kvStore.transaction(async txn => {
-            const counter = new Counter(txn, 7);
+        await kvStore.transaction(async tx => {
+            const counter = new Counter(tx, 7);
             await counter.increment();
         });
 
-        await kvStore.transaction(async txn => {
-            const counter = new Counter(txn, 0); // Initial value should not matter since it reads from storage.
+        await kvStore.transaction(async tx => {
+            const counter = new Counter(tx, 0); // Initial value should not matter since it reads from storage.
             const value = await counter.get();
             expect(value).toBe(8);
         });
     });
 
     it('should handle large increments', async () => {
-        await kvStore.transaction(async txn => {
-            const counter = new Counter(txn, 0);
+        await kvStore.transaction(async tx => {
+            const counter = new Counter(tx, 0);
 
             for (let i = 0; i <= 100; i++) {
                 await counter.increment(i);
@@ -82,9 +82,9 @@ describe('Counter', () => {
     });
 
     it('should initialize multiple counters independently', async () => {
-        await kvStore.transaction(async txn => {
-            const counter1 = new Counter(withPrefix('1/')(txn), 3);
-            const counter2 = new Counter(withPrefix('2/')(txn), 10);
+        await kvStore.transaction(async tx => {
+            const counter1 = new Counter(withPrefix('1/')(tx), 3);
+            const counter2 = new Counter(withPrefix('2/')(tx), 10);
 
             const value1 = await counter1.get();
             const value2 = await counter2.get();

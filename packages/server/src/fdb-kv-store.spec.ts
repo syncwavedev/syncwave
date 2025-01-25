@@ -22,16 +22,16 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
     });
 
     afterEach(async () => {
-        await store.transaction(async txn => {
-            for await (const {key} of txn.query({gte: new Uint8Array()})) {
-                await txn.delete(key);
+        await store.transaction(async tx => {
+            for await (const {key} of tx.query({gte: new Uint8Array()})) {
+                await tx.delete(key);
             }
         });
     });
 
     it('should return undefined for a missing key', async () => {
-        const result = await store.transaction(async txn => {
-            return txn.get(new Uint8Array([0xaa, 0xbb]));
+        const result = await store.transaction(async tx => {
+            return tx.get(new Uint8Array([0xaa, 0xbb]));
         });
         expect(result).toBeUndefined();
     });
@@ -40,12 +40,12 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
         const key = new Uint8Array([0x01]);
         const value = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 
-        await store.transaction(async txn => {
-            await txn.put(key, value);
+        await store.transaction(async tx => {
+            await tx.put(key, value);
         });
 
-        const fetchedValue = await store.transaction(async txn => {
-            return txn.get(key);
+        const fetchedValue = await store.transaction(async tx => {
+            return tx.get(key);
         });
         expect(fetchedValue).toEqual(value);
     });
@@ -54,16 +54,16 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
         const keyToDelete = new Uint8Array([0x02]);
         const value = new Uint8Array([0x11, 0x22]);
 
-        await store.transaction(async txn => {
-            await txn.put(keyToDelete, value);
+        await store.transaction(async tx => {
+            await tx.put(keyToDelete, value);
         });
 
-        await store.transaction(async txn => {
-            await txn.delete(keyToDelete);
+        await store.transaction(async tx => {
+            await tx.delete(keyToDelete);
         });
 
-        const resultAfterDelete = await store.transaction(async txn => {
-            return txn.get(keyToDelete);
+        const resultAfterDelete = await store.transaction(async tx => {
+            return tx.get(keyToDelete);
         });
         expect(resultAfterDelete).toBeUndefined();
     });
@@ -74,14 +74,14 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
         const valA = new Uint8Array([0xa1]);
         const valB = new Uint8Array([0xb2]);
 
-        await store.transaction(async txn => {
-            await txn.put(keyA, valA);
-            await txn.put(keyB, valB);
+        await store.transaction(async tx => {
+            await tx.put(keyA, valA);
+            await tx.put(keyB, valB);
         });
 
-        const [gotA, gotB] = await store.transaction(async txn => {
-            const gA = await txn.get(keyA);
-            const gB = await txn.get(keyB);
+        const [gotA, gotB] = await store.transaction(async tx => {
+            const gA = await tx.get(keyA);
+            const gB = await tx.get(keyB);
             return [gA, gB];
         });
 
@@ -94,8 +94,8 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
         const valRollback = new Uint8Array([0xcc]);
 
         try {
-            await store.transaction(async txn => {
-                await txn.put(keyRollback, valRollback);
+            await store.transaction(async tx => {
+                await tx.put(keyRollback, valRollback);
 
                 // Force an error to simulate rollback
                 throw new Error('Simulated error for rollback test');
@@ -105,8 +105,8 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
         }
 
         // If properly rolled back, the key should not exist:
-        const result = await store.transaction(async txn => {
-            return txn.get(keyRollback);
+        const result = await store.transaction(async tx => {
+            return tx.get(keyRollback);
         });
         expect(result).toBeUndefined();
     });
@@ -120,9 +120,9 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
         ];
 
         beforeEach(async () => {
-            await store.transaction(async txn => {
+            await store.transaction(async tx => {
                 for (const [k, v] of keysAndValues) {
-                    await txn.put(k, v);
+                    await tx.put(k, v);
                 }
             });
         });
@@ -133,8 +133,8 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
                 gt: new Uint8Array([0x11]) as GtCondition<Uint8Array>['gt'],
             };
 
-            const results = await store.transaction(txn =>
-                astream(txn.query(condition)).toArray()
+            const results = await store.transaction(tx =>
+                astream(tx.query(condition)).toArray()
             );
 
             expect(results.map(r => Array.from(r.key))).toEqual([
@@ -150,8 +150,8 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
             };
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
-            await store.transaction(async txn => {
-                for await (const kv of txn.query(condition)) {
+            await store.transaction(async tx => {
+                for await (const kv of tx.query(condition)) {
                     results.push(kv);
                 }
             });
@@ -170,8 +170,8 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
             };
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
-            await store.transaction(async txn => {
-                for await (const kv of txn.query(condition)) {
+            await store.transaction(async tx => {
+                for await (const kv of tx.query(condition)) {
                     results.push(kv);
                 }
             });
@@ -189,8 +189,8 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
             };
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
-            await store.transaction(async txn => {
-                for await (const kv of txn.query(condition)) {
+            await store.transaction(async tx => {
+                for await (const kv of tx.query(condition)) {
                     results.push(kv);
                 }
             });

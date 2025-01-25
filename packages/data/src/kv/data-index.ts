@@ -21,7 +21,7 @@ export interface Index<TValue> {
 }
 
 export interface IndexOptions<TValue> {
-    readonly txn: Uint8Transaction;
+    readonly tx: Uint8Transaction;
     readonly idSelector: (value: TValue) => Uuid;
     readonly keySelector: (value: TValue) => IndexKey;
     readonly unique: boolean;
@@ -36,7 +36,7 @@ export class UniqueError extends Error {
 }
 
 export function createIndex<TValue>({
-    txn,
+    tx,
     idSelector,
     keySelector,
     unique,
@@ -82,7 +82,7 @@ export function createIndex<TValue>({
             }
         );
 
-        const iterator = txn.query(queryCondition);
+        const iterator = tx.query(queryCondition);
 
         for await (const entry of iterator) {
             const entryKey = keyCodec.decode(entry.key);
@@ -102,7 +102,7 @@ export function createIndex<TValue>({
         _debug: {
             async keys() {
                 const result: IndexKey[] = [];
-                for await (const {key} of txn.query({gte: new Uint8Array()})) {
+                for await (const {key} of tx.query({gte: new Uint8Array()})) {
                     result.push(keyCodec.decode(key));
                 }
 
@@ -148,9 +148,9 @@ export function createIndex<TValue>({
             if (prevIncluded) {
                 assert(prevKey !== undefined);
                 if (unique) {
-                    await txn.delete(keyCodec.encode(prevKey));
+                    await tx.delete(keyCodec.encode(prevKey));
                 } else {
-                    await txn.delete(keyCodec.encode([...prevKey, id]));
+                    await tx.delete(keyCodec.encode([...prevKey, id]));
                 }
             }
 
@@ -158,17 +158,17 @@ export function createIndex<TValue>({
             if (nextIncluded) {
                 assert(nextKey !== undefined);
                 if (unique) {
-                    const existing = await txn.get(keyCodec.encode(nextKey));
+                    const existing = await tx.get(keyCodec.encode(nextKey));
                     if (existing) {
                         throw new UniqueError(indexName);
                     }
 
-                    await txn.put(
+                    await tx.put(
                         keyCodec.encode(nextKey),
                         uuidCodec.encode(id)
                     );
                 } else {
-                    await txn.put(
+                    await tx.put(
                         keyCodec.encode([...nextKey, id]),
                         uuidCodec.encode(id)
                     );

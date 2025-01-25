@@ -39,9 +39,9 @@ export function zMember() {
 export class MemberRepo implements SyncTarget<Member> {
     public readonly rawRepo: DocRepo<Member>;
 
-    constructor(txn: Uint8Transaction, onChange: OnDocChange<Member>) {
+    constructor(tx: Uint8Transaction, onChange: OnDocChange<Member>) {
         this.rawRepo = new DocRepo<Member>({
-            txn: withPrefix('d/')(txn),
+            tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
                 [USER_ID_BOARD_ID_INDEX]: {

@@ -76,7 +76,7 @@ export interface Transaction<TKey, TValue> {
 export interface KVStore<TKey, TValue> {
     // fn must be called multiple times in case of a conflict (optimistic concurrency)
     transaction<TResult>(
-        fn: (txn: Transaction<TKey, TValue>) => Promise<TResult>
+        fn: (tx: Transaction<TKey, TValue>) => Promise<TResult>
     ): Promise<TResult>;
 }
 

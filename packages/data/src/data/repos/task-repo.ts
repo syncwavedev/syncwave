@@ -47,9 +47,9 @@ export function zTask() {
 export class TaskRepo implements SyncTarget<Task> {
     public readonly rawRepo: DocRepo<Task>;
 
-    constructor(txn: Uint8Transaction, onChange: OnDocChange<Task>) {
+    constructor(tx: Uint8Transaction, onChange: OnDocChange<Task>) {
         this.rawRepo = new DocRepo<Task>({
-            txn: withPrefix('d/')(txn),
+            tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
                 [BOARD_ID_COUNTER_INDEX]: {

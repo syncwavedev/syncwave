@@ -8,12 +8,12 @@ const stringCodec = new StringCodec();
 const createUint8Array = (input: string): Uint8Array =>
     stringCodec.encode(input);
 
-const sampleFactory = (txn: Uint8Transaction) => ({
+const sampleFactory = (tx: Uint8Transaction) => ({
     async getKey(key: string): Promise<Uint8Array | undefined> {
-        return txn.get(createUint8Array(key));
+        return tx.get(createUint8Array(key));
     },
     async putKey(key: string, value: string): Promise<void> {
-        await txn.put(createUint8Array(key), createUint8Array(value));
+        await tx.put(createUint8Array(key), createUint8Array(value));
     },
 });
 
@@ -25,8 +25,8 @@ describe('Registry', () => {
     });
 
     it('should return a constructed object from the factory', async () => {
-        await kvStore.transaction(async txn => {
-            const registry = new Registry(txn, sampleFactory);
+        await kvStore.transaction(async tx => {
+            const registry = new Registry(tx, sampleFactory);
             const instance = registry.get('test-item');
 
             expect(instance).toHaveProperty('getKey');
@@ -35,8 +35,8 @@ describe('Registry', () => {
     });
 
     it('should throw an error for invalid item names containing "/"', async () => {
-        await kvStore.transaction(async txn => {
-            const registry = new Registry(txn, sampleFactory);
+        await kvStore.transaction(async tx => {
+            const registry = new Registry(tx, sampleFactory);
 
             expect(() => registry.get('invalid/name')).toThrowError(
                 'invalid item name, / is not allowed'
@@ -45,8 +45,8 @@ describe('Registry', () => {
     });
 
     it('should correctly store and retrieve data through the factory-generated object', async () => {
-        await kvStore.transaction(async txn => {
-            const registry = new Registry(txn, sampleFactory);
+        await kvStore.transaction(async tx => {
+            const registry = new Registry(tx, sampleFactory);
             const instance = registry.get('test-item');
 
             await instance.putKey('key1', 'value1');
@@ -57,8 +57,8 @@ describe('Registry', () => {
     });
 
     it('should isolate objects with different prefixes', async () => {
-        await kvStore.transaction(async txn => {
-            const registry = new Registry(txn, sampleFactory);
+        await kvStore.transaction(async tx => {
+            const registry = new Registry(tx, sampleFactory);
             const instance1 = registry.get('item1');
             const instance2 = registry.get('item2');
 
@@ -74,8 +74,8 @@ describe('Registry', () => {
     });
 
     it('should not find keys outside its prefix', async () => {
-        await kvStore.transaction(async txn => {
-            const registry = new Registry(txn, sampleFactory);
+        await kvStore.transaction(async tx => {
+            const registry = new Registry(tx, sampleFactory);
             const instance1 = registry.get('item1');
             const instance2 = registry.get('item2');
 

@@ -4,8 +4,8 @@ import {Uint8Transaction} from './kv-store.js';
 export class Counter {
     private readonly cell: Cell<number>;
 
-    constructor(txn: Uint8Transaction, initial: number) {
-        this.cell = new Cell(txn, initial);
+    constructor(tx: Uint8Transaction, initial: number) {
+        this.cell = new Cell(tx, initial);
     }
 
     async get(): Promise<number> {

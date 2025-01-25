@@ -18,10 +18,10 @@ export class Topic<T> {
     private readonly counter: Counter;
     private readonly log: Transaction<number, T>;
 
-    constructor(txn: Uint8Transaction, codec: Codec<T>) {
-        this.counter = new Counter(pipe(txn, withPrefix('i/')), 0);
+    constructor(tx: Uint8Transaction, codec: Codec<T>) {
+        this.counter = new Counter(pipe(tx, withPrefix('i/')), 0);
         this.log = pipe(
-            txn,
+            tx,
             withPrefix('l/'),
             withKeyCodec(new NumberCodec()),
             withValueCodec(codec)

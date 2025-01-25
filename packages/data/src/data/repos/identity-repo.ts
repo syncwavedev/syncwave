@@ -48,9 +48,9 @@ export function zIdentity() {
 export class IdentityRepo implements SyncTarget<Identity> {
     public readonly rawRepo: DocRepo<Identity>;
 
-    constructor(txn: Uint8Transaction, onChange: OnDocChange<Identity>) {
+    constructor(tx: Uint8Transaction, onChange: OnDocChange<Identity>) {
         this.rawRepo = new DocRepo<Identity>({
-            txn: withPrefix('d/')(txn),
+            tx: withPrefix('d/')(tx),
             indexes: {
                 [EMAIL_INDEX]: {
                     key: x => [x.email],

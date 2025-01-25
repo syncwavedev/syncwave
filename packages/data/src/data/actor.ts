@@ -63,29 +63,29 @@ export class Actor implements DataAccessor {
     private changelog: TopicManager<unknown>;
 
     constructor(
-        txn: Uint8Transaction,
+        tx: Uint8Transaction,
         private readonly auth: AuthContext,
         private readonly role: ActorRole
     ) {
         this.users = new UserRepo(
-            withPrefix('users/')(txn),
+            withPrefix('users/')(tx),
             this.userOnChange.bind(this)
         );
         this.members = new MemberRepo(
-            withPrefix('members/')(txn),
+            withPrefix('members/')(tx),
             this.memberOnChange.bind(this)
         );
         this.boards = new BoardRepo(
-            withPrefix('boards/')(txn),
+            withPrefix('boards/')(tx),
             this.boardOnChange.bind(this)
         );
         this.tasks = new TaskRepo(
-            withPrefix('tasks/')(txn),
+            withPrefix('tasks/')(tx),
             this.taskOnChange.bind(this)
         );
 
         this.changelog = new TopicManager(
-            withPrefix('log/')(txn),
+            withPrefix('log/')(tx),
             new MsgpackrCodec()
         );
 

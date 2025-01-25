@@ -17,14 +17,14 @@ fdb.setAPIVersion(620, 620);
 const MAGIC_BYTE = 174;
 
 export class FoundationDBUint8Transaction implements Uint8Transaction {
-    private readonly txn: fdb.Transaction;
+    private readonly tx: fdb.Transaction;
 
-    constructor(txn: fdb.Transaction) {
-        this.txn = txn;
+    constructor(tx: fdb.Transaction) {
+        this.tx = tx;
     }
 
     async get(key: Uint8Array): Promise<Uint8Array | undefined> {
-        const val = await this.txn.get(Buffer.from(key));
+        const val = await this.tx.get(Buffer.from(key));
         if (val === undefined) {
             return undefined;
         }
@@ -62,7 +62,7 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
             ],
         });
 
-        for await (const [kBuf, vBuf] of this.txn.getRange(start, end, {
+        for await (const [kBuf, vBuf] of this.tx.getRange(start, end, {
             reverse,
         })) {
             yield {
@@ -73,11 +73,11 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
     }
 
     async put(key: Uint8Array, value: Uint8Array): Promise<void> {
-        this.txn.set(Buffer.from(key), Buffer.from(value));
+        this.tx.set(Buffer.from(key), Buffer.from(value));
     }
 
     async delete(key: Uint8Array): Promise<void> {
-        this.txn.clear(Buffer.from(key));
+        this.tx.clear(Buffer.from(key));
     }
 }
 
@@ -89,7 +89,7 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
     }
 
     async transaction<TResult>(
-        fn: (txn: Uint8Transaction) => Promise<TResult>
+        fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         return this.db.doTransaction(async nativeTxn => {
             const wrappedTxn = new FoundationDBUint8Transaction(nativeTxn);

@@ -6,8 +6,8 @@ import {Topic} from './topic.js';
 export class TopicManager<T> {
     private readonly topics: Registry<Topic<T>>;
 
-    constructor(txn: Uint8Transaction, codec: Codec<T>) {
-        this.topics = new Registry(txn, topicTxn => new Topic(topicTxn, codec));
+    constructor(tx: Uint8Transaction, codec: Codec<T>) {
+        this.topics = new Registry(tx, topicTxn => new Topic(topicTxn, codec));
     }
 
     topic(name: string): Topic<T> {

@@ -74,17 +74,17 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
     constructor() {}
 
     async transaction<TResult>(
-        fn: (txn: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>
+        fn: (tx: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>
     ): Promise<TResult> {
         return await this.locker.lock(this, async () => {
             const retries = 10;
 
             for (let attempt = 0; attempt <= retries; attempt += 1) {
-                const txn = new MemTransaction(this.tree);
+                const tx = new MemTransaction(this.tree);
                 try {
-                    const result = await fn(txn);
+                    const result = await fn(tx);
 
-                    this.tree = txn.tree;
+                    this.tree = tx.tree;
 
                     return result;
                 } catch (error) {

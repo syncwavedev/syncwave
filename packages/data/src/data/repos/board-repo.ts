@@ -45,9 +45,9 @@ export class BoardRepo implements SyncTarget<Board> {
     public readonly rawRepo: DocRepo<Board>;
     private readonly counters: Registry<Counter>;
 
-    constructor(txn: Uint8Transaction, onChange: OnDocChange<Board>) {
+    constructor(tx: Uint8Transaction, onChange: OnDocChange<Board>) {
         this.rawRepo = new DocRepo<Board>({
-            txn: withPrefix('d/')(txn),
+            tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
                 [SLUG_INDEX]: {
@@ -59,7 +59,7 @@ export class BoardRepo implements SyncTarget<Board> {
             schema: zBoard(),
         });
         this.counters = new Registry(
-            withPrefix('c/')(txn),
+            withPrefix('c/')(tx),
             counterTxn => new Counter(counterTxn, 0)
         );
     }

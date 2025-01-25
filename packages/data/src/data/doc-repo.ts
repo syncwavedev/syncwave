@@ -46,7 +46,7 @@ export type OnDocChange<T extends Doc> = (
 ) => Promise<void>;
 
 export interface DocStoreOptions<T extends Doc> {
-    txn: Uint8Transaction;
+    tx: Uint8Transaction;
     indexes: IndexMap<T>;
     schema: ZodType<T>;
     onChange: OnDocChange<T>;
@@ -65,7 +65,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
 
-    constructor({txn, indexes, onChange, schema}: DocStoreOptions<T>) {
+    constructor({tx, indexes, onChange, schema}: DocStoreOptions<T>) {
         this.indexes = new Map(
             Object.entries(indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
@@ -77,7 +77,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
                 return [
                     indexName,
                     createIndex({
-                        txn: withPrefix(`i/${indexName}/`)(txn),
+                        tx: withPrefix(`i/${indexName}/`)(tx),
                         idSelector: x => x.id,
                         keySelector:
                             typeof spec === 'function' ? spec : spec.key,
@@ -91,7 +91,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
             })
         );
         this.primaryKeyRaw = pipe(
-            txn,
+            tx,
             withPrefix('d/'),
             withValueCodec(new CrdtCodec())
         );

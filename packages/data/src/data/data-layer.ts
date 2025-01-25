@@ -34,7 +34,7 @@ export class DataLayer {
     ) {}
 
     async transaction<T>(
-        fn: (txn: TransactionContext) => Promise<T>
+        fn: (tx: TransactionContext) => Promise<T>
     ): Promise<T> {
         return await this.kv.transaction(async tx => {
             const userChangelog = new TopicManager<UserChangeEntry>(

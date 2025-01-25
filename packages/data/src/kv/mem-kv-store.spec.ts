@@ -152,12 +152,12 @@ describe('MemKVStore', () => {
         const key = toUint8Array('key1');
         const value = toUint8Array('value1');
 
-        await kvStore.transaction(async txn => {
-            await txn.put(key, value);
+        await kvStore.transaction(async tx => {
+            await tx.put(key, value);
         });
 
-        await kvStore.transaction(async txn => {
-            const result = await txn.get(key);
+        await kvStore.transaction(async tx => {
+            const result = await tx.get(key);
             expect(result).toEqual(value);
         });
     });
@@ -167,18 +167,18 @@ describe('MemKVStore', () => {
         const value1 = toUint8Array('value1');
         const value2 = toUint8Array('value2');
 
-        const txn1 = kvStore.transaction(async txn => {
-            await txn.put(key, value1);
+        const txn1 = kvStore.transaction(async tx => {
+            await tx.put(key, value1);
         });
 
-        const txn2 = kvStore.transaction(async txn => {
-            await txn.put(key, value2);
+        const txn2 = kvStore.transaction(async tx => {
+            await tx.put(key, value2);
         });
 
         await whenAll([txn1, txn2]);
 
-        await kvStore.transaction(async txn => {
-            const result = await txn.get(key);
+        await kvStore.transaction(async tx => {
+            const result = await tx.get(key);
             expect(result).toEqual(value2); // Last transaction wins
         });
     });
@@ -210,14 +210,14 @@ describe('MemKVStore', () => {
         const value = toUint8Array('value1');
 
         await kvStore
-            .transaction(async txn => {
-                await txn.put(key, value);
+            .transaction(async tx => {
+                await tx.put(key, value);
                 throw new Error('Simulated rollback');
             })
             .catch(() => {});
 
-        await kvStore.transaction(async txn => {
-            const result = await txn.get(key);
+        await kvStore.transaction(async tx => {
+            const result = await tx.get(key);
             expect(result).toBeUndefined();
         });
     });

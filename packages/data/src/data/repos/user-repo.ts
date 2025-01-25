@@ -27,9 +27,9 @@ export function zUser() {
 export class UserRepo implements SyncTarget<User> {
     public readonly rawRepo: DocRepo<User>;
 
-    constructor(txn: Uint8Transaction, onChange: OnDocChange<User>) {
+    constructor(tx: Uint8Transaction, onChange: OnDocChange<User>) {
         this.rawRepo = new DocRepo<User>({
-            txn: withPrefix('d/')(txn),
+            tx: withPrefix('d/')(tx),
             onChange,
             indexes: {},
             schema: zUser(),

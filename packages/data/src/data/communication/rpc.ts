@@ -256,12 +256,14 @@ export function createRpcClient<TApi extends Api<any>>(
                 }
             },
             reconnect: async () => {
+                timeoutCxs.cancel();
                 exe.throw(
                     new Error('connection to coordinator lost [reconnect]')
                 );
                 unsub();
             },
             close: async () => {
+                timeoutCxs.cancel();
                 exe.throw(new Error('connection to coordinator lost [close]'));
                 unsub();
             },
@@ -345,12 +347,14 @@ export function createRpcClient<TApi extends Api<any>>(
                 }
             },
             reconnect: async () => {
+                timeoutCxs.cancel();
                 result.reject(
                     new Error('connection to coordinator lost [reconnect]')
                 );
                 unsub();
             },
             close: async () => {
+                timeoutCxs.cancel();
                 result.reject(
                     new Error('connection to coordinator lost [close]')
                 );
@@ -445,10 +449,12 @@ async function waitMessage<S extends Message>(
             }
         },
         reconnect: async () => {
+            timeoutCxs.cancel();
             result.resolve(undefined);
             unsub();
         },
         close: async () => {
+            timeoutCxs.cancel();
             result.resolve(undefined);
             unsub();
         },
@@ -478,6 +484,10 @@ export function setupRpcServer<TState>(
 
     conn.subscribe({
         next: message => handleMessageServer(message),
+        reconnect: async () => {
+            streamsTracker.cancelAll();
+            cxs.cancel();
+        },
         close: async () => {
             streamsTracker.cancelAll();
             cxs.cancel();

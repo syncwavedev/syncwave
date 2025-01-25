@@ -12,7 +12,7 @@ export const dbApi = createApi<Actor>()({
     getStream: streamer({
         request: z.object({intervalMs: z.number()}),
         item: z.object({index: z.number()}),
-        async *stream(_, request) {
+        async *stream(_, {intervalMs}, cx) {
             console.log('stream start');
             try {
                 let index = 1;
@@ -20,7 +20,7 @@ export const dbApi = createApi<Actor>()({
                     console.log('stream item', index);
                     yield {index};
                     index += 1;
-                    await wait(request.intervalMs);
+                    await wait(intervalMs, cx);
                 }
             } finally {
                 console.log('stream closed');
@@ -28,72 +28,72 @@ export const dbApi = createApi<Actor>()({
         },
     }),
     getMe: handler({
-        request: z.object({}),
-        response: zUser().optional(),
+        req: z.object({}),
+        res: zUser().optional(),
         handle: (actor, req) => actor.getMe(req),
     }),
     getMyBoards: handler({
-        request: z.object({}),
-        response: z.array(zBoard()),
+        req: z.object({}),
+        res: z.array(zBoard()),
         handle: (actor, req) => actor.getMyBoards(req),
     }),
     getBoardTasks: handler({
-        request: z.object({boardId: zUuid<BoardId>()}),
-        response: z.array(zTask()),
+        req: z.object({boardId: zUuid<BoardId>()}),
+        res: z.array(zTask()),
         handle: (actor, req) => actor.getBoardTasks(req),
     }),
     getTask: handler({
-        request: z.object({taskId: zUuid<TaskId>()}),
-        response: zTask().optional(),
+        req: z.object({taskId: zUuid<TaskId>()}),
+        res: zTask().optional(),
         handle: (actor, req) => actor.getTask(req),
     }),
     createTask: handler({
-        request: z.object({
+        req: z.object({
             taskId: zUuid<TaskId>(),
             boardId: zUuid<BoardId>(),
             title: z.string(),
         }),
-        response: zTask(),
+        res: zTask(),
         handle: (actor, req) => actor.createTask(req),
     }),
     createBoard: handler({
-        request: z.object({
+        req: z.object({
             boardId: zUuid<BoardId>(),
             name: z.string(),
             slug: z.string().optional(),
         }),
-        response: zBoard(),
+        res: zBoard(),
         handle: (actor, req) => actor.createBoard(req),
     }),
     getBoard: handler({
-        request: z.object({
+        req: z.object({
             boardId: zUuid<BoardId>(),
         }),
-        response: zBoard().optional(),
+        res: zBoard().optional(),
         handle: (actor, req) => actor.getBoard(req),
     }),
     setBoardSlug: handler({
-        request: z.object({
+        req: z.object({
             boardId: zUuid<BoardId>(),
             slug: z.string(),
         }),
-        response: zBoard(),
+        res: zBoard(),
         handle: (actor, req) => actor.setBoardSlug(req),
     }),
     updateBoardName: handler({
-        request: z.object({
+        req: z.object({
             boardId: zUuid<BoardId>(),
             name: z.string(),
         }),
-        response: zBoard(),
+        res: zBoard(),
         handle: (actor, req) => actor.updateBoardName(req),
     }),
     updateTaskTitle: handler({
-        request: z.object({
+        req: z.object({
             taskId: zUuid<TaskId>(),
             title: z.string(),
         }),
-        response: zTask(),
+        res: zTask(),
         handle: (actor, req) => actor.updateTaskTitle(req),
     }),
 });

@@ -73,8 +73,8 @@ export interface DataInspectorApiState {
 
 export const dataInspectorApi = createApi<DataInspectorApiState>()({
     getDbTree: handler({
-        request: z.object({}),
-        response: zDataNodeDto(),
+        req: z.object({}),
+        res: zDataNodeDto(),
         handle: async ({dataNode}) => {
             return await dataNode.visit(
                 createTreeVisitor(encodeString('root'), 'root')
@@ -82,8 +82,8 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
         },
     }),
     truncateDb: handler({
-        request: z.object({}),
-        response: z.void(),
+        req: z.object({}),
+        res: z.void(),
         handle: async ({rootTx}) => {
             const keys = await astream(rootTx.query({gte: new Uint8Array()}))
                 .map(x => x.key)
@@ -94,8 +94,8 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
         },
     }),
     getDbItem: handler({
-        request: z.object({path: z.array(zUint8Array())}),
-        response: z.discriminatedUnion('type', [
+        req: z.object({path: z.array(zUint8Array())}),
+        res: z.discriminatedUnion('type', [
             z.object({type: z.literal('aggregate')}),
             z.object({type: z.literal('doc'), snapshot: z.any()}),
             z.object({type: z.literal('repo')}),

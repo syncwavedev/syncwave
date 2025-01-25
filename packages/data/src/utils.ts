@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
     AggregateError,
@@ -76,8 +77,15 @@ export function assertDefined<T>(value: T | undefined | null): T {
     return value;
 }
 
-export function wait(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+export function wait(ms: number, cx?: Cancellation): Promise<void> {
+    return new Promise(resolve => {
+        const timeoutId = setTimeout(resolve, ms);
+        cx
+            ?.then(() => clearTimeout(timeoutId))
+            .catch(error => {
+                console.error('[ERR] failed to clear timeout', error);
+            });
+    });
 }
 
 export function pipe<T>(x: T): T;
@@ -233,4 +241,35 @@ export function zUint8Array() {
     return z.custom<Uint8Array>(x => x instanceof Uint8Array, {
         message: 'Uint8Array expected',
     });
+}
+
+export class CancellationSource {
+    private readonly signal = new Deferred<void>();
+
+    get cancellation() {
+        return new Cancellation(this, this.signal.promise);
+    }
+
+    get isCancelled() {
+        return this.signal.state === 'fulfilled';
+    }
+
+    cancel() {
+        this.signal.resolve();
+    }
+}
+
+export class Cancellation {
+    constructor(
+        private readonly cxs: CancellationSource,
+        private signal: Promise<void>
+    ) {}
+
+    get isCancelled() {
+        return this.cxs.isCancelled;
+    }
+
+    async then<T>(cb: () => PromiseLike<T> | T) {
+        return await this.signal.then(cb);
+    }
 }

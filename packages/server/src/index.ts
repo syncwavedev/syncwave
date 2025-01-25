@@ -170,9 +170,15 @@ async function launch() {
     async function shutdown() {
         console.log('[INF] shutting down...');
         await coordinator.close();
-        console.log('[INF] coordinator closed');
+        console.log('[INF] coordinator is closed');
+        const httpServerCloseSignal = new Deferred<void>();
+        httpServer.on('close', () => httpServerCloseSignal.resolve());
         httpServer.close();
-        await wait(100);
+
+        await httpServerCloseSignal.promise;
+
+        // wait one event loop cycle for resources to clean up
+        await wait(0);
 
         const activeResources = process
             .getActiveResourcesInfo()

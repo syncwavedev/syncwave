@@ -18,8 +18,8 @@ export class ParticipantClient {
 
 export const participantApi = createApi<{}>()({
     echo: handler({
-        request: z.object({message: z.string()}),
-        response: z.object({message: z.string()}),
+        req: z.object({message: z.string()}),
+        res: z.object({message: z.string()}),
         handle: async (_, {message}) => ({message}),
     }),
 });

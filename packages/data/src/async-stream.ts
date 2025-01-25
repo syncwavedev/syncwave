@@ -1,13 +1,17 @@
 import {Channel} from 'async-channel';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
-import {Deferred} from './deferred.js';
-import {assert, assertNever} from './utils.js';
+import {
+    assert,
+    assertNever,
+    Cancellation,
+    CancellationSource,
+} from './utils.js';
 
 export interface DeferredStreamExecutor<T> {
     next: (value: T) => Promise<void>;
     end: () => void;
     throw: (error: any) => void;
-    cancellation: Promise<void>;
+    cx: Cancellation;
 }
 
 export class DeferredStream<T> implements AsyncIterable<T> {
@@ -18,13 +22,13 @@ export class DeferredStream<T> implements AsyncIterable<T> {
     async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
         const chan = new Channel<T>(0);
 
-        const cancellation = new Deferred<void>();
+        const cxs = new CancellationSource();
 
         this.execute({
             end: () => chan.close(),
             next: value => chan.push(value),
             throw: error => chan.throw(error),
-            cancellation: cancellation.promise,
+            cx: cxs.cancellation,
         });
 
         let complete = false;
@@ -36,7 +40,7 @@ export class DeferredStream<T> implements AsyncIterable<T> {
             complete = true;
         } finally {
             if (!complete) {
-                cancellation.resolve();
+                cxs.cancel();
             }
         }
     }

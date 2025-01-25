@@ -27,17 +27,17 @@ export interface AuthApiState {
 
 export const authApi = createApi<AuthApiState>()({
     debug: handler({
-        request: z.object({}),
-        response: z.object({}),
+        req: z.object({}),
+        res: z.object({}),
         handle: async () => {
             return {};
         },
     }),
     sendSignInEmail: handler({
-        request: z.object({
+        req: z.object({
             email: z.string(),
         }),
-        response: z.discriminatedUnion('type', [
+        res: z.discriminatedUnion('type', [
             z.object({type: z.literal('success')}),
             z.object({type: z.literal('cooldown')}),
         ]),
@@ -93,11 +93,11 @@ The Ground Team`,
         },
     }),
     verifySignInCode: handler({
-        request: z.object({
+        req: z.object({
             email: z.string(),
             code: z.string(),
         }),
-        response: z.discriminatedUnion('type', [
+        res: z.discriminatedUnion('type', [
             z.object({
                 type: z.literal('success'),
                 token: z.string(),

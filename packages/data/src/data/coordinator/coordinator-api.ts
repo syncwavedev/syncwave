@@ -60,7 +60,7 @@ export const coordinatorApi = (() => {
         if (next.type === 'handler') {
             return {
                 type: 'handler',
-                handle: async (state, request) => {
+                handle: async (state, request, cx) => {
                     if (!state.auth.superadmin) {
                         throw new BusinessError(
                             `only superadmins can use inspector api. id = ${state.auth.identityId}`,
@@ -68,13 +68,13 @@ export const coordinatorApi = (() => {
                         );
                     }
 
-                    return await next.handle(state, request);
+                    return await next.handle(state, request, cx);
                 },
             };
         } else if (next.type === 'streamer') {
             return {
                 type: 'streamer',
-                stream: async function* (state, request) {
+                stream: async function* (state, request, cx) {
                     if (!state.auth.superadmin) {
                         throw new BusinessError(
                             `only superadmins can use inspector api. id = ${state.auth.identityId}`,
@@ -82,7 +82,7 @@ export const coordinatorApi = (() => {
                         );
                     }
 
-                    yield* next.stream(state, request);
+                    yield* next.stream(state, request, cx);
                 },
             };
         } else {
@@ -127,7 +127,8 @@ export const coordinatorApi = (() => {
                         },
                         message,
                     },
-                    request
+                    req,
+                    cx
                 ) => {
                     let effects: Array<() => Promise<void>> = [];
                     const result = await dataLayer.transaction(async ctx => {
@@ -145,7 +146,7 @@ export const coordinatorApi = (() => {
                             enqueueEffect: effect => effects.push(effect),
                         };
 
-                        return await processor.handle(state, request);
+                        return await processor.handle(state, req, cx);
                     });
                     await whenAll(effects.map(effect => effect()));
                     return result;
@@ -165,7 +166,8 @@ export const coordinatorApi = (() => {
                         },
                         message,
                     },
-                    request
+                    req,
+                    cx
                 ) {
                     let effects: Array<() => Promise<void>> = [];
                     const result = await dataLayer.transaction(async ctx => {
@@ -183,7 +185,7 @@ export const coordinatorApi = (() => {
                             enqueueEffect: effect => effects.push(effect),
                         };
 
-                        return processor.stream(state, request);
+                        return processor.stream(state, req, cx);
                     });
                     await whenAll(effects.map(effect => effect()));
                     yield* result;

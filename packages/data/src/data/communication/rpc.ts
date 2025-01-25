@@ -4,7 +4,12 @@ import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {Deferred} from '../../deferred.js';
 import {BusinessError, getReadableError} from '../../errors.js';
 import {JobTracker} from '../../job-tracker.js';
-import {assertNever, wait} from '../../utils.js';
+import {
+    assertNever,
+    Cancellation,
+    CancellationSource,
+    wait,
+} from '../../utils.js';
 import {
     createMessageId,
     Message,
@@ -16,7 +21,11 @@ import {Connection} from './transport.js';
 
 export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
-    handle(state: TState, request: TRequest): Promise<TResponse>;
+    handle(
+        state: TState,
+        request: TRequest,
+        cx: Cancellation
+    ): Promise<TResponse>;
 }
 
 export type HandlerRequestSchema<T extends Handler<any, any, any>> =
@@ -30,11 +39,12 @@ export interface HandlerOptions<
     TRequestSchema extends ZodObject<any, any, any>,
     TResponseSchema extends ZodType<any, any, any>,
 > {
-    request: TRequestSchema;
-    response: TResponseSchema;
+    req: TRequestSchema;
+    res: TResponseSchema;
     handle: (
         state: TState,
-        request: TypeOf<TRequestSchema>
+        request: TypeOf<TRequestSchema>,
+        cx: Cancellation
     ) => Promise<TypeOf<TResponseSchema>>;
 }
 
@@ -45,10 +55,14 @@ export function handler<
 >(
     options: HandlerOptions<TState, TRequestSchema, TResponseSchema>
 ): Handler<TState, TypeOf<TRequestSchema>, TypeOf<TResponseSchema>> {
-    async function wrapper(state: TState, request: TypeOf<TRequestSchema>) {
-        request = options.request.parse(request);
-        const response = await options.handle(state, request);
-        return options.response.parse(response);
+    async function wrapper(
+        state: TState,
+        request: TypeOf<TRequestSchema>,
+        cx: Cancellation
+    ) {
+        request = options.req.parse(request);
+        const res = await options.handle(state, request, cx);
+        return options.res.parse(res);
     }
 
     return {
@@ -59,7 +73,11 @@ export function handler<
 
 export interface Streamer<TState, TRequest, TItem> {
     type: 'streamer';
-    stream(state: TState, request: TRequest): AsyncIterable<TItem>;
+    stream(
+        state: TState,
+        req: TRequest,
+        cx: Cancellation
+    ): AsyncIterable<TItem>;
 }
 
 export type StreamerRequestSchema<T extends Streamer<any, any, any>> =
@@ -77,7 +95,8 @@ export interface StreamerOptions<
     item: TItemSchema;
     stream: (
         state: TState,
-        request: TypeOf<TRequestSchema>
+        req: TypeOf<TRequestSchema>,
+        cx: Cancellation
     ) => AsyncIterable<TypeOf<TItemSchema>>;
 }
 
@@ -90,10 +109,11 @@ export function streamer<
 ): Streamer<TState, TypeOf<TRequestSchema>, TypeOf<TItemSchema>> {
     async function* wrapper(
         state: TState,
-        request: TypeOf<TRequestSchema>
+        req: TypeOf<TRequestSchema>,
+        cx: Cancellation
     ): AsyncIterable<TypeOf<TItemSchema>> {
-        request = options.request.parse(request);
-        for await (const item of options.stream(state, request)) {
+        req = options.request.parse(req);
+        for await (const item of options.stream(state, req, cx)) {
             yield options.item.parse(item);
         }
     }
@@ -128,14 +148,14 @@ export function apiStateAdapter<TStateA, TStateB, TApi extends Api<TStateA>>(
         if (processor.type === 'handler') {
             return {
                 type: 'handler',
-                handle: async (state, request) =>
-                    await processor.handle(await adapter(state), request),
+                handle: async (state, request, cx) =>
+                    await processor.handle(await adapter(state), request, cx),
             };
         } else if (processor.type === 'streamer') {
             return {
                 type: 'streamer',
-                stream: async function* (state, request) {
-                    yield* processor.stream(await adapter(state), request);
+                stream: async function* (state, request, cx) {
+                    yield* processor.stream(await adapter(state), request, cx);
                 },
             };
         } else {
@@ -179,11 +199,15 @@ export function createRpcClient<TApi extends Api<any>>(
         const requestId = createMessageId();
 
         let started = false;
+
+        const timeoutCxs = new CancellationSource();
         const unsub = conn.subscribe({
             next: async msg => {
                 if (msg.type !== 'response' || msg.requestId !== requestId) {
                     return;
                 }
+
+                timeoutCxs.cancel();
 
                 if (msg.payload.type === 'error') {
                     if (!started) {
@@ -247,7 +271,7 @@ export function createRpcClient<TApi extends Api<any>>(
             exe.throw(error);
         }
 
-        wait(RPC_CALL_TIMEOUT_MS)
+        wait(RPC_CALL_TIMEOUT_MS, timeoutCxs.cancellation)
             .then(() => {
                 if (!started) {
                     exe.throw(new Error('stream failed to start: timeout'));
@@ -258,7 +282,7 @@ export function createRpcClient<TApi extends Api<any>>(
                 console.error('unexpected error after rpc timed out', err);
             });
 
-        exe.cancellation
+        exe.cx
             .then(() =>
                 conn.send({
                     id: createMessageId(),
@@ -275,11 +299,14 @@ export function createRpcClient<TApi extends Api<any>>(
     async function listenHandler(name: string, arg: any) {
         const result = new Deferred<any>();
         const requestId = createMessageId();
+        const timeoutCxs = new CancellationSource();
+
         const unsub = conn.subscribe({
             next: async msg => {
                 if (!(msg.type === 'response' && msg.requestId === requestId)) {
                     return;
                 }
+                timeoutCxs.cancel();
                 if (msg.payload.type === 'error') {
                     result.reject(
                         new Error(
@@ -315,7 +342,7 @@ export function createRpcClient<TApi extends Api<any>>(
             },
         });
 
-        wait(RPC_CALL_TIMEOUT_MS)
+        wait(RPC_CALL_TIMEOUT_MS, timeoutCxs.cancellation)
             .then(() => {
                 if (result.state === 'pending') {
                     result.reject(new Error('rpc call failed: timeout'));
@@ -392,10 +419,12 @@ async function waitMessage<S extends Message>(
     timeoutMs: number
 ): Promise<S | undefined> {
     const result = new Deferred<S | undefined>();
+    const timeoutCxs = new CancellationSource();
     const unsub = conn.subscribe({
         next: async message => {
             if (predicate(message)) {
                 result.resolve(message as any);
+                timeoutCxs.cancel();
                 unsub();
             }
         },
@@ -404,7 +433,7 @@ async function waitMessage<S extends Message>(
         },
     });
 
-    wait(timeoutMs)
+    wait(timeoutMs, timeoutCxs.cancellation)
         .then(() => {
             if (result.state === 'pending') {
                 result.reject(new Error(`timeout after ${timeoutMs}`));
@@ -424,10 +453,14 @@ export function setupRpcServer<TState>(
 ): void {
     // we use requestId as stream id
     const streamsTracker = new JobTracker<MessageId>();
+    const cxs = new CancellationSource();
 
     conn.subscribe({
         next: message => handleMessageServer(message),
-        close: async () => streamsTracker.cancelAll(),
+        close: async () => {
+            streamsTracker.cancelAll();
+            cxs.cancel();
+        },
     });
 
     async function handleMessageServer(message: Message) {
@@ -446,25 +479,26 @@ export function setupRpcServer<TState>(
 
     async function handleRequestHandler(
         handler: Handler<ProcessorContext<TState>, any, any>,
-        message: RequestMessage
+        msg: RequestMessage
     ) {
         const result = await handler.handle(
-            {message, state},
-            message.payload.arg
+            {message: msg, state},
+            msg.payload.arg,
+            cxs.cancellation
         );
         await conn.send({
             id: createMessageId(),
             type: 'response',
-            requestId: message.id,
+            requestId: msg.id,
             payload: {type: 'success', result},
         });
     }
 
     async function handleRequestStreamer(
         processor: Streamer<ProcessorContext<TState>, any, any>,
-        message: RequestMessage
+        msg: RequestMessage
     ) {
-        const requestId = message.id;
+        const requestId = msg.id;
         streamsTracker.start(requestId);
         try {
             await conn.send({
@@ -475,8 +509,9 @@ export function setupRpcServer<TState>(
             });
 
             for await (const item of processor.stream(
-                {message, state},
-                message.payload.arg
+                {message: msg, state},
+                msg.payload.arg,
+                cxs.cancellation
             )) {
                 // we need to check at the beginning, because processor.stream might resolved
                 // after connection has already closed
@@ -516,13 +551,13 @@ export function setupRpcServer<TState>(
         }
     }
 
-    async function handleRequest(message: RequestMessage) {
+    async function handleRequest(msg: RequestMessage) {
         try {
-            const processor = api[message.payload.name];
+            const processor = api[msg.payload.name];
             if (processor.type === 'handler') {
-                await handleRequestHandler(processor, message);
+                await handleRequestHandler(processor, msg);
             } else if (processor.type === 'streamer') {
-                await handleRequestStreamer(processor, message);
+                await handleRequestStreamer(processor, msg);
             } else {
                 assertNever(processor);
             }
@@ -541,7 +576,7 @@ export function setupRpcServer<TState>(
             await conn.send({
                 id: createMessageId(),
                 type: 'response',
-                requestId: message.id,
+                requestId: msg.id,
                 payload: {
                     type: 'error',
                     message: errorMessage,

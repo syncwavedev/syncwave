@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:ground/models/board.dart';
-import 'package:ground/ui/boards/board_list.dart';
+import 'package:ground/ui/boards/board_screen.dart';
+import 'package:ground/ui/boards/boards_list.dart';
+import 'package:ground/ui/core/navigator/navigator.dart';
 import 'package:ground/ui/core/themes/theme_extensions.dart';
 import 'package:ground/ui/widgets/avatar.dart';
 import 'package:ground/ui/widgets/bottom_bar.dart';
@@ -46,11 +48,11 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       // trailing: const [ThemeToggleButton()],
-      child: BoardList(
+      child: BoardsList(
         boards: _generateSampleBoards(),
         onBoardTap: (board) {
           // Handle board tap
-          debugPrint('Tapped board: ${board.name}');
+          context.pushPage(BoardScreen(board: board));
         },
       ),
     );

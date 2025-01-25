@@ -1,12 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:ground/models/board.dart';
-import 'package:ground/ui/boards/board_list_item.dart';
+import 'package:ground/ui/boards/board_tile.dart';
 
-class BoardList extends StatelessWidget {
+class BoardsList extends StatelessWidget {
   final List<Board> boards;
   final Function(Board)? onBoardTap;
 
-  const BoardList({
+  const BoardsList({
     super.key,
     required this.boards,
     this.onBoardTap,
@@ -18,9 +18,9 @@ class BoardList extends StatelessWidget {
       itemCount: boards.length,
       itemBuilder: (context, index) {
         final board = boards[index];
-        return BoardListItem(
+        return BoardTile(
           board: board,
-          onTap: onBoardTap != null ? () => onBoardTap!(board) : null,
+          onTap: () => onBoardTap?.call(board),
         );
       },
     );

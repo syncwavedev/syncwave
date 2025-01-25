@@ -57,4 +57,14 @@ abstract final class Icons {
 
   /// The search icon.
   static const SvgIcon search = SvgIcon('assets/icons/search.svg.vec');
+
+  /// The arrow left icon.
+  static const SvgIcon arrowLeft = SvgIcon('assets/icons/arrow_left.svg.vec');
+
+  /// The inbox solid icon.
+  static const SvgIcon inboxSolid = SvgIcon('assets/icons/inbox_solid.svg.vec');
+
+  /// The chevron left icon.
+  static const SvgIcon chevronLeft =
+      SvgIcon('assets/icons/chevron_left.svg.vec');
 }

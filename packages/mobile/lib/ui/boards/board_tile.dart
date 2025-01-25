@@ -3,11 +3,11 @@ import 'package:ground/models/board.dart';
 import 'package:ground/ui/core/themes/theme_extensions.dart';
 import 'package:ground/ui/widgets/avatar.dart';
 
-class BoardListItem extends StatelessWidget {
+class BoardTile extends StatelessWidget {
   final Board board;
   final VoidCallback? onTap;
 
-  const BoardListItem({
+  const BoardTile({
     super.key,
     required this.board,
     this.onTap,
@@ -16,6 +16,7 @@ class BoardListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(

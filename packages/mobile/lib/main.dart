@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
+import 'package:ground/ui/core/navigator/navigator.dart';
 import 'package:ground/ui/core/themes/theme_extensions.dart';
 import 'package:ground/ui/core/themes/theme_controller.dart';
-import 'package:ground/ui/screens/home.dart';
+import 'package:ground/ui/home/home.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -28,12 +29,9 @@ class AppView extends StatelessWidget {
     return WidgetsApp(
       color: context.colors.ink,
       pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) {
-        return PageRouteBuilder<T>(
+        return AppPageRoute<T>(
           settings: settings,
-          pageBuilder: (BuildContext context, Animation<double> animation,
-              Animation<double> secondaryAnimation) {
-            return builder(context);
-          },
+          builder: builder,
         );
       },
       builder: (context, child) {

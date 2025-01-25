@@ -3,7 +3,7 @@ import 'package:ground/ui/core/themes/theme_extensions.dart';
 
 const double _kNavBarPersistentHeight = 44.0;
 const double _kBottomBarHeight = 50.0;
-const double _kNavBarEdgePadding = 16.0;
+const double _kNavBarEdgePadding = 4.0;
 
 class NavigationStack extends StatelessWidget {
   const NavigationStack({
@@ -29,26 +29,29 @@ class NavigationStack extends StatelessWidget {
       return child;
     }
 
-    return Column(
-      children: [
-        if (!hideNavigationBar)
-          _NavigationBar(
-            title: title,
-            leading: leading,
-            trailing: trailing,
+    return Container(
+      color: context.colors.bg,
+      child: Column(
+        children: [
+          if (!hideNavigationBar)
+            _NavigationBar(
+              title: title,
+              leading: leading,
+              trailing: trailing,
+            ),
+          Expanded(
+            child: MediaQuery.removePadding(
+                context: context,
+                removeTop: true,
+                removeBottom: bottomBar != null,
+                child: child),
           ),
-        Expanded(
-          child: MediaQuery.removePadding(
-              context: context,
-              removeTop: true,
-              removeBottom: bottomBar != null,
-              child: child),
-        ),
-        if (bottomBar != null)
-          _BottomBar(
-            child: bottomBar!,
-          ),
-      ],
+          if (bottomBar != null)
+            _BottomBar(
+              child: bottomBar!,
+            ),
+        ],
+      ),
     );
   }
 }

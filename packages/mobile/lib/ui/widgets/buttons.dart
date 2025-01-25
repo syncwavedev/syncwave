@@ -15,8 +15,13 @@ enum _ButtonStyle {
   filled,
 }
 
-const _kPressedOpacity = 0.4;
 const _kMinInteractiveDimension = 44.0;
+
+const Map<ButtonSize, EdgeInsets> _kButtonPadding = {
+  ButtonSize.small: EdgeInsets.all(6.0),
+  ButtonSize.medium: EdgeInsets.all(4.0),
+  ButtonSize.large: EdgeInsets.all(2.0),
+};
 
 class IconButton extends StatefulWidget {
   const IconButton({
@@ -70,123 +75,46 @@ class IconButton extends StatefulWidget {
   }
 }
 
-class _IconButtonState extends State<IconButton>
-    with SingleTickerProviderStateMixin {
-  static const Duration kFadeOutDuration = Duration(milliseconds: 120);
-  static const Duration kFadeInDuration = Duration(milliseconds: 180);
-  final Tween<double> _opacityTween = Tween<double>(begin: 1.0);
-
-  late AnimationController _animationController;
-  late Animation<double> _opacityAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      value: 0.0,
-      vsync: this,
-    );
-    _opacityAnimation = _animationController
-        .drive(CurveTween(curve: Curves.decelerate))
-        .drive(_opacityTween);
-    _setTween();
-  }
-
-  @override
-  void didUpdateWidget(IconButton old) {
-    super.didUpdateWidget(old);
-    _setTween();
-  }
-
-  void _setTween() {
-    _opacityTween.end = _kPressedOpacity;
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
+class _IconButtonState extends State<IconButton> {
   bool _buttonHeldDown = false;
 
   void _handleTapDown(TapDownDetails event) {
-    if (!_buttonHeldDown) {
-      _buttonHeldDown = true;
-      _animate();
+    if (!_buttonHeldDown && mounted) {
+      setState(() => _buttonHeldDown = true);
     }
   }
 
   void _handleTapUp(TapUpDetails event) {
-    if (_buttonHeldDown) {
-      _buttonHeldDown = false;
-      _animate();
+    if (_buttonHeldDown && mounted) {
+      setState(() => _buttonHeldDown = false);
     }
   }
 
   void _handleTapCancel() {
-    if (_buttonHeldDown) {
-      _buttonHeldDown = false;
-      _animate();
+    if (_buttonHeldDown && mounted) {
+      setState(() => _buttonHeldDown = false);
     }
   }
-
-  void _animate() {
-    if (_animationController.isAnimating) {
-      return;
-    }
-    final bool wasHeldDown = _buttonHeldDown;
-    final TickerFuture ticker = _buttonHeldDown
-        ? _animationController.animateTo(
-            1.0,
-            duration: kFadeOutDuration,
-            curve: Curves.easeInOutCubicEmphasized,
-          )
-        : _animationController.animateTo(
-            0.0,
-            duration: kFadeInDuration,
-            curve: Curves.easeOutCubic,
-          );
-    ticker.then<void>((void value) {
-      if (mounted && wasHeldDown != _buttonHeldDown) {
-        _animate();
-      }
-    });
-  }
-
-  static const Map<ButtonSize, EdgeInsets> kButtonPadding = {
-    ButtonSize.small: EdgeInsets.all(6.0),
-    ButtonSize.medium: EdgeInsets.all(4.0),
-    ButtonSize.large: EdgeInsets.all(2.0),
-  };
 
   @override
   Widget build(BuildContext context) {
     final bool enabled = widget.enabled;
-
     final Color? color;
+    final Color foregroundColor;
+
     switch (widget._style) {
       case _ButtonStyle.plain:
         color = null;
+        foregroundColor = context.colors.action;
         break;
       case _ButtonStyle.filled:
         color = context.colors.subtle4;
-        break;
-    }
-
-    final Color foregroundColor;
-    switch (widget._style) {
-      case _ButtonStyle.plain:
-        foregroundColor = context.colors.ink;
-        break;
-      case _ButtonStyle.filled:
-        foregroundColor = context.colors.inkReversed;
+        foregroundColor = context.colors.alwaysWhite;
         break;
     }
 
     final effectiveIconSize = _kMinInteractiveDimension -
-        kButtonPadding[widget.sizeStyle]!.horizontal;
+        _kButtonPadding[widget.sizeStyle]!.horizontal;
     const outerPadding = EdgeInsets.all(4.0);
 
     return SizedBox(
@@ -203,26 +131,23 @@ class _IconButtonState extends State<IconButton>
           button: true,
           child: Padding(
             padding: outerPadding,
-            child: FadeTransition(
-              opacity: _opacityAnimation,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(100),
-                  color: color,
-                ),
-                child: Padding(
-                  padding: kButtonPadding[widget.sizeStyle]!,
-                  child: Align(
-                    alignment: Alignment.center,
-                    widthFactor: 1.0,
-                    heightFactor: 1.0,
-                    child: IconTheme(
-                      data: IconThemeData(
-                        size: effectiveIconSize,
-                        color: foregroundColor,
-                      ),
-                      child: widget.child,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(100),
+                color: color,
+              ),
+              child: Padding(
+                padding: _kButtonPadding[widget.sizeStyle]!,
+                child: Align(
+                  alignment: Alignment.center,
+                  widthFactor: 1.0,
+                  heightFactor: 1.0,
+                  child: IconTheme(
+                    data: IconThemeData(
+                      size: effectiveIconSize,
+                      color: foregroundColor,
                     ),
+                    child: widget.child,
                   ),
                 ),
               ),

@@ -27,6 +27,7 @@
         "clean": "rimraf dist",
         "dev": "tsx watch ./src/index.ts",
         "build": "tsc",
+        "build:watch": "tsc -w",
         "test": "vitest run"
     },
     "devDependencies": {

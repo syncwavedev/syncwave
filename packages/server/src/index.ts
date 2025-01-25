@@ -18,6 +18,7 @@ import {
     MsgpackrCodec,
     PrefixedKVStore,
     Uint8KVStore,
+    wait,
 } from 'ground-data';
 import {createServer} from 'http';
 import jwt from 'jsonwebtoken';
@@ -166,7 +167,26 @@ async function launch() {
         JWT_SECRET
     );
 
-    process.once('SIGINT', () => coordinator.close());
+    async function shutdown() {
+        console.log('[INF] shutting down...');
+        await coordinator.close();
+        console.log('[INF] coordinator closed');
+        httpServer.close();
+        await wait(100);
+
+        const activeResources = process
+            .getActiveResourcesInfo()
+            .filter(x => x !== 'TTYWrap');
+        if (activeResources.length > 0) {
+            console.error(
+                '[ERR] failed to gracefully shutdown, active resources:',
+                activeResources
+            );
+        }
+    }
+
+    process.once('SIGINT', () => shutdown());
+    process.once('SIGTERM', () => shutdown());
 
     const serverStarted = new Deferred<void>();
     httpServer.listen(PORT, () => serverStarted.resolve());

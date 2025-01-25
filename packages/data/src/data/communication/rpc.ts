@@ -255,8 +255,13 @@ export function createRpcClient<TApi extends Api<any>>(
                     assertNever(msg.payload);
                 }
             },
+            reconnect: async () => {
+                exe.throw(
+                    new Error('connection to coordinator lost [reconnect]')
+                );
+            },
             close: async () => {
-                exe.throw(new Error('connection to coordinator closed'));
+                exe.throw(new Error('connection to coordinator lost [close]'));
             },
         });
 

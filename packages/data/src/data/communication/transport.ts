@@ -20,8 +20,12 @@ export interface MessageConnectionEvent<T>
     readonly message: T;
 }
 
+export interface ConnectionObserver<T> extends Observer<T> {
+    reconnect?: () => Promise<void>;
+}
+
 export interface Connection<T> {
     send(message: T): Promise<void>;
-    subscribe(observer: Observer<T>): Unsubscribe;
+    subscribe(observer: ConnectionObserver<T>): Unsubscribe;
     close(): Promise<void>;
 }

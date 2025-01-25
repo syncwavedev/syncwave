@@ -15,15 +15,22 @@ export interface Observer<T> {
     close: () => Promise<void>;
 }
 
-export class Subject<T> {
-    private subs: Array<{observer: Observer<T>}> = [];
+export class Subject<
+    TValue,
+    TObserver extends Observer<TValue> = Observer<TValue>,
+> {
+    private subs: Array<{observer: TObserver}> = [];
     private _open = true;
 
     get open() {
         return this._open;
     }
 
-    subscribe(observer: Observer<T>): Unsubscribe {
+    get observers(): TObserver[] {
+        return this.subs.map(x => x.observer);
+    }
+
+    subscribe(observer: TObserver): Unsubscribe {
         this.ensureOpen();
 
         // wrap if the same observer is used twice for subscription, so unsubscribe wouldn't filter both out
@@ -36,7 +43,7 @@ export class Subject<T> {
         };
     }
 
-    async next(value: T): Promise<void> {
+    async next(value: TValue): Promise<void> {
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
         await whenAll([...this.subs].map(sub => sub.observer.next(value)));

@@ -1,13 +1,13 @@
 import {RECONNECT_WAIT_MS} from '../../constants.js';
-import {Observer, Subject, Unsubscribe, wait} from '../../utils.js';
-import {Connection, TransportClient} from './transport.js';
+import {Observer, Subject, Unsubscribe, wait, whenAll} from '../../utils.js';
+import {Connection, ConnectionObserver, TransportClient} from './transport.js';
 
 export class ReconnectConnection<T> implements Connection<T> {
     // if we already initiated connection process, then we want subsequent sends to wait until the
     // initial connect is done
     private connection?: Promise<Connection<T>>;
     private closed = false;
-    private subject = new Subject<T>();
+    private subject = new Subject<T, ConnectionObserver<T>>();
 
     constructor(private readonly transport: TransportClient<T>) {}
 
@@ -63,6 +63,20 @@ export class ReconnectConnection<T> implements Connection<T> {
                     close: async () => {
                         if (!this.closed) {
                             this.connection = undefined;
+                            try {
+                                await whenAll(
+                                    this.subject.observers
+                                        .map(x => x.reconnect)
+                                        .filter(reconnect => !!reconnect)
+                                        .map(reconnect => reconnect())
+                                );
+                            } catch (error) {
+                                console.error(
+                                    '[ERR] reconnect observers error',
+                                    error
+                                );
+                            }
+
                             // reconnect
                             this.getConnection().catch(err => {
                                 console.error(

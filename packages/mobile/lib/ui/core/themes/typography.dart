@@ -23,7 +23,7 @@ class Typography {
   double get relaxed => Typography._relaxedLeading;
 
   static const String _defaultFontFamily = '.SF Pro Text';
-  static const double _titleSize = 18;
+  static const double _titleSize = 17;
   static const double _bodySize = 16;
   static const double _labelSize = 16;
   static const double _captionSize = 14;

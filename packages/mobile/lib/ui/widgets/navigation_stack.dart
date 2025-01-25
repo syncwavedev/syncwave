@@ -32,7 +32,7 @@ class NavigationStack extends StatelessWidget {
     return Column(
       children: [
         if (!hideNavigationBar)
-          NavigationBar(
+          _NavigationBar(
             title: title,
             leading: leading,
             trailing: trailing,
@@ -45,7 +45,7 @@ class NavigationStack extends StatelessWidget {
               child: child),
         ),
         if (bottomBar != null)
-          BottomBar(
+          _BottomBar(
             child: bottomBar!,
           ),
       ],
@@ -53,9 +53,8 @@ class NavigationStack extends StatelessWidget {
   }
 }
 
-class NavigationBar extends StatelessWidget {
-  const NavigationBar({
-    super.key,
+class _NavigationBar extends StatelessWidget {
+  const _NavigationBar({
     required this.title,
     this.leading,
     this.trailing,
@@ -75,7 +74,7 @@ class NavigationBar extends StatelessWidget {
         bottom: false,
         child: SizedBox(
           height: _kNavBarPersistentHeight,
-          child: NavigationBarContent(
+          child: _NavigationBarContent(
             title: title,
             leading: leading,
             trailing: trailing,
@@ -87,9 +86,8 @@ class NavigationBar extends StatelessWidget {
 }
 
 /// The content layout of the navigation bar
-class NavigationBarContent extends StatelessWidget {
-  const NavigationBarContent({
-    super.key,
+class _NavigationBarContent extends StatelessWidget {
+  const _NavigationBarContent({
     required this.title,
     this.leading,
     this.trailing,
@@ -136,8 +134,8 @@ class NavigationBarContent extends StatelessWidget {
   }
 }
 
-class BottomBar extends StatelessWidget {
-  const BottomBar({Key? key, required this.child}) : super(key: key);
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({required this.child});
 
   final Widget child;
 

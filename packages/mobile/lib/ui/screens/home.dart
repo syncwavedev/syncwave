@@ -3,7 +3,11 @@ import 'package:ground/models/board.dart';
 import 'package:ground/ui/boards/board_list.dart';
 import 'package:ground/ui/core/themes/theme_extensions.dart';
 import 'package:ground/ui/widgets/avatar.dart';
+import 'package:ground/ui/widgets/bottom_bar.dart';
+import 'package:ground/ui/widgets/icons.dart';
 import 'package:ground/ui/widgets/navigation_stack.dart';
+
+import '../widgets/buttons.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -12,20 +16,32 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return NavigationStack(
       title: 'Boards',
-      leading: Avatar(name: 'Andrei', size: context.icons.lg),
-      bottomBar: Row(
+      leading: IconButton(
+        child: Avatar(name: 'Andrei', size: context.icons.lg),
+        onPressed: () {
+          // Handle add board
+          debugPrint('Profile page');
+        },
+      ),
+      bottomBar: BottomBar(
         children: [
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: context.spacing.md,
-              vertical: context.spacing.sm,
-            ),
-            child: Text(
-              '30 boards',
-              style: context.text.small.copyWith(
-                color: context.colors.inkSecondary,
-              ),
-            ),
+          IconButton(
+            child: Icons.search,
+            onPressed: () {
+              // Handle add board
+              debugPrint('Add board');
+            },
+          ),
+          Text(
+            '30 Boards',
+            style: context.text.small,
+          ),
+          IconButton.filled(
+            child: Icons.plus,
+            onPressed: () {
+              // Handle add board
+              debugPrint('Search');
+            },
           ),
         ],
       ),

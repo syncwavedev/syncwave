@@ -33,6 +33,7 @@ final class ColorScheme with Diagnosticable {
   Color get subtle1 => isDark ? ColorsDark.subtle1 : ColorsLight.subtle1;
   Color get subtle2 => isDark ? ColorsDark.subtle2 : ColorsLight.subtle2;
   Color get subtle3 => isDark ? ColorsDark.subtle3 : ColorsLight.subtle3;
+  Color get subtle4 => isDark ? ColorsDark.subtle4 : ColorsLight.subtle4;
 
   @override
   bool operator ==(Object other) {
@@ -66,6 +67,7 @@ abstract final class ColorsLight {
   static const Color subtle1 = Color.fromRGBO(247, 247, 247, 1);
   static const Color subtle2 = Color.fromRGBO(229, 229, 229, 1);
   static const Color subtle3 = Color.fromRGBO(201, 201, 201, 1);
+  static const Color subtle4 = Color.fromRGBO(160, 160, 160, 1);
 }
 
 @immutable
@@ -83,4 +85,5 @@ abstract final class ColorsDark {
   static const Color subtle1 = Color.fromRGBO(26, 26, 26, 1);
   static const Color subtle2 = Color.fromRGBO(36, 36, 36, 1);
   static const Color subtle3 = Color.fromRGBO(46, 46, 46, 1);
+  static const Color subtle4 = Color.fromRGBO(64, 64, 64, 1);
 }

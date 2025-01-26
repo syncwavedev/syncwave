@@ -25,7 +25,7 @@ describe('Registry', () => {
     });
 
     it('should return a constructed object from the factory', async () => {
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const registry = new Registry(tx, sampleFactory);
             const instance = registry.get('test-item');
 
@@ -35,7 +35,7 @@ describe('Registry', () => {
     });
 
     it('should throw an error for invalid item names containing "/"', async () => {
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const registry = new Registry(tx, sampleFactory);
 
             expect(() => registry.get('invalid/name')).toThrowError(
@@ -45,7 +45,7 @@ describe('Registry', () => {
     });
 
     it('should correctly store and retrieve data through the factory-generated object', async () => {
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const registry = new Registry(tx, sampleFactory);
             const instance = registry.get('test-item');
 
@@ -57,7 +57,7 @@ describe('Registry', () => {
     });
 
     it('should isolate objects with different prefixes', async () => {
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const registry = new Registry(tx, sampleFactory);
             const instance1 = registry.get('item1');
             const instance2 = registry.get('item2');
@@ -74,7 +74,7 @@ describe('Registry', () => {
     });
 
     it('should not find keys outside its prefix', async () => {
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const registry = new Registry(tx, sampleFactory);
             const instance1 = registry.get('item1');
             const instance2 = registry.get('item2');

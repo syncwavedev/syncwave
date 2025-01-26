@@ -115,7 +115,7 @@ async function getKVStore(): Promise<Uint8KVStore> {
 
 async function upgradeKVStore(kvStore: Uint8KVStore) {
     const versionKey = encodeString('version');
-    const version = await kvStore.transaction(async tx => {
+    const version = await kvStore.transact(async tx => {
         const ver = await tx.get(versionKey);
         if (ver) {
             return decodeNumber(ver);
@@ -125,7 +125,7 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
     });
 
     if (!version) {
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const keys = await astream(tx.query({gte: new Uint8Array()}))
                 .map(x => x.key)
                 .toArray();

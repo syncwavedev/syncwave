@@ -34,9 +34,9 @@ export class Topic<T> {
         await whenAll(data.map((x, idx) => this.log.put(offset + idx, x)));
     }
 
-    async *list(start: number, end: number): AsyncIterable<TopicEntry<T>> {
+    async *list(start: number, end?: number): AsyncIterable<TopicEntry<T>> {
         for await (const {key, value} of this.log.query({gte: start})) {
-            if (key >= end) return;
+            if (end !== undefined && key >= end) return;
 
             yield {offset: key, data: value};
         }

@@ -10,7 +10,7 @@ import {zUser} from '../repos/user-repo.js';
 export const dbApi = createApi<Actor>()({
     // streaming example
     getStream: streamer({
-        request: z.object({intervalMs: z.number()}),
+        req: z.object({intervalMs: z.number()}),
         item: z.object({index: z.number()}),
         async *stream(_, {intervalMs: ms}, cx) {
             console.log('stream start');

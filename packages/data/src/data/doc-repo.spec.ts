@@ -55,7 +55,7 @@ describe('DocStore with MemKVStore', () => {
         let repo: DocRepo<MyDoc> | undefined;
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({
                 tx,
 
@@ -67,7 +67,7 @@ describe('DocStore with MemKVStore', () => {
         });
 
         // Make sure the doc is retrievable
-        const retrieved = await store.transaction(async tx => {
+        const retrieved = await store.transact(async tx => {
             // repo must be re-instantiated each transaction, or pass the same tx
             const repo2 = new DocRepo<MyDoc>({
                 tx,
@@ -100,7 +100,7 @@ describe('DocStore with MemKVStore', () => {
             updatedAt: now,
         };
 
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({
                 tx,
 
@@ -113,7 +113,7 @@ describe('DocStore with MemKVStore', () => {
 
         // Attempt to create the same doc again
         await expect(
-            store.transaction(async tx => {
+            store.transact(async tx => {
                 const repo = new DocRepo<MyDoc>({
                     tx,
 
@@ -139,13 +139,13 @@ describe('DocStore with MemKVStore', () => {
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
         // Create the doc
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             await repo.create(doc);
         });
 
         // Update the doc
-        const updated = await store.transaction(async tx => {
+        const updated = await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             return repo.update(id, current => {
                 current.age = 41;
@@ -155,7 +155,7 @@ describe('DocStore with MemKVStore', () => {
         expect(updated.age).toBe(41);
 
         // Re-retrieve the doc
-        const retrieved = await store.transaction(async tx => {
+        const retrieved = await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             return repo.getById(id);
         });
@@ -178,13 +178,13 @@ describe('DocStore with MemKVStore', () => {
         let repo: DocRepo<MyDoc> | undefined;
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             await repo.create(doc);
         });
 
         await expect(
-            store.transaction(async tx => {
+            store.transact(async tx => {
                 repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
                 return repo.update(id, current => {
                     (current as any).unknownProp = 'val';
@@ -200,7 +200,7 @@ describe('DocStore with MemKVStore', () => {
         });
 
         await expect(
-            store.transaction(async tx => {
+            store.transact(async tx => {
                 repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
                 return repo.update(id, current => {
                     (current as any).id = 'val';
@@ -213,7 +213,7 @@ describe('DocStore with MemKVStore', () => {
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
         // Insert multiple docs
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             await repo.create({
                 id: createUuid(),
@@ -239,7 +239,7 @@ describe('DocStore with MemKVStore', () => {
         });
 
         // Use the "byName" index
-        const docsNamedDana = await store.transaction(async tx => {
+        const docsNamedDana = await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             const results: MyDoc[] = [];
             for await (const d of repo.get('byName', ['Dana'])) {
@@ -255,7 +255,7 @@ describe('DocStore with MemKVStore', () => {
         );
 
         // Check byAge index for age=25
-        const docsAge25 = await store.transaction(async tx => {
+        const docsAge25 = await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             const results: MyDoc[] = [];
             for await (const d of repo.get('byAge', [25])) {
@@ -269,7 +269,7 @@ describe('DocStore with MemKVStore', () => {
     it('should retrieve documents by querying an index (range condition)', async () => {
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             await repo.create({
                 id: createUuid(),
@@ -314,7 +314,7 @@ describe('DocStore with MemKVStore', () => {
         // So let's see how to do a range query:
         const ageGte15: Condition<IndexKey> = {gte: [15]};
 
-        const docsBetween15And25 = await store.transaction(async tx => {
+        const docsBetween15And25 = await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
 
             const results: MyDoc[] = [];
@@ -346,7 +346,7 @@ describe('DocStore with MemKVStore', () => {
 
         // Insert some docs
         let repo: DocRepo<MyDoc>;
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             await repo.create({
                 id: createUuid(),
@@ -367,7 +367,7 @@ describe('DocStore with MemKVStore', () => {
         // getUnique on 'byName' with 'Zed'
         // Because 'byName' is not unique in our example,
         // we should get an error if more than one doc matches.
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             await expect(
                 repo.getUnique('byName', ['Zed'])
@@ -380,7 +380,7 @@ describe('DocStore with MemKVStore', () => {
         // For demonstration, let's remove one of the "Zed" docs, then getUnique will succeed.
 
         let firstZedId: Uuid | undefined;
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             const zedEntries: MyDoc[] = [];
             for await (const zedDoc of repo.get('byName', ['Zed'])) {
@@ -394,7 +394,7 @@ describe('DocStore with MemKVStore', () => {
         });
 
         // Now only one 'Zed' doc remains, getUnique works
-        const uniqueZedDoc = await store.transaction(async tx => {
+        const uniqueZedDoc = await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             return repo.getUnique('byName', ['Zed']);
         });
@@ -406,7 +406,7 @@ describe('DocStore with MemKVStore', () => {
         const nonExistentId = createUuid();
 
         await expect(
-            store.transaction(async tx => {
+            store.transact(async tx => {
                 const repo = new DocRepo<MyDoc>({
                     tx,
                     indexes,
@@ -431,7 +431,7 @@ describe('DocStore with MemKVStore', () => {
             createdAt: now,
             updatedAt: now,
         };
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             await repo.create(createdDoc);
         });
@@ -447,7 +447,7 @@ describe('DocStore with MemKVStore', () => {
         // 2) UPDATE
         onChange.mockClear();
 
-        await store.transaction(async tx => {
+        await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
             await repo.update(createdDoc.id, doc => {
                 doc.age = 2;

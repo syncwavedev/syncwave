@@ -108,7 +108,7 @@ export class IndexedDBKVStore implements Uint8KVStore {
 		});
 	}
 
-	public async transaction<TResult>(
+	public async transact<TResult>(
 		fn: (tx: Uint8Transaction) => Promise<TResult>
 	): Promise<TResult> {
 		const db = await this.dbPromise;

@@ -23,7 +23,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should initialize a database without errors', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async () => {});
+		await store.transact(async () => {});
 		const db = await openDB(dbName);
 		expect(db.objectStoreNames.contains('index')).toBe(true);
 		db.close();
@@ -31,7 +31,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should put and get a value', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			await tx.put(key1, value1);
 			const retrievedValue = await tx.get(key1);
 			expect(retrievedValue).toEqual(value1);
@@ -41,7 +41,7 @@ describe('IndexedDBKVStore', () => {
 	it('should throw if transaction auto-commited before user tx', async () => {
 		const store = new IndexedDBKVStore(dbName);
 		await expect(
-			store.transaction(async tx => {
+			store.transact(async tx => {
 				await tx.put(key1, value1);
 				await new Promise(setImmediate);
 			})
@@ -50,7 +50,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should return undefined for a non-existent key', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			const retrievedValue = await tx.get(key1);
 			expect(retrievedValue).toBeUndefined();
 		});
@@ -58,7 +58,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should delete a value', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			await tx.put(key1, value1);
 			await tx.delete(key1);
 			const retrievedValue = await tx.get(key1);
@@ -68,7 +68,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should query values with a condition (gte)', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			await tx.put(key1, value1);
 			await tx.put(key2, value2);
 
@@ -87,7 +87,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should throw an error when accessing a completed transaction', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			await tx.put(key1, value1);
 			(tx as IndexedDBTransaction).markDone();
 			await expect(tx.get(key1)).rejects.toThrowError(
@@ -99,7 +99,7 @@ describe('IndexedDBKVStore', () => {
 	it('should handle transaction aborts gracefully', async () => {
 		const store = new IndexedDBKVStore(dbName);
 		await expect(
-			store.transaction(async tx => {
+			store.transact(async tx => {
 				await tx.put(key1, value1);
 				throw new Error('Simulated error');
 			})
@@ -113,7 +113,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should support querying with upper and lower bounds', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			await tx.put(key1, value1);
 			await tx.put(key2, value2);
 
@@ -129,7 +129,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should overwrite an existing value', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			await tx.put(key1, value1);
 			const initialRetrievedValue = await tx.get(key1);
 			expect(initialRetrievedValue).toEqual(value1);
@@ -142,7 +142,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should handle transactions with multiple operations', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			await tx.put(key1, value1);
 			await tx.put(key2, value2);
 
@@ -158,15 +158,15 @@ describe('IndexedDBKVStore', () => {
 		const store = new IndexedDBKVStore(dbName);
 
 		await whenAll([
-			store.transaction(async tx => {
+			store.transact(async tx => {
 				await tx.put(key1, value1);
 			}),
-			store.transaction(async tx => {
+			store.transact(async tx => {
 				await tx.put(key2, value2);
 			}),
 		]);
 
-		await store.transaction(async tx => {
+		await store.transact(async tx => {
 			const retrievedValue1 = await tx.get(key1);
 			const retrievedValue2 = await tx.get(key2);
 

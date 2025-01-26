@@ -1,104 +1,71 @@
 import {BusinessError} from '../../errors.js';
-import {assertNever, whenAll} from '../../utils.js';
 import {Actor} from '../actor.js';
 import {AuthContext, AuthContextParser} from '../auth-context.js';
 import {
     Api,
-    apiStateAdapter,
+    applyMiddleware,
     InferRpcClient,
+    mapApiState,
     ProcessorContext,
-    Streamer,
-    wrapApi,
 } from '../communication/rpc.js';
 import {dataInspectorApi, DataInspectorApiState} from '../data-inspector.js';
-import {DataLayer, TransactionContext} from '../data-layer.js';
+import {DataContext, DataEffectScheduler, DataLayer} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
-import {authApi, AuthApiState} from './auth-api.js';
+import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
 import {dbApi} from './db-api.js';
 
 export interface CoordinatorApiState {
-    ctx: TransactionContext;
+    ctx: DataContext;
     auth: AuthContext;
     jwt: JwtService;
     crypto: CryptoService;
     emailService: EmailService;
-    enqueueEffect: (cb: () => Promise<void>) => void;
+    scheduleEffect: DataEffectScheduler;
 }
 
-type CoordinatorApiInputState = ProcessorContext<{
+export interface CoordinatorApiInputState {
     dataLayer: DataLayer;
     authContextParser: AuthContextParser;
     jwt: JwtService;
     emailService: EmailService;
     crypto: CryptoService;
-}>;
+}
 
-export const coordinatorApi = (() => {
-    const adaptedDbApi = apiStateAdapter<
-        Actor,
-        CoordinatorApiState,
-        typeof dbApi
-    >(
-        dbApi,
-        state => new Actor(state.ctx.tx, state.auth, {type: 'coordinator'})
-    );
-
-    const adaptedInspectorApi = apiStateAdapter<
-        DataInspectorApiState,
-        CoordinatorApiState,
-        typeof dataInspectorApi
-    >(dataInspectorApi, state => ({
-        dataNode: state.ctx.dataNode,
-        rootTx: state.ctx.tx,
-    }));
-
-    const wrappedAndAdaptedInspectorApi = wrapApi<
-        CoordinatorApiState,
-        CoordinatorApiState,
-        typeof adaptedInspectorApi
-    >(adaptedInspectorApi, next => {
-        if (next.type === 'handler') {
-            return {
-                type: 'handler',
-                handle: async (state, request, cx) => {
-                    if (!state.auth.superadmin) {
-                        throw new BusinessError(
-                            `only superadmins can use inspector api. id = ${state.auth.identityId}`,
-                            'forbidden'
-                        );
-                    }
-
-                    return await next.handle(state, request, cx);
-                },
-            };
-        } else if (next.type === 'streamer') {
-            return {
-                type: 'streamer',
-                stream: async function* (state, request, cx) {
-                    if (!state.auth.superadmin) {
-                        throw new BusinessError(
-                            `only superadmins can use inspector api. id = ${state.auth.identityId}`,
-                            'forbidden'
-                        );
-                    }
-
-                    yield* next.stream(state, request, cx);
-                },
-            };
-        } else {
-            assertNever(next);
-        }
+export function createCoordinatorApi() {
+    const adaptedDbApi = mapApiState(dbApi, (state: CoordinatorApiState) => {
+        return new Actor(state.ctx.tx, state.auth, {type: 'coordinator'});
     });
 
-    const adaptedAuthApi = apiStateAdapter<
+    const adaptedInspectorApi = mapApiState(
+        dataInspectorApi,
+        (state: CoordinatorApiState): DataInspectorApiState => ({
+            dataNode: state.ctx.dataNode,
+            rootTx: state.ctx.tx,
+        })
+    );
+
+    const wrappedAndAdaptedInspectorApi = applyMiddleware(
+        adaptedInspectorApi,
+        async (next, state: CoordinatorApiState) => {
+            if (!state.auth.superadmin) {
+                throw new BusinessError(
+                    `only superadmins can use inspector api. id = ${state.auth.identityId}`,
+                    'forbidden'
+                );
+            }
+            await next(state);
+        }
+    );
+
+    const adaptedAuthApi = mapApiState<
         AuthApiState,
         CoordinatorApiState,
-        typeof authApi
-    >(authApi, state => ({
+        AuthApi
+    >(createAuthApi(), state => ({
         crypto: state.crypto,
         ctx: state.ctx,
         emailService: state.emailService,
-        enqueueEffect: state.enqueueEffect,
+        scheduleEffect: state.scheduleEffect,
         jwt: state.jwt,
     }));
 
@@ -108,95 +75,35 @@ export const coordinatorApi = (() => {
         ...wrappedAndAdaptedInspectorApi,
     } satisfies Api<CoordinatorApiState>;
 
-    const resultApi = wrapApi<
+    const resultApi = applyMiddleware<
         CoordinatorApiState,
-        CoordinatorApiInputState,
+        ProcessorContext<CoordinatorApiInputState>,
         typeof combinedApi
-    >(combinedApi, processor => {
-        if (processor.type === 'handler') {
-            return {
-                type: 'handler',
-                handle: async (
-                    {
-                        state: {
-                            dataLayer,
-                            authContextParser,
-                            jwt,
-                            emailService,
-                            crypto,
-                        },
-                        message,
-                    },
-                    req,
-                    cx
-                ) => {
-                    let effects: Array<() => Promise<void>> = [];
-                    const result = await dataLayer.transaction(async ctx => {
-                        effects = [];
-                        const auth = await authContextParser.parse(
-                            ctx,
-                            message.headers?.auth
-                        );
-                        const state: CoordinatorApiState = {
-                            ctx,
-                            auth,
-                            jwt,
-                            crypto,
-                            emailService,
-                            enqueueEffect: effect => effects.push(effect),
-                        };
-
-                        return await processor.handle(state, req, cx);
-                    });
-                    await whenAll(effects.map(effect => effect()));
-                    return result;
-                },
+    >(combinedApi, async (next, processorContext) => {
+        const {
+            state: {dataLayer, authContextParser, jwt, emailService, crypto},
+            message,
+        } = processorContext;
+        await dataLayer.transact(async ctx => {
+            const auth = await authContextParser.parse(
+                ctx,
+                message.headers?.auth
+            );
+            const state: CoordinatorApiState = {
+                ctx,
+                auth,
+                jwt,
+                crypto,
+                emailService,
+                scheduleEffect: ctx.scheduleEffect,
             };
-        } else if (processor.type === 'streamer') {
-            return {
-                type: 'streamer',
-                stream: async function* (
-                    {
-                        state: {
-                            dataLayer,
-                            authContextParser,
-                            jwt,
-                            emailService,
-                            crypto,
-                        },
-                        message,
-                    },
-                    req,
-                    cx
-                ) {
-                    let effects: Array<() => Promise<void>> = [];
-                    const result = await dataLayer.transaction(async ctx => {
-                        effects = [];
-                        const auth = await authContextParser.parse(
-                            ctx,
-                            message.headers?.auth
-                        );
-                        const state: CoordinatorApiState = {
-                            ctx,
-                            auth,
-                            jwt,
-                            crypto,
-                            emailService,
-                            enqueueEffect: effect => effects.push(effect),
-                        };
 
-                        return processor.stream(state, req, cx);
-                    });
-                    await whenAll(effects.map(effect => effect()));
-                    yield* result;
-                },
-            } satisfies Streamer<CoordinatorApiInputState, any, any>;
-        } else {
-            assertNever(processor);
-        }
+            return await next(state);
+        });
     });
 
     return resultApi;
-})();
+}
 
-export type CoordinatorRpc = InferRpcClient<typeof coordinatorApi>;
+export type CoordinatorApi = ReturnType<typeof createCoordinatorApi>;
+export type CoordinatorRpc = InferRpcClient<CoordinatorApi>;

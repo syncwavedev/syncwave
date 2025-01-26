@@ -67,10 +67,10 @@ export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
 
-    transaction<TResult>(
+    transact<TResult>(
         fn: (tx: Transaction<TKeyPublic, TValuePublic>) => Promise<TResult>
     ): Promise<TResult> {
-        return this.store.transaction(tx =>
+        return this.store.transact(tx =>
             fn(new MappedTransaction(tx, this.keyMapper, this.valueMapper))
         );
     }

@@ -1,37 +1,49 @@
 import {Uint8KVStore} from '../../kv/kv-store.js';
 import {AuthContextParser} from '../auth-context.js';
 import {Message} from '../communication/message.js';
-import {setupRpcServer} from '../communication/rpc.js';
-import {Connection, TransportServer} from '../communication/transport.js';
+import {RpcServer} from '../communication/rpc.js';
+import {TransportServer} from '../communication/transport.js';
 import {DataLayer} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {getIdentity, signJwtToken} from './auth-api.js';
-import {coordinatorApi} from './coordinator-api.js';
+import {
+    CoordinatorApiInputState,
+    createCoordinatorApi,
+} from './coordinator-api.js';
 
 export class Coordinator {
     private readonly dataLayer: DataLayer;
+    private readonly rpcServer: RpcServer<CoordinatorApiInputState>;
 
     constructor(
-        private readonly transport: TransportServer<Message>,
+        transport: TransportServer<Message>,
         kv: Uint8KVStore,
         private readonly jwt: JwtService,
         private readonly crypto: CryptoService,
-        private readonly email: EmailService,
+        email: EmailService,
         private readonly jwtSecret: string
     ) {
         this.dataLayer = new DataLayer(kv, jwtSecret);
+        const authContextParser = new AuthContextParser(4, jwt);
+        this.rpcServer = new RpcServer(transport, createCoordinatorApi(), {
+            authContextParser,
+            dataLayer: this.dataLayer,
+            jwt,
+            crypto,
+            emailService: email,
+        });
     }
 
     async launch(): Promise<void> {
-        await this.transport.launch(conn => this.handleConnection(conn));
+        await this.rpcServer.launch();
     }
 
     async close() {
-        await this.transport.close();
+        await this.rpcServer.close();
     }
 
     async issueJwtByUserEmail(email: string): Promise<string> {
-        return await this.dataLayer.transaction(async ctx => {
+        return await this.dataLayer.transact(async ctx => {
             const identity = await getIdentity(
                 ctx.identities,
                 ctx.users,
@@ -40,17 +52,6 @@ export class Coordinator {
             );
 
             return signJwtToken(this.jwt, identity, this.jwtSecret);
-        });
-    }
-
-    private handleConnection(conn: Connection<Message>): void {
-        const authContextParser = new AuthContextParser(4, this.jwt);
-        setupRpcServer(coordinatorApi, conn, {
-            authContextParser,
-            dataLayer: this.dataLayer,
-            jwt: this.jwt,
-            crypto: this.crypto,
-            emailService: this.email,
         });
     }
 }

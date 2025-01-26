@@ -88,7 +88,7 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
         this.db = fdb.open(clusterFilePath);
     }
 
-    async transaction<TResult>(
+    async transact<TResult>(
         fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         return this.db.doTransaction(async nativeTxn => {

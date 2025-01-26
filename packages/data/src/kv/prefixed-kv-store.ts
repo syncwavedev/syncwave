@@ -77,10 +77,10 @@ export class PrefixedKVStore<TValue> implements KVStore<Uint8Array, TValue> {
         }
     }
 
-    async transaction<TResult>(
+    async transact<TResult>(
         fn: (tx: Transaction<Uint8Array, TValue>) => Promise<TResult>
     ): Promise<TResult> {
-        return await this.target.transaction(tx =>
+        return await this.target.transact(tx =>
             fn(new PrefixedTransaction(tx, this.prefix))
         );
     }

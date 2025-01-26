@@ -22,7 +22,7 @@ const idSelector = (x: TestUser) => x.id;
 
 async function getTxn() {
     const store = new MemKVStore();
-    const tx = await store.transaction(async x => x);
+    const tx = await store.transact(async x => x);
 
     return {store, tx};
 }

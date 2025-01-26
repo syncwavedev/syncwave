@@ -1,5 +1,5 @@
 import {RECONNECT_WAIT_MS} from '../../constants.js';
-import {Observer, Subject, Unsubscribe, wait, whenAll} from '../../utils.js';
+import {Subject, Unsubscribe, wait, whenAll} from '../../utils.js';
 import {Connection, ConnectionObserver, TransportClient} from './transport.js';
 
 export class ReconnectConnection<T> implements Connection<T> {
@@ -20,7 +20,7 @@ export class ReconnectConnection<T> implements Connection<T> {
         await connection.send(message);
     }
 
-    subscribe(cb: Observer<T>): Unsubscribe {
+    subscribe(cb: ConnectionObserver<T>): Unsubscribe {
         this.assertOpen();
         // connect if not already
         this.getConnection().catch(err => {

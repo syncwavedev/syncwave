@@ -1,7 +1,7 @@
 import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
 import {ReconnectConnection} from '../communication/reconnect-connection.js';
-import {setupRpcServer} from '../communication/rpc.js';
+import {setupRpcServerConnection} from '../communication/rpc.js';
 import {Connection, TransportClient} from '../communication/transport.js';
 import {CoordinatorClient} from '../coordinator/coordinator-client.js';
 import {participantApi} from './participant-client.js';
@@ -17,7 +17,7 @@ export class Participant {
     ) {
         this.connection = new ReconnectConnection(transport);
         this.coordinator = new CoordinatorClient(this.connection);
-        setupRpcServer(participantApi, this.connection, {});
+        setupRpcServerConnection(participantApi, this.connection, {});
     }
 
     async sendSignInEmail(email: string) {

@@ -83,7 +83,7 @@ export class SqliteUint8KVStore implements Uint8KVStore {
         `);
     }
 
-    public async transaction<TResult>(
+    public async transact<TResult>(
         fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {

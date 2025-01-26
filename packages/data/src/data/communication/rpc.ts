@@ -22,7 +22,7 @@ import {
     MessageId,
     RequestMessage,
 } from './message.js';
-import {Connection} from './transport.js';
+import {Connection, TransportServer} from './transport.js';
 
 export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
@@ -96,7 +96,7 @@ export interface StreamerOptions<
     TRequestSchema extends ZodObject<any, any, any>,
     TItemSchema extends ZodType<any, any, any>,
 > {
-    request: TRequestSchema;
+    req: TRequestSchema;
     item: TItemSchema;
     stream: (
         state: TState,
@@ -117,7 +117,7 @@ export function streamer<
         req: TypeOf<TRequestSchema>,
         cx: Cancellation
     ): AsyncIterable<TypeOf<TItemSchema>> {
-        req = options.request.parse(req);
+        req = options.req.parse(req);
         for await (const item of options.stream(state, req, cx)) {
             yield options.item.parse(item);
         }
@@ -145,42 +145,107 @@ type ChangeApiState<TApi extends Api<any>, TNewState> = {
           : never;
 };
 
-export function apiStateAdapter<TStateA, TStateB, TApi extends Api<TStateA>>(
+export function mapApiState<
+    TStatePrivate,
+    TStatePublic,
+    TApi extends Api<TStatePrivate>,
+>(
     api: TApi,
-    adapter: (state: TStateB) => TStateA | Promise<TStateA>
-): ChangeApiState<TApi, TStateB> {
-    return wrapApi<TStateA, TStateB, TApi>(api, processor => {
+    map: (state: TStatePublic) => TStatePrivate | Promise<TStatePrivate>
+): ChangeApiState<TApi, TStatePublic> {
+    return applyMiddleware(api, async (next, state) => await next(map(state)));
+}
+
+export function decorateApi<
+    TStatePrivate,
+    TStatePublic,
+    TApi extends Api<TStatePrivate>,
+>(
+    api: TApi,
+    decorate: (
+        processor:
+            | Handler<TStatePrivate, unknown, any>
+            | Streamer<TStatePrivate, unknown, any>
+    ) =>
+        | Handler<TStatePublic, unknown, any>
+        | Streamer<TStatePublic, unknown, any>
+): ChangeApiState<TApi, TStatePublic> {
+    const result: Api<any> = {};
+    for (const key of Object.keys(api)) {
+        result[key] = decorate(api[key]);
+    }
+
+    return result as any;
+}
+
+export function applyMiddleware<
+    TStatePrivate,
+    TStatePublic,
+    TApi extends Api<TStatePrivate>,
+>(
+    api: TApi,
+    middleware: (
+        next: (state: TStatePrivate) => Promise<void>,
+        state: TStatePublic,
+        cx: Cancellation
+    ) => Promise<void>
+): ChangeApiState<TApi, TStatePublic> {
+    return decorateApi<TStatePrivate, TStatePublic, TApi>(api, processor => {
+        async function work(
+            state: TStatePublic,
+            request: unknown,
+            cx: Cancellation
+        ) {
+            const signal = new Deferred<any>();
+            middleware(
+                async (newState: TStatePrivate) => {
+                    if (processor.type === 'handler') {
+                        const result = await processor.handle(
+                            newState,
+                            request,
+                            cx
+                        );
+                        signal.resolve(result);
+                    } else if (processor.type === 'streamer') {
+                        const result = processor.stream(newState, request, cx);
+                        signal.resolve(result);
+                    } else {
+                        assertNever(processor);
+                    }
+                },
+                state,
+                cx
+            ).catch(error => {
+                if (signal.state !== 'pending') {
+                    console.error(
+                        '[ERR] middleware failed after next()',
+                        error
+                    );
+                } else {
+                    signal.reject(error);
+                }
+            });
+
+            return await signal.promise;
+        }
         if (processor.type === 'handler') {
             return {
                 type: 'handler',
-                handle: async (state, request, cx) =>
-                    await processor.handle(await adapter(state), request, cx),
+                handle: async (state, request, cx) => {
+                    return work(state, request, cx);
+                },
             };
         } else if (processor.type === 'streamer') {
             return {
                 type: 'streamer',
                 stream: async function* (state, request, cx) {
-                    yield* processor.stream(await adapter(state), request, cx);
+                    yield* await work(state, request, cx);
                 },
             };
         } else {
             assertNever(processor);
         }
     });
-}
-
-export function wrapApi<TStateA, TStateB, TApi extends Api<TStateA>>(
-    def: TApi,
-    decorator: (
-        next: Handler<TStateA, unknown, any> | Streamer<TStateA, unknown, any>
-    ) => Handler<TStateB, unknown, any> | Streamer<TStateB, unknown, any>
-): ChangeApiState<TApi, TStateB> {
-    const result: Api<any> = {};
-    for (const key of Object.keys(def)) {
-        result[key] = decorator(def[key]);
-    }
-
-    return result as any;
 }
 
 export type InferRpcClient<T extends Api<any>> = {
@@ -480,7 +545,27 @@ async function waitMessage<S extends Message>(
     return await result.promise;
 }
 
-export function setupRpcServer<TState>(
+export class RpcServer<TState> {
+    constructor(
+        private readonly transport: TransportServer<Message>,
+        private readonly api: Api<ProcessorContext<TState>>,
+        private readonly state: TState
+    ) {}
+
+    async launch(): Promise<void> {
+        await this.transport.launch(conn => this.handleConnection(conn));
+    }
+
+    async close() {
+        await this.transport.close();
+    }
+
+    private handleConnection(conn: Connection<Message>): void {
+        setupRpcServerConnection(this.api, conn, this.state);
+    }
+}
+
+export function setupRpcServerConnection<TState>(
     api: Api<ProcessorContext<TState>>,
     conn: Connection<Message>,
     state: TState

@@ -73,6 +73,15 @@ export class WsClientConnection<T> implements Connection<T> {
 			}
 		});
 
+		this.ws.addEventListener('error', async error => {
+			try {
+				await this.subject.throw(new Error('ws.error: ' + error.toString()));
+				this.closedSignal.resolve();
+			} catch (error) {
+				this.closedSignal.reject(error);
+			}
+		});
+
 		this.ws.addEventListener('close', async () => {
 			try {
 				await this.subject.close();

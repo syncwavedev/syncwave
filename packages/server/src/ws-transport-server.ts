@@ -31,6 +31,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
 
             conn.subscribe({
                 next: () => Promise.resolve(),
+                throw: () => Promise.resolve(),
                 close: async () => {
                     this.conns = this.conns.filter(x => x !== conn);
                 },
@@ -112,6 +113,25 @@ export class WsConnection<T> implements Connection<T> {
                 await this.subject.next(message);
             } catch (error) {
                 console.error('[ERR] error during ws message', error);
+            }
+        });
+
+        this.ws.on('error', async error => {
+            try {
+                await this.subject.throw(error);
+            } catch (error) {
+                console.error('[ERR] error during ws.error', error);
+            }
+        });
+
+        this.ws.on('unexpected-response', async () => {
+            try {
+                await this.subject.throw(new Error('ws.unexpected response'));
+            } catch (error) {
+                console.error(
+                    '[ERR] error during ws.unexpected-response',
+                    error
+                );
             }
         });
 

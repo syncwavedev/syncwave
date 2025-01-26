@@ -2,7 +2,7 @@ import {z, ZodType} from 'zod';
 import {AsyncStream, DeferredStream} from '../../async-stream.js';
 import {Subject} from '../../utils.js';
 import {Message} from './message.js';
-import {ReconnectConnection} from './reconnect-connection.js';
+import {PersistentConnection} from './persistent-connection.js';
 import {
     applyMiddleware,
     createApi,
@@ -24,7 +24,7 @@ export class HubClient<T> {
         schema: ZodType<T>,
         authSecret: string
     ) {
-        const conn = new ReconnectConnection(transportClient);
+        const conn = new PersistentConnection(transportClient);
         this.server = createRpcClient(createHubServerApi(schema), conn, () => ({
             auth: authSecret,
         }));

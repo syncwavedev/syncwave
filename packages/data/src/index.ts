@@ -4,7 +4,7 @@ export * from './codec.js';
 export * from './constants.js';
 export * from './crdt/crdt.js';
 export * from './data/communication/message.js';
-export * from './data/communication/reconnect-connection.js';
+export * from './data/communication/persistent-connection.js';
 export * from './data/communication/transport.js';
 export * from './data/coordinator/coordinator.js';
 export * from './data/data-inspector.js';

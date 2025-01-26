@@ -2,7 +2,7 @@ import {RECONNECT_WAIT_MS} from '../../constants.js';
 import {Observer, Subject, Unsubscribe, wait, whenAll} from '../../utils.js';
 import {Connection, TransportClient} from './transport.js';
 
-export class ReconnectConnection<T> implements Connection<T> {
+export class PersistentConnection<T> implements Connection<T> {
     // if we already initiated connection process, then we want subsequent sends to wait until the
     // initial connect is done
     private connection?: Promise<Connection<T>>;

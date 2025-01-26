@@ -1,6 +1,6 @@
 import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
-import {ReconnectConnection} from '../communication/reconnect-connection.js';
+import {PersistentConnection} from '../communication/persistent-connection.js';
 import {setupRpcServerConnection} from '../communication/rpc.js';
 import {Connection, TransportClient} from '../communication/transport.js';
 import {CoordinatorClient} from '../coordinator/coordinator-client.js';
@@ -15,7 +15,7 @@ export class Participant {
         transport: TransportClient<Message>,
         private readonly mode: 'proxy' | 'local'
     ) {
-        this.connection = new ReconnectConnection(transport);
+        this.connection = new PersistentConnection(transport);
         this.coordinator = new CoordinatorClient(this.connection);
         setupRpcServerConnection(participantApi, this.connection, {});
     }

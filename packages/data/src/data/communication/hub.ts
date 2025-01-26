@@ -1,7 +1,8 @@
 import {z, ZodType} from 'zod';
-import {AsyncStream, DeferredStream} from './async-stream.js';
-import {Message} from './data/communication/message.js';
-import {ReconnectConnection} from './data/communication/reconnect-connection.js';
+import {AsyncStream, DeferredStream} from '../../async-stream.js';
+import {Subject} from '../../utils.js';
+import {Message} from './message.js';
+import {ReconnectConnection} from './reconnect-connection.js';
 import {
     applyMiddleware,
     createApi,
@@ -12,15 +13,11 @@ import {
     ProcessorContext,
     RpcServer,
     streamer,
-} from './data/communication/rpc.js';
-import {
-    TransportClient,
-    TransportServer,
-} from './data/communication/transport.js';
-import {Subject} from './utils.js';
+} from './rpc.js';
+import {TransportClient, TransportServer} from './transport.js';
 
 export class HubClient<T> {
-    private readonly client: HubServerRpc<T>;
+    private readonly server: HubServerRpc<T>;
 
     constructor(
         transportClient: TransportClient<Message>,
@@ -28,17 +25,22 @@ export class HubClient<T> {
         authSecret: string
     ) {
         const conn = new ReconnectConnection(transportClient);
-        this.client = createRpcClient(createHubServerApi(schema), conn, () => ({
+        this.server = createRpcClient(createHubServerApi(schema), conn, () => ({
             auth: authSecret,
         }));
     }
 
-    async publish(message: T) {
-        await this.client.publish({message});
+    // next waits for all subscribers to do their work
+    async next(message: T) {
+        await this.server.publish({message});
+    }
+
+    async throw(error: string) {
+        await this.server.throw({error});
     }
 
     subscribe(): AsyncStream<T> {
-        return this.client.subscribe({}) as AsyncStream<T>;
+        return this.server.subscribe({}) as AsyncStream<T>;
     }
 }
 
@@ -81,14 +83,22 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 await state.subject.next(message as T);
             },
         }),
+        throw: handler({
+            req: z.object({error: z.string()}),
+            res: z.void(),
+            handle: async (state, {error}) => {
+                await state.subject.throw(new Error(error));
+            },
+        }),
         subscribe: streamer({
             req: z.object({}),
             item: z.object({message: zMessage}),
             stream(state) {
-                return new DeferredStream(({next, end}) => {
+                return new DeferredStream(exe => {
                     state.subject.subscribe({
-                        next: message => next({message: message as T}),
-                        close: async () => end(),
+                        next: message => exe.next({message: message as T}),
+                        throw: error => exe.throw(error),
+                        close: async () => exe.end(),
                     });
                 });
             },

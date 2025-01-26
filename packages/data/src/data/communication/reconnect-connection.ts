@@ -56,35 +56,46 @@ export class ReconnectConnection<T> implements Connection<T> {
                     }
                 }
             })().then(conn => {
+                const reconnect = async () => {
+                    if (!this.closed) {
+                        this.connection = undefined;
+                        try {
+                            await whenAll(
+                                this.subject.observers
+                                    .map(x => x.reconnect)
+                                    .filter(reconnect => !!reconnect)
+                                    .map(reconnect => reconnect())
+                            );
+                        } catch (error) {
+                            console.error(
+                                '[ERR] reconnect observers error',
+                                error
+                            );
+                        }
+
+                        // reconnect
+                        this.getConnection().catch(err => {
+                            console.error(
+                                'error while reconnection to the server: ',
+                                err
+                            );
+                        });
+                    }
+                };
+
                 conn.subscribe({
                     next: async event => {
                         await this.subject.next(event);
                     },
+                    throw: async error => {
+                        console.error(
+                            '[ERR] error in underlying connection',
+                            error
+                        );
+                        await reconnect();
+                    },
                     close: async () => {
-                        if (!this.closed) {
-                            this.connection = undefined;
-                            try {
-                                await whenAll(
-                                    this.subject.observers
-                                        .map(x => x.reconnect)
-                                        .filter(reconnect => !!reconnect)
-                                        .map(reconnect => reconnect())
-                                );
-                            } catch (error) {
-                                console.error(
-                                    '[ERR] reconnect observers error',
-                                    error
-                                );
-                            }
-
-                            // reconnect
-                            this.getConnection().catch(err => {
-                                console.error(
-                                    'error while reconnection to the server: ',
-                                    err
-                                );
-                            });
-                        }
+                        await reconnect();
                     },
                 });
 

@@ -13,6 +13,7 @@ export type Unsubscribe = () => void;
 
 export interface Observer<T> {
     next: (value: T) => Promise<void>;
+    throw: (error: any) => Promise<void>;
     close: () => Promise<void>;
 }
 
@@ -48,6 +49,12 @@ export class Subject<
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
         await whenAll([...this.subs].map(sub => sub.observer.next(value)));
+    }
+
+    async throw(error: Error): Promise<void> {
+        this.ensureOpen();
+        // copy in case if new subscribers are added/removed during notification
+        await whenAll([...this.subs].map(sub => sub.observer.throw(error)));
     }
 
     async close(): Promise<void> {

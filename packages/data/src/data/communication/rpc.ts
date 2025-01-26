@@ -281,9 +281,9 @@ export function createRpcClient<TApi extends Api<any>>(
 
                 if (msg.payload.type === 'error') {
                     if (!started) {
-                        exe.throw(new Error("got 'error' before start"));
+                        await exe.throw(new Error("got 'error' before start"));
                     }
-                    exe.throw(
+                    await exe.throw(
                         new Error(
                             'rpc call failed: ' +
                                 (msg.payload.message ?? '<no message>')
@@ -291,13 +291,15 @@ export function createRpcClient<TApi extends Api<any>>(
                     );
                     unsub();
                 } else if (msg.payload.type === 'success') {
-                    exe.throw(
+                    await exe.throw(
                         new Error("unexpected 'success' message for stream")
                     );
                     unsub();
                 } else if (msg.payload.type === 'item') {
                     if (!started) {
-                        exe.throw(new Error("got 'item' before start"));
+                        await exe.throw(new Error("got 'item' before start"));
+                        unsub();
+                        return;
                     }
                     const itemId = msg.id;
                     await exe.next(msg.payload.item);
@@ -310,14 +312,17 @@ export function createRpcClient<TApi extends Api<any>>(
                     });
                 } else if (msg.payload.type === 'end') {
                     if (!started) {
-                        exe.throw(new Error("got 'end' before start"));
+                        await exe.throw(new Error("got 'end' before start"));
+                        unsub();
+                        return;
                     }
                     exe.end();
                     unsub();
                 } else if (msg.payload.type === 'start') {
                     if (started) {
-                        exe.throw(new Error('stream started twice'));
+                        await exe.throw(new Error('stream started twice'));
                         unsub();
+                        return;
                     } else {
                         started = true;
                     }
@@ -325,16 +330,23 @@ export function createRpcClient<TApi extends Api<any>>(
                     assertNever(msg.payload);
                 }
             },
+            throw: async error => {
+                timeoutCxs.cancel();
+                await exe.throw(error);
+                unsub();
+            },
             reconnect: async () => {
                 timeoutCxs.cancel();
-                exe.throw(
+                await exe.throw(
                     new Error('connection to coordinator lost [reconnect]')
                 );
                 unsub();
             },
             close: async () => {
                 timeoutCxs.cancel();
-                exe.throw(new Error('connection to coordinator lost [close]'));
+                await exe.throw(
+                    new Error('connection to coordinator lost [close]')
+                );
                 unsub();
             },
         });
@@ -347,13 +359,16 @@ export function createRpcClient<TApi extends Api<any>>(
                 payload: {name, arg},
             });
         } catch (error) {
-            exe.throw(error);
+            await exe.throw(error);
+            unsub();
         }
 
         wait(RPC_CALL_TIMEOUT_MS, timeoutCxs.cancellation)
-            .then(() => {
+            .then(async () => {
                 if (!started) {
-                    exe.throw(new Error('stream failed to start: timeout'));
+                    await exe.throw(
+                        new Error('stream failed to start: timeout')
+                    );
                     unsub();
                 }
             })
@@ -416,6 +431,11 @@ export function createRpcClient<TApi extends Api<any>>(
                     assertNever(msg.payload);
                 }
             },
+            throw: async error => {
+                timeoutCxs.cancel();
+                result.reject(error);
+                unsub();
+            },
             reconnect: async () => {
                 timeoutCxs.cancel();
                 result.reject(
@@ -443,14 +463,18 @@ export function createRpcClient<TApi extends Api<any>>(
                 console.error('unexpected error after rpc timed out', err);
             });
 
-        await conn.send({
-            id: requestId,
-            type: 'request',
-            headers: getHeaders(),
-            payload: {name, arg},
-        });
+        try {
+            await conn.send({
+                id: requestId,
+                type: 'request',
+                headers: getHeaders(),
+                payload: {name, arg},
+            });
 
-        return await result.promise;
+            return await result.promise;
+        } finally {
+            unsub();
+        }
     }
 
     function get(nameOrSymbol: string | symbol) {
@@ -520,6 +544,11 @@ async function waitMessage<S extends Message>(
                 unsub();
             }
         },
+        throw: async error => {
+            timeoutCxs.cancel();
+            result.reject(error);
+            unsub();
+        },
         reconnect: async () => {
             timeoutCxs.cancel();
             result.resolve(undefined);
@@ -577,6 +606,10 @@ export function setupRpcServerConnection<TState>(
     conn.subscribe({
         next: message => handleMessageServer(message),
         reconnect: async () => {
+            streamsTracker.cancelAll();
+            cxs.cancel();
+        },
+        throw: async () => {
             streamsTracker.cancelAll();
             cxs.cancel();
         },

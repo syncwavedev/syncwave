@@ -26,6 +26,9 @@ describe('MemConnection', async () => {
             next: async message => {
                 value = message;
             },
+            throw: error => {
+                throw error;
+            },
             close: async () => {
                 // do nothing
             },
@@ -47,6 +50,9 @@ describe('MemConnection', async () => {
         conn2.subscribe({
             next: async message => {
                 messageHandler(message);
+            },
+            throw: error => {
+                throw error;
             },
             close: async () => {
                 throw new Error('unexpectedly closed');
@@ -76,6 +82,9 @@ describe('MemConnection', async () => {
         const messageHandler = vi.fn();
         const unsubscribe = conn2.subscribe({
             next: async message => messageHandler(message),
+            throw: error => {
+                throw error;
+            },
             close: () => {
                 throw new Error('unexpectedly closed');
             },
@@ -97,6 +106,9 @@ describe('MemConnection', async () => {
         conn1.subscribe({
             next: () => {
                 throw new Error('unexpected message');
+            },
+            throw: error => {
+                throw error;
             },
             close: async () => closeHandler(),
         });

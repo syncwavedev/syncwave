@@ -2,7 +2,7 @@ import createTree from 'functional-red-black-tree';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {StringCodec} from '../codec.js';
 import {compareUint8Array, wait, whenAll} from '../utils.js';
-import {Entry, InvalidQueryCondition} from './kv-store.js';
+import {Entry, InvalidQueryCondition, Uint8KVStore} from './kv-store.js';
 import {MemKVStore, MemLocker, MemTransaction} from './mem-kv-store.js'; // Adjust the path as needed
 
 const stringCodec = new StringCodec();
@@ -142,7 +142,7 @@ describe('MemTransaction', () => {
 });
 
 describe('MemKVStore', () => {
-    let kvStore;
+    let kvStore: Uint8KVStore;
 
     beforeEach(() => {
         kvStore = new MemKVStore();
@@ -152,11 +152,11 @@ describe('MemKVStore', () => {
         const key = toUint8Array('key1');
         const value = toUint8Array('value1');
 
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             await tx.put(key, value);
         });
 
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const result = await tx.get(key);
             expect(result).toEqual(value);
         });
@@ -167,17 +167,17 @@ describe('MemKVStore', () => {
         const value1 = toUint8Array('value1');
         const value2 = toUint8Array('value2');
 
-        const txn1 = kvStore.transaction(async tx => {
+        const txn1 = kvStore.transact(async tx => {
             await tx.put(key, value1);
         });
 
-        const txn2 = kvStore.transaction(async tx => {
+        const txn2 = kvStore.transact(async tx => {
             await tx.put(key, value2);
         });
 
         await whenAll([txn1, txn2]);
 
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const result = await tx.get(key);
             expect(result).toEqual(value2); // Last transaction wins
         });
@@ -186,7 +186,7 @@ describe('MemKVStore', () => {
     it('should retry on transaction failure', async () => {
         let attempt = 0;
 
-        await kvStore.transaction(async () => {
+        await kvStore.transact(async () => {
             if (attempt++ < 1) {
                 throw new Error('Simulated failure');
             }
@@ -196,11 +196,11 @@ describe('MemKVStore', () => {
     });
 
     it('should fail after exceeding retry attempts', async () => {
-        vi.spyOn(kvStore, 'transaction').mockImplementationOnce(async () => {
+        vi.spyOn(kvStore, 'transact').mockImplementationOnce(async () => {
             throw new Error('Simulated permanent failure');
         });
 
-        await expect(kvStore.transaction(async () => {})).rejects.toThrow(
+        await expect(kvStore.transact(async () => {})).rejects.toThrow(
             'Simulated permanent failure'
         );
     });
@@ -210,13 +210,13 @@ describe('MemKVStore', () => {
         const value = toUint8Array('value1');
 
         await kvStore
-            .transaction(async tx => {
+            .transact(async tx => {
                 await tx.put(key, value);
                 throw new Error('Simulated rollback');
             })
             .catch(() => {});
 
-        await kvStore.transaction(async tx => {
+        await kvStore.transact(async tx => {
             const result = await tx.get(key);
             expect(result).toBeUndefined();
         });

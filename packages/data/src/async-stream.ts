@@ -10,7 +10,7 @@ import {
 export interface DeferredStreamExecutor<T> {
     next: (value: T) => Promise<void>;
     end: () => void;
-    throw: (error: any) => void;
+    throw: (error: any) => Promise<void>;
     cx: Cancellation;
 }
 

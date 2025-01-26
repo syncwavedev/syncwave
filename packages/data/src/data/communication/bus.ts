@@ -41,7 +41,7 @@ export class BusConsumer<T> implements BusConsumer<T> {
         this.transact = async fn =>
             await transact(async tx => {
                 const topic = new Topic(withPrefix('topic/')(tx), this.codec);
-                const counter = new Counter(withPrefix('counter')(tx), 0);
+                const counter = new Counter(withPrefix('counter/')(tx), 0);
 
                 return fn(topic, counter);
             });

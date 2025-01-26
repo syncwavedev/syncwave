@@ -4,31 +4,32 @@ export class JobTracker<T> {
 
     start(job: T) {
         if (this.runningJobs.has(job)) {
-            throw new Error(`job ${job} is already running`);
+            console.warn(`[WRN] job ${job} is already running`);
+        } else if (this.cancelledJobs.has(job)) {
+            console.warn(`[WRN] job ${job} is already finished`);
+        } else {
+            this.runningJobs.add(job);
         }
-        if (this.cancelledJobs.has(job)) {
-            throw new Error(`job ${job} is already finished`);
-        }
-        this.runningJobs.add(job);
     }
 
     cancel(job: T) {
-        if (!this.runningJobs.has(job)) {
-            throw new Error(`job ${job} is not running`);
+        if (this.runningJobs.has(job)) {
+            this.runningJobs.delete(job);
+            this.cancelledJobs.add(job);
+        } else if (this.cancelledJobs.has(job)) {
+            console.warn(`[WRN] job ${job} is already cancelled`);
+        } else {
+            console.warn(`[WRN] unknown job: ${job}`);
         }
-        if (this.cancelledJobs.has(job)) {
-            throw new Error(`job ${job} is already finished`);
-        }
-        this.runningJobs.delete(job);
-        this.cancelledJobs.add(job);
     }
 
     finish(job: T) {
-        if (!this.runningJobs.has(job) && !this.cancelledJobs.has(job)) {
-            throw new Error(`unknown job: ${job}`);
+        if (this.runningJobs.has(job) || this.cancelledJobs.has(job)) {
+            this.runningJobs.delete(job);
+            this.cancelledJobs.delete(job);
+        } else {
+            console.warn(`[WRN] unknown job: ${job}`);
         }
-        this.runningJobs.delete(job);
-        this.cancelledJobs.delete(job);
     }
 
     cancelAll() {
@@ -37,9 +38,13 @@ export class JobTracker<T> {
     }
 
     isRunning(job: T) {
-        if (!this.runningJobs.has(job) && !this.cancelledJobs.has(job)) {
-            throw new Error(`unknown job: ${job}`);
+        if (this.runningJobs.has(job)) {
+            return true;
+        } else if (this.cancelledJobs.has(job)) {
+            return false;
+        } else {
+            console.warn(`[WRN] unknown job: ${job}`);
+            return false;
         }
-        return this.runningJobs.has(job);
     }
 }

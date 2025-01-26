@@ -1,13 +1,13 @@
 import {RECONNECT_WAIT_MS} from '../../constants.js';
-import {Subject, Unsubscribe, wait, whenAll} from '../../utils.js';
-import {Connection, ConnectionObserver, TransportClient} from './transport.js';
+import {Observer, Subject, Unsubscribe, wait, whenAll} from '../../utils.js';
+import {Connection, TransportClient} from './transport.js';
 
 export class ReconnectConnection<T> implements Connection<T> {
     // if we already initiated connection process, then we want subsequent sends to wait until the
     // initial connect is done
     private connection?: Promise<Connection<T>>;
     private closed = false;
-    private subject = new Subject<T, ConnectionObserver<T>>();
+    private subject = new Subject<T, Observer<T>>();
 
     constructor(private readonly transport: TransportClient<T>) {}
 
@@ -20,7 +20,7 @@ export class ReconnectConnection<T> implements Connection<T> {
         await connection.send(message);
     }
 
-    subscribe(cb: ConnectionObserver<T>): Unsubscribe {
+    subscribe(cb: Observer<T>): Unsubscribe {
         this.assertOpen();
         // connect if not already
         this.getConnection().catch(err => {
@@ -61,10 +61,13 @@ export class ReconnectConnection<T> implements Connection<T> {
                         this.connection = undefined;
                         try {
                             await whenAll(
-                                this.subject.observers
-                                    .map(x => x.reconnect)
-                                    .filter(reconnect => !!reconnect)
-                                    .map(reconnect => reconnect())
+                                this.subject.observers.map(x =>
+                                    x.throw(
+                                        new Error(
+                                            'connection is lost, reconnection...'
+                                        )
+                                    )
+                                )
                             );
                         } catch (error) {
                             console.error(

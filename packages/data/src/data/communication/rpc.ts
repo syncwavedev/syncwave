@@ -335,17 +335,10 @@ export function createRpcClient<TApi extends Api<any>>(
                 await exe.throw(error);
                 unsub();
             },
-            reconnect: async () => {
-                timeoutCxs.cancel();
-                await exe.throw(
-                    new Error('connection to coordinator lost [reconnect]')
-                );
-                unsub();
-            },
             close: async () => {
                 timeoutCxs.cancel();
                 await exe.throw(
-                    new Error('connection to coordinator lost [close]')
+                    new Error('lost connection to rpc server lost')
                 );
                 unsub();
             },
@@ -377,14 +370,21 @@ export function createRpcClient<TApi extends Api<any>>(
             });
 
         exe.cx
-            .then(() =>
-                conn.send({
+            .then(async () => {
+                // note: what happens when server dies
+                // - server dies
+                // - exe.throw('connection lost, reconnecting')
+                // - conn.send in retry loop
+                // - new server instance starts
+                // - conn.send succeeds, but that stream doesn't exist on the new server
+                // - noop
+                await conn.send({
                     id: createMessageId(),
                     type: 'cancel',
                     requestId,
                     headers: {},
-                })
-            )
+                });
+            })
             .catch(error => {
                 console.error('failed to cancel request: ', error);
             });
@@ -436,18 +436,9 @@ export function createRpcClient<TApi extends Api<any>>(
                 result.reject(error);
                 unsub();
             },
-            reconnect: async () => {
-                timeoutCxs.cancel();
-                result.reject(
-                    new Error('connection to coordinator lost [reconnect]')
-                );
-                unsub();
-            },
             close: async () => {
                 timeoutCxs.cancel();
-                result.reject(
-                    new Error('connection to coordinator lost [close]')
-                );
+                result.reject(new Error('lost connection to rpc server'));
                 unsub();
             },
         });
@@ -549,11 +540,6 @@ async function waitMessage<S extends Message>(
             result.reject(error);
             unsub();
         },
-        reconnect: async () => {
-            timeoutCxs.cancel();
-            result.resolve(undefined);
-            unsub();
-        },
         close: async () => {
             timeoutCxs.cancel();
             result.resolve(undefined);
@@ -605,10 +591,6 @@ export function setupRpcServerConnection<TState>(
 
     conn.subscribe({
         next: message => handleMessageServer(message),
-        reconnect: async () => {
-            streamsTracker.cancelAll();
-            cxs.cancel();
-        },
         throw: async () => {
             streamsTracker.cancelAll();
             cxs.cancel();

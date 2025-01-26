@@ -1,5 +1,10 @@
 import {TypeOf, ZodObject, ZodType} from 'zod';
-import {DeferredStream, DeferredStreamExecutor} from '../../async-stream.js';
+import {
+    astream,
+    AsyncStream,
+    DeferredStream,
+    DeferredStreamExecutor,
+} from '../../async-stream.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {Deferred} from '../../deferred.js';
 import {BusinessError, getReadableError} from '../../errors.js';
@@ -180,7 +185,7 @@ export function wrapApi<TStateA, TStateB, TApi extends Api<TStateA>>(
 
 export type InferRpcClient<T extends Api<any>> = {
     [K in keyof T]: T[K] extends Streamer<any, infer TReq, infer TItem>
-        ? (req: TReq) => AsyncIterable<TItem>
+        ? (req: TReq) => AsyncStream<TItem>
         : T[K] extends Handler<any, infer TReq, infer TRes>
           ? (req: TReq) => Promise<TRes>
           : never;
@@ -398,11 +403,13 @@ export function createRpcClient<TApi extends Api<any>>(
             if (processor.type === 'handler') {
                 return listenHandler(name, arg);
             } else if (processor.type === 'streamer') {
-                return new DeferredStream(executor => {
-                    listenStreamer(executor, name, arg).catch(error =>
-                        executor.throw(error)
-                    );
-                });
+                return astream(
+                    new DeferredStream(executor => {
+                        listenStreamer(executor, name, arg).catch(error =>
+                            executor.throw(error)
+                        );
+                    })
+                );
             } else {
                 assertNever(processor);
             }

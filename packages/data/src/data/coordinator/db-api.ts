@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {wait} from '../../utils.js';
+import {interval} from '../../utils.js';
 import {zUuid} from '../../uuid.js';
 import {Actor} from '../actor.js';
 import {createApi, handler, streamer} from '../communication/rpc.js';
@@ -12,15 +12,13 @@ export const dbApi = createApi<Actor>()({
     getStream: streamer({
         request: z.object({intervalMs: z.number()}),
         item: z.object({index: z.number()}),
-        async *stream(_, {intervalMs}, cx) {
+        async *stream(_, {intervalMs: ms}, cx) {
             console.log('stream start');
             try {
-                let index = 1;
-                while (index < 10) {
+                const interval$ = interval(ms, cx).while(x => x < 5);
+                for await (const index of interval$) {
                     console.log('stream item', index);
                     yield {index};
-                    index += 1;
-                    await wait(intervalMs, cx);
                 }
             } finally {
                 console.log('stream closed');

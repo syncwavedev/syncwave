@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {astream, AsyncStream} from './async-stream.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
@@ -93,6 +94,19 @@ export function wait(ms: number, cx?: Cancellation): Promise<void> {
                 console.error('[ERR] failed to clear timeout', error);
             });
     });
+}
+
+export function interval(ms: number, cx: Cancellation): AsyncStream<number> {
+    return astream(_interval(ms, cx));
+}
+
+async function* _interval(ms: number, cx: Cancellation): AsyncIterable<number> {
+    let index = 0;
+    while (!cx.isCancelled) {
+        yield index;
+        index += 1;
+        await wait(ms, cx);
+    }
 }
 
 export function pipe<T>(x: T): T;

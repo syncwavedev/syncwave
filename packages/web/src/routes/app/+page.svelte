@@ -13,7 +13,10 @@
 		(async () => {
 			try {
 				console.log('stream start');
-				for await (const item of sdk.coordinatorRpc.getStream({intervalMs: 1000})) {
+				const interval$ = sdk.coordinatorRpc
+					.getStream({intervalMs: 1000})
+					.while(({index}) => index < 3);
+				for await (const item of interval$) {
 					console.log('stream item', item.index);
 
 					if (cancelled) {

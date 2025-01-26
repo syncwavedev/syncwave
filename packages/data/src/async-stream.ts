@@ -137,6 +137,14 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return false;
     }
 
+    while<S extends T>(predicate: (value: T) => value is S): AsyncStream<S>;
+    while(predicate: (value: T) => boolean): AsyncStream<T>;
+    while(
+        predicate: ((value: T) => boolean) | ((value: T) => value is T)
+    ): AsyncStream<T> {
+        return astream(this._while(predicate)) as AsyncStream<any>;
+    }
+
     filter<S extends T>(predicate: (value: T) => value is S): AsyncStream<S>;
     filter(predicate: (value: T) => boolean): AsyncStream<T>;
     filter(
@@ -194,6 +202,13 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         for await (const item of this.source) {
             assert(validator(item));
 
+            yield item;
+        }
+    }
+
+    private async *_while(predicate: (value: T) => boolean) {
+        for await (const item of this.source) {
+            if (!predicate(item)) break;
             yield item;
         }
     }

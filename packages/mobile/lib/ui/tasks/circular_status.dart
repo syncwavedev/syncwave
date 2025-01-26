@@ -26,7 +26,7 @@ class CircularStatus extends StatelessWidget {
           currentStep: currentStep,
           totalSteps: totalSteps,
           activeColor: context.colors.ink,
-          inactiveColor: context.colors.subtle2,
+          inactiveColor: context.colors.subtle3,
         ),
       ),
     );

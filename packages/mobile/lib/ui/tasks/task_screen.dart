@@ -1,11 +1,16 @@
 import 'package:flutter/widgets.dart';
 import 'package:ground/models/task.dart';
+import 'package:ground/ui/core/messages/messages_list.dart';
 import 'package:ground/ui/core/navigator/navigator.dart';
 import 'package:ground/ui/tasks/circular_status.dart';
 import 'package:ground/ui/widgets/buttons.dart';
+import 'package:ground/ui/widgets/divider.dart';
 import 'package:ground/ui/widgets/icons.dart';
+import 'package:ground/ui/widgets/inputs.dart';
 import 'package:ground/ui/widgets/navigation_stack.dart';
 import 'package:ground/ui/core/themes/theme_extensions.dart';
+
+import '../widgets/bottom_bar.dart';
 
 class TaskScreen extends StatelessWidget {
   final Task task;
@@ -20,6 +25,20 @@ class TaskScreen extends StatelessWidget {
         child: Icons.chevronLeft,
         onPressed: () => context.popPage(),
       ),
+      bottomBar: BottomBar(
+        children: [
+          Expanded(
+            child: TextField(
+              maxLines: 5,
+              minLines: 1,
+              style: context.text.body.copyWith(
+                height: context.text.relaxed,
+              ),
+            ),
+          ),
+        ],
+      ),
+      resizeBodyForKeyboard: true,
       child: Padding(
         padding: EdgeInsets.symmetric(
             horizontal: context.spacing.md, vertical: context.spacing.sm),
@@ -30,7 +49,7 @@ class TaskScreen extends StatelessWidget {
               task.content,
               style: context.text.body,
             ),
-            SizedBox(height: context.spacing.md),
+            Divider(verticalMargin: context.spacing.sm),
             Row(children: [
               const CircularStatus(currentStep: 1, totalSteps: 2, size: 24),
               SizedBox(width: context.spacing.sm),
@@ -41,6 +60,8 @@ class TaskScreen extends StatelessWidget {
                 ),
               ),
             ]),
+            Divider(verticalMargin: context.spacing.sm),
+            Expanded(child: MessageList(messages: task.messages)),
           ],
         ),
       ),

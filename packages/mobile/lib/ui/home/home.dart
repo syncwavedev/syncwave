@@ -38,7 +38,7 @@ class HomeScreen extends StatelessWidget {
             '30 Boards',
             style: context.text.small,
           ),
-          IconButton.filled(
+          IconButton(
             child: Icons.plus,
             onPressed: () {
               // Handle add board

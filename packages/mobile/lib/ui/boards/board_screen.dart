@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:ground/models/board.dart';
 import 'package:ground/models/column.dart';
+import 'package:ground/models/message.dart';
 import 'package:ground/models/task.dart';
 import 'package:ground/ui/core/navigator/navigator.dart';
 import 'package:ground/ui/tasks/task_screen.dart';
@@ -42,7 +43,7 @@ class BoardScreen extends StatelessWidget {
               debugPrint('Search');
             },
           ),
-          IconButton.filled(
+          IconButton(
             child: Icons.plus,
             onPressed: () {
               // Handle add task
@@ -106,6 +107,28 @@ class BoardScreen extends StatelessWidget {
     ];
 
     final List<String> columnNames = ['To Do', 'In Progress', 'Done'];
+    final List<String> messageContents = [
+      'This is a detailed message content for task message number ',
+      'Update: Task has been reviewed and approved.',
+      'Comment: Please address the issues mentioned in the previous review.',
+      'Reminder: The due date for this task is approaching.',
+      'Note: This task is critical for the project milestone.',
+      'Feedback: The implementation looks good, but needs some minor tweaks.',
+      'Alert: There is a blocker that needs immediate attention.',
+      'Info: The task has been moved to the next phase.',
+      'Question: Can we have a quick meeting to discuss this task?',
+      'Status: The task is now in progress and being actively worked on.'
+    ];
+
+    final List<Message> messages = List.generate(10, (index) {
+      return Message(
+        id: index,
+        content: '${messageContents[index % messageContents.length]} $index',
+        from: assignees[index % assignees.length],
+        createdAt: DateTime.now().subtract(Duration(days: index)),
+        updatedAt: DateTime.now().subtract(Duration(days: index - 1)),
+      );
+    });
 
     for (int i = 0; i < 3; i++) {
       final List<Task> tasks = List.generate(tasksPerColumn, (index) {
@@ -116,6 +139,7 @@ class BoardScreen extends StatelessWidget {
           dueDate: DateTime.now().add(Duration(days: index % 30)),
           content: descriptions[index % descriptions.length],
           number: 'GRND-${index + (i * tasksPerColumn)}',
+          messages: messages,
         );
       });
 

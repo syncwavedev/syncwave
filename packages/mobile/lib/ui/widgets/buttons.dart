@@ -105,7 +105,7 @@ class _IconButtonState extends State<IconButton> {
     switch (widget._style) {
       case _ButtonStyle.plain:
         color = null;
-        foregroundColor = context.colors.action;
+        foregroundColor = context.colors.ink;
         break;
       case _ButtonStyle.filled:
         color = context.colors.subtle4;

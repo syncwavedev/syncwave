@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/button/button.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
+	import {Cancellation} from 'ground-data';
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
@@ -14,7 +15,7 @@
 			try {
 				console.log('stream start');
 				const interval$ = sdk.coordinatorRpc
-					.getStream({intervalMs: 1000})
+					.getStream({intervalMs: 1000}, Cancellation.none)
 					.while(({index}) => index < 3);
 				for await (const item of interval$) {
 					console.log('stream item', item.index);

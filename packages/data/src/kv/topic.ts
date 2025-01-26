@@ -1,3 +1,4 @@
+import {astream, AsyncStream} from '../async-stream.js';
 import {Codec, NumberCodec} from '../codec.js';
 import {pipe, whenAll} from '../utils.js';
 import {Counter} from './counter.js';
@@ -34,7 +35,14 @@ export class Topic<T> {
         await whenAll(data.map((x, idx) => this.log.put(offset + idx, x)));
     }
 
-    async *list(start: number, end?: number): AsyncIterable<TopicEntry<T>> {
+    list(start: number, end?: number): AsyncStream<TopicEntry<T>> {
+        return astream(this._list(start, end));
+    }
+
+    private async *_list(
+        start: number,
+        end?: number
+    ): AsyncIterable<TopicEntry<T>> {
         for await (const {key, value} of this.log.query({gte: start})) {
             if (end !== undefined && key >= end) return;
 

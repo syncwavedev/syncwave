@@ -102,6 +102,41 @@ export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
     return new AsyncStream(source);
 }
 
+export function mergeStreams<T>(source: AsyncIterable<T>[]): AsyncStream<T> {
+    return astream(
+        new DeferredStream(async exe => {
+            try {
+                let active = source
+                    .map(x => x[Symbol.asyncIterator]())
+                    .map((iter, id) => ({
+                        result: iter.next().then(result => ({result, id})),
+                        iter,
+                        id,
+                    }));
+                while (active.length > 0 && !exe.cx.isCancelled) {
+                    const {id, result} = await Promise.race(
+                        active.map(x => x.result)
+                    );
+                    if (result.done) {
+                        active = active.filter(x => x.id !== id);
+                    } else {
+                        await exe.next(result.value);
+                        const item = active.find(x => x.id === id);
+                        assert(item !== undefined);
+                        item.result = item.iter
+                            .next()
+                            .then(result => ({id, result}));
+                    }
+                }
+            } catch (error) {
+                await exe.throw(error);
+            } finally {
+                exe.end();
+            }
+        })
+    );
+}
+
 export class AsyncStream<T> implements AsyncIterable<T> {
     constructor(private readonly source: AsyncIterable<T>) {}
 
@@ -115,6 +150,14 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     assert<S extends T>(validator: (value: T) => value is S): AsyncStream<S> {
         return astream(this._assert(validator)) as AsyncStream<S>;
+    }
+
+    private async *_assert(validator: (value: T) => boolean) {
+        for await (const item of this.source) {
+            assert(validator(item));
+
+            yield item;
+        }
     }
 
     async find(predicate: (value: T) => boolean): Promise<T | undefined> {
@@ -154,6 +197,20 @@ export class AsyncStream<T> implements AsyncIterable<T> {
     }
 
     map<TResult>(
+        mapper: (value: T) => TResult | Promise<TResult>
+    ): AsyncStream<TResult> {
+        return astream(this._map(mapper));
+    }
+
+    private async *_map<TResult>(
+        mapper: (value: T) => TResult | Promise<TResult>
+    ): AsyncIterable<TResult> {
+        for await (const item of this.source) {
+            yield await mapper(item);
+        }
+    }
+
+    mapParallel<TResult>(
         mapper: (value: T) => TResult | Promise<TResult>
     ): AsyncStream<TResult> {
         return astream(
@@ -196,14 +253,6 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     [Symbol.asyncIterator](): AsyncIterator<T, any, any> {
         return this.source[Symbol.asyncIterator]();
-    }
-
-    private async *_assert(validator: (value: T) => boolean) {
-        for await (const item of this.source) {
-            assert(validator(item));
-
-            yield item;
-        }
     }
 
     private async *_while(predicate: (value: T) => boolean) {

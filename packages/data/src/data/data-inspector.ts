@@ -45,7 +45,7 @@ function createTreeVisitor(
             name,
             type: 'aggregate',
             childrenPreview: await astream(agg.queryChildren(new Uint8Array()))
-                .map(async ({key, node}) =>
+                .mapParallel(async ({key, node}) =>
                     node.visit(createTreeVisitor(key, decodeString(key)))
                 )
                 .toArray(),
@@ -55,7 +55,7 @@ function createTreeVisitor(
             name,
             type: 'repo',
             childrenPreview: await astream(repo.queryChildren(new Uint8Array()))
-                .map(async ({key, node}) =>
+                .mapParallel(async ({key, node}) =>
                     node.visit(createTreeVisitor(key, decodeUuid(key)))
                 )
                 .take(100)
@@ -86,7 +86,7 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
         res: z.void(),
         handle: async ({rootTx}) => {
             const keys = await astream(rootTx.query({gte: new Uint8Array()}))
-                .map(x => x.key)
+                .mapParallel(x => x.key)
                 .toArray();
             for (const key of keys) {
                 await rootTx.delete(key);

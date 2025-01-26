@@ -5,12 +5,18 @@ import {BusinessError} from '../errors.js';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {TopicManager} from '../kv/topic-manager.js';
 import {getNow} from '../timestamp.js';
-import {assertNever, unimplemented, wait, whenAll} from '../utils.js';
+import {
+    assertNever,
+    Cancellation,
+    unimplemented,
+    wait,
+    whenAll,
+} from '../utils.js';
 import {AuthContext} from './auth-context.js';
 import {CoordinatorRpc} from './coordinator/coordinator-api.js';
 import {OnDocChange} from './doc-repo.js';
 import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
-import {Member, MemberRepo, createMemberId} from './repos/member-repo.js';
+import {createMemberId, Member, MemberRepo} from './repos/member-repo.js';
 import {Task, TaskId, TaskRepo} from './repos/task-repo.js';
 import {User, UserId, UserRepo} from './repos/user-repo.js';
 
@@ -27,19 +33,34 @@ export interface CreateBoardModel {
 }
 
 export interface DataAccessor {
-    getMe(input: {}): Promise<User | undefined>;
+    getMe(input: {}, cx: Cancellation): Promise<User | undefined>;
 
-    getMyBoards(input: {}): Promise<Board[]>;
-    getBoard(input: {boardId: BoardId}): Promise<Board | undefined>;
-    getBoardTasks(input: {boardId: BoardId}): Promise<Task[]>;
-    createBoard(input: CreateBoardModel): Promise<Board>;
-    updateBoardName(input: {boardId: BoardId; name: string}): Promise<Board>;
-    setBoardSlug(input: {boardId: BoardId; slug: string}): Promise<Board>;
+    getMyBoards(input: {}, cx: Cancellation): Promise<Board[]>;
+    getBoard(
+        input: {boardId: BoardId},
+        cx: Cancellation
+    ): Promise<Board | undefined>;
+    getBoardTasks(input: {boardId: BoardId}, cx: Cancellation): Promise<Task[]>;
+    createBoard(input: CreateBoardModel, cx: Cancellation): Promise<Board>;
+    updateBoardName(
+        input: {boardId: BoardId; name: string},
+        cx: Cancellation
+    ): Promise<Board>;
+    setBoardSlug(
+        input: {boardId: BoardId; slug: string},
+        cx: Cancellation
+    ): Promise<Board>;
 
-    getTask(input: {taskId: TaskId}): Promise<Task | undefined>;
-    updateTaskTitle(input: {taskId: TaskId; title: string}): Promise<Task>;
+    getTask(
+        input: {taskId: TaskId},
+        cx: Cancellation
+    ): Promise<Task | undefined>;
+    updateTaskTitle(
+        input: {taskId: TaskId; title: string},
+        cx: Cancellation
+    ): Promise<Task>;
 
-    createTask(input: CreateTaskModel): Promise<Task>;
+    createTask(input: CreateTaskModel, cx: Cancellation): Promise<Task>;
 }
 
 export interface BaseActorRole<TType extends string> {
@@ -107,7 +128,7 @@ export class Actor implements DataAccessor {
     async getMyBoards(_input: {}): Promise<Board[]> {
         const members = this.members.getByUserId(this.ensureAuthenticated());
         return await astream(members)
-            .map(member => this.boards.getById(member.boardId))
+            .mapParallel(member => this.boards.getById(member.boardId))
             .assert(x => x !== undefined)
             .toArray();
     }
@@ -130,12 +151,15 @@ export class Actor implements DataAccessor {
         return tasks;
     }
 
-    async createBoard(input: CreateBoardModel): Promise<Board> {
+    async createBoard(
+        input: CreateBoardModel,
+        cx: Cancellation
+    ): Promise<Board> {
         const now = getNow();
         if (input.slug) {
             if (this.role.type === 'participant') {
                 // participant can't set board slug, escalate
-                return await this.role.coordinator.createBoard(input);
+                return await this.role.coordinator.createBoard(input, cx);
             } else if (this.role.type === 'coordinator') {
                 // coordinator can set board slug, nothing specific to do
             } else {
@@ -183,13 +207,16 @@ export class Actor implements DataAccessor {
         return board;
     }
 
-    async setBoardSlug({
-        boardId,
-        slug,
-    }: {
-        boardId: BoardId;
-        slug: string;
-    }): Promise<Board> {
+    async setBoardSlug(
+        {
+            boardId,
+            slug,
+        }: {
+            boardId: BoardId;
+            slug: string;
+        },
+        cx: Cancellation
+    ): Promise<Board> {
         if (this.role.type === 'coordinator') {
             const [board] = await whenAll([
                 this.boards.update(boardId, draft => {
@@ -209,7 +236,10 @@ export class Actor implements DataAccessor {
             return board;
         } else if (this.role.type === 'participant') {
             // participant can't set board slug, escalate
-            return await this.role.coordinator.setBoardSlug({boardId, slug});
+            return await this.role.coordinator.setBoardSlug(
+                {boardId, slug},
+                cx
+            );
         } else {
             assertNever(this.role);
         }

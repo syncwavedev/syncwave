@@ -1,6 +1,6 @@
 import {z, ZodType} from 'zod';
 import {AsyncStream, DeferredStream} from '../../async-stream.js';
-import {Subject} from '../../utils.js';
+import {Cancellation, Subject} from '../../utils.js';
 import {Message} from './message.js';
 import {PersistentConnection} from './persistent-connection.js';
 import {
@@ -31,16 +31,16 @@ export class HubClient<T> {
     }
 
     // next waits for all subscribers to do their work
-    async next(message: T) {
-        await this.server.publish({message});
+    async publish(message: T, cx: Cancellation) {
+        await this.server.publish({message}, cx);
     }
 
-    async throw(error: string) {
-        await this.server.throw({error});
+    async throw(error: string, cx: Cancellation) {
+        await this.server.throw({error}, cx);
     }
 
-    subscribe(): AsyncStream<T> {
-        return this.server.subscribe({}) as AsyncStream<T>;
+    subscribe(cx: Cancellation): AsyncStream<T> {
+        return this.server.subscribe({}, cx) as AsyncStream<T>;
     }
 }
 

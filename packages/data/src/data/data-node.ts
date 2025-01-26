@@ -57,7 +57,7 @@ export class RepoDataNode<T extends Doc> extends DataNode {
     }
 
     async *queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild> {
-        yield* this.repo.getAll(prefix).map(doc => ({
+        yield* this.repo.getAll(prefix).mapParallel(doc => ({
             key: encodeUuid(doc.id),
             node: new DocDataNode(doc.id, this.repo),
         }));

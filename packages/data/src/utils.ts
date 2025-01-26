@@ -288,6 +288,7 @@ export class CancellationSource {
 }
 
 export class Cancellation {
+    static none = new CancellationSource().cancellation;
     constructor(
         private readonly cxs: CancellationSource,
         private signal: Promise<void>
@@ -299,5 +300,16 @@ export class Cancellation {
 
     async then<T>(cb: () => PromiseLike<T> | T) {
         return await this.signal.then(cb);
+    }
+
+    combine(cx: Cancellation): Cancellation {
+        const cxs = new CancellationSource();
+        Promise.race([cx, this])
+            .then(() => cxs.cancel)
+            .catch(error => {
+                console.error('[ERR] error for combined cx', error);
+            });
+
+        return cxs.cancellation;
     }
 }

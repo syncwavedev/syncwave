@@ -127,7 +127,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
     getAll(prefix?: Uint8Array): AsyncStream<T> {
         return astream(
             queryStartsWith(this.primaryKeyRaw, prefix ?? new Uint8Array())
-        ).map(x => x.value.snapshot());
+        ).mapParallel(x => x.value.snapshot());
     }
 
     query(indexName: string, condition: Condition<IndexKey>): AsyncStream<T> {
@@ -233,9 +233,9 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
 
     private _mapToDocs(ids: AsyncIterable<Uuid>): AsyncStream<T> {
         return astream(ids)
-            .map(id => this.primary.get(id))
+            .mapParallel(id => this.primary.get(id))
             .assert(x => x !== undefined)
-            .map(doc => doc.snapshot());
+            .mapParallel(doc => doc.snapshot());
     }
 
     private ensureValid(value: T) {

@@ -14,6 +14,7 @@ import {
     Cancellation,
     CancellationSource,
     wait,
+    whenAll,
 } from '../../utils.js';
 import {
     createMessageId,
@@ -250,9 +251,9 @@ export function applyMiddleware<
 
 export type InferRpcClient<T extends Api<any>> = {
     [K in keyof T]: T[K] extends Streamer<any, infer TReq, infer TItem>
-        ? (req: TReq) => AsyncStream<TItem>
+        ? (req: TReq, cx: Cancellation) => AsyncStream<TItem>
         : T[K] extends Handler<any, infer TReq, infer TRes>
-          ? (req: TReq) => Promise<TRes>
+          ? (req: TReq, cx: Cancellation) => Promise<TRes>
           : never;
 };
 
@@ -264,7 +265,8 @@ export function createRpcClient<TApi extends Api<any>>(
     async function listenStreamer(
         exe: DeferredStreamExecutor<any>,
         name: string,
-        arg: any
+        arg: any,
+        cx: Cancellation
     ) {
         const requestId = createMessageId();
 
@@ -369,28 +371,33 @@ export function createRpcClient<TApi extends Api<any>>(
                 console.error('unexpected error after rpc timed out', err);
             });
 
-        exe.cx
+        // note: what happens when server dies
+        // - server dies
+        // - exe.throw('connection lost, reconnecting')
+        // - conn.send in retry loop
+        // - new server instance starts
+        // - conn.send succeeds, but that stream doesn't exist on the new server
+        // - noop
+        cx.combine(exe.cx)
             .then(async () => {
-                // note: what happens when server dies
-                // - server dies
-                // - exe.throw('connection lost, reconnecting')
-                // - conn.send in retry loop
-                // - new server instance starts
-                // - conn.send succeeds, but that stream doesn't exist on the new server
-                // - noop
-                await conn.send({
-                    id: createMessageId(),
-                    type: 'cancel',
-                    requestId,
-                    headers: {},
-                });
+                unsub();
+                timeoutCxs.cancel();
+                await whenAll([
+                    exe.throw(new Error('cancellation requested')),
+                    conn.send({
+                        id: createMessageId(),
+                        type: 'cancel',
+                        requestId,
+                        headers: {},
+                    }),
+                ]);
             })
             .catch(error => {
-                console.error('failed to cancel request: ', error);
+                console.error('[ERR] error during cancellation', error);
             });
     }
 
-    async function listenHandler(name: string, arg: any) {
+    async function listenHandler(name: string, arg: any, cx: Cancellation) {
         const result = new Deferred<any>();
         const requestId = createMessageId();
         const timeoutCxs = new CancellationSource();
@@ -462,6 +469,14 @@ export function createRpcClient<TApi extends Api<any>>(
                 payload: {name, arg},
             });
 
+            cx.then(() => {
+                unsub();
+                timeoutCxs.cancel();
+                result.reject(new Error('handler cancellation requested'));
+            }).catch(error => {
+                console.error('[ERR] error during handler cancellation', error);
+            });
+
             return await result.promise;
         } finally {
             unsub();
@@ -479,13 +494,13 @@ export function createRpcClient<TApi extends Api<any>>(
             throw new Error(`unknown rpc endpoint: ${name}`);
         }
 
-        return (arg: any) => {
+        return (arg: any, cx: Cancellation) => {
             if (processor.type === 'handler') {
-                return listenHandler(name, arg);
+                return listenHandler(name, arg, cx);
             } else if (processor.type === 'streamer') {
                 return astream(
                     new DeferredStream(executor => {
-                        listenStreamer(executor, name, arg).catch(error =>
+                        listenStreamer(executor, name, arg, cx).catch(error =>
                             executor.throw(error)
                         );
                     })

@@ -61,7 +61,7 @@ export const dbApi = createApi<Actor>()({
             slug: z.string().optional(),
         }),
         res: zBoard(),
-        handle: (actor, req) => actor.createBoard(req),
+        handle: (actor, req, cx) => actor.createBoard(req, cx),
     }),
     getBoard: handler({
         req: z.object({
@@ -76,7 +76,7 @@ export const dbApi = createApi<Actor>()({
             slug: z.string(),
         }),
         res: zBoard(),
-        handle: (actor, req) => actor.setBoardSlug(req),
+        handle: (actor, req, cx) => actor.setBoardSlug(req, cx),
     }),
     updateBoardName: handler({
         req: z.object({

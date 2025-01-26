@@ -75,7 +75,9 @@ describe('AsyncStream', () => {
         const values = [1, 2, 3];
         const stream = astream(values);
 
-        const result = await stream.map(async value => value * 2).toArray();
+        const result = await stream
+            .mapParallel(async value => value * 2)
+            .toArray();
         expect(result).toEqual([2, 4, 6]);
     });
 
@@ -115,7 +117,7 @@ describe('AsyncStream', () => {
         const values = Array(MAX_LOOKAHEAD_COUNT + 1).fill(1);
         const stream = astream(values);
 
-        const result = await stream.map(value => value + 1).toArray();
+        const result = await stream.mapParallel(value => value + 1).toArray();
         expect(result).toEqual(Array(MAX_LOOKAHEAD_COUNT + 1).fill(2));
     });
 });

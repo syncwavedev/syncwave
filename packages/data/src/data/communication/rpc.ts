@@ -2,8 +2,8 @@ import {TypeOf, ZodObject, ZodType} from 'zod';
 import {
     astream,
     AsyncStream,
-    DeferredStream,
-    DeferredStreamExecutor,
+    ColdStream,
+    ColdStreamExecutor,
 } from '../../async-stream.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {Deferred} from '../../deferred.js';
@@ -263,7 +263,7 @@ export function createRpcClient<TApi extends Api<any>>(
     getHeaders: () => MessageHeaders
 ): InferRpcClient<TApi> {
     async function listenStreamer(
-        exe: DeferredStreamExecutor<any>,
+        exe: ColdStreamExecutor<any>,
         name: string,
         arg: any,
         cx: Cancellation
@@ -499,7 +499,7 @@ export function createRpcClient<TApi extends Api<any>>(
                 return listenHandler(name, arg, cx);
             } else if (processor.type === 'streamer') {
                 return astream(
-                    new DeferredStream(executor => {
+                    new ColdStream(executor => {
                         listenStreamer(executor, name, arg, cx).catch(error =>
                             executor.throw(error)
                         );

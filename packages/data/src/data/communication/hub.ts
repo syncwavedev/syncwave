@@ -1,5 +1,5 @@
 import {z, ZodType} from 'zod';
-import {AsyncStream, DeferredStream} from '../../async-stream.js';
+import {AsyncStream, ColdStream} from '../../async-stream.js';
 import {Cancellation, Subject} from '../../utils.js';
 import {Message} from './message.js';
 import {PersistentConnection} from './persistent-connection.js';
@@ -94,7 +94,7 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
             req: z.object({}),
             item: z.object({message: zMessage}),
             stream(state) {
-                return new DeferredStream(exe => {
+                return new ColdStream(exe => {
                     state.subject.subscribe({
                         next: message => exe.next({message: message as T}),
                         throw: error => exe.throw(error),

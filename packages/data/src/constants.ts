@@ -16,3 +16,5 @@ export const SUPERADMIN_IDS = [
     '01949768-e65c-73e5-ac64-fe7c77c94c49',
     '01949936-78b4-72eb-a04c-9e6f6f810509',
 ];
+export const BUS_PULL_INTERVAL_MS = 1_000;
+export const BUS_MAX_PULL_COUNT = 128;

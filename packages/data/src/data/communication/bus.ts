@@ -1,5 +1,11 @@
-import {AsyncStream, mergeStreams} from '../../async-stream.js';
+import {
+    astream,
+    AsyncStream,
+    HotStream,
+    mergeStreams,
+} from '../../async-stream.js';
 import {Codec} from '../../codec.js';
+import {BUS_MAX_PULL_COUNT, BUS_PULL_INTERVAL_MS} from '../../constants.js';
 import {Counter} from '../../kv/counter.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Topic} from '../../kv/topic.js';
@@ -29,7 +35,6 @@ export class BusConsumer<T> implements BusConsumer<T> {
         transact: <TResult>(
             fn: (tx: Uint8Transaction) => Promise<TResult>
         ) => Promise<TResult>,
-        private readonly scheduleEffect: DataEffectScheduler,
         private readonly hub: HubClient<void>,
         private readonly codec: Codec<T>
     ) {
@@ -43,14 +48,34 @@ export class BusConsumer<T> implements BusConsumer<T> {
     }
 
     subscribe(cx: Cancellation): AsyncStream<T[]> {
+        // we wanna trigger bus iteration immediately if we didn't reach the end of the topic
+        const selfTrigger = new HotStream<void>();
         return mergeStreams<void>([
+            // make the first check immediately
+            astream([undefined]),
+            selfTrigger,
             this.hub.subscribe(cx).map(() => undefined),
-            interval(1000, cx).map(() => undefined),
+            interval(BUS_PULL_INTERVAL_MS, cx).map(() => undefined),
         ]).map(async () => {
             const messages = await this.transact(async (topic, counter) => {
-                const result = await topic.list(await counter.get()).toArray();
+                const result = await topic
+                    .list(await counter.get())
+                    .take(BUS_MAX_PULL_COUNT)
+                    .map(x => x.data)
+                    .toArray();
                 await counter.increment(result.length);
-                return result.map(x => x.data);
+
+                // check if there are potentially more values to pull from the topic
+                if (result.length === BUS_MAX_PULL_COUNT) {
+                    // we don't wanna block on this call to avoid a deadlock
+                    selfTrigger.next().catch(error => {
+                        console.error(
+                            '[ERR] failed to trigger bus iteration',
+                            error
+                        );
+                    });
+                }
+                return result;
             });
 
             return messages;

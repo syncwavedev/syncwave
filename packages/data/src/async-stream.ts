@@ -7,29 +7,35 @@ import {
     CancellationSource,
 } from './utils.js';
 
-export interface DeferredStreamExecutor<T> {
+export interface ColdStreamExecutor<T> {
     next: (value: T) => Promise<void>;
     end: () => void;
     throw: (error: any) => Promise<void>;
     cx: Cancellation;
 }
 
-export class DeferredStream<T> implements AsyncIterable<T> {
-    constructor(
-        private readonly execute: (executor: DeferredStreamExecutor<T>) => void
-    ) {}
+export class HotStream<T> implements AsyncIterable<T> {
+    private chan = new Channel<T>();
+    private cxs = new CancellationSource();
 
-    async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
+    get cx() {
+        return this.cxs.cancellation;
+    }
+
+    end() {
+        this.chan.close();
+    }
+
+    async next(value: T) {
+        await this.chan.push(value);
+    }
+
+    async throw(error: any) {
+        await this.chan.throw(error);
+    }
+
+    async *[Symbol.asyncIterator](): AsyncIterator<T> {
         const chan = new Channel<T>(0);
-
-        const cxs = new CancellationSource();
-
-        this.execute({
-            end: () => chan.close(),
-            next: value => chan.push(value),
-            throw: error => chan.throw(error),
-            cx: cxs.cancellation,
-        });
 
         let complete = false;
         try {
@@ -40,9 +46,21 @@ export class DeferredStream<T> implements AsyncIterable<T> {
             complete = true;
         } finally {
             if (!complete) {
-                cxs.cancel();
+                this.cxs.cancel();
             }
         }
+    }
+}
+
+export class ColdStream<T> implements AsyncIterable<T> {
+    constructor(
+        private readonly execute: (executor: ColdStreamExecutor<T>) => void
+    ) {}
+
+    async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
+        const stream = new HotStream<T>();
+        this.execute(stream);
+        yield* stream;
     }
 }
 
@@ -90,7 +108,7 @@ export class CancellationStream<T> implements AsyncIterable<T> {
 export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
     if (Array.isArray(source)) {
         return new AsyncStream(
-            new DeferredStream(async ({next, end}) => {
+            new ColdStream(async ({next, end}) => {
                 for (const item of source) {
                     await next(item);
                 }
@@ -104,7 +122,7 @@ export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
 
 export function mergeStreams<T>(source: AsyncIterable<T>[]): AsyncStream<T> {
     return astream(
-        new DeferredStream(async exe => {
+        new ColdStream(async exe => {
             try {
                 let active = source
                     .map(x => x[Symbol.asyncIterator]())
@@ -214,7 +232,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         mapper: (value: T) => TResult | Promise<TResult>
     ): AsyncStream<TResult> {
         return astream(
-            new DeferredStream(async ({next, end}) => {
+            new ColdStream(async ({next, end}) => {
                 let left = 0;
                 let right = 0;
                 const pending = new Map<number, Promise<TResult> | TResult>();

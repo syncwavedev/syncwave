@@ -1,4 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
+import {Cancellation, CancellationSource} from '../cancellation.js';
 import {assert} from '../utils.js';
 import {Crdt} from './crdt.js';
 
@@ -43,7 +44,7 @@ describe('Doc', () => {
 
     function createReplica<T>(doc: Crdt<T>): Crdt<T> {
         const replica = Crdt.load(doc.state());
-        doc.subscribe('update', diff => replica.apply(diff));
+        doc.subscribe('update', diff => replica.apply(diff), Cancellation.none);
         return replica;
     }
 
@@ -241,7 +242,8 @@ describe('Doc', () => {
         it('should unsubscribe from updates', () => {
             const a = Crdt.from({val: 1});
             const b = Crdt.load(a.state());
-            const unsub = a.subscribe('update', diff => b.apply(diff));
+            const sub = new CancellationSource();
+            a.subscribe('update', diff => b.apply(diff), sub.cancellation);
 
             expect(b.snapshot()).toEqual({val: 1});
 
@@ -250,7 +252,7 @@ describe('Doc', () => {
             });
             expect(b.snapshot()).toEqual({val: 2});
 
-            unsub();
+            sub.cancel();
 
             a.update(x => {
                 x.val = 3;
@@ -305,7 +307,8 @@ describe('Doc', () => {
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const unsubscribe = crdt.subscribe('update', callback);
+        const sub = new CancellationSource();
+        crdt.subscribe('update', callback, sub.cancellation);
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -314,7 +317,7 @@ describe('Doc', () => {
             tag: undefined,
         });
 
-        unsubscribe();
+        sub.cancel();
     });
 
     it('should unsubscribe from updates', () => {
@@ -322,8 +325,9 @@ describe('Doc', () => {
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const unsubscribe = crdt.subscribe('update', callback);
-        unsubscribe();
+        const sub = new CancellationSource();
+        crdt.subscribe('update', callback, sub.cancellation);
+        sub.cancel();
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -401,14 +405,17 @@ describe('Doc', () => {
         expect(crdt2.snapshot()).toEqual(value2);
     });
 
-    it('should handle concurrent subscriptions and updates', () => {
+    it('should handle concurrent subs and updates', () => {
         const value = {key: 'value'};
         const crdt = Crdt.from(value);
         const callback1 = vi.fn();
         const callback2 = vi.fn();
 
-        const unsubscribe1 = crdt.subscribe('update', callback1);
-        const unsubscribe2 = crdt.subscribe('update', callback2);
+        const sub1 = new CancellationSource();
+        crdt.subscribe('update', callback1, sub1.cancellation);
+
+        const sub2 = new CancellationSource();
+        crdt.subscribe('update', callback2, sub2.cancellation);
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -416,8 +423,8 @@ describe('Doc', () => {
         expect(callback1).toHaveBeenCalled();
         expect(callback2).toHaveBeenCalled();
 
-        unsubscribe1();
-        unsubscribe2();
+        sub1.cancel();
+        sub2.cancel();
     });
 
     it('should handle updates with complex structures', () => {
@@ -436,9 +443,13 @@ describe('Doc', () => {
         const crdt = Crdt.from(value);
         const events: string[] = [];
 
-        crdt.subscribe('update', (diff, options) => {
-            events.push(options.origin || 'no-tag');
-        });
+        crdt.subscribe(
+            'update',
+            (_diff, options) => {
+                events.push(options.origin || 'no-tag');
+            },
+            Cancellation.none
+        );
 
         crdt.apply(createTestDocDiff({key: 'value1'}), {origin: 'first'});
         crdt.apply(createTestDocDiff({key: 'value2'}), {origin: 'second'});
@@ -451,8 +462,9 @@ describe('Doc', () => {
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const unsubscribe = crdt.subscribe('update', callback);
-        unsubscribe();
+        const sub = new CancellationSource();
+        crdt.subscribe('update', callback, sub.cancellation);
+        sub.cancel();
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);

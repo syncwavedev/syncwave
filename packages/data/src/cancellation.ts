@@ -6,6 +6,7 @@ export class CancellationError extends Error {
     }
 }
 
+// todo: make cancel synchronous (without Promises)
 export class CancellationSource {
     private readonly signal = new Deferred<void>();
 

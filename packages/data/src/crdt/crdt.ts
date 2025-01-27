@@ -6,8 +6,9 @@ import {
     Map as YMap,
     Text as YText,
 } from 'yjs';
+import {Cancellation, CancellationSource} from '../cancellation.js';
 import {Codec} from '../codec.js';
-import {assert, assertNever, Brand, Unsubscribe, zip} from '../utils.js';
+import {assert, assertNever, Brand, zip} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {observe, OpLog} from './observe.js';
 
@@ -76,9 +77,11 @@ export class Crdt<T> {
         const [replacement, log] = observe(snapshot, draft => recipe(draft));
         // diff can be undefined if no change were made in recipe
         let diff: CrdtDiff<T> | undefined = undefined;
-        const unsub = this.subscribe(
+        const subscription = new CancellationSource();
+        this.subscribe(
             'update',
-            (nextDiff: CrdtDiff<T>) => (diff = nextDiff)
+            (nextDiff: CrdtDiff<T>) => (diff = nextDiff),
+            subscription.cancellation
         );
         this.doc.transact(() => {
             if (replacement) {
@@ -87,7 +90,7 @@ export class Crdt<T> {
                 replayLog(log, locator);
             }
         }, options?.origin);
-        unsub();
+        subscription.cancel();
 
         // todo: add tests for returned diff
         return diff;
@@ -99,12 +102,16 @@ export class Crdt<T> {
 
     subscribe(
         event: 'update',
-        next: (diff: CrdtDiff<T>, options: DiffOptions) => void
-    ): Unsubscribe {
+        next: (diff: CrdtDiff<T>, options: DiffOptions) => void,
+        cx: Cancellation
+    ) {
         const fn = (state: Uint8Array, origin: string | undefined) =>
             next(state as CrdtDiff<T>, {origin: origin ?? undefined});
         this.doc.on('updateV2', fn);
-        return () => this.doc.off('updateV2', fn);
+
+        cx.then(() => this.doc.off('updateV2', fn)).catch(error =>
+            console.error("[ERR] failed to doc.off('updateV2')", error)
+        );
     }
 }
 

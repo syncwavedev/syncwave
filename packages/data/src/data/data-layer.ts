@@ -57,9 +57,7 @@ export class DataLayer {
                 userId: UserId,
                 diff: CrdtDiff<User>
             ): Promise<void> {
-                await userChangelog
-                    .topic(userId.toString())
-                    .push({userId, diff});
+                await userChangelog.get(userId.toString()).push({userId, diff});
             }
 
             const users = new UserRepo(

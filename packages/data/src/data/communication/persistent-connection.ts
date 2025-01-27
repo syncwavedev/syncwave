@@ -1,5 +1,5 @@
 import {RECONNECT_WAIT_MS} from '../../constants.js';
-import {Observer, Subject, Unsubscribe, wait, whenAll} from '../../utils.js';
+import {Observer, Subject, Unsubscribe, wait} from '../../utils.js';
 import {Connection, TransportClient} from './transport.js';
 
 export class PersistentConnection<T> implements Connection<T> {
@@ -7,7 +7,7 @@ export class PersistentConnection<T> implements Connection<T> {
     // initial connect is done
     private connection?: Promise<Connection<T>>;
     private closed = false;
-    private subject = new Subject<T, Observer<T>>();
+    private subject = new Subject<T>();
 
     constructor(private readonly transport: TransportClient<T>) {}
 
@@ -60,14 +60,8 @@ export class PersistentConnection<T> implements Connection<T> {
                     if (!this.closed) {
                         this.connection = undefined;
                         try {
-                            await whenAll(
-                                this.subject.observers.map(x =>
-                                    x.throw(
-                                        new Error(
-                                            'connection is lost, reconnection...'
-                                        )
-                                    )
-                                )
+                            await this.subject.throw(
+                                new Error('connection is lost, reconnection...')
                             );
                         } catch (error) {
                             console.error(

@@ -1,30 +1,12 @@
 import {z} from 'zod';
-import {interval} from '../../utils.js';
 import {zUuid} from '../../uuid.js';
 import {Actor} from '../actor.js';
-import {createApi, handler, streamer} from '../communication/rpc.js';
+import {createApi, handler} from '../communication/rpc.js';
 import {BoardId, zBoard} from '../repos/board-repo.js';
 import {TaskId, zTask} from '../repos/task-repo.js';
 import {zUser} from '../repos/user-repo.js';
 
 export const dbApi = createApi<Actor>()({
-    // streaming example
-    getStream: streamer({
-        req: z.object({intervalMs: z.number()}),
-        item: z.object({index: z.number()}),
-        async *stream(_, {intervalMs: ms}, cx) {
-            console.log('stream start');
-            try {
-                const interval$ = interval(ms, cx).while(x => x < 10);
-                for await (const index of interval$) {
-                    console.log('stream item', index);
-                    yield {index};
-                }
-            } finally {
-                console.log('stream closed');
-            }
-        },
-    }),
     getMe: handler({
         req: z.object({}),
         res: zUser().optional(),

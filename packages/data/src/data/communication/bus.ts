@@ -7,27 +7,31 @@ import {
 import {Codec} from '../../codec.js';
 import {BUS_MAX_PULL_COUNT, BUS_PULL_INTERVAL_MS} from '../../constants.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {Topic} from '../../kv/topic.js';
+import {TopicManager} from '../../kv/topic-manager.js';
 import {Cancellation, interval} from '../../utils.js';
 import {DataEffectScheduler} from '../data-layer.js';
 import {HubClient} from './hub.js';
 
 export class BusProducer<T> implements BusProducer<T> {
+    private readonly topics: TopicManager<T>;
     constructor(
-        private readonly topic: Topic<T>,
-        private readonly scheduleEffect: DataEffectScheduler,
-        private readonly hub: HubClient<T>
-    ) {}
+        tx: Uint8Transaction,
+        codec: Codec<T>,
+        private readonly hub: HubClient<void>,
+        private readonly scheduleEffect: DataEffectScheduler
+    ) {
+        this.topics = new TopicManager(withPrefix('topics/')(tx), codec);
+    }
 
-    async publish(message: T, cx: Cancellation): Promise<void> {
-        await this.topic.push(message);
-        this.scheduleEffect(() => this.hub.publish(message, cx));
+    async publish(topic: string, message: T, cx: Cancellation): Promise<void> {
+        await this.topics.get(topic).push(message);
+        this.scheduleEffect(() => this.hub.publish(topic, undefined, cx));
     }
 }
 
 export class BusConsumer<T> implements BusConsumer<T> {
     private readonly transact: <TResult>(
-        fn: (topic: Topic<T>) => Promise<TResult>
+        fn: (topics: TopicManager<T>) => Promise<TResult>
     ) => Promise<TResult>;
 
     constructor(
@@ -39,24 +43,32 @@ export class BusConsumer<T> implements BusConsumer<T> {
     ) {
         this.transact = async fn =>
             await transact(async tx => {
-                const topic = new Topic(withPrefix('topic/')(tx), this.codec);
+                const topics = new TopicManager(
+                    withPrefix('topics/')(tx),
+                    this.codec
+                );
 
-                return fn(topic);
+                return fn(topics);
             });
     }
 
-    subscribe(start: number, cx: Cancellation): AsyncStream<T[]> {
+    subscribe(
+        topic: string,
+        start: number,
+        cx: Cancellation
+    ): AsyncStream<T[]> {
         // we wanna trigger bus iteration immediately if we didn't reach the end of the topic
         const selfTrigger = new HotStream<void>();
         return mergeStreams<void>([
             // make the first check immediately
             astream([undefined]),
             selfTrigger,
-            this.hub.subscribe(cx).map(() => undefined),
+            this.hub.subscribe(topic, cx).map(() => undefined),
             interval(BUS_PULL_INTERVAL_MS, cx).map(() => undefined),
         ]).map(async () => {
-            const messages = await this.transact(async topic => {
-                const result = await topic
+            const messages = await this.transact(async topics => {
+                const result = await topics
+                    .get(topic)
                     .list(start)
                     .take(BUS_MAX_PULL_COUNT)
                     .map(x => x.data)

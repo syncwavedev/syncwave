@@ -2,6 +2,7 @@ import {TypeOf, ZodObject, ZodType} from 'zod';
 import {
     astream,
     AsyncStream,
+    CancellationStream,
     ColdStream,
     ColdStreamExecutor,
 } from '../../async-stream.js';
@@ -264,6 +265,7 @@ export function createRpcClient<TApi extends Api<any>>(
 ): InferRpcClient<TApi> {
     async function listenStreamer(
         exe: ColdStreamExecutor<any>,
+        exeCx: Cancellation,
         name: string,
         arg: any,
         cx: Cancellation
@@ -381,7 +383,7 @@ export function createRpcClient<TApi extends Api<any>>(
         // - new server instance starts
         // - conn.send succeeds, but that stream doesn't exist on the new server
         // - noop
-        cx.combine(exe.cx)
+        cx.combine(exeCx)
             .then(async () => {
                 unsub();
                 timeoutCxs.cancel();
@@ -396,7 +398,7 @@ export function createRpcClient<TApi extends Api<any>>(
                         })
                     );
                 }
-                if (!exe.cx.isCancelled) {
+                if (!exeCx.isCancelled) {
                     promises.push(
                         exe.throw(new Error('cancellation requested'))
                     );
@@ -510,9 +512,9 @@ export function createRpcClient<TApi extends Api<any>>(
                 return listenHandler(name, arg, cx);
             } else if (processor.type === 'streamer') {
                 return astream(
-                    new ColdStream(executor => {
-                        listenStreamer(executor, name, arg, cx).catch(error =>
-                            executor.throw(error)
+                    new ColdStream((exe, exeCx) => {
+                        listenStreamer(exe, exeCx, name, arg, cx).catch(error =>
+                            exe.throw(error)
                         );
                     })
                 );
@@ -613,17 +615,17 @@ export function setupRpcServerConnection<TState>(
 ): void {
     // we use requestId as stream id
     const streamsTracker = new JobTracker<MessageId>();
-    const cxs = new CancellationSource();
+    const serverCxs = new CancellationSource();
 
     conn.subscribe({
         next: message => handleMessageServer(message),
         throw: async () => {
             streamsTracker.cancelAll();
-            cxs.cancel();
+            serverCxs.cancel();
         },
         close: async () => {
             streamsTracker.cancelAll();
-            cxs.cancel();
+            serverCxs.cancel();
         },
     });
 
@@ -648,7 +650,7 @@ export function setupRpcServerConnection<TState>(
         const result = await handler.handle(
             {message: msg, state},
             msg.payload.arg,
-            cxs.cancellation
+            serverCxs.cancellation
         );
         await conn.send({
             id: createMessageId(),
@@ -672,17 +674,19 @@ export function setupRpcServerConnection<TState>(
                 payload: {type: 'start'},
             });
 
-            for await (const item of processor.stream(
+            const cx = streamsTracker
+                .cancellation(requestId)
+                .combine(serverCxs.cancellation);
+
+            const processorStream = processor.stream(
                 {message: msg, state},
                 msg.payload.arg,
-                cxs.cancellation
+                cx
+            );
+            for await (const item of new CancellationStream(
+                processorStream,
+                cx
             )) {
-                // we need to check at the beginning, because processor.stream might resolved
-                // after connection has already closed
-                if (!streamsTracker.isRunning(requestId)) {
-                    break;
-                }
-
                 const itemMessageId = createMessageId();
 
                 // we must subscribe for an ack before sending the message
@@ -728,11 +732,14 @@ export function setupRpcServerConnection<TState>(
         } catch (err: any) {
             if (err instanceof BusinessError) {
                 console.warn(
-                    '[WRN] Error during RPC handle:',
+                    `[WRN] error during ${msg.payload.name} RPC handle:`,
                     getReadableError(err)
                 );
             } else {
-                console.error('[ERR] Error during RPC handle:', err);
+                console.error(
+                    `[ERR] error during ${msg.payload.name} RPC handle:`,
+                    err
+                );
             }
 
             const errorMessage = getReadableError(err);

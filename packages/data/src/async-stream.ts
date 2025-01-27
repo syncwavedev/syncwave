@@ -11,7 +11,6 @@ export interface ColdStreamExecutor<T> {
     next: (value: T) => Promise<void>;
     end: () => void;
     throw: (error: any) => Promise<void>;
-    cx: Cancellation;
 }
 
 export class HotStream<T> implements AsyncIterable<T> {
@@ -50,7 +49,10 @@ export class HotStream<T> implements AsyncIterable<T> {
 
 export class ColdStream<T> implements AsyncIterable<T> {
     constructor(
-        private readonly execute: (executor: ColdStreamExecutor<T>) => void
+        private readonly execute: (
+            executor: ColdStreamExecutor<T>,
+            cx: Cancellation
+        ) => void
     ) {}
 
     async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
@@ -58,12 +60,14 @@ export class ColdStream<T> implements AsyncIterable<T> {
         const stream = new HotStream<T>();
         const cxs = new CancellationSource();
         try {
-            this.execute({
-                next: value => stream.next(value),
-                end: () => stream.end(),
-                throw: error => stream.throw(error),
-                cx: cxs.cancellation,
-            });
+            this.execute(
+                {
+                    next: value => stream.next(value),
+                    end: () => stream.end(),
+                    throw: error => stream.throw(error),
+                },
+                cxs.cancellation
+            );
             yield* stream;
 
             complete = true;
@@ -79,7 +83,7 @@ export class ColdStream<T> implements AsyncIterable<T> {
 export class CancellationStream<T> implements AsyncIterable<T> {
     constructor(
         private readonly source: AsyncIterable<T>,
-        private readonly cancellation: Promise<void>
+        private readonly cx: Cancellation
     ) {}
 
     [Symbol.asyncIterator](): AsyncIterator<T, any, any> {
@@ -90,7 +94,7 @@ export class CancellationStream<T> implements AsyncIterable<T> {
                     iterator
                         .next(value)
                         .then(value => ({type: 'next' as const, value})),
-                    this.cancellation.then(() => ({
+                    this.cx.then(() => ({
                         type: 'cancellation' as const,
                     })),
                 ]);
@@ -98,6 +102,7 @@ export class CancellationStream<T> implements AsyncIterable<T> {
                 if (result.type === 'next') {
                     return result.value;
                 } else if (result.type === 'cancellation') {
+                    await iterator.return?.();
                     return {done: true, value: undefined};
                 } else {
                     assertNever(result);
@@ -134,7 +139,7 @@ export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
 
 export function mergeStreams<T>(source: AsyncIterable<T>[]): AsyncStream<T> {
     return astream(
-        new ColdStream(async exe => {
+        new ColdStream(async (exe, cx) => {
             try {
                 let active = source
                     .map(x => x[Symbol.asyncIterator]())
@@ -143,7 +148,7 @@ export function mergeStreams<T>(source: AsyncIterable<T>[]): AsyncStream<T> {
                         iter,
                         id,
                     }));
-                while (active.length > 0 && !exe.cx.isCancelled) {
+                while (active.length > 0 && !cx.isCancelled) {
                     const {id, result} = await Promise.race(
                         active.map(x => x.result)
                     );

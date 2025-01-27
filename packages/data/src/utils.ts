@@ -17,22 +17,19 @@ export interface Observer<T> {
     close: () => Promise<void>;
 }
 
-export class Subject<
-    TValue,
-    TObserver extends Observer<TValue> = Observer<TValue>,
-> {
-    private subs: Array<{observer: TObserver}> = [];
+export class Subject<TValue> {
+    private subs: Array<{observer: Observer<TValue>}> = [];
     private _open = true;
 
     get open() {
         return this._open;
     }
 
-    get observers(): TObserver[] {
-        return this.subs.map(x => x.observer);
+    get anyObservers(): boolean {
+        return this.subs.length > 0;
     }
 
-    subscribe(observer: TObserver): Unsubscribe {
+    subscribe(observer: Observer<TValue>): Unsubscribe {
         this.ensureOpen();
 
         // wrap if the same observer is used twice for subscription, so unsubscribe wouldn't filter both out
@@ -51,7 +48,7 @@ export class Subject<
         await whenAll([...this.subs].map(sub => sub.observer.next(value)));
     }
 
-    async throw(error: Error): Promise<void> {
+    async throw(error: unknown): Promise<void> {
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
         await whenAll([...this.subs].map(sub => sub.observer.throw(error)));
@@ -289,6 +286,11 @@ export class CancellationSource {
 
 export class Cancellation {
     static none = new CancellationSource().cancellation;
+    static cancelled = (() => {
+        const cxs = new CancellationSource();
+        cxs.cancel();
+        return cxs.cancellation;
+    })();
     constructor(
         private readonly cxs: CancellationSource,
         private signal: Promise<void>

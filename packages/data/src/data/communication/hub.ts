@@ -1,6 +1,6 @@
 import {z, ZodType} from 'zod';
 import {AsyncStream, ColdStream} from '../../async-stream.js';
-import {Cancellation, Subject} from '../../utils.js';
+import {Cancellation, Observer, Subject, Unsubscribe} from '../../utils.js';
 import {Message} from './message.js';
 import {PersistentConnection} from './persistent-connection.js';
 import {
@@ -31,16 +31,16 @@ export class HubClient<T> {
     }
 
     // next waits for all subscribers to do their work
-    async publish(message: T, cx: Cancellation) {
-        await this.server.publish({message}, cx);
+    async publish(topic: string, message: T, cx: Cancellation) {
+        await this.server.publish({topic, message}, cx);
     }
 
-    async throw(error: string, cx: Cancellation) {
-        await this.server.throw({error}, cx);
+    async throw(topic: string, error: string, cx: Cancellation) {
+        await this.server.throw({topic, error}, cx);
     }
 
-    subscribe(cx: Cancellation): AsyncStream<T> {
-        return this.server.subscribe({}, cx) as AsyncStream<T>;
+    subscribe(topic: string, cx: Cancellation): AsyncStream<T> {
+        return this.server.subscribe({topic}, cx).map(x => x.message!);
     }
 }
 
@@ -54,7 +54,7 @@ export class HubServer<T> {
     ) {
         this.rpcServer = new RpcServer(transport, createHubServerApi(schema), {
             authSecret,
-            subject: new Subject(),
+            subjects: new SubjectManager(),
         });
     }
 
@@ -67,39 +67,93 @@ export class HubServer<T> {
     }
 }
 
+class SubjectManager<T> {
+    private subjects = new Map<string, Subject<T>>();
+
+    async next(topic: string, value: T) {
+        await this.subjects.get(topic)?.next(value);
+    }
+
+    async throw(topic: string, error: unknown) {
+        await this.subjects.get(topic)?.throw(error);
+    }
+
+    subscribe(topic: string, observer: Observer<T>): Unsubscribe {
+        let subject = this.subjects.get(topic);
+        if (!subject) {
+            subject = new Subject();
+            this.subjects.set(topic, subject);
+        }
+        const unsub = subject.subscribe({
+            ...observer,
+            close: async () => {
+                await observer.close();
+                unsub();
+            },
+        });
+        return () => {
+            unsub();
+            if (!subject.anyObservers) {
+                this.subjects.delete(topic);
+            }
+        };
+    }
+}
+
 interface HubServerRpcState<T> {
     authSecret: string;
-    subject: Subject<T>;
+    subjects: SubjectManager<T>;
 }
 
 function createHubServerApi<T>(zMessage: ZodType<T>) {
     const api1 = createApi<HubServerRpcState<T>>()({
         publish: handler({
             req: z.object({
+                topic: z.string(),
                 message: zMessage,
             }),
             res: z.void(),
-            handle: async (state, {message}) => {
-                await state.subject.next(message as T);
+            handle: async (state, {topic, message}) => {
+                await state.subjects.next(topic, message!);
             },
         }),
         throw: handler({
-            req: z.object({error: z.string()}),
+            req: z.object({topic: z.string(), error: z.string()}),
             res: z.void(),
-            handle: async (state, {error}) => {
-                await state.subject.throw(new Error(error));
+            handle: async (state, {topic, error}) => {
+                await state.subjects.throw(topic, new Error(error));
             },
         }),
         subscribe: streamer({
-            req: z.object({}),
+            req: z.object({topic: z.string()}),
             item: z.object({message: zMessage}),
-            stream(state) {
-                return new ColdStream(exe => {
-                    state.subject.subscribe({
-                        next: message => exe.next({message: message as T}),
-                        throw: error => exe.throw(error),
+            stream({subjects}, {topic}, cx) {
+                return new ColdStream((exe, exeCx) => {
+                    exeCx = exeCx.combine(cx);
+
+                    const unsub = subjects.subscribe(topic, {
+                        next: message => exe.next({message: message}),
+                        throw: async error => {
+                            await exe.throw(error);
+                            exe.end();
+                            unsub();
+                        },
                         close: async () => exe.end(),
                     });
+                    exeCx
+                        .then(async () => {
+                            unsub();
+                            await exe.throw(
+                                new Error('cancellation requested')
+                            );
+                            exe.end();
+                        })
+                        .catch(error => {
+                            console.error(
+                                '[ERR] error during hub server unsub after cancellation',
+                                error
+                            );
+                        });
                 });
             },
         }),

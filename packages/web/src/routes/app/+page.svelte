@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
 	import {Cancellation} from 'ground-data';
 
@@ -10,22 +11,38 @@
 
 	let cancelled = false;
 
+	let items: Array<{index: number; value: string}> = $state([]);
+	let itemValue: string = $state('');
+
+	async function publish() {
+		await sdk.coordinatorRpc.streamPut(
+			{topic: 'stream item', value: itemValue},
+			Cancellation.none
+		);
+	}
+
 	$effect(() => {
 		(async () => {
 			try {
 				console.log('stream start');
 				const interval$ = sdk.coordinatorRpc
-					.getStream({intervalMs: 1000}, Cancellation.none)
+					.getStream({topic: 'stream item'}, Cancellation.none)
 					.while(({index}) => index < 3);
 				for await (const item of interval$) {
 					console.log('stream item', item.index);
+
+					items.push(item);
 
 					if (cancelled) {
 						break;
 					}
 				}
+
+				console.log('stream complete');
+			} catch (error) {
+				console.log('stream error', error);
 			} finally {
-				console.log('stream end');
+				console.log('stream closed');
 			}
 		})();
 	});
@@ -41,3 +58,13 @@
 {/if}
 
 <Button onclick={() => (cancelled = true)}>Stop stream</Button>
+<Input bind:value={itemValue} type="text" />
+<Button onclick={publish}>Publish into stream</Button>
+
+<div>
+	{#each items as item}
+		<div>
+			{item.index} - {item.value}
+		</div>
+	{/each}
+</div>

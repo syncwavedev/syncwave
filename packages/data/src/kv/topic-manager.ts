@@ -7,10 +7,10 @@ export class TopicManager<T> {
     private readonly topics: Registry<Topic<T>>;
 
     constructor(tx: Uint8Transaction, codec: Codec<T>) {
-        this.topics = new Registry(tx, topicTxn => new Topic(topicTxn, codec));
+        this.topics = new Registry(tx, topicTx => new Topic(topicTx, codec));
     }
 
-    topic(name: string): Topic<T> {
+    get(name: string): Topic<T> {
         return this.topics.get(name);
     }
 }

@@ -1,6 +1,13 @@
+import {z} from 'zod';
+import {MsgpackrCodec} from '../../codec.js';
 import {BusinessError} from '../../errors.js';
 import {Actor} from '../actor.js';
 import {AuthContext, AuthContextParser} from '../auth-context.js';
+import {HubClient, HubServer} from '../communication/hub.js';
+import {
+    MemTransportClient,
+    MemTransportServer,
+} from '../communication/mem-transport.js';
 import {
     Api,
     applyMiddleware,
@@ -13,6 +20,7 @@ import {DataContext, DataEffectScheduler, DataLayer} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
 import {dbApi} from './db-api.js';
+import {createTestApi, TestApiState} from './test-api.js';
 
 export interface CoordinatorApiState {
     ctx: DataContext;
@@ -69,7 +77,34 @@ export function createCoordinatorApi() {
         jwt: state.jwt,
     }));
 
+    const memTransportServer = new MemTransportServer(new MsgpackrCodec());
+    const hubMessageSchema = z.object({
+        value: z.string(),
+    });
+    const hubAuthSecret = 'hub-auth-secret';
+    const hubServer = new HubServer(
+        memTransportServer,
+        hubMessageSchema,
+        hubAuthSecret
+    );
+
+    hubServer.launch().catch(error => {
+        console.error('HubServer failed to launch', error);
+    });
+
+    const testApi = mapApiState(
+        createTestApi(),
+        (_state: CoordinatorApiState): TestApiState => ({
+            hub: new HubClient(
+                new MemTransportClient(memTransportServer, new MsgpackrCodec()),
+                hubMessageSchema,
+                hubAuthSecret
+            ),
+        })
+    );
+
     const combinedApi = {
+        ...testApi,
         ...adaptedDbApi,
         ...adaptedAuthApi,
         ...wrappedAndAdaptedInspectorApi,

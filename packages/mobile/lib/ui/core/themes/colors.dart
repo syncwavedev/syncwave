@@ -79,30 +79,36 @@ abstract final class ColorsLight {
 
 @immutable
 abstract final class ColorsDark {
-  // Core palette
-  static const Color black = Color.fromRGBO(240, 244, 248, 1);
-  static const Color white = Color.fromRGBO(28, 33, 38, 1);
+  // Core palette (True grayscale)
+  static const Color black = Color.fromRGBO(235, 235, 235, 1); // Near-white
+  static const Color white = Color.fromRGBO(28, 28, 28, 1); // Deep gray
 
   // Absolute values
   static const Color alwaysBlack = Color.fromRGBO(0, 0, 0, 1);
   static const Color alwaysWhite = Color.fromRGBO(255, 255, 255, 1);
 
   // Background & Structure
-  static const Color bg = Color.fromRGBO(18, 22, 26, 1);
-  static const Color border = Color.fromRGBO(48, 54, 60, 1);
+  static const Color bg =
+      Color.fromRGBO(24, 24, 24, 1); // True black substitute
+  static const Color border = Color.fromRGBO(60, 60, 60, 1); // Medium gray
 
-  // Text hierarchy
-  static const Color ink = black;
+  // Text hierarchy (8-bit grayscale progression)
+  static const Color ink = black; // 235,235,235
   static const Color inkSecondary =
-      Color.fromRGBO(180, 188, 196, 1); // 60% opacity
-  static const Color inkMuted = Color.fromRGBO(140, 148, 156, 1); // 40% opacity
-  static const Color inkReversed = white;
+      Color.fromRGBO(180, 180, 180, 1); // 70% contrast
+  static const Color inkMuted =
+      Color.fromRGBO(140, 140, 140, 1); // 50% contrast
+  static const Color inkPlaceholder =
+      Color.fromRGBO(100, 100, 100, 1); // 30% contrast
+  static const Color inkReversed = white; // 28,28,28
 
-  // Elevation system (8% luminance steps)
-  static const Color subtle1 = Color.fromRGBO(28, 32, 36, 1); // +10% from bg
-  static const Color subtle2 = Color.fromRGBO(38, 42, 46, 1); // +20% from bg
-  static const Color subtle3 = Color.fromRGBO(48, 52, 56, 1); // +30% from bg
-  static const Color subtle4 = Color.fromRGBO(58, 62, 66, 1); // +40% from bg
+  // Elevation system (Linear 12% increments)
+  static const Color subtle1 = Color.fromRGBO(36, 36, 36, 1); // +12% from bg
+  static const Color subtle2 = Color.fromRGBO(48, 48, 48, 1); // +24% from bg
+  static const Color subtle3 = Color.fromRGBO(60, 60, 60, 1); // +36% from bg
+  static const Color subtle4 = Color.fromRGBO(72, 72, 72, 1); // +48% from bg
 
-  static const Color action = Color.fromRGBO(140, 155, 170, 1);
+  // Interactive elements
+  static const Color action =
+      Color.fromRGBO(160, 160, 160, 1); // Primary action
 }

@@ -79,30 +79,30 @@ abstract final class ColorsLight {
 
 @immutable
 abstract final class ColorsDark {
-  // Near-white, slightly cool
-  static const Color black = Color.fromRGBO(234, 237, 240, 1);
+  // Core palette
+  static const Color black = Color.fromRGBO(240, 244, 248, 1);
   static const Color white = Color.fromRGBO(28, 33, 38, 1);
 
-  // “Always” tokens — unchanged in dark mode
+  // Absolute values
   static const Color alwaysBlack = Color.fromRGBO(0, 0, 0, 1);
   static const Color alwaysWhite = Color.fromRGBO(255, 255, 255, 1);
 
-  // Background & Border (cool dark grays)
-  static const Color bg = Color.fromRGBO(34, 39, 44, 1);
-  static const Color border = Color.fromRGBO(58, 64, 70, 1);
+  // Background & Structure
+  static const Color bg = Color.fromRGBO(18, 22, 26, 1);
+  static const Color border = Color.fromRGBO(48, 54, 60, 1);
 
-  // Ink (text) tokens
+  // Text hierarchy
   static const Color ink = black;
-  static const Color inkSecondary = Color.fromRGBO(160, 168, 176, 1);
-  static const Color inkMuted = Color.fromRGBO(130, 138, 146, 1);
+  static const Color inkSecondary =
+      Color.fromRGBO(180, 188, 196, 1); // 60% opacity
+  static const Color inkMuted = Color.fromRGBO(140, 148, 156, 1); // 40% opacity
   static const Color inkReversed = white;
 
-  // Subtle backgrounds or hover/pressed states
-  static const Color subtle1 = Color.fromRGBO(40, 46, 52, 1);
-  static const Color subtle2 = Color.fromRGBO(52, 58, 64, 1);
-  static const Color subtle3 = Color.fromRGBO(62, 70, 78, 1);
-  static const Color subtle4 = Color.fromRGBO(80, 88, 96, 1);
+  // Elevation system (8% luminance steps)
+  static const Color subtle1 = Color.fromRGBO(28, 32, 36, 1); // +10% from bg
+  static const Color subtle2 = Color.fromRGBO(38, 42, 46, 1); // +20% from bg
+  static const Color subtle3 = Color.fromRGBO(48, 52, 56, 1); // +30% from bg
+  static const Color subtle4 = Color.fromRGBO(58, 62, 66, 1); // +40% from bg
 
-  // A cool-gray action color (slightly bluish)
-  static const Color action = Color.fromRGBO(130, 145, 160, 1);
+  static const Color action = Color.fromRGBO(140, 155, 170, 1);
 }

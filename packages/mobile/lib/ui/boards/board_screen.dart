@@ -43,7 +43,7 @@ class BoardScreen extends StatelessWidget {
               debugPrint('Search');
             },
           ),
-          IconButton(
+          IconButton.filled(
             child: Icons.plus,
             onPressed: () {
               // Handle add task

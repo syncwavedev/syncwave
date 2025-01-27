@@ -56,6 +56,8 @@ class TextField extends StatefulWidget {
     this.scrollPadding = const EdgeInsets.all(20.0),
     this.enableInteractiveSelection = true,
     this.onTap,
+    this.textInputAction,
+    this.placeholder,
   });
 
   /// Controls the text being edited.
@@ -157,13 +159,19 @@ class TextField extends StatefulWidget {
   /// Called when the user taps on this text field.
   final GestureTapCallback? onTap;
 
+  /// The action the keyboard should take when the user presses the action button.
+  final TextInputAction? textInputAction;
+
+  /// Placeholder text to display when the text field is empty.
+  final String? placeholder;
+
   @override
   State<TextField> createState() => _TextFieldState();
 }
 
 class _TextFieldState extends State<TextField> {
-  late TextEditingController _controller;
-  late FocusNode _focusNode;
+  late final TextEditingController _controller;
+  late final FocusNode _focusNode;
   bool _showSelectionHandles = false;
 
   TextEditingController get _effectiveController =>
@@ -173,24 +181,18 @@ class _TextFieldState extends State<TextField> {
   @override
   void initState() {
     super.initState();
-    if (widget.controller == null) {
-      _controller = TextEditingController();
-    }
-    if (widget.focusNode == null) {
-      _focusNode = FocusNode();
-    }
+    _controller = widget.controller ?? TextEditingController();
+    _focusNode = widget.focusNode ?? FocusNode();
     _effectiveFocusNode.addListener(_handleFocusChanged);
   }
 
   @override
   void didUpdateWidget(TextField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.controller == null && oldWidget.controller != null) {
-      _controller =
-          TextEditingController.fromValue(oldWidget.controller!.value);
-    } else if (widget.controller != null && oldWidget.controller == null) {
-      _controller.dispose();
-    }
+    _updateFocusNode(oldWidget);
+  }
+
+  void _updateFocusNode(TextField oldWidget) {
     if (widget.focusNode != oldWidget.focusNode) {
       (oldWidget.focusNode ?? _focusNode).removeListener(_handleFocusChanged);
       (widget.focusNode ?? _focusNode).addListener(_handleFocusChanged);
@@ -200,69 +202,79 @@ class _TextFieldState extends State<TextField> {
   @override
   void dispose() {
     _effectiveFocusNode.removeListener(_handleFocusChanged);
-    if (widget.controller == null) {
-      _controller.dispose();
-    }
-    if (widget.focusNode == null) {
-      _focusNode.dispose();
-    }
+    if (widget.controller == null) _controller.dispose();
+    if (widget.focusNode == null) _focusNode.dispose();
     super.dispose();
   }
 
-  void _handleFocusChanged() {
-    setState(() {
-      // Rebuild when focus changes to show/hide selection handles
-    });
-  }
-
-  void _handleSelectionChanged(
-      TextSelection selection, SelectionChangedCause? cause) {
-    final bool willShowSelectionHandles = _shouldShowSelectionHandles(cause);
-    if (willShowSelectionHandles != _showSelectionHandles) {
-      setState(() {
-        _showSelectionHandles = willShowSelectionHandles;
-      });
-    }
-  }
+  void _handleFocusChanged() => setState(() {});
 
   bool _shouldShowSelectionHandles(SelectionChangedCause? cause) {
-    if (cause == SelectionChangedCause.keyboard) {
-      return false;
-    }
+    return cause != SelectionChangedCause.keyboard &&
+        (!widget.readOnly || !_effectiveController.selection.isCollapsed) &&
+        (cause == SelectionChangedCause.longPress ||
+            _effectiveController.text.isNotEmpty);
+  }
 
-    if (widget.readOnly && _effectiveController.selection.isCollapsed) {
-      return false;
-    }
-
-    if (cause == SelectionChangedCause.longPress) {
-      return true;
-    }
-
-    if (_effectiveController.text.isNotEmpty) {
-      return true;
-    }
-
-    return false;
+  Widget _buildPlaceholder(BuildContext context, TextStyle textStyle) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Text(
+          widget.placeholder!,
+          style: textStyle.copyWith(
+            color: context.colors.inkSecondary.withAlpha(175),
+          ),
+          textAlign: widget.textAlign,
+          textDirection: widget.textDirection,
+          strutStyle: widget.strutStyle,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = widget.style?.copyWith(
-          color: widget.enabled ? context.colors.ink : context.colors.inkMuted,
-        ) ??
-        TextStyle(
-          color: widget.enabled ? context.colors.ink : context.colors.inkMuted,
-          fontSize: 16,
-        );
+    final textStyle = (widget.style ?? TextStyle()).copyWith(
+      color: widget.enabled ? context.colors.ink : context.colors.inkMuted,
+    );
 
-    Widget child = EditableText(
+    return MouseRegion(
+      cursor: SystemMouseCursors.text,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.translucent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.colors.subtle2,
+            borderRadius: BorderRadius.circular(context.radius.md),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _effectiveController,
+            builder: (context, value, _) {
+              return Stack(
+                children: [
+                  _buildEditableText(context, textStyle),
+                  if (widget.placeholder != null && value.text.isEmpty)
+                    _buildPlaceholder(context, textStyle),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditableText(BuildContext context, TextStyle textStyle) {
+    return EditableText(
       controller: _effectiveController,
       focusNode: _effectiveFocusNode,
       style: textStyle,
       cursorColor: widget.cursorColor ?? context.colors.ink,
       backgroundCursorColor: context.colors.inkSecondary,
       cursorWidth: widget.cursorWidth,
-      cursorHeight: widget.cursorHeight,
+      cursorHeight: widget.cursorHeight ?? textStyle.fontSize!,
       cursorRadius: widget.cursorRadius,
       textAlign: widget.textAlign,
       textDirection: widget.textDirection,
@@ -286,22 +298,14 @@ class _TextFieldState extends State<TextField> {
       selectionWidthStyle: widget.selectionWidthStyle,
       scrollPadding: widget.scrollPadding,
       enableInteractiveSelection: widget.enableInteractiveSelection,
-      onSelectionChanged: _handleSelectionChanged,
-    );
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.text,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        behavior: HitTestBehavior.translucent,
-        child: Container(
-          decoration: BoxDecoration(
-            color: context.colors.subtle1,
-            borderRadius: BorderRadius.circular(context.radius.sm),
-          ),
-          child: child,
-        ),
-      ),
+      textInputAction: widget.textInputAction,
+      onSelectionChanged: (selection, cause) {
+        final showHandles = _shouldShowSelectionHandles(cause);
+        if (showHandles != _showSelectionHandles) {
+          setState(() => _showSelectionHandles = showHandles);
+        }
+      },
+      keyboardAppearance: widget.keyboardAppearance ?? context.theme.brightness,
     );
   }
 }

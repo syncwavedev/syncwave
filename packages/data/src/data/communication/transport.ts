@@ -1,4 +1,5 @@
-import {Observer, Unsubscribe} from '../../utils.js';
+import {Cancellation} from '../../cancellation.js';
+import {Observer} from '../../utils.js';
 
 export interface TransportServer<T> {
     launch(cb: (connection: Connection<T>) => void): Promise<void>;
@@ -22,6 +23,6 @@ export interface MessageConnectionEvent<T>
 
 export interface Connection<T> {
     send(message: T): Promise<void>;
-    subscribe(observer: Observer<T>): Unsubscribe;
+    subscribe(observer: Observer<T>, cx: Cancellation): void;
     close(): Promise<void>;
 }

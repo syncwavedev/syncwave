@@ -1,11 +1,7 @@
 import {Channel} from 'async-channel';
+import {Cancellation, CancellationSource} from './cancellation.js';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
-import {
-    assert,
-    assertNever,
-    Cancellation,
-    CancellationSource,
-} from './utils.js';
+import {assert, assertNever} from './utils.js';
 
 export interface ColdStreamExecutor<T> {
     next: (value: T) => Promise<void>;

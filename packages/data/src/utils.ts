@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {astream, AsyncStream} from './async-stream.js';
-import {Deferred} from './deferred.js';
+import {Cancellation, CancellationError} from './cancellation.js';
 import {
     AggregateBusinessError,
     AggregateError,
@@ -8,8 +8,6 @@ import {
 } from './errors.js';
 
 export type Brand<T, B> = T & {__brand: B | undefined};
-
-export type Unsubscribe = () => void;
 
 export interface Observer<T> {
     next: (value: T) => Promise<void>;
@@ -29,7 +27,7 @@ export class Subject<TValue> {
         return this.subs.length > 0;
     }
 
-    subscribe(observer: Observer<TValue>): Unsubscribe {
+    subscribe(observer: Observer<TValue>, cx: Cancellation): void {
         this.ensureOpen();
 
         // wrap if the same observer is used twice for subscription, so unsubscribe wouldn't filter both out
@@ -37,9 +35,15 @@ export class Subject<TValue> {
 
         this.subs.push(sub);
 
-        return () => {
+        cx.then(async () => {
+            await sub.observer.throw(
+                new CancellationError('Subject.subscribe')
+            );
+            await sub.observer.close();
             this.subs = this.subs.filter(x => x !== sub);
-        };
+        }).catch(error => {
+            console.error('[ERR] failed to cancel subject subscription', error);
+        });
     }
 
     async next(value: TValue): Promise<void> {
@@ -266,52 +270,4 @@ export function zUint8Array() {
     return z.custom<Uint8Array>(x => x instanceof Uint8Array, {
         message: 'Uint8Array expected',
     });
-}
-
-export class CancellationSource {
-    private readonly signal = new Deferred<void>();
-
-    get cancellation() {
-        return new Cancellation(this, this.signal.promise);
-    }
-
-    get isCancelled() {
-        return this.signal.state === 'fulfilled';
-    }
-
-    cancel() {
-        this.signal.resolve();
-    }
-}
-
-export class Cancellation {
-    static none = new CancellationSource().cancellation;
-    static cancelled = (() => {
-        const cxs = new CancellationSource();
-        cxs.cancel();
-        return cxs.cancellation;
-    })();
-    constructor(
-        private readonly cxs: CancellationSource,
-        private signal: Promise<void>
-    ) {}
-
-    get isCancelled() {
-        return this.cxs.isCancelled;
-    }
-
-    async then<T>(cb: () => PromiseLike<T> | T) {
-        return await this.signal.then(cb);
-    }
-
-    combine(cx: Cancellation): Cancellation {
-        const cxs = new CancellationSource();
-        Promise.race([cx, this])
-            .then(() => cxs.cancel())
-            .catch(error => {
-                console.error('[ERR] error for combined cx', error);
-            });
-
-        return cxs.cancellation;
-    }
 }

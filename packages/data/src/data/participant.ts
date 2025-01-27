@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {Cancellation} from '../utils.js';
+import {Cancellation} from '../cancellation.js';
 import {DataAccessor} from './actor.js';
 import {Message} from './communication/message.js';
 import {PersistentConnection} from './communication/persistent-connection.js';

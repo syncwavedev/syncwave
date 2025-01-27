@@ -1,4 +1,5 @@
 import {
+	Cancellation,
 	Deferred,
 	Subject,
 	assert,
@@ -7,7 +8,6 @@ import {
 	type Logger,
 	type Observer,
 	type TransportClient,
-	type Unsubscribe,
 } from 'ground-data';
 
 export interface WsTransportClientOptions<T> {
@@ -53,8 +53,8 @@ export class WsClientConnection<T> implements Connection<T> {
 		this.ws.send(data);
 	}
 
-	subscribe(cb: Observer<T>): Unsubscribe {
-		return this.subject.subscribe(cb);
+	subscribe(cb: Observer<T>, cx: Cancellation) {
+		return this.subject.subscribe(cb, cx);
 	}
 
 	async close(): Promise<void> {

@@ -4,11 +4,12 @@ import {
     HotStream,
     mergeStreams,
 } from '../../async-stream.js';
+import {Cancellation} from '../../cancellation.js';
 import {Codec} from '../../codec.js';
 import {BUS_MAX_PULL_COUNT, BUS_PULL_INTERVAL_MS} from '../../constants.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {TopicManager} from '../../kv/topic-manager.js';
-import {Cancellation, interval} from '../../utils.js';
+import {interval} from '../../utils.js';
 import {DataEffectScheduler} from '../data-layer.js';
 import {HubClient} from './hub.js';
 

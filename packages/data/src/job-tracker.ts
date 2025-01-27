@@ -1,4 +1,4 @@
-import {Cancellation, CancellationSource} from './utils.js';
+import {Cancellation, CancellationSource} from './cancellation.js';
 
 export class JobTracker<T> {
     private readonly runningJobs = new Map<T, CancellationSource>();

@@ -6,17 +6,12 @@ import {
     ColdStream,
     ColdStreamExecutor,
 } from '../../async-stream.js';
+import {Cancellation, CancellationSource} from '../../cancellation.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {Deferred} from '../../deferred.js';
 import {BusinessError, getReadableError} from '../../errors.js';
 import {JobTracker} from '../../job-tracker.js';
-import {
-    assertNever,
-    Cancellation,
-    CancellationSource,
-    wait,
-    whenAll,
-} from '../../utils.js';
+import {assertNever, wait, whenAll} from '../../utils.js';
 import {
     createMessageId,
     Message,
@@ -275,81 +270,94 @@ export function createRpcClient<TApi extends Api<any>>(
         let state: 'pending' | 'open' | 'end' = 'pending';
 
         const timeoutCxs = new CancellationSource();
-        const unsub = conn.subscribe({
-            next: async msg => {
-                if (msg.type !== 'response' || msg.requestId !== requestId) {
-                    return;
-                }
+        const subscribeCxs = new CancellationSource();
+        const unsub = () => subscribeCxs.cancel();
 
-                timeoutCxs.cancel();
-
-                if (msg.payload.type === 'error') {
-                    if (state === 'pending') {
-                        await exe.throw(new Error("got 'error' before start"));
-                    }
-                    await exe.throw(
-                        new Error(
-                            'rpc call failed: ' +
-                                (msg.payload.message ?? '<no message>')
-                        )
-                    );
-                    unsub();
-                } else if (msg.payload.type === 'success') {
-                    await exe.throw(
-                        new Error("unexpected 'success' message for stream")
-                    );
-                    unsub();
-                } else if (msg.payload.type === 'item') {
-                    if (state !== 'open') {
-                        await exe.throw(new Error("got 'item' in " + state));
-                        unsub();
+        conn.subscribe(
+            {
+                next: async msg => {
+                    if (
+                        msg.type !== 'response' ||
+                        msg.requestId !== requestId
+                    ) {
                         return;
                     }
-                    const itemId = msg.id;
-                    await exe.next(msg.payload.item);
 
-                    await conn.send({
-                        id: createMessageId(),
-                        type: 'ack',
-                        headers: getHeaders(),
-                        itemId,
-                    });
-                } else if (msg.payload.type === 'end') {
-                    if (state !== 'open') {
-                        await exe.throw(new Error("got 'end' in " + state));
+                    timeoutCxs.cancel();
+
+                    if (msg.payload.type === 'error') {
+                        if (state === 'pending') {
+                            await exe.throw(
+                                new Error("got 'error' before start")
+                            );
+                        }
+                        await exe.throw(
+                            new Error(
+                                'rpc call failed: ' +
+                                    (msg.payload.message ?? '<no message>')
+                            )
+                        );
                         unsub();
-                        return;
-                    }
-                    state = 'end';
-                    exe.end();
-                    unsub();
-                } else if (msg.payload.type === 'start') {
-                    if (state !== 'pending') {
-                        await exe.throw(new Error('stream started twice'));
+                    } else if (msg.payload.type === 'success') {
+                        await exe.throw(
+                            new Error("unexpected 'success' message for stream")
+                        );
                         unsub();
-                        return;
+                    } else if (msg.payload.type === 'item') {
+                        if (state !== 'open') {
+                            await exe.throw(
+                                new Error("got 'item' in " + state)
+                            );
+                            unsub();
+                            return;
+                        }
+                        const itemId = msg.id;
+                        await exe.next(msg.payload.item);
+
+                        await conn.send({
+                            id: createMessageId(),
+                            type: 'ack',
+                            headers: getHeaders(),
+                            itemId,
+                        });
+                    } else if (msg.payload.type === 'end') {
+                        if (state !== 'open') {
+                            await exe.throw(new Error("got 'end' in " + state));
+                            unsub();
+                            return;
+                        }
+                        state = 'end';
+                        exe.end();
+                        unsub();
+                    } else if (msg.payload.type === 'start') {
+                        if (state !== 'pending') {
+                            await exe.throw(new Error('stream started twice'));
+                            unsub();
+                            return;
+                        } else {
+                            state = 'open';
+                        }
                     } else {
-                        state = 'open';
+                        assertNever(msg.payload);
                     }
-                } else {
-                    assertNever(msg.payload);
-                }
+                },
+                throw: async error => {
+                    timeoutCxs.cancel();
+                    await exe.throw(error);
+                    state = 'end';
+                    unsub();
+                },
+                close: async () => {
+                    timeoutCxs.cancel();
+                    state = 'end';
+                    await exe.throw(
+                        new Error('lost connection to rpc server lost')
+                    );
+                    unsub();
+                },
             },
-            throw: async error => {
-                timeoutCxs.cancel();
-                await exe.throw(error);
-                state = 'end';
-                unsub();
-            },
-            close: async () => {
-                timeoutCxs.cancel();
-                state = 'end';
-                await exe.throw(
-                    new Error('lost connection to rpc server lost')
-                );
-                unsub();
-            },
-        });
+            subscribeCxs.cancellation
+        );
 
         try {
             await conn.send({
@@ -414,54 +422,64 @@ export function createRpcClient<TApi extends Api<any>>(
         const result = new Deferred<any>();
         const requestId = createMessageId();
         const timeoutCxs = new CancellationSource();
+        const subscribeCxs = new CancellationSource();
+        const unsub = () => subscribeCxs.cancel();
 
-        const unsub = conn.subscribe({
-            next: async msg => {
-                if (!(msg.type === 'response' && msg.requestId === requestId)) {
-                    return;
-                }
-                timeoutCxs.cancel();
-                if (msg.payload.type === 'error') {
-                    result.reject(
-                        new Error(
-                            'rpc call failed: ' +
-                                (msg.payload.message ?? '<no message>')
+        conn.subscribe(
+            {
+                next: async msg => {
+                    if (
+                        !(
+                            msg.type === 'response' &&
+                            msg.requestId === requestId
                         )
-                    );
+                    ) {
+                        return;
+                    }
+                    timeoutCxs.cancel();
+                    if (msg.payload.type === 'error') {
+                        result.reject(
+                            new Error(
+                                'rpc call failed: ' +
+                                    (msg.payload.message ?? '<no message>')
+                            )
+                        );
+                        unsub();
+                    } else if (msg.payload.type === 'success') {
+                        result.resolve(msg.payload.result);
+                        unsub();
+                    } else if (msg.payload.type === 'item') {
+                        result.reject(
+                            new Error("unexpected 'item' message for handler")
+                        );
+                        unsub();
+                    } else if (msg.payload.type === 'end') {
+                        result.reject(
+                            new Error("unexpected 'end' message for handler")
+                        );
+                        unsub();
+                    } else if (msg.payload.type === 'start') {
+                        result.reject(
+                            new Error("unexpected 'start' message for handler")
+                        );
+                        unsub();
+                    } else {
+                        assertNever(msg.payload);
+                    }
+                },
+                throw: async error => {
+                    timeoutCxs.cancel();
+                    result.reject(error);
                     unsub();
-                } else if (msg.payload.type === 'success') {
-                    result.resolve(msg.payload.result);
+                },
+                close: async () => {
+                    timeoutCxs.cancel();
+                    result.reject(new Error('lost connection to rpc server'));
                     unsub();
-                } else if (msg.payload.type === 'item') {
-                    result.reject(
-                        new Error("unexpected 'item' message for handler")
-                    );
-                    unsub();
-                } else if (msg.payload.type === 'end') {
-                    result.reject(
-                        new Error("unexpected 'end' message for handler")
-                    );
-                    unsub();
-                } else if (msg.payload.type === 'start') {
-                    result.reject(
-                        new Error("unexpected 'start' message for handler")
-                    );
-                    unsub();
-                } else {
-                    assertNever(msg.payload);
-                }
+                },
             },
-            throw: async error => {
-                timeoutCxs.cancel();
-                result.reject(error);
-                unsub();
-            },
-            close: async () => {
-                timeoutCxs.cancel();
-                result.reject(new Error('lost connection to rpc server'));
-                unsub();
-            },
-        });
+            subscribeCxs.cancellation
+        );
 
         wait(RPC_CALL_TIMEOUT_MS, timeoutCxs.cancellation)
             .then(() => {
@@ -555,25 +573,30 @@ async function waitMessage<S extends Message>(
 ): Promise<S | undefined> {
     const result = new Deferred<S | undefined>();
     const timeoutCxs = new CancellationSource();
-    const unsub = conn.subscribe({
-        next: async message => {
-            if (predicate(message)) {
-                result.resolve(message as any);
+    const subscribeCxs = new CancellationSource();
+    const unsub = () => subscribeCxs.cancel();
+    conn.subscribe(
+        {
+            next: async message => {
+                if (predicate(message)) {
+                    result.resolve(message as any);
+                    timeoutCxs.cancel();
+                    unsub();
+                }
+            },
+            throw: async error => {
                 timeoutCxs.cancel();
+                result.reject(error);
                 unsub();
-            }
+            },
+            close: async () => {
+                timeoutCxs.cancel();
+                result.resolve(undefined);
+                unsub();
+            },
         },
-        throw: async error => {
-            timeoutCxs.cancel();
-            result.reject(error);
-            unsub();
-        },
-        close: async () => {
-            timeoutCxs.cancel();
-            result.resolve(undefined);
-            unsub();
-        },
-    });
+        subscribeCxs.cancellation
+    );
 
     wait(timeoutMs, timeoutCxs.cancellation)
         .then(() => {
@@ -617,17 +640,20 @@ export function setupRpcServerConnection<TState>(
     const streamsTracker = new JobTracker<MessageId>();
     const serverCxs = new CancellationSource();
 
-    conn.subscribe({
-        next: message => handleMessageServer(message),
-        throw: async () => {
-            streamsTracker.cancelAll();
-            serverCxs.cancel();
+    conn.subscribe(
+        {
+            next: message => handleMessageServer(message),
+            throw: async () => {
+                streamsTracker.cancelAll();
+                serverCxs.cancel();
+            },
+            close: async () => {
+                streamsTracker.cancelAll();
+                serverCxs.cancel();
+            },
         },
-        close: async () => {
-            streamsTracker.cancelAll();
-            serverCxs.cancel();
-        },
-    });
+        Cancellation.none
+    );
 
     async function handleMessageServer(message: Message) {
         if (message.type === 'request') {

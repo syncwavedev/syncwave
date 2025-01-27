@@ -1,11 +1,11 @@
 import {
+    Cancellation,
     Codec,
     Connection,
     Deferred,
     Observer,
     Subject,
     TransportServer,
-    Unsubscribe,
     whenAll,
 } from 'ground-data';
 import {Server} from 'http';
@@ -29,13 +29,16 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss.on('connection', (ws: WebSocket) => {
             const conn = new WsConnection<T>(ws, this.opt.codec);
 
-            conn.subscribe({
-                next: () => Promise.resolve(),
-                throw: () => Promise.resolve(),
-                close: async () => {
-                    this.conns = this.conns.filter(x => x !== conn);
+            conn.subscribe(
+                {
+                    next: () => Promise.resolve(),
+                    throw: () => Promise.resolve(),
+                    close: async () => {
+                        this.conns = this.conns.filter(x => x !== conn);
+                    },
                 },
-            });
+                Cancellation.none
+            );
             this.conns.push(conn);
 
             cb(conn);
@@ -96,8 +99,8 @@ export class WsConnection<T> implements Connection<T> {
         });
     }
 
-    subscribe(observer: Observer<T>): Unsubscribe {
-        return this.subject.subscribe(observer);
+    subscribe(observer: Observer<T>, cx: Cancellation) {
+        return this.subject.subscribe(observer, cx);
     }
 
     async close(): Promise<void> {

@@ -1,5 +1,6 @@
+import {Cancellation} from '../../cancellation.js';
 import {RECONNECT_WAIT_MS} from '../../constants.js';
-import {Observer, Subject, Unsubscribe, wait} from '../../utils.js';
+import {Observer, Subject, wait} from '../../utils.js';
 import {Connection, TransportClient} from './transport.js';
 
 export class PersistentConnection<T> implements Connection<T> {
@@ -20,14 +21,14 @@ export class PersistentConnection<T> implements Connection<T> {
         await connection.send(message);
     }
 
-    subscribe(cb: Observer<T>): Unsubscribe {
+    subscribe(cb: Observer<T>, cx: Cancellation): void {
         this.assertOpen();
         // connect if not already
         this.getConnection().catch(err => {
             console.error('error while connection to the server: ', err);
         });
 
-        return this.subject.subscribe(cb);
+        this.subject.subscribe(cb, cx);
     }
 
     async close(): Promise<void> {
@@ -80,21 +81,24 @@ export class PersistentConnection<T> implements Connection<T> {
                     }
                 };
 
-                conn.subscribe({
-                    next: async event => {
-                        await this.subject.next(event);
+                conn.subscribe(
+                    {
+                        next: async event => {
+                            await this.subject.next(event);
+                        },
+                        throw: async error => {
+                            console.error(
+                                '[ERR] error in underlying connection',
+                                error
+                            );
+                            await reconnect();
+                        },
+                        close: async () => {
+                            await reconnect();
+                        },
                     },
-                    throw: async error => {
-                        console.error(
-                            '[ERR] error in underlying connection',
-                            error
-                        );
-                        await reconnect();
-                    },
-                    close: async () => {
-                        await reconnect();
-                    },
-                });
+                    Cancellation.none
+                );
 
                 return conn;
             });

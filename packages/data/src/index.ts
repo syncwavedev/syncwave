@@ -1,5 +1,6 @@
 export * from './async-stream.js';
 export * from './auth/google.js';
+export * from './cancellation.js';
 export * from './codec.js';
 export * from './constants.js';
 export * from './crdt/crdt.js';

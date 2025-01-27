@@ -1,17 +1,12 @@
 import {astream} from '../async-stream.js';
+import {Cancellation} from '../cancellation.js';
 import {MsgpackrCodec} from '../codec.js';
 import {PULL_WAIT_MS} from '../constants.js';
 import {BusinessError} from '../errors.js';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {TopicManager} from '../kv/topic-manager.js';
 import {getNow} from '../timestamp.js';
-import {
-    assertNever,
-    Cancellation,
-    unimplemented,
-    wait,
-    whenAll,
-} from '../utils.js';
+import {assertNever, unimplemented, wait, whenAll} from '../utils.js';
 import {AuthContext} from './auth-context.js';
 import {CoordinatorRpc} from './coordinator/coordinator-api.js';
 import {OnDocChange} from './doc-repo.js';

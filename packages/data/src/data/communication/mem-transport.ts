@@ -1,5 +1,6 @@
+import {Cancellation} from '../../cancellation.js';
 import {Codec} from '../../codec.js';
-import {Observer, Subject, Unsubscribe} from '../../utils.js';
+import {Observer, Subject} from '../../utils.js';
 import {Connection, TransportClient, TransportServer} from './transport.js';
 
 export class MemConnection<T> implements Connection<T> {
@@ -27,10 +28,10 @@ export class MemConnection<T> implements Connection<T> {
         });
     }
 
-    subscribe(observer: Observer<T>): Unsubscribe {
+    subscribe(observer: Observer<T>, cx: Cancellation) {
         this.ensureOpen();
 
-        return this.subject.subscribe(observer);
+        this.subject.subscribe(observer, cx);
     }
 
     async close(): Promise<void> {

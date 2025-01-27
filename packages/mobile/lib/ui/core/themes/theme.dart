@@ -38,6 +38,9 @@ final class Theme with Diagnosticable {
   final Typography typography;
   final Icons icons;
 
+  Brightness get brightness =>
+      colors.isDark ? Brightness.dark : Brightness.light;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;

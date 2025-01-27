@@ -31,6 +31,7 @@ class MessageTile extends StatelessWidget {
                   message.from,
                   style: context.text.caption.copyWith(
                     fontWeight: FontWeight.w600,
+                    height: context.text.tight,
                   ),
                 ),
                 Text(

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:ground/models/task.dart';
 import 'package:ground/ui/core/messages/messages_list.dart';
@@ -29,6 +30,7 @@ class TaskScreen extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
+              placeholder: 'Message',
               maxLines: 5,
               minLines: 1,
               style: context.text.body.copyWith(

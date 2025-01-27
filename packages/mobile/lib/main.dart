@@ -27,6 +27,7 @@ class AppView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WidgetsApp(
+      // showPerformanceOverlay: true,
       color: context.colors.ink,
       pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) {
         return AppPageRoute<T>(

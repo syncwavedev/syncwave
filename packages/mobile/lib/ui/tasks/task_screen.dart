@@ -1,7 +1,6 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:ground/models/task.dart';
-import 'package:ground/ui/core/messages/messages_list.dart';
+import 'package:ground/ui/core/messages/messages_silver_list.dart';
 import 'package:ground/ui/core/navigator/navigator.dart';
 import 'package:ground/ui/tasks/circular_status.dart';
 import 'package:ground/ui/widgets/buttons.dart';
@@ -40,36 +39,46 @@ class TaskScreen extends StatelessWidget {
           ),
         ],
       ),
-      resizeBodyForKeyboard: true,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-            horizontal: context.spacing.md, vertical: context.spacing.sm),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              task.content,
-              style: context.text.body,
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.spacing.md,
+              vertical: context.spacing.sm,
             ),
-            SizedBox(height: context.spacing.md),
-            Divider(),
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: context.spacing.md),
-              child: Row(children: [
-                const CircularStatus(currentStep: 1, totalSteps: 2, size: 24),
-                SizedBox(width: context.spacing.sm),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate.fixed([
                 Text(
-                  'In Progress',
-                  style: context.text.body.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  task.content,
+                  style: context.text.body,
                 ),
+                SizedBox(height: context.spacing.md),
+                const Divider(),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: context.spacing.md),
+                  child: Row(children: [
+                    const CircularStatus(
+                        currentStep: 1, totalSteps: 2, size: 24),
+                    SizedBox(width: context.spacing.sm),
+                    Text(
+                      'In Progress',
+                      style: context.text.body.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ]),
+                ),
+                const Divider(),
               ]),
             ),
-            Divider(),
-            Expanded(child: MessageList(messages: task.messages)),
-          ],
-        ),
+          ),
+          SliverPadding(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.spacing.md,
+            ),
+            sliver: MessageSilverList(messages: task.messages),
+          ),
+        ],
       ),
     );
   }

@@ -4,17 +4,16 @@ import 'package:ground/models/message.dart';
 import '../../widgets/divider.dart';
 import 'message_tile.dart';
 
-class MessageList extends StatelessWidget {
-  final EdgeInsetsGeometry? padding;
+class MessageSilverList extends StatelessWidget {
   final List<Message> messages;
+  final EdgeInsetsGeometry? padding;
 
-  const MessageList({super.key, required this.messages, this.padding});
+  const MessageSilverList({super.key, required this.messages, this.padding});
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
+    return SliverList.separated(
       itemCount: messages.length,
-      padding: padding,
       separatorBuilder: (context, index) => const Divider(),
       itemBuilder: (context, index) {
         final message = messages[index];

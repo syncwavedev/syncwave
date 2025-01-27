@@ -4,7 +4,7 @@
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import {getSdk} from '$lib/utils';
-	import {type DataNodeDto} from 'ground-data';
+	import {Cancellation, type DataNodeDto} from 'ground-data';
 	import {ChevronDown, Dot} from 'lucide-svelte';
 
 	let source: 'client' | 'server' = $state('server');
@@ -13,12 +13,12 @@
 	let itemsPromise: Promise<DataNodeDto> | undefined = $state(undefined);
 
 	$effect(() => {
-		itemsPromise = sdk.coordinatorRpc.getDbTree({});
+		itemsPromise = sdk.coordinatorRpc.getDbTree({}, Cancellation.none);
 	});
 
 	function openDetails(path: Uint8Array[]) {
 		detailsPromise = (async () => {
-			const info = await sdk.coordinatorRpc.getDbItem({path});
+			const info = await sdk.coordinatorRpc.getDbItem({path}, Cancellation.none);
 			return JSON.stringify(info, null, 2);
 		})();
 	}

@@ -127,15 +127,6 @@
 					<ContextMenu.Shortcut>⌘⇧B</ContextMenu.Shortcut>
 				</ContextMenu.CheckboxItem>
 				<ContextMenu.CheckboxItem>Show Full URLs</ContextMenu.CheckboxItem>
-				<ContextMenu.Separator />
-				<ContextMenu.RadioGroup>
-					<ContextMenu.Group>
-						<ContextMenu.GroupHeading inset>People</ContextMenu.GroupHeading>
-						<ContextMenu.Separator />
-						<ContextMenu.RadioItem value="pedro">Pedro Duarte</ContextMenu.RadioItem>
-						<ContextMenu.RadioItem value="colm">Colm Tuite</ContextMenu.RadioItem>
-					</ContextMenu.Group>
-				</ContextMenu.RadioGroup>
 			</ContextMenu.Content>
 		</ContextMenu.Root>
 	{/each}

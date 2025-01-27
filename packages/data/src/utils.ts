@@ -305,7 +305,7 @@ export class Cancellation {
     combine(cx: Cancellation): Cancellation {
         const cxs = new CancellationSource();
         Promise.race([cx, this])
-            .then(() => cxs.cancel)
+            .then(() => cxs.cancel())
             .catch(error => {
                 console.error('[ERR] error for combined cx', error);
             });

@@ -270,7 +270,7 @@ export function createRpcClient<TApi extends Api<any>>(
     ) {
         const requestId = createMessageId();
 
-        let started = false;
+        let state: 'pending' | 'open' | 'end' = 'pending';
 
         const timeoutCxs = new CancellationSource();
         const unsub = conn.subscribe({
@@ -282,7 +282,7 @@ export function createRpcClient<TApi extends Api<any>>(
                 timeoutCxs.cancel();
 
                 if (msg.payload.type === 'error') {
-                    if (!started) {
+                    if (state === 'pending') {
                         await exe.throw(new Error("got 'error' before start"));
                     }
                     await exe.throw(
@@ -298,8 +298,8 @@ export function createRpcClient<TApi extends Api<any>>(
                     );
                     unsub();
                 } else if (msg.payload.type === 'item') {
-                    if (!started) {
-                        await exe.throw(new Error("got 'item' before start"));
+                    if (state !== 'open') {
+                        await exe.throw(new Error("got 'item' in " + state));
                         unsub();
                         return;
                     }
@@ -313,20 +313,21 @@ export function createRpcClient<TApi extends Api<any>>(
                         itemId,
                     });
                 } else if (msg.payload.type === 'end') {
-                    if (!started) {
-                        await exe.throw(new Error("got 'end' before start"));
+                    if (state !== 'open') {
+                        await exe.throw(new Error("got 'end' in " + state));
                         unsub();
                         return;
                     }
+                    state = 'end';
                     exe.end();
                     unsub();
                 } else if (msg.payload.type === 'start') {
-                    if (started) {
+                    if (state !== 'pending') {
                         await exe.throw(new Error('stream started twice'));
                         unsub();
                         return;
                     } else {
-                        started = true;
+                        state = 'open';
                     }
                 } else {
                     assertNever(msg.payload);
@@ -335,10 +336,12 @@ export function createRpcClient<TApi extends Api<any>>(
             throw: async error => {
                 timeoutCxs.cancel();
                 await exe.throw(error);
+                state = 'end';
                 unsub();
             },
             close: async () => {
                 timeoutCxs.cancel();
+                state = 'end';
                 await exe.throw(
                     new Error('lost connection to rpc server lost')
                 );
@@ -360,7 +363,7 @@ export function createRpcClient<TApi extends Api<any>>(
 
         wait(RPC_CALL_TIMEOUT_MS, timeoutCxs.cancellation)
             .then(async () => {
-                if (!started) {
+                if (state === 'pending') {
                     await exe.throw(
                         new Error('stream failed to start: timeout')
                     );
@@ -382,15 +385,23 @@ export function createRpcClient<TApi extends Api<any>>(
             .then(async () => {
                 unsub();
                 timeoutCxs.cancel();
-                await whenAll([
-                    exe.throw(new Error('cancellation requested')),
-                    conn.send({
-                        id: createMessageId(),
-                        type: 'cancel',
-                        requestId,
-                        headers: {},
-                    }),
-                ]);
+                const promises: Promise<void>[] = [];
+                if (state !== 'end') {
+                    promises.push(
+                        conn.send({
+                            id: createMessageId(),
+                            type: 'cancel',
+                            requestId,
+                            headers: {},
+                        })
+                    );
+                }
+                if (!exe.cx.isCancelled) {
+                    promises.push(
+                        exe.throw(new Error('cancellation requested'))
+                    );
+                }
+                await whenAll(promises);
             })
             .catch(error => {
                 console.error('[ERR] error during cancellation', error);

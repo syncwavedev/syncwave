@@ -3,18 +3,21 @@
 	import {Plus} from 'lucide-svelte';
 	import {Button} from './ui/button';
 	import {getSdk} from '$lib/utils';
-	import {createBoardId} from 'ground-data';
+	import {Cancellation, createBoardId} from 'ground-data';
 	import {goto} from '$app/navigation';
 
 	const sdk = getSdk();
 
 	async function createBoard() {
 		const boardId = createBoardId();
-		const board = await sdk.data.createBoard({
-			boardId,
-			name: 'Untitled',
-			slug: boardId,
-		});
+		const board = await sdk.data.createBoard(
+			{
+				boardId,
+				name: 'Untitled',
+				slug: boardId,
+			},
+			Cancellation.none
+		);
 
 		goto(`/app/b/${board.id}`);
 	}

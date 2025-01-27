@@ -16,38 +16,34 @@ export interface ColdStreamExecutor<T> {
 
 export class HotStream<T> implements AsyncIterable<T> {
     private chan = new Channel<T>();
-    private cxs = new CancellationSource();
-
-    get cx() {
-        return this.cxs.cancellation;
-    }
 
     end() {
+        if (this.chan.closed) {
+            console.warn('[WRN] end on a closed HotStream');
+            return;
+        }
         this.chan.close();
     }
 
     async next(value: T) {
+        if (this.chan.closed) {
+            console.warn('[WRN] next on a closed HotStream');
+            return;
+        }
         await this.chan.push(value);
     }
 
     async throw(error: any) {
+        if (this.chan.closed) {
+            console.warn('[WRN] throw on a closed HotStream');
+            return;
+        }
         await this.chan.throw(error);
     }
 
     async *[Symbol.asyncIterator](): AsyncIterator<T> {
-        const chan = new Channel<T>(0);
-
-        let complete = false;
-        try {
-            for await (const item of chan) {
-                yield item;
-            }
-
-            complete = true;
-        } finally {
-            if (!complete) {
-                this.cxs.cancel();
-            }
+        for await (const item of this.chan) {
+            yield item;
         }
     }
 }
@@ -58,9 +54,25 @@ export class ColdStream<T> implements AsyncIterable<T> {
     ) {}
 
     async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
+        let complete = false;
         const stream = new HotStream<T>();
-        this.execute(stream);
-        yield* stream;
+        const cxs = new CancellationSource();
+        try {
+            this.execute({
+                next: value => stream.next(value),
+                end: () => stream.end(),
+                throw: error => stream.throw(error),
+                cx: cxs.cancellation,
+            });
+            yield* stream;
+
+            complete = true;
+        } finally {
+            if (!complete) {
+                cxs.cancel();
+                stream.end();
+            }
+        }
     }
 }
 

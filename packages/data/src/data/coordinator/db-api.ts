@@ -15,7 +15,7 @@ export const dbApi = createApi<Actor>()({
         async *stream(_, {intervalMs: ms}, cx) {
             console.log('stream start');
             try {
-                const interval$ = interval(ms, cx).while(x => x < 5);
+                const interval$ = interval(ms, cx).while(x => x < 10);
                 for await (const index of interval$) {
                     console.log('stream item', index);
                     yield {index};

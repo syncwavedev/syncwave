@@ -15,7 +15,7 @@ import {
     getGoogleUser,
     JwtPayload,
     JwtService,
-    MsgpackrCodec,
+    MsgpackCodec,
     PrefixedKVStore,
     Uint8KVStore,
     wait,
@@ -157,7 +157,7 @@ async function launch() {
 
     const coordinator = new Coordinator(
         new WsTransportServer({
-            codec: new MsgpackrCodec(),
+            codec: new MsgpackCodec(),
             server: httpServer,
         }),
         kvStore,

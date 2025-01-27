@@ -25,9 +25,10 @@
 		(async () => {
 			try {
 				console.log('stream start');
-				const interval$ = sdk.coordinatorRpc
-					.getStream({topic: 'stream item'}, Cancellation.none)
-					.while(({index}) => index < 3);
+				const interval$ = sdk.coordinatorRpc.getStream(
+					{topic: 'stream item'},
+					Cancellation.none
+				);
 				for await (const item of interval$) {
 					console.log('stream item', item.index);
 

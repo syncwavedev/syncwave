@@ -6,7 +6,11 @@ import {
     ColdStream,
     ColdStreamExecutor,
 } from '../../async-stream.js';
-import {Cancellation, CancellationSource} from '../../cancellation.js';
+import {
+    Cancellation,
+    CancellationError,
+    CancellationSource,
+} from '../../cancellation.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {Deferred} from '../../deferred.js';
 import {BusinessError, getReadableError} from '../../errors.js';
@@ -408,7 +412,9 @@ export function createRpcClient<TApi extends Api<any>>(
                 }
                 if (!exeCx.isCancelled) {
                     promises.push(
-                        exe.throw(new Error('cancellation requested'))
+                        exe.throw(
+                            new CancellationError('cancellation requested')
+                        )
                     );
                 }
                 await whenAll(promises);
@@ -768,15 +774,13 @@ export function setupRpcServerConnection<TState>(
                 );
             }
 
-            const errorMessage = getReadableError(err);
-
             await conn.send({
                 id: createMessageId(),
                 type: 'response',
                 requestId: msg.id,
                 payload: {
                     type: 'error',
-                    message: errorMessage,
+                    message: getReadableError(err),
                 },
             });
         }

@@ -1,6 +1,6 @@
 import {astream} from '../async-stream.js';
 import {Cancellation} from '../cancellation.js';
-import {MsgpackrCodec} from '../codec.js';
+import {MsgpackCodec} from '../codec.js';
 import {PULL_WAIT_MS} from '../constants.js';
 import {BusinessError} from '../errors.js';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store.js';
@@ -102,7 +102,7 @@ export class Actor implements DataAccessor {
 
         this.changelog = new TopicManager(
             withPrefix('log/')(tx),
-            new MsgpackrCodec()
+            new MsgpackCodec()
         );
 
         if (this.role.type === 'participant') {

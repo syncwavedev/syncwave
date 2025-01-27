@@ -159,7 +159,9 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
         api2,
         async (next, state: ProcessorContext<HubServerRpcState<T>>) => {
             if (state.message.headers?.auth !== state.state.authSecret) {
-                throw new Error('HubServer: authentication failed');
+                throw new Error(
+                    `HubServer: authentication failed: ${state.state.authSecret} !== ${state.message.headers?.auth}`
+                );
             }
 
             await next(state);

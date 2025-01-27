@@ -53,11 +53,7 @@ export class BusConsumer<T> implements BusConsumer<T> {
             });
     }
 
-    subscribe(
-        topic: string,
-        start: number,
-        cx: Cancellation
-    ): AsyncStream<T[]> {
+    subscribe(topic: string, start: number, cx: Cancellation): AsyncStream<T> {
         // we wanna trigger bus iteration immediately if we didn't reach the end of the topic
         const selfTrigger = new HotStream<void>();
         return mergeStreams<void>([
@@ -66,7 +62,7 @@ export class BusConsumer<T> implements BusConsumer<T> {
             selfTrigger,
             this.hub.subscribe(topic, cx).map(() => undefined),
             interval(BUS_PULL_INTERVAL_MS, cx).map(() => undefined),
-        ]).map(async () => {
+        ]).flatMap(async () => {
             const messages = await this.transact(async topics => {
                 const result = await topics
                     .get(topic)
@@ -87,6 +83,8 @@ export class BusConsumer<T> implements BusConsumer<T> {
                 }
                 return result;
             });
+
+            console.log(`got ${messages.length} messages`);
 
             start += messages.length;
 

@@ -5,7 +5,7 @@ export interface Codec<TData> {
     decode(buf: Uint8Array): TData;
 }
 
-export class MsgpackrCodec implements Codec<any> {
+export class MsgpackCodec implements Codec<any> {
     encode(data: any): Uint8Array {
         return encode(data);
     }

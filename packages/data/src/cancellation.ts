@@ -1,10 +1,6 @@
 import {Deferred} from './deferred.js';
 
-export class CancellationError extends Error {
-    constructor(message: string) {
-        super(`cancellation: ${message}`);
-    }
-}
+export class CancellationError extends Error {}
 
 // todo: make cancel synchronous (without Promises)
 export class CancellationSource {

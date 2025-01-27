@@ -1,4 +1,4 @@
-import {MsgpackrCodec} from '../codec.js';
+import {MsgpackCodec} from '../codec.js';
 import {pipe} from '../utils.js';
 import {Transaction, Uint8Transaction, withValueCodec} from './kv-store.js';
 
@@ -11,7 +11,7 @@ export class Cell<T> {
         tx: Uint8Transaction,
         private readonly initialValue: T
     ) {
-        this.tx = pipe(tx, withValueCodec(new MsgpackrCodec()));
+        this.tx = pipe(tx, withValueCodec(new MsgpackCodec()));
     }
 
     async get(): Promise<T> {

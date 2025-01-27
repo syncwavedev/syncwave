@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {MsgpackrCodec, StringCodec} from './codec.js';
+import {MsgpackCodec, StringCodec} from './codec.js';
 import {createUuid} from './uuid.js';
 
 const testData = [
@@ -18,8 +18,8 @@ const testData = [
     {input: Buffer.from('buffer data'), description: 'Buffer object'},
 ];
 
-describe('MsgpackrCodec', () => {
-    const codec = new MsgpackrCodec();
+describe('MsgpackrCode', () => {
+    const codec = new MsgpackCodec();
 
     describe('round-trip', () => {
         testData.forEach(({input, description}) => {

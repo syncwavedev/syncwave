@@ -1,4 +1,4 @@
-import {MsgpackrCodec} from '../codec.js';
+import {MsgpackCodec} from '../codec.js';
 import {CrdtDiff} from '../crdt/crdt.js';
 import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {TopicManager} from '../kv/topic-manager.js';
@@ -50,7 +50,7 @@ export class DataLayer {
 
             const userChangelog = new TopicManager<UserChangeEntry>(
                 withPrefix('topics/users/')(tx),
-                new MsgpackrCodec()
+                new MsgpackCodec()
             );
 
             async function handleUserChange(

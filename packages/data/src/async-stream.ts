@@ -239,6 +239,24 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return astream(this._filter(predicate)) as AsyncStream<any>;
     }
 
+    flatMap<TResult>(
+        flatMapper: (
+            value: T
+        ) => TResult[] | Promise<TResult[]> | AsyncIterable<TResult>
+    ): AsyncStream<TResult> {
+        return astream(this._flatMap(flatMapper));
+    }
+
+    private async *_flatMap<TResult>(
+        flatMapper: (
+            value: T
+        ) => TResult[] | Promise<TResult[]> | AsyncIterable<TResult>
+    ): AsyncIterable<TResult> {
+        for await (const item of this.source) {
+            yield* await flatMapper(item);
+        }
+    }
+
     map<TResult>(
         mapper: (value: T) => TResult | Promise<TResult>
     ): AsyncStream<TResult> {

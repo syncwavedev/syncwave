@@ -13,7 +13,7 @@ class MessageTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        vertical: context.spacing.sm,
+        vertical: context.spacing.md,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +31,6 @@ class MessageTile extends StatelessWidget {
                   message.from,
                   style: context.text.caption.copyWith(
                     fontWeight: FontWeight.w600,
-                    height: context.text.tight,
                   ),
                 ),
                 Text(

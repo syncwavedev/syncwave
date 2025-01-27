@@ -49,18 +49,22 @@ class TaskScreen extends StatelessWidget {
               task.content,
               style: context.text.body,
             ),
-            Divider(verticalMargin: context.spacing.sm),
-            Row(children: [
-              const CircularStatus(currentStep: 1, totalSteps: 2, size: 24),
-              SizedBox(width: context.spacing.sm),
-              Text(
-                'In Progress',
-                style: context.text.body.copyWith(
-                  fontWeight: FontWeight.w500,
+            SizedBox(height: context.spacing.md),
+            Divider(),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: context.spacing.md),
+              child: Row(children: [
+                const CircularStatus(currentStep: 1, totalSteps: 2, size: 24),
+                SizedBox(width: context.spacing.sm),
+                Text(
+                  'In Progress',
+                  style: context.text.body.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ]),
-            Divider(verticalMargin: context.spacing.sm),
+              ]),
+            ),
+            Divider(),
             Expanded(child: MessageList(messages: task.messages)),
           ],
         ),

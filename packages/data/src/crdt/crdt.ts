@@ -6,8 +6,8 @@ import {
     Map as YMap,
     Text as YText,
 } from 'yjs';
-import {Cancellation, CancellationSource} from '../cancellation.js';
 import {Codec} from '../codec.js';
+import {CancellationSource, Context} from '../context.js';
 import {assert, assertNever, Brand, zip} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {observe, OpLog} from './observe.js';
@@ -103,13 +103,13 @@ export class Crdt<T> {
     subscribe(
         event: 'update',
         next: (diff: CrdtDiff<T>, options: DiffOptions) => void,
-        cx: Cancellation
+        cx: Context
     ) {
         const fn = (state: Uint8Array, origin: string | undefined) =>
             next(state as CrdtDiff<T>, {origin: origin ?? undefined});
         this.doc.on('updateV2', fn);
 
-        cx.then(() => this.doc.off('updateV2', fn)).catch(error =>
+        cx.cleanup(() => this.doc.off('updateV2', fn)).catch(error =>
             console.error("[ERR] failed to doc.off('updateV2')", error)
         );
     }

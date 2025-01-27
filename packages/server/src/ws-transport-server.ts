@@ -1,7 +1,7 @@
 import {
-    Cancellation,
     Codec,
     Connection,
+    Context,
     Deferred,
     Observer,
     Subject,
@@ -37,7 +37,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
                         this.conns = this.conns.filter(x => x !== conn);
                     },
                 },
-                Cancellation.none
+                Context.background
             );
             this.conns.push(conn);
 
@@ -99,7 +99,7 @@ export class WsConnection<T> implements Connection<T> {
         });
     }
 
-    subscribe(observer: Observer<T>, cx: Cancellation) {
+    subscribe(observer: Observer<T>, cx: Context) {
         return this.subject.subscribe(observer, cx);
     }
 

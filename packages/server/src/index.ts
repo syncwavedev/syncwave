@@ -125,9 +125,9 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
     });
 
     if (!version) {
-        await kvStore.transact(async tx => {
+        await kvStore.transact(ctx, async (ctx, tx) => {
             const keys = await astream(tx.query({gte: new Uint8Array()}))
-                .mapParallel(x => x.key)
+                .mapParallel(ctx, x => x.key)
                 .toArray();
 
             if (keys.length > 1000) {

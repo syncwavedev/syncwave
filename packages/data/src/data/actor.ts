@@ -1,7 +1,7 @@
 import {astream} from '../async-stream.js';
-import {Cancellation} from '../cancellation.js';
 import {MsgpackCodec} from '../codec.js';
 import {PULL_WAIT_MS} from '../constants.js';
+import {Context} from '../context.js';
 import {BusinessError} from '../errors.js';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {TopicManager} from '../kv/topic-manager.js';
@@ -28,34 +28,31 @@ export interface CreateBoardModel {
 }
 
 export interface DataAccessor {
-    getMe(input: {}, cx: Cancellation): Promise<User | undefined>;
+    getMe(input: {}, cx: Context): Promise<User | undefined>;
 
-    getMyBoards(input: {}, cx: Cancellation): Promise<Board[]>;
+    getMyBoards(input: {}, cx: Context): Promise<Board[]>;
     getBoard(
         input: {boardId: BoardId},
-        cx: Cancellation
+        cx: Context
     ): Promise<Board | undefined>;
-    getBoardTasks(input: {boardId: BoardId}, cx: Cancellation): Promise<Task[]>;
-    createBoard(input: CreateBoardModel, cx: Cancellation): Promise<Board>;
+    getBoardTasks(input: {boardId: BoardId}, cx: Context): Promise<Task[]>;
+    createBoard(input: CreateBoardModel, cx: Context): Promise<Board>;
     updateBoardName(
         input: {boardId: BoardId; name: string},
-        cx: Cancellation
+        cx: Context
     ): Promise<Board>;
     setBoardSlug(
         input: {boardId: BoardId; slug: string},
-        cx: Cancellation
+        cx: Context
     ): Promise<Board>;
 
-    getTask(
-        input: {taskId: TaskId},
-        cx: Cancellation
-    ): Promise<Task | undefined>;
+    getTask(input: {taskId: TaskId}, cx: Context): Promise<Task | undefined>;
     updateTaskTitle(
         input: {taskId: TaskId; title: string},
-        cx: Cancellation
+        cx: Context
     ): Promise<Task>;
 
-    createTask(input: CreateTaskModel, cx: Cancellation): Promise<Task>;
+    createTask(input: CreateTaskModel, cx: Context): Promise<Task>;
 }
 
 export interface BaseActorRole<TType extends string> {
@@ -146,10 +143,7 @@ export class Actor implements DataAccessor {
         return tasks;
     }
 
-    async createBoard(
-        input: CreateBoardModel,
-        cx: Cancellation
-    ): Promise<Board> {
+    async createBoard(input: CreateBoardModel, cx: Context): Promise<Board> {
         const now = getNow();
         if (input.slug) {
             if (this.role.type === 'participant') {
@@ -210,7 +204,7 @@ export class Actor implements DataAccessor {
             boardId: BoardId;
             slug: string;
         },
-        cx: Cancellation
+        cx: Context
     ): Promise<Board> {
         if (this.role.type === 'coordinator') {
             const [board] = await whenAll([

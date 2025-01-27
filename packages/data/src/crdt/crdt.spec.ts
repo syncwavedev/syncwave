@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {Cancellation, CancellationSource} from '../cancellation.js';
+import {CancellationSource, Context} from '../context.js';
 import {assert} from '../utils.js';
 import {Crdt} from './crdt.js';
 
@@ -44,7 +44,11 @@ describe('Doc', () => {
 
     function createReplica<T>(doc: Crdt<T>): Crdt<T> {
         const replica = Crdt.load(doc.state());
-        doc.subscribe('update', diff => replica.apply(diff), Cancellation.none);
+        doc.subscribe(
+            'update',
+            diff => replica.apply(diff),
+            Context.background
+        );
         return replica;
     }
 
@@ -448,7 +452,7 @@ describe('Doc', () => {
             (_diff, options) => {
                 events.push(options.origin || 'no-tag');
             },
-            Cancellation.none
+            Context.background
         );
 
         crdt.apply(createTestDocDiff({key: 'value1'}), {origin: 'first'});

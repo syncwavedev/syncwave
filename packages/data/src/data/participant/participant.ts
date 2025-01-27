@@ -1,4 +1,4 @@
-import {Cancellation} from '../../cancellation.js';
+import {Context} from '../../context.js';
 import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
 import {PersistentConnection} from '../communication/persistent-connection.js';
@@ -21,15 +21,15 @@ export class Participant {
         setupRpcServerConnection(participantApi, this.connection, {});
     }
 
-    async sendSignInEmail(email: string, cx: Cancellation) {
+    async sendSignInEmail(email: string, cx: Context) {
         return await this.coordinator.rpc.sendSignInEmail({email}, cx);
     }
 
-    async verifySignInCode(email: string, code: string, cx: Cancellation) {
+    async verifySignInCode(email: string, code: string, cx: Context) {
         return await this.coordinator.rpc.verifySignInCode({email, code}, cx);
     }
 
-    async debug(cx: Cancellation) {
+    async debug(cx: Context) {
         return await this.coordinator.rpc.debug({}, cx);
     }
 

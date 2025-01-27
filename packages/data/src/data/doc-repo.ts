@@ -1,5 +1,6 @@
 import {z, ZodType} from 'zod';
 import {astream, AsyncStream} from '../async-stream.js';
+import {Context} from '../context.js';
 import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
 import {createIndex, Index, IndexKey} from '../kv/data-index.js';
 import {
@@ -100,33 +101,37 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         this.schema = schema;
     }
 
-    async getById(id: Uuid): Promise<T | undefined> {
-        const doc = await this.primary.get(id);
+    async getById(ctx: Context, id: Uuid): Promise<T | undefined> {
+        const doc = await this.primary.get(ctx, id);
         return doc?.snapshot();
     }
 
-    get(indexName: string, key: IndexKey): AsyncStream<T> {
+    get(ctx: Context, indexName: string, key: IndexKey): AsyncStream<T> {
         const index = this._index(indexName);
-        return this._mapToDocs(index.get(key));
+        return this._mapToDocs(index.get(ctx, key));
     }
 
-    async getUnique(indexName: string, key: IndexKey): Promise<T | undefined> {
+    async getUnique(
+        ctx: Context,
+        indexName: string,
+        key: IndexKey
+    ): Promise<T | undefined> {
         const index = this._index(indexName);
-        const ids = await astream(index.get(key)).take(2).toArray();
+        const ids = await astream(index.get(ctx, key)).take(2).toArray();
         if (ids.length > 1) {
             throw new Error(
                 `index ${indexName} contains multiple docs for the key: ${key}`
             );
         } else if (ids.length === 1) {
-            return await this.getById(ids[0]);
+            return await this.getById(ctx, ids[0]);
         } else {
             return undefined;
         }
     }
 
-    getAll(prefix?: Uint8Array): AsyncStream<T> {
+    getAll(ctx: Context, prefix?: Uint8Array): AsyncStream<T> {
         return astream(
-            queryStartsWith(this.primaryKeyRaw, prefix ?? new Uint8Array())
+            queryStartsWith(ctx, this.primaryKeyRaw, prefix ?? new Uint8Array())
         ).mapParallel(x => x.value.snapshot());
     }
 

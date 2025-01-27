@@ -1,4 +1,5 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
+import {Context} from '../context.js';
 import {compareUint8Array} from '../utils.js';
 import {
     Condition,
@@ -17,15 +18,16 @@ export class CursorClosedError extends Error {
 export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
     constructor(public tree: Tree<Uint8Array, Uint8Array>) {}
 
-    async get(key: Uint8Array): Promise<Uint8Array | undefined> {
+    async get(_ctx: Context, key: Uint8Array): Promise<Uint8Array | undefined> {
         return this.tree.get(key) ?? undefined;
     }
 
     async *query(
+        ctx: Context,
         condition: Condition<Uint8Array>
     ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         let iterator: Iterator<Uint8Array, Uint8Array>;
-        let useNext;
+        let useNext: boolean;
         if (condition.gt) {
             iterator = this.tree.gt(condition.gt);
             useNext = true;
@@ -43,6 +45,7 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
         }
 
         while (iterator.valid) {
+            ctx.ensureAlive();
             yield {
                 key: iterator.key!,
                 value: iterator.value!,
@@ -56,11 +59,15 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
         }
     }
 
-    async put(key: Uint8Array, value: Uint8Array): Promise<void> {
+    async put(
+        _ctx: Context,
+        key: Uint8Array,
+        value: Uint8Array
+    ): Promise<void> {
         this.tree = this.tree.remove(key).insert(key, value);
     }
 
-    async delete(key: Uint8Array): Promise<void> {
+    async delete(_ctx: Context, key: Uint8Array): Promise<void> {
         this.tree = this.tree.remove(key);
     }
 }
@@ -74,7 +81,11 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
     constructor() {}
 
     async transact<TResult>(
-        fn: (tx: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>
+        ctx: Context,
+        fn: (
+            ctx: Context,
+            tx: Transaction<Uint8Array, Uint8Array>
+        ) => Promise<TResult>
     ): Promise<TResult> {
         return await this.locker.lock(this, async () => {
             const retries = 10;
@@ -82,7 +93,7 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
             for (let attempt = 0; attempt <= retries; attempt += 1) {
                 const tx = new MemTransaction(this.tree);
                 try {
-                    const result = await fn(tx);
+                    const result = await fn(ctx, tx);
 
                     this.tree = tx.tree;
 

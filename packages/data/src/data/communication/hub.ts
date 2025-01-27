@@ -1,6 +1,6 @@
 import {z, ZodType} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
-import {Cancellation} from '../../cancellation.js';
+import {Context} from '../../context.js';
 import {Observer, Subject} from '../../utils.js';
 import {Message} from './message.js';
 import {PersistentConnection} from './persistent-connection.js';
@@ -32,16 +32,16 @@ export class HubClient<T> {
     }
 
     // next waits for all subscribers to do their work
-    async publish(topic: string, message: T, cx: Cancellation) {
-        await this.server.publish({topic, message}, cx);
+    async publish(ctx: Context, topic: string, message: T) {
+        await this.server.publish(ctx, {topic, message});
     }
 
-    async throw(topic: string, error: string, cx: Cancellation) {
-        await this.server.throw({topic, error}, cx);
+    async throw(ctx: Context, topic: string, error: string) {
+        await this.server.throw(ctx, {topic, error});
     }
 
-    subscribe(topic: string, cx: Cancellation): AsyncStream<T> {
-        return this.server.subscribe({topic}, cx).map(x => x.message!);
+    subscribe(ctx: Context, topic: string): AsyncStream<T> {
+        return this.server.subscribe(ctx, {topic}).map(x => x.message!);
     }
 }
 
@@ -71,43 +71,40 @@ export class HubServer<T> {
 class SubjectManager<T> {
     private subjects = new Map<string, Subject<T>>();
 
-    async next(topic: string, value: T) {
-        await this.subjects.get(topic)?.next(value);
+    async next(ctx: Context, topic: string, value: T) {
+        await this.subjects.get(topic)?.next(ctx, value);
     }
 
-    async throw(topic: string, error: unknown) {
-        await this.subjects.get(topic)?.throw(error);
+    async throw(ctx: Context, topic: string, error: unknown) {
+        await this.subjects.get(topic)?.throw(ctx, error);
     }
 
-    subscribe(topic: string, observer: Observer<T>, cx: Cancellation) {
+    subscribe(ctx: Context, topic: string, observer: Observer<T>) {
         let subject = this.subjects.get(topic);
         if (!subject) {
             subject = new Subject();
             this.subjects.set(topic, subject);
         }
-        subject.subscribe(
-            {
-                next: value => observer.next(value),
-                throw: error => observer.throw(error),
-                close: async () => {
-                    await observer.close();
-                    if (!subject.anyObservers) {
-                        this.subjects.delete(topic);
-                    }
-                },
+        subject.subscribe(ctx, {
+            next: (ctx, value) => observer.next(ctx, value),
+            throw: (ctx, error) => observer.throw(ctx, error),
+            close: async ctx => {
+                await observer.close(ctx);
+                if (!subject.anyObservers) {
+                    this.subjects.delete(topic);
+                }
             },
-            cx
-        );
+        });
     }
 
-    value$(topic: string, cx: Cancellation) {
+    value$(ctx: Context, topic: string) {
         let subject = this.subjects.get(topic);
         if (!subject) {
             subject = new Subject();
             this.subjects.set(topic, subject);
         }
 
-        return subject.value$(cx).finally(async () => {
+        return subject.value$(ctx).finally(async () => {
             if (!subject.anyObservers) {
                 this.subjects.delete(topic);
             }
@@ -128,22 +125,22 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 message: zMessage,
             }),
             res: z.void(),
-            handle: async (state, {topic, message}) => {
-                await state.subjects.next(topic, message!);
+            handle: async (state, {topic, message}, ctx) => {
+                await state.subjects.next(ctx, topic, message!);
             },
         }),
         throw: handler({
             req: z.object({topic: z.string(), error: z.string()}),
             res: z.void(),
-            handle: async (state, {topic, error}) => {
-                await state.subjects.throw(topic, new Error(error));
+            handle: async (state, {topic, error}, ctx) => {
+                await state.subjects.throw(ctx, topic, new Error(error));
             },
         }),
         subscribe: streamer({
             req: z.object({topic: z.string()}),
             item: z.object({message: zMessage}),
-            async *stream({subjects}, {topic}, cx) {
-                for await (const message of subjects.value$(topic, cx)) {
+            async *stream({subjects}, {topic}, ctx) {
+                for await (const message of subjects.value$(ctx, topic)) {
                     yield {message};
                 }
             },

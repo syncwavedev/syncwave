@@ -1,4 +1,5 @@
 import {MsgpackCodec} from '../codec.js';
+import {Context} from '../context.js';
 import {CrdtDiff} from '../crdt/crdt.js';
 import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {TopicManager} from '../kv/topic-manager.js';
@@ -34,7 +35,7 @@ export interface UserChangeEntry {
 }
 
 export type DataEffect = () => Promise<void>;
-export type DataEffectScheduler = (effect: DataEffect) => void;
+export type DataEffectScheduler = (ctx: Context, effect: DataEffect) => void;
 
 export class DataLayer {
     constructor(

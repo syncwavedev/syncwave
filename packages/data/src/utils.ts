@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {astream, AsyncStream} from './async-stream.js';
+import {astream, AsyncStream, ColdStream} from './async-stream.js';
 import {Cancellation, CancellationError} from './cancellation.js';
 import {
     AggregateBusinessError,
@@ -44,6 +44,20 @@ export class Subject<TValue> {
         }).catch(error => {
             console.error('[ERR] failed to cancel subject subscription', error);
         });
+    }
+
+    value$(cx: Cancellation): AsyncStream<TValue> {
+        const stream = new ColdStream<TValue>((exe, exeCx) => {
+            this.subscribe(
+                {
+                    next: value => exe.next(value),
+                    throw: error => exe.throw(error),
+                    close: async () => exe.end(),
+                },
+                exeCx.combine(cx)
+            );
+        });
+        return astream(stream);
     }
 
     async next(value: TValue): Promise<void> {

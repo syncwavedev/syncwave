@@ -1,5 +1,5 @@
 import {z, ZodType} from 'zod';
-import {AsyncStream, ColdStream} from '../../async-stream.js';
+import {AsyncStream} from '../../async-stream.js';
 import {Cancellation} from '../../cancellation.js';
 import {Observer, Subject} from '../../utils.js';
 import {Message} from './message.js';
@@ -87,7 +87,8 @@ class SubjectManager<T> {
         }
         subject.subscribe(
             {
-                ...observer,
+                next: value => observer.next(value),
+                throw: error => observer.throw(error),
                 close: async () => {
                     await observer.close();
                     if (!subject.anyObservers) {
@@ -97,6 +98,20 @@ class SubjectManager<T> {
             },
             cx
         );
+    }
+
+    value$(topic: string, cx: Cancellation) {
+        let subject = this.subjects.get(topic);
+        if (!subject) {
+            subject = new Subject();
+            this.subjects.set(topic, subject);
+        }
+
+        return subject.value$(cx).finally(async () => {
+            if (!subject.anyObservers) {
+                this.subjects.delete(topic);
+            }
+        });
     }
 }
 
@@ -127,20 +142,10 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
         subscribe: streamer({
             req: z.object({topic: z.string()}),
             item: z.object({message: zMessage}),
-            stream({subjects}, {topic}, cx) {
-                return new ColdStream((exe, exeCx) => {
-                    subjects.subscribe(
-                        topic,
-                        {
-                            next: message => exe.next({message: message}),
-                            throw: async error => {
-                                await exe.throw(error);
-                            },
-                            close: async () => exe.end(),
-                        },
-                        exeCx.combine(cx)
-                    );
-                });
+            async *stream({subjects}, {topic}, cx) {
+                for await (const message of subjects.value$(topic, cx)) {
+                    yield {message};
+                }
             },
         }),
     });

@@ -201,6 +201,18 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return undefined;
     }
 
+    finally(fn: () => Promise<void>): AsyncStream<T> {
+        return astream(this._finally(fn));
+    }
+
+    async *_finally(fn: () => Promise<void>) {
+        try {
+            yield* this.source;
+        } finally {
+            await fn();
+        }
+    }
+
     async some(predicate?: (value: T) => boolean): Promise<boolean> {
         for await (const item of this.source) {
             if (!predicate || predicate(item)) {

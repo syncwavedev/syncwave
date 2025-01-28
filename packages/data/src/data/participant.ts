@@ -5,7 +5,7 @@ import {Message} from './communication/message.js';
 import {PersistentConnection} from './communication/persistent-connection.js';
 import {Connection, TransportClient} from './communication/transport.js';
 import {CoordinatorClient} from './coordinator/coordinator-client.js';
-import {setupRpcServerConnection} from './rpc/rpc-protocol.js';
+import {setupRpcServerConnection} from './rpc/rpc-engine.js';
 import {createApi, handler} from './rpc/rpc.js';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)

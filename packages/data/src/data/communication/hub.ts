@@ -2,7 +2,7 @@ import {z, ZodType} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
 import {Context} from '../../context.js';
 import {Observer, Subject} from '../../utils.js';
-import {createRpcClient, RpcServer} from '../rpc/rpc-protocol.js';
+import {createRpcClient, RpcServer} from '../rpc/rpc-engine.js';
 import {
     applyMiddleware,
     createApi,

@@ -17,6 +17,7 @@ import {
     MessageHeaders,
     MessageId,
     RequestMessage,
+    ResponsePayload,
 } from '../communication/message.js';
 import {Connection, TransportServer} from '../communication/transport.js';
 import {
@@ -37,25 +38,23 @@ async function proxyStreamerCall(
 ) {
     const requestId = createMessageId();
 
-    let state: 'pending' | 'open' | 'complete' | 'invalid' = 'pending';
+    let state: 'pending' | 'open' | 'complete' = 'pending';
 
-    const [ctx, cancel] = listenCtx.withCancel();
+    const [ctx, cancelCtx] = listenCtx.withCancel();
     const [timeoutCtx, cancelTimeout] = ctx.withCancel();
 
     ctx.cleanup(async () => {
-        console.log('state: ', state);
         if (state !== 'complete') {
-            await toCancelled(Context.todo(), 'cancelled');
+            await cancel(Context.todo(), 'cancelled');
         }
     });
 
-    async function toCompleted(ctx: Context) {
+    async function complete(ctx: Context) {
         state = 'complete';
-        await exe.end(ctx);
-        await cancel();
+        await whenAll([exe.end(ctx), cancelCtx()]);
     }
 
-    async function toCancelled(ctx: Context, error: string) {
+    async function cancel(ctx: Context, err: unknown) {
         state = 'complete';
         await whenAll([
             conn.send(listenCtx, {
@@ -64,7 +63,10 @@ async function proxyStreamerCall(
                 requestId,
                 headers: {},
             }),
-            exe.throw(ctx, new Error(error)).then(() => exe.end(ctx)),
+            exe
+                .throw(ctx, typeof err === 'string' ? new Error(err) : err)
+                .then(() => exe.end(ctx)),
+            cancelCtx(),
         ]);
     }
 
@@ -74,19 +76,17 @@ async function proxyStreamerCall(
                 return;
             }
 
-            async function toOpened() {
+            async function open() {
                 state = 'open';
                 await cancelTimeout();
             }
 
-            async function toInvalid(error: string) {
+            async function cancelInvalid(error: string) {
                 console.error('[ERR] rpc protocol violation', error);
-                state = 'invalid';
-                await exe.throw(ctx, new Error(error));
-                await cancel();
+                await cancel(ctx, error);
             }
 
-            async function sendAck() {
+            async function acknowledge() {
                 await conn.send(ctx, {
                     id: createMessageId(),
                     type: 'ack',
@@ -97,48 +97,39 @@ async function proxyStreamerCall(
 
             if (state === 'pending') {
                 if (msg.payload.type === 'start') {
-                    await toOpened();
+                    await open();
                 } else {
                     const error = `got '${msg.payload.type}' for pending stream`;
-                    await toInvalid(error);
+                    await cancelInvalid(error);
                 }
             } else if (state === 'open') {
                 if (msg.payload.type === 'item') {
                     await exe.next(ctx, msg.payload.item);
-                    await sendAck();
+                    await acknowledge();
                 } else if (msg.payload.type === 'error') {
                     await exe.throw(
                         ctx,
                         new Error('rpc error: ' + msg.payload.message)
                     );
-                    await sendAck();
+                    await acknowledge();
                 } else if (msg.payload.type === 'end') {
-                    await toCompleted(ctx);
+                    await complete(ctx);
                 } else {
                     const error = `got '${msg.payload.type}' for open stream`;
-                    await toInvalid(error);
+                    await cancelInvalid(error);
                 }
             } else if (state === 'complete') {
                 const error = `got '${msg.payload.type}' for open stream`;
-                await toInvalid(error);
-            } else if (state === 'invalid') {
-                const error = `got '${msg.payload.type}' for invalid stream`;
-                await toInvalid(error);
+                await cancelInvalid(error);
             } else {
                 assertNever(state);
             }
         },
         throw: async (ctx, error) => {
-            await exe.throw(ctx, error);
-            await toCompleted(ctx);
+            await cancel(ctx, error);
         },
         close: async ctx => {
-            state = 'complete';
-            await exe.throw(
-                ctx,
-                new Error('lost connection to rpc server lost')
-            );
-            await cancel();
+            await cancel(ctx, 'lost connection to rpc server');
         },
     });
 
@@ -150,13 +141,12 @@ async function proxyStreamerCall(
             payload: {name, arg},
         });
     } catch (error) {
-        await exe.throw(listenCtx, error);
-        await cancel();
+        await cancel(ctx, error);
     }
 
     ignoreCancel(wait(timeoutCtx, RPC_CALL_TIMEOUT_MS))
         .then(async () => {
-            await toCancelled(Context.todo(), 'stream failed to start');
+            await cancel(Context.todo(), 'stream failed to start');
         })
         .catch(err => {
             console.error('unexpected error after rpc timed out', err);
@@ -374,7 +364,8 @@ async function handleRequestStreamer<TState>(
     conn: Connection<Message>,
     processor: Streamer<ProcessorContext<TState>, any, any>,
     msg: RequestMessage,
-    state: TState
+    state: TState,
+    serverName: string
 ) {
     const requestId = msg.id;
 
@@ -386,12 +377,16 @@ async function handleRequestStreamer<TState>(
             payload: {type: 'start'},
         });
 
-        const processorStream = processor.stream(
-            ctx,
-            {message: msg, state},
-            msg.payload.arg
-        );
+        const processorStream = astream(
+            processor.stream(ctx, {message: msg, state}, msg.payload.arg)
+        )
+            .map((ctx, value) => ({type: 'next' as const, value}))
+            .catch((ctx, error) => ({type: 'error' as const, error}));
         for await (const item of processorStream) {
+            if (!ctx.alive) {
+                break;
+            }
+
             const itemMessageId = createMessageId();
 
             // we must subscribe for an ack before sending the message
@@ -402,11 +397,25 @@ async function handleRequestStreamer<TState>(
                 RPC_ACK_TIMEOUT_MS
             );
 
+            let payload: ResponsePayload;
+            if (item.type === 'next') {
+                payload = {type: 'item', item: item.value};
+            } else if (item.type === 'error') {
+                logRpcError(ctx, item.error, msg.payload.name, serverName);
+
+                payload = {
+                    type: 'error',
+                    message: getReadableError(item.error),
+                };
+            } else {
+                assertNever(item);
+            }
+
             await conn.send(ctx, {
                 id: itemMessageId,
                 type: 'response',
                 requestId,
-                payload: {type: 'item', item},
+                payload,
             });
 
             await ack;
@@ -454,26 +463,19 @@ async function handleRequest<TState>(
         if (processor.type === 'handler') {
             await handleRequestHandler(ctx, conn, processor, msg, state);
         } else if (processor.type === 'streamer') {
-            await handleRequestStreamer(ctx, conn, processor, msg, state);
+            await handleRequestStreamer(
+                ctx,
+                conn,
+                processor,
+                msg,
+                state,
+                serverName
+            );
         } else {
             assertNever(processor);
         }
     } catch (err: any) {
-        if (isCancelledError(err) && !ctx.alive) {
-            console.warn(
-                `[WRN] [${serverName}] cancel during ${msg.payload.name} RPC request`
-            );
-        } else if (err instanceof BusinessError) {
-            console.warn(
-                `[WRN] [${serverName}] error during ${msg.payload.name} RPC request:`,
-                getReadableError(err)
-            );
-        } else {
-            console.error(
-                `[ERR] [${serverName}] error during ${msg.payload.name} RPC request:`,
-                err
-            );
-        }
+        logRpcError(ctx, err, msg.payload.name, serverName);
 
         await conn.send(ctx, {
             id: createMessageId(),
@@ -484,6 +486,29 @@ async function handleRequest<TState>(
                 message: getReadableError(err),
             },
         });
+    }
+}
+
+function logRpcError(
+    ctx: Context,
+    err: unknown,
+    procedureName: string,
+    serverName: string
+) {
+    if (isCancelledError(err) && !ctx.alive) {
+        console.warn(
+            `[WRN] [${serverName}] cancel during ${procedureName} RPC request`
+        );
+    } else if (err instanceof BusinessError) {
+        console.warn(
+            `[WRN] [${serverName}] error during ${procedureName} RPC request:`,
+            getReadableError(err)
+        );
+    } else {
+        console.error(
+            `[ERR] [${serverName}] error during ${procedureName} RPC request:`,
+            err
+        );
     }
 }
 

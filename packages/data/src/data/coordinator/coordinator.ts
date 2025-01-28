@@ -5,7 +5,7 @@ import {Message} from '../communication/message.js';
 import {TransportServer} from '../communication/transport.js';
 import {DataLayer} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
-import {RpcServer} from '../rpc/rpc-protocol.js';
+import {RpcServer} from '../rpc/rpc-engine.js';
 import {getIdentity, signJwtToken} from './auth-api.js';
 import {
     CoordinatorApiInputState,

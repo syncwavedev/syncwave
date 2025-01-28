@@ -42,6 +42,7 @@ export function createTestApi() {
                     )) {
                         console.log('stream item', index, value);
                         yield {index, value};
+                        console.log('stream item after', index);
                         index += 1;
                     }
 

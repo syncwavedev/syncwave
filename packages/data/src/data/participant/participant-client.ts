@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {Message} from '../communication/message.js';
 import {Connection} from '../communication/transport.js';
-import {createRpcClient} from '../rpc/rpc-protocol.js';
+import {createRpcClient} from '../rpc/rpc-engine.js';
 import {createApi, handler, InferRpcClient} from '../rpc/rpc.js';
 
 export class ParticipantClient {

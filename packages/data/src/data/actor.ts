@@ -1,12 +1,11 @@
 import {astream} from '../async-stream.js';
 import {MsgpackCodec} from '../codec.js';
-import {PULL_WAIT_MS} from '../constants.js';
 import {Context} from '../context.js';
 import {BusinessError} from '../errors.js';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {TopicManager} from '../kv/topic-manager.js';
 import {getNow} from '../timestamp.js';
-import {assertNever, unimplemented, wait, whenAll} from '../utils.js';
+import {assertNever, whenAll} from '../utils.js';
 import {AuthContext} from './auth-context.js';
 import {CoordinatorRpc} from './coordinator/coordinator-api.js';
 import {OnDocChange} from './doc-repo.js';
@@ -28,31 +27,31 @@ export interface CreateBoardModel {
 }
 
 export interface DataAccessor {
-    getMe(input: {}, cx: Context): Promise<User | undefined>;
+    getMe(ctx: Context, input: {}): Promise<User | undefined>;
 
-    getMyBoards(input: {}, cx: Context): Promise<Board[]>;
+    getMyBoards(ctx: Context, input: {}): Promise<Board[]>;
     getBoard(
-        input: {boardId: BoardId},
-        cx: Context
+        ctx: Context,
+        input: {boardId: BoardId}
     ): Promise<Board | undefined>;
-    getBoardTasks(input: {boardId: BoardId}, cx: Context): Promise<Task[]>;
-    createBoard(input: CreateBoardModel, cx: Context): Promise<Board>;
+    getBoardTasks(ctx: Context, input: {boardId: BoardId}): Promise<Task[]>;
+    createBoard(ctx: Context, input: CreateBoardModel): Promise<Board>;
     updateBoardName(
-        input: {boardId: BoardId; name: string},
-        cx: Context
+        ctx: Context,
+        input: {boardId: BoardId; name: string}
     ): Promise<Board>;
     setBoardSlug(
-        input: {boardId: BoardId; slug: string},
-        cx: Context
+        ctx: Context,
+        input: {boardId: BoardId; slug: string}
     ): Promise<Board>;
 
-    getTask(input: {taskId: TaskId}, cx: Context): Promise<Task | undefined>;
+    getTask(ctx: Context, input: {taskId: TaskId}): Promise<Task | undefined>;
     updateTaskTitle(
-        input: {taskId: TaskId; title: string},
-        cx: Context
+        ctx: Context,
+        input: {taskId: TaskId; title: string}
     ): Promise<Task>;
 
-    createTask(input: CreateTaskModel, cx: Context): Promise<Task>;
+    createTask(ctx: Context, input: CreateTaskModel): Promise<Task>;
 }
 
 export interface BaseActorRole<TType extends string> {
@@ -101,54 +100,55 @@ export class Actor implements DataAccessor {
             withPrefix('log/')(tx),
             new MsgpackCodec()
         );
-
-        if (this.role.type === 'participant') {
-            this.startPullLoop().catch(err => {
-                console.error('error during pull loop: ', err);
-            });
-        } else if (this.role.type === 'coordinator') {
-            // participant will push changes, nothing to do on coordinator side
-        } else {
-            assertNever(this.role);
-        }
     }
 
-    async getMe(_input: {}): Promise<User | undefined> {
-        return await this.users.getById(this.ensureAuthenticated());
+    async getMe(ctx: Context, _input: {}): Promise<User | undefined> {
+        return await this.users.getById(ctx, this.ensureAuthenticated());
     }
 
-    async getMyBoards(_input: {}): Promise<Board[]> {
-        const members = this.members.getByUserId(this.ensureAuthenticated());
+    async getMyBoards(ctx: Context, _input: {}): Promise<Board[]> {
+        const members = this.members.getByUserId(
+            ctx,
+            this.ensureAuthenticated()
+        );
         return await astream(members)
-            .mapParallel(member => this.boards.getById(member.boardId))
+            .mapParallel((ctx, member) =>
+                this.boards.getById(ctx, member.boardId)
+            )
             .assert(x => x !== undefined)
-            .toArray();
+            .toArray(ctx);
     }
 
-    async getBoard(input: {boardId: BoardId}): Promise<Board | undefined> {
+    async getBoard(
+        ctx: Context,
+        input: {boardId: BoardId}
+    ): Promise<Board | undefined> {
         const [board] = await whenAll([
-            this.boards.getById(input.boardId),
-            this.ensureBoardReadAccess(input.boardId),
+            this.boards.getById(ctx, input.boardId),
+            this.ensureBoardReadAccess(ctx, input.boardId),
         ]);
 
         return board;
     }
 
-    async getBoardTasks({boardId}: {boardId: BoardId}): Promise<Task[]> {
+    async getBoardTasks(
+        ctx: Context,
+        {boardId}: {boardId: BoardId}
+    ): Promise<Task[]> {
         const [tasks] = await whenAll([
-            this.tasks.getByBoardId(boardId).toArray(),
-            this.ensureBoardReadAccess(boardId),
+            this.tasks.getByBoardId(ctx, boardId).toArray(ctx),
+            this.ensureBoardReadAccess(ctx, boardId),
         ]);
 
         return tasks;
     }
 
-    async createBoard(input: CreateBoardModel, cx: Context): Promise<Board> {
+    async createBoard(ctx: Context, input: CreateBoardModel): Promise<Board> {
         const now = getNow();
         if (input.slug) {
             if (this.role.type === 'participant') {
                 // participant can't set board slug, escalate
-                return await this.role.coordinator.createBoard(input, cx);
+                return await this.role.coordinator.createBoard(ctx, input);
             } else if (this.role.type === 'coordinator') {
                 // coordinator can set board slug, nothing specific to do
             } else {
@@ -167,8 +167,8 @@ export class Actor implements DataAccessor {
             ownerId: userId,
             slug: input.slug,
         };
-        await this.boards.create(board);
-        await this.members.create({
+        await this.boards.create(ctx, board);
+        await this.members.create(ctx, {
             id: createMemberId(),
             boardId: board.id,
             createdAt: now,
@@ -179,36 +179,39 @@ export class Actor implements DataAccessor {
         return board;
     }
 
-    async updateBoardName({
-        boardId,
-        name,
-    }: {
-        boardId: BoardId;
-        name: string;
-    }): Promise<Board> {
+    async updateBoardName(
+        ctx: Context,
+        {
+            boardId,
+            name,
+        }: {
+            boardId: BoardId;
+            name: string;
+        }
+    ): Promise<Board> {
         const [board] = await whenAll([
-            this.boards.update(boardId, draft => {
+            this.boards.update(ctx, boardId, draft => {
                 draft.name = name;
             }),
-            this.ensureBoardWriteAccess(boardId),
+            this.ensureBoardWriteAccess(ctx, boardId),
         ]);
 
         return board;
     }
 
     async setBoardSlug(
+        ctx: Context,
         {
             boardId,
             slug,
         }: {
             boardId: BoardId;
             slug: string;
-        },
-        cx: Context
+        }
     ): Promise<Board> {
         if (this.role.type === 'coordinator') {
             const [board] = await whenAll([
-                this.boards.update(boardId, draft => {
+                this.boards.update(ctx, boardId, draft => {
                     if (draft.slug !== undefined) {
                         throw new BusinessError(
                             'changing board slug is not supported',
@@ -219,39 +222,45 @@ export class Actor implements DataAccessor {
                     // remove readonly modifier
                     (draft as {slug: string}).slug = slug;
                 }),
-                this.ensureBoardWriteAccess(boardId),
+                this.ensureBoardWriteAccess(ctx, boardId),
             ]);
 
             return board;
         } else if (this.role.type === 'participant') {
             // participant can't set board slug, escalate
-            return await this.role.coordinator.setBoardSlug(
-                {boardId, slug},
-                cx
-            );
+            return await this.role.coordinator.setBoardSlug(ctx, {
+                boardId,
+                slug,
+            });
         } else {
             assertNever(this.role);
         }
     }
 
-    async getTask({taskId}: {taskId: TaskId}): Promise<Task | undefined> {
-        const task = await this.tasks.getById(taskId);
+    async getTask(
+        ctx: Context,
+        {taskId}: {taskId: TaskId}
+    ): Promise<Task | undefined> {
+        const task = await this.tasks.getById(ctx, taskId);
         if (!task) {
             return undefined;
         }
-        await this.ensureBoardReadAccess(task.boardId);
+        await this.ensureBoardReadAccess(ctx, task.boardId);
 
         return task;
     }
 
-    async createTask({taskId, boardId, title}: CreateTaskModel): Promise<Task> {
+    async createTask(
+        ctx: Context,
+        {taskId, boardId, title}: CreateTaskModel
+    ): Promise<Task> {
         const meId = this.ensureAuthenticated();
-        await this.ensureBoardWriteAccess(boardId);
+        await this.ensureBoardWriteAccess(ctx, boardId);
         const now = getNow();
 
         let counter: number | null;
         if (this.role.type === 'coordinator') {
-            counter = await this.boards.incrementBoardCounter(boardId);
+            counter = await this.boards.incrementBoardCounter(ctx, boardId);
         } else if (this.role.type === 'participant') {
             counter = null;
         } else {
@@ -268,22 +277,25 @@ export class Actor implements DataAccessor {
             title: title,
             counter,
         };
-        await this.tasks.create(task);
+        await this.tasks.create(ctx, task);
 
         return task;
     }
 
-    async updateTaskTitle({
-        taskId,
-        title,
-    }: {
-        taskId: TaskId;
-        title: string;
-    }): Promise<Task> {
-        const task = await this.tasks.update(taskId, draft => {
+    async updateTaskTitle(
+        ctx: Context,
+        {
+            taskId,
+            title,
+        }: {
+            taskId: TaskId;
+            title: string;
+        }
+    ): Promise<Task> {
+        const task = await this.tasks.update(ctx, taskId, draft => {
             draft.title = title;
         });
-        await this.ensureBoardWriteAccess(task.boardId);
+        await this.ensureBoardWriteAccess(ctx, task.boardId);
 
         return task;
     }
@@ -323,13 +335,23 @@ export class Actor implements DataAccessor {
         return this.auth.userId;
     }
 
-    private async ensureBoardReadAccess(boardId: BoardId): Promise<Member> {
-        return await this.ensureBoardWriteAccess(boardId);
+    private async ensureBoardReadAccess(
+        ctx: Context,
+        boardId: BoardId
+    ): Promise<Member> {
+        return await this.ensureBoardWriteAccess(ctx, boardId);
     }
 
-    private async ensureBoardWriteAccess(boardId: BoardId): Promise<Member> {
+    private async ensureBoardWriteAccess(
+        ctx: Context,
+        boardId: BoardId
+    ): Promise<Member> {
         const meId = this.ensureAuthenticated();
-        const member = await this.members.getByUserIdAndBoardId(meId, boardId);
+        const member = await this.members.getByUserIdAndBoardId(
+            ctx,
+            meId,
+            boardId
+        );
         if (!member) {
             throw new BusinessError(
                 `user ${meId} does not have access to board ${boardId}`,
@@ -338,15 +360,5 @@ export class Actor implements DataAccessor {
         }
 
         return member;
-    }
-
-    private async startPullLoop(): Promise<never> {
-        while (true) {
-            const noChanges = unimplemented();
-
-            if (noChanges) {
-                await wait(PULL_WAIT_MS);
-            }
-        }
     }
 }

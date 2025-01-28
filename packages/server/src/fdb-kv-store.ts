@@ -1,6 +1,7 @@
 import * as fdb from 'foundationdb';
 import {
     Condition,
+    Context,
     Entry,
     GtCondition,
     GteCondition,
@@ -16,6 +17,7 @@ fdb.setAPIVersion(620, 620);
 
 const MAGIC_BYTE = 174;
 
+// todo: use context
 export class FoundationDBUint8Transaction implements Uint8Transaction {
     private readonly tx: fdb.Transaction;
 
@@ -23,7 +25,7 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
         this.tx = tx;
     }
 
-    async get(key: Uint8Array): Promise<Uint8Array | undefined> {
+    async get(ctx: Context, key: Uint8Array): Promise<Uint8Array | undefined> {
         const val = await this.tx.get(Buffer.from(key));
         if (val === undefined) {
             return undefined;
@@ -32,6 +34,7 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
     }
 
     async *query(
+        ctx: Context,
         condition: Condition<Uint8Array>
     ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         const bigKey = Buffer.from([255]);
@@ -72,11 +75,11 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
         }
     }
 
-    async put(key: Uint8Array, value: Uint8Array): Promise<void> {
+    async put(ctx: Context, key: Uint8Array, value: Uint8Array): Promise<void> {
         this.tx.set(Buffer.from(key), Buffer.from(value));
     }
 
-    async delete(key: Uint8Array): Promise<void> {
+    async delete(ctx: Context, key: Uint8Array): Promise<void> {
         this.tx.clear(Buffer.from(key));
     }
 }
@@ -89,7 +92,8 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
     }
 
     async transact<TResult>(
-        fn: (tx: Uint8Transaction) => Promise<TResult>
+        ctx: Context,
+        fn: (ctx: Context, tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         return this.db.doTransaction(async nativeTxn => {
             const wrappedTxn = new FoundationDBUint8Transaction(nativeTxn);
@@ -97,7 +101,7 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
             const prefixedTxn = withPrefix(new Uint8Array([MAGIC_BYTE]))(
                 wrappedTxn
             );
-            return fn(prefixedTxn);
+            return fn(ctx, prefixedTxn);
         });
     }
 

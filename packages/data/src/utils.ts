@@ -12,7 +12,7 @@ export type Brand<T, B> = T & {__brand: B | undefined};
 
 export interface Observer<T> {
     next: (ctx: Context, value: T) => Promise<void>;
-    throw: (ctx: Context, error: any) => Promise<void>;
+    throw: (ctx: Context, error: unknown) => Promise<void>;
     close: (ctx: Context) => Promise<void>;
 }
 

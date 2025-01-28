@@ -29,16 +29,13 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss.on('connection', (ws: WebSocket) => {
             const conn = new WsConnection<T>(ws, this.opt.codec);
 
-            conn.subscribe(
-                {
-                    next: () => Promise.resolve(),
-                    throw: () => Promise.resolve(),
-                    close: async () => {
-                        this.conns = this.conns.filter(x => x !== conn);
-                    },
+            conn.subscribe(Context.todo(), {
+                next: () => Promise.resolve(),
+                throw: () => Promise.resolve(),
+                close: async () => {
+                    this.conns = this.conns.filter(x => x !== conn);
                 },
-                Context.background
-            );
+            });
             this.conns.push(conn);
 
             cb(conn);
@@ -87,7 +84,7 @@ export class WsConnection<T> implements Connection<T> {
         this.setupListeners();
     }
 
-    async send(message: T): Promise<void> {
+    async send(ctx: Context, message: T): Promise<void> {
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: Error) => {
@@ -99,8 +96,8 @@ export class WsConnection<T> implements Connection<T> {
         });
     }
 
-    subscribe(observer: Observer<T>, cx: Context) {
-        return this.subject.subscribe(observer, cx);
+    subscribe(ctx: Context, observer: Observer<T>) {
+        return this.subject.subscribe(ctx, observer);
     }
 
     async close(): Promise<void> {
@@ -113,7 +110,7 @@ export class WsConnection<T> implements Connection<T> {
             try {
                 const message = this.codec.decode(rawData);
 
-                await this.subject.next(message);
+                await this.subject.next(Context.todo(), message);
             } catch (error) {
                 console.error('[ERR] error during ws message', error);
             }
@@ -121,7 +118,7 @@ export class WsConnection<T> implements Connection<T> {
 
         this.ws.on('error', async error => {
             try {
-                await this.subject.throw(error);
+                await this.subject.throw(Context.todo(), error);
             } catch (error) {
                 console.error('[ERR] error during ws.error', error);
             }
@@ -129,7 +126,10 @@ export class WsConnection<T> implements Connection<T> {
 
         this.ws.on('unexpected-response', async () => {
             try {
-                await this.subject.throw(new Error('ws.unexpected response'));
+                await this.subject.throw(
+                    Context.todo(),
+                    new Error('ws.unexpected response')
+                );
             } catch (error) {
                 console.error(
                     '[ERR] error during ws.unexpected-response',
@@ -140,7 +140,7 @@ export class WsConnection<T> implements Connection<T> {
 
         this.ws.on('close', async () => {
             try {
-                await this.subject.close();
+                await this.subject.close(Context.todo());
                 this.closedSignal.resolve();
             } catch (error) {
                 this.closedSignal.reject(error);

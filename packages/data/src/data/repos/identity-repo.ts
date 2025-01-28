@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {Context} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
@@ -67,8 +68,13 @@ export class IdentityRepo implements SyncTarget<Identity> {
         });
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
+    async apply(
+        ctx: Context,
+        id: Uuid,
+        diff: CrdtDiff<Identity>
+    ): Promise<void> {
         return await this.rawRepo.apply(
+            ctx,
             id,
             diff,
             createWriteableChecker({
@@ -79,21 +85,21 @@ export class IdentityRepo implements SyncTarget<Identity> {
         );
     }
 
-    getById(id: IdentityId): Promise<Identity | undefined> {
-        return this.rawRepo.getById(id);
+    getById(ctx: Context, id: IdentityId): Promise<Identity | undefined> {
+        return this.rawRepo.getById(ctx, id);
     }
 
-    getByEmail(email: string): Promise<Identity | undefined> {
-        return this.rawRepo.getUnique(EMAIL_INDEX, [email]);
+    getByEmail(ctx: Context, email: string): Promise<Identity | undefined> {
+        return this.rawRepo.getUnique(ctx, EMAIL_INDEX, [email]);
     }
 
-    getByUserId(userId: UserId): Promise<Identity | undefined> {
-        return this.rawRepo.getUnique(USER_ID_INDEX, [userId]);
+    getByUserId(ctx: Context, userId: UserId): Promise<Identity | undefined> {
+        return this.rawRepo.getUnique(ctx, USER_ID_INDEX, [userId]);
     }
 
-    async create(identity: Identity): Promise<Identity> {
+    async create(ctx: Context, identity: Identity): Promise<Identity> {
         try {
-            return await this.rawRepo.create(identity);
+            return await this.rawRepo.create(ctx, identity);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === EMAIL_INDEX) {
                 throw new EmailTakenIdentityRepoError(
@@ -107,9 +113,10 @@ export class IdentityRepo implements SyncTarget<Identity> {
     }
 
     update(
+        ctx: Context,
         id: IdentityId,
         recipe: (user: Identity) => Identity | void
     ): Promise<Identity> {
-        return this.rawRepo.update(id, recipe);
+        return this.rawRepo.update(ctx, id, recipe);
     }
 }

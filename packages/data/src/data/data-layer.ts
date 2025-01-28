@@ -34,8 +34,8 @@ export interface UserChangeEntry {
     readonly diff: CrdtDiff<User>;
 }
 
-export type DataEffect = () => Promise<void>;
-export type DataEffectScheduler = (ctx: Context, effect: DataEffect) => void;
+export type DataEffect = (ctx: Context) => Promise<void>;
+export type DataEffectScheduler = (effect: DataEffect) => void;
 
 export class DataLayer {
     constructor(
@@ -43,9 +43,12 @@ export class DataLayer {
         private readonly jwtSecret: string
     ) {}
 
-    async transact<T>(fn: (tx: DataContext) => Promise<T>): Promise<T> {
+    async transact<T>(
+        ctx: Context,
+        fn: (ctx: Context, tx: DataContext) => Promise<T>
+    ): Promise<T> {
         let effects: DataEffect[] = [];
-        const result = await this.kv.transact(async tx => {
+        const result = await this.kv.transact(ctx, async (ctx, tx) => {
             // clear effect because of transaction retries
             effects = [];
 
@@ -55,10 +58,13 @@ export class DataLayer {
             );
 
             async function handleUserChange(
+                ctx: Context,
                 userId: UserId,
                 diff: CrdtDiff<User>
             ): Promise<void> {
-                await userChangelog.get(userId.toString()).push({userId, diff});
+                await userChangelog
+                    .get(userId.toString())
+                    .push(ctx, {userId, diff});
             }
 
             const users = new UserRepo(
@@ -87,7 +93,7 @@ export class DataLayer {
                 members: new RepoDataNode(members.rawRepo),
             });
 
-            const result = await fn({
+            const result = await fn(ctx, {
                 users,
                 identities,
                 userChangelog,
@@ -106,7 +112,7 @@ export class DataLayer {
             const effectsSnapshot = effects;
             effects = [];
 
-            await whenAll(effectsSnapshot.map(effect => effect()));
+            await whenAll(effectsSnapshot.map(effect => effect(ctx)));
 
             if (effects.length > 0) {
                 console.info('[INF] effect recursion detected');

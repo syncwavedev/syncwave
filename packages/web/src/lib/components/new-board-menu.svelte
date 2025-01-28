@@ -3,7 +3,7 @@
 	import {Plus} from 'lucide-svelte';
 	import {Button} from './ui/button';
 	import {getSdk} from '$lib/utils';
-	import {Cancellation, createBoardId} from 'ground-data';
+	import {Context, createBoardId} from 'ground-data';
 	import {goto} from '$app/navigation';
 
 	const sdk = getSdk();
@@ -16,7 +16,7 @@
 				name: 'Untitled',
 				slug: boardId,
 			},
-			Cancellation.none
+			Context.todo()
 		);
 
 		goto(`/app/b/${board.id}`);

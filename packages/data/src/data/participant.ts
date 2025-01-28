@@ -64,7 +64,7 @@ function createParticipantRpc() {
         echo: handler({
             req: z.object({message: z.string()}),
             res: z.object({message: z.string()}),
-            handle: async (_, {message}) => ({message}),
+            handle: async (ctx, _, {message}) => ({message}),
         }),
     });
 }

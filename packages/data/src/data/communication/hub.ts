@@ -41,7 +41,7 @@ export class HubClient<T> {
     }
 
     subscribe(ctx: Context, topic: string): AsyncStream<T> {
-        return this.server.subscribe(ctx, {topic}).map(x => x.message!);
+        return this.server.subscribe(ctx, {topic}).map((ctx, x) => x.message!);
     }
 }
 
@@ -125,21 +125,21 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 message: zMessage,
             }),
             res: z.void(),
-            handle: async (state, {topic, message}, ctx) => {
+            handle: async (ctx, state, {topic, message}) => {
                 await state.subjects.next(ctx, topic, message!);
             },
         }),
         throw: handler({
             req: z.object({topic: z.string(), error: z.string()}),
             res: z.void(),
-            handle: async (state, {topic, error}, ctx) => {
+            handle: async (ctx, state, {topic, error}) => {
                 await state.subjects.throw(ctx, topic, new Error(error));
             },
         }),
         subscribe: streamer({
             req: z.object({topic: z.string()}),
             item: z.object({message: zMessage}),
-            async *stream({subjects}, {topic}, ctx) {
+            async *stream(ctx, {subjects}, {topic}) {
                 for await (const message of subjects.value$(ctx, topic)) {
                     yield {message};
                 }
@@ -149,19 +149,19 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
 
     const api2 = mapApiState(
         api1,
-        ({state}: ProcessorContext<HubServerRpcState<T>>) => state
+        (ctx, {state}: ProcessorContext<HubServerRpcState<T>>) => state
     );
 
     const api3 = applyMiddleware(
         api2,
-        async (next, state: ProcessorContext<HubServerRpcState<T>>) => {
+        async (ctx, next, state: ProcessorContext<HubServerRpcState<T>>) => {
             if (state.message.headers?.auth !== state.state.authSecret) {
                 throw new Error(
                     `HubServer: authentication failed: ${state.state.authSecret} !== ${state.message.headers?.auth}`
                 );
             }
 
-            await next(state);
+            await next(ctx, state);
         }
     );
 

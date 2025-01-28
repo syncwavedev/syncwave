@@ -44,13 +44,16 @@ export interface CoordinatorApiInputState {
 }
 
 export function createCoordinatorApi() {
-    const adaptedDbApi = mapApiState(dbApi, (state: CoordinatorApiState) => {
-        return new Actor(state.ctx.tx, state.auth, {type: 'coordinator'});
-    });
+    const adaptedDbApi = mapApiState(
+        dbApi,
+        (ctx, state: CoordinatorApiState) => {
+            return new Actor(state.ctx.tx, state.auth, {type: 'coordinator'});
+        }
+    );
 
     const adaptedInspectorApi = mapApiState(
         dataInspectorApi,
-        (state: CoordinatorApiState): DataInspectorApiState => ({
+        (ctx, state: CoordinatorApiState): DataInspectorApiState => ({
             dataNode: state.ctx.dataNode,
             rootTx: state.ctx.tx,
         })
@@ -58,14 +61,14 @@ export function createCoordinatorApi() {
 
     const wrappedAndAdaptedInspectorApi = applyMiddleware(
         adaptedInspectorApi,
-        async (next, state: CoordinatorApiState) => {
+        async (ctx, next, state: CoordinatorApiState) => {
             if (!state.auth.superadmin) {
                 throw new BusinessError(
                     `only superadmins can use inspector api. id = ${state.auth.identityId}`,
                     'forbidden'
                 );
             }
-            await next(state);
+            await next(ctx, state);
         }
     );
 
@@ -73,7 +76,7 @@ export function createCoordinatorApi() {
         AuthApiState,
         CoordinatorApiState,
         AuthApi
-    >(createAuthApi(), state => ({
+    >(createAuthApi(), (ctx, state) => ({
         crypto: state.crypto,
         ctx: state.ctx,
         emailService: state.emailService,
@@ -104,7 +107,10 @@ export function createCoordinatorApi() {
 
     const testApi = mapApiState(
         createTestApi(),
-        ({busConsumer, busProducer}: CoordinatorApiState): TestApiState => ({
+        (
+            ctx,
+            {busConsumer, busProducer}: CoordinatorApiState
+        ): TestApiState => ({
             hub: hubClient,
             busConsumer,
             busProducer,
@@ -142,39 +148,41 @@ export function createCoordinatorApi() {
         CoordinatorApiState,
         ProcessorContext<CoordinatorApiInputState>,
         typeof combinedApi
-    >(combinedApi, async (next, processorContext) => {
+    >(combinedApi, async (ctx, next, processorContext) => {
         const {
             state: {dataLayer, authContextParser, jwt, emailService, crypto},
             message,
         } = processorContext;
         const busConsumer = new BusConsumer(
-            fn =>
-                dataLayer.transact(ctx => fn(withPrefix('test-bus/')(ctx.tx))),
+            (ctx, fn) =>
+                dataLayer.transact(ctx, (ctx, {tx}) =>
+                    fn(ctx, withPrefix('test-bus/')(tx))
+                ),
             busHubClient,
             new MsgpackCodec()
         );
-        await dataLayer.transact(async ctx => {
+        await dataLayer.transact(ctx, async (ctx, dataCtx) => {
             const auth = await authContextParser.parse(
-                ctx,
+                dataCtx,
                 message.headers?.auth
             );
             const state: CoordinatorApiState = {
-                ctx,
+                ctx: dataCtx,
                 auth,
                 jwt,
                 crypto,
                 emailService,
-                scheduleEffect: ctx.scheduleEffect,
+                scheduleEffect: dataCtx.scheduleEffect,
                 busConsumer,
                 busProducer: new BusProducer(
-                    withPrefix('test-bus/')(ctx.tx),
+                    withPrefix('test-bus/')(dataCtx.tx),
                     new MsgpackCodec(),
                     busHubClient,
-                    ctx.scheduleEffect
+                    dataCtx.scheduleEffect
                 ),
             };
 
-            return await next(state);
+            return await next(ctx, state);
         });
     });
 

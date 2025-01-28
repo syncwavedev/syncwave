@@ -1,3 +1,4 @@
+import {Context} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Brand} from '../../utils.js';
@@ -36,8 +37,9 @@ export class UserRepo implements SyncTarget<User> {
         });
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {
+    async apply(ctx: Context, id: Uuid, diff: CrdtDiff<User>): Promise<void> {
         return await this.rawRepo.apply(
+            ctx,
             id,
             diff,
             createWriteableChecker({
@@ -46,15 +48,15 @@ export class UserRepo implements SyncTarget<User> {
         );
     }
 
-    getById(id: UserId): Promise<User | undefined> {
-        return this.rawRepo.getById(id);
+    getById(ctx: Context, id: UserId): Promise<User | undefined> {
+        return this.rawRepo.getById(ctx, id);
     }
 
-    async create(user: User): Promise<User> {
-        return this.rawRepo.create(user);
+    async create(ctx: Context, user: User): Promise<User> {
+        return this.rawRepo.create(ctx, user);
     }
 
-    update(id: UserId, recipe: Recipe<User>): Promise<User> {
-        return this.rawRepo.update(id, recipe);
+    update(ctx: Context, id: UserId, recipe: Recipe<User>): Promise<User> {
+        return this.rawRepo.update(ctx, id, recipe);
     }
 }

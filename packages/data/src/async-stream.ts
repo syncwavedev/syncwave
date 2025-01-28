@@ -253,6 +253,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     flatMap<TResult>(
         flatMapper: (
+            ctx: Context,
             value: T
         ) => TResult[] | Promise<TResult[]> | AsyncIterable<TResult>
     ): AsyncStream<TResult> {
@@ -261,30 +262,31 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     private async *_flatMap<TResult>(
         flatMapper: (
+            ctx: Context,
             value: T
         ) => TResult[] | Promise<TResult[]> | AsyncIterable<TResult>
     ): AsyncIterable<TResult> {
         for await (const item of this.source) {
-            yield* await flatMapper(item);
+            yield* await flatMapper(Context.todo(), item);
         }
     }
 
     map<TResult>(
-        mapper: (value: T) => TResult | Promise<TResult>
+        mapper: (ctx: Context, value: T) => TResult | Promise<TResult>
     ): AsyncStream<TResult> {
         return astream(this._map(mapper));
     }
 
     private async *_map<TResult>(
-        mapper: (value: T) => TResult | Promise<TResult>
+        mapper: (context: Context, value: T) => TResult | Promise<TResult>
     ): AsyncIterable<TResult> {
         for await (const item of this.source) {
-            yield await mapper(item);
+            yield await mapper(Context.todo(), item);
         }
     }
 
     mapParallel<TResult>(
-        mapper: (ctx: Context, value: T) => TResult | Promise<TResult>
+        mapper: (ctx: Context, value: T) => Promise<TResult>
     ): AsyncStream<TResult> {
         return astream(
             new ColdStream(Context.todo(), async (ctx, {next, end}) => {
@@ -317,9 +319,11 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         );
     }
 
-    async toArray(): Promise<T[]> {
+    async toArray(ctx: Context): Promise<T[]> {
         const result: T[] = [];
-        for await (const item of this.source) {
+        for await (const item of astream(this.source).until(
+            ctx.cancelPromise
+        )) {
             result.push(item);
         }
 

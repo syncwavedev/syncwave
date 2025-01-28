@@ -1,4 +1,5 @@
 import {decodeString, encodeString} from '../codec.js';
+import {Context} from '../context.js';
 import {decodeHex} from '../hex.js';
 import {bufStartsWith} from '../utils.js';
 import {decodeUuid, encodeUuid, Uuid} from '../uuid.js';
@@ -16,7 +17,10 @@ export interface DataNodeChild {
 }
 
 export abstract class DataNode {
-    abstract queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild>;
+    abstract queryChildren(
+        ctx: Context,
+        prefix: Uint8Array
+    ): AsyncIterable<DataNodeChild>;
     abstract child(part: Uint8Array): DataNode;
     abstract visit<T>(visitor: DataNodeVisitor<T>): T;
 }
@@ -28,7 +32,10 @@ export class AggregateDataNode<
         super();
     }
 
-    async *queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild> {
+    async *queryChildren(
+        ctx: Context,
+        prefix: Uint8Array
+    ): AsyncIterable<DataNodeChild> {
         for (const [prop, node] of Object.entries(this.children)) {
             const key = encodeString(prop);
             if (bufStartsWith(key, prefix)) {
@@ -56,8 +63,11 @@ export class RepoDataNode<T extends Doc> extends DataNode {
         super();
     }
 
-    async *queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild> {
-        yield* this.repo.getAll(prefix).mapParallel(doc => ({
+    async *queryChildren(
+        ctx: Context,
+        prefix: Uint8Array
+    ): AsyncIterable<DataNodeChild> {
+        yield* this.repo.getAll(ctx, prefix).map((ctx, doc) => ({
             key: encodeUuid(doc.id),
             node: new DocDataNode(doc.id, this.repo),
         }));
@@ -95,7 +105,7 @@ export class DocDataNode<T extends Doc> extends DataNode {
         return visitor.doc(this);
     }
 
-    async snapshot(): Promise<T | undefined> {
-        return await this.repo.getById(this.docId);
+    async snapshot(ctx: Context): Promise<T | undefined> {
+        return await this.repo.getById(ctx, this.docId);
     }
 }

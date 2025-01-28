@@ -1,6 +1,7 @@
 import BetterSqlite3, {Database} from 'better-sqlite3';
 import {
     Condition,
+    Context,
     Entry,
     TXN_RETRIES_COUNT,
     Uint8KVStore,
@@ -30,10 +31,14 @@ interface Row {
     value: Uint8Array | Buffer;
 }
 
+// todo: use context
 class SqliteTransaction implements Uint8Transaction {
     constructor(private readonly db: Database) {}
 
-    public async get(key: Uint8Array): Promise<Uint8Array | undefined> {
+    public async get(
+        ctx: Context,
+        key: Uint8Array
+    ): Promise<Uint8Array | undefined> {
         const row = this.db
             .prepare('SELECT value FROM kv_store WHERE key = ?')
             .get(key) as Row;
@@ -41,6 +46,7 @@ class SqliteTransaction implements Uint8Transaction {
     }
 
     public async *query(
+        ctx: Context,
         condition: Condition<Uint8Array>
     ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         const {clause, param, order} = buildConditionSql(condition);
@@ -49,6 +55,8 @@ class SqliteTransaction implements Uint8Transaction {
         );
 
         for (const row of stmt.iterate(param)) {
+            ctx.ensureAlive();
+
             yield {
                 key: new Uint8Array((row as Row).key),
                 value: new Uint8Array((row as Row).value),
@@ -56,7 +64,11 @@ class SqliteTransaction implements Uint8Transaction {
         }
     }
 
-    public async put(key: Uint8Array, value: Uint8Array): Promise<void> {
+    public async put(
+        ctx: Context,
+        key: Uint8Array,
+        value: Uint8Array
+    ): Promise<void> {
         this.db
             .prepare(
                 'INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)'
@@ -64,7 +76,7 @@ class SqliteTransaction implements Uint8Transaction {
             .run(key, value);
     }
 
-    public async delete(key: Uint8Array): Promise<void> {
+    public async delete(ctx: Context, key: Uint8Array): Promise<void> {
         this.db.prepare('DELETE FROM kv_store WHERE key = ?').run(key);
     }
 }
@@ -84,14 +96,15 @@ export class SqliteUint8KVStore implements Uint8KVStore {
     }
 
     public async transact<TResult>(
-        fn: (tx: Uint8Transaction) => Promise<TResult>
+        ctx: Context,
+        fn: (ctx: Context, tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
             this.db.exec('BEGIN');
 
             try {
                 const tx = new SqliteTransaction(this.db);
-                const result = await fn(tx);
+                const result = await fn(ctx, tx);
 
                 this.db.exec('COMMIT');
 

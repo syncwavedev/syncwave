@@ -42,6 +42,7 @@ export type IndexSpec<T> =
 export type IndexMap<T> = Record<string, IndexSpec<T>>;
 
 export type OnDocChange<T extends Doc> = (
+    ctx: Context,
     id: T['id'],
     diff: CrdtDiff<T>
 ) => Promise<void>;
@@ -56,7 +57,7 @@ export interface DocStoreOptions<T extends Doc> {
 export type Recipe<T> = (doc: T) => T | void;
 
 export interface SyncTarget<T> {
-    apply(id: Uuid, diff: CrdtDiff<T>): Promise<void>;
+    apply(ctx: Context, id: Uuid, diff: CrdtDiff<T>): Promise<void>;
 }
 
 export class DocRepo<T extends Doc> implements SyncTarget<T> {
@@ -117,7 +118,7 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         key: IndexKey
     ): Promise<T | undefined> {
         const index = this._index(indexName);
-        const ids = await astream(index.get(ctx, key)).take(2).toArray();
+        const ids = await astream(index.get(ctx, key)).take(2).toArray(ctx);
         if (ids.length > 1) {
             throw new Error(
                 `index ${indexName} contains multiple docs for the key: ${key}`
@@ -132,17 +133,21 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
     getAll(ctx: Context, prefix?: Uint8Array): AsyncStream<T> {
         return astream(
             queryStartsWith(ctx, this.primaryKeyRaw, prefix ?? new Uint8Array())
-        ).mapParallel(x => x.value.snapshot());
+        ).map((_mapCtx, x) => x.value.snapshot());
     }
 
-    query(indexName: string, condition: Condition<IndexKey>): AsyncStream<T> {
+    query(
+        ctx: Context,
+        indexName: string,
+        condition: Condition<IndexKey>
+    ): AsyncStream<T> {
         const index = this._index(indexName);
 
-        return this._mapToDocs(index.query(condition));
+        return this._mapToDocs(index.query(ctx, condition));
     }
 
-    async update(id: Uuid, recipe: Recipe<T>): Promise<T> {
-        const doc = await this.primary.get(id);
+    async update(ctx: Context, id: Uuid, recipe: Recipe<T>): Promise<T> {
+        const doc = await this.primary.get(ctx, id);
         if (!doc) {
             throw new Error('doc not found: ' + id);
         }
@@ -163,8 +168,8 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         this.ensureValid(next);
 
         await whenAll([
-            this.primary.put(id, doc),
-            this._sync(id, prev, next, diff),
+            this.primary.put(ctx, id, doc),
+            this._sync(ctx, id, prev, next, diff),
         ]);
 
         return next;
@@ -172,11 +177,12 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
 
     // todo: add tests
     async apply(
+        ctx: Context,
         id: Uuid,
         diff: CrdtDiff<T>,
         updateChecker?: UpdateChecker<T>
     ): Promise<void> {
-        let doc: Crdt<T> | undefined = await this.primary.get(id);
+        let doc: Crdt<T> | undefined = await this.primary.get(ctx, id);
         let prev: T | undefined;
         let next: T;
         if (doc) {
@@ -200,8 +206,8 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         this.ensureValid(next);
     }
 
-    async create(doc: T): Promise<T> {
-        const existing = await this.primary.get(doc.id);
+    async create(ctx: Context, doc: T): Promise<T> {
+        const existing = await this.primary.get(ctx, doc.id);
         if (existing) {
             throw new Error(`doc ${doc.id} already exists`);
         }
@@ -209,8 +215,8 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
         const now = getNow();
         const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
         await whenAll([
-            this.primary.put(doc.id, crdt),
-            this._sync(doc.id, undefined, doc, crdt.state()),
+            this.primary.put(ctx, doc.id, crdt),
+            this._sync(ctx, doc.id, undefined, doc, crdt.state()),
         ]);
 
         return crdt.snapshot();
@@ -225,22 +231,23 @@ export class DocRepo<T extends Doc> implements SyncTarget<T> {
     }
 
     private async _sync(
+        ctx: Context,
         id: Uuid,
         prev: T | undefined,
         next: T | undefined,
         diff: CrdtDiff<T>
     ): Promise<void> {
         await whenAll([
-            ...[...this.indexes.values()].map(x => x.sync(prev, next)),
-            this.onChange(id, diff),
+            ...[...this.indexes.values()].map(x => x.sync(ctx, prev, next)),
+            this.onChange(ctx, id, diff),
         ]);
     }
 
     private _mapToDocs(ids: AsyncIterable<Uuid>): AsyncStream<T> {
         return astream(ids)
-            .mapParallel(id => this.primary.get(id))
+            .mapParallel((ctx, id) => this.primary.get(ctx, id))
             .assert(x => x !== undefined)
-            .mapParallel(doc => doc.snapshot());
+            .map((_mapCtx, doc) => doc.snapshot());
     }
 
     private ensureValid(value: T) {

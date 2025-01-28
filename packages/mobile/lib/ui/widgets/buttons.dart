@@ -10,72 +10,43 @@ enum ButtonSize {
   large,
 }
 
-enum _ButtonStyle {
-  plain,
-  filled,
-}
-
-const _kMinInteractiveDimension = 44.0;
-
-const Map<ButtonSize, EdgeInsets> _kButtonPadding = {
-  ButtonSize.small: EdgeInsets.all(6.0),
-  ButtonSize.medium: EdgeInsets.all(4.0),
-  ButtonSize.large: EdgeInsets.all(2.0),
-};
-
-class IconButton extends StatefulWidget {
-  const IconButton({
+abstract class BaseButton extends StatefulWidget {
+  const BaseButton({
     super.key,
     required this.child,
     required this.onPressed,
-    this.sizeStyle = ButtonSize.medium,
+    this.size = ButtonSize.medium,
     this.onLongPress,
-  }) : _style = _ButtonStyle.plain;
+    this.borderRadius = 8.0,
+    this.fixedSize = false,
+  });
 
-  const IconButton.filled({
-    super.key,
-    required this.child,
-    required this.onPressed,
-    this.sizeStyle = ButtonSize.medium,
-    this.onLongPress,
-  }) : _style = _ButtonStyle.filled;
-
-  /// The widget below this widget in the tree.
-  ///
-  /// Typically a [Text] widget.
   final Widget child;
-
-  /// The callback that is called when the button is tapped or otherwise activated.
-  ///
-  /// If [onPressed] and [onLongPress] callbacks are null, then the button will be disabled.
   final VoidCallback? onPressed;
-
-  /// If [onPressed] and [onLongPress] callbacks are null, then the button will be disabled.
   final VoidCallback? onLongPress;
+  final ButtonSize size;
+  final double borderRadius;
+  final bool fixedSize;
 
-  /// The size of the button.
-  ///
-  /// Defaults to [ButtonSize.large].
-  final ButtonSize sizeStyle;
+  Color? backgroundColor(BuildContext context, bool isPressed);
+  Color foregroundColor(BuildContext context, bool isPressed);
+  EdgeInsets padding(BuildContext context);
 
-  final _ButtonStyle _style;
-
-  /// Whether the button is enabled or disabled. Buttons are disabled by default. To
-  /// enable a button, set [onPressed] or [onLongPress] to a non-null value.
   bool get enabled => onPressed != null || onLongPress != null;
 
   @override
-  State<IconButton> createState() => _IconButtonState();
+  State<BaseButton> createState() => _BaseButtonState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
     properties
-        .add(FlagProperty('enabled', value: enabled, ifFalse: 'disabled'));
+      ..add(EnumProperty<ButtonSize>('size', size))
+      ..add(FlagProperty('enabled', value: enabled, ifFalse: 'disabled'));
   }
 }
 
-class _IconButtonState extends State<IconButton> {
+class _BaseButtonState extends State<BaseButton> {
   bool _buttonHeldDown = false;
 
   void _handleTapDown(TapDownDetails event) {
@@ -98,57 +69,37 @@ class _IconButtonState extends State<IconButton> {
 
   @override
   Widget build(BuildContext context) {
-    final bool enabled = widget.enabled;
-    final Color? color;
-    final Color foregroundColor;
-
-    switch (widget._style) {
-      case _ButtonStyle.plain:
-        color = null;
-        foregroundColor = context.colors.ink;
-        break;
-      case _ButtonStyle.filled:
-        color = context.colors.subtle4;
-        foregroundColor = context.colors.alwaysWhite;
-        break;
-    }
-
-    final effectiveIconSize = _kMinInteractiveDimension -
-        _kButtonPadding[widget.sizeStyle]!.horizontal;
-    const outerPadding = EdgeInsets.all(4.0);
+    final minSize = widget.fixedSize ? _kMinInteractiveDimension : null;
 
     return SizedBox(
-      width: _kMinInteractiveDimension,
-      height: _kMinInteractiveDimension,
+      width: minSize,
+      height: minSize,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapDown: enabled ? _handleTapDown : null,
-        onTapUp: enabled ? _handleTapUp : null,
-        onTapCancel: enabled ? _handleTapCancel : null,
+        onTapDown: widget.enabled ? _handleTapDown : null,
+        onTapUp: widget.enabled ? _handleTapUp : null,
+        onTapCancel: widget.enabled ? _handleTapCancel : null,
         onTap: widget.onPressed,
         onLongPress: widget.onLongPress,
         child: Semantics(
           button: true,
-          child: Padding(
-            padding: outerPadding,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                color: color,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              color: widget.backgroundColor(context, _buttonHeldDown),
+            ),
+            padding: widget.padding(context),
+            child: IconTheme(
+              data: IconThemeData(
+                color: widget.foregroundColor(context, _buttonHeldDown),
               ),
-              child: Padding(
-                padding: _kButtonPadding[widget.sizeStyle]!,
-                child: Align(
-                  alignment: Alignment.center,
-                  widthFactor: 1.0,
-                  heightFactor: 1.0,
-                  child: IconTheme(
-                    data: IconThemeData(
-                      size: effectiveIconSize,
-                      color: foregroundColor,
-                    ),
-                    child: widget.child,
-                  ),
+              child: DefaultTextStyle(
+                style: TextStyle(
+                  color: widget.foregroundColor(context, _buttonHeldDown),
+                ),
+                child: Center(
+                  child: widget.child,
                 ),
               ),
             ),
@@ -158,3 +109,154 @@ class _IconButtonState extends State<IconButton> {
     );
   }
 }
+
+class IconButton extends BaseButton {
+  const IconButton({
+    super.key,
+    required super.child,
+    required super.onPressed,
+    super.size = ButtonSize.medium,
+    super.onLongPress,
+  })  : _style = _IconButtonStyle.plain,
+        super(
+          fixedSize: true,
+          borderRadius: 100.0,
+        );
+
+  const IconButton.filled({
+    super.key,
+    required super.child,
+    required super.onPressed,
+    super.size = ButtonSize.medium,
+    super.onLongPress,
+  })  : _style = _IconButtonStyle.filled,
+        super(
+          fixedSize: true,
+          borderRadius: 100.0,
+        );
+
+  final _IconButtonStyle _style;
+
+  @override
+  Color? backgroundColor(BuildContext context, bool isPressed) {
+    if (!enabled) return context.colors.subtle3;
+
+    final baseColor =
+        _style == _IconButtonStyle.filled ? context.colors.subtle4 : null;
+
+    return isPressed
+        ? baseColor?.withAlpha((baseColor.a * 0.8).round())
+        : baseColor;
+  }
+
+  @override
+  Color foregroundColor(BuildContext context, bool isPressed) {
+    if (!enabled) return context.colors.subtle1;
+    final baseColor = _style == _IconButtonStyle.filled
+        ? context.colors.alwaysWhite
+        : context.colors.ink;
+    return isPressed
+        ? baseColor.withAlpha((baseColor.a * 0.9).round())
+        : baseColor;
+  }
+
+  @override
+  EdgeInsets padding(BuildContext context) {
+    switch (size) {
+      case ButtonSize.small:
+        return const EdgeInsets.all(10.0);
+      case ButtonSize.medium:
+        return const EdgeInsets.all(12.0);
+      case ButtonSize.large:
+        return const EdgeInsets.all(14.0);
+    }
+  }
+}
+
+enum _IconButtonStyle {
+  plain,
+  filled,
+}
+
+class Button extends BaseButton {
+  Button({
+    super.key,
+    required this.label,
+    this.icon,
+    required super.onPressed,
+    super.size = ButtonSize.medium,
+    super.onLongPress,
+  })  : _style = _ButtonStyle.plain,
+        super(
+          fixedSize: false,
+          borderRadius: 8.0,
+          child: _ButtonContent(icon: icon, label: label),
+        );
+
+  final Widget label;
+  final Widget? icon;
+  final _ButtonStyle _style;
+
+  @override
+  Color? backgroundColor(BuildContext context, bool isPressed) {
+    if (!enabled) return context.colors.subtle3;
+    final baseColor =
+        _style == _ButtonStyle.filled ? context.colors.subtle4 : null;
+
+    return isPressed
+        ? baseColor?.withAlpha((baseColor.a * 0.8).round())
+        : baseColor;
+  }
+
+  @override
+  Color foregroundColor(BuildContext context, bool isPressed) {
+    if (!enabled) return context.colors.subtle1;
+    final baseColor = _style == _ButtonStyle.filled
+        ? context.colors.alwaysWhite
+        : context.colors.ink;
+    return isPressed
+        ? baseColor.withAlpha((baseColor.a * 0.9).round())
+        : baseColor;
+  }
+
+  @override
+  EdgeInsets padding(BuildContext context) {
+    switch (size) {
+      case ButtonSize.small:
+        return const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0);
+      case ButtonSize.medium:
+        return const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0);
+      case ButtonSize.large:
+        return const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0);
+    }
+  }
+}
+
+class _ButtonContent extends StatelessWidget {
+  const _ButtonContent({
+    required this.icon,
+    required this.label,
+  });
+
+  final Widget? icon;
+  final Widget label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) icon!,
+        if (icon != null) const SizedBox(width: 8),
+        Flexible(child: label),
+      ],
+    );
+  }
+}
+
+enum _ButtonStyle {
+  plain,
+  filled,
+}
+
+const _kMinInteractiveDimension = 44.0;

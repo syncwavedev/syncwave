@@ -44,6 +44,7 @@
         "bytewise": "^1.1.0",
         "deep-equal": "^2.2.3",
         "functional-red-black-tree": "^1.0.1",
+        "ix": "^7.0.0",
         "lru-cache": "^11.0.2",
         "msgpackr": "^1.11.2",
         "uuid": "^11.0.3",

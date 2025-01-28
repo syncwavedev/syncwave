@@ -1,4 +1,5 @@
 import {Channel} from 'async-channel';
+import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cancel, CancelledError, Context} from './context.js';
 import {assert, assertNever} from './utils.js';
@@ -61,9 +62,11 @@ export class ColdStream<T> implements AsyncIterable<T> {
 
     async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
         const [ctx, cancelCtx] = this.parentCtx.withCancel();
+        let executorCancel: Cancel = () => Promise.resolve();
+        ctx.cleanup(() => executorCancel());
+
         const stream = new HotStream<T>(ctx);
 
-        let executorCancel: Cancel = () => Promise.resolve();
         try {
             executorCancel = this.execute(ctx, {
                 next: (ctx, value) => stream.next(value),
@@ -72,7 +75,6 @@ export class ColdStream<T> implements AsyncIterable<T> {
             });
             yield* stream;
         } finally {
-            await executorCancel();
             await cancelCtx();
         }
     }
@@ -80,67 +82,14 @@ export class ColdStream<T> implements AsyncIterable<T> {
 
 export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
     if (Array.isArray(source)) {
-        return new AsyncStream(
-            new ColdStream(Context.todo(), (ctx, {next, end}) => {
-                (async () => {
-                    for (const item of source) {
-                        ctx.ensureAlive('cold stream');
-                        await next(ctx, item);
-                    }
-                    await end(ctx);
-                })().catch(error => {
-                    console.error(
-                        '[ERR] error in astream during array transform',
-                        error
-                    );
-                });
-
-                return () => Promise.resolve();
-            })
-        );
+        return astream(of(...source));
     }
 
     return new AsyncStream(source);
 }
 
-export function mergeStreams<T>(source: AsyncIterable<T>[]): AsyncStream<T> {
-    return astream(_mergeStreams(source));
-}
-
-async function* _mergeStreams<T>(iterable: AsyncIterable<T>[]) {
-    const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
-    const results: T[] = [];
-    let count = asyncIterators.length;
-    const never = new Promise(() => {});
-    function getNext(asyncIterator, index) {
-        return asyncIterator.next().then(result => ({
-            index,
-            result,
-        }));
-    }
-    const nextPromises = asyncIterators.map(getNext);
-    try {
-        while (count) {
-            const {index, result} = await Promise.race(nextPromises);
-            if (result.done) {
-                nextPromises[index] = never;
-                results[index] = result.value;
-                count--;
-            } else {
-                nextPromises[index] = getNext(asyncIterators[index], index);
-                yield result.value;
-            }
-        }
-    } finally {
-        for (const [index, iterator] of asyncIterators.entries())
-            if (nextPromises[index] !== never && iterator.return) {
-                // no await here - see https://github.com/tc39/proposal-async-iteration/issues/126
-                iterator.return().catch(error => {
-                    console.error('[ERR] failed to iterator.return', error);
-                });
-            }
-    }
-    return results;
+export function mergeStreams<T>(sources: AsyncIterable<T>[]): AsyncStream<T> {
+    return astream(merge(astream([]), ...sources));
 }
 
 export class AsyncStream<T> implements AsyncIterable<T> {
@@ -186,33 +135,17 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return astream(this._catch(map));
     }
 
-    _catch<R>(
+    async *_catch<R>(
         map: (ctx: Context, error: unknown) => Promise<R> | R
     ): AsyncIterable<T | R> {
-        return {
-            [Symbol.asyncIterator]: () => {
-                const [ctx, cancel] = Context.create();
-                const target = this.source[Symbol.asyncIterator]();
-                const result: AsyncIterator<T | R> = {
-                    next: value =>
-                        target.next(value).catch(async error => ({
-                            done: false,
-                            value: await map(ctx, error),
-                        })),
-                };
-                result.return = async value => {
-                    await target.return?.(value);
-                    await cancel();
-
-                    return {done: true, value: undefined};
-                };
-                if (target.throw) {
-                    result.throw = e => target.throw!(e);
-                }
-
-                return result;
-            },
-        };
+        const [ctx, cancel] = Context.create();
+        try {
+            yield* this.source;
+        } catch (error) {
+            yield await map(ctx, error);
+        } finally {
+            await cancel();
+        }
     }
 
     finally(fn: () => Promise<void>): AsyncStream<T> {

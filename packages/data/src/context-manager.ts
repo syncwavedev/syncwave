@@ -8,16 +8,19 @@ export class ContextManager<T extends Uuid> {
 
     constructor(private readonly parentCtx: Context) {}
 
-    start(job: T) {
-        if (this.runningJobs.has(job)) {
-            console.warn(`[WRN] job ${job} is already running`);
-        } else if (this.cancelledJobs.has(job)) {
-            console.warn(`[WRN] job ${job} is already finished`);
+    start(id: T) {
+        if (this.runningJobs.has(id)) {
+            console.warn(`[WRN] job ${id} is already running`);
+            const [ctx] = this.runningJobs.get(id)!;
+            return ctx;
+        } else if (this.cancelledJobs.has(id)) {
+            console.warn(`[WRN] job ${id} is already finished`);
+            return Context.cancelled();
         } else {
-            this.runningJobs.set(job, this.parentCtx.withCancel());
+            const [ctx, cancel] = this.parentCtx.withCancel();
+            this.runningJobs.set(id, [ctx, cancel]);
+            return ctx;
         }
-
-        return this.context(job);
     }
 
     async cancel(id: T) {
@@ -32,18 +35,6 @@ export class ContextManager<T extends Uuid> {
         }
     }
 
-    context(id: T): Context {
-        if (this.runningJobs.has(id)) {
-            const [ctx] = this.runningJobs.get(id)!;
-            return ctx;
-        } else if (this.cancelledJobs.has(id)) {
-            console.warn(`[WRN] job ${id} is already cancelled`);
-            return Context.cancelled();
-        } else {
-            throw new Error(`cancellation: unknown job: ${id}`);
-        }
-    }
-
     async finish(job: T) {
         if (this.runningJobs.has(job) || this.cancelledJobs.has(job)) {
             await this.runningJobs.get(job)?.[1]();
@@ -54,25 +45,12 @@ export class ContextManager<T extends Uuid> {
         }
     }
 
-    async cancelAll() {
-        const runningSnapshot = [...this.runningJobs.entries()];
-        this.runningJobs.clear();
+    async finishAll() {
+        const runningSnapshot = [...this.runningJobs.keys()];
         await whenAll(
-            runningSnapshot.map(async ([job, [, cancel]]) => {
-                this.cancelledJobs.add(job);
-                await cancel();
+            runningSnapshot.map(async job => {
+                await this.finish(job);
             })
         );
-    }
-
-    isRunning(job: T) {
-        if (this.runningJobs.has(job)) {
-            return true;
-        } else if (this.cancelledJobs.has(job)) {
-            return false;
-        } else {
-            console.warn(`[WRN] unknown job: ${job}`);
-            return false;
-        }
     }
 }

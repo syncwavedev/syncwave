@@ -10,16 +10,16 @@ import {
     MemTransportClient,
     MemTransportServer,
 } from '../communication/mem-transport.js';
+import {dataInspectorApi, DataInspectorApiState} from '../data-inspector.js';
+import {DataContext, DataEffectScheduler, DataLayer} from '../data-layer.js';
+import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {
     Api,
     applyMiddleware,
     InferRpcClient,
     mapApiState,
     ProcessorContext,
-} from '../communication/rpc.js';
-import {dataInspectorApi, DataInspectorApiState} from '../data-inspector.js';
-import {DataContext, DataEffectScheduler, DataLayer} from '../data-layer.js';
-import {CryptoService, EmailService, JwtService} from '../infra.js';
+} from '../rpc/rpc.js';
 import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
 import {dbApi} from './db-api.js';
 import {createTestApi, TestApiState} from './test-api.js';

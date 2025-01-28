@@ -2,10 +2,10 @@ import {Context} from '../../context.js';
 import {Uint8KVStore} from '../../kv/kv-store.js';
 import {AuthContextParser} from '../auth-context.js';
 import {Message} from '../communication/message.js';
-import {RpcServer} from '../communication/rpc.js';
 import {TransportServer} from '../communication/transport.js';
 import {DataLayer} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
+import {RpcServer} from '../rpc/rpc-protocol.js';
 import {getIdentity, signJwtToken} from './auth-api.js';
 import {
     CoordinatorApiInputState,

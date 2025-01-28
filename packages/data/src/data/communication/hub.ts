@@ -2,19 +2,18 @@ import {z, ZodType} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
 import {Context} from '../../context.js';
 import {Observer, Subject} from '../../utils.js';
-import {Message} from './message.js';
-import {PersistentConnection} from './persistent-connection.js';
+import {createRpcClient, RpcServer} from '../rpc/rpc-protocol.js';
 import {
     applyMiddleware,
     createApi,
-    createRpcClient,
     handler,
     InferRpcClient,
     mapApiState,
     ProcessorContext,
-    RpcServer,
     streamer,
-} from './rpc.js';
+} from '../rpc/rpc.js';
+import {Message} from './message.js';
+import {PersistentConnection} from './persistent-connection.js';
 import {TransportClient, TransportServer} from './transport.js';
 
 export class HubClient<T> {

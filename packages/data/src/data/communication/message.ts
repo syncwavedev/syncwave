@@ -49,7 +49,7 @@ export interface StartResponsePayload extends BaseResponsePayload<'start'> {}
 export interface EndResponsePayload extends BaseResponsePayload<'end'> {}
 
 export interface ErrorResponsePayload extends BaseResponsePayload<'error'> {
-    readonly message?: string;
+    readonly message: string;
 }
 
 export type ResponsePayload =

@@ -6,7 +6,6 @@ import {
 import {Context} from '../../context.js';
 import {addHours, getNow} from '../../timestamp.js';
 import {whenAll} from '../../utils.js';
-import {createApi, handler} from '../communication/rpc.js';
 import {DataContext, DataEffectScheduler} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {
@@ -16,6 +15,7 @@ import {
     VerificationCode,
 } from '../repos/identity-repo.js';
 import {createUserId, UserId, UserRepo} from '../repos/user-repo.js';
+import {createApi, handler} from '../rpc/rpc.js';
 import {VerifySignInCodeResponse} from './coordinator.js';
 
 export interface AuthApiState {

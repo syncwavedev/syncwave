@@ -81,6 +81,8 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     method === 'filter' ||
                     method === 'find' ||
                     method === 'findIndex' ||
+                    method === 'findLast' ||
+                    method === 'findLastIndex' ||
                     method === 'flat' ||
                     method === 'flatMap' ||
                     method === 'forEach' ||
@@ -102,18 +104,6 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     return (...args: any) => {
                         return original.apply(target, args);
                     };
-                } else if (
-                    method === 'copyWithin' ||
-                    method === 'reverse' ||
-                    method === 'fill' ||
-                    method === 'pop' ||
-                    method === 'shift' ||
-                    method === 'sort' ||
-                    method === 'splice'
-                ) {
-                    throw new Error(
-                        'unsupported array modification: ' + method
-                    );
                 } else if (method === 'push') {
                     return (...args: any[]) => {
                         log.push({type: 'array_push', args, subject});
@@ -130,6 +120,22 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                             args.map(x => createProxy(x, log))
                         );
                     };
+                } else if (
+                    method === 'copyWithin' ||
+                    method === 'reverse' ||
+                    method === 'fill' ||
+                    method === 'pop' ||
+                    method === 'shift' ||
+                    method === 'sort' ||
+                    method === 'splice' ||
+                    method === 'toReversed' ||
+                    method === 'toSorted' ||
+                    method === 'toSpliced' ||
+                    method === 'with'
+                ) {
+                    throw new Error(
+                        'unsupported array modification: ' + method
+                    );
                 } else {
                     const _: never = method;
                 }

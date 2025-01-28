@@ -2,9 +2,9 @@ import {Context} from '../../context.js';
 import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
 import {PersistentConnection} from '../communication/persistent-connection.js';
-import {setupRpcServerConnection} from '../communication/rpc.js';
 import {Connection, TransportClient} from '../communication/transport.js';
 import {CoordinatorClient} from '../coordinator/coordinator-client.js';
+import {setupRpcServerConnection} from '../rpc/rpc-protocol.js';
 import {participantApi} from './participant-client.js';
 
 // todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
@@ -22,7 +22,8 @@ export class Participant {
             Context.todo(),
             participantApi,
             this.connection,
-            {}
+            {},
+            'PRT'
         );
     }
 

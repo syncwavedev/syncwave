@@ -1,12 +1,8 @@
 import {z} from 'zod';
 import {Message} from '../communication/message.js';
-import {
-    createApi,
-    createRpcClient,
-    handler,
-    InferRpcClient,
-} from '../communication/rpc.js';
 import {Connection} from '../communication/transport.js';
+import {createRpcClient} from '../rpc/rpc-protocol.js';
+import {createApi, handler, InferRpcClient} from '../rpc/rpc.js';
 
 export class ParticipantClient {
     constructor(private readonly connection: Connection<Message>) {}

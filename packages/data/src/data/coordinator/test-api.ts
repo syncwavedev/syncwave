@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {isCancelledError, wait} from '../../utils.js';
 import {BusConsumer, BusProducer} from '../communication/bus.js';
 import {HubClient} from '../communication/hub.js';
-import {createApi, handler, streamer} from '../communication/rpc.js';
+import {createApi, handler, streamer} from '../rpc/rpc.js';
 
 export interface TestApiState {
     hub: HubClient<{value: string}>;

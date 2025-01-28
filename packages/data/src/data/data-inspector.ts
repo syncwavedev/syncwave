@@ -5,8 +5,8 @@ import {Context} from '../context.js';
 import {Uint8Transaction} from '../kv/kv-store.js';
 import {zUint8Array} from '../utils.js';
 import {decodeUuid} from '../uuid.js';
-import {createApi, handler} from './communication/rpc.js';
 import {AggregateDataNode, DataNode, DataNodeVisitor} from './data-node.js';
+import {createApi, handler} from './rpc/rpc.js';
 
 export interface DataNodeDto {
     readonly key: Uint8Array;

@@ -1,7 +1,7 @@
 import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
-import {createRpcClient} from '../communication/rpc.js';
 import {Connection} from '../communication/transport.js';
+import {createRpcClient} from '../rpc/rpc-protocol.js';
 import {CoordinatorRpc, createCoordinatorApi} from './coordinator-api.js';
 
 export class CoordinatorClient {

@@ -1,10 +1,10 @@
 import {z} from 'zod';
 import {zUuid} from '../../uuid.js';
 import {Actor} from '../actor.js';
-import {createApi, handler} from '../communication/rpc.js';
 import {BoardId, zBoard} from '../repos/board-repo.js';
 import {TaskId, zTask} from '../repos/task-repo.js';
 import {zUser} from '../repos/user-repo.js';
+import {createApi, handler} from '../rpc/rpc.js';
 
 export const dbApi = createApi<Actor>()({
     getMe: handler({

@@ -26,7 +26,9 @@
 	let detailsPromise: Promise<string> | undefined = $state(undefined);
 </script>
 
-<!-- <Button variant="destructive" onclick={() => sdk.coordinatorRpc.truncateDb({})}>Reset store</Button> -->
+<Button variant="destructive" onclick={() => sdk.coordinatorRpc.truncateDb(Context.todo(), {})}
+	>Reset store</Button
+>
 <div class="flex gap-8">
 	<div>
 		{#if itemsPromise}

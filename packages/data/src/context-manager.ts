@@ -16,6 +16,8 @@ export class ContextManager<T extends Uuid> {
         } else {
             this.runningJobs.set(job, this.parentCtx.withCancel());
         }
+
+        return this.context(job);
     }
 
     async cancel(id: T) {
@@ -36,7 +38,7 @@ export class ContextManager<T extends Uuid> {
             return ctx;
         } else if (this.cancelledJobs.has(id)) {
             console.warn(`[WRN] job ${id} is already cancelled`);
-            return Context.cancelled;
+            return Context.cancelled();
         } else {
             throw new Error(`cancellation: unknown job: ${id}`);
         }

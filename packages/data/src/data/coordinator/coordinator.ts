@@ -26,13 +26,18 @@ export class Coordinator {
     ) {
         this.dataLayer = new DataLayer(kv, jwtSecret);
         const authContextParser = new AuthContextParser(4, jwt);
-        this.rpcServer = new RpcServer(transport, createCoordinatorApi(), {
-            authContextParser,
-            dataLayer: this.dataLayer,
-            jwt,
-            crypto,
-            emailService: email,
-        });
+        this.rpcServer = new RpcServer(
+            transport,
+            createCoordinatorApi(),
+            {
+                authContextParser,
+                dataLayer: this.dataLayer,
+                jwt,
+                crypto,
+                emailService: email,
+            },
+            'CRD'
+        );
     }
 
     async launch(): Promise<void> {

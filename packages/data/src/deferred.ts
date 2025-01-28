@@ -32,7 +32,7 @@ export class Deferred<T> {
     reject(reason: any) {
         if (this._state.type === 'pending') {
             this._state = {type: 'rejected', reason};
-            this._reject(reason);
+            this._reject(new Error('Deferred.reject', {cause: reason}));
         }
     }
 }

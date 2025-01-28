@@ -1,6 +1,6 @@
 import {Channel} from 'async-channel';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
-import {CancelledError, Context} from './context.js';
+import {Cancel, CancelledError, Context} from './context.js';
 import {assert, assertNever, whenAny} from './utils.js';
 
 export interface ColdStreamExecutor<T> {
@@ -12,7 +12,14 @@ export interface ColdStreamExecutor<T> {
 export class HotStream<T> implements AsyncIterable<T> {
     private chan = new Channel<T>();
 
-    async end(_ctx: Context) {
+    constructor(ctx: Context) {
+        ctx.cleanup(async () => {
+            await this.throw(new CancelledError());
+            await this.end();
+        });
+    }
+
+    async end() {
         if (this.chan.closed) {
             console.warn('[WRN] end on a closed HotStream');
             return;
@@ -20,20 +27,20 @@ export class HotStream<T> implements AsyncIterable<T> {
         this.chan.close();
     }
 
-    async next(ctx: Context, value: T) {
+    async next(value: T) {
         if (this.chan.closed) {
             console.warn('[WRN] next on a closed HotStream');
             return;
         }
-        await ctx.race(this.chan.push(value));
+        await this.chan.push(value);
     }
 
-    async throw(ctx: Context, error: any) {
+    async throw(error: any) {
         if (this.chan.closed) {
             console.warn('[WRN] throw on a closed HotStream');
             return;
         }
-        await ctx.race(this.chan.throw(error));
+        await this.chan.throw(new Error('HotStream.throw', {cause: error}));
     }
 
     async *[Symbol.asyncIterator](): AsyncIterator<T> {
@@ -45,35 +52,28 @@ export class HotStream<T> implements AsyncIterable<T> {
 
 export class ColdStream<T> implements AsyncIterable<T> {
     constructor(
-        private readonly ctx: Context,
+        private readonly parentCtx: Context,
         private readonly execute: (
             ctx: Context,
             executor: ColdStreamExecutor<T>
-        ) => void
+        ) => Cancel
     ) {}
 
     async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
-        let complete = false;
-        const stream = new HotStream<T>();
-        const [ctx, cancel] = this.ctx.withCancel();
+        const [ctx, cancelCtx] = this.parentCtx.withCancel();
+        const stream = new HotStream<T>(ctx);
+
+        let executorCancel: Cancel = () => Promise.resolve();
         try {
-            this.execute(ctx, {
-                next: (ctx, value) => stream.next(ctx, value),
-                end: ctx => stream.end(ctx),
-                throw: (ctx, error) => stream.throw(ctx, error),
+            executorCancel = this.execute(ctx, {
+                next: (ctx, value) => stream.next(value),
+                end: () => stream.end(),
+                throw: (ctx, error) => stream.throw(error),
             });
             yield* stream;
-
-            complete = true;
-        } catch (error) {
-            if (!(error instanceof CancelledError)) {
-                throw error;
-            }
         } finally {
-            if (!complete) {
-                await cancel();
-                await stream.end(ctx);
-            }
+            await executorCancel();
+            await cancelCtx();
         }
     }
 }
@@ -81,12 +81,21 @@ export class ColdStream<T> implements AsyncIterable<T> {
 export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
     if (Array.isArray(source)) {
         return new AsyncStream(
-            new ColdStream(Context.todo(), async (ctx, {next, end}) => {
-                for (const item of source) {
-                    ctx.ensureAlive('cold stream');
-                    await next(ctx, item);
-                }
-                await end(ctx);
+            new ColdStream(Context.todo(), (ctx, {next, end}) => {
+                (async () => {
+                    for (const item of source) {
+                        ctx.ensureAlive('cold stream');
+                        await next(ctx, item);
+                    }
+                    await end(ctx);
+                })().catch(error => {
+                    console.error(
+                        '[ERR] error in astream during array transform',
+                        error
+                    );
+                });
+
+                return () => Promise.resolve();
             })
         );
     }
@@ -96,42 +105,53 @@ export function astream<T>(source: AsyncIterable<T> | T[]): AsyncStream<T> {
 
 export function mergeStreams<T>(source: AsyncIterable<T>[]): AsyncStream<T> {
     return astream(
-        new ColdStream(Context.todo(), async (ctx, exe) => {
-            try {
-                let promises = source
-                    .map(x => x[Symbol.asyncIterator]())
-                    .map(iter =>
-                        iter.next().then(result => ({
-                            result,
-                            iter,
-                        }))
-                    );
-                while (promises.length > 0 && ctx.alive) {
-                    try {
-                        const [racer, rest] = await ctx.race(whenAny(promises));
-                        promises = rest;
-                        if (racer.result.done) {
-                            // do nothing
-                        } else {
-                            const promise = racer.iter.next().then(result => ({
-                                type: 'next' as const,
+        new ColdStream(Context.todo(), (executorCtx, exe) => {
+            const [ctx, cancel] = executorCtx.withCancel();
+            (async () => {
+                try {
+                    let promises = source
+                        .map(x => x[Symbol.asyncIterator]())
+                        .map(iter =>
+                            iter.next().then(result => ({
                                 result,
-                                iter: racer.iter,
-                            }));
-                            promises.push(promise);
-                            await exe.next(ctx, racer.result.value);
+                                iter,
+                            }))
+                        );
+                    while (promises.length > 0 && ctx.alive) {
+                        try {
+                            const [racer, rest] = await ctx.race(
+                                whenAny(promises)
+                            );
+                            promises = rest;
+                            if (racer.result.done) {
+                                // do nothing
+                            } else {
+                                const promise = racer.iter
+                                    .next()
+                                    .then(result => ({
+                                        type: 'next' as const,
+                                        result,
+                                        iter: racer.iter,
+                                    }));
+                                promises.push(promise);
+                                await exe.next(ctx, racer.result.value);
+                            }
+                        } catch (error) {
+                            await exe.throw(ctx, error);
                         }
-                    } catch (error) {
-                        await exe.throw(ctx, error);
                     }
+                } catch (error) {
+                    if (!(error instanceof CancelledError)) {
+                        throw error;
+                    }
+                } finally {
+                    await exe.end(ctx);
                 }
-            } catch (error) {
-                if (!(error instanceof CancelledError)) {
-                    throw error;
-                }
-            } finally {
-                await exe.end(ctx);
-            }
+            })().catch(error =>
+                console.error('[ERR] error during mergeStreams', error)
+            );
+
+            return cancel;
         })
     );
 }
@@ -289,32 +309,42 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         mapper: (ctx: Context, value: T) => Promise<TResult>
     ): AsyncStream<TResult> {
         return astream(
-            new ColdStream(Context.todo(), async (ctx, {next, end}) => {
-                let left = 0;
-                let right = 0;
-                const pending = new Map<number, Promise<TResult> | TResult>();
+            new ColdStream(Context.todo(), (executorCtx, {next, end}) => {
+                const [ctx, cancel] = executorCtx.withCancel();
+                (async () => {
+                    let left = 0;
+                    let right = 0;
+                    const pending = new Map<
+                        number,
+                        Promise<TResult> | TResult
+                    >();
 
-                for await (const item of astream(this.source).until(
-                    ctx.cancelPromise
-                )) {
-                    if (pending.size >= MAX_LOOKAHEAD_COUNT) {
+                    for await (const item of astream(this.source).until(
+                        ctx.cancelPromise
+                    )) {
+                        if (pending.size >= MAX_LOOKAHEAD_COUNT) {
+                            assert(pending.has(left));
+                            await next(ctx, await pending.get(left)!);
+                            pending.delete(left);
+                            left += 1;
+                        }
+
+                        pending.set(right, mapper(ctx, item));
+                        right += 1;
+                    }
+
+                    for (; left < right; left += 1) {
                         assert(pending.has(left));
                         await next(ctx, await pending.get(left)!);
                         pending.delete(left);
-                        left += 1;
                     }
 
-                    pending.set(right, mapper(ctx, item));
-                    right += 1;
-                }
+                    await end(ctx);
+                })().catch(error => {
+                    console.error('[ERR] error in mapParallel', error);
+                });
 
-                for (; left < right; left += 1) {
-                    assert(pending.has(left));
-                    await next(ctx, await pending.get(left)!);
-                    pending.delete(left);
-                }
-
-                await end(ctx);
+                return cancel;
             })
         );
     }

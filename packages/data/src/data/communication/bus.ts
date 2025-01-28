@@ -57,11 +57,11 @@ export class BusConsumer<T> implements BusConsumer<T> {
 
     subscribe(ctx: Context, topic: string, start: number): AsyncStream<T> {
         // we wanna trigger bus iteration immediately if we didn't reach the end of the topic
-        const selfTrigger = new HotStream<void>();
+        const selfTrigger = new HotStream<void>(ctx);
         return mergeStreams<void>([
             // make the first check immediately
             astream([undefined]),
-            selfTrigger,
+            astream(selfTrigger),
             this.hub.subscribe(ctx, topic).map(() => undefined),
             interval(BUS_PULL_INTERVAL_MS, ctx).map(() => undefined),
         ]).flatMap(async ctx => {
@@ -76,7 +76,7 @@ export class BusConsumer<T> implements BusConsumer<T> {
                 // check if there are potentially more values to pull from the topic
                 if (result.length === BUS_MAX_PULL_COUNT) {
                     // we don't wanna block on this call to avoid a deadlock
-                    selfTrigger.next(Context.todo()).catch(error => {
+                    selfTrigger.next().catch(error => {
                         console.error(
                             '[ERR] failed to trigger bus iteration',
                             error

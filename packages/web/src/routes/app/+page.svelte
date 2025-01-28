@@ -14,9 +14,11 @@
 	let items: Array<{index: number; value: string}> = $state([]);
 	let itemValue: string = $state('');
 
+	const topic = `topic-${Math.random().toString().split('.')[1]}`;
+
 	async function publish() {
 		await sdk.coordinatorRpc.streamPut(Context.todo(), {
-			topic: 'stream item',
+			topic,
 			value: itemValue,
 		});
 	}
@@ -26,7 +28,7 @@
 			try {
 				console.log('stream start');
 				const interval$ = sdk.coordinatorRpc.getStream(Context.todo(), {
-					topic: 'stream item',
+					topic,
 				});
 				for await (const item of interval$) {
 					console.log('stream item', item.index);
@@ -34,6 +36,7 @@
 					items.push(item);
 
 					if (cancelled) {
+						console.log('stream break');
 						break;
 					}
 				}

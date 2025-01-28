@@ -1,12 +1,12 @@
 import {astream, AsyncStream} from './async-stream.js';
 import {Deferred} from './deferred.js';
-import {Brand, whenAll} from './utils.js';
+import {whenAll} from './utils.js';
 
 export class CancelledError extends Error {}
 
 // todo: make cancel synchronous (without Promises)
 
-export type Cancel = Brand<() => Promise<void>, 'cancel'>;
+export type Cancel = () => Promise<void>;
 
 type AsyncRemap<T extends Promise<any> | AsyncIterable<any>> =
     T extends AsyncIterable<infer R>
@@ -83,11 +83,11 @@ export class Context {
         return Context.background();
     }
 
-    static cancelled = (() => {
+    static cancelled() {
         const ctx = new Context();
         ctx._cancelled = true;
         return ctx;
-    })();
+    }
 
     private constructor() {}
 
@@ -143,10 +143,10 @@ export class Context {
         this.children.push(child);
         return [
             child,
-            (async () => {
+            async () => {
                 await child.cancel();
                 this.children = this.children.filter(x => x !== child);
-            }) as Cancel,
+            },
         ];
     }
 
@@ -156,7 +156,9 @@ export class Context {
         }
 
         this._cancelled = true;
-        await whenAll(this.children.map(x => x.cancel()));
-        await whenAll(this.cleaners.map(async cb => cb()));
+        await whenAll([
+            ...this.children.map(x => x.cancel()),
+            ...this.cleaners.map(async cb => cb()),
+        ]);
     }
 }

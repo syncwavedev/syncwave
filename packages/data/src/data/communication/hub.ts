@@ -53,10 +53,15 @@ export class HubServer<T> {
         schema: ZodType<T>,
         authSecret: string
     ) {
-        this.rpcServer = new RpcServer(transport, createHubServerApi(schema), {
-            authSecret,
-            subjects: new SubjectManager(),
-        });
+        this.rpcServer = new RpcServer(
+            transport,
+            createHubServerApi(schema),
+            {
+                authSecret,
+                subjects: new SubjectManager(),
+            },
+            'HUB'
+        );
     }
 
     async launch(): Promise<void> {
@@ -133,7 +138,7 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
             req: z.object({topic: z.string(), error: z.string()}),
             res: z.void(),
             handle: async (ctx, state, {topic, error}) => {
-                await state.subjects.throw(ctx, topic, new Error(error));
+                await state.subjects.throw(ctx, topic, error);
             },
         }),
         subscribe: streamer({

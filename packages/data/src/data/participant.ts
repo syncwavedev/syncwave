@@ -26,7 +26,8 @@ export class Participant {
             Context.todo(),
             createParticipantRpc(),
             this.connection,
-            () => ({})
+            () => ({}),
+            false
         );
     }
 

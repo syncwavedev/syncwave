@@ -35,24 +35,21 @@ export class Subject<TValue> {
         const sub = {observer};
 
         this.subs.push(sub);
-
-        ctx.cleanup(async () => {
-            await sub.observer.throw(
-                ctx,
-                new CancelledError('Subject.subscribe')
-            );
-            await sub.observer.close(ctx);
+        ctx.cleanup(() => {
             this.subs = this.subs.filter(x => x !== sub);
         });
     }
 
     value$(ctx: Context): AsyncStream<TValue> {
-        const stream = new ColdStream<TValue>(ctx, (ctx, exe) => {
+        const stream = new ColdStream<TValue>(ctx, (executorCtx, exe) => {
+            const [ctx, cancel] = executorCtx.withCancel();
             this.subscribe(ctx, {
                 next: (ctx, value) => exe.next(ctx, value),
                 throw: (ctx, error) => exe.throw(ctx, error),
                 close: ctx => exe.end(ctx),
             });
+
+            return cancel;
         });
         return astream(stream);
     }
@@ -60,22 +57,42 @@ export class Subject<TValue> {
     async next(ctx: Context, value: TValue): Promise<void> {
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
-        await whenAll([...this.subs].map(sub => sub.observer.next(ctx, value)));
+        // await whenAll([...this.subs].map(sub => sub.observer.next(ctx, value)));
+
+        // to preserve stack
+        for (const sub of [...this.subs]) {
+            await sub.observer.next(ctx, value);
+        }
     }
 
     async throw(ctx: Context, error: unknown): Promise<void> {
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
-        await whenAll(
-            [...this.subs].map(sub => sub.observer.throw(ctx, error))
-        );
+        // await whenAll(
+        //     [...this.subs].map(sub =>
+        //         sub.observer.throw(ctx, new ForwardedError(error))
+        //     )
+        // );
+
+        // to preserve stack
+        for (const sub of [...this.subs]) {
+            await sub.observer.throw(
+                ctx,
+                new Error('Subject.throw', {cause: error})
+            );
+        }
     }
 
     async close(ctx: Context): Promise<void> {
         if (this._open) {
             this._open = false;
             // copy in case if new subscribers are added/removed during notification
-            await whenAll([...this.subs].map(sub => sub.observer.close(ctx)));
+            // await whenAll([...this.subs].map(sub => sub.observer.close(ctx)));
+
+            // to preserve stack
+            for (const sub of [...this.subs]) {
+                await sub.observer.close(ctx);
+            }
         } else {
             console.warn('[WRN] subject already closed');
         }
@@ -109,11 +126,31 @@ export function assertDefined<T>(value: T | undefined | null): T {
 export function wait(ctx: Context, ms: number): Promise<void> {
     const result = new Deferred<void>();
     const timeoutId = setTimeout(() => result.resolve(), ms);
+    // create CancelledError here to preserve call stack
+    const cancelError = new CancelledError();
     ctx.cleanup(() => {
+        result.reject(cancelError);
         clearTimeout(timeoutId);
-        result.reject(new CancelledError());
     });
     return result.promise;
+}
+
+export function isCancelledError(error: unknown) {
+    return (
+        error instanceof CancelledError ||
+        (error instanceof Error && isCancelledError(error.cause))
+    );
+}
+
+export async function ignoreCancel<T>(promise: Promise<T>): Promise<T | never> {
+    try {
+        return await promise;
+    } catch (error) {
+        if (isCancelledError(error)) {
+            return new Promise(() => {});
+        }
+        return await Promise.reject(error);
+    }
 }
 
 export function interval(ms: number, ctx: Context): AsyncStream<number> {
@@ -122,7 +159,7 @@ export function interval(ms: number, ctx: Context): AsyncStream<number> {
 
 async function* _interval(ctx: Context, ms: number): AsyncIterable<number> {
     let index = 0;
-    while (true) {
+    while (ctx.alive) {
         ctx.ensureAlive();
         yield index;
         index += 1;

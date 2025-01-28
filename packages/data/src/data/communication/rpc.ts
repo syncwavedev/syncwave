@@ -7,10 +7,16 @@ import {
 } from '../../async-stream.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {ContextManager} from '../../context-manager.js';
-import {CancelledError, Context} from '../../context.js';
+import {Context} from '../../context.js';
 import {Deferred} from '../../deferred.js';
 import {BusinessError, getReadableError} from '../../errors.js';
-import {assertNever, wait, whenAll} from '../../utils.js';
+import {
+    assertNever,
+    ignoreCancel,
+    isCancelledError,
+    wait,
+    whenAll,
+} from '../../utils.js';
 import {
     createMessageId,
     Message,
@@ -256,7 +262,7 @@ export function createRpcClient<TApi extends Api<any>>(
     getHeaders: () => MessageHeaders
 ): InferRpcClient<TApi> {
     async function listenStreamer(
-        ctx: Context,
+        listenCtx: Context,
         exe: ColdStreamExecutor<any>,
         name: string,
         arg: any
@@ -265,9 +271,8 @@ export function createRpcClient<TApi extends Api<any>>(
 
         let state: 'pending' | 'open' | 'end' = 'pending';
 
-        const [timeoutCtx, cancelTimeout] = Context.todo().withCancel();
-        const [subscriptionCtx, cancelSubscription] =
-            Context.todo().withCancel();
+        const [timeoutCtx, cancelTimeout] = listenCtx.withCancel();
+        const [subscriptionCtx, cancelSubscription] = listenCtx.withCancel();
 
         conn.subscribe(subscriptionCtx, {
             next: async (ctx, msg) => {
@@ -358,22 +363,22 @@ export function createRpcClient<TApi extends Api<any>>(
         });
 
         try {
-            await conn.send(ctx, {
+            await conn.send(listenCtx, {
                 id: requestId,
                 type: 'request',
                 headers: getHeaders(),
                 payload: {name, arg},
             });
         } catch (error) {
-            await exe.throw(ctx, error);
+            await exe.throw(listenCtx, error);
             await cancelSubscription();
         }
 
-        wait(timeoutCtx, RPC_CALL_TIMEOUT_MS)
+        ignoreCancel(wait(timeoutCtx, RPC_CALL_TIMEOUT_MS))
             .then(async () => {
                 if (state === 'pending') {
                     await exe.throw(
-                        ctx,
+                        listenCtx,
                         new Error('stream failed to start: timeout')
                     );
                     await cancelSubscription();
@@ -390,15 +395,18 @@ export function createRpcClient<TApi extends Api<any>>(
         // - new server instance starts
         // - conn.send succeeds, but that stream doesn't exist on the new server
         // - noop
-        ctx.cleanup(async () => {
-            await cancelSubscription();
-            await cancelTimeout();
+        listenCtx.cleanup(async () => {
             const promises: Promise<void>[] = [
-                exe.throw(ctx, new CancelledError('cancellation requested')),
+                cancelTimeout(),
+                cancelSubscription(),
+                // exe.end(
+                //     listenCtx,
+                //     new CancelledError('cancellation requested')
+                // ),
             ];
             if (state !== 'end') {
                 promises.push(
-                    conn.send(ctx, {
+                    conn.send(listenCtx, {
                         id: createMessageId(),
                         type: 'cancel',
                         requestId,
@@ -465,7 +473,7 @@ export function createRpcClient<TApi extends Api<any>>(
             },
         });
 
-        wait(timeoutCtx, RPC_CALL_TIMEOUT_MS)
+        ignoreCancel(wait(timeoutCtx, RPC_CALL_TIMEOUT_MS))
             .then(async () => {
                 if (result.state === 'pending') {
                     result.reject(new Error('rpc call failed: timeout'));
@@ -512,10 +520,13 @@ export function createRpcClient<TApi extends Api<any>>(
                 return listenHandler(requestCtx, name, arg);
             } else if (processor.type === 'streamer') {
                 return astream(
-                    new ColdStream(requestCtx, (ctx, exe) => {
+                    new ColdStream(requestCtx, (executorCtx, exe) => {
+                        const [ctx, cancel] = executorCtx.withCancel();
                         listenStreamer(ctx, exe, name, arg).catch(error =>
                             exe.throw(ctx, error)
                         );
+
+                        return cancel;
                     })
                 );
             } else {
@@ -575,7 +586,7 @@ async function waitMessage<S extends Message>(
         },
     });
 
-    wait(ctx, timeoutMs)
+    ignoreCancel(wait(ctx, timeoutMs))
         .then(async () => {
             if (result.state === 'pending') {
                 result.reject(new Error(`timeout after ${timeoutMs}`));
@@ -593,7 +604,8 @@ export class RpcServer<TState> {
     constructor(
         private readonly transport: TransportServer<Message>,
         private readonly api: Api<ProcessorContext<TState>>,
-        private readonly state: TState
+        private readonly state: TState,
+        private readonly serverName: string
     ) {}
 
     async launch(): Promise<void> {
@@ -605,7 +617,13 @@ export class RpcServer<TState> {
     }
 
     private handleConnection(conn: Connection<Message>): void {
-        setupRpcServerConnection(Context.todo(), this.api, conn, this.state);
+        setupRpcServerConnection(
+            Context.todo(),
+            this.api,
+            conn,
+            this.state,
+            this.serverName
+        );
     }
 }
 
@@ -613,7 +631,8 @@ export function setupRpcServerConnection<TState>(
     connectionCtx: Context,
     api: Api<ProcessorContext<TState>>,
     conn: Connection<Message>,
-    state: TState
+    state: TState,
+    serverName: string
 ): void {
     // we use requestId as stream id
     const [serverCtx, serverCancel] = connectionCtx.withCancel();
@@ -625,13 +644,18 @@ export function setupRpcServerConnection<TState>(
             await contextManager.cancelAll();
         },
         close: async () => {
-            serverCancel;
+            await serverCancel();
         },
     });
 
     async function handleMessageServer(ctx: Context, message: Message) {
         if (message.type === 'request') {
-            await handleRequest(ctx, message);
+            try {
+                const requestCtx = contextManager.start(message.id);
+                await handleRequest(requestCtx, message);
+            } finally {
+                await contextManager.finish(message.id);
+            }
         } else if (message.type === 'response') {
             // do nothing
         } else if (message.type === 'ack') {
@@ -648,21 +672,17 @@ export function setupRpcServerConnection<TState>(
         handler: Handler<ProcessorContext<TState>, any, any>,
         msg: RequestMessage
     ) {
-        try {
-            const result = await handler.handle(
-                ctx,
-                {message: msg, state},
-                msg.payload.arg
-            );
-            await conn.send(ctx, {
-                id: createMessageId(),
-                type: 'response',
-                requestId: msg.id,
-                payload: {type: 'success', result},
-            });
-        } finally {
-            await contextManager.finish(msg.id);
-        }
+        const result = await handler.handle(
+            ctx,
+            {message: msg, state},
+            msg.payload.arg
+        );
+        await conn.send(ctx, {
+            id: createMessageId(),
+            type: 'response',
+            requestId: msg.id,
+            payload: {type: 'success', result},
+        });
     }
 
     async function handleRequestStreamer(
@@ -671,82 +691,72 @@ export function setupRpcServerConnection<TState>(
         msg: RequestMessage
     ) {
         const requestId = msg.id;
-        contextManager.start(requestId);
-        try {
+        await conn.send(ctx, {
+            id: createMessageId(),
+            type: 'response',
+            requestId,
+            payload: {type: 'start'},
+        });
+
+        const processorStream = processor.stream(
+            ctx,
+            {message: msg, state},
+            msg.payload.arg
+        );
+        for await (const item of processorStream) {
+            const itemMessageId = createMessageId();
+
+            // we must subscribe for an ack before sending the message
+            const ack = waitMessage(
+                ctx,
+                conn,
+                msg => msg.type === 'ack' && msg.itemId === itemMessageId,
+                RPC_ACK_TIMEOUT_MS
+            );
+
+            await conn.send(ctx, {
+                id: itemMessageId,
+                type: 'response',
+                requestId,
+                payload: {type: 'item', item},
+            });
+
+            await ack;
+        }
+
+        if (contextManager.isRunning(requestId)) {
             await conn.send(ctx, {
                 id: createMessageId(),
                 type: 'response',
                 requestId,
-                payload: {type: 'start'},
+                payload: {type: 'end'},
             });
-
-            const processorStream = processor.stream(
-                ctx,
-                {message: msg, state},
-                msg.payload.arg
-            );
-            for await (const item of processorStream) {
-                const itemMessageId = createMessageId();
-
-                // we must subscribe for an ack before sending the message
-                const ack = waitMessage(
-                    ctx,
-                    conn,
-                    msg => msg.type === 'ack' && msg.itemId === itemMessageId,
-                    RPC_ACK_TIMEOUT_MS
-                );
-
-                await conn.send(ctx, {
-                    id: itemMessageId,
-                    type: 'response',
-                    requestId,
-                    payload: {type: 'item', item},
-                });
-
-                await ack;
-            }
-
-            if (contextManager.isRunning(requestId)) {
-                await conn.send(ctx, {
-                    id: createMessageId(),
-                    type: 'response',
-                    requestId,
-                    payload: {type: 'end'},
-                });
-            }
-        } finally {
-            await contextManager.finish(requestId);
         }
     }
 
     async function handleRequest(ctx: Context, msg: RequestMessage) {
         try {
             const processor = api[msg.payload.name];
-            contextManager.start(msg.id);
             if (processor.type === 'handler') {
-                await handleRequestHandler(
-                    contextManager.context(msg.id),
-                    processor,
-                    msg
-                );
+                await handleRequestHandler(ctx, processor, msg);
             } else if (processor.type === 'streamer') {
-                await handleRequestStreamer(
-                    contextManager.context(msg.id),
-                    processor,
-                    msg
-                );
+                await handleRequestStreamer(ctx, processor, msg);
             } else {
                 assertNever(processor);
             }
         } catch (err: any) {
-            if (err instanceof BusinessError) {
+            if (isCancelledError(err) && !ctx.alive) {
                 console.warn(
-                    `[WRN] error during ${msg.payload.name} RPC handle:`,
+                    `[WRN] [${serverName}] cancel during ${msg.payload.name} RPC request`
+                );
+            } else if (err instanceof BusinessError) {
+                console.warn(
+                    `[WRN] [${serverName}] error during ${msg.payload.name} RPC request:`,
                     getReadableError(err)
                 );
             } else {
                 console.error(
-                    `[ERR] error during ${msg.payload.name} RPC handle:`,
+                    `[ERR] [${serverName}] error during ${msg.payload.name} RPC request:`,
                     err
                 );
             }

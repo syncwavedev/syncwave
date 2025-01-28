@@ -1,4 +1,5 @@
 import {StringCodec} from '../codec.js';
+import {Context} from '../context.js';
 import {compareUint8Array, concatBuffers} from '../utils.js';
 import {
     Condition,
@@ -24,11 +25,12 @@ export class PrefixedTransaction<TValue>
         }
     }
 
-    get(key: Uint8Array): Promise<TValue | undefined> {
-        return this.target.get(concatBuffers(this.prefix, key));
+    get(ctx: Context, key: Uint8Array): Promise<TValue | undefined> {
+        return this.target.get(ctx, concatBuffers(this.prefix, key));
     }
 
     async *query(
+        ctx: Context,
         condition: Condition<Uint8Array>
     ): AsyncIterable<Entry<Uint8Array, TValue>> {
         const prefixedCondition = mapCondition<
@@ -40,7 +42,10 @@ export class PrefixedTransaction<TValue>
             lt: cond => ({lt: concatBuffers(this.prefix, cond.lt)}),
             lte: cond => ({lte: concatBuffers(this.prefix, cond.lte)}),
         });
-        for await (const {key, value} of this.target.query(prefixedCondition)) {
+        for await (const {key, value} of this.target.query(
+            ctx,
+            prefixedCondition
+        )) {
             if (
                 compareUint8Array(
                     key.slice(0, this.prefix.length),
@@ -54,12 +59,12 @@ export class PrefixedTransaction<TValue>
         }
     }
 
-    put(key: Uint8Array, value: TValue): Promise<void> {
-        return this.target.put(concatBuffers(this.prefix, key), value);
+    put(ctx: Context, key: Uint8Array, value: TValue): Promise<void> {
+        return this.target.put(ctx, concatBuffers(this.prefix, key), value);
     }
 
-    delete(key: Uint8Array): Promise<void> {
-        return this.target.delete(concatBuffers(this.prefix, key));
+    delete(ctx: Context, key: Uint8Array): Promise<void> {
+        return this.target.delete(ctx, concatBuffers(this.prefix, key));
     }
 }
 
@@ -78,10 +83,14 @@ export class PrefixedKVStore<TValue> implements KVStore<Uint8Array, TValue> {
     }
 
     async transact<TResult>(
-        fn: (tx: Transaction<Uint8Array, TValue>) => Promise<TResult>
+        ctx: Context,
+        fn: (
+            ctx: Context,
+            tx: Transaction<Uint8Array, TValue>
+        ) => Promise<TResult>
     ): Promise<TResult> {
-        return await this.target.transact(tx =>
-            fn(new PrefixedTransaction(tx, this.prefix))
+        return await this.target.transact(ctx, (ctx, tx) =>
+            fn(ctx, new PrefixedTransaction(tx, this.prefix))
         );
     }
 }

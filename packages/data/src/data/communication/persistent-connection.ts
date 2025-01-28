@@ -1,5 +1,5 @@
-import {Cancellation} from '../../cancellation.js';
 import {RECONNECT_WAIT_MS} from '../../constants.js';
+import {Context} from '../../context.js';
 import {Observer, Subject, wait} from '../../utils.js';
 import {Connection, TransportClient} from './transport.js';
 
@@ -9,39 +9,41 @@ export class PersistentConnection<T> implements Connection<T> {
     private connection?: Promise<Connection<T>>;
     private closed = false;
     private subject = new Subject<T>();
+    private readonly connectionCtx = Context.background();
 
     constructor(private readonly transport: TransportClient<T>) {}
 
-    async send(message: T): Promise<void> {
+    async send(ctx: Context, message: T): Promise<void> {
         const connection = await this.getConnection();
         if (connection === 'closed_during_connect') {
             return;
         }
 
-        await connection.send(message);
+        await connection.send(ctx, message);
     }
 
-    subscribe(cb: Observer<T>, cx: Cancellation): void {
+    subscribe(ctx: Context, cb: Observer<T>): void {
         this.assertOpen();
         // connect if not already
         this.getConnection().catch(err => {
             console.error('error while connection to the server: ', err);
         });
 
-        this.subject.subscribe(cb, cx);
+        this.subject.subscribe(ctx, cb);
     }
 
-    async close(): Promise<void> {
+    async close(ctx: Context): Promise<void> {
         this.closed = true;
         if (this.connection) {
             const connection = this.connection;
             this.connection = undefined;
 
-            await connection.then(x => x.close());
+            await connection.then(x => x.close(ctx));
         }
-        await this.subject.close();
+        await this.subject.close(ctx);
     }
 
+    // getConnection should not accept ctx because it doesn't depend on it
     private async getConnection(): Promise<
         Connection<T> | 'closed_during_connect'
     > {
@@ -53,15 +55,16 @@ export class PersistentConnection<T> implements Connection<T> {
                     try {
                         return await this.transport.connect();
                     } catch {
-                        await wait(RECONNECT_WAIT_MS);
+                        await wait(this.connectionCtx, RECONNECT_WAIT_MS);
                     }
                 }
             })().then(conn => {
-                const reconnect = async () => {
+                const reconnect = async (ctx: Context) => {
                     if (!this.closed) {
                         this.connection = undefined;
                         try {
                             await this.subject.throw(
+                                ctx,
                                 new Error('connection is lost, reconnection...')
                             );
                         } catch (error) {
@@ -81,24 +84,21 @@ export class PersistentConnection<T> implements Connection<T> {
                     }
                 };
 
-                conn.subscribe(
-                    {
-                        next: async event => {
-                            await this.subject.next(event);
-                        },
-                        throw: async error => {
-                            console.error(
-                                '[ERR] error in underlying connection',
-                                error
-                            );
-                            await reconnect();
-                        },
-                        close: async () => {
-                            await reconnect();
-                        },
+                conn.subscribe(this.connectionCtx, {
+                    next: async (ctx, event) => {
+                        await this.subject.next(ctx, event);
                     },
-                    Cancellation.none
-                );
+                    throw: async (ctx, error) => {
+                        console.error(
+                            '[ERR] error in underlying connection',
+                            error
+                        );
+                        await reconnect(ctx);
+                    },
+                    close: async ctx => {
+                        await reconnect(ctx);
+                    },
+                });
 
                 return conn;
             });

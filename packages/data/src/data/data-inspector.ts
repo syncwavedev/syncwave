@@ -1,6 +1,7 @@
 import {z, ZodType} from 'zod';
 import {astream} from '../async-stream.js';
 import {decodeString, encodeString} from '../codec.js';
+import {Context} from '../context.js';
 import {Uint8Transaction} from '../kv/kv-store.js';
 import {zUint8Array} from '../utils.js';
 import {decodeUuid} from '../uuid.js';
@@ -30,6 +31,7 @@ export function zDataNodeDto(): ZodType<DataNodeDto> {
 }
 
 function createTreeVisitor(
+    ctx: Context,
     key: Uint8Array,
     name: string
 ): DataNodeVisitor<Promise<DataNodeDto>> {
@@ -44,22 +46,26 @@ function createTreeVisitor(
             key,
             name,
             type: 'aggregate',
-            childrenPreview: await astream(agg.queryChildren(new Uint8Array()))
-                .mapParallel(async ({key, node}) =>
-                    node.visit(createTreeVisitor(key, decodeString(key)))
+            childrenPreview: await astream(
+                agg.queryChildren(ctx, new Uint8Array())
+            )
+                .mapParallel(async (ctx, {key, node}) =>
+                    node.visit(createTreeVisitor(ctx, key, decodeString(key)))
                 )
-                .toArray(),
+                .toArray(ctx),
         }),
         repo: async repo => ({
             key,
             name,
             type: 'repo',
-            childrenPreview: await astream(repo.queryChildren(new Uint8Array()))
-                .mapParallel(async ({key, node}) =>
-                    node.visit(createTreeVisitor(key, decodeUuid(key)))
+            childrenPreview: await astream(
+                repo.queryChildren(ctx, new Uint8Array())
+            )
+                .mapParallel(async (ctx, {key, node}) =>
+                    node.visit(createTreeVisitor(ctx, key, decodeUuid(key)))
                 )
                 .take(100)
-                .toArray(),
+                .toArray(ctx),
         }),
     };
 }
@@ -75,21 +81,23 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
     getDbTree: handler({
         req: z.object({}),
         res: zDataNodeDto(),
-        handle: async ({dataNode}) => {
+        handle: async (ctx, {dataNode}, _) => {
             return await dataNode.visit(
-                createTreeVisitor(encodeString('root'), 'root')
+                createTreeVisitor(ctx, encodeString('root'), 'root')
             );
         },
     }),
     truncateDb: handler({
         req: z.object({}),
         res: z.void(),
-        handle: async ({rootTx}) => {
-            const keys = await astream(rootTx.query({gte: new Uint8Array()}))
-                .mapParallel(x => x.key)
-                .toArray();
+        handle: async (ctx, {rootTx}, _) => {
+            const keys = await astream(
+                rootTx.query(ctx, {gte: new Uint8Array()})
+            )
+                .map((ctx, node) => node.key)
+                .toArray(ctx);
             for (const key of keys) {
-                await rootTx.delete(key);
+                await rootTx.delete(ctx, key);
             }
         },
     }),
@@ -100,7 +108,7 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
             z.object({type: z.literal('doc'), snapshot: z.any()}),
             z.object({type: z.literal('repo')}),
         ]),
-        handle: async ({dataNode}, {path}) => {
+        handle: async (ctx, {dataNode}, {path}) => {
             let current: DataNode = new AggregateDataNode({root: dataNode});
             for (const key of path) {
                 current = current.child(key);
@@ -110,7 +118,7 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
                 aggregate: async () => ({type: 'aggregate'}),
                 doc: async x => ({
                     type: 'doc',
-                    snapshot: await x.snapshot(),
+                    snapshot: await x.snapshot(ctx),
                 }),
                 repo: async () => ({type: 'repo'}),
             });

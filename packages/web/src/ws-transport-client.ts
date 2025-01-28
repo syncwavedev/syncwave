@@ -1,8 +1,9 @@
 import {
-	Cancellation,
-	Deferred,
-	Subject,
 	assert,
+	Context,
+	Deferred,
+	scoped,
+	Subject,
 	type Codec,
 	type Connection,
 	type Logger,
@@ -48,13 +49,14 @@ export class WsClientConnection<T> implements Connection<T> {
 		this.setupListeners();
 	}
 
-	async send(message: T): Promise<void> {
+	@scoped()
+	async send(ctx: Context, message: T): Promise<void> {
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 	}
 
-	subscribe(cb: Observer<T>, cx: Cancellation) {
-		return this.subject.subscribe(cb, cx);
+	subscribe(ctx: Context, cb: Observer<T>) {
+		return this.subject.subscribe(ctx, cb);
 	}
 
 	async close(): Promise<void> {
@@ -67,7 +69,7 @@ export class WsClientConnection<T> implements Connection<T> {
 			try {
 				assert(event.data instanceof ArrayBuffer);
 				const message = this.codec.decode(new Uint8Array(event.data));
-				await this.subject.next(message);
+				await this.subject.next(Context.todo(), message);
 			} catch (error) {
 				this.logger.error('[ERR] error during ws message', error);
 			}
@@ -75,7 +77,10 @@ export class WsClientConnection<T> implements Connection<T> {
 
 		this.ws.addEventListener('error', async error => {
 			try {
-				await this.subject.throw(new Error('ws.error: ' + error.toString()));
+				await this.subject.throw(
+					Context.todo(),
+					new Error('ws.error: ' + error.toString())
+				);
 				this.closedSignal.resolve();
 			} catch (error) {
 				this.closedSignal.reject(error);
@@ -84,7 +89,7 @@ export class WsClientConnection<T> implements Connection<T> {
 
 		this.ws.addEventListener('close', async () => {
 			try {
-				await this.subject.close();
+				await this.subject.close(Context.todo());
 				this.closedSignal.resolve();
 			} catch (error) {
 				this.closedSignal.reject(error);

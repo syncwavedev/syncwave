@@ -1,5 +1,5 @@
-import {Cancellation} from '../../cancellation.js';
 import {Codec} from '../../codec.js';
+import {Context} from '../../context.js';
 import {Observer, Subject} from '../../utils.js';
 import {Connection, TransportClient, TransportServer} from './transport.js';
 
@@ -19,7 +19,7 @@ export class MemConnection<T> implements Connection<T> {
 
     private constructor(private readonly codec: Codec<T>) {}
 
-    async send(message: T): Promise<void> {
+    async send(_ctx: Context, message: T): Promise<void> {
         this.ensureOpen();
 
         // don't wait for peer to respond
@@ -28,24 +28,27 @@ export class MemConnection<T> implements Connection<T> {
         });
     }
 
-    subscribe(observer: Observer<T>, cx: Cancellation) {
+    subscribe(ctx: Context, observer: Observer<T>) {
         this.ensureOpen();
 
-        this.subject.subscribe(observer, cx);
+        this.subject.subscribe(ctx, observer);
     }
 
-    async close(): Promise<void> {
-        await this.subject.close();
+    async close(ctx: Context): Promise<void> {
+        await this.subject.close(ctx);
         if (this.peer.subject.open) {
             // don't wait for peer to respond
-            this.peer.close().catch(err => {
+            this.peer.close(ctx).catch(err => {
                 console.error('error during peer receive', err);
             });
         }
     }
 
     private async receive(message: Uint8Array): Promise<void> {
-        await this.subject.next(this.codec.decode(message));
+        await this.subject.next(
+            Context.background(),
+            this.codec.decode(message)
+        );
     }
 
     private ensureOpen() {

@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import {astream, AsyncStream, ColdStream} from './async-stream.js';
-import {Cancellation, CancellationError} from './cancellation.js';
+import {CancelledError, Context} from './context.js';
+import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
     AggregateError,
@@ -10,9 +11,9 @@ import {
 export type Brand<T, B> = T & {__brand: B | undefined};
 
 export interface Observer<T> {
-    next: (value: T) => Promise<void>;
-    throw: (error: any) => Promise<void>;
-    close: () => Promise<void>;
+    next: (ctx: Context, value: T) => Promise<void>;
+    throw: (ctx: Context, error: unknown) => Promise<void>;
+    close: (ctx: Context) => Promise<void>;
 }
 
 export class Subject<TValue> {
@@ -27,7 +28,7 @@ export class Subject<TValue> {
         return this.subs.length > 0;
     }
 
-    subscribe(observer: Observer<TValue>, cx: Cancellation): void {
+    subscribe(ctx: Context, observer: Observer<TValue>): void {
         this.ensureOpen();
 
         // wrap if the same observer is used twice for subscription, so unsubscribe wouldn't filter both out
@@ -35,48 +36,46 @@ export class Subject<TValue> {
 
         this.subs.push(sub);
 
-        cx.then(async () => {
+        ctx.cleanup(async () => {
             await sub.observer.throw(
-                new CancellationError('Subject.subscribe')
+                ctx,
+                new CancelledError('Subject.subscribe')
             );
-            await sub.observer.close();
+            await sub.observer.close(ctx);
             this.subs = this.subs.filter(x => x !== sub);
-        }).catch(error => {
-            console.error('[ERR] failed to cancel subject subscription', error);
         });
     }
 
-    value$(cx: Cancellation): AsyncStream<TValue> {
-        const stream = new ColdStream<TValue>((exe, exeCx) => {
-            this.subscribe(
-                {
-                    next: value => exe.next(value),
-                    throw: error => exe.throw(error),
-                    close: async () => exe.end(),
-                },
-                exeCx.combine(cx)
-            );
+    value$(ctx: Context): AsyncStream<TValue> {
+        const stream = new ColdStream<TValue>(ctx, (ctx, exe) => {
+            this.subscribe(ctx, {
+                next: (ctx, value) => exe.next(ctx, value),
+                throw: (ctx, error) => exe.throw(ctx, error),
+                close: ctx => exe.end(ctx),
+            });
         });
         return astream(stream);
     }
 
-    async next(value: TValue): Promise<void> {
+    async next(ctx: Context, value: TValue): Promise<void> {
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
-        await whenAll([...this.subs].map(sub => sub.observer.next(value)));
+        await whenAll([...this.subs].map(sub => sub.observer.next(ctx, value)));
     }
 
-    async throw(error: unknown): Promise<void> {
+    async throw(ctx: Context, error: unknown): Promise<void> {
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
-        await whenAll([...this.subs].map(sub => sub.observer.throw(error)));
+        await whenAll(
+            [...this.subs].map(sub => sub.observer.throw(ctx, error))
+        );
     }
 
-    async close(): Promise<void> {
+    async close(ctx: Context): Promise<void> {
         if (this._open) {
             this._open = false;
             // copy in case if new subscribers are added/removed during notification
-            await whenAll([...this.subs].map(sub => sub.observer.close()));
+            await whenAll([...this.subs].map(sub => sub.observer.close(ctx)));
         } else {
             console.warn('[WRN] subject already closed');
         }
@@ -107,27 +106,27 @@ export function assertDefined<T>(value: T | undefined | null): T {
     return value;
 }
 
-export function wait(ms: number, cx?: Cancellation): Promise<void> {
-    return new Promise(resolve => {
-        const timeoutId = setTimeout(resolve, ms);
-        cx
-            ?.then(() => clearTimeout(timeoutId))
-            .catch(error => {
-                console.error('[ERR] failed to clear timeout', error);
-            });
+export function wait(ctx: Context, ms: number): Promise<void> {
+    const result = new Deferred<void>();
+    const timeoutId = setTimeout(() => result.resolve(), ms);
+    ctx.cleanup(() => {
+        clearTimeout(timeoutId);
+        result.reject(new CancelledError());
     });
+    return result.promise;
 }
 
-export function interval(ms: number, cx: Cancellation): AsyncStream<number> {
-    return astream(_interval(ms, cx));
+export function interval(ms: number, ctx: Context): AsyncStream<number> {
+    return astream(_interval(ctx, ms));
 }
 
-async function* _interval(ms: number, cx: Cancellation): AsyncIterable<number> {
+async function* _interval(ctx: Context, ms: number): AsyncIterable<number> {
     let index = 0;
-    while (!cx.isCancelled) {
+    while (true) {
+        ctx.ensureAlive();
         yield index;
         index += 1;
-        await wait(ms, cx);
+        await wait(ctx, ms);
     }
 }
 
@@ -278,6 +277,20 @@ export async function whenAll<const T extends Promise<any>[]>(
             throw new AggregateError(rejected.map(x => x.reason));
         }
     }
+}
+
+export async function whenAny<T>(promises: Promise<T>[]) {
+    assert(promises.length > 0);
+
+    const withId = promises.map((promise, idx) =>
+        promise.then(result => ({result, idx}))
+    );
+    const racer = await Promise.race(withId);
+
+    return [
+        racer.result,
+        promises.filter((_, idx) => idx !== racer.idx),
+    ] as const;
 }
 
 export function zUint8Array() {

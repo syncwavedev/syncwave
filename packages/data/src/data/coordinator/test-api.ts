@@ -15,14 +15,14 @@ export function createTestApi() {
         getStream: streamer({
             req: z.object({topic: z.string()}),
             item: z.object({index: z.number(), value: z.string()}),
-            async *stream({busConsumer}, {topic}, cx) {
+            async *stream(ctx, {busConsumer}, {topic}) {
                 console.log('stream start');
                 try {
                     let index = 0;
                     for await (const {value} of busConsumer.subscribe(
+                        ctx,
                         topic,
-                        0,
-                        cx
+                        0
                     )) {
                         console.log('stream item', index, value);
                         yield {index, value};
@@ -40,8 +40,8 @@ export function createTestApi() {
         streamPut: handler({
             req: z.object({topic: z.string(), value: z.string()}),
             res: z.object({}),
-            handle: async (state, {topic, value}, cx) => {
-                await state.busProducer.publish(topic, {value}, cx);
+            handle: async (ctx, state, {topic, value}) => {
+                await state.busProducer.publish(ctx, topic, {value});
                 return {};
             },
         }),

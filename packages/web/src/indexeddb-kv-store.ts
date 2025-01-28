@@ -1,5 +1,12 @@
-import type {Entry} from 'ground-data';
-import {ENVIRONMENT, type Condition, type Uint8KVStore, type Uint8Transaction} from 'ground-data';
+import type {Context, Entry} from 'ground-data';
+import {
+	astream,
+	ENVIRONMENT,
+	scoped,
+	type Condition,
+	type Uint8KVStore,
+	type Uint8Transaction,
+} from 'ground-data';
 import {openDB, type DBSchema, type IDBPDatabase, type IDBPTransaction} from 'idb';
 
 function createKeyRange(condition: Condition<Uint8Array>): IDBKeyRange {
@@ -68,28 +75,36 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		}
 	}
 
-	public async get(key: Uint8Array): Promise<Uint8Array | undefined> {
+	@scoped()
+	public async get(ctx: Context, key: Uint8Array): Promise<Uint8Array | undefined> {
 		this.assertActive();
 		return await this.tx.objectStore(STORE_NAME).get(key);
 	}
 
+	@scoped()
 	public async *query(
+		ctx: Context,
 		condition: Condition<Uint8Array>
 	): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
 		this.assertActive();
 		const keyRange = createKeyRange(condition);
 
-		for await (const {key, value} of this.tx.objectStore(STORE_NAME).iterate(keyRange)) {
+		const entries = astream(this.tx.objectStore(STORE_NAME).iterate(keyRange)).until(
+			ctx.cancelPromise
+		);
+		for await (const {key, value} of entries) {
 			yield {key: new Uint8Array(key), value: new Uint8Array(value)};
 		}
 	}
 
-	public async put(key: Uint8Array, value: Uint8Array): Promise<void> {
+	@scoped()
+	public async put(ctx: Context, key: Uint8Array, value: Uint8Array): Promise<void> {
 		this.assertActive();
 		await this.tx.objectStore(STORE_NAME).put(value, key);
 	}
 
-	public async delete(key: Uint8Array): Promise<void> {
+	@scoped()
+	public async delete(ctx: Context, key: Uint8Array): Promise<void> {
 		this.assertActive();
 		await this.tx.objectStore(STORE_NAME).delete(key);
 	}
@@ -108,8 +123,10 @@ export class IndexedDBKVStore implements Uint8KVStore {
 		});
 	}
 
+	@scoped()
 	public async transact<TResult>(
-		fn: (tx: Uint8Transaction) => Promise<TResult>
+		ctx: Context,
+		fn: (ctx: Context, tx: Uint8Transaction) => Promise<TResult>
 	): Promise<TResult> {
 		const db = await this.dbPromise;
 		const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -117,7 +134,7 @@ export class IndexedDBKVStore implements Uint8KVStore {
 
 		try {
 			tx.done.catch(() => {});
-			const result = await fn(wrappedTxn);
+			const result = await fn(ctx, wrappedTxn);
 			wrappedTxn.markDone();
 			tx.commit();
 			await tx.done;

@@ -2,7 +2,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
-	import {Cancellation} from 'ground-data';
+	import {Context} from 'ground-data';
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
@@ -15,20 +15,19 @@
 	let itemValue: string = $state('');
 
 	async function publish() {
-		await sdk.coordinatorRpc.streamPut(
-			{topic: 'stream item', value: itemValue},
-			Cancellation.none
-		);
+		await sdk.coordinatorRpc.streamPut(Context.todo(), {
+			topic: 'stream item',
+			value: itemValue,
+		});
 	}
 
 	$effect(() => {
 		(async () => {
 			try {
 				console.log('stream start');
-				const interval$ = sdk.coordinatorRpc.getStream(
-					{topic: 'stream item'},
-					Cancellation.none
-				);
+				const interval$ = sdk.coordinatorRpc.getStream(Context.todo(), {
+					topic: 'stream item',
+				});
 				for await (const item of interval$) {
 					console.log('stream item', item.index);
 

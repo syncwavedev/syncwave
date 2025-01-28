@@ -1,3 +1,4 @@
+import {Context} from '../../context.js';
 import {Uint8KVStore} from '../../kv/kv-store.js';
 import {AuthContextParser} from '../auth-context.js';
 import {Message} from '../communication/message.js';
@@ -42,11 +43,12 @@ export class Coordinator {
         await this.rpcServer.close();
     }
 
-    async issueJwtByUserEmail(email: string): Promise<string> {
-        return await this.dataLayer.transact(async ctx => {
+    async issueJwtByUserEmail(ctx: Context, email: string): Promise<string> {
+        return await this.dataLayer.transact(ctx, async (ctx, dataCtx) => {
             const identity = await getIdentity(
-                ctx.identities,
-                ctx.users,
+                ctx,
+                dataCtx.identities,
+                dataCtx.users,
                 email,
                 this.crypto
             );

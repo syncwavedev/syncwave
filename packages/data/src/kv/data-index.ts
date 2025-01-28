@@ -1,5 +1,6 @@
 import bytewise from 'bytewise';
 import {Codec} from '../codec.js';
+import {Context} from '../context.js';
 import {assert, compareUint8Array, zip} from '../utils.js';
 import {Uuid, UuidCodec} from '../uuid.js';
 import {Condition, Uint8Transaction, mapCondition} from './kv-store.js';
@@ -10,14 +11,18 @@ export interface IndexGetOptions {
 
 export interface Index<TValue> {
     _debug: {
-        keys(): Promise<IndexKey[]>;
+        keys(ctx: Context): Promise<IndexKey[]>;
     };
     info: {
         unique: boolean;
     };
-    sync(prev: TValue | undefined, next: TValue | undefined): Promise<void>;
-    get(key: IndexKey): AsyncIterable<Uuid>;
-    query(condition: Condition<IndexKey>): AsyncIterable<Uuid>;
+    sync(
+        ctx: Context,
+        prev: TValue | undefined,
+        next: TValue | undefined
+    ): Promise<void>;
+    get(ctx: Context, key: IndexKey): AsyncIterable<Uuid>;
+    query(ctx: Context, condition: Condition<IndexKey>): AsyncIterable<Uuid>;
 }
 
 export interface IndexOptions<TValue> {
@@ -48,7 +53,10 @@ export function createIndex<TValue>({
 
     const filter = originalFilter ?? (() => true);
 
-    async function* queryInternal(condition: Condition<IndexKey>) {
+    async function* queryInternal(
+        ctx: Context,
+        condition: Condition<IndexKey>
+    ) {
         const conditionKey = mapCondition(condition, {
             gt: cond => cond.gt,
             gte: cond => cond.gte,
@@ -82,7 +90,7 @@ export function createIndex<TValue>({
             }
         );
 
-        const iterator = tx.query(queryCondition);
+        const iterator = tx.query(ctx, queryCondition);
 
         for await (const entry of iterator) {
             const entryKey = keyCodec.decode(entry.key);
@@ -100,16 +108,18 @@ export function createIndex<TValue>({
             unique,
         },
         _debug: {
-            async keys() {
+            async keys(ctx: Context) {
                 const result: IndexKey[] = [];
-                for await (const {key} of tx.query({gte: new Uint8Array()})) {
+                for await (const {key} of tx.query(ctx, {
+                    gte: new Uint8Array(),
+                })) {
                     result.push(keyCodec.decode(key));
                 }
 
                 return result;
             },
         },
-        async sync(prev, next) {
+        async sync(ctx: Context, prev, next) {
             const prevId = prev && idSelector(prev);
             const nextId = next && idSelector(next);
             const id = prevId ?? nextId;
@@ -148,9 +158,9 @@ export function createIndex<TValue>({
             if (prevIncluded) {
                 assert(prevKey !== undefined);
                 if (unique) {
-                    await tx.delete(keyCodec.encode(prevKey));
+                    await tx.delete(ctx, keyCodec.encode(prevKey));
                 } else {
-                    await tx.delete(keyCodec.encode([...prevKey, id]));
+                    await tx.delete(ctx, keyCodec.encode([...prevKey, id]));
                 }
             }
 
@@ -158,30 +168,35 @@ export function createIndex<TValue>({
             if (nextIncluded) {
                 assert(nextKey !== undefined);
                 if (unique) {
-                    const existing = await tx.get(keyCodec.encode(nextKey));
+                    const existing = await tx.get(
+                        ctx,
+                        keyCodec.encode(nextKey)
+                    );
                     if (existing) {
                         throw new UniqueError(indexName);
                     }
 
                     await tx.put(
+                        ctx,
                         keyCodec.encode(nextKey),
                         uuidCodec.encode(id)
                     );
                 } else {
                     await tx.put(
+                        ctx,
                         keyCodec.encode([...nextKey, id]),
                         uuidCodec.encode(id)
                     );
                 }
             }
         },
-        async *query(condition) {
-            for await (const entry of queryInternal(condition)) {
+        async *query(ctx: Context, condition) {
+            for await (const entry of queryInternal(ctx, condition)) {
                 yield uuidCodec.decode(entry.value);
             }
         },
-        async *get(key) {
-            for await (const entry of queryInternal({gte: key})) {
+        async *get(ctx: Context, key) {
+            for await (const entry of queryInternal(ctx, {gte: key})) {
                 const entryKey = keyCodec.decode(entry.key);
                 for (let i = 0; i < key.length; i += 1) {
                     if (key.length > 0) {

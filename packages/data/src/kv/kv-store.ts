@@ -1,5 +1,6 @@
 import {astream, AsyncStream} from '../async-stream.js';
 import {Codec} from '../codec.js';
+import {Context} from '../context.js';
 import {bufStartsWith, unreachable} from '../utils.js';
 import {MappedTransaction, Mapper} from './mapped-kv-store.js';
 import {PrefixedTransaction} from './prefixed-kv-store.js';
@@ -67,16 +68,20 @@ export class InvalidQueryCondition extends Error {
 }
 
 export interface Transaction<TKey, TValue> {
-    get(key: TKey): Promise<TValue | undefined>;
-    query(condition: Condition<TKey>): AsyncIterable<Entry<TKey, TValue>>;
-    put(key: TKey, value: TValue): Promise<void>;
-    delete(key: TKey): Promise<void>;
+    get(ctx: Context, key: TKey): Promise<TValue | undefined>;
+    query(
+        ctx: Context,
+        condition: Condition<TKey>
+    ): AsyncIterable<Entry<TKey, TValue>>;
+    put(ctx: Context, key: TKey, value: TValue): Promise<void>;
+    delete(ctx: Context, key: TKey): Promise<void>;
 }
 
 export interface KVStore<TKey, TValue> {
     // fn must be called multiple times in case of a conflict (optimistic concurrency)
     transact<TResult>(
-        fn: (tx: Transaction<TKey, TValue>) => Promise<TResult>
+        ctx: Context,
+        fn: (ctx: Context, tx: Transaction<TKey, TValue>) => Promise<TResult>
     ): Promise<TResult>;
 }
 
@@ -158,17 +163,19 @@ export function withKeyCodec<TData>(
 }
 
 export function queryStartsWith<T>(
+    ctx: Context,
     tx: Transaction<Uint8Array, T>,
     prefix: Uint8Array
 ): AsyncStream<Entry<Uint8Array, T>> {
-    return astream(_queryStartsWith(tx, prefix));
+    return astream(_queryStartsWith(ctx, tx, prefix));
 }
 
 async function* _queryStartsWith<T>(
+    ctx: Context,
     tx: Transaction<Uint8Array, T>,
     prefix: Uint8Array
 ): AsyncIterable<Entry<Uint8Array, T>> {
-    for await (const entry of tx.query({gte: prefix})) {
+    for await (const entry of tx.query(ctx, {gte: prefix})) {
         if (!bufStartsWith(entry.key, prefix)) {
             return;
         }

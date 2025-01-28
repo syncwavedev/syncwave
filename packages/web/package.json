@@ -20,6 +20,7 @@
 		"@sveltejs/adapter-node": "^5.2.11",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^4.0.0",
+		"@swc/core": "^1.10.11",
 		"@tailwindcss/container-queries": "^0.1.1",
 		"autoprefixer": "^10.4.20",
 		"bits-ui": "^1.0.0-next.78",
@@ -43,6 +44,7 @@
 		"tailwindcss-animate": "^1.0.7",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
+		"unplugin-swc": "^1.5.1",
 		"vite": "^5.4.11",
 		"vite-plugin-node-polyfills": "^0.23.0",
 		"vitest": "^2.1.8"

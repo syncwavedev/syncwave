@@ -5,6 +5,7 @@ import {createHash, randomBytes} from 'crypto';
 import {
     assertDefined,
     astream,
+    Context,
     Coordinator,
     CryptoService,
     decodeNumber,
@@ -113,10 +114,10 @@ async function getKVStore(): Promise<Uint8KVStore> {
     }
 }
 
-async function upgradeKVStore(kvStore: Uint8KVStore) {
+async function upgradeKVStore(upgradeCtx: Context, kvStore: Uint8KVStore) {
     const versionKey = encodeString('version');
-    const version = await kvStore.transact(async tx => {
-        const ver = await tx.get(versionKey);
+    const version = await kvStore.transact(upgradeCtx, async (txCtx, tx) => {
+        const ver = await tx.get(txCtx, versionKey);
         if (ver) {
             return decodeNumber(ver);
         } else {
@@ -125,27 +126,27 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
     });
 
     if (!version) {
-        await kvStore.transact(async tx => {
-            const keys = await astream(tx.query({gte: new Uint8Array()}))
-                .mapParallel(x => x.key)
-                .toArray();
+        await kvStore.transact(upgradeCtx, async (ctx, tx) => {
+            const keys = await astream(tx.query(ctx, {gte: new Uint8Array()}))
+                .map((ctx, entry) => entry.key)
+                .toArray(ctx);
 
             if (keys.length > 1000) {
                 throw new Error('too many keys to truncate the database');
             }
 
             for (const key of keys) {
-                await tx.delete(key);
+                await tx.delete(ctx, key);
             }
 
-            await tx.put(versionKey, encodeNumber(1));
+            await tx.put(ctx, versionKey, encodeNumber(1));
         });
     }
 }
 
-async function launch() {
+async function launch(launchCtx: Context) {
     const kvStore = await getKVStore();
-    await upgradeKVStore(kvStore);
+    await upgradeKVStore(launchCtx, kvStore);
 
     const router = new Router();
     setupRouter(() => coordinator, router);
@@ -167,7 +168,7 @@ async function launch() {
         JWT_SECRET
     );
 
-    async function shutdown() {
+    launchCtx.cleanup(async () => {
         console.log('[INF] shutting down...');
         await coordinator.close();
         console.log('[INF] coordinator is closed');
@@ -178,7 +179,7 @@ async function launch() {
         await httpServerCloseSignal.promise;
 
         // wait one event loop cycle for resources to clean up
-        await wait(0);
+        await wait(Context.todo(), 0);
 
         const activeResources = process
             .getActiveResourcesInfo()
@@ -189,10 +190,7 @@ async function launch() {
                 activeResources
             );
         }
-    }
-
-    process.once('SIGINT', () => shutdown());
-    process.once('SIGTERM', () => shutdown());
+    });
 
     const serverStarted = new Deferred<void>();
     httpServer.listen(PORT, () => serverStarted.resolve());
@@ -202,11 +200,11 @@ async function launch() {
 }
 
 function setupRouter(coordinator: () => Coordinator, router: Router) {
-    router.get('/callbacks/google', async ctx => {
-        const {code, state} = ctx.query;
+    router.get('/callbacks/google', async request => {
+        const {code, state} = request.query;
 
         if (typeof code !== 'string') {
-            return ctx.redirect(`${APP_URL}/log-in/failed`);
+            return request.redirect(`${APP_URL}/log-in/failed`);
         }
 
         const result = await getGoogleUser(code, {
@@ -215,17 +213,18 @@ function setupRouter(coordinator: () => Coordinator, router: Router) {
             redirectUri: GOOGLE_REDIRECT_URL,
         });
         if (result.type === 'error') {
-            return ctx.redirect(`${APP_URL}/log-in/failed`);
+            return request.redirect(`${APP_URL}/log-in/failed`);
         }
 
         if (!result.user.verified_email || !result.user.email) {
             console.warn(
                 `[WRN] Google user has unverified email: ${result.user.email}`
             );
-            return ctx.redirect(`${APP_URL}/log-in/failed`);
+            return request.redirect(`${APP_URL}/log-in/failed`);
         }
 
         const jwtToken = await coordinator().issueJwtByUserEmail(
+            Context.todo(),
             result.user.email
         );
         const jwtTokenComponent = encodeURIComponent(jwtToken);
@@ -233,13 +232,18 @@ function setupRouter(coordinator: () => Coordinator, router: Router) {
             JSON.parse(decodeURIComponent(state as string)).redirectUrl ?? ''
         );
 
-        return ctx.redirect(
+        return request.redirect(
             `${APP_URL}/log-in/callback/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
         );
     });
 }
 
-launch()
+const [mainCtx, cancelMain] = Context.background().withCancel();
+
+process.once('SIGINT', () => cancelMain());
+process.once('SIGTERM', () => cancelMain());
+
+launch(mainCtx)
     .then(() => {
         console.log(`[INF] coordinator is running on port ${PORT}`);
     })

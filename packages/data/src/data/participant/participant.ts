@@ -1,4 +1,4 @@
-import {Cancellation} from '../../cancellation.js';
+import {Context} from '../../context.js';
 import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
 import {PersistentConnection} from '../communication/persistent-connection.js';
@@ -18,19 +18,24 @@ export class Participant {
     ) {
         this.connection = new PersistentConnection(transport);
         this.coordinator = new CoordinatorClient(this.connection);
-        setupRpcServerConnection(participantApi, this.connection, {});
+        setupRpcServerConnection(
+            Context.todo(),
+            participantApi,
+            this.connection,
+            {}
+        );
     }
 
-    async sendSignInEmail(email: string, cx: Cancellation) {
-        return await this.coordinator.rpc.sendSignInEmail({email}, cx);
+    async sendSignInEmail(ctx: Context, email: string) {
+        return await this.coordinator.rpc.sendSignInEmail(ctx, {email});
     }
 
-    async verifySignInCode(email: string, code: string, cx: Cancellation) {
-        return await this.coordinator.rpc.verifySignInCode({email, code}, cx);
+    async verifySignInCode(ctx: Context, email: string, code: string) {
+        return await this.coordinator.rpc.verifySignInCode(ctx, {email, code});
     }
 
-    async debug(cx: Cancellation) {
-        return await this.coordinator.rpc.debug({}, cx);
+    async debug(ctx: Context) {
+        return await this.coordinator.rpc.debug(ctx, {});
     }
 
     authenticate(authToken: string): void {
@@ -46,6 +51,6 @@ export class Participant {
     }
 
     async close(): Promise<void> {
-        await this.connection.close();
+        await this.connection.close(Context.todo());
     }
 }

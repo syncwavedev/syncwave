@@ -10,22 +10,22 @@ export const dbApi = createApi<Actor>()({
     getMe: handler({
         req: z.object({}),
         res: zUser().optional(),
-        handle: (actor, req) => actor.getMe(req),
+        handle: (ctx, actor, req) => actor.getMe(ctx, req),
     }),
     getMyBoards: handler({
         req: z.object({}),
         res: z.array(zBoard()),
-        handle: (actor, req) => actor.getMyBoards(req),
+        handle: (ctx, actor, req) => actor.getMyBoards(ctx, req),
     }),
     getBoardTasks: handler({
         req: z.object({boardId: zUuid<BoardId>()}),
         res: z.array(zTask()),
-        handle: (actor, req) => actor.getBoardTasks(req),
+        handle: (ctx, actor, req) => actor.getBoardTasks(ctx, req),
     }),
     getTask: handler({
         req: z.object({taskId: zUuid<TaskId>()}),
         res: zTask().optional(),
-        handle: (actor, req) => actor.getTask(req),
+        handle: (ctx, actor, req) => actor.getTask(ctx, req),
     }),
     createTask: handler({
         req: z.object({
@@ -34,7 +34,7 @@ export const dbApi = createApi<Actor>()({
             title: z.string(),
         }),
         res: zTask(),
-        handle: (actor, req) => actor.createTask(req),
+        handle: (ctx, actor, req) => actor.createTask(ctx, req),
     }),
     createBoard: handler({
         req: z.object({
@@ -43,14 +43,14 @@ export const dbApi = createApi<Actor>()({
             slug: z.string().optional(),
         }),
         res: zBoard(),
-        handle: (actor, req, cx) => actor.createBoard(req, cx),
+        handle: (ctx, actor, req) => actor.createBoard(ctx, req),
     }),
     getBoard: handler({
         req: z.object({
             boardId: zUuid<BoardId>(),
         }),
         res: zBoard().optional(),
-        handle: (actor, req) => actor.getBoard(req),
+        handle: (ctx, actor, req) => actor.getBoard(ctx, req),
     }),
     setBoardSlug: handler({
         req: z.object({
@@ -58,7 +58,7 @@ export const dbApi = createApi<Actor>()({
             slug: z.string(),
         }),
         res: zBoard(),
-        handle: (actor, req, cx) => actor.setBoardSlug(req, cx),
+        handle: (ctx, actor, req) => actor.setBoardSlug(ctx, req),
     }),
     updateBoardName: handler({
         req: z.object({
@@ -66,7 +66,7 @@ export const dbApi = createApi<Actor>()({
             name: z.string(),
         }),
         res: zBoard(),
-        handle: (actor, req) => actor.updateBoardName(req),
+        handle: (ctx, actor, req) => actor.updateBoardName(ctx, req),
     }),
     updateTaskTitle: handler({
         req: z.object({
@@ -74,6 +74,6 @@ export const dbApi = createApi<Actor>()({
             title: z.string(),
         }),
         res: zTask(),
-        handle: (actor, req) => actor.updateTaskTitle(req),
+        handle: (ctx, actor, req) => actor.updateTaskTitle(ctx, req),
     }),
 });

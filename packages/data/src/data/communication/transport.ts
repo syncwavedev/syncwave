@@ -1,4 +1,4 @@
-import {Cancellation} from '../../cancellation.js';
+import {Context} from '../../context.js';
 import {Observer} from '../../utils.js';
 
 export interface TransportServer<T> {
@@ -22,7 +22,7 @@ export interface MessageConnectionEvent<T>
 }
 
 export interface Connection<T> {
-    send(message: T): Promise<void>;
-    subscribe(observer: Observer<T>, cx: Cancellation): void;
-    close(): Promise<void>;
+    send(ctx: Context, message: T): Promise<void>;
+    subscribe(ctx: Context, observer: Observer<T>): void;
+    close(ctx: Context): Promise<void>;
 }

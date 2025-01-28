@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
+import {Context} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
@@ -63,8 +64,9 @@ export class TaskRepo implements SyncTarget<Task> {
         });
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
+    async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
         return await this.rawRepo.apply(
+            ctx,
             id,
             diff,
             createWriteableChecker({
@@ -74,19 +76,19 @@ export class TaskRepo implements SyncTarget<Task> {
         );
     }
 
-    getById(id: TaskId): Promise<Task | undefined> {
-        return this.rawRepo.getById(id);
+    getById(ctx: Context, id: TaskId): Promise<Task | undefined> {
+        return this.rawRepo.getById(ctx, id);
     }
 
-    getByBoardId(boardId: BoardId): AsyncStream<Task> {
-        return this.rawRepo.get(BOARD_ID, [boardId]);
+    getByBoardId(ctx: Context, boardId: BoardId): AsyncStream<Task> {
+        return this.rawRepo.get(ctx, BOARD_ID, [boardId]);
     }
 
-    create(user: Task): Promise<Task> {
-        return this.rawRepo.create(user);
+    create(ctx: Context, user: Task): Promise<Task> {
+        return this.rawRepo.create(ctx, user);
     }
 
-    update(id: TaskId, recipe: Recipe<Task>): Promise<Task> {
-        return this.rawRepo.update(id, recipe);
+    update(ctx: Context, id: TaskId, recipe: Recipe<Task>): Promise<Task> {
+        return this.rawRepo.update(ctx, id, recipe);
     }
 }

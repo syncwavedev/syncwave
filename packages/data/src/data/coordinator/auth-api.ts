@@ -3,6 +3,7 @@ import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_HOURS,
 } from '../../constants.js';
+import {Context} from '../../context.js';
 import {addHours, getNow} from '../../timestamp.js';
 import {whenAll} from '../../utils.js';
 import {createApi, handler} from '../communication/rpc.js';
@@ -43,14 +44,21 @@ export function createAuthApi() {
                 z.object({type: z.literal('cooldown')}),
             ]),
             handle: async (
-                {ctx, crypto, scheduleEffect, emailService},
+                ctx,
+                {
+                    ctx: {identities, users},
+                    crypto,
+                    scheduleEffect,
+                    emailService,
+                },
                 {email}
             ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
                 const verificationCode = await createVerificationCode(crypto);
 
                 const identity = await getIdentity(
-                    ctx.identities,
-                    ctx.users,
+                    ctx,
+                    identities,
+                    users,
                     email,
                     crypto
                 );
@@ -59,7 +67,7 @@ export function createAuthApi() {
                     return {type: 'cooldown'};
                 }
 
-                await ctx.identities.update(identity.id, x => {
+                await identities.update(ctx, identity.id, x => {
                     x.verificationCode = verificationCode;
                     pushActivityLog(x);
                 });
@@ -108,10 +116,11 @@ export function createAuthApi() {
                 z.object({type: z.literal('cooldown')}),
             ]),
             handle: async (
-                {ctx, jwt},
+                ctx,
+                {ctx: {identities, config}, jwt},
                 {email, code}
             ): Promise<VerifySignInCodeResponse> => {
-                const identity = await ctx.identities.getByEmail(email);
+                const identity = await identities.getByEmail(ctx, email);
                 if (!identity) {
                     throw new Error('invalid email, no identity found');
                 }
@@ -128,7 +137,7 @@ export function createAuthApi() {
                     return {type: 'code_expired'};
                 }
 
-                await ctx.identities.update(identity.id, x => {
+                await identities.update(ctx, identity.id, x => {
                     pushActivityLog(x);
                 });
 
@@ -138,11 +147,7 @@ export function createAuthApi() {
 
                 return {
                     type: 'success',
-                    token: await signJwtToken(
-                        jwt,
-                        identity,
-                        ctx.config.jwtSecret
-                    ),
+                    token: await signJwtToken(jwt, identity, config.jwtSecret),
                 };
             },
         }),
@@ -207,12 +212,13 @@ export async function signJwtToken(
 }
 
 export async function getIdentity(
+    ctx: Context,
     identities: IdentityRepo,
     users: UserRepo,
     email: string,
     crypto: CryptoService
 ): Promise<Identity> {
-    const existingIdentity = await identities.getByEmail(email);
+    const existingIdentity = await identities.getByEmail(ctx, email);
     if (existingIdentity) {
         return existingIdentity;
     }
@@ -221,7 +227,7 @@ export async function getIdentity(
     const userId = createUserId();
 
     const [identity] = await whenAll([
-        identities.create({
+        identities.create(ctx, {
             id: createIdentityId(),
             createdAt: now,
             updatedAt: now,
@@ -230,7 +236,7 @@ export async function getIdentity(
             verificationCode: await createVerificationCode(crypto),
             authActivityLog: [],
         }),
-        users.create({
+        users.create(ctx, {
             id: userId,
             createdAt: now,
             updatedAt: now,

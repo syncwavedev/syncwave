@@ -1,4 +1,5 @@
 import {AsyncStream} from '../../async-stream.js';
+import {Context} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Brand} from '../../utils.js';
@@ -54,8 +55,9 @@ export class MemberRepo implements SyncTarget<Member> {
         });
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
+    async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
         return await this.rawRepo.apply(
+            ctx,
             id,
             diff,
             createWriteableChecker({
@@ -65,33 +67,38 @@ export class MemberRepo implements SyncTarget<Member> {
         );
     }
 
-    create(member: Member): Promise<Member> {
-        return this.rawRepo.create(member);
+    create(ctx: Context, member: Member): Promise<Member> {
+        return this.rawRepo.create(ctx, member);
     }
 
-    getById(id: MemberId): Promise<Member | undefined> {
-        return this.rawRepo.getById(id);
+    getById(ctx: Context, id: MemberId): Promise<Member | undefined> {
+        return this.rawRepo.getById(ctx, id);
     }
 
-    getByUserId(userId: UserId): AsyncStream<Member> {
-        return this.rawRepo.get(USER_ID_BOARD_ID_INDEX, [userId]);
+    getByUserId(ctx: Context, userId: UserId): AsyncStream<Member> {
+        return this.rawRepo.get(ctx, USER_ID_BOARD_ID_INDEX, [userId]);
     }
 
-    getByBoardId(boardId: BoardId): AsyncStream<Member> {
-        return this.rawRepo.get(BOARD_ID_INDEX, [boardId]);
+    getByBoardId(ctx: Context, boardId: BoardId): AsyncStream<Member> {
+        return this.rawRepo.get(ctx, BOARD_ID_INDEX, [boardId]);
     }
 
     getByUserIdAndBoardId(
+        ctx: Context,
         userId: UserId,
         boardId: BoardId
     ): Promise<Member | undefined> {
-        return this.rawRepo.getUnique(USER_ID_BOARD_ID_INDEX, [
+        return this.rawRepo.getUnique(ctx, USER_ID_BOARD_ID_INDEX, [
             userId,
             boardId,
         ]);
     }
 
-    update(id: MemberId, recipe: Recipe<Member>): Promise<Member> {
-        return this.rawRepo.update(id, recipe);
+    update(
+        ctx: Context,
+        id: MemberId,
+        recipe: Recipe<Member>
+    ): Promise<Member> {
+        return this.rawRepo.update(ctx, id, recipe);
     }
 }

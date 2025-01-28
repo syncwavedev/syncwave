@@ -1,3 +1,4 @@
+import {Context} from '../context.js';
 import {
     Condition,
     Entry,
@@ -24,8 +25,11 @@ export class MappedTransaction<
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
 
-    async get(key: TKeyPublic): Promise<TValuePublic | undefined> {
-        const result = await this.target.get(this.keyMapper.encode(key));
+    async get(
+        ctx: Context,
+        key: TKeyPublic
+    ): Promise<TValuePublic | undefined> {
+        const result = await this.target.get(ctx, this.keyMapper.encode(key));
         if (result) {
             return this.valueMapper.decode(result);
         } else {
@@ -34,9 +38,11 @@ export class MappedTransaction<
     }
 
     async *query(
+        ctx: Context,
         condition: Condition<TKeyPublic>
     ): AsyncIterable<Entry<TKeyPublic, TValuePublic>> {
         for await (const {key, value} of this.target.query(
+            ctx,
             projectCondition(condition, this.keyMapper)
         )) {
             yield {
@@ -46,15 +52,20 @@ export class MappedTransaction<
         }
     }
 
-    async put(key: TKeyPublic, value: TValuePublic): Promise<void> {
+    async put(
+        ctx: Context,
+        key: TKeyPublic,
+        value: TValuePublic
+    ): Promise<void> {
         return await this.target.put(
+            ctx,
             this.keyMapper.encode(key),
             this.valueMapper.encode(value)
         );
     }
 
-    async delete(key: TKeyPublic): Promise<void> {
-        await this.target.delete(this.keyMapper.encode(key));
+    async delete(ctx: Context, key: TKeyPublic): Promise<void> {
+        await this.target.delete(ctx, this.keyMapper.encode(key));
     }
 }
 
@@ -68,10 +79,14 @@ export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
     ) {}
 
     transact<TResult>(
-        fn: (tx: Transaction<TKeyPublic, TValuePublic>) => Promise<TResult>
+        ctx: Context,
+        fn: (
+            ctx: Context,
+            tx: Transaction<TKeyPublic, TValuePublic>
+        ) => Promise<TResult>
     ): Promise<TResult> {
-        return this.store.transact(tx =>
-            fn(new MappedTransaction(tx, this.keyMapper, this.valueMapper))
+        return this.store.transact(ctx, (ctx, tx) =>
+            fn(ctx, new MappedTransaction(tx, this.keyMapper, this.valueMapper))
         );
     }
 }

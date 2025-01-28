@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {Cancellation, CancellationSource} from '../cancellation.js';
+import {Context} from '../context.js';
 import {assert} from '../utils.js';
 import {Crdt} from './crdt.js';
 
@@ -44,7 +44,11 @@ describe('Doc', () => {
 
     function createReplica<T>(doc: Crdt<T>): Crdt<T> {
         const replica = Crdt.load(doc.state());
-        doc.subscribe('update', diff => replica.apply(diff), Cancellation.none);
+        doc.subscribe(
+            'update',
+            diff => replica.apply(diff),
+            Context.background()
+        );
         return replica;
     }
 
@@ -239,11 +243,11 @@ describe('Doc', () => {
             expect(doc.snapshot()).toEqual(replica.snapshot());
         });
 
-        it('should unsubscribe from updates', () => {
+        it('should unsubscribe from updates', async () => {
             const a = Crdt.from({val: 1});
             const b = Crdt.load(a.state());
-            const sub = new CancellationSource();
-            a.subscribe('update', diff => b.apply(diff), sub.cancellation);
+            const [ctx, unsub] = Context.background().withCancel();
+            a.subscribe('update', diff => b.apply(diff), ctx);
 
             expect(b.snapshot()).toEqual({val: 1});
 
@@ -252,7 +256,7 @@ describe('Doc', () => {
             });
             expect(b.snapshot()).toEqual({val: 2});
 
-            sub.cancel();
+            await unsub();
 
             a.update(x => {
                 x.val = 3;
@@ -302,13 +306,13 @@ describe('Doc', () => {
         expect(crdt.snapshot()).toEqual({key: 'updatedValue'});
     });
 
-    it('should support subscribing to updates', () => {
+    it('should support subscribing to updates', async () => {
         const value = {key: 'value'};
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const sub = new CancellationSource();
-        crdt.subscribe('update', callback, sub.cancellation);
+        const [ctx, unsub] = Context.background().withCancel();
+        crdt.subscribe('update', callback, ctx);
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -317,17 +321,17 @@ describe('Doc', () => {
             tag: undefined,
         });
 
-        sub.cancel();
+        await unsub();
     });
 
-    it('should unsubscribe from updates', () => {
+    it('should unsubscribe from updates', async () => {
         const value = {key: 'value'};
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const sub = new CancellationSource();
-        crdt.subscribe('update', callback, sub.cancellation);
-        sub.cancel();
+        const [ctx, unsub] = Context.background().withCancel();
+        crdt.subscribe('update', callback, ctx);
+        await unsub();
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -405,17 +409,17 @@ describe('Doc', () => {
         expect(crdt2.snapshot()).toEqual(value2);
     });
 
-    it('should handle concurrent subs and updates', () => {
+    it('should handle concurrent subs and updates', async () => {
         const value = {key: 'value'};
         const crdt = Crdt.from(value);
         const callback1 = vi.fn();
         const callback2 = vi.fn();
 
-        const sub1 = new CancellationSource();
-        crdt.subscribe('update', callback1, sub1.cancellation);
+        const [ctx1, unsub1] = Context.background().withCancel();
+        crdt.subscribe('update', callback1, ctx1);
 
-        const sub2 = new CancellationSource();
-        crdt.subscribe('update', callback2, sub2.cancellation);
+        const [ctx2, unsub2] = Context.background().withCancel();
+        crdt.subscribe('update', callback2, ctx2);
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -423,8 +427,8 @@ describe('Doc', () => {
         expect(callback1).toHaveBeenCalled();
         expect(callback2).toHaveBeenCalled();
 
-        sub1.cancel();
-        sub2.cancel();
+        await unsub1();
+        await unsub2();
     });
 
     it('should handle updates with complex structures', () => {
@@ -448,7 +452,7 @@ describe('Doc', () => {
             (_diff, options) => {
                 events.push(options.origin || 'no-tag');
             },
-            Cancellation.none
+            Context.background()
         );
 
         crdt.apply(createTestDocDiff({key: 'value1'}), {origin: 'first'});
@@ -457,14 +461,14 @@ describe('Doc', () => {
         expect(events).toEqual(['first', 'second']);
     });
 
-    it('should correctly unsubscribe in concurrent scenarios', () => {
+    it('should correctly unsubscribe in concurrent scenarios', async () => {
         const value = {key: 'value'};
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const sub = new CancellationSource();
-        crdt.subscribe('update', callback, sub.cancellation);
-        sub.cancel();
+        const [ctx, unsub] = Context.background().withCancel();
+        crdt.subscribe('update', callback, ctx);
+        await unsub();
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);

@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {Context} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {Counter} from '../../kv/counter.js';
@@ -64,8 +65,9 @@ export class BoardRepo implements SyncTarget<Board> {
         );
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
+    async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
         return await this.rawRepo.apply(
+            ctx,
             id,
             diff,
             createWriteableChecker({
@@ -76,23 +78,28 @@ export class BoardRepo implements SyncTarget<Board> {
         );
     }
 
-    async getById(id: BoardId): Promise<Board | undefined> {
-        return await this.rawRepo.getById(id);
+    async getById(ctx: Context, id: BoardId): Promise<Board | undefined> {
+        return await this.rawRepo.getById(ctx, id);
     }
 
-    async incrementBoardCounter(boardId: BoardId): Promise<number> {
-        return await this.counters.get(boardId.toString()).increment();
+    async incrementBoardCounter(
+        ctx: Context,
+        boardId: BoardId
+    ): Promise<number> {
+        return await this.counters.get(boardId.toString()).increment(ctx);
     }
 
-    async checkSlugAvailable(slug: string): Promise<boolean> {
-        const existingBoard = await this.rawRepo.getUnique(SLUG_INDEX, [slug]);
+    async checkSlugAvailable(ctx: Context, slug: string): Promise<boolean> {
+        const existingBoard = await this.rawRepo.getUnique(ctx, SLUG_INDEX, [
+            slug,
+        ]);
 
         return existingBoard === undefined;
     }
 
-    async create(board: Board): Promise<Board> {
+    async create(ctx: Context, board: Board): Promise<Board> {
         try {
-            return await this.rawRepo.create(board);
+            return await this.rawRepo.create(ctx, board);
         } catch (err) {
             // todo: map errors in AggregateError
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
@@ -106,9 +113,13 @@ export class BoardRepo implements SyncTarget<Board> {
         }
     }
 
-    async update(id: BoardId, recipe: Recipe<Board>): Promise<Board> {
+    async update(
+        ctx: Context,
+        id: BoardId,
+        recipe: Recipe<Board>
+    ): Promise<Board> {
         try {
-            return await this.rawRepo.update(id, recipe);
+            return await this.rawRepo.update(ctx, id, recipe);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
                 throw new BusinessError(

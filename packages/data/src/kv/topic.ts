@@ -1,5 +1,6 @@
 import {astream, AsyncStream} from '../async-stream.js';
 import {Codec, NumberCodec} from '../codec.js';
+import {Context} from '../context.js';
 import {pipe, whenAll} from '../utils.js';
 import {Counter} from './counter.js';
 import {
@@ -29,21 +30,26 @@ export class Topic<T> {
         );
     }
 
-    async push(...data: T[]): Promise<void> {
+    async push(ctx: Context, ...data: T[]): Promise<void> {
         const offset =
-            (await this.counter.increment(data.length)) - data.length;
-        await whenAll(data.map((x, idx) => this.log.put(offset + idx, x)));
+            (await this.counter.increment(ctx, data.length)) - data.length;
+        await whenAll(data.map((x, idx) => this.log.put(ctx, offset + idx, x)));
     }
 
-    list(start: number, end?: number): AsyncStream<TopicEntry<T>> {
-        return astream(this._list(start, end));
+    list(
+        ctx: Context,
+        start: number,
+        end?: number
+    ): AsyncStream<TopicEntry<T>> {
+        return astream(this._list(ctx, start, end));
     }
 
     private async *_list(
+        ctx: Context,
         start: number,
         end?: number
     ): AsyncIterable<TopicEntry<T>> {
-        for await (const {key, value} of this.log.query({gte: start})) {
+        for await (const {key, value} of this.log.query(ctx, {gte: start})) {
             if (end !== undefined && key >= end) return;
 
             yield {offset: key, data: value};

@@ -35,7 +35,7 @@ export class Subject<TValue> {
         const sub = {observer};
 
         this.subs.push(sub);
-        ctx.cleanup(() => {
+        ctx.onCancel(() => {
             this.subs = this.subs.filter(x => x !== sub);
         });
     }
@@ -128,7 +128,7 @@ export function wait(ctx: Context, ms: number): Promise<void> {
     const timeoutId = setTimeout(() => result.resolve(), ms);
     // create CancelledError here to preserve call stack
     const cancelError = new CancelledError();
-    ctx.cleanup(() => {
+    ctx.onCancel(() => {
         result.reject(cancelError);
         clearTimeout(timeoutId);
     });

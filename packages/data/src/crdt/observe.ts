@@ -81,8 +81,6 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     method === 'filter' ||
                     method === 'find' ||
                     method === 'findIndex' ||
-                    method === 'findLast' ||
-                    method === 'findLastIndex' ||
                     method === 'flat' ||
                     method === 'flatMap' ||
                     method === 'forEach' ||
@@ -169,7 +167,7 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     receiver
                 );
             },
-            deleteProperty(target, prop) {
+            deleteProperty() {
                 throw new Error('delete is an unsupported array modification');
             },
         }
@@ -244,7 +242,7 @@ function createMapProxy<T>(
 
                 return original;
             },
-            set(target, prop, newValue, receiver) {
+            set(target, prop) {
                 throw new Error(
                     'unsupported map modification: direct set of property ' +
                         prop.toString()

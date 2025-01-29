@@ -14,9 +14,12 @@ export class HotStream<T> implements AsyncIterable<T> {
     private chan = new Channel<T>();
 
     constructor(ctx: Context) {
-        ctx.cleanup(async () => {
-            await this.throw(new CancelledError());
-            await this.end();
+        ctx.onCancel(() => {
+            this.throw(new CancelledError())
+                .then(() => this.end())
+                .catch(error => {
+                    console.error('[ERR] HotStream onCancel', error);
+                });
         });
     }
 
@@ -46,6 +49,7 @@ export class HotStream<T> implements AsyncIterable<T> {
 
     async *[Symbol.asyncIterator](): AsyncIterator<T> {
         for await (const item of this.chan) {
+            console.log('read hot stream');
             yield item;
         }
     }
@@ -62,8 +66,8 @@ export class ColdStream<T> implements AsyncIterable<T> {
 
     async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
         const [ctx, cancelCtx] = this.parentCtx.withCancel();
-        let executorCancel: Cancel = () => Promise.resolve();
-        ctx.cleanup(() => executorCancel());
+        let executorCancel: Cancel = () => {};
+        ctx.onCancel(() => executorCancel());
 
         const stream = new HotStream<T>(ctx);
 
@@ -75,7 +79,7 @@ export class ColdStream<T> implements AsyncIterable<T> {
             });
             yield* stream;
         } finally {
-            await cancelCtx();
+            cancelCtx();
         }
     }
 }
@@ -144,19 +148,19 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         } catch (error) {
             yield await map(ctx, error);
         } finally {
-            await cancel();
+            cancel();
         }
     }
 
-    finally(fn: () => Promise<void>): AsyncStream<T> {
+    finally(fn: () => void): AsyncStream<T> {
         return astream(this._finally(fn));
     }
 
-    async *_finally(fn: () => Promise<void>) {
+    async *_finally(fn: () => void) {
         try {
             yield* this.source;
         } finally {
-            await fn();
+            fn();
         }
     }
 

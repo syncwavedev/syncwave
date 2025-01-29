@@ -10,7 +10,7 @@
 	import CircleAlert from 'lucide-svelte/icons/circle-alert';
 	import * as Alert from '$lib/components/ui/alert/index.js';
 	import {goto} from '$app/navigation';
-	import {wait} from 'ground-data';
+	import {Context, wait} from 'ground-data';
 
 	const googleSignInUrl = (() => {
 		const authState = {redirectUrl: '/'};
@@ -51,10 +51,8 @@
 	async function signIn() {
 		isLoading = true;
 		error = undefined;
-		// wait for a bit for better UX
-		await wait(500);
 		try {
-			const result = await sdk.verifySignInCode(email ?? '', code);
+			const result = await sdk.verifySignInCode(Context.todo(), email ?? '', code);
 			if (result.type === 'success') {
 				store.logIn(result.token);
 

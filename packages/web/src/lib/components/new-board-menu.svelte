@@ -10,14 +10,11 @@
 
 	async function createBoard() {
 		const boardId = createBoardId();
-		const board = await sdk.data.createBoard(
-			{
-				boardId,
-				name: 'Untitled',
-				slug: boardId,
-			},
-			Context.todo()
-		);
+		const board = await sdk.data.createBoard(Context.todo(), {
+			boardId,
+			name: 'Untitled',
+			slug: boardId,
+		});
 
 		goto(`/app/b/${board.id}`);
 	}

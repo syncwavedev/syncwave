@@ -2,7 +2,6 @@ import {
 	assert,
 	Context,
 	Deferred,
-	scoped,
 	Subject,
 	type Codec,
 	type Connection,
@@ -49,7 +48,6 @@ export class WsClientConnection<T> implements Connection<T> {
 		this.setupListeners();
 	}
 
-	@scoped()
 	async send(ctx: Context, message: T): Promise<void> {
 		const data = this.codec.encode(message);
 		this.ws.send(data);

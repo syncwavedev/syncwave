@@ -1,13 +1,20 @@
 import {describe, expect, it} from 'vitest';
 import {ColdStream, astream} from './async-stream.js';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
+import {Context} from './context.js';
+
+const ctx = Context.test();
 
 describe('DeferredStream', () => {
     it('should emit values using the executor', async () => {
         const values = [1, 2, 3];
-        const stream = new ColdStream<number>(({next, end}) => {
-            values.forEach(next);
-            end();
+        const stream = new ColdStream<number>(ctx, (ctx, {next, end}) => {
+            for (const value of values) {
+                const _ = next(ctx, value);
+            }
+            const _ = end(ctx);
+
+            return () => {};
         });
 
         const result: number[] = [];
@@ -20,15 +27,17 @@ describe('DeferredStream', () => {
 
     it('should propagate errors from the executor', async () => {
         const error = new Error('Test error');
-        const stream = new ColdStream<number>(({throw: reject}) => {
-            reject(error);
+        const stream = new ColdStream<number>(ctx, (ctx, exe) => {
+            const _ = exe.throw(ctx, error);
+
+            return () => {};
         });
 
         await expect(async () => {
             for await (const _value of stream) {
                 // Iterate over the stream to trigger the executor.
             }
-        }).rejects.toThrow(error);
+        }).rejects.toThrow(/HotStream.throw/);
     });
 });
 
@@ -42,7 +51,7 @@ describe('AsyncStream', () => {
         })();
 
         const stream = astream(source);
-        const result = await stream.toArray();
+        const result = await stream.toArray(ctx);
 
         expect(result).toEqual(values);
     });
@@ -51,7 +60,7 @@ describe('AsyncStream', () => {
         const values = [1, 2, 3, 4];
         const stream = astream(values);
 
-        const result = await stream.drop(2).toArray();
+        const result = await stream.drop(2).toArray(ctx);
         expect(result).toEqual([3, 4]);
     });
 
@@ -59,7 +68,7 @@ describe('AsyncStream', () => {
         const values = [1, 2, 3, 4];
         const stream = astream(values);
 
-        const result = await stream.take(2).toArray();
+        const result = await stream.take(2).toArray(ctx);
         expect(result).toEqual([1, 2]);
     });
 
@@ -67,8 +76,20 @@ describe('AsyncStream', () => {
         const values = [1, 2, 3, 4];
         const stream = astream(values);
 
-        const result = await stream.filter(value => value % 2 === 0).toArray();
+        const result = await stream
+            .filter(value => value % 2 === 0)
+            .toArray(ctx);
         expect(result).toEqual([2, 4]);
+    });
+
+    it('should map parallel elements using an async mapper', async () => {
+        const values = [1, 2, 3];
+        const stream = astream(values);
+
+        const result = await stream
+            .mapParallel(async (ctx, value) => value * 2)
+            .toArray(ctx);
+        expect(result).toEqual([2, 4, 6]);
     });
 
     it('should map elements using an async mapper', async () => {
@@ -76,8 +97,8 @@ describe('AsyncStream', () => {
         const stream = astream(values);
 
         const result = await stream
-            .mapParallel(async value => value * 2)
-            .toArray();
+            .map(async (ctx, value) => value * 2)
+            .toArray(ctx);
         expect(result).toEqual([2, 4, 6]);
     });
 
@@ -113,11 +134,13 @@ describe('AsyncStream', () => {
         expect(result).toBe(false);
     });
 
-    it('should handle MAX_LOOKAHEAD_COUNT during map', async () => {
+    it('should handle MAX_LOOKAHEAD_COUNT during map parallel', async () => {
         const values = Array(MAX_LOOKAHEAD_COUNT + 1).fill(1);
         const stream = astream(values);
 
-        const result = await stream.mapParallel(value => value + 1).toArray();
+        const result = await stream
+            .mapParallel((ctx, value) => value + 1)
+            .toArray(ctx);
         expect(result).toEqual(Array(MAX_LOOKAHEAD_COUNT + 1).fill(2));
     });
 });

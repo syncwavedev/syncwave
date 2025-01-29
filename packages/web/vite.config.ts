@@ -9,9 +9,7 @@ export default defineConfig({
 		nodePolyfills({
 			include: ['buffer'],
 		}),
-		swc.vite({
-			tsconfigFile: './tsconfig.json',
-		}),
+		swc.vite(),
 	],
 
 	test: {

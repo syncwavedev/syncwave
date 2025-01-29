@@ -168,7 +168,7 @@ async function launch(launchCtx: Context) {
         JWT_SECRET
     );
 
-    launchCtx.cleanup(async () => {
+    async function shutdown() {
         console.log('[INF] shutting down...');
         await coordinator.close();
         console.log('[INF] coordinator is closed');
@@ -190,6 +190,12 @@ async function launch(launchCtx: Context) {
                 activeResources
             );
         }
+    }
+
+    launchCtx.onCancel(() => {
+        shutdown().catch(error => {
+            console.error('[ERR] failed to shutdown', error);
+        });
     });
 
     const serverStarted = new Deferred<void>();

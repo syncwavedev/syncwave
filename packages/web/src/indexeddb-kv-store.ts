@@ -2,7 +2,6 @@ import type {Context, Entry} from 'ground-data';
 import {
 	astream,
 	ENVIRONMENT,
-	scoped,
 	type Condition,
 	type Uint8KVStore,
 	type Uint8Transaction,
@@ -75,13 +74,11 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		}
 	}
 
-	@scoped()
 	public async get(ctx: Context, key: Uint8Array): Promise<Uint8Array | undefined> {
 		this.assertActive();
 		return await this.tx.objectStore(STORE_NAME).get(key);
 	}
 
-	@scoped()
 	public async *query(
 		ctx: Context,
 		condition: Condition<Uint8Array>
@@ -97,13 +94,11 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		}
 	}
 
-	@scoped()
 	public async put(ctx: Context, key: Uint8Array, value: Uint8Array): Promise<void> {
 		this.assertActive();
 		await this.tx.objectStore(STORE_NAME).put(value, key);
 	}
 
-	@scoped()
 	public async delete(ctx: Context, key: Uint8Array): Promise<void> {
 		this.assertActive();
 		await this.tx.objectStore(STORE_NAME).delete(key);
@@ -123,7 +118,6 @@ export class IndexedDBKVStore implements Uint8KVStore {
 		});
 	}
 
-	@scoped()
 	public async transact<TResult>(
 		ctx: Context,
 		fn: (ctx: Context, tx: Uint8Transaction) => Promise<TResult>

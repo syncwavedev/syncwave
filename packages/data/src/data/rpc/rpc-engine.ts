@@ -43,19 +43,23 @@ async function proxyStreamerCall(
     const [ctx, cancelCtx] = listenCtx.withCancel();
     const [timeoutCtx, cancelTimeout] = ctx.withCancel();
 
-    ctx.cleanup(async () => {
+    ctx.onCancel(() => {
         if (state !== 'complete') {
-            await cancel(Context.todo(), 'cancelled');
+            cancel(Context.todo(), 'cancelled').catch(error => {
+                console.error('[ERR] proxyStreamerCall ctx.onCancel', error);
+            });
         }
     });
 
     async function complete(ctx: Context) {
         state = 'complete';
-        await whenAll([exe.end(ctx), cancelCtx()]);
+        cancelCtx();
+        await exe.end(ctx);
     }
 
     async function cancel(ctx: Context, err: unknown) {
         state = 'complete';
+        cancelCtx();
         await whenAll([
             conn.send(listenCtx, {
                 id: createMessageId(),
@@ -66,7 +70,6 @@ async function proxyStreamerCall(
             exe
                 .throw(ctx, typeof err === 'string' ? new Error(err) : err)
                 .then(() => exe.end(ctx)),
-            cancelCtx(),
         ]);
     }
 
@@ -76,9 +79,9 @@ async function proxyStreamerCall(
                 return;
             }
 
-            async function open() {
+            function open() {
                 state = 'open';
-                await cancelTimeout();
+                cancelTimeout();
             }
 
             async function cancelInvalid(error: string) {
@@ -97,7 +100,7 @@ async function proxyStreamerCall(
 
             if (state === 'pending') {
                 if (msg.payload.type === 'start') {
-                    await open();
+                    open();
                 } else {
                     const error = `got '${msg.payload.type}' for pending stream`;
                     await cancelInvalid(error);
@@ -165,7 +168,7 @@ async function proxyHandlerCall(
     try {
         const requestId = createMessageId();
         const result = new Deferred<any>();
-        ctx.cleanup(() => {
+        ctx.onCancel(() => {
             result.reject(new Error('handler cancellation requested'));
         });
 
@@ -189,24 +192,24 @@ async function proxyHandlerCall(
                         );
                     }
                 } finally {
-                    await cancel();
+                    cancel();
                 }
             },
             throw: async error => {
-                await cancel();
+                cancel();
                 result.reject(error);
             },
             close: async () => {
-                await cancel();
+                cancel();
                 result.reject(new Error('lost connection to rpc server'));
             },
         });
 
         ignoreCancel(wait(ctx, RPC_CALL_TIMEOUT_MS))
-            .then(async () => {
+            .then(() => {
                 if (result.state === 'pending') {
                     result.reject(new Error('rpc call failed: timeout'));
-                    await cancel();
+                    cancel();
                 }
             })
             .catch(err => {
@@ -222,7 +225,7 @@ async function proxyHandlerCall(
 
         return await result.promise;
     } finally {
-        await cancel();
+        cancel();
     }
 }
 
@@ -305,25 +308,25 @@ async function waitMessage<S extends Message>(
         next: async (ctx, msg) => {
             if (predicate(msg)) {
                 result.resolve(msg as any);
-                await cancelCtx();
+                cancelCtx();
             }
         },
         throw: async error => {
             result.reject(error);
-            await cancelCtx();
+            cancelCtx();
         },
         close: async () => {
             result.resolve(undefined);
-            await cancelCtx();
+            cancelCtx();
         },
     });
 
     ignoreCancel(wait(ctx, timeoutMs))
-        .then(async () => {
+        .then(() => {
             if (result.state === 'pending') {
                 result.reject(new Error(`timeout after ${timeoutMs}`));
             }
-            await cancelCtx();
+            cancelCtx();
         })
         .catch(err => {
             console.error('unexpected error after timed out', err);
@@ -537,23 +540,23 @@ export function setupRpcServerConnection<TState>(
                         serverName
                     );
                 } finally {
-                    await contextManager.finish(message.id);
+                    contextManager.finish(message.id);
                 }
             } else if (message.type === 'response') {
                 // do nothing
             } else if (message.type === 'ack') {
                 // nothing to do
             } else if (message.type === 'cancel') {
-                await contextManager.cancel(message.requestId);
+                contextManager.cancel(message.requestId);
             } else {
                 assertNever(message);
             }
         },
         throw: async () => {
-            await contextManager.finishAll();
+            contextManager.finishAll();
         },
         close: async () => {
-            await serverCancel();
+            serverCancel();
         },
     });
 }

@@ -3,7 +3,7 @@
     "compilerOptions": {
         "rootDir": ".",
         "outDir": "./dist/esm",
-        "lib": ["es2024"]
+        "lib": ["es2022"]
     },
     "include": ["src/**/*.ts", "tests/**/*.ts"]
 }

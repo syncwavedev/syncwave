@@ -90,9 +90,7 @@ export class Crdt<T> {
                 replayLog(log, locator);
             }
         }, options?.origin);
-        cancelSubscription().catch(error => {
-            console.error('[ERR] failed to cancel crdt subscription', error);
-        });
+        cancelSubscription();
 
         // todo: add tests for returned diff
         return diff;
@@ -111,7 +109,9 @@ export class Crdt<T> {
             next(state as CrdtDiff<T>, {origin: origin ?? undefined});
         this.doc.on('updateV2', fn);
 
-        cx.cleanup(() => this.doc.off('updateV2', fn));
+        cx.onCancel(() => {
+            this.doc.off('updateV2', fn);
+        });
     }
 }
 

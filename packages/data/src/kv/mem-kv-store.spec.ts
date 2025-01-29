@@ -1,17 +1,16 @@
-import createTree from 'functional-red-black-tree';
+import createTree, {Tree} from 'functional-red-black-tree';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {StringCodec} from '../codec.js';
+import {encodeString} from '../codec.js';
+import {Context} from '../context.js';
 import {compareUint8Array, wait, whenAll} from '../utils.js';
 import {Entry, InvalidQueryCondition, Uint8KVStore} from './kv-store.js';
 import {MemKVStore, MemLocker, MemTransaction} from './mem-kv-store.js'; // Adjust the path as needed
 
-const stringCodec = new StringCodec();
-// Utility function to create Uint8Array from strings for testing
-const toUint8Array = (str: string) => stringCodec.encode(str);
+const ctx = Context.test();
 
 describe('MemTransaction', () => {
-    let tree;
-    let transaction;
+    let tree: Tree<Uint8Array, Uint8Array>;
+    let transaction: MemTransaction;
 
     beforeEach(() => {
         tree = createTree(compareUint8Array);
@@ -19,53 +18,56 @@ describe('MemTransaction', () => {
     });
 
     it('should retrieve an existing key', async () => {
-        const key = toUint8Array('key1');
-        const value = toUint8Array('value1');
+        const key = encodeString('key1');
+        const value = encodeString('value1');
         tree = tree.insert(key, value);
         transaction = new MemTransaction(tree);
 
-        const result = await transaction.get(key);
+        const result = await transaction.get(ctx, key);
         expect(result).toEqual(value);
     });
 
     it('should return undefined for a non-existent key', async () => {
-        const result = await transaction.get(toUint8Array('non-existent-key'));
+        const result = await transaction.get(
+            ctx,
+            encodeString('non-existent-key')
+        );
         expect(result).toBeUndefined();
     });
 
     it('should insert a key-value pair', async () => {
-        const key = toUint8Array('key1');
-        const value = toUint8Array('value1');
-        await transaction.put(key, value);
+        const key = encodeString('key1');
+        const value = encodeString('value1');
+        await transaction.put(ctx, key, value);
 
-        const result = await transaction.get(key);
+        const result = await transaction.get(ctx, key);
         expect(result).toEqual(value);
     });
 
     it('should overwrite an existing key-value pair', async () => {
-        const key = toUint8Array('key1');
-        const value1 = toUint8Array('value1');
-        const value2 = toUint8Array('value2');
+        const key = encodeString('key1');
+        const value1 = encodeString('value1');
+        const value2 = encodeString('value2');
 
-        await transaction.put(key, value1);
-        await transaction.put(key, value2);
+        await transaction.put(ctx, key, value1);
+        await transaction.put(ctx, key, value2);
 
-        const result = await transaction.get(key);
+        const result = await transaction.get(ctx, key);
         expect(result).toEqual(value2);
     });
 
     it('should query with greater-than condition', async () => {
-        const key1 = toUint8Array('a');
-        const key2 = toUint8Array('b');
-        const value = toUint8Array('value');
+        const key1 = encodeString('a');
+        const key2 = encodeString('b');
+        const value = encodeString('value');
 
-        await transaction.put(key1, value);
-        await transaction.put(key2, value);
+        await transaction.put(ctx, key1, value);
+        await transaction.put(ctx, key2, value);
 
         const condition = {gt: key1};
-        const results: Entry<string, string>[] = [];
+        const results: Entry<Uint8Array, Uint8Array>[] = [];
 
-        for await (const entry of transaction.query(condition)) {
+        for await (const entry of transaction.query(ctx, condition)) {
             results.push(entry);
         }
 
@@ -75,24 +77,24 @@ describe('MemTransaction', () => {
     it('should throw an error for an invalid condition', async () => {
         const condition = {};
         await expect(async () => {
-            for await (const _ of transaction.query(condition)) {
+            for await (const _ of transaction.query(ctx, condition as any)) {
                 // do nothing
             }
         }).rejects.toThrow(InvalidQueryCondition);
     });
 
     it('should handle less-than condition in query', async () => {
-        const key1 = toUint8Array('a');
-        const key2 = toUint8Array('b');
-        const value = toUint8Array('value');
+        const key1 = encodeString('a');
+        const key2 = encodeString('b');
+        const value = encodeString('value');
 
-        await transaction.put(key1, value);
-        await transaction.put(key2, value);
+        await transaction.put(ctx, key1, value);
+        await transaction.put(ctx, key2, value);
 
         const condition = {lt: key2};
-        const results: Entry<string, string>[] = [];
+        const results: Entry<Uint8Array, Uint8Array>[] = [];
 
-        for await (const entry of transaction.query(condition)) {
+        for await (const entry of transaction.query(ctx, condition)) {
             results.push(entry);
         }
 
@@ -100,17 +102,17 @@ describe('MemTransaction', () => {
     });
 
     it('should handle greater-than or equal condition in query', async () => {
-        const key1 = toUint8Array('a');
-        const key2 = toUint8Array('b');
-        const value = toUint8Array('value');
+        const key1 = encodeString('a');
+        const key2 = encodeString('b');
+        const value = encodeString('value');
 
-        await transaction.put(key1, value);
-        await transaction.put(key2, value);
+        await transaction.put(ctx, key1, value);
+        await transaction.put(ctx, key2, value);
 
         const condition = {gte: key1};
-        const results: Entry<string, string>[] = [];
+        const results: Entry<Uint8Array, Uint8Array>[] = [];
 
-        for await (const entry of transaction.query(condition)) {
+        for await (const entry of transaction.query(ctx, condition)) {
             results.push(entry);
         }
 
@@ -121,16 +123,18 @@ describe('MemTransaction', () => {
     });
 
     it('should handle less-than or equal condition in query', async () => {
-        const key1 = toUint8Array('a');
-        const key2 = toUint8Array('b');
-        const value = toUint8Array('value');
+        const key1 = encodeString('a');
+        const key2 = encodeString('b');
+        const value = encodeString('value');
 
-        await transaction.put(key1, value);
-        await transaction.put(key2, value);
+        await transaction.put(ctx, key1, value);
+        await transaction.put(ctx, key2, value);
 
-        const results: Entry<string, string>[] = [];
+        const results: Entry<Uint8Array, Uint8Array>[] = [];
 
-        for await (const entry of transaction.query({lte: toUint8Array('d')})) {
+        for await (const entry of transaction.query(ctx, {
+            lte: encodeString('d'),
+        })) {
             results.push(entry);
         }
 
@@ -149,36 +153,36 @@ describe('MemKVStore', () => {
     });
 
     it('should execute a transaction and persist changes', async () => {
-        const key = toUint8Array('key1');
-        const value = toUint8Array('value1');
+        const key = encodeString('key1');
+        const value = encodeString('value1');
 
-        await kvStore.transact(async tx => {
-            await tx.put(key, value);
+        await kvStore.transact(ctx, async (ctx, tx) => {
+            await tx.put(ctx, key, value);
         });
 
-        await kvStore.transact(async tx => {
-            const result = await tx.get(key);
+        await kvStore.transact(ctx, async (ctx, tx) => {
+            const result = await tx.get(ctx, key);
             expect(result).toEqual(value);
         });
     });
 
     it('should handle concurrent transactions sequentially', async () => {
-        const key = toUint8Array('key1');
-        const value1 = toUint8Array('value1');
-        const value2 = toUint8Array('value2');
+        const key = encodeString('key1');
+        const value1 = encodeString('value1');
+        const value2 = encodeString('value2');
 
-        const txn1 = kvStore.transact(async tx => {
-            await tx.put(key, value1);
+        const txn1 = kvStore.transact(ctx, async (ctx, tx) => {
+            await tx.put(ctx, key, value1);
         });
 
-        const txn2 = kvStore.transact(async tx => {
-            await tx.put(key, value2);
+        const txn2 = kvStore.transact(ctx, async (ctx, tx) => {
+            await tx.put(ctx, key, value2);
         });
 
         await whenAll([txn1, txn2]);
 
-        await kvStore.transact(async tx => {
-            const result = await tx.get(key);
+        await kvStore.transact(ctx, async (ctx, tx) => {
+            const result = await tx.get(ctx, key);
             expect(result).toEqual(value2); // Last transaction wins
         });
     });
@@ -186,7 +190,7 @@ describe('MemKVStore', () => {
     it('should retry on transaction failure', async () => {
         let attempt = 0;
 
-        await kvStore.transact(async () => {
+        await kvStore.transact(ctx, async () => {
             if (attempt++ < 1) {
                 throw new Error('Simulated failure');
             }
@@ -200,24 +204,24 @@ describe('MemKVStore', () => {
             throw new Error('Simulated permanent failure');
         });
 
-        await expect(kvStore.transact(async () => {})).rejects.toThrow(
+        await expect(kvStore.transact(ctx, async () => {})).rejects.toThrow(
             'Simulated permanent failure'
         );
     });
 
     it('should handle transaction rollback on failure', async () => {
-        const key = toUint8Array('key1');
-        const value = toUint8Array('value1');
+        const key = encodeString('key1');
+        const value = encodeString('value1');
 
         await kvStore
-            .transact(async tx => {
-                await tx.put(key, value);
+            .transact(ctx, async (ctx, tx) => {
+                await tx.put(ctx, key, value);
                 throw new Error('Simulated rollback');
             })
             .catch(() => {});
 
-        await kvStore.transact(async tx => {
-            const result = await tx.get(key);
+        await kvStore.transact(ctx, async (ctx, tx) => {
+            const result = await tx.get(ctx, key);
             expect(result).toBeUndefined();
         });
     });
@@ -232,7 +236,7 @@ describe('MemLocker', () => {
 
     it('executes a single lock correctly', async () => {
         const fn = vi.fn(async () => {
-            await wait(50);
+            await wait(ctx, 50);
             return 'result';
         });
 
@@ -247,21 +251,21 @@ describe('MemLocker', () => {
 
         const fn1 = vi.fn(async () => {
             executionOrder.push(1);
-            await wait(100);
+            await wait(ctx, 100);
             executionOrder.push(2);
             return 'first';
         });
 
         const fn2 = vi.fn(async () => {
             executionOrder.push(3);
-            await wait(50);
+            await wait(ctx, 50);
             executionOrder.push(4);
             return 'second';
         });
 
         const fn3 = vi.fn(async () => {
             executionOrder.push(5);
-            await wait(10);
+            await wait(ctx, 10);
             executionOrder.push(6);
             return 'third';
         });
@@ -285,14 +289,14 @@ describe('MemLocker', () => {
 
         const fn1 = vi.fn(async () => {
             executionOrder.push('fn1_start');
-            await wait(100);
+            await wait(ctx, 100);
             executionOrder.push('fn1_end');
             return 'result1';
         });
 
         const fn2 = vi.fn(async () => {
             executionOrder.push('fn2_start');
-            await wait(50);
+            await wait(ctx, 50);
             executionOrder.push('fn2_end');
             return 'result2';
         });
@@ -320,14 +324,14 @@ describe('MemLocker', () => {
 
         const fn1 = vi.fn(async () => {
             executionOrder.push(1);
-            await wait(50);
+            await wait(ctx, 50);
             executionOrder.push(2);
             throw new Error('Error in fn1');
         });
 
         const fn2 = vi.fn(async () => {
             executionOrder.push(3);
-            await wait(30);
+            await wait(ctx, 30);
             executionOrder.push(4);
             return 'fn2 result';
         });
@@ -351,21 +355,21 @@ describe('MemLocker', () => {
 
         const fn1 = vi.fn(async () => {
             executionOrder.push('fn1_start');
-            await wait(50);
+            await wait(ctx, 50);
             executionOrder.push('fn1_end');
             return 'result1';
         });
 
         const fn2 = vi.fn(async () => {
             executionOrder.push('fn2_start');
-            await wait(20);
+            await wait(ctx, 20);
             executionOrder.push('fn2_end');
             return 'result2';
         });
 
         const fn3 = vi.fn(async () => {
             executionOrder.push('fn3_start');
-            await wait(10);
+            await wait(ctx, 10);
             executionOrder.push('fn3_end');
             return 'result3';
         });
@@ -397,7 +401,7 @@ describe('MemLocker', () => {
 
         const fn = vi.fn(async (id: number) => {
             executionOrder.push(id);
-            await wait(10);
+            await wait(ctx, 10);
             executionOrder.push(id + 100);
             return `result${id}`;
         });

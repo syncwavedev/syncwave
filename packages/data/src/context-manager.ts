@@ -1,5 +1,4 @@
 import {Cancel, Context} from './context.js';
-import {whenAll} from './utils.js';
 import {Uuid} from './uuid.js';
 
 export class ContextManager<T extends Uuid> {
@@ -23,9 +22,9 @@ export class ContextManager<T extends Uuid> {
         }
     }
 
-    async cancel(id: T) {
+    cancel(id: T) {
         if (this.runningJobs.has(id)) {
-            await this.runningJobs.get(id)![1]();
+            this.runningJobs.get(id)![1]();
             this.runningJobs.delete(id);
             this.cancelledJobs.add(id);
         } else if (this.cancelledJobs.has(id)) {
@@ -35,9 +34,9 @@ export class ContextManager<T extends Uuid> {
         }
     }
 
-    async finish(job: T) {
+    finish(job: T) {
         if (this.runningJobs.has(job) || this.cancelledJobs.has(job)) {
-            await this.runningJobs.get(job)?.[1]();
+            this.runningJobs.get(job)?.[1]();
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
         } else {
@@ -45,12 +44,8 @@ export class ContextManager<T extends Uuid> {
         }
     }
 
-    async finishAll() {
+    finishAll() {
         const runningSnapshot = [...this.runningJobs.keys()];
-        await whenAll(
-            runningSnapshot.map(async job => {
-                await this.finish(job);
-            })
-        );
+        runningSnapshot.forEach(job => this.finish(job));
     }
 }

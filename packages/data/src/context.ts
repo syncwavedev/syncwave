@@ -1,12 +1,11 @@
 import {astream, AsyncStream} from './async-stream.js';
 import {Deferred} from './deferred.js';
-import {whenAll} from './utils.js';
 
 export class CancelledError extends Error {}
 
 // todo: make cancel synchronous (without Promises)
 
-export type Cancel = () => Promise<void>;
+export type Cancel = () => undefined;
 
 type AsyncRemap<T extends Promise<any> | AsyncIterable<any>> =
     T extends AsyncIterable<infer R>
@@ -44,7 +43,7 @@ function createScopedFunc<
         try {
             return await result;
         } finally {
-            await cancelCtx();
+            cancelCtx();
         }
     }
 
@@ -56,7 +55,7 @@ function createScopedFunc<
         try {
             yield* result;
         } finally {
-            await cancelCtx();
+            cancelCtx();
         }
     }
 
@@ -81,6 +80,10 @@ export class Context {
 
     static todo() {
         return Context.background();
+    }
+
+    static test() {
+        return Context.todo();
     }
 
     static cancelled() {
@@ -124,15 +127,15 @@ export class Context {
 
     get cancelPromise() {
         const signal = new Deferred<void>();
-        this.cleanup(() => signal.resolve());
+        this.onCancel(() => {
+            signal.resolve();
+        });
         return signal.promise;
     }
 
-    cleanup(cb: () => Promise<void> | void): void {
+    onCancel(cb: () => undefined): void {
         if (this._cancelled) {
-            cb()?.catch(error => {
-                console.error('[ERR] failed to cleanup', error);
-            });
+            cb();
         } else {
             this.cleaners.push(cb);
         }
@@ -143,22 +146,20 @@ export class Context {
         this.children.push(child);
         return [
             child,
-            async () => {
-                await child.cancel();
+            () => {
+                child.cancel();
                 this.children = this.children.filter(x => x !== child);
             },
         ];
     }
 
-    private async cancel() {
+    private cancel() {
         if (this._cancelled) {
             return;
         }
 
         this._cancelled = true;
-        await whenAll([
-            ...this.children.map(x => x.cancel()),
-            ...this.cleaners.map(async cb => cb()),
-        ]);
+        this.children.forEach(x => x.cancel());
+        this.cleaners.forEach(cb => cb());
     }
 }

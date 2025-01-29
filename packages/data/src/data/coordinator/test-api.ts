@@ -1,13 +1,14 @@
 import {z} from 'zod';
 import {isCancelledError, wait} from '../../utils.js';
-import {BusConsumer, BusProducer} from '../communication/bus.js';
-import {HubClient} from '../communication/hub.js';
+import {
+    EventStoreReader,
+    EventStoreWriter,
+} from '../communication/event-store.js';
 import {createApi, handler, streamer} from '../rpc/rpc.js';
 
 export interface TestApiState {
-    hub: HubClient<{value: string}>;
-    busProducer: BusProducer<{value: string}>;
-    busConsumer: BusConsumer<{value: string}>;
+    esWriter: EventStoreWriter<{value: string}>;
+    esReader: EventStoreReader<{value: string}>;
 }
 
 export function createTestApi() {
@@ -31,11 +32,11 @@ export function createTestApi() {
         getStream: streamer({
             req: z.object({topic: z.string()}),
             item: z.object({index: z.number(), value: z.string()}),
-            async *stream(ctx, {busConsumer}, {topic}) {
+            async *stream(ctx, {esReader}, {topic}) {
                 console.log('stream start');
                 try {
                     let index = 0;
-                    for await (const {value} of busConsumer.subscribe(
+                    for await (const {value} of esReader.subscribe(
                         ctx,
                         topic,
                         0
@@ -62,7 +63,7 @@ export function createTestApi() {
             req: z.object({topic: z.string(), value: z.string()}),
             res: z.object({}),
             handle: async (ctx, state, {topic, value}) => {
-                await state.busProducer.publish(ctx, topic, {value});
+                await state.esWriter.append(ctx, topic, {value});
                 return {};
             },
         }),

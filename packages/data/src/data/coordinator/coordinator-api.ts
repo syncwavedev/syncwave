@@ -4,7 +4,10 @@ import {BusinessError} from '../../errors.js';
 import {withPrefix} from '../../kv/kv-store.js';
 import {Actor} from '../actor.js';
 import {AuthContext, AuthContextParser} from '../auth-context.js';
-import {BusConsumer, BusProducer} from '../communication/bus.js';
+import {
+    EventStoreReader,
+    EventStoreWriter,
+} from '../communication/event-store.js';
 import {HubClient, HubServer} from '../communication/hub.js';
 import {
     MemTransportClient,
@@ -31,8 +34,8 @@ export interface CoordinatorApiState {
     crypto: CryptoService;
     emailService: EmailService;
     scheduleEffect: DataEffectScheduler;
-    busProducer: BusProducer<{value: string}>;
-    busConsumer: BusConsumer<{value: string}>;
+    esWriter: EventStoreWriter<{value: string}>;
+    esReader: EventStoreReader<{value: string}>;
 }
 
 export interface CoordinatorApiInputState {
@@ -85,9 +88,7 @@ export function createCoordinatorApi() {
     }));
 
     const hubMemTransportServer = new MemTransportServer(new MsgpackCodec());
-    const hubMessageSchema = z.object({
-        value: z.string(),
-    });
+    const hubMessageSchema = z.unknown();
     const hubAuthSecret = 'hub-auth-secret';
     const hubServer = new HubServer(
         hubMemTransportServer,
@@ -109,32 +110,11 @@ export function createCoordinatorApi() {
         createTestApi(),
         (
             ctx,
-            {busConsumer, busProducer}: CoordinatorApiState
+            {esReader: busConsumer, esWriter: busProducer}: CoordinatorApiState
         ): TestApiState => ({
-            hub: hubClient,
-            busConsumer,
-            busProducer,
+            esReader: busConsumer,
+            esWriter: busProducer,
         })
-    );
-
-    const busMemTransportServer = new MemTransportServer(new MsgpackCodec());
-    const busHubMessageSchema = z.void();
-
-    const busHubAuthSecret = 'busHub-auth-secret';
-    const busHubServer = new HubServer(
-        busMemTransportServer,
-        busHubMessageSchema,
-        busHubAuthSecret
-    );
-
-    busHubServer.launch().catch(error => {
-        console.error('HubServer failed to launch', error);
-    });
-
-    const busHubClient = new HubClient(
-        new MemTransportClient(busMemTransportServer, new MsgpackCodec()),
-        busHubMessageSchema,
-        busHubAuthSecret
     );
 
     const combinedApi = {
@@ -153,12 +133,12 @@ export function createCoordinatorApi() {
             state: {dataLayer, authContextParser, jwt, emailService, crypto},
             message,
         } = processorContext;
-        const busConsumer = new BusConsumer(
+        const esConsumer = new EventStoreReader(
             (ctx, fn) =>
                 dataLayer.transact(ctx, (ctx, {tx}) =>
-                    fn(ctx, withPrefix('test-bus/')(tx))
+                    fn(ctx, withPrefix('es/')(tx))
                 ),
-            busHubClient,
+            hubClient,
             new MsgpackCodec()
         );
         await dataLayer.transact(ctx, async (ctx, dataCtx) => {
@@ -173,11 +153,11 @@ export function createCoordinatorApi() {
                 crypto,
                 emailService,
                 scheduleEffect: dataCtx.scheduleEffect,
-                busConsumer,
-                busProducer: new BusProducer(
-                    withPrefix('test-bus/')(dataCtx.tx),
+                esReader: esConsumer,
+                esWriter: new EventStoreWriter(
+                    withPrefix('es/')(dataCtx.tx),
                     new MsgpackCodec(),
-                    busHubClient,
+                    hubClient,
                     dataCtx.scheduleEffect
                 ),
             };

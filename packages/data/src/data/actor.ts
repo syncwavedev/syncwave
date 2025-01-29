@@ -2,8 +2,8 @@ import {astream} from '../async-stream.js';
 import {MsgpackCodec} from '../codec.js';
 import {Context} from '../context.js';
 import {BusinessError} from '../errors.js';
+import {CollectionManager} from '../kv/collection-manager.js';
 import {Uint8Transaction, withPrefix} from '../kv/kv-store.js';
-import {TopicManager} from '../kv/topic-manager.js';
 import {getNow} from '../timestamp.js';
 import {assertNever, whenAll} from '../utils.js';
 import {AuthContext} from './auth-context.js';
@@ -72,7 +72,7 @@ export class Actor implements DataAccessor {
     private readonly tasks: TaskRepo;
     private readonly members: MemberRepo;
 
-    private changelog: TopicManager<unknown>;
+    private changelog: CollectionManager<unknown>;
 
     constructor(
         tx: Uint8Transaction,
@@ -96,7 +96,7 @@ export class Actor implements DataAccessor {
             this.taskOnChange.bind(this)
         );
 
-        this.changelog = new TopicManager(
+        this.changelog = new CollectionManager(
             withPrefix('log/')(tx),
             new MsgpackCodec()
         );

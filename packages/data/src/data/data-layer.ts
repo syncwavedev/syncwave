@@ -1,8 +1,8 @@
 import {MsgpackCodec} from '../codec.js';
 import {Context} from '../context.js';
 import {CrdtDiff} from '../crdt/crdt.js';
+import {CollectionManager} from '../kv/collection-manager.js';
 import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
-import {TopicManager} from '../kv/topic-manager.js';
 import {whenAll} from '../utils.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import {BoardRepo} from './repos/board-repo.js';
@@ -18,7 +18,7 @@ export interface Config {
 export interface DataContext {
     readonly users: UserRepo;
     readonly identities: IdentityRepo;
-    readonly userChangelog: TopicManager<UserChangeEntry>;
+    readonly userChangelog: CollectionManager<UserChangeEntry>;
     readonly config: Config;
     readonly tx: Uint8Transaction;
     readonly dataNode: DataNode;
@@ -52,7 +52,7 @@ export class DataLayer {
             // clear effect because of transaction retries
             effects = [];
 
-            const userChangelog = new TopicManager<UserChangeEntry>(
+            const userChangelog = new CollectionManager<UserChangeEntry>(
                 withPrefix('topics/users/')(tx),
                 new MsgpackCodec()
             );
@@ -64,7 +64,7 @@ export class DataLayer {
             ): Promise<void> {
                 await userChangelog
                     .get(userId.toString())
-                    .push(ctx, {userId, diff});
+                    .append(ctx, {userId, diff});
             }
 
             const users = new UserRepo(

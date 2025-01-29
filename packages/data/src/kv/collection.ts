@@ -11,12 +11,12 @@ import {
     withValueCodec,
 } from './kv-store.js';
 
-export interface TopicEntry<T> {
+export interface CollectionEntry<T> {
     readonly offset: number;
     readonly data: T;
 }
 
-export class Topic<T> {
+export class Collection<T> {
     private readonly counter: Counter;
     private readonly log: Transaction<number, T>;
 
@@ -30,7 +30,7 @@ export class Topic<T> {
         );
     }
 
-    async push(ctx: Context, ...data: T[]): Promise<void> {
+    async append(ctx: Context, ...data: T[]): Promise<void> {
         const offset =
             (await this.counter.increment(ctx, data.length)) - data.length;
         await whenAll(data.map((x, idx) => this.log.put(ctx, offset + idx, x)));
@@ -40,7 +40,7 @@ export class Topic<T> {
         ctx: Context,
         start: number,
         end?: number
-    ): AsyncStream<TopicEntry<T>> {
+    ): AsyncStream<CollectionEntry<T>> {
         return astream(this._list(ctx, start, end));
     }
 
@@ -48,7 +48,7 @@ export class Topic<T> {
         ctx: Context,
         start: number,
         end?: number
-    ): AsyncIterable<TopicEntry<T>> {
+    ): AsyncIterable<CollectionEntry<T>> {
         for await (const {key, value} of this.log.query(ctx, {gte: start})) {
             if (end !== undefined && key >= end) return;
 

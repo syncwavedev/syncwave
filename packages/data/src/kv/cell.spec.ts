@@ -29,6 +29,24 @@ describe('Cell', () => {
         });
     });
 
+    it('should store and retrieve the same value without put', async () => {
+        const store = new MemKVStore();
+        const firstValue = Math.random();
+
+        await store.transact(ctx, async (ctx, tx) => {
+            const cell = new Cell(tx, firstValue);
+            const value = await cell.get(ctx);
+            expect(value).toBe(firstValue);
+        });
+
+        const secondValue = Math.random();
+        await store.transact(ctx, async (ctx, tx) => {
+            const cell = new Cell(tx, secondValue);
+            const value = await cell.get(ctx);
+            expect(value).toBe(firstValue);
+        });
+    });
+
     it('should overwrite the value when put is called again', async () => {
         const store = new MemKVStore();
 

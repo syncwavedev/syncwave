@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {Codec, decodeString, encodeString} from '../codec.js';
 import {Context} from '../context.js';
+import {Collection, CollectionEntry} from './collection.js';
 import {MemKVStore} from './mem-kv-store.js';
-import {Topic, TopicEntry} from './topic.js';
 
 const ctx = Context.test();
 const jsonCodec: Codec<any> = {
@@ -10,21 +10,26 @@ const jsonCodec: Codec<any> = {
     decode: bytes => JSON.parse(decodeString(bytes)),
 };
 
-describe('Topic', () => {
+describe('Collection', () => {
     let store: MemKVStore;
 
     beforeEach(() => {
         store = new MemKVStore();
     });
 
-    it('should push data into the topic and retrieve it with the correct offsets', async () => {
+    it('should append data into the collection and retrieve it with the correct offsets', async () => {
         await store.transact(ctx, async (ctx, tx) => {
-            const topic = new Topic(tx, jsonCodec);
+            const collection = new Collection(tx, jsonCodec);
 
-            await topic.push(ctx, {value: 'A'}, {value: 'B'}, {value: 'C'});
+            await collection.append(
+                ctx,
+                {value: 'A'},
+                {value: 'B'},
+                {value: 'C'}
+            );
 
-            const results: TopicEntry<any>[] = [];
-            for await (const entry of topic.list(ctx, 0, 3)) {
+            const results: CollectionEntry<any>[] = [];
+            for await (const entry of collection.list(ctx, 0, 3)) {
                 results.push(entry);
             }
 
@@ -36,15 +41,15 @@ describe('Topic', () => {
         });
     });
 
-    it('should handle pushing data multiple times and retrieving by ranges', async () => {
+    it('should handle appending data multiple times and retrieving by ranges', async () => {
         await store.transact(ctx, async (ctx, tx) => {
-            const topic = new Topic(tx, jsonCodec);
+            const collection = new Collection(tx, jsonCodec);
 
-            await topic.push(ctx, {value: 'X'}, {value: 'Y'});
-            await topic.push(ctx, {value: 'Z'});
+            await collection.append(ctx, {value: 'X'}, {value: 'Y'});
+            await collection.append(ctx, {value: 'Z'});
 
-            const results: TopicEntry<any>[] = [];
-            for await (const entry of topic.list(ctx, 1, 3)) {
+            const results: CollectionEntry<any>[] = [];
+            for await (const entry of collection.list(ctx, 1, 3)) {
                 results.push(entry);
             }
 
@@ -57,12 +62,12 @@ describe('Topic', () => {
 
     it('should return an empty list if the range is outside the offsets', async () => {
         await store.transact(ctx, async (ctx, tx) => {
-            const topic = new Topic(tx, jsonCodec);
+            const collection = new Collection(tx, jsonCodec);
 
-            await topic.push(ctx, {value: 'A'});
+            await collection.append(ctx, {value: 'A'});
 
-            const results: TopicEntry<any>[] = [];
-            for await (const entry of topic.list(ctx, 2, 5)) {
+            const results: CollectionEntry<any>[] = [];
+            for await (const entry of collection.list(ctx, 2, 5)) {
                 results.push(entry);
             }
 
@@ -72,12 +77,17 @@ describe('Topic', () => {
 
     it('should handle overlapping ranges correctly', async () => {
         await store.transact(ctx, async (ctx, tx) => {
-            const topic = new Topic(tx, jsonCodec);
+            const collection = new Collection(tx, jsonCodec);
 
-            await topic.push(ctx, {value: 'D'}, {value: 'E'}, {value: 'F'});
+            await collection.append(
+                ctx,
+                {value: 'D'},
+                {value: 'E'},
+                {value: 'F'}
+            );
 
-            const results: TopicEntry<any>[] = [];
-            for await (const entry of topic.list(ctx, 0, 2)) {
+            const results: CollectionEntry<any>[] = [];
+            for await (const entry of collection.list(ctx, 0, 2)) {
                 results.push(entry);
             }
 
@@ -90,15 +100,15 @@ describe('Topic', () => {
 
     it('should support querying with large ranges', async () => {
         await store.transact(ctx, async (ctx, tx) => {
-            const topic = new Topic(tx, jsonCodec);
+            const collection = new Collection(tx, jsonCodec);
 
-            await topic.push(
+            await collection.append(
                 ctx,
                 ...Array.from({length: 1000}, (_, i) => ({value: i}))
             );
 
-            const results: TopicEntry<any>[] = [];
-            for await (const entry of topic.list(ctx, 990, 1000)) {
+            const results: CollectionEntry<any>[] = [];
+            for await (const entry of collection.list(ctx, 990, 1000)) {
                 results.push(entry);
             }
 
@@ -110,20 +120,20 @@ describe('Topic', () => {
 
     it('should increment offset correctly across transactions', async () => {
         await store.transact(ctx, async (ctx, tx) => {
-            const topic = new Topic(tx, jsonCodec);
-            await topic.push(ctx, {value: 'First'});
+            const collection = new Collection(tx, jsonCodec);
+            await collection.append(ctx, {value: 'First'});
         });
 
         await store.transact(ctx, async (ctx, tx) => {
-            const topic = new Topic(tx, jsonCodec);
-            await topic.push(ctx, {value: 'Second'});
+            const collection = new Collection(tx, jsonCodec);
+            await collection.append(ctx, {value: 'Second'});
         });
 
         await store.transact(ctx, async (ctx, tx) => {
-            const topic = new Topic(tx, jsonCodec);
+            const collection = new Collection(tx, jsonCodec);
 
-            const results: TopicEntry<any>[] = [];
-            for await (const entry of topic.list(ctx, 0, 3)) {
+            const results: CollectionEntry<any>[] = [];
+            for await (const entry of collection.list(ctx, 0, 3)) {
                 results.push(entry);
             }
 

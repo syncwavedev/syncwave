@@ -2,7 +2,6 @@ import {z} from 'zod';
 import {MsgpackCodec} from '../../codec.js';
 import {BusinessError} from '../../errors.js';
 import {withPrefix} from '../../kv/kv-store.js';
-import {Actor} from '../actor.js';
 import {AuthContext, AuthContextParser} from '../auth-context.js';
 import {
     EventStoreReader,
@@ -15,6 +14,7 @@ import {
 } from '../communication/mem-transport.js';
 import {dataInspectorApi, DataInspectorApiState} from '../data-inspector.js';
 import {DataContext, DataEffectScheduler, DataLayer} from '../data-layer.js';
+import {createDbApi, DbApiState} from '../db-api.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {
     Api,
@@ -24,7 +24,6 @@ import {
     ProcessorContext,
 } from '../rpc/rpc.js';
 import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
-import {dbApi} from './db-api.js';
 import {createTestApi, TestApiState} from './test-api.js';
 
 export interface CoordinatorApiState {
@@ -48,9 +47,11 @@ export interface CoordinatorApiInputState {
 
 export function createCoordinatorApi() {
     const adaptedDbApi = mapApiState(
-        dbApi,
+        createDbApi(),
         (ctx, state: CoordinatorApiState) => {
-            return new Actor(state.ctx.tx, state.auth, {type: 'coordinator'});
+            return new DbApiState(state.ctx.tx, state.esWriter, state.auth, {
+                type: 'coordinator',
+            });
         }
     );
 

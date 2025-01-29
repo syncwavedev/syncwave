@@ -1,9 +1,9 @@
 import {Context} from '../../context.js';
-import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
 import {PersistentConnection} from '../communication/persistent-connection.js';
 import {Connection, TransportClient} from '../communication/transport.js';
 import {CoordinatorClient} from '../coordinator/coordinator-client.js';
+import {DbApiRpc} from '../db-api.js';
 import {setupRpcServerConnection} from '../rpc/rpc-engine.js';
 import {participantApi} from './participant-client.js';
 
@@ -43,7 +43,7 @@ export class Participant {
         this.coordinator.authenticate(authToken);
     }
 
-    public get data(): DataAccessor {
+    public get data(): DbApiRpc {
         return this.coordinator.rpc;
     }
 

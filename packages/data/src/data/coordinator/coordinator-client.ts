@@ -1,4 +1,3 @@
-import {DataAccessor} from '../actor.js';
 import {Message} from '../communication/message.js';
 import {Connection} from '../communication/transport.js';
 import {createRpcClient} from '../rpc/rpc-engine.js';
@@ -12,10 +11,8 @@ export class CoordinatorClient {
         this.rpc = createRpcClient(
             createCoordinatorApi(),
             this.connection,
-            () => ({
-                auth: this.token,
-            })
-        ) satisfies DataAccessor;
+            () => ({auth: this.token})
+        );
     }
 
     authenticate(authToken: string) {

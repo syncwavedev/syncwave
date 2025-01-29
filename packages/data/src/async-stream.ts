@@ -49,7 +49,6 @@ export class HotStream<T> implements AsyncIterable<T> {
 
     async *[Symbol.asyncIterator](): AsyncIterator<T> {
         for await (const item of this.chan) {
-            console.log('read hot stream');
             yield item;
         }
     }

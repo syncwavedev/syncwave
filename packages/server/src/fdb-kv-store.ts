@@ -9,6 +9,7 @@ import {
     LteCondition,
     Uint8KVStore,
     Uint8Transaction,
+    astream,
     mapCondition,
     withPrefix,
 } from 'ground-data';
@@ -65,9 +66,10 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
             ],
         });
 
-        for await (const [kBuf, vBuf] of this.tx.getRange(start, end, {
-            reverse,
-        })) {
+        const range = astream(
+            this.tx.getRange(start, end, {reverse})
+        ).withContext(ctx);
+        for await (const [kBuf, vBuf] of range) {
             yield {
                 key: new Uint8Array(kBuf),
                 value: new Uint8Array(vBuf),

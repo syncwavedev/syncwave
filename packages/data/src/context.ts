@@ -1,5 +1,6 @@
 import {astream, AsyncStream} from './async-stream.js';
 import {Deferred} from './deferred.js';
+import {Nothing} from './utils.js';
 
 export class CancelledError extends Error {}
 
@@ -133,7 +134,7 @@ export class Context {
         return signal.promise;
     }
 
-    onCancel(cb: () => undefined): void {
+    onCancel(cb: () => Nothing): void {
         if (this._cancelled) {
             cb();
         } else {

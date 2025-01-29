@@ -10,6 +10,8 @@ import {
 
 export type Brand<T, B> = T & {__brand: B | undefined};
 
+export type Nothing = void | undefined;
+
 export interface Observer<T> {
     next: (ctx: Context, value: T) => Promise<void>;
     throw: (ctx: Context, error: unknown) => Promise<void>;
@@ -41,15 +43,12 @@ export class Subject<TValue> {
     }
 
     value$(ctx: Context): AsyncStream<TValue> {
-        const stream = new ColdStream<TValue>(ctx, (executorCtx, exe) => {
-            const [ctx, cancel] = executorCtx.withCancel();
+        const stream = new ColdStream<TValue>(ctx, (ctx, exe) => {
             this.subscribe(ctx, {
                 next: (ctx, value) => exe.next(ctx, value),
                 throw: (ctx, error) => exe.throw(ctx, error),
-                close: ctx => exe.end(ctx),
+                close: ctx => Promise.resolve(exe.end(ctx)),
             });
-
-            return cancel;
         });
         return astream(stream);
     }

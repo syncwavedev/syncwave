@@ -86,9 +86,7 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		this.assertActive();
 		const keyRange = createKeyRange(condition);
 
-		const entries = astream(this.tx.objectStore(STORE_NAME).iterate(keyRange)).until(
-			ctx.cancelPromise
-		);
+		const entries = astream(this.tx.objectStore(STORE_NAME).iterate(keyRange)).withContext(ctx);
 		for await (const {key, value} of entries) {
 			yield {key: new Uint8Array(key), value: new Uint8Array(value)};
 		}

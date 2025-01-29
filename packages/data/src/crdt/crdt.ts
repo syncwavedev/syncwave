@@ -8,7 +8,7 @@ import {
 } from 'yjs';
 import {Codec} from '../codec.js';
 import {Context} from '../context.js';
-import {assert, assertNever, Brand, zip} from '../utils.js';
+import {assert, assertNever, Brand, Nothing, zip} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {observe, OpLog} from './observe.js';
 
@@ -80,7 +80,9 @@ export class Crdt<T> {
         const [subscriptionCtx, cancelSubscription] = Context.create();
         this.subscribe(
             'update',
-            (nextDiff: CrdtDiff<T>) => (diff = nextDiff),
+            (nextDiff: CrdtDiff<T>) => {
+                diff = nextDiff;
+            },
             subscriptionCtx
         );
         this.doc.transact(() => {
@@ -102,7 +104,7 @@ export class Crdt<T> {
 
     subscribe(
         event: 'update',
-        next: (diff: CrdtDiff<T>, options: DiffOptions) => void,
+        next: (diff: CrdtDiff<T>, options: DiffOptions) => Nothing,
         cx: Context
     ) {
         const fn = (state: Uint8Array, origin: string | undefined) =>

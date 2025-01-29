@@ -3,6 +3,7 @@ import {
     Connection,
     Context,
     Deferred,
+    Nothing,
     Observer,
     Subject,
     TransportServer,
@@ -23,7 +24,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
 
     constructor(private readonly opt: WsTransportServerOptions<T>) {}
 
-    launch(cb: (connection: Connection<T>) => void): Promise<void> {
+    launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', (ws: WebSocket) => {

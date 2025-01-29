@@ -13,8 +13,6 @@ describe('DeferredStream', () => {
                 const _ = next(ctx, value);
             }
             const _ = end(ctx);
-
-            return () => {};
         });
 
         const result: number[] = [];
@@ -29,8 +27,6 @@ describe('DeferredStream', () => {
         const error = new Error('Test error');
         const stream = new ColdStream<number>(ctx, (ctx, exe) => {
             const _ = exe.throw(ctx, error);
-
-            return () => {};
         });
 
         await expect(async () => {

@@ -1,6 +1,6 @@
 import {Codec} from '../../codec.js';
 import {Context} from '../../context.js';
-import {Observer, Subject} from '../../utils.js';
+import {Nothing, Observer, Subject} from '../../utils.js';
 import {Connection, TransportClient, TransportServer} from './transport.js';
 
 export class MemConnection<T> implements Connection<T> {
@@ -72,7 +72,7 @@ export class MemTransportClient<T> implements TransportClient<T> {
 }
 
 export class MemTransportServer<T> implements TransportServer<T> {
-    private listener?: (connection: Connection<T>) => void;
+    private listener?: (connection: Connection<T>) => Nothing;
 
     constructor(private readonly codec: Codec<T>) {}
 
@@ -84,7 +84,7 @@ export class MemTransportServer<T> implements TransportServer<T> {
         return new MemTransportClient(this, this.codec);
     }
 
-    launch(cb: (connection: Connection<T>) => void): Promise<void> {
+    launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
         this.listener = cb;
         return Promise.resolve();
     }

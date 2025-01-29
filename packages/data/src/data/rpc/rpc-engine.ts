@@ -54,7 +54,7 @@ async function proxyStreamerCall(
     async function complete(ctx: Context) {
         state = 'complete';
         cancelCtx();
-        await exe.end(ctx);
+        exe.end(ctx);
     }
 
     async function cancel(ctx: Context, err: unknown) {
@@ -235,26 +235,15 @@ function createProcessorProxy(
     processor: Handler<any, any, any> | Streamer<any, any, any>,
     name: string
 ) {
-    return (requestCtx: Context, arg: unknown) => {
+    return (ctx: Context, arg: unknown) => {
         if (processor.type === 'handler') {
-            return proxyHandlerCall(requestCtx, conn, getHeaders, name, arg);
+            return proxyHandlerCall(ctx, conn, getHeaders, name, arg);
         } else if (processor.type === 'streamer') {
-            const coldStream = new ColdStream(
-                requestCtx,
-                (executorCtx, exe) => {
-                    const [ctx, cancel] = executorCtx.withCancel();
-                    proxyStreamerCall(
-                        ctx,
-                        conn,
-                        getHeaders,
-                        exe,
-                        name,
-                        arg
-                    ).catch(error => exe.throw(ctx, error));
-
-                    return cancel;
-                }
-            );
+            const coldStream = new ColdStream(ctx, (ctx, exe) => {
+                proxyStreamerCall(ctx, conn, getHeaders, exe, name, arg).catch(
+                    error => exe.throw(ctx, error)
+                );
+            });
             return astream(coldStream);
         } else {
             assertNever(processor);

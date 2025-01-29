@@ -1,8 +1,8 @@
 import {Context} from '../../context.js';
-import {Observer} from '../../utils.js';
+import {Nothing, Observer} from '../../utils.js';
 
 export interface TransportServer<T> {
-    launch(cb: (connection: Connection<T>) => void): Promise<void>;
+    launch(cb: (connection: Connection<T>) => Nothing): Promise<void>;
     close(): Promise<void>;
 }
 

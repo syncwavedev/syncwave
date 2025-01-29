@@ -108,7 +108,7 @@ class SubjectManager<T> {
             this.subjects.set(topic, subject);
         }
 
-        return subject.value$(ctx).finally(async () => {
+        return subject.value$(ctx).finally(() => {
             if (!subject.anyObservers) {
                 this.subjects.delete(topic);
             }

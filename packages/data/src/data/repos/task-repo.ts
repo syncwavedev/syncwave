@@ -45,7 +45,7 @@ export function zTask() {
     });
 }
 
-export class TaskRepo implements SyncTarget<Task> {
+export class TaskReadonlyRepo {
     public readonly rawRepo: DocRepo<Task>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<Task>) {
@@ -64,6 +64,16 @@ export class TaskRepo implements SyncTarget<Task> {
         });
     }
 
+    getById(ctx: Context, id: TaskId): Promise<Task | undefined> {
+        return this.rawRepo.getById(ctx, id);
+    }
+
+    getByBoardId(ctx: Context, boardId: BoardId): AsyncStream<Task> {
+        return this.rawRepo.get(ctx, BOARD_ID, [boardId]);
+    }
+}
+
+export class TaskRepo extends TaskReadonlyRepo implements SyncTarget<Task> {
     async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
         return await this.rawRepo.apply(
             ctx,
@@ -74,14 +84,6 @@ export class TaskRepo implements SyncTarget<Task> {
                 title: true,
             })
         );
-    }
-
-    getById(ctx: Context, id: TaskId): Promise<Task | undefined> {
-        return this.rawRepo.getById(ctx, id);
-    }
-
-    getByBoardId(ctx: Context, boardId: BoardId): AsyncStream<Task> {
-        return this.rawRepo.get(ctx, BOARD_ID, [boardId]);
     }
 
     create(ctx: Context, user: Task): Promise<Task> {

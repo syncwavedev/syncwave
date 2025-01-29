@@ -42,9 +42,9 @@ export function zBoard() {
     });
 }
 
-export class BoardRepo implements SyncTarget<Board> {
+export class BoardReadonlyRepo {
     public readonly rawRepo: DocRepo<Board>;
-    private readonly counters: Registry<Counter>;
+    protected readonly counters: Registry<Counter>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<Board>) {
         this.rawRepo = new DocRepo<Board>({
@@ -65,6 +65,20 @@ export class BoardRepo implements SyncTarget<Board> {
         );
     }
 
+    async getById(ctx: Context, id: BoardId): Promise<Board | undefined> {
+        return await this.rawRepo.getById(ctx, id);
+    }
+
+    async checkSlugAvailable(ctx: Context, slug: string): Promise<boolean> {
+        const existingBoard = await this.rawRepo.getUnique(ctx, SLUG_INDEX, [
+            slug,
+        ]);
+
+        return existingBoard === undefined;
+    }
+}
+
+export class BoardRepo extends BoardReadonlyRepo implements SyncTarget<Board> {
     async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
         return await this.rawRepo.apply(
             ctx,
@@ -78,23 +92,11 @@ export class BoardRepo implements SyncTarget<Board> {
         );
     }
 
-    async getById(ctx: Context, id: BoardId): Promise<Board | undefined> {
-        return await this.rawRepo.getById(ctx, id);
-    }
-
     async incrementBoardCounter(
         ctx: Context,
         boardId: BoardId
     ): Promise<number> {
         return await this.counters.get(boardId.toString()).increment(ctx);
-    }
-
-    async checkSlugAvailable(ctx: Context, slug: string): Promise<boolean> {
-        const existingBoard = await this.rawRepo.getUnique(ctx, SLUG_INDEX, [
-            slug,
-        ]);
-
-        return existingBoard === undefined;
     }
 
     async create(ctx: Context, board: Board): Promise<Board> {

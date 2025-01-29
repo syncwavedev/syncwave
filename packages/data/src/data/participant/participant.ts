@@ -3,7 +3,8 @@ import {Message} from '../communication/message.js';
 import {PersistentConnection} from '../communication/persistent-connection.js';
 import {Connection, TransportClient} from '../communication/transport.js';
 import {CoordinatorClient} from '../coordinator/coordinator-client.js';
-import {DbApiRpc} from '../db-api.js';
+import {ReadApiRpc} from '../data-api/read-api.js';
+import {WriteApiRpc} from '../data-api/write-api.js';
 import {setupRpcServerConnection} from '../rpc/rpc-engine.js';
 import {participantApi} from './participant-client.js';
 
@@ -43,7 +44,11 @@ export class Participant {
         this.coordinator.authenticate(authToken);
     }
 
-    public get data(): DbApiRpc {
+    public get read(): ReadApiRpc {
+        return this.coordinator.rpc;
+    }
+
+    public get write(): WriteApiRpc {
         return this.coordinator.rpc;
     }
 

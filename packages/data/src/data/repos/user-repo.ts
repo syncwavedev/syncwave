@@ -25,7 +25,7 @@ export function zUser() {
     return zDoc<UserId>().extend({});
 }
 
-export class UserRepo implements SyncTarget<User> {
+export class UserReadonlyRepo {
     public readonly rawRepo: DocRepo<User>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<User>) {
@@ -37,6 +37,12 @@ export class UserRepo implements SyncTarget<User> {
         });
     }
 
+    getById(ctx: Context, id: UserId): Promise<User | undefined> {
+        return this.rawRepo.getById(ctx, id);
+    }
+}
+
+export class UserRepo extends UserReadonlyRepo implements SyncTarget<User> {
     async apply(ctx: Context, id: Uuid, diff: CrdtDiff<User>): Promise<void> {
         return await this.rawRepo.apply(
             ctx,
@@ -46,10 +52,6 @@ export class UserRepo implements SyncTarget<User> {
                 name: true,
             })
         );
-    }
-
-    getById(ctx: Context, id: UserId): Promise<User | undefined> {
-        return this.rawRepo.getById(ctx, id);
     }
 
     async create(ctx: Context, user: User): Promise<User> {

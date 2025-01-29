@@ -37,7 +37,7 @@ export function zMember() {
     });
 }
 
-export class MemberRepo implements SyncTarget<Member> {
+export class MemberReadonlyRepo {
     public readonly rawRepo: DocRepo<Member>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<Member>) {
@@ -53,22 +53,6 @@ export class MemberRepo implements SyncTarget<Member> {
             },
             schema: zMember(),
         });
-    }
-
-    async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
-        return await this.rawRepo.apply(
-            ctx,
-            id,
-            diff,
-            createWriteableChecker({
-                boardId: false,
-                userId: false,
-            })
-        );
-    }
-
-    create(ctx: Context, member: Member): Promise<Member> {
-        return this.rawRepo.create(ctx, member);
     }
 
     getById(ctx: Context, id: MemberId): Promise<Member | undefined> {
@@ -92,6 +76,27 @@ export class MemberRepo implements SyncTarget<Member> {
             userId,
             boardId,
         ]);
+    }
+}
+
+export class MemberRepo
+    extends MemberReadonlyRepo
+    implements SyncTarget<Member>
+{
+    async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
+        return await this.rawRepo.apply(
+            ctx,
+            id,
+            diff,
+            createWriteableChecker({
+                boardId: false,
+                userId: false,
+            })
+        );
+    }
+
+    create(ctx: Context, member: Member): Promise<Member> {
+        return this.rawRepo.create(ctx, member);
     }
 
     update(

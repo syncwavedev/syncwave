@@ -46,7 +46,7 @@ export function zIdentity() {
     });
 }
 
-export class IdentityRepo implements SyncTarget<Identity> {
+export class IdentityReadonlyRepo {
     public readonly rawRepo: DocRepo<Identity>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<Identity>) {
@@ -68,6 +68,23 @@ export class IdentityRepo implements SyncTarget<Identity> {
         });
     }
 
+    getById(ctx: Context, id: IdentityId): Promise<Identity | undefined> {
+        return this.rawRepo.getById(ctx, id);
+    }
+
+    getByEmail(ctx: Context, email: string): Promise<Identity | undefined> {
+        return this.rawRepo.getUnique(ctx, EMAIL_INDEX, [email]);
+    }
+
+    getByUserId(ctx: Context, userId: UserId): Promise<Identity | undefined> {
+        return this.rawRepo.getUnique(ctx, USER_ID_INDEX, [userId]);
+    }
+}
+
+export class IdentityRepo
+    extends IdentityReadonlyRepo
+    implements SyncTarget<Identity>
+{
     async apply(
         ctx: Context,
         id: Uuid,
@@ -83,18 +100,6 @@ export class IdentityRepo implements SyncTarget<Identity> {
                 authActivityLog: true,
             })
         );
-    }
-
-    getById(ctx: Context, id: IdentityId): Promise<Identity | undefined> {
-        return this.rawRepo.getById(ctx, id);
-    }
-
-    getByEmail(ctx: Context, email: string): Promise<Identity | undefined> {
-        return this.rawRepo.getUnique(ctx, EMAIL_INDEX, [email]);
-    }
-
-    getByUserId(ctx: Context, userId: UserId): Promise<Identity | undefined> {
-        return this.rawRepo.getUnique(ctx, USER_ID_INDEX, [userId]);
     }
 
     async create(ctx: Context, identity: Identity): Promise<Identity> {

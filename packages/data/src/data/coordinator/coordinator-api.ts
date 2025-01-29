@@ -12,9 +12,10 @@ import {
     MemTransportClient,
     MemTransportServer,
 } from '../communication/mem-transport.js';
+import {createReadApi, ReadApiState} from '../data-api/read-api.js';
+import {createWriteApi, WriteApiState} from '../data-api/write-api.js';
 import {dataInspectorApi, DataInspectorApiState} from '../data-inspector.js';
 import {DataContext, DataEffectScheduler, DataLayer} from '../data-layer.js';
-import {createDbApi, DbApiState} from '../db-api.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {
     Api,
@@ -46,12 +47,17 @@ export interface CoordinatorApiInputState {
 }
 
 export function createCoordinatorApi() {
-    const adaptedDbApi = mapApiState(
-        createDbApi(),
+    const adaptedWriteApi = mapApiState(
+        createWriteApi(),
         (ctx, state: CoordinatorApiState) => {
-            return new DbApiState(state.ctx.tx, state.esWriter, state.auth, {
-                type: 'coordinator',
-            });
+            return new WriteApiState(state.ctx.tx, state.esWriter, state.auth);
+        }
+    );
+
+    const adaptedReadApi = mapApiState(
+        createReadApi(),
+        (ctx, state: CoordinatorApiState) => {
+            return new ReadApiState(state.ctx.tx, state.esReader, state.auth);
         }
     );
 
@@ -120,7 +126,8 @@ export function createCoordinatorApi() {
 
     const combinedApi = {
         ...testApi,
-        ...adaptedDbApi,
+        ...adaptedReadApi,
+        ...adaptedWriteApi,
         ...adaptedAuthApi,
         ...wrappedAndAdaptedInspectorApi,
     } satisfies Api<CoordinatorApiState>;

@@ -101,6 +101,7 @@ export function createParticipantApi() {
         getDbTree: proxy('getDbTree'),
         getDbItem: proxy('getDbItem'),
         truncateDb: proxy('truncateDb'),
+        getMyBoards: proxy('getMyBoards'),
     });
 }
 

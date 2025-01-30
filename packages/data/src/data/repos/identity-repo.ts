@@ -7,7 +7,7 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Timestamp, zTimestamp} from '../../timestamp.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, SyncTarget, zDoc} from '../doc-repo.js';
+import {Doc, DocRepo, OnDocChange, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 import {UserId} from './user-repo.js';
 
@@ -46,7 +46,7 @@ export function zIdentity() {
     });
 }
 
-export class IdentityReadonlyRepo {
+export class IdentityRepo {
     public readonly rawRepo: DocRepo<Identity>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<Identity>) {
@@ -79,12 +79,7 @@ export class IdentityReadonlyRepo {
     getByUserId(ctx: Context, userId: UserId): Promise<Identity | undefined> {
         return this.rawRepo.getUnique(ctx, USER_ID_INDEX, [userId]);
     }
-}
 
-export class IdentityRepo
-    extends IdentityReadonlyRepo
-    implements SyncTarget<Identity>
-{
     async apply(
         ctx: Context,
         id: Uuid,

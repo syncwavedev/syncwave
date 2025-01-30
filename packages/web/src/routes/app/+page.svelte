@@ -2,7 +2,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
-	import {Context} from 'ground-data';
+	import {Context, type Board} from 'ground-data';
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
@@ -11,7 +11,7 @@
 
 	let cancelled = false;
 
-	let items: Array<{index: number; value: string}> = $state([]);
+	let boards: Board[] = $state([]);
 	let itemValue: string = $state('');
 
 	const topic = `topic-${Math.random().toString().split('.')[1]}`;
@@ -25,28 +25,12 @@
 
 	$effect(() => {
 		(async () => {
-			try {
-				console.log('stream start');
-				const [initItem, interval$] = await sdk.getStream(Context.todo(), {
-					topic,
-				});
-				items.push(initItem);
-				for await (const item of interval$) {
-					console.log('stream item', item.index);
+			const [initialBoards, boards$] = await sdk.getMyBoards(Context.todo(), {});
 
-					items.push(item);
+			boards = initialBoards;
 
-					if (cancelled) {
-						console.log('stream break');
-						break;
-					}
-				}
-
-				console.log('stream complete');
-			} catch (error) {
-				console.log('stream error', error);
-			} finally {
-				console.log('stream closed');
+			for await (const nextBoards of boards$) {
+				boards = nextBoards;
 			}
 		})();
 	});
@@ -66,9 +50,9 @@
 <Button onclick={publish}>Publish into stream</Button>
 
 <div>
-	{#each items as item}
+	{#each boards as board}
 		<div>
-			{item.index} - {item.value}
+			{board.createdAt} - {board.name}
 		</div>
 	{/each}
 </div>

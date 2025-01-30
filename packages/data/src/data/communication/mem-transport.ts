@@ -1,6 +1,6 @@
 import {Codec} from '../../codec.js';
 import {Context} from '../../context.js';
-import {Nothing, Observer, Subject} from '../../utils.js';
+import {Nothing, Observer, Subject, wait} from '../../utils.js';
 import {Connection, TransportClient, TransportServer} from './transport.js';
 
 export class MemConnection<T> implements Connection<T> {
@@ -19,8 +19,10 @@ export class MemConnection<T> implements Connection<T> {
 
     private constructor(private readonly codec: Codec<T>) {}
 
-    async send(_ctx: Context, message: T): Promise<void> {
+    async send(ctx: Context, message: T): Promise<void> {
         this.ensureOpen();
+
+        await wait(ctx, 0);
 
         // don't wait for peer to respond
         this.peer.receive(this.codec.encode(message)).catch(err => {

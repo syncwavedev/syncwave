@@ -8,14 +8,7 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Registry} from '../../kv/registry.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {
-    Doc,
-    DocRepo,
-    OnDocChange,
-    Recipe,
-    SyncTarget,
-    zDoc,
-} from '../doc-repo.js';
+import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 import {UserId} from './user-repo.js';
 
@@ -42,7 +35,7 @@ export function zBoard() {
     });
 }
 
-export class BoardReadonlyRepo {
+export class BoardRepo {
     public readonly rawRepo: DocRepo<Board>;
     protected readonly counters: Registry<Counter>;
 
@@ -76,9 +69,7 @@ export class BoardReadonlyRepo {
 
         return existingBoard === undefined;
     }
-}
 
-export class BoardRepo extends BoardReadonlyRepo implements SyncTarget<Board> {
     async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
         return await this.rawRepo.apply(
             ctx,

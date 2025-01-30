@@ -4,7 +4,8 @@ import {CrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {ReadonlyCell} from '../kv/readonly-cell.js';
-import {whenAll} from '../utils.js';
+import {getNow, Timestamp} from '../timestamp.js';
+import {assert, whenAll} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
 import {
     EventStoreReader,
@@ -12,10 +13,10 @@ import {
 } from './communication/event-store.js';
 import {HubClient} from './communication/hub.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
-import {BoardId, BoardRepo} from './repos/board-repo.js';
-import {IdentityRepo} from './repos/identity-repo.js';
-import {MemberRepo} from './repos/member-repo.js';
-import {TaskId, TaskRepo} from './repos/task-repo.js';
+import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
+import {Identity, IdentityId, IdentityRepo} from './repos/identity-repo.js';
+import {Member, MemberId, MemberRepo} from './repos/member-repo.js';
+import {Task, TaskId, TaskRepo} from './repos/task-repo.js';
 import {User, UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
@@ -28,13 +29,12 @@ export interface DataTx {
     readonly boards: BoardRepo;
     readonly tasks: TaskRepo;
     readonly identities: IdentityRepo;
-    readonly userChangelog: CollectionManager<UserChangeEntry>;
     readonly config: Config;
     readonly tx: Uint8Transaction;
     readonly dataNode: DataNode;
-    readonly events: CollectionManager<{value: string}>;
+    readonly events: CollectionManager<ChangeEvent>;
     readonly eventStoreId: ReadonlyCell<Uuid>;
-    readonly esWriter: EventStoreWriter<{value: string}>;
+    readonly esWriter: EventStoreWriter<ChangeEvent>;
     // effects are not guaranteed to run because process might die after transaction is commited
     //
     // use topics with a pull loop where possible or hubs that combine strong
@@ -42,10 +42,38 @@ export interface DataTx {
     readonly scheduleEffect: DataEffectScheduler;
 }
 
-export interface UserChangeEntry {
-    readonly userId: UserId;
-    readonly diff: CrdtDiff<User>;
+export interface BaseChangeEvent<
+    TType extends string,
+    TId extends Uuid,
+    TValue,
+> {
+    readonly type: TType;
+    readonly id: TId;
+    readonly diff: CrdtDiff<TValue>;
+    readonly ts: Timestamp;
 }
+
+export interface UserChangeEvent
+    extends BaseChangeEvent<'user', UserId, User> {}
+
+export interface MemberChangeEvent
+    extends BaseChangeEvent<'member', MemberId, Member> {}
+
+export interface BoardChangeEvent
+    extends BaseChangeEvent<'board', BoardId, Board> {}
+
+export interface TaskChangeEvent
+    extends BaseChangeEvent<'task', TaskId, Task> {}
+
+export interface IdentityChangeEvent
+    extends BaseChangeEvent<'identity', IdentityId, Identity> {}
+
+export type ChangeEvent =
+    | UserChangeEvent
+    | MemberChangeEvent
+    | BoardChangeEvent
+    | TaskChangeEvent
+    | IdentityChangeEvent;
 
 export type DataEffect = (ctx: Context) => Promise<void>;
 export type DataEffectScheduler = (effect: DataEffect) => void;
@@ -56,7 +84,7 @@ export type Transact = <T>(
 ) => Promise<T>;
 
 export class DataLayer {
-    public readonly esReader: EventStoreReader<{value: string}>;
+    public readonly esReader: EventStoreReader<ChangeEvent>;
 
     constructor(
         private readonly kv: Uint8KVStore,
@@ -81,33 +109,26 @@ export class DataLayer {
             // clear effect because of transaction retries
             effects = [];
 
-            const userChangelog = new CollectionManager<UserChangeEntry>(
-                withPrefix('topics/users/')(tx),
-                new MsgpackCodec()
-            );
-
-            async function handleUserChange(
-                ctx: Context,
-                userId: UserId,
-                diff: CrdtDiff<User>
-            ): Promise<void> {
-                await userChangelog
-                    .get(userId.toString())
-                    .append(ctx, {userId, diff});
-            }
-
-            const noop = () => Promise.resolve();
             const users = new UserRepo(
                 withPrefix('users/')(tx),
-                handleUserChange
+                (ctx, id, diff) => logUserChange(ctx, dataTx, id, diff)
             );
             const identities = new IdentityRepo(
                 withPrefix('identities/')(tx),
-                noop
+                (ctx, id, diff) => logIdentityChange(ctx, dataTx, id, diff)
             );
-            const members = new MemberRepo(withPrefix('members/')(tx), noop);
-            const boards = new BoardRepo(withPrefix('boards/')(tx), noop);
-            const tasks = new TaskRepo(withPrefix('tasks/')(tx), noop);
+            const members = new MemberRepo(
+                withPrefix('members/')(tx),
+                (ctx, id, diff) => logMemberChange(ctx, dataTx, id, diff)
+            );
+            const boards = new BoardRepo(
+                withPrefix('boards/')(tx),
+                (ctx, id, diff) => logBoardChange(ctx, dataTx, id, diff)
+            );
+            const tasks = new TaskRepo(
+                withPrefix('tasks/')(tx),
+                (ctx, id, diff) => logTaskChange(ctx, dataTx, id, diff)
+            );
 
             const dataNode = new AggregateDataNode({
                 identities: new RepoDataNode(identities.rawRepo),
@@ -117,7 +138,7 @@ export class DataLayer {
                 members: new RepoDataNode(members.rawRepo),
             });
 
-            const events = new CollectionManager<{value: string}>(
+            const events = new CollectionManager<ChangeEvent>(
                 withPrefix('events/')(tx),
                 new MsgpackCodec()
             );
@@ -136,7 +157,7 @@ export class DataLayer {
                 scheduleEffect
             );
 
-            const result = await fn(ctx, {
+            const dataTx: DataTx = {
                 boards,
                 tasks,
                 events,
@@ -145,14 +166,15 @@ export class DataLayer {
                 esWriter,
                 users,
                 members,
-                userChangelog,
                 config: {
                     jwtSecret: this.jwtSecret,
                 },
                 tx: tx,
                 dataNode,
                 scheduleEffect,
-            });
+            };
+
+            const result = await fn(ctx, dataTx);
 
             return result;
         });
@@ -173,13 +195,93 @@ export class DataLayer {
 }
 
 export function userEvents(userId: UserId) {
-    return `users/${userId}`;
+    return `users-${userId}`;
 }
 
 export function boardEvents(boardId: BoardId) {
-    return `boards/${boardId}`;
+    return `boards-${boardId}`;
 }
 
-export function taskEvents(taskId: TaskId) {
-    return `tasks/${taskId}`;
+async function logIdentityChange(
+    ctx: Context,
+    tx: DataTx,
+    id: IdentityId,
+    diff: CrdtDiff<Identity>
+) {
+    const identity = await tx.identities.getById(ctx, id);
+    assert(identity !== undefined);
+    const members = await tx.members
+        .getByUserId(ctx, identity.userId)
+        .toArray(ctx);
+    const ts = getNow();
+    const event: IdentityChangeEvent = {type: 'identity', id, diff, ts};
+    await whenAll([
+        tx.esWriter.append(ctx, userEvents(identity.userId), event),
+        ...members.map(member =>
+            tx.esWriter.append(ctx, boardEvents(member.boardId), event)
+        ),
+    ]);
+}
+
+async function logUserChange(
+    ctx: Context,
+    tx: DataTx,
+    id: UserId,
+    diff: CrdtDiff<User>
+) {
+    const members = await tx.members.getByUserId(ctx, id).toArray(ctx);
+    const ts = getNow();
+    const event: UserChangeEvent = {type: 'user', id, diff, ts};
+    await whenAll([
+        tx.esWriter.append(ctx, userEvents(id), event),
+        ...members.map(member =>
+            tx.esWriter.append(ctx, boardEvents(member.boardId), event)
+        ),
+    ]);
+}
+
+async function logBoardChange(
+    ctx: Context,
+    tx: DataTx,
+    id: BoardId,
+    diff: CrdtDiff<Board>
+) {
+    const members = await tx.members.getByBoardId(ctx, id).toArray(ctx);
+    const ts = getNow();
+    const event: BoardChangeEvent = {type: 'board', id, diff, ts};
+    await whenAll([
+        tx.esWriter.append(ctx, boardEvents(id), event),
+        ...members.map(member =>
+            tx.esWriter.append(ctx, userEvents(member.userId), event)
+        ),
+    ]);
+}
+
+async function logMemberChange(
+    ctx: Context,
+    tx: DataTx,
+    id: MemberId,
+    diff: CrdtDiff<Member>
+) {
+    const member = await tx.members.getById(ctx, id);
+    assert(member !== undefined);
+    const ts = getNow();
+    const event: MemberChangeEvent = {type: 'member', id, diff, ts};
+    await whenAll([
+        tx.esWriter.append(ctx, boardEvents(member.boardId), event),
+        tx.esWriter.append(ctx, userEvents(member.userId), event),
+    ]);
+}
+
+async function logTaskChange(
+    ctx: Context,
+    tx: DataTx,
+    id: TaskId,
+    diff: CrdtDiff<Task>
+) {
+    const task = await tx.tasks.getById(ctx, id);
+    assert(task !== undefined);
+    const ts = getNow();
+    const event: TaskChangeEvent = {type: 'task', id, diff, ts};
+    await tx.esWriter.append(ctx, boardEvents(task.boardId), event);
 }

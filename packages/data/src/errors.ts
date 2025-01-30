@@ -4,7 +4,8 @@ export type ErrorCode =
     | 'forbidden'
     | 'not_authenticated'
     | 'board_change_slug_not_supported'
-    | 'aggregate';
+    | 'aggregate'
+    | 'task_not_found';
 
 export class BusinessError extends Error {
     constructor(

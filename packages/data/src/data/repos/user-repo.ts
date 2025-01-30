@@ -3,14 +3,7 @@ import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid} from '../../uuid.js';
-import {
-    Doc,
-    DocRepo,
-    OnDocChange,
-    Recipe,
-    SyncTarget,
-    zDoc,
-} from '../doc-repo.js';
+import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
@@ -25,7 +18,7 @@ export function zUser() {
     return zDoc<UserId>().extend({});
 }
 
-export class UserReadonlyRepo {
+export class UserRepo {
     public readonly rawRepo: DocRepo<User>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<User>) {
@@ -40,9 +33,7 @@ export class UserReadonlyRepo {
     getById(ctx: Context, id: UserId): Promise<User | undefined> {
         return this.rawRepo.getById(ctx, id);
     }
-}
 
-export class UserRepo extends UserReadonlyRepo implements SyncTarget<User> {
     async apply(ctx: Context, id: Uuid, diff: CrdtDiff<User>): Promise<void> {
         return await this.rawRepo.apply(
             ctx,

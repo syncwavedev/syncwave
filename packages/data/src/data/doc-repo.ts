@@ -56,11 +56,7 @@ export interface DocStoreOptions<T extends Doc> {
 
 export type Recipe<T> = (doc: T) => T | void;
 
-export interface SyncTarget<T> {
-    apply(ctx: Context, id: Uuid, diff: CrdtDiff<T>): Promise<void>;
-}
-
-export class DocRepo<T extends Doc> implements SyncTarget<T> {
+export class DocRepo<T extends Doc> {
     private readonly indexes: Map<string, Index<T>>;
     private readonly primary: Transaction<Uuid, Crdt<T>>;
     private readonly primaryKeyRaw: Transaction<Uint8Array, Crdt<T>>;

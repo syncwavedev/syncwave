@@ -4,7 +4,7 @@ import {EventStoreReader} from '../communication/event-store.js';
 import {createReadApi, ReadApiState} from '../data-api/read-api.js';
 import {createWriteApi, WriteApiState} from '../data-api/write-api.js';
 import {dataInspectorApi} from '../data-inspector.js';
-import {Config, DataLayer, Transact} from '../data-layer.js';
+import {ChangeEvent, Config, DataLayer, Transact} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {Api, applyMiddleware, InferRpcClient, mapApiState} from '../rpc/rpc.js';
 import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
@@ -15,7 +15,7 @@ export interface CoordinatorApiState {
     jwt: JwtService;
     crypto: CryptoService;
     emailService: EmailService;
-    esReader: EventStoreReader<{value: string}>;
+    esReader: EventStoreReader<ChangeEvent>;
     transact: Transact;
 }
 

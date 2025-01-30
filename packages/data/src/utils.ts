@@ -8,7 +8,7 @@ import {
     BusinessError,
 } from './errors.js';
 
-export type Brand<T, B> = T & {__brand: B | undefined};
+export type Brand<T, B> = T & {__brand: () => B | undefined};
 
 export type Nothing = void | undefined;
 

@@ -119,6 +119,7 @@ export function createWriteApi() {
                     createdAt: now,
                     updatedAt: now,
                     userId: userId,
+                    active: true,
                 });
 
                 return board;

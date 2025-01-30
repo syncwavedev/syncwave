@@ -4,14 +4,7 @@ import {Context} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {
-    Doc,
-    DocRepo,
-    OnDocChange,
-    Recipe,
-    SyncTarget,
-    zDoc,
-} from '../doc-repo.js';
+import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 import {BoardId} from './board-repo.js';
 import {UserId} from './user-repo.js';
@@ -45,7 +38,7 @@ export function zTask() {
     });
 }
 
-export class TaskReadonlyRepo {
+export class TaskRepo {
     public readonly rawRepo: DocRepo<Task>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<Task>) {
@@ -71,9 +64,7 @@ export class TaskReadonlyRepo {
     getByBoardId(ctx: Context, boardId: BoardId): AsyncStream<Task> {
         return this.rawRepo.get(ctx, BOARD_ID, [boardId]);
     }
-}
 
-export class TaskRepo extends TaskReadonlyRepo implements SyncTarget<Task> {
     async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
         return await this.rawRepo.apply(
             ctx,

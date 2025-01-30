@@ -8,8 +8,8 @@ import {AuthContext} from '../auth-context.js';
 import {EventStoreReader} from '../communication/event-store.js';
 import {
     boardEvents,
+    ChangeEvent,
     DataTx,
-    taskEvents,
     Transact,
     userEvents,
 } from '../data-layer.js';
@@ -22,7 +22,7 @@ import {createApi, InferRpcClient, observer} from '../rpc/rpc.js';
 export class ReadApiState {
     constructor(
         public readonly transact: Transact,
-        readonly esReader: EventStoreReader<{value: string}>,
+        readonly esReader: EventStoreReader<ChangeEvent>,
         public readonly auth: AuthContext
     ) {}
 
@@ -134,6 +134,15 @@ export function createReadApi() {
             req: z.object({taskId: zUuid<TaskId>()}),
             value: zTask().optional(),
             observe: async (ctx, st, {taskId}) => {
+                const task = await st.transact(ctx, (ctx, tx) =>
+                    tx.tasks.getById(ctx, taskId)
+                );
+                if (!task) {
+                    throw new BusinessError(
+                        `task with id ${taskId} not found`,
+                        'task_not_found'
+                    );
+                }
                 return observable(ctx, {
                     async get(ctx) {
                         return await st.transact(ctx, async (ctx, tx) => {
@@ -150,7 +159,10 @@ export function createReadApi() {
                             return task;
                         });
                     },
-                    update$: st.esReader.subscribe(ctx, taskEvents(taskId)),
+                    update$: st.esReader.subscribe(
+                        ctx,
+                        boardEvents(task.boardId)
+                    ),
                 });
             },
         }),

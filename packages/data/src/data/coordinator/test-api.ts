@@ -1,11 +1,14 @@
 import {z} from 'zod';
+import {Crdt} from '../../crdt/crdt.js';
+import {getNow} from '../../timestamp.js';
 import {observable, wait} from '../../utils.js';
 import {EventStoreReader} from '../communication/event-store.js';
-import {Transact} from '../data-layer.js';
+import {ChangeEvent, Transact} from '../data-layer.js';
+import {createUserId, User} from '../repos/user-repo.js';
 import {createApi, handler, observer, streamer} from '../rpc/rpc.js';
 
 export interface TestApiState {
-    esReader: EventStoreReader<{value: string}>;
+    esReader: EventStoreReader<ChangeEvent>;
     transact: Transact;
 }
 
@@ -44,7 +47,16 @@ export function createTestApi() {
             res: z.object({}),
             handle: async (ctx, state, {topic, value}) => {
                 await state.transact(ctx, async (ctx, tx) => {
-                    await tx.esWriter.append(ctx, topic, {value});
+                    await tx.esWriter.append(ctx, topic, {
+                        type: 'user',
+                        id: createUserId(),
+                        ts: getNow(),
+                        diff: Crdt.from<User>({
+                            id: createUserId(),
+                            createdAt: getNow(),
+                            updatedAt: getNow(),
+                        }).state(),
+                    });
                 });
                 return {};
             },

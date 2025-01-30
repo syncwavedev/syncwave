@@ -34,7 +34,7 @@ export class AuthContextParser {
 
             const jwtPayload = await this.jwt.verify(jwtToken, jwtSecret);
             const authContext: AuthContext = {
-                identityId: jwtPayload.sub as UserId | undefined,
+                identityId: jwtPayload.sub as IdentityId | undefined,
                 userId: jwtPayload.uid as UserId | undefined,
                 superadmin: SUPERADMIN_IDS.includes(jwtPayload.sub ?? ''),
             };

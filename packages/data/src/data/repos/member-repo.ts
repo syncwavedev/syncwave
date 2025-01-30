@@ -1,17 +1,11 @@
+import {z} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
 import {Context} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {
-    Doc,
-    DocRepo,
-    OnDocChange,
-    Recipe,
-    SyncTarget,
-    zDoc,
-} from '../doc-repo.js';
+import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 import {BoardId} from './board-repo.js';
 import {UserId} from './user-repo.js';
@@ -25,6 +19,7 @@ export function createMemberId(): MemberId {
 export interface Member extends Doc<MemberId> {
     readonly userId: UserId;
     readonly boardId: BoardId;
+    active: boolean;
 }
 
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
@@ -34,10 +29,11 @@ export function zMember() {
     return zDoc<MemberId>().extend({
         userId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
+        active: z.boolean(),
     });
 }
 
-export class MemberReadonlyRepo {
+export class MemberRepo {
     public readonly rawRepo: DocRepo<Member>;
 
     constructor(tx: Uint8Transaction, onChange: OnDocChange<Member>) {
@@ -59,38 +55,56 @@ export class MemberReadonlyRepo {
         return this.rawRepo.getById(ctx, id);
     }
 
-    getByUserId(ctx: Context, userId: UserId): AsyncStream<Member> {
-        return this.rawRepo.get(ctx, USER_ID_BOARD_ID_INDEX, [userId]);
-    }
-
-    getByBoardId(ctx: Context, boardId: BoardId): AsyncStream<Member> {
-        return this.rawRepo.get(ctx, BOARD_ID_INDEX, [boardId]);
-    }
-
-    getByUserIdAndBoardId(
+    getByUserId(
         ctx: Context,
         userId: UserId,
-        boardId: BoardId
-    ): Promise<Member | undefined> {
-        return this.rawRepo.getUnique(ctx, USER_ID_BOARD_ID_INDEX, [
-            userId,
-            boardId,
-        ]);
+        activeOnly = true
+    ): AsyncStream<Member> {
+        return this.rawRepo
+            .get(ctx, USER_ID_BOARD_ID_INDEX, [userId])
+            .filter(x => x.active || !activeOnly);
     }
-}
 
-export class MemberRepo
-    extends MemberReadonlyRepo
-    implements SyncTarget<Member>
-{
+    getByBoardId(
+        ctx: Context,
+        boardId: BoardId,
+        activeOnly = true
+    ): AsyncStream<Member> {
+        return this.rawRepo
+            .get(ctx, BOARD_ID_INDEX, [boardId])
+            .filter(x => x.active || !activeOnly);
+    }
+
+    async getByUserIdAndBoardId(
+        ctx: Context,
+        userId: UserId,
+        boardId: BoardId,
+        activeOnly = true
+    ): Promise<Member | undefined> {
+        const result = await this.rawRepo.getUnique(
+            ctx,
+            USER_ID_BOARD_ID_INDEX,
+            [userId, boardId]
+        );
+
+        if (!result) {
+            return undefined;
+        }
+
+        if (!result.active && activeOnly) {
+            return undefined;
+        }
+
+        return result;
+    }
+
     async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
         return await this.rawRepo.apply(
             ctx,
             id,
             diff,
             createWriteableChecker({
-                boardId: false,
-                userId: false,
+                active: true,
             })
         );
     }

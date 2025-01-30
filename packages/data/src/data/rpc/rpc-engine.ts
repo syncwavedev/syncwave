@@ -20,21 +20,15 @@ import {
     ResponsePayload,
 } from '../communication/message.js';
 import {Connection, TransportServer} from '../communication/transport.js';
-import {
-    Api,
-    Handler,
-    InferRpcClient,
-    ProcessorContext,
-    Streamer,
-} from './rpc.js';
+import {Api, Handler, InferRpcClient, Streamer} from './rpc.js';
 
 async function proxyStreamerCall(
     listenCtx: Context,
     conn: Connection<Message>,
-    getHeaders: () => MessageHeaders,
     exe: ColdStreamExecutor<any>,
     name: string,
-    arg: any
+    arg: any,
+    headers: MessageHeaders
 ) {
     const requestId = createMessageId();
 
@@ -93,7 +87,7 @@ async function proxyStreamerCall(
                 await conn.send(ctx, {
                     id: createMessageId(),
                     type: 'ack',
-                    headers: getHeaders(),
+                    headers,
                     itemId: msg.id,
                 });
             }
@@ -140,7 +134,7 @@ async function proxyStreamerCall(
         await conn.send(listenCtx, {
             id: requestId,
             type: 'request',
-            headers: getHeaders(),
+            headers,
             payload: {name, arg},
         });
     } catch (error) {
@@ -159,9 +153,9 @@ async function proxyStreamerCall(
 async function proxyHandlerCall(
     parentCtx: Context,
     conn: Connection<Message>,
-    getHeaders: () => MessageHeaders,
     name: string,
-    arg: unknown
+    arg: unknown,
+    headers: MessageHeaders
 ) {
     const [ctx, cancel] = parentCtx.withCancel();
 
@@ -219,7 +213,7 @@ async function proxyHandlerCall(
         await conn.send(ctx, {
             id: requestId,
             type: 'request',
-            headers: getHeaders(),
+            headers,
             payload: {name, arg},
         });
 
@@ -235,14 +229,25 @@ function createProcessorProxy(
     processor: Handler<any, any, any> | Streamer<any, any, any>,
     name: string
 ) {
-    return (ctx: Context, arg: unknown) => {
+    return (ctx: Context, arg: unknown, headers?: MessageHeaders) => {
         if (processor.type === 'handler') {
-            return proxyHandlerCall(ctx, conn, getHeaders, name, arg);
+            return proxyHandlerCall(
+                ctx,
+                conn,
+                name,
+                arg,
+                Object.assign({}, getHeaders(), headers ?? {})
+            );
         } else if (processor.type === 'streamer') {
             const coldStream = new ColdStream(ctx, (ctx, exe) => {
-                proxyStreamerCall(ctx, conn, getHeaders, exe, name, arg).catch(
-                    error => exe.throw(ctx, error)
-                );
+                proxyStreamerCall(
+                    ctx,
+                    conn,
+                    exe,
+                    name,
+                    arg,
+                    Object.assign({}, getHeaders(), headers ?? {})
+                ).catch(error => exe.throw(ctx, error));
             });
             return astream(coldStream);
         } else {
@@ -327,7 +332,7 @@ async function waitMessage<S extends Message>(
 export class RpcServer<TState> {
     constructor(
         private readonly transport: TransportServer<Message>,
-        private readonly api: Api<ProcessorContext<TState>>,
+        private readonly api: Api<TState>,
         private readonly state: TState,
         private readonly serverName: string
     ) {}
@@ -354,7 +359,7 @@ export class RpcServer<TState> {
 async function handleRequestStreamer<TState>(
     ctx: Context,
     conn: Connection<Message>,
-    processor: Streamer<ProcessorContext<TState>, any, any>,
+    processor: Streamer<TState, any, any>,
     msg: RequestMessage,
     state: TState,
     serverName: string
@@ -367,10 +372,11 @@ async function handleRequestStreamer<TState>(
             type: 'response',
             requestId,
             payload: {type: 'start'},
+            headers: {},
         });
 
         const processorStream = astream(
-            processor.stream(ctx, {message: msg, state}, msg.payload.arg)
+            processor.stream(ctx, state, msg.payload.arg, msg.headers)
         )
             .map((ctx, value) => ({type: 'next' as const, value}))
             .catch((ctx, error) => ({type: 'error' as const, error}));
@@ -408,37 +414,43 @@ async function handleRequestStreamer<TState>(
                 type: 'response',
                 requestId,
                 payload,
+                headers: {},
             });
 
             await ack;
         }
     } finally {
-        await conn.send(ctx, {
-            id: createMessageId(),
-            type: 'response',
-            requestId,
-            payload: {type: 'end'},
-        });
+        if (ctx.alive) {
+            await conn.send(ctx, {
+                id: createMessageId(),
+                type: 'response',
+                requestId,
+                payload: {type: 'end'},
+                headers: {},
+            });
+        }
     }
 }
 
 async function handleRequestHandler<TState>(
     ctx: Context,
     conn: Connection<Message>,
-    handler: Handler<ProcessorContext<TState>, any, any>,
+    handler: Handler<TState, any, any>,
     msg: RequestMessage,
     state: TState
 ) {
     const result = await handler.handle(
         ctx,
-        {message: msg, state},
-        msg.payload.arg
+        state,
+        msg.payload.arg,
+        msg.headers
     );
     await conn.send(ctx, {
         id: createMessageId(),
         type: 'response',
         requestId: msg.id,
         payload: {type: 'success', result},
+        headers: {},
     });
 }
 
@@ -446,7 +458,7 @@ async function handleRequest<TState>(
     ctx: Context,
     conn: Connection<Message>,
     msg: RequestMessage,
-    api: Api<ProcessorContext<TState>>,
+    api: Api<TState>,
     state: TState,
     serverName: string
 ) {
@@ -477,6 +489,7 @@ async function handleRequest<TState>(
                 type: 'error',
                 message: getReadableError(err),
             },
+            headers: {},
         });
     }
 }
@@ -506,7 +519,7 @@ function logRpcError(
 
 export function setupRpcServerConnection<TState>(
     connectionCtx: Context,
-    api: Api<ProcessorContext<TState>>,
+    api: Api<TState>,
     conn: Connection<Message>,
     state: TState,
     serverName: string

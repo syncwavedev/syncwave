@@ -17,7 +17,7 @@
 	const topic = `topic-${Math.random().toString().split('.')[1]}`;
 
 	async function publish() {
-		await sdk.coordinatorRpc.streamPut(Context.todo(), {
+		await sdk.streamPut(Context.todo(), {
 			topic,
 			value: itemValue,
 		});
@@ -27,7 +27,7 @@
 		(async () => {
 			try {
 				console.log('stream start');
-				const interval$ = sdk.coordinatorRpc.getStream(Context.todo(), {
+				const interval$ = sdk.getStream(Context.todo(), {
 					topic,
 				});
 				for await (const item of interval$) {

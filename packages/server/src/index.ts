@@ -6,7 +6,7 @@ import {
     assertDefined,
     astream,
     Context,
-    Coordinator,
+    CoordinatorServer,
     CryptoService,
     decodeNumber,
     Deferred,
@@ -156,7 +156,7 @@ async function launch(launchCtx: Context) {
 
     const httpServer = createServer(app.callback());
 
-    const coordinator = new Coordinator(
+    const coordinator = new CoordinatorServer(
         new WsTransportServer({
             codec: new MsgpackCodec(),
             server: httpServer,
@@ -205,7 +205,7 @@ async function launch(launchCtx: Context) {
     return await serverStarted.promise;
 }
 
-function setupRouter(coordinator: () => Coordinator, router: Router) {
+function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
     router.get('/callbacks/google', async request => {
         const {code, state} = request.query;
 

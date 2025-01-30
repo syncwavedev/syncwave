@@ -13,12 +13,12 @@
 	let itemsPromise: Promise<DataNodeDto> | undefined = $state(undefined);
 
 	$effect(() => {
-		itemsPromise = sdk.coordinatorRpc.getDbTree(Context.todo(), {});
+		itemsPromise = sdk.getDbTree(Context.todo(), {});
 	});
 
 	function openDetails(path: Uint8Array[]) {
 		detailsPromise = (async () => {
-			const info = await sdk.coordinatorRpc.getDbItem(Context.todo(), {path});
+			const info = await sdk.getDbItem(Context.todo(), {path});
 			return JSON.stringify(info, null, 2);
 		})();
 	}
@@ -26,8 +26,7 @@
 	let detailsPromise: Promise<string> | undefined = $state(undefined);
 </script>
 
-<Button variant="destructive" onclick={() => sdk.coordinatorRpc.truncateDb(Context.todo(), {})}
-	>Reset store</Button
+<Button variant="destructive" onclick={() => sdk.truncateDb(Context.todo(), {})}>Reset store</Button
 >
 <div class="flex gap-8">
 	<div>

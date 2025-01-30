@@ -12,7 +12,7 @@ import {
     createCoordinatorApi,
 } from './coordinator-api.js';
 
-export class Coordinator {
+export class CoordinatorServer {
     private readonly dataLayer: DataLayer;
     private readonly rpcServer: RpcServer<CoordinatorApiInputState>;
 

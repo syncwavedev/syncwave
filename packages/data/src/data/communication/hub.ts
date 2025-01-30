@@ -8,8 +8,6 @@ import {
     createApi,
     handler,
     InferRpcClient,
-    mapApiState,
-    ProcessorContext,
     streamer,
 } from '../rpc/rpc.js';
 import {Message} from './message.js';
@@ -151,17 +149,12 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
         }),
     });
 
-    const api2 = mapApiState(
+    const api2 = applyMiddleware(
         api1,
-        (ctx, {state}: ProcessorContext<HubServerRpcState<T>>) => state
-    );
-
-    const api3 = applyMiddleware(
-        api2,
-        async (ctx, next, state: ProcessorContext<HubServerRpcState<T>>) => {
-            if (state.message.headers?.auth !== state.state.authSecret) {
+        async (ctx, next, state: HubServerRpcState<T>, headers) => {
+            if (headers.auth !== state.authSecret) {
                 throw new Error(
-                    `HubServer: authentication failed: ${state.state.authSecret} !== ${state.message.headers?.auth}`
+                    `HubServer: authentication failed: ${state.authSecret} !== ${headers.auth}`
                 );
             }
 
@@ -169,7 +162,7 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
         }
     );
 
-    return api3;
+    return api2;
 }
 
 type HubServerRpc<T> = InferRpcClient<ReturnType<typeof createHubServerApi<T>>>;

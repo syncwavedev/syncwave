@@ -17,13 +17,7 @@ import {createWriteApi, WriteApiState} from '../data-api/write-api.js';
 import {dataInspectorApi, DataInspectorApiState} from '../data-inspector.js';
 import {DataContext, DataEffectScheduler, DataLayer} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
-import {
-    Api,
-    applyMiddleware,
-    InferRpcClient,
-    mapApiState,
-    ProcessorContext,
-} from '../rpc/rpc.js';
+import {Api, applyMiddleware, InferRpcClient, mapApiState} from '../rpc/rpc.js';
 import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
 import {createTestApi, TestApiState} from './test-api.js';
 
@@ -134,45 +128,49 @@ export function createCoordinatorApi() {
 
     const resultApi = applyMiddleware<
         CoordinatorApiState,
-        ProcessorContext<CoordinatorApiInputState>,
+        CoordinatorApiInputState,
         typeof combinedApi
-    >(combinedApi, async (ctx, next, processorContext) => {
-        const {
-            state: {dataLayer, authContextParser, jwt, emailService, crypto},
-            message,
-        } = processorContext;
-        const esConsumer = new EventStoreReader(
-            (ctx, fn) =>
-                dataLayer.transact(ctx, (ctx, {tx}) =>
-                    fn(ctx, withPrefix('es/')(tx))
-                ),
-            hubClient,
-            new MsgpackCodec()
-        );
-        await dataLayer.transact(ctx, async (ctx, dataCtx) => {
-            const auth = await authContextParser.parse(
-                dataCtx,
-                message.headers?.auth
+    >(
+        combinedApi,
+        async (
+            ctx,
+            next,
+            {dataLayer, authContextParser, jwt, emailService, crypto},
+            headers
+        ) => {
+            const esConsumer = new EventStoreReader(
+                (ctx, fn) =>
+                    dataLayer.transact(ctx, (ctx, {tx}) =>
+                        fn(ctx, withPrefix('es/')(tx))
+                    ),
+                hubClient,
+                new MsgpackCodec()
             );
-            const state: CoordinatorApiState = {
-                ctx: dataCtx,
-                auth,
-                jwt,
-                crypto,
-                emailService,
-                scheduleEffect: dataCtx.scheduleEffect,
-                esReader: esConsumer,
-                esWriter: new EventStoreWriter(
-                    withPrefix('es/')(dataCtx.tx),
-                    new MsgpackCodec(),
-                    hubClient,
-                    dataCtx.scheduleEffect
-                ),
-            };
+            await dataLayer.transact(ctx, async (ctx, dataCtx) => {
+                const auth = await authContextParser.parse(
+                    dataCtx,
+                    headers.auth
+                );
+                const state: CoordinatorApiState = {
+                    ctx: dataCtx,
+                    auth,
+                    jwt,
+                    crypto,
+                    emailService,
+                    scheduleEffect: dataCtx.scheduleEffect,
+                    esReader: esConsumer,
+                    esWriter: new EventStoreWriter(
+                        withPrefix('es/')(dataCtx.tx),
+                        new MsgpackCodec(),
+                        hubClient,
+                        dataCtx.scheduleEffect
+                    ),
+                };
 
-            return await next(ctx, state);
-        });
-    });
+                return await next(ctx, state);
+            });
+        }
+    );
 
     return resultApi;
 }

@@ -4,7 +4,7 @@
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
 	import {browser} from '$app/environment';
-	import {MsgpackCodec, ConsoleLogger, Participant} from 'ground-data';
+	import {MsgpackCodec, ConsoleLogger, ParticipantClient, Context} from 'ground-data';
 	import {appConfig} from '../lib/config';
 	import {WsTransportClient} from '../ws-transport-client';
 	import {Toaster} from '$lib/components/ui/sonner/index.js';
@@ -18,26 +18,23 @@
 	const authManager = createAuthManager(data.serverCookies);
 	setContext(AuthManager, authManager);
 
-	function createParticipant() {
+	function createParticipantClient() {
 		const transport = new WsTransportClient({
 			url: appConfig.serverWsUrl,
 			codec: new MsgpackCodec(),
 			logger: new ConsoleLogger(),
 		});
-		const participant = new Participant(transport, browser ? 'local' : 'proxy');
 		const jwt = authManager.getJwt();
-		if (jwt) {
-			participant.authenticate(jwt);
-		}
+		const participant = new ParticipantClient(transport, jwt);
 
 		return participant;
 	}
 
-	export const participant = createParticipant();
-	setContext(Participant, participant);
+	export const participantClient = createParticipantClient();
+	setContext(ParticipantClient, participantClient);
 
 	onDestroy(() => {
-		participant.close();
+		participantClient.close(Context.todo());
 	});
 
 	let devToolsOpen = $state(false);

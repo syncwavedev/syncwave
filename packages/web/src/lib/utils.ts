@@ -1,5 +1,5 @@
 import {clsx, type ClassValue} from 'clsx';
-import {Participant} from 'ground-data';
+import {ParticipantClient} from 'ground-data';
 import {getContext} from 'svelte';
 import {toast} from 'svelte-sonner';
 import {twMerge} from 'tailwind-merge';
@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getSdk() {
-	return getContext<Participant>(Participant);
+	return getContext<ParticipantClient>(ParticipantClient).rpc;
 }
 
 export function getAuthManager() {

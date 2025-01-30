@@ -52,7 +52,7 @@
 		isLoading = true;
 		error = undefined;
 		try {
-			const result = await sdk.verifySignInCode(Context.todo(), email ?? '', code);
+			const result = await sdk.verifySignInCode(Context.todo(), {email: email ?? '', code});
 			if (result.type === 'success') {
 				store.logIn(result.token);
 

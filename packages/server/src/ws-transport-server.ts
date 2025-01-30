@@ -90,7 +90,10 @@ export class WsConnection<T> implements Connection<T> {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: Error) => {
                 if (error) {
-                    return reject(error);
+                    const err = new Error();
+                    err.cause = error;
+                    err.message = 'got message + ' + JSON.stringify(message);
+                    return reject(err);
                 }
                 resolve();
             });
@@ -113,7 +116,7 @@ export class WsConnection<T> implements Connection<T> {
 
                 await this.subject.next(Context.todo(), message);
             } catch (error) {
-                console.error('[ERR] error during ws message', error);
+                console.error('[ERR] ws.message', error);
             }
         });
 
@@ -121,7 +124,7 @@ export class WsConnection<T> implements Connection<T> {
             try {
                 await this.subject.throw(Context.todo(), error);
             } catch (error) {
-                console.error('[ERR] error during ws.error', error);
+                console.error('[ERR] ws.error', error);
             }
         });
 

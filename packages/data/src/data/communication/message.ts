@@ -14,7 +14,7 @@ export interface MessageHeaders {
 export interface BaseMessage<TType extends string> {
     readonly type: TType;
     readonly id: MessageId;
-    readonly headers?: MessageHeaders;
+    readonly headers: MessageHeaders;
 }
 
 export interface RequestMessage extends BaseMessage<'request'> {

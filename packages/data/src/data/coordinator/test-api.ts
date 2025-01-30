@@ -1,14 +1,12 @@
 import {z} from 'zod';
-import {isCancelledError, wait} from '../../utils.js';
-import {
-    EventStoreReader,
-    EventStoreWriter,
-} from '../communication/event-store.js';
-import {createApi, handler, streamer} from '../rpc/rpc.js';
+import {observable, wait} from '../../utils.js';
+import {EventStoreReader} from '../communication/event-store.js';
+import {Transact} from '../data-layer.js';
+import {createApi, handler, observer, streamer} from '../rpc/rpc.js';
 
 export interface TestApiState {
-    esWriter: EventStoreWriter<{value: string}>;
     esReader: EventStoreReader<{value: string}>;
+    transact: Transact;
 }
 
 export function createTestApi() {
@@ -29,41 +27,25 @@ export function createTestApi() {
             },
         }),
         // streaming example
-        getStream: streamer({
+        getStream: observer({
             req: z.object({topic: z.string()}),
-            item: z.object({index: z.number(), value: z.string()}),
-            async *stream(ctx, {esReader}, {topic}) {
-                console.log('stream start');
-                try {
-                    let index = 0;
-                    for await (const {value} of esReader.subscribe(
-                        ctx,
-                        topic,
-                        0
-                    )) {
-                        console.log('stream item', index, value);
-                        yield {index, value};
-                        console.log('stream item after', index);
-                        index += 1;
-                    }
-
-                    console.log('stream complete');
-                } catch (error) {
-                    if (isCancelledError(error)) {
-                        console.log('stream cancelled');
-                    } else {
-                        console.log('stream error', error);
-                    }
-                } finally {
-                    console.log('stream closed');
-                }
+            value: z.object({index: z.number(), value: z.string()}),
+            async observe(ctx, {esReader}, {topic}) {
+                return observable(ctx, {
+                    async get(ctx) {
+                        return {index: 1, value: 'sdf'};
+                    },
+                    update$: esReader.subscribe(ctx, topic, 0),
+                });
             },
         }),
         streamPut: handler({
             req: z.object({topic: z.string(), value: z.string()}),
             res: z.object({}),
             handle: async (ctx, state, {topic, value}) => {
-                await state.esWriter.append(ctx, topic, {value});
+                await state.transact(ctx, async (ctx, tx) => {
+                    await tx.esWriter.append(ctx, topic, {value});
+                });
                 return {};
             },
         }),

@@ -1,7 +1,8 @@
 import {z, ZodType} from 'zod';
-import {AsyncStream} from '../../async-stream.js';
-import {Context} from '../../context.js';
-import {Observer, Subject} from '../../utils.js';
+import {astream, AsyncStream, StreamPuppet} from '../../async-stream.js';
+import {CancelledError, Context} from '../../context.js';
+import {Deferred} from '../../deferred.js';
+import {assertNever, Observer, Subject} from '../../utils.js';
 import {createRpcClient, RpcServer} from '../rpc/rpc-engine.js';
 import {
     applyMiddleware,
@@ -37,8 +38,44 @@ export class HubClient<T> {
         await this.server.throw(ctx, {topic, error});
     }
 
-    subscribe(ctx: Context, topic: string): AsyncStream<T> {
-        return this.server.subscribe(ctx, {topic}).map((ctx, x) => x.message!);
+    async subscribe(ctx: Context, topic: string): Promise<AsyncStream<T>> {
+        const result = new Deferred<AsyncStream<T>>();
+        const updateStream = new StreamPuppet<any>(ctx);
+        (async () => {
+            const observerStream = astream(
+                this.server.subscribe(ctx, {topic}) as AsyncIterable<
+                    {type: 'start'} | {type: 'message'; message: T}
+                >
+            );
+
+            try {
+                for await (const item of observerStream) {
+                    if (item.type === 'start') {
+                        result.resolve(astream(updateStream));
+                    } else if (item.type === 'message') {
+                        await updateStream.next(item.message);
+                    } else {
+                        assertNever(item);
+                    }
+                }
+            } catch (error) {
+                result.reject(error);
+                await updateStream.throw(error);
+            } finally {
+                updateStream.end();
+            }
+        })()
+            .catch(error => {
+                console.error('[ERR] HubClient.subscribe', error);
+                result.reject(error);
+                return updateStream.throw(error);
+            })
+            .finally(() => {
+                result.reject(new CancelledError());
+                updateStream.end();
+            });
+
+        return result.promise;
     }
 }
 
@@ -140,10 +177,22 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
         }),
         subscribe: streamer({
             req: z.object({topic: z.string()}),
-            item: z.object({message: zMessage}),
-            async *stream(ctx, {subjects}, {topic}) {
-                for await (const message of subjects.value$(ctx, topic)) {
-                    yield {message};
+            item: z.discriminatedUnion('type', [
+                z.object({type: z.literal('start')}),
+                z.object({type: z.literal('message'), message: zMessage}),
+            ]),
+            async *stream(
+                ctx,
+                {subjects},
+                {topic}
+            ): AsyncIterable<
+                | {type: 'start'}
+                | {type: 'message'; message: z.infer<typeof zMessage>}
+            > {
+                const message$ = subjects.value$(ctx, topic);
+                yield {type: 'start'};
+                for await (const message of message$) {
+                    yield {type: 'message', message};
                 }
             },
         }),

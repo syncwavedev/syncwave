@@ -1,39 +1,27 @@
-import {z} from 'zod';
-import {MsgpackCodec} from '../../codec.js';
 import {BusinessError} from '../../errors.js';
-import {withPrefix} from '../../kv/kv-store.js';
 import {AuthContext, AuthContextParser} from '../auth-context.js';
-import {
-    EventStoreReader,
-    EventStoreWriter,
-} from '../communication/event-store.js';
-import {HubClient, HubServer} from '../communication/hub.js';
-import {
-    MemTransportClient,
-    MemTransportServer,
-} from '../communication/mem-transport.js';
+import {EventStoreReader} from '../communication/event-store.js';
 import {createReadApi, ReadApiState} from '../data-api/read-api.js';
 import {createWriteApi, WriteApiState} from '../data-api/write-api.js';
-import {dataInspectorApi, DataInspectorApiState} from '../data-inspector.js';
-import {DataContext, DataEffectScheduler, DataLayer} from '../data-layer.js';
+import {dataInspectorApi} from '../data-inspector.js';
+import {Config, DataLayer, Transact} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {Api, applyMiddleware, InferRpcClient, mapApiState} from '../rpc/rpc.js';
 import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
-import {createTestApi, TestApiState} from './test-api.js';
+import {createTestApi} from './test-api.js';
 
 export interface CoordinatorApiState {
-    ctx: DataContext;
     auth: AuthContext;
     jwt: JwtService;
     crypto: CryptoService;
     emailService: EmailService;
-    scheduleEffect: DataEffectScheduler;
-    esWriter: EventStoreWriter<{value: string}>;
     esReader: EventStoreReader<{value: string}>;
+    transact: Transact;
 }
 
 export interface CoordinatorApiInputState {
     dataLayer: DataLayer;
+    config: Config;
     authContextParser: AuthContextParser;
     jwt: JwtService;
     emailService: EmailService;
@@ -41,26 +29,32 @@ export interface CoordinatorApiInputState {
 }
 
 export function createCoordinatorApi() {
-    const adaptedWriteApi = mapApiState(
+    const adaptedWriteApi = applyMiddleware(
         createWriteApi(),
-        (ctx, state: CoordinatorApiState) => {
-            return new WriteApiState(state.ctx.tx, state.esWriter, state.auth);
+        async (ctx, next, state: CoordinatorApiState) => {
+            await state.transact(ctx, async (ctx, tx) => {
+                await next(ctx, new WriteApiState(tx, state.auth));
+            });
         }
     );
 
     const adaptedReadApi = mapApiState(
         createReadApi(),
         (ctx, state: CoordinatorApiState) => {
-            return new ReadApiState(state.ctx.tx, state.esReader, state.auth);
+            return new ReadApiState(state.transact, state.esReader, state.auth);
         }
     );
 
-    const adaptedInspectorApi = mapApiState(
+    const adaptedInspectorApi = applyMiddleware(
         dataInspectorApi,
-        (ctx, state: CoordinatorApiState): DataInspectorApiState => ({
-            dataNode: state.ctx.dataNode,
-            rootTx: state.ctx.tx,
-        })
+        async (ctx, next, state: CoordinatorApiState) => {
+            await state.transact(ctx, async (ctx, tx) => {
+                await next(ctx, {
+                    dataNode: tx.dataNode,
+                    rootTx: tx.tx,
+                });
+            });
+        }
     );
 
     const wrappedAndAdaptedInspectorApi = applyMiddleware(
@@ -76,47 +70,23 @@ export function createCoordinatorApi() {
         }
     );
 
-    const adaptedAuthApi = mapApiState<
+    const adaptedAuthApi = applyMiddleware<
         AuthApiState,
         CoordinatorApiState,
         AuthApi
-    >(createAuthApi(), (ctx, state) => ({
-        crypto: state.crypto,
-        ctx: state.ctx,
-        emailService: state.emailService,
-        scheduleEffect: state.scheduleEffect,
-        jwt: state.jwt,
-    }));
-
-    const hubMemTransportServer = new MemTransportServer(new MsgpackCodec());
-    const hubMessageSchema = z.unknown();
-    const hubAuthSecret = 'hub-auth-secret';
-    const hubServer = new HubServer(
-        hubMemTransportServer,
-        hubMessageSchema,
-        hubAuthSecret
-    );
-
-    hubServer.launch().catch(error => {
-        console.error('HubServer failed to launch', error);
+    >(createAuthApi(), async (ctx, next, state) => {
+        await state.transact(ctx, async (ctx, tx) => {
+            await next(ctx, {
+                crypto: state.crypto,
+                ctx: tx,
+                emailService: state.emailService,
+                jwt: state.jwt,
+                scheduleEffect: tx.scheduleEffect,
+            });
+        });
     });
 
-    const hubClient = new HubClient(
-        new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
-        hubMessageSchema,
-        hubAuthSecret
-    );
-
-    const testApi = mapApiState(
-        createTestApi(),
-        (
-            ctx,
-            {esReader: busConsumer, esWriter: busProducer}: CoordinatorApiState
-        ): TestApiState => ({
-            esReader: busConsumer,
-            esWriter: busProducer,
-        })
-    );
+    const testApi = createTestApi();
 
     const combinedApi = {
         ...testApi,
@@ -135,40 +105,23 @@ export function createCoordinatorApi() {
         async (
             ctx,
             next,
-            {dataLayer, authContextParser, jwt, emailService, crypto},
+            {dataLayer, authContextParser, jwt, emailService, crypto, config},
             headers
         ) => {
-            const esConsumer = new EventStoreReader(
-                (ctx, fn) =>
-                    dataLayer.transact(ctx, (ctx, {tx}) =>
-                        fn(ctx, withPrefix('es/')(tx))
-                    ),
-                hubClient,
-                new MsgpackCodec()
+            const auth = await authContextParser.parse(
+                config.jwtSecret,
+                headers.auth
             );
-            await dataLayer.transact(ctx, async (ctx, dataCtx) => {
-                const auth = await authContextParser.parse(
-                    dataCtx,
-                    headers.auth
-                );
-                const state: CoordinatorApiState = {
-                    ctx: dataCtx,
-                    auth,
-                    jwt,
-                    crypto,
-                    emailService,
-                    scheduleEffect: dataCtx.scheduleEffect,
-                    esReader: esConsumer,
-                    esWriter: new EventStoreWriter(
-                        withPrefix('es/')(dataCtx.tx),
-                        new MsgpackCodec(),
-                        hubClient,
-                        dataCtx.scheduleEffect
-                    ),
-                };
+            const state: CoordinatorApiState = {
+                transact: dataLayer.transact.bind(dataLayer),
+                auth,
+                jwt,
+                crypto,
+                emailService,
+                esReader: dataLayer.esReader,
+            };
 
-                return await next(ctx, state);
-            });
+            return await next(ctx, state);
         }
     );
 

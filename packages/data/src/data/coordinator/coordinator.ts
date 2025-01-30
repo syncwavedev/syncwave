@@ -1,6 +1,13 @@
+import {z} from 'zod';
+import {MsgpackCodec} from '../../codec.js';
 import {Context} from '../../context.js';
 import {Uint8KVStore} from '../../kv/kv-store.js';
 import {AuthContextParser} from '../auth-context.js';
+import {HubClient, HubServer} from '../communication/hub.js';
+import {
+    MemTransportClient,
+    MemTransportServer,
+} from '../communication/mem-transport.js';
 import {Message} from '../communication/message.js';
 import {TransportServer} from '../communication/transport.js';
 import {DataLayer} from '../data-layer.js';
@@ -24,7 +31,28 @@ export class CoordinatorServer {
         email: EmailService,
         private readonly jwtSecret: string
     ) {
-        this.dataLayer = new DataLayer(kv, jwtSecret);
+        const hubMemTransportServer = new MemTransportServer(
+            new MsgpackCodec()
+        );
+        const hubMessageSchema = z.unknown();
+        const hubAuthSecret = 'hub-auth-secret';
+        const hubServer = new HubServer(
+            hubMemTransportServer,
+            hubMessageSchema,
+            hubAuthSecret
+        );
+
+        hubServer.launch().catch(error => {
+            console.error('HubServer failed to launch', error);
+        });
+
+        const hubClient = new HubClient(
+            new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
+            hubMessageSchema,
+            hubAuthSecret
+        );
+
+        this.dataLayer = new DataLayer(kv, hubClient, jwtSecret);
         const authContextParser = new AuthContextParser(4, jwt);
         this.rpcServer = new RpcServer(
             transport,
@@ -35,6 +63,9 @@ export class CoordinatorServer {
                 jwt,
                 crypto,
                 emailService: email,
+                config: {
+                    jwtSecret: this.jwtSecret,
+                },
             },
             'CRD'
         );

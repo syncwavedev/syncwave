@@ -1,5 +1,5 @@
-import {TypeOf, ZodType} from 'zod';
-import {AsyncStream} from '../../async-stream.js';
+import {TypeOf, z, ZodType} from 'zod';
+import {astream, AsyncStream} from '../../async-stream.js';
 import {Context} from '../../context.js';
 import {Deferred} from '../../deferred.js';
 import {assertNever} from '../../utils.js';
@@ -21,6 +21,7 @@ export interface Streamer<TState, TRequest, TItem> {
     type: 'streamer';
     req: ZodType<TRequest>;
     item: ZodType<TItem>;
+    observer: boolean;
     stream(
         ctx: Context,
         state: TState,
@@ -29,9 +30,17 @@ export interface Streamer<TState, TRequest, TItem> {
     ): AsyncIterable<TItem>;
 }
 
+export type ObserverItem<T> = z.infer<ReturnType<typeof zObserverItem<T>>>;
+
+export interface Observer<TState, TRequest, TValue>
+    extends Streamer<TState, TRequest, ObserverItem<TValue>> {
+    _obs: true;
+}
+
 export type Processor<TState, TRequest, TResult> =
     | Handler<TState, TRequest, TResult>
-    | Streamer<TState, TRequest, TResult>;
+    | Streamer<TState, TRequest, TResult>
+    | Observer<TState, TRequest, TResult>;
 
 export type HandlerRequestSchema<T extends Handler<any, any, any>> =
     T extends Handler<any, infer R, any> ? R : never;
@@ -122,7 +131,79 @@ export function streamer<
     return {
         type: 'streamer' as const,
         req: options.req,
+        observer: false,
         item: options.item,
+        stream: wrapper,
+    };
+}
+
+export type ObserverRequestSchema<T extends Observer<any, any, any>> =
+    T extends Observer<any, infer R, any> ? R : never;
+
+export type ObserverItemSchema<T extends Observer<any, any, any>> =
+    T extends Observer<any, any, infer R> ? R : never;
+
+export interface ObserverOptions<
+    TState,
+    TRequestSchema extends ZodType<any, any, any>,
+    TValueSchema extends ZodType<any, any, any>,
+> {
+    req: TRequestSchema;
+    value: TValueSchema;
+    observe: (
+        ctx: Context,
+        state: TState,
+        req: TypeOf<TRequestSchema>,
+        headers: MessageHeaders
+    ) => Promise<
+        [
+            initialValue: TypeOf<TValueSchema>,
+            stream: AsyncIterable<TypeOf<TValueSchema>>,
+        ]
+    >;
+}
+
+function zObserverItem<T>(valueSchema: ZodType<T>) {
+    return z.discriminatedUnion('type', [
+        z.object({type: z.literal('start'), initialValue: valueSchema}),
+        z.object({type: z.literal('next'), value: valueSchema}),
+    ]);
+}
+
+export function observer<
+    TState,
+    TRequestSchema extends ZodType<any, any, any>,
+    TValueSchema extends ZodType<any, any, any>,
+>(
+    options: ObserverOptions<TState, TRequestSchema, TValueSchema>
+): Observer<TState, TypeOf<TRequestSchema>, TypeOf<TValueSchema>> {
+    function wrapper(
+        ctx: Context,
+        state: TState,
+        req: TypeOf<TRequestSchema>,
+        headers: MessageHeaders
+    ): AsyncIterable<TypeOf<TValueSchema>> {
+        req = options.req.parse(req);
+        return astream(options.observe(ctx, state, req, headers)).flatMap(
+            (ctx, [initialValue, stream]) => {
+                return astream<ObserverItem<TypeOf<TValueSchema>>>([
+                    {type: 'start', initialValue},
+                ]).concat(
+                    astream(stream).map((ctx, value) => ({
+                        type: 'next',
+                        value,
+                    }))
+                );
+            }
+        );
+    }
+
+    return {
+        type: 'streamer' as const,
+        observer: true,
+        _obs: true,
+        req: options.req,
+        item: zObserverItem(options.value as ZodType<TypeOf<TValueSchema>>),
         stream: wrapper,
     };
 }
@@ -141,11 +222,13 @@ export type MapProcessorState<
     TProcessor extends Processor<any, any, any>,
     TNewState,
 > =
-    TProcessor extends Streamer<any, infer R, infer I>
-        ? Streamer<TNewState, R, I>
-        : TProcessor extends Handler<any, infer TReq, infer TRes>
-          ? Handler<TNewState, TReq, TRes>
-          : never;
+    TProcessor extends Observer<any, infer R, infer V>
+        ? Observer<TNewState, R, V>
+        : TProcessor extends Streamer<any, infer R, infer I>
+          ? Streamer<TNewState, R, I>
+          : TProcessor extends Handler<any, infer TReq, infer TRes>
+            ? Handler<TNewState, TReq, TRes>
+            : never;
 
 export function mapApiState<
     TStatePrivate,
@@ -255,6 +338,7 @@ export function applyMiddleware<
                 type: 'streamer',
                 req: processor.req,
                 item: processor.item,
+                observer: processor.observer,
                 stream: async function* (ctx, state, request, headers) {
                     yield* await work(ctx, state, request, headers);
                 },
@@ -266,25 +350,45 @@ export function applyMiddleware<
 }
 
 export type InferRpcClient<T extends Api<any>> = {
-    [K in keyof T]: T[K] extends Streamer<any, infer TReq, infer TItem>
+    [K in keyof T]: T[K] extends Observer<any, infer TReq, infer TValue>
         ? (
               ctx: Context,
               req: TReq,
               headers?: MessageHeaders
-          ) => AsyncStream<TItem>
-        : T[K] extends Handler<any, infer TReq, infer TRes>
-          ? (ctx: Context, req: TReq, headers?: MessageHeaders) => Promise<TRes>
-          : never;
+          ) => Promise<[initialValue: TValue, AsyncStream<TValue>]>
+        : T[K] extends Streamer<any, infer TReq, infer TItem>
+          ? (
+                ctx: Context,
+                req: TReq,
+                headers?: MessageHeaders
+            ) => AsyncStream<TItem>
+          : T[K] extends Handler<any, infer TReq, infer TRes>
+            ? (
+                  ctx: Context,
+                  req: TReq,
+                  headers?: MessageHeaders
+              ) => Promise<TRes>
+            : never;
 };
 
 export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
-    [K in keyof T]: T[K] extends Streamer<any, infer TReq, infer TItem>
+    [K in keyof T]: T[K] extends Observer<any, infer TReq, infer TValue>
         ? (
               ctx: Context,
               req: TReq,
               headers: MessageHeaders
-          ) => AsyncStream<TItem>
-        : T[K] extends Handler<any, infer TReq, infer TRes>
-          ? (ctx: Context, req: TReq, headers: MessageHeaders) => Promise<TRes>
-          : never;
+          ) => Promise<[initialValue: TValue, AsyncStream<TValue>]>
+        : T[K] extends Streamer<any, infer TReq, infer TItem>
+          ? (
+                ctx: Context,
+                req: TReq,
+                headers: MessageHeaders
+            ) => AsyncStream<TItem>
+          : T[K] extends Handler<any, infer TReq, infer TRes>
+            ? (
+                  ctx: Context,
+                  req: TReq,
+                  headers: MessageHeaders
+              ) => Promise<TRes>
+            : never;
 };

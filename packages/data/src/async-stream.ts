@@ -10,7 +10,7 @@ export interface ColdStreamExecutor<T> {
     end: (ctx: Context) => void;
 }
 
-export class HotStream<T> implements AsyncIterable<T> {
+export class StreamPuppet<T> implements AsyncIterable<T> {
     private chan = new Channel<T>();
 
     constructor(ctx: Context) {
@@ -37,7 +37,7 @@ export class HotStream<T> implements AsyncIterable<T> {
         await this.chan.throw(new Error('HotStream.throw', {cause: error}));
     }
 
-    async end() {
+    end() {
         if (this.chan.closed) {
             return;
         }
@@ -71,7 +71,7 @@ export class ColdStream<T> implements AsyncIterable<T> {
                 );
         });
 
-        const stream = new HotStream<T>(ctx);
+        const stream = new StreamPuppet<T>(ctx);
 
         try {
             this.execute(ctx, {
@@ -123,6 +123,18 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return astream(this._assert(validator)) as AsyncStream<S>;
     }
 
+    concat(...streams: AsyncIterable<T>[]): AsyncStream<T> {
+        return astream(this._concat(...streams));
+    }
+
+    private async *_concat(...streams: AsyncIterable<T>[]): AsyncIterable<T> {
+        yield* this.source;
+
+        for (const stream of streams) {
+            yield* stream;
+        }
+    }
+
     private async *_assert(validator: (value: T) => boolean) {
         for await (const item of this.source) {
             assert(validator(item));
@@ -143,6 +155,31 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         }
 
         return undefined;
+    }
+
+    flatCatch<R>(
+        flatMap: (
+            ctx: Context,
+            error: unknown
+        ) => R[] | Promise<R> | AsyncIterable<R>
+    ): AsyncStream<T | R> {
+        return astream(this._flatCatch(flatMap));
+    }
+
+    private async *_flatCatch<R>(
+        flatMap: (
+            ctx: Context,
+            error: unknown
+        ) => R[] | Promise<R> | AsyncIterable<R>
+    ): AsyncIterable<T | R> {
+        const [ctx, cancel] = Context.create();
+        try {
+            yield* this.source;
+        } catch (error) {
+            yield* astream(flatMap(ctx, error));
+        } finally {
+            cancel();
+        }
     }
 
     catch<R>(
@@ -240,6 +277,13 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         for await (const item of this.source) {
             yield* await flatMapper(Context.todo(), item);
         }
+    }
+
+    tap(cb: (ctx: Context, value: T) => Promise<void> | void): AsyncStream<T> {
+        return this.map(async (ctx, value) => {
+            await cb(ctx, value);
+            return value;
+        });
     }
 
     map<TResult>(

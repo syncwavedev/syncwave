@@ -1,6 +1,5 @@
 import {LRUCache} from 'lru-cache';
 import {SUPERADMIN_IDS} from '../constants.js';
-import {DataContext} from './data-layer.js';
 import {JwtService} from './infra.js';
 import {IdentityId} from './repos/identity-repo.js';
 import {UserId} from './repos/user-repo.js';
@@ -24,7 +23,7 @@ export class AuthContextParser {
     }
 
     async parse(
-        ctx: DataContext,
+        jwtSecret: string,
         jwtToken: string | undefined
     ): Promise<AuthContext> {
         if (typeof jwtToken === 'string') {
@@ -33,10 +32,7 @@ export class AuthContextParser {
                 return result;
             }
 
-            const jwtPayload = await this.jwt.verify(
-                jwtToken,
-                ctx.config.jwtSecret
-            );
+            const jwtPayload = await this.jwt.verify(jwtToken, jwtSecret);
             const authContext: AuthContext = {
                 identityId: jwtPayload.sub as UserId | undefined,
                 userId: jwtPayload.uid as UserId | undefined,

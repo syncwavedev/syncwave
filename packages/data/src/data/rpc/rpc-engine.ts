@@ -1,7 +1,13 @@
-import {astream, ColdStream, ColdStreamExecutor} from '../../async-stream.js';
+import {
+    astream,
+    AsyncStream,
+    ColdStream,
+    ColdStreamExecutor,
+    StreamPuppet,
+} from '../../async-stream.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {ContextManager} from '../../context-manager.js';
-import {Context} from '../../context.js';
+import {CancelledError, Context} from '../../context.js';
 import {Deferred} from '../../deferred.js';
 import {BusinessError, getReadableError} from '../../errors.js';
 import {
@@ -20,7 +26,14 @@ import {
     ResponsePayload,
 } from '../communication/message.js';
 import {Connection, TransportServer} from '../communication/transport.js';
-import {Api, Handler, InferRpcClient, Streamer} from './rpc.js';
+import {
+    Api,
+    Handler,
+    InferRpcClient,
+    ObserverItem,
+    Processor,
+    Streamer,
+} from './rpc.js';
 
 async function proxyStreamerCall(
     listenCtx: Context,
@@ -226,7 +239,7 @@ async function proxyHandlerCall(
 function createProcessorProxy(
     conn: Connection<Message>,
     getHeaders: () => MessageHeaders,
-    processor: Handler<any, any, any> | Streamer<any, any, any>,
+    processor: Processor<any, any, any>,
     name: string
 ) {
     return (ctx: Context, arg: unknown, headers?: MessageHeaders) => {
@@ -239,7 +252,7 @@ function createProcessorProxy(
                 Object.assign({}, getHeaders(), headers ?? {})
             );
         } else if (processor.type === 'streamer') {
-            const coldStream = new ColdStream(ctx, (ctx, exe) => {
+            const coldStream = new ColdStream<any>(ctx, (ctx, exe) => {
                 proxyStreamerCall(
                     ctx,
                     conn,
@@ -249,7 +262,53 @@ function createProcessorProxy(
                     Object.assign({}, getHeaders(), headers ?? {})
                 ).catch(error => exe.throw(ctx, error));
             });
-            return astream(coldStream);
+
+            if (processor.observer) {
+                const result = new Deferred<
+                    [initialValue: unknown, AsyncStream<unknown>]
+                >();
+                const updateStream = new StreamPuppet<any>(ctx);
+                (async () => {
+                    const observerStream: AsyncIterable<ObserverItem<any>> =
+                        coldStream;
+
+                    try {
+                        for await (const item of observerStream) {
+                            if (item.type === 'start') {
+                                result.resolve([
+                                    item.initialValue,
+                                    astream(updateStream),
+                                ]);
+                            } else if (item.type === 'next') {
+                                await updateStream.next(item.value);
+                            } else {
+                                assertNever(item);
+                            }
+                        }
+                    } catch (error) {
+                        result.reject(error);
+                        await updateStream.throw(error);
+                    } finally {
+                        updateStream.end();
+                    }
+                })()
+                    .catch(error => {
+                        console.error(
+                            '[ERR] createProcessorProxy observer',
+                            error
+                        );
+                        result.reject(error);
+                        return updateStream.throw(error);
+                    })
+                    .finally(() => {
+                        result.reject(new CancelledError());
+                        updateStream.end();
+                    });
+
+                return result.promise;
+            } else {
+                return astream(coldStream);
+            }
         } else {
             assertNever(processor);
         }
@@ -318,7 +377,7 @@ async function waitMessage<S extends Message>(
     ignoreCancel(wait(ctx, timeoutMs))
         .then(() => {
             if (result.state === 'pending') {
-                result.reject(new Error(`timeout after ${timeoutMs}`));
+                result.reject(new Error(`stream timeout after ${timeoutMs}`));
             }
             cancelCtx();
         })

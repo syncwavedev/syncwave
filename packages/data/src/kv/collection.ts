@@ -30,6 +30,10 @@ export class Collection<T> {
         );
     }
 
+    async length(ctx: Context) {
+        return await this.counter.get(ctx);
+    }
+
     async append(ctx: Context, ...data: T[]): Promise<void> {
         const offset =
             (await this.counter.increment(ctx, data.length)) - data.length;

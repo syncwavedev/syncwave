@@ -334,3 +334,18 @@ export function zUint8Array() {
         message: 'Uint8Array expected',
     });
 }
+
+export interface ObservableOptions<T> {
+    get: (ctx: Context) => Promise<T>;
+    update$: Promise<AsyncIterable<any>>;
+}
+
+export async function observable<T>(
+    ctx: Context,
+    options: ObservableOptions<T>
+): Promise<[initialValue: T, update$: AsyncIterable<T>]> {
+    return [
+        await options.get(ctx),
+        astream(await options.update$).map(ctx => options.get(ctx)),
+    ];
+}

@@ -27,9 +27,10 @@
 		(async () => {
 			try {
 				console.log('stream start');
-				const interval$ = sdk.getStream(Context.todo(), {
+				const [initItem, interval$] = await sdk.getStream(Context.todo(), {
 					topic,
 				});
+				items.push(initItem);
 				for await (const item of interval$) {
 					console.log('stream item', item.index);
 

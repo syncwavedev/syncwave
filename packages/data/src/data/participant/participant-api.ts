@@ -17,7 +17,6 @@ import {
     MapProcessorState,
 } from '../rpc/rpc.js';
 
-// todo: add auto reconnect connection (it must buffer messages before sending them to an new connection)
 export class ParticipantState {
     private readonly connection: Connection<Message>;
 
@@ -62,26 +61,31 @@ export function createParticipantApi() {
                 req: processor.req,
                 res: processor.res,
                 handle: async (ctx, state, req, headers) => {
-                    return await state.coordinator[name](
-                        ctx,
-                        req as any,
-                        headers
-                    );
+                    return await state.coordinator[name](ctx, req, headers);
                 },
             } as any;
         } else if (processor.type === 'streamer') {
-            return {
-                type: 'streamer',
-                req: processor.req,
-                item: processor.item,
-                stream: (ctx, state, req, headers) => {
-                    return state.coordinator[name](
-                        ctx,
-                        req as any,
-                        headers
-                    ) as any;
-                },
-            } as any;
+            if (processor.observer) {
+                return {
+                    type: 'streamer',
+                    req: processor.req,
+                    item: processor.item,
+                    observer: processor.observer,
+                    stream: (ctx, state, req, headers) => {
+                        return state.coordinator[name](ctx, req, headers);
+                    },
+                } as any;
+            } else {
+                return {
+                    type: 'streamer',
+                    req: processor.req,
+                    item: processor.item,
+                    observer: processor.observer,
+                    stream: (ctx, state, req, headers) => {
+                        return state.coordinator[name](ctx, req, headers);
+                    },
+                } as any;
+            }
         } else {
             assertNever(processor);
         }

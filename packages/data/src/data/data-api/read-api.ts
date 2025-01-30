@@ -2,36 +2,31 @@ import {z} from 'zod';
 import {astream} from '../../async-stream.js';
 import {Context} from '../../context.js';
 import {BusinessError} from '../../errors.js';
-import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {whenAll} from '../../utils.js';
+import {assert, observable, whenAll} from '../../utils.js';
 import {zUuid} from '../../uuid.js';
 import {AuthContext} from '../auth-context.js';
 import {EventStoreReader} from '../communication/event-store.js';
-import {BoardId, BoardReadonlyRepo, zBoard} from '../repos/board-repo.js';
-import {Member, MemberReadonlyRepo} from '../repos/member-repo.js';
-import {TaskId, TaskReadonlyRepo, zTask} from '../repos/task-repo.js';
-import {UserId, UserReadonlyRepo, zUser} from '../repos/user-repo.js';
-import {createApi, handler, InferRpcClient} from '../rpc/rpc.js';
+import {
+    boardEvents,
+    DataTx,
+    taskEvents,
+    Transact,
+    userEvents,
+} from '../data-layer.js';
+import {BoardId, zBoard} from '../repos/board-repo.js';
+import {Member} from '../repos/member-repo.js';
+import {TaskId, zTask} from '../repos/task-repo.js';
+import {UserId, zUser} from '../repos/user-repo.js';
+import {createApi, InferRpcClient, observer} from '../rpc/rpc.js';
 
 export class ReadApiState {
-    public readonly boards: BoardReadonlyRepo;
-    public readonly users: UserReadonlyRepo;
-    public readonly tasks: TaskReadonlyRepo;
-    public readonly members: MemberReadonlyRepo;
-
     constructor(
-        tx: Uint8Transaction,
-        public esReader: EventStoreReader<unknown>,
+        public readonly transact: Transact,
+        readonly esReader: EventStoreReader<{value: string}>,
         public readonly auth: AuthContext
-    ) {
-        const noop = () => Promise.resolve();
-        this.users = new UserReadonlyRepo(withPrefix('users/')(tx), noop);
-        this.members = new MemberReadonlyRepo(withPrefix('members/')(tx), noop);
-        this.boards = new BoardReadonlyRepo(withPrefix('boards/')(tx), noop);
-        this.tasks = new TaskReadonlyRepo(withPrefix('tasks/')(tx), noop);
-    }
+    ) {}
 
-    public ensureAuthenticated(): UserId {
+    ensureAuthenticated(): UserId {
         if (this.auth.userId === undefined) {
             throw new BusinessError(
                 'user is not authenticated',
@@ -42,19 +37,21 @@ export class ReadApiState {
         return this.auth.userId;
     }
 
-    public async ensureBoardReadAccess(
+    async ensureBoardReadAccess(
         ctx: Context,
+        tx: DataTx,
         boardId: BoardId
     ): Promise<Member> {
-        return await this.ensureBoardWriteAccess(ctx, boardId);
+        return await this.ensureBoardWriteAccess(ctx, tx, boardId);
     }
 
-    public async ensureBoardWriteAccess(
+    async ensureBoardWriteAccess(
         ctx: Context,
+        tx: DataTx,
         boardId: BoardId
     ): Promise<Member> {
         const meId = this.ensureAuthenticated();
-        const member = await this.members.getByUserIdAndBoardId(
+        const member = await tx.members.getByUserIdAndBoardId(
             ctx,
             meId,
             boardId
@@ -72,69 +69,110 @@ export class ReadApiState {
 
 export function createReadApi() {
     return createApi<ReadApiState>()({
-        getMe: handler({
+        getMe: observer({
             req: z.object({}),
-            res: zUser().optional(),
-            handle: async (ctx, actor) => {
-                return await actor.users.getById(
-                    ctx,
-                    actor.ensureAuthenticated()
-                );
+            value: zUser(),
+            observe: async (ctx, st) => {
+                const userId = st.ensureAuthenticated();
+
+                return observable(ctx, {
+                    async get(ctx: Context) {
+                        return await st.transact(ctx, async (ctx, tx) => {
+                            const user = await tx.users.getById(ctx, userId);
+                            assert(user !== undefined);
+                            return user;
+                        });
+                    },
+                    update$: st.esReader.subscribe(ctx, userEvents(userId)),
+                });
             },
         }),
-        getMyBoards: handler({
+        getMyBoards: observer({
             req: z.object({}),
-            res: z.array(zBoard()),
-            handle: async (ctx, actor) => {
-                const members = actor.members.getByUserId(
-                    ctx,
-                    actor.ensureAuthenticated()
-                );
-                return await astream(members)
-                    .mapParallel((ctx, member) =>
-                        actor.boards.getById(ctx, member.boardId)
-                    )
-                    .assert(x => x !== undefined)
-                    .toArray(ctx);
+            value: z.array(zBoard()),
+            observe: async (ctx, st) => {
+                const userId = st.ensureAuthenticated();
+
+                return observable(ctx, {
+                    async get(ctx) {
+                        return st.transact(ctx, async (ctx, tx) => {
+                            const members = tx.members.getByUserId(ctx, userId);
+                            return await astream(members)
+                                .mapParallel((ctx, member) =>
+                                    tx.boards.getById(ctx, member.boardId)
+                                )
+                                .assert(x => x !== undefined)
+                                .toArray(ctx);
+                        });
+                    },
+                    update$: st.esReader.subscribe(ctx, userEvents(userId)),
+                });
             },
         }),
-        getBoardTasks: handler({
+        getBoardTasks: observer({
             req: z.object({boardId: zUuid<BoardId>()}),
-            res: z.array(zTask()),
-            handle: async (ctx, actor, {boardId}) => {
-                const [tasks] = await whenAll([
-                    actor.tasks.getByBoardId(ctx, boardId).toArray(ctx),
-                    actor.ensureBoardReadAccess(ctx, boardId),
-                ]);
+            value: z.array(zTask()),
+            observe: async (ctx, st, {boardId}) => {
+                return observable(ctx, {
+                    async get(ctx) {
+                        return await st.transact(ctx, async (ctx, tx) => {
+                            const [tasks] = await whenAll([
+                                tx.tasks
+                                    .getByBoardId(ctx, boardId)
+                                    .toArray(ctx),
+                                st.ensureBoardReadAccess(ctx, tx, boardId),
+                            ]);
 
-                return tasks;
+                            return tasks;
+                        });
+                    },
+                    update$: st.esReader.subscribe(ctx, boardEvents(boardId)),
+                });
             },
         }),
-        getTask: handler({
+        getTask: observer({
             req: z.object({taskId: zUuid<TaskId>()}),
-            res: zTask().optional(),
-            handle: async (ctx, actor, {taskId}) => {
-                const task = await actor.tasks.getById(ctx, taskId);
-                if (!task) {
-                    return undefined;
-                }
-                await actor.ensureBoardReadAccess(ctx, task.boardId);
+            value: zTask().optional(),
+            observe: async (ctx, st, {taskId}) => {
+                return observable(ctx, {
+                    async get(ctx) {
+                        return await st.transact(ctx, async (ctx, tx) => {
+                            const task = await tx.tasks.getById(ctx, taskId);
+                            if (!task) {
+                                return undefined;
+                            }
+                            await st.ensureBoardReadAccess(
+                                ctx,
+                                tx,
+                                task.boardId
+                            );
 
-                return task;
+                            return task;
+                        });
+                    },
+                    update$: st.esReader.subscribe(ctx, taskEvents(taskId)),
+                });
             },
         }),
-        getBoard: handler({
+        getBoard: observer({
             req: z.object({
                 boardId: zUuid<BoardId>(),
             }),
-            res: zBoard().optional(),
-            handle: async (ctx, actor, req) => {
-                const [board] = await whenAll([
-                    actor.boards.getById(ctx, req.boardId),
-                    actor.ensureBoardReadAccess(ctx, req.boardId),
-                ]);
+            value: zBoard().optional(),
+            observe: async (ctx, st, {boardId}) => {
+                return observable(ctx, {
+                    async get(ctx) {
+                        return await st.transact(ctx, async (ctx, tx) => {
+                            const [board] = await whenAll([
+                                tx.boards.getById(ctx, boardId),
+                                st.ensureBoardReadAccess(ctx, tx, boardId),
+                            ]);
 
-                return board;
+                            return board;
+                        });
+                    },
+                    update$: st.esReader.subscribe(ctx, boardEvents(boardId)),
+                });
             },
         }),
     });

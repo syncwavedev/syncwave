@@ -1,11 +1,4 @@
-import {Cx} from '../context.js';
-import {AppError} from '../errors.js';
-
-export type UpdateChecker<T> = (
-    cx: Cx,
-    prev: T,
-    next: T
-) => {errors: string[]} | void;
+export type UpdateChecker<T> = (prev: T, next: T) => {errors: string[]} | void;
 
 type WritableMap<T> = {
     [K in WritableKeys<T>]-?: IfEquals<
@@ -31,7 +24,7 @@ type IfEquals<X, Y> =
 export function createWriteableChecker<T extends object>(
     writable: WritableMap<Omit<T, 'updatedAt' | 'createdAt' | 'id'>>
 ) {
-    return (cx: Cx, prev: T, next: T) => {
+    return (prev: T, next: T) => {
         const keys = new Set([
             ...Object.keys(prev),
             ...Object.keys(next),
@@ -39,8 +32,7 @@ export function createWriteableChecker<T extends object>(
         const errors: string[] = [];
         for (const key of keys) {
             if (typeof key !== 'string') {
-                throw new AppError(
-                    cx,
+                throw new Error(
                     'property (with non-string name) modification is not allowed: ' +
                         String(key)
                 );
@@ -62,9 +54,9 @@ export function combineUpdateCheckers<T>(
     checkers: Array<UpdateChecker<T>>
 ): UpdateChecker<T> {
     return checkers.reduce<UpdateChecker<T>>(
-        (a, b) => (cx: Cx, prev: T, next: T) => {
-            const aResult = a(cx, prev, next);
-            const bResult = b(cx, prev, next);
+        (a, b) => (prev: T, next: T) => {
+            const aResult = a(prev, next);
+            const bResult = b(prev, next);
             const errors: string[] = [];
             if (aResult) errors.push(...aResult.errors);
             if (bResult) errors.push(...bResult.errors);

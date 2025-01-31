@@ -3,8 +3,7 @@ import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_HOURS,
 } from '../../constants.js';
-import {Cx} from '../../context.js';
-import {AppError} from '../../errors.js';
+import {Error} from '../../errors.js';
 import {addHours, getNow} from '../../timestamp.js';
 import {whenAll} from '../../utils.js';
 import {DataEffectScheduler, DataTx} from '../data-layer.js';
@@ -118,7 +117,7 @@ export function createAuthApi() {
             ): Promise<VerifySignInCodeResponse> => {
                 const identity = await identities.getByEmail(cx, email);
                 if (!identity) {
-                    throw new AppError(cx, 'invalid email, no identity found');
+                    throw new Error(cx, 'invalid email, no identity found');
                 }
 
                 if (await needsCooldown(identity)) {
@@ -126,10 +125,7 @@ export function createAuthApi() {
                 }
 
                 if (identity.verificationCode === undefined) {
-                    throw new AppError(
-                        cx,
-                        'verification code was not requested'
-                    );
+                    throw new Error(cx, 'verification code was not requested');
                 }
 
                 if (getNow() > identity.verificationCode.expires) {
@@ -211,7 +207,6 @@ export async function signJwtToken(
 }
 
 export async function getIdentity(
-    cx: Cx,
     identities: IdentityRepo,
     users: UserRepo,
     email: string,

@@ -1,5 +1,4 @@
 import {z} from 'zod';
-import {Cx} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
@@ -49,9 +48,9 @@ export function zIdentity() {
 export class IdentityRepo {
     public readonly rawRepo: DocRepo<Identity>;
 
-    constructor(cx: Cx, tx: Uint8Transaction, onChange: OnDocChange<Identity>) {
-        this.rawRepo = new DocRepo<Identity>(cx, {
-            tx: withPrefix(cx, 'd/')(tx),
+    constructor(tx: Uint8Transaction, onChange: OnDocChange<Identity>) {
+        this.rawRepo = new DocRepo<Identity>({
+            tx: withPrefix('d/')(tx),
             indexes: {
                 [EMAIL_INDEX]: {
                     key: x => [x.email],
@@ -68,21 +67,20 @@ export class IdentityRepo {
         });
     }
 
-    getById(cx: Cx, id: IdentityId): Promise<Identity | undefined> {
-        return this.rawRepo.getById(cx, id);
+    getById(id: IdentityId): Promise<Identity | undefined> {
+        return this.rawRepo.getById(id);
     }
 
-    getByEmail(cx: Cx, email: string): Promise<Identity | undefined> {
-        return this.rawRepo.getUnique(cx, EMAIL_INDEX, [email]);
+    getByEmail(email: string): Promise<Identity | undefined> {
+        return this.rawRepo.getUnique(EMAIL_INDEX, [email]);
     }
 
-    getByUserId(cx: Cx, userId: UserId): Promise<Identity | undefined> {
-        return this.rawRepo.getUnique(cx, USER_ID_INDEX, [userId]);
+    getByUserId(userId: UserId): Promise<Identity | undefined> {
+        return this.rawRepo.getUnique(USER_ID_INDEX, [userId]);
     }
 
-    async apply(cx: Cx, id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
         return await this.rawRepo.apply(
-            cx,
             id,
             diff,
             createWriteableChecker({
@@ -93,13 +91,12 @@ export class IdentityRepo {
         );
     }
 
-    async create(cx: Cx, identity: Identity): Promise<Identity> {
+    async create(identity: Identity): Promise<Identity> {
         try {
-            return await this.rawRepo.create(cx, identity);
+            return await this.rawRepo.create(identity);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === EMAIL_INDEX) {
                 throw new EmailTakenIdentityRepoError(
-                    cx,
                     `user with email ${identity.email} already exists`,
                     'identity_email_taken'
                 );
@@ -110,10 +107,9 @@ export class IdentityRepo {
     }
 
     update(
-        cx: Cx,
         id: IdentityId,
-        recipe: (cx: Cx, user: Identity) => Identity | void
+        recipe: (user: Identity) => Identity | void
     ): Promise<Identity> {
-        return this.rawRepo.update(cx, id, recipe);
+        return this.rawRepo.update(id, recipe);
     }
 }

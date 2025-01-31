@@ -8,7 +8,6 @@ import {
     EVENT_STORE_MAX_PULL_COUNT,
     EVENT_STORE_PULL_INTERVAL_MS,
 } from '../../constants.js';
-import {Cx} from '../../context.js';
 import {CollectionManager} from '../../kv/collection-manager.js';
 import {ReadonlyCell} from '../../kv/readonly-cell.js';
 import {logger} from '../../logger.js';
@@ -29,20 +28,18 @@ export class EventStoreWriter<T> implements EventStoreWriter<T> {
         private readonly scheduleEffect: DataEffectScheduler
     ) {}
 
-    async append(cx: Cx, collection: string, event: T): Promise<void> {
-        const [id] = await whenAll(cx, [
-            this.id.get(cx),
-            this.events.get(cx, collection).append(cx, event),
+    async append(collection: string, event: T): Promise<void> {
+        const [id] = await whenAll([
+            this.id.get(),
+            this.events.get(collection).append(event),
         ]);
         const topic = getEventHubTopic(id, collection);
-        this.scheduleEffect(cx => this.hub.publish(cx, topic, undefined));
+        this.scheduleEffect(() => this.hub.publish(topic, undefined));
     }
 }
 
 type EventStoreReaderTransact<T> = <TResult>(
-    cx: Cx,
     fn: (
-        cx: Cx,
         events: CollectionManager<T>,
         id: ReadonlyCell<Uuid>
     ) => Promise<TResult>
@@ -55,7 +52,6 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
     ) {}
 
     async subscribe(
-        cx: Cx,
         collection: string,
         offsetArg?: number
     ): Promise<AsyncStream<T>> {
@@ -64,39 +60,37 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
         let offset =
             offsetArg === undefined
-                ? await this.transact(cx, async (cx, topics) =>
-                      topics.get(cx, collection).length(cx)
+                ? await this.transact(async topics =>
+                      topics.get(collection).length(cx)
                   )
                 : offsetArg;
 
-        const id = await this.transact(cx, (cx, _, id) => id.get(cx));
+        const id = await this.transact((_, id) => id.get(cx));
         const hubEvent$ = await this.hub.subscribe(
-            cx,
             getEventHubTopic(id, collection)
         );
 
         return mergeStreams<void>([
             // make the first check immediately
-            astream([[cx, undefined]]),
+            astream<void>([[undefined]]),
             astream(selfTrigger),
             hubEvent$.map(() => undefined),
-            interval(EVENT_STORE_PULL_INTERVAL_MS, cx).map(() => undefined),
-        ]).flatMap(async cx => {
+            interval(EVENT_STORE_PULL_INTERVAL_MS).map(() => undefined),
+        ]).flatMap(async () => {
             try {
-                const events = await this.transact(cx, async (cx, topics) => {
+                const events = await this.transact(async topics => {
                     const result = await topics
-                        .get(cx, collection)
-                        .list(cx, offset)
+                        .get(collection)
+                        .list(offset)
                         .take(EVENT_STORE_MAX_PULL_COUNT)
-                        .map((cx, entry) => entry.data)
+                        .map(entry => entry.data)
                         .toArray();
 
                     // check if there are potentially more values to pull from the topic
                     if (result.length === EVENT_STORE_MAX_PULL_COUNT) {
                         // we don't wanna block on this call to avoid a deadlock
-                        selfTrigger.next(cx).catch(error => {
+                        selfTrigger.next().catch(error => {
                             logger.error(
-                                cx,
                                 'failed to trigger event store iteration',
                                 error
                             );
@@ -107,9 +101,9 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                 offset += events.length;
 
-                return events.map(x => [cx, x]);
+                return events.map(x => [x]);
             } catch (error) {
-                logger.error(cx, 'EventStoreReader.subscribe', error);
+                logger.error('EventStoreReader.subscribe', error);
                 return [];
             }
         });

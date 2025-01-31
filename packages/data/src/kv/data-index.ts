@@ -1,7 +1,5 @@
 import bytewise from 'bytewise';
 import {Codec} from '../codec.js';
-import {Cx} from '../context.js';
-import {AppError} from '../errors.js';
 import {assert, compareUint8Array, zip} from '../utils.js';
 import {decodeUuid, encodeUuid, Uuid, UuidCodec} from '../uuid.js';
 import {
@@ -17,18 +15,14 @@ export interface IndexGetOptions {
 
 export interface Index<TValue> {
     _debug: {
-        keys(cx: Cx): Promise<IndexKey[]>;
+        keys(): Promise<IndexKey[]>;
     };
     info: {
         unique: boolean;
     };
-    sync(
-        cx: Cx,
-        prev: TValue | undefined,
-        next: TValue | undefined
-    ): Promise<void>;
-    get(cx: Cx, key: IndexKey): AsyncIterable<[Cx, Uuid]>;
-    query(cx: Cx, condition: Condition<IndexKey>): AsyncIterable<[Cx, Uuid]>;
+    sync(prev: TValue | undefined, next: TValue | undefined): Promise<void>;
+    get(key: IndexKey): AsyncIterable<Uuid>;
+    query(condition: Condition<IndexKey>): AsyncIterable<Uuid>;
 }
 
 export interface IndexOptions<TValue> {
@@ -40,12 +34,9 @@ export interface IndexOptions<TValue> {
     readonly filter?: (value: TValue) => boolean;
 }
 
-export class UniqueError extends AppError {
-    constructor(
-        cx: Cx,
-        public readonly indexName: string
-    ) {
-        super(cx, 'unique index constraint violation');
+export class UniqueError extends Error {
+    constructor(public readonly indexName: string) {
+        super('unique index constraint violation');
     }
 }
 
@@ -62,10 +53,9 @@ export function createIndex<TValue>({
     const filter = originalFilter ?? (() => true);
 
     async function* queryInternal(
-        cx: Cx,
         condition: Condition<IndexKey>
-    ): AsyncIterable<[Cx, Uint8Entry]> {
-        const conditionKey = mapCondition(cx, condition, {
+    ): AsyncIterable<Uint8Entry> {
+        const conditionKey = mapCondition(condition, {
             gt: cond => cond.gt,
             gte: cond => cond.gte,
             lt: cond => cond.lt,
@@ -79,19 +69,18 @@ export function createIndex<TValue>({
         //   if we don't add undefined: {gt: [1, undefined]}, index_key would match the condition
         // undefined has the largest type tag in bytewise serialization, null the lowest
         const queryCondition = mapCondition<IndexKey, Condition<Uint8Array>>(
-            cx,
             condition,
             {
                 gt: cond => ({
-                    gt: keyCodec.encode(cx, [
+                    gt: keyCodec.encode([
                         ...cond.gt,
                         ...Array(16).fill(undefined),
                     ]),
                 }),
-                gte: cond => ({gte: keyCodec.encode(cx, cond.gte)}),
-                lt: cond => ({lt: keyCodec.encode(cx, cond.lt)}),
+                gte: cond => ({gte: keyCodec.encode(cond.gte)}),
+                lt: cond => ({lt: keyCodec.encode(cond.lt)}),
                 lte: cond => ({
-                    lte: keyCodec.encode(cx, [
+                    lte: keyCodec.encode([
                         ...cond.lte,
                         ...Array(16).fill(undefined),
                     ]),
@@ -99,16 +88,16 @@ export function createIndex<TValue>({
             }
         );
 
-        const iterator = tx.query(cx, queryCondition);
+        const iterator = tx.query(queryCondition);
 
-        for await (const [cx, entry] of iterator) {
-            const entryKey = keyCodec.decode(cx, entry.key);
+        for await (const entry of iterator) {
+            const entryKey = keyCodec.decode(entry.key);
             for (let i = 0; i < conditionKey.length - 1; i += 1) {
                 if (compareIndexKeyPart(entryKey[i], conditionKey[i]) !== 0) {
                     return;
                 }
             }
-            yield [cx, entry];
+            yield entry;
         }
     }
 
@@ -117,31 +106,28 @@ export function createIndex<TValue>({
             unique,
         },
         _debug: {
-            async keys(cx: Cx) {
+            async keys() {
                 const result: IndexKey[] = [];
-                const stream = tx.query(cx, {gte: new Uint8Array()});
-                for await (const [cx, {key}] of stream) {
-                    result.push(keyCodec.decode(cx, key));
+                for await (const {key} of tx.query({gte: new Uint8Array()})) {
+                    result.push(keyCodec.decode(key));
                 }
 
                 return result;
             },
         },
-        async sync(cx: Cx, prev, next) {
+        async sync(prev, next) {
             const prevId = prev && idSelector(prev);
             const nextId = next && idSelector(next);
             const id = prevId ?? nextId;
 
             if (!id) {
-                throw new AppError(
-                    cx,
+                throw new Error(
                     'invalid index sync: at least prev or next must be present'
                 );
             }
 
             if (prev && next && prevId !== nextId) {
-                throw new AppError(
-                    cx,
+                throw new Error(
                     'invalid index sync: changing id is not allowed'
                 );
             }
@@ -155,7 +141,7 @@ export function createIndex<TValue>({
             if (
                 prevKey !== undefined &&
                 nextKey !== undefined &&
-                zip(cx, prevKey, nextKey).every(
+                zip(prevKey, nextKey).every(
                     ([a, b]) => compareIndexKeyPart(a, b) === 0
                 ) &&
                 prevIncluded === nextIncluded
@@ -166,50 +152,40 @@ export function createIndex<TValue>({
 
             // clean up
             if (prevIncluded) {
-                assert(cx, prevKey !== undefined);
+                assert(prevKey !== undefined);
                 if (unique) {
-                    await tx.delete(cx, keyCodec.encode(cx, prevKey));
+                    await tx.delete(keyCodec.encode(prevKey));
                 } else {
-                    await tx.delete(cx, keyCodec.encode(cx, [...prevKey, id]));
+                    await tx.delete(keyCodec.encode([...prevKey, id]));
                 }
             }
 
             // add
             if (nextIncluded) {
-                assert(cx, nextKey !== undefined);
+                assert(nextKey !== undefined);
                 if (unique) {
-                    const existing = await tx.get(
-                        cx,
-                        keyCodec.encode(cx, nextKey)
-                    );
+                    const existing = await tx.get(keyCodec.encode(nextKey));
                     if (existing) {
-                        throw new UniqueError(cx, indexName);
+                        throw new UniqueError(indexName);
                     }
 
-                    await tx.put(
-                        cx,
-                        keyCodec.encode(cx, nextKey),
-                        encodeUuid(cx, id)
-                    );
+                    await tx.put(keyCodec.encode(nextKey), encodeUuid(id));
                 } else {
                     await tx.put(
-                        cx,
-                        keyCodec.encode(cx, [...nextKey, id]),
-                        encodeUuid(cx, id)
+                        keyCodec.encode([...nextKey, id]),
+                        encodeUuid(id)
                     );
                 }
             }
         },
-        async *query(cx: Cx, condition): AsyncIterable<[Cx, Uuid]> {
-            const stream = queryInternal(cx, condition);
-            for await (const [cx, entry] of stream) {
-                yield [cx, decodeUuid(cx, entry.value)];
+        async *query(condition): AsyncIterable<Uuid> {
+            for await (const entry of queryInternal(condition)) {
+                yield decodeUuid(entry.value);
             }
         },
-        async *get(cx: Cx, key): AsyncIterable<[Cx, Uuid]> {
-            const stream = queryInternal(cx, {gte: key});
-            for await (const [cx, entry] of stream) {
-                const entryKey = keyCodec.decode(cx, entry.key);
+        async *get(key): AsyncIterable<Uuid> {
+            for await (const entry of queryInternal({gte: key})) {
+                const entryKey = keyCodec.decode(entry.key);
                 for (let i = 0; i < key.length; i += 1) {
                     if (key.length > 0) {
                         // all parts up to the last were checked in queryInternal
@@ -224,7 +200,7 @@ export function createIndex<TValue>({
                     }
                 }
 
-                yield [cx, decodeUuid(cx, entry.value)];
+                yield decodeUuid(entry.value);
             }
         },
     };
@@ -297,7 +273,7 @@ export function compareIndexKeyPart(
 export class IndexKeyCodec implements Codec<IndexKey> {
     uuidCodec = new UuidCodec();
 
-    encode(cx: Cx, data: IndexKey): Uint8Array {
+    encode(data: IndexKey): Uint8Array {
         const key = data.map(part => {
             if (part instanceof Uint8Array) {
                 return Buffer.from(part);
@@ -308,7 +284,7 @@ export class IndexKeyCodec implements Codec<IndexKey> {
         return new Uint8Array(bytewise.encode(key));
     }
 
-    decode(cx: Cx, buf: Uint8Array): IndexKey {
+    decode(buf: Uint8Array): IndexKey {
         const key = bytewise.decode(Buffer.from(buf));
 
         return key.map((part: unknown) => {

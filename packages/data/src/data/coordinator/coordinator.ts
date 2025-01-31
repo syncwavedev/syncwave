@@ -25,7 +25,6 @@ export class CoordinatorServer {
     private readonly rpcServer: RpcServer<CoordinatorApiInputState>;
 
     constructor(
-        cx: Cx,
         transport: TransportServer<Message>,
         kv: Uint8KVStore,
         private readonly jwt: JwtService,
@@ -83,7 +82,7 @@ export class CoordinatorServer {
         await this.rpcServer.close(cx);
     }
 
-    async issueJwtByUserEmail(cx: Cx, email: string): Promise<string> {
+    async issueJwtByUserEmail(email: string): Promise<string> {
         return await this.dataLayer.transact(cx, async (cx, dataCx) => {
             const identity = await getIdentity(
                 cx,

@@ -1,8 +1,8 @@
 import {z, ZodType} from 'zod';
 import {astream, AsyncStream, StreamPuppet} from '../../async-stream.js';
-import {CancelledError, Cx} from '../../context.js';
+import {CancelledError} from '../../context.js';
 import {Deferred} from '../../deferred.js';
-import {AppError, toError} from '../../errors.js';
+import {toError} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {assertNever, Observer, Subject} from '../../utils.js';
 import {createRpcClient, RpcServer} from '../rpc/rpc-engine.js';
@@ -21,64 +21,59 @@ export class HubClient<T> {
     private readonly server: HubServerRpc<T>;
 
     constructor(
-        cx: Cx,
         transportClient: TransportClient<Message>,
         schema: ZodType<T>,
         authSecret: string
     ) {
         const conn = new PersistentConnection(transportClient);
-        this.server = createRpcClient(
-            createHubServerApi(cx, schema),
-            conn,
-            () => ({
-                auth: authSecret,
-            })
-        );
+        this.server = createRpcClient(createHubServerApi(schema), conn, () => ({
+            auth: authSecret,
+        }));
     }
 
     // next waits for all subscribers to do their work
-    async publish(cx: Cx, topic: string, message: T) {
-        await this.server.publish(cx, {topic, message});
+    async publish(topic: string, message: T) {
+        await this.server.publish({topic, message});
     }
 
-    async throw(cx: Cx, topic: string, error: string) {
-        await this.server.throw(cx, {topic, error});
+    async throw(topic: string, error: string) {
+        await this.server.throw({topic, error});
     }
 
-    async subscribe(cx: Cx, topic: string): Promise<AsyncStream<T>> {
+    async subscribe(topic: string): Promise<AsyncStream<T>> {
         const result = new Deferred<AsyncStream<T>>();
         const updateStream = new StreamPuppet<any>();
         (async () => {
             const observerStream = astream(
-                this.server.subscribe(cx, {topic}) as AsyncIterable<
-                    [Cx, {type: 'start'} | {type: 'message'; message: T}]
+                this.server.subscribe({topic}) as AsyncIterable<
+                    {type: 'start'} | {type: 'message'; message: T}
                 >
             );
 
             try {
-                for await (const [cx, item] of observerStream) {
+                for await (const item of observerStream) {
                     if (item.type === 'start') {
-                        result.resolve(cx, astream(updateStream));
+                        result.resolve(astream(updateStream));
                     } else if (item.type === 'message') {
-                        await updateStream.next(cx, item.message);
+                        await updateStream.next(item.message);
                     } else {
-                        assertNever(cx, item);
+                        assertNever(item);
                     }
                 }
             } catch (error) {
-                result.reject(toError(cx, error));
+                result.reject(toError(error));
                 await updateStream.throw(error);
             } finally {
                 updateStream.end();
             }
         })()
             .catch((error: unknown) => {
-                logger.error(cx, 'HubClient.subscribe', error);
-                result.reject(toError(cx, error));
+                logger.error('HubClient.subscribe', error);
+                result.reject(toError(error));
                 return updateStream.throw(error);
             })
             .finally(() => {
-                result.reject(new CancelledError(cx));
+                result.reject(new CancelledError());
                 updateStream.end();
             });
 
@@ -90,14 +85,13 @@ export class HubServer<T> {
     private readonly rpcServer: RpcServer<HubServerRpcState<T>>;
 
     constructor(
-        cx: Cx,
         transport: TransportServer<Message>,
         schema: ZodType<T>,
         authSecret: string
     ) {
         this.rpcServer = new RpcServer(
             transport,
-            createHubServerApi(cx, schema),
+            createHubServerApi(schema),
             {
                 authSecret,
                 subjects: new SubjectManager(),
@@ -106,34 +100,34 @@ export class HubServer<T> {
         );
     }
 
-    async launch(cx: Cx): Promise<void> {
-        await this.rpcServer.launch(cx);
+    async launch(): Promise<void> {
+        await this.rpcServer.launch();
     }
 
-    async close(cx: Cx) {
-        await this.rpcServer.close(cx);
+    async close() {
+        await this.rpcServer.close();
     }
 }
 
 class SubjectManager<T> {
     private subjects = new Map<string, Subject<T>>();
 
-    async next(cx: Cx, topic: string, value: T) {
-        await this.subjects.get(topic)?.next(cx, value);
+    async next(topic: string, value: T) {
+        await this.subjects.get(topic)?.next(value);
     }
 
-    async throw(cx: Cx, topic: string, error: AppError) {
+    async throw(topic: string, error: Error) {
         await this.subjects.get(topic)?.throw(error);
     }
 
-    subscribe(cx: Cx, topic: string, observer: Observer<T>) {
+    subscribe(topic: string, observer: Observer<T>) {
         let subject = this.subjects.get(topic);
         if (!subject) {
             subject = new Subject();
             this.subjects.set(topic, subject);
         }
-        subject.subscribe(cx, {
-            next: (cx, value) => observer.next(cx, value),
+        subject.subscribe({
+            next: value => observer.next(value),
             throw: error => observer.throw(error),
             close: () => {
                 observer.close();
@@ -144,7 +138,7 @@ class SubjectManager<T> {
         });
     }
 
-    value$(cx: Cx, topic: string) {
+    value$(topic: string) {
         let subject = this.subjects.get(topic);
         if (!subject) {
             subject = new Subject();
@@ -164,7 +158,7 @@ interface HubServerRpcState<T> {
     subjects: SubjectManager<T>;
 }
 
-function createHubServerApi<T>(cx: Cx, zMessage: ZodType<T>) {
+function createHubServerApi<T>(zMessage: ZodType<T>) {
     const api1 = createApi<HubServerRpcState<T>>()({
         publish: handler({
             req: z.object({
@@ -172,18 +166,17 @@ function createHubServerApi<T>(cx: Cx, zMessage: ZodType<T>) {
                 message: zMessage,
             }),
             res: z.void(),
-            handle: async (cx, state, {topic, message}) => {
-                await state.subjects.next(cx, topic, message!);
+            handle: async (state, {topic, message}) => {
+                await state.subjects.next(topic, message!);
             },
         }),
         throw: handler({
             req: z.object({topic: z.string(), error: z.string()}),
             res: z.void(),
-            handle: async (cx, state, {topic, error}) => {
+            handle: async (state, {topic, error}) => {
                 await state.subjects.throw(
-                    cx,
                     topic,
-                    new AppError(cx, 'EventHubServerApi.throw', {cause: error})
+                    new Error('EventHubServerApi.throw', {cause: error})
                 );
             },
         }),
@@ -194,16 +187,15 @@ function createHubServerApi<T>(cx: Cx, zMessage: ZodType<T>) {
                 z.object({type: z.literal('message'), message: zMessage}),
             ]),
             async *stream(
-                cx,
                 {subjects},
                 {topic}
             ): AsyncIterable<
                 | {type: 'start'}
                 | {type: 'message'; message: z.infer<typeof zMessage>}
             > {
-                const message$ = subjects.value$(cx, topic);
+                const message$ = subjects.value$(topic);
                 yield {type: 'start'};
-                for await (const [cx, message] of message$) {
+                for await (const [message] of message$) {
                     yield {type: 'message', message};
                 }
             },
@@ -211,17 +203,15 @@ function createHubServerApi<T>(cx: Cx, zMessage: ZodType<T>) {
     });
 
     const api2 = applyMiddleware(
-        cx,
         api1,
-        async (cx, next, state: HubServerRpcState<T>, headers) => {
+        async (next, state: HubServerRpcState<T>, headers) => {
             if (headers.auth !== state.authSecret) {
-                throw new AppError(
-                    cx,
+                throw new Error(
                     `HubServer: authentication failed: ${state.authSecret} !== ${headers.auth}`
                 );
             }
 
-            await next(cx, state);
+            await next(state);
         }
     );
 

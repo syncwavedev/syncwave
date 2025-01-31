@@ -1,7 +1,5 @@
 import {astream, AsyncStream} from '../async-stream.js';
 import {Codec} from '../codec.js';
-import {Cx} from '../context.js';
-import {AppError} from '../errors.js';
 import {bufStartsWith, unreachable} from '../utils.js';
 import {MappedTransaction, Mapper} from './mapped-kv-store.js';
 import {PrefixedTransaction} from './prefixed-kv-store.js';
@@ -62,30 +60,23 @@ export type Condition<TKey> =
     | LtCondition<TKey>
     | LteCondition<TKey>;
 
-export class InvalidQueryCondition extends AppError {
-    constructor(
-        cx: Cx,
-        public readonly condition: Condition<unknown>
-    ) {
-        super(cx, 'invalid query condition');
+export class InvalidQueryCondition extends Error {
+    constructor(public readonly condition: Condition<unknown>) {
+        super('invalid query condition');
     }
 }
 
 export interface Transaction<TKey, TValue> {
-    get(cx: Cx, key: TKey): Promise<TValue | undefined>;
-    query(
-        cx: Cx,
-        condition: Condition<TKey>
-    ): AsyncIterable<[Cx, Entry<TKey, TValue>]>;
-    put(cx: Cx, key: TKey, value: TValue): Promise<void>;
-    delete(cx: Cx, key: TKey): Promise<void>;
+    get(key: TKey): Promise<TValue | undefined>;
+    query(condition: Condition<TKey>): AsyncIterable<Entry<TKey, TValue>>;
+    put(key: TKey, value: TValue): Promise<void>;
+    delete(key: TKey): Promise<void>;
 }
 
 export interface KVStore<TKey, TValue> {
     // fn must be called multiple times in case of a conflict (optimistic concurrency)
     transact<TResult>(
-        cx: Cx,
-        fn: (cx: Cx, tx: Transaction<TKey, TValue>) => Promise<TResult>
+        fn: (tx: Transaction<TKey, TValue>) => Promise<TResult>
     ): Promise<TResult>;
 }
 
@@ -100,7 +91,6 @@ export interface ConditionMapper<TKey, TResult> {
 }
 
 export function mapCondition<TKey, TResult>(
-    cx: Cx,
     condition: Condition<TKey>,
     mapper: ConditionMapper<TKey, TResult>
 ): TResult {
@@ -113,7 +103,7 @@ export function mapCondition<TKey, TResult>(
     } else if (condition.lte !== undefined) {
         return mapper.lte(condition as LteCondition<TKey>);
     } else {
-        return unreachable(cx);
+        return unreachable();
     }
 }
 
@@ -121,8 +111,8 @@ export function mapCondition<TKey, TResult>(
 
 function createIdMapper<T>(): Mapper<T, T> {
     return {
-        decode: (cx, x) => x,
-        encode: (cx, x) => x,
+        decode: x => x,
+        encode: x => x,
     };
 }
 
@@ -136,12 +126,11 @@ function createEncodingMapper<TData>(
 }
 
 export function withPrefix(
-    cx: Cx,
     prefix: Uint8Array | string
 ): <TValue>(
     store: Transaction<Uint8Array, TValue>
 ) => Transaction<Uint8Array, TValue> {
-    return store => new PrefixedTransaction(cx, store, prefix);
+    return store => new PrefixedTransaction(store, prefix);
 }
 
 export function withValueCodec<TData>(
@@ -169,24 +158,22 @@ export function withKeyCodec<TData>(
 }
 
 export function queryStartsWith<T>(
-    cx: Cx,
     tx: Transaction<Uint8Array, T>,
     prefix: Uint8Array
 ): AsyncStream<Entry<Uint8Array, T>> {
-    return astream(_queryStartsWith(cx, tx, prefix));
+    return astream(_queryStartsWith(tx, prefix));
 }
 
 async function* _queryStartsWith<T>(
-    cx: Cx,
     tx: Transaction<Uint8Array, T>,
     prefix: Uint8Array
-): AsyncIterable<[Cx, Entry<Uint8Array, T>]> {
-    const stream = tx.query(cx, {gte: prefix});
-    for await (const [cx, entry] of stream) {
+): AsyncIterable<Entry<Uint8Array, T>> {
+    const stream = tx.query({gte: prefix});
+    for await (const entry of stream) {
         if (!bufStartsWith(entry.key, prefix)) {
             return;
         }
 
-        yield [cx, entry];
+        yield entry;
     }
 }

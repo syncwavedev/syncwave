@@ -11,7 +11,6 @@ export interface Handler<TState, TRequest, TResponse> {
     req: ZodType<TRequest>;
     res: ZodType<TResponse>;
     handle(
-        cx: Cx,
         state: TState,
         req: TRequest,
         headers: MessageHeaders
@@ -24,7 +23,6 @@ export interface Streamer<TState, TRequest, TItem> {
     item: ZodType<TItem>;
     observer: boolean;
     stream(
-        cx: Cx,
         state: TState,
         req: TRequest,
         headers: MessageHeaders
@@ -57,7 +55,6 @@ export interface HandlerOptions<
     req: TRequestSchema;
     res: TResponseSchema;
     handle: (
-        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -72,7 +69,6 @@ export function handler<
     options: HandlerOptions<TState, TRequestSchema, TResponseSchema>
 ): Handler<TState, TypeOf<TRequestSchema>, TypeOf<TResponseSchema>> {
     async function wrapper(
-        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -104,7 +100,6 @@ export interface StreamerOptions<
     req: TRequestSchema;
     item: TItemSchema;
     stream: (
-        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -119,7 +114,6 @@ export function streamer<
     options: StreamerOptions<TState, TRequestSchema, TItemSchema>
 ): Streamer<TState, TypeOf<TRequestSchema>, TypeOf<TItemSchema>> {
     async function* wrapper(
-        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -152,7 +146,6 @@ export interface ObserverOptions<
     req: TRequestSchema;
     value: TValueSchema;
     observe: (
-        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -179,7 +172,6 @@ export function observer<
     options: ObserverOptions<TState, TRequestSchema, TValueSchema>
 ): Observer<TState, TypeOf<TRequestSchema>, TypeOf<TValueSchema>> {
     function wrapper(
-        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -238,9 +230,8 @@ export function mapApiState<
     TStatePublic,
     TApi extends Api<TStatePrivate>,
 >(
-    cx: Cx,
     api: TApi,
-    map: (cx: Cx, state: TStatePublic) => TStatePrivate | Promise<TStatePrivate>
+    map: (state: TStatePublic) => TStatePrivate | Promise<TStatePrivate>
 ): MapApiState<TApi, TStatePublic> {
     return applyMiddleware(
         cx,
@@ -254,10 +245,8 @@ export function decorateApi<
     TStatePublic,
     TApi extends Api<TStatePrivate>,
 >(
-    cx: Cx,
     api: TApi,
     decorate: (
-        cx: Cx,
         processor: Processor<TStatePrivate, unknown, any>
     ) => Processor<TStatePublic, unknown, any>
 ): MapApiState<TApi, TStatePublic> {
@@ -274,11 +263,9 @@ export function applyMiddleware<
     TStatePublic,
     TApi extends Api<TStatePrivate>,
 >(
-    cx: Cx,
     api: TApi,
     middleware: (
-        cx: Cx,
-        next: (cx: Cx, state: TStatePrivate) => Promise<void>,
+        next: (state: TStatePrivate) => Promise<void>,
         state: TStatePublic,
         headers: MessageHeaders
     ) => Promise<void>
@@ -288,7 +275,6 @@ export function applyMiddleware<
         api,
         (cx, processor) => {
             async function work(
-                cx: Cx,
                 state: TStatePublic,
                 req: unknown,
                 headers: MessageHeaders
@@ -362,27 +348,25 @@ export function applyMiddleware<
 export type InferRpcClient<T extends Api<any>> = {
     [K in keyof T]: T[K] extends Observer<any, infer TReq, infer TValue>
         ? (
-              cx: Cx,
               req: TReq,
               headers?: MessageHeaders
           ) => Promise<[initialValue: TValue, AsyncStream<TValue>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
-          ? (cx: Cx, req: TReq, headers?: MessageHeaders) => AsyncStream<TItem>
+          ? (req: TReq, headers?: MessageHeaders) => AsyncStream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
-            ? (cx: Cx, req: TReq, headers?: MessageHeaders) => Promise<TRes>
+            ? (req: TReq, headers?: MessageHeaders) => Promise<TRes>
             : never;
 };
 
 export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
     [K in keyof T]: T[K] extends Observer<any, infer TReq, infer TValue>
         ? (
-              cx: Cx,
               req: TReq,
               headers: MessageHeaders
           ) => Promise<[initialValue: TValue, AsyncStream<TValue>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
-          ? (cx: Cx, req: TReq, headers: MessageHeaders) => AsyncStream<TItem>
+          ? (req: TReq, headers: MessageHeaders) => AsyncStream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
-            ? (cx: Cx, req: TReq, headers: MessageHeaders) => Promise<TRes>
+            ? (req: TReq, headers: MessageHeaders) => Promise<TRes>
             : never;
 };

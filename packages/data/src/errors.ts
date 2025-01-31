@@ -1,16 +1,3 @@
-import {Cx} from './context.js';
-
-// eslint-disable-next-line no-restricted-globals
-export class AppError extends Error {
-    constructor(
-        public readonly cx: Cx,
-        message?: string,
-        cause?: unknown
-    ) {
-        super(message, {cause});
-    }
-}
-
 export type ErrorCode =
     | 'board_slug_taken'
     | 'identity_email_taken'
@@ -20,23 +7,18 @@ export type ErrorCode =
     | 'aggregate'
     | 'task_not_found';
 
-export class BusinessError extends AppError {
+export class BusinessError extends Error {
     constructor(
-        cx: Cx,
         message: string,
         public readonly code: ErrorCode
     ) {
-        super(cx, message);
+        super(message);
     }
 }
 
 export class AggregateBusinessError extends BusinessError {
-    constructor(
-        cx: Cx,
-        public readonly errors: any[]
-    ) {
+    constructor(public readonly errors: any[]) {
         super(
-            cx,
             `${errors.length} errors occurred:\n - ` +
                 errors.map(getReadableError).join('\n - '),
             'aggregate'
@@ -44,13 +26,9 @@ export class AggregateBusinessError extends BusinessError {
     }
 }
 
-export class AggregateError extends AppError {
-    constructor(
-        cx: Cx,
-        public readonly errors: any[]
-    ) {
+export class AggregateError extends Error {
+    constructor(public readonly errors: any[]) {
         super(
-            cx,
             `${errors.length} errors occurred:\n - ` +
                 errors.map(getReadableError).join('\n - ')
         );
@@ -74,11 +52,11 @@ export function getReadableError(error: any) {
     return 'An unknown error occurred.';
 }
 
-export function toError(cx: Cx, reason: unknown): AppError {
+export function toError(reason: unknown): Error {
     // eslint-disable-next-line no-restricted-globals
-    if (reason instanceof AppError) {
+    if (reason instanceof Error) {
         return reason;
     }
 
-    return new AppError(cx, 'Unknown error', {cause: reason});
+    return new Error('Unknown error', {cause: reason});
 }

@@ -1,47 +1,47 @@
-import {Cancel, Cx} from './context.js';
+import {Cancel, spawnContext} from './context.js';
 import {logger} from './logger.js';
+import {Nothing} from './utils.js';
 import {Uuid} from './uuid.js';
 
 export class ContextManager<T extends Uuid> {
-    private readonly runningJobs = new Map<T, [Cx, Cancel]>();
+    private readonly runningJobs = new Map<T, Cancel>();
     private readonly cancelledJobs = new Set<T>();
 
-    constructor(private readonly parentCx: Cx) {}
+    constructor() {}
 
-    start(cx: Cx, id: T) {
+    start(id: T, fn: () => Nothing) {
         if (this.runningJobs.has(id)) {
-            logger.warn(cx, `job ${id} is already running`);
-            const [jobCx] = this.runningJobs.get(id)!;
-            return jobCx;
+            logger.warn(`job ${id} is already running`);
+            return;
         } else if (this.cancelledJobs.has(id)) {
-            logger.warn(cx, `job ${id} is already finished`);
-            return Cx.cancelled();
+            logger.warn(`job ${id} is already finished`);
+            return;
         } else {
-            const [cx, cancel] = this.parentCx.withCancel();
-            this.runningJobs.set(id, [cx, cancel]);
-            return cx;
+            const cancel = spawnContext(fn);
+            this.runningJobs.set(id, cancel);
+            return cancel;
         }
     }
 
     cancel(id: T) {
         if (this.runningJobs.has(id)) {
-            this.runningJobs.get(id)![1]();
+            this.runningJobs.get(id)!();
             this.runningJobs.delete(id);
             this.cancelledJobs.add(id);
         } else if (this.cancelledJobs.has(id)) {
-            logger.warn(Cx.todo(), `job ${id} is already cancelled`);
+            logger.warn(`job ${id} is already cancelled`);
         } else {
-            logger.warn(Cx.todo(), `unknown job: ${id}`);
+            logger.warn(`unknown job: ${id}`);
         }
     }
 
     finish(job: T) {
         if (this.runningJobs.has(job) || this.cancelledJobs.has(job)) {
-            this.runningJobs.get(job)?.[1]();
+            this.runningJobs.get(job)?.();
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
         } else {
-            logger.warn(Cx.todo(), `unknown job: ${job}`);
+            logger.warn(`unknown job: ${job}`);
         }
     }
 

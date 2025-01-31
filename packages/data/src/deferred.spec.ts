@@ -1,9 +1,5 @@
 import {assert, describe, expect, it, vi} from 'vitest';
-import {Cx} from './context.js';
 import {Deferred} from './deferred.js';
-import {AppError} from './errors.js';
-
-const cx = Cx.todo();
 
 describe('Deferred', () => {
     it('should initialize with a pending state', () => {
@@ -15,7 +11,7 @@ describe('Deferred', () => {
         const deferred = new Deferred();
         const value = 'testValue';
 
-        deferred.resolve(cx, value);
+        deferred.resolve(value);
 
         expect(deferred.state).toBe('fulfilled');
         await expect(deferred.promise).resolves.toBe(value);
@@ -23,7 +19,7 @@ describe('Deferred', () => {
 
     it('should reject with the given error', async () => {
         const deferred = new Deferred();
-        const error = new AppError(cx, 'testError');
+        const error = new Error('testError');
 
         deferred.reject(error);
 
@@ -36,8 +32,8 @@ describe('Deferred', () => {
         const firstValue = 'firstValue';
         const secondValue = 'secondValue';
 
-        deferred.resolve(cx, firstValue);
-        deferred.resolve(cx, secondValue);
+        deferred.resolve(firstValue);
+        deferred.resolve(secondValue);
 
         expect(deferred.state).toBe('fulfilled');
         await expect(deferred.promise).resolves.toBe(firstValue);
@@ -45,8 +41,8 @@ describe('Deferred', () => {
 
     it('should not reject again after being rejected', async () => {
         const deferred = new Deferred();
-        const firstError = new AppError(cx, 'firstError');
-        const secondError = new AppError(cx, 'secondError');
+        const firstError = new Error('firstError');
+        const secondError = new Error('secondError');
 
         deferred.reject(firstError);
         const result1 = await deferred.promise.catch(err => err);
@@ -59,11 +55,11 @@ describe('Deferred', () => {
 
     it('should not resolve after being rejected', async () => {
         const deferred = new Deferred();
-        const error = new AppError(cx, 'testError');
+        const error = new Error('testError');
         const value = 'testValue';
 
         deferred.reject(error);
-        deferred.resolve(cx, value);
+        deferred.resolve(value);
 
         expect(deferred.state).toBe('rejected');
         await expect(deferred.promise).rejects.toThrow();
@@ -72,9 +68,9 @@ describe('Deferred', () => {
     it('should not reject after being fulfilled', async () => {
         const deferred = new Deferred();
         const value = 'testValue';
-        const error = new AppError(cx, 'testError');
+        const error = new Error('testError');
 
-        deferred.resolve(cx, value);
+        deferred.resolve(value);
         deferred.reject(error);
 
         expect(deferred.state).toBe('fulfilled');
@@ -87,7 +83,7 @@ describe('Deferred', () => {
         const onResolved = vi.fn();
 
         deferred.promise.then(onResolved).catch(() => {});
-        deferred.resolve(cx, value);
+        deferred.resolve(value);
 
         await deferred.promise;
 
@@ -96,7 +92,7 @@ describe('Deferred', () => {
 
     it('should execute reject callback when rejected', async () => {
         const deferred = new Deferred();
-        const error = new AppError(cx, 'testError');
+        const error = new Error('testError');
         const onRejected = vi.fn();
 
         deferred.promise.catch(onRejected);
@@ -108,14 +104,14 @@ describe('Deferred', () => {
             // swallow
         }
 
-        expect(onRejected.mock.calls[0][0]).toBeInstanceOf(AppError);
+        expect(onRejected.mock.calls[0][0]).toBeInstanceOf(Error);
     });
 
     it('should maintain the fulfilled value after resolution', async () => {
         const deferred = new Deferred();
         const value = 'testValue';
 
-        deferred.resolve(cx, value);
+        deferred.resolve(value);
 
         expect(deferred.state).toBe('fulfilled');
         assert(deferred['_state'].type === 'fulfilled');
@@ -124,7 +120,7 @@ describe('Deferred', () => {
 
     it('should maintain the rejection error after rejection', async () => {
         const deferred = new Deferred();
-        const error = new AppError(cx, 'testError');
+        const error = new Error('testError');
 
         deferred.reject(error);
 

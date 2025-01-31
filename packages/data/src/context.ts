@@ -1,10 +1,10 @@
+import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {astream, AsyncStream} from './async-stream.js';
 import {Deferred} from './deferred.js';
-import {AppError} from './errors.js';
-import {Brand, Nothing} from './utils.js';
+import {assert, Brand, Nothing} from './utils.js';
 
-export class CancelledError extends AppError {}
+export class CancelledError extends Error {}
 
 // todo: make cancel synchronous (without Promises)
 
@@ -22,7 +22,10 @@ export function scoped() {
 }
 
 function createScopedFunc<
-    T extends (cx: Cx, ...args: any[]) => Promise<any> | AsyncIterable<any>,
+    T extends (
+        cx: Context,
+        ...args: any[]
+    ) => Promise<any> | AsyncIterable<any>,
 >(originalMethod: T): (...args: Parameters<T>) => AsyncRemap<ReturnType<T>> {
     function scopedMethod(this: any, ...args: Parameters<T>): any {
         const [childScope, cancelChild] = args[0].withCancel();
@@ -70,38 +73,38 @@ export function createTraceId(): TraceId {
     return traceNanoId() as TraceId;
 }
 
-export class Cx {
+export class Context {
     public readonly traceId = createTraceId();
 
     // this should not exist
     static create() {
-        return Cx.background().withCancel();
+        return Context.background().withCancel();
     }
 
-    static scope<T extends (child: Cx) => Promise<T> | AsyncIterable<T>>(
+    static scope<T extends (child: Context) => Promise<T> | AsyncIterable<T>>(
         fn: T
     ): AsyncRemap<ReturnType<T>> {
-        return (createScopedFunc(fn) as any)(Cx.background());
+        return (createScopedFunc(fn) as any)(Context.background());
     }
 
     static background() {
-        return new Cx();
+        return new Context();
     }
 
     static todo() {
-        return Cx.background();
+        return Context.background();
     }
 
     static none() {
-        return Cx.todo();
+        return Context.todo();
     }
 
     static test() {
-        return Cx.todo();
+        return Context.todo();
     }
 
     static cancelled() {
-        const cx = new Cx();
+        const cx = new Context();
         cx._cancelled = true;
         return cx;
     }
@@ -110,13 +113,13 @@ export class Cx {
 
     private readonly cleaners: Array<() => Promise<void> | void> = [];
     private _cancelled = false;
-    private children: Cx[] = [];
+    private children: Context[] = [];
 
     get alive() {
         return !this._cancelled;
     }
 
-    async race<T>(cx: Cx, promise: Promise<T>, message?: string) {
+    async race<T>(cx: Context, promise: Promise<T>, message?: string) {
         const result = await Promise.race([
             this.cancelPromise().then(() => ({
                 type: 'cancel' as const,
@@ -125,26 +128,26 @@ export class Cx {
         ]);
 
         if (result.type === 'cancel') {
-            throw new CancelledError(cx, message);
+            throw new CancelledError(message);
         }
 
         return result.value;
     }
 
-    scope<T extends (child: Cx) => Promise<T> | AsyncIterable<T>>(fn: T) {
+    scope<T extends (child: Context) => Promise<T> | AsyncIterable<T>>(fn: T) {
         return createScopedFunc(fn);
     }
 
-    ensureAlive(cx: Cx, message?: string) {
+    ensureAlive(message?: string) {
         if (!this.alive) {
-            throw new CancelledError(cx, message);
+            throw new CancelledError(message);
         }
     }
 
     cancelPromise(): Promise<void> {
         const signal = new Deferred<void>();
         this.onCancel(() => {
-            signal.resolve(Cx.todo());
+            signal.resolve();
         });
         return signal.promise;
     }
@@ -157,8 +160,8 @@ export class Cx {
         }
     }
 
-    withCancel(): [Cx, Cancel] {
-        const child = new Cx();
+    withCancel(): [Context, Cancel] {
+        const child = new Context();
         this.children.push(child);
         return [
             child,
@@ -178,4 +181,20 @@ export class Cx {
         this.children.forEach(x => x.cancel());
         this.cleaners.forEach(cb => cb());
     }
+}
+
+const _ctx = new AsyncContext.Variable<Context>({});
+export function context() {
+    const result = _ctx.get();
+    assert(result !== undefined);
+
+    return result;
+}
+
+export function spawnContext(fn: () => Nothing) {
+    const [child, cancelChild] = context().withCancel();
+
+    _ctx.run(child, fn);
+
+    return cancelChild;
 }

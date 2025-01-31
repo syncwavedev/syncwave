@@ -1,15 +1,13 @@
 import {decodeString, encodeString} from '../codec.js';
-import {Cx} from '../context.js';
-import {AppError} from '../errors.js';
 import {decodeHex} from '../hex.js';
 import {bufStartsWith} from '../utils.js';
 import {decodeUuid, encodeUuid, Uuid} from '../uuid.js';
 import {Doc, DocRepo} from './doc-repo.js';
 
 export interface DataNodeVisitor<T> {
-    repo(cx: Cx, node: RepoDataNode<any>): T;
-    doc(cx: Cx, node: DocDataNode<any>): T;
-    aggregate(cx: Cx, node: AggregateDataNode<Record<string, DataNode>>): T;
+    repo(node: RepoDataNode<any>): T;
+    doc(node: DocDataNode<any>): T;
+    aggregate(node: AggregateDataNode<Record<string, DataNode>>): T;
 }
 
 export interface DataNodeChild {
@@ -18,12 +16,9 @@ export interface DataNodeChild {
 }
 
 export abstract class DataNode {
-    abstract queryChildren(
-        cx: Cx,
-        prefix: Uint8Array
-    ): AsyncIterable<[Cx, DataNodeChild]>;
-    abstract child(cx: Cx, part: Uint8Array): DataNode;
-    abstract visit<T>(cx: Cx, visitor: DataNodeVisitor<T>): T;
+    abstract queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild>;
+    abstract child(part: Uint8Array): DataNode;
+    abstract visit<T>(visitor: DataNodeVisitor<T>): T;
 }
 
 export class AggregateDataNode<
@@ -33,29 +28,26 @@ export class AggregateDataNode<
         super();
     }
 
-    async *queryChildren(
-        cx: Cx,
-        prefix: Uint8Array
-    ): AsyncIterable<[Cx, DataNodeChild]> {
+    async *queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild> {
         for (const [prop, node] of Object.entries(this.children)) {
-            const key = encodeString(cx, prop);
+            const key = encodeString(prop);
             if (bufStartsWith(key, prefix)) {
-                yield [cx, {key, node}];
+                yield {key, node};
             }
         }
     }
 
-    child(cx: Cx, key: Uint8Array): DataNode {
-        const result = this.children[decodeString(cx, key)];
+    child(key: Uint8Array): DataNode {
+        const result = this.children[decodeString(key)];
         if (!result) {
-            `AggregateDataNode does not have any children with key = ${decodeHex(cx, key)}`;
+            `AggregateDataNode does not have any children with key = ${decodeHex(key)}`;
         }
 
         return result;
     }
 
-    visit<T>(cx: Cx, visitor: DataNodeVisitor<T>): T {
-        return visitor.aggregate(cx, this);
+    visit<T>(visitor: DataNodeVisitor<T>): T {
+        return visitor.aggregate(this);
     }
 }
 
@@ -64,23 +56,20 @@ export class RepoDataNode<T extends Doc> extends DataNode {
         super();
     }
 
-    async *queryChildren(
-        cx: Cx,
-        prefix: Uint8Array
-    ): AsyncIterable<[Cx, DataNodeChild]> {
-        yield* this.repo.getAll(cx, prefix).map((cx, doc) => ({
-            key: encodeUuid(cx, doc.id),
+    async *queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild> {
+        yield* this.repo.getAll(prefix).map(doc => ({
+            key: encodeUuid(doc.id),
             node: new DocDataNode(doc.id, this.repo),
         }));
     }
 
-    child(cx: Cx, key: Uint8Array): DataNode {
-        const uuid = decodeUuid(cx, key);
+    child(key: Uint8Array): DataNode {
+        const uuid = decodeUuid(key);
         return new DocDataNode(uuid, this.repo);
     }
 
-    visit<TResult>(cx: Cx, visitor: DataNodeVisitor<TResult>): TResult {
-        return visitor.repo(cx, this);
+    visit<TResult>(visitor: DataNodeVisitor<TResult>): TResult {
+        return visitor.repo(this);
     }
 }
 
@@ -92,22 +81,21 @@ export class DocDataNode<T extends Doc> extends DataNode {
         super();
     }
 
-    async *queryChildren(): AsyncIterable<[Cx, DataNodeChild]> {
+    async *queryChildren(): AsyncIterable<DataNodeChild> {
         // no children
     }
 
-    child(cx: Cx, key: Uint8Array): DataNode {
-        throw new AppError(
-            cx,
-            `DocDataNode does not have any children, part: ${decodeHex(cx, key)}`
+    child(key: Uint8Array): DataNode {
+        throw new Error(
+            `DocDataNode does not have any children, part: ${decodeHex(key)}`
         );
     }
 
-    visit<T>(cx: Cx, visitor: DataNodeVisitor<T>): T {
-        return visitor.doc(cx, this);
+    visit<T>(visitor: DataNodeVisitor<T>): T {
+        return visitor.doc(this);
     }
 
-    async snapshot(cx: Cx): Promise<T | undefined> {
-        return await this.repo.getById(cx, this.docId);
+    async snapshot(): Promise<T | undefined> {
+        return await this.repo.getById(this.docId);
     }
 }

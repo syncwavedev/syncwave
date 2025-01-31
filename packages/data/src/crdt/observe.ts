@@ -1,6 +1,3 @@
-import {Cx} from '../context.js';
-import {AppError} from '../errors.js';
-
 interface BaseOpLogEntry<TType extends string> {
     readonly type: TType;
     readonly subject: any;
@@ -134,8 +131,7 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     method === 'toSpliced' ||
                     method === 'with'
                 ) {
-                    throw new AppError(
-                        Cx.none(),
+                    throw new Error(
                         'unsupported array modification: ' + method
                     );
                 } else {
@@ -146,8 +142,7 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
             },
             set(target, prop, value, receiver) {
                 if (typeof prop !== 'string' || !Number.isInteger(+prop)) {
-                    throw new AppError(
-                        Cx.todo(),
+                    throw new Error(
                         'unsupported array modification: set ' + prop.toString()
                     );
                 }
@@ -155,10 +150,7 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                 const index = +prop.toString();
 
                 if (target.length <= index || index < 0) {
-                    throw new AppError(
-                        Cx.none(),
-                        'unsupported index modification'
-                    );
+                    throw new Error('unsupported index modification');
                 }
 
                 log.push({
@@ -176,10 +168,7 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                 );
             },
             deleteProperty() {
-                throw new AppError(
-                    Cx.none(),
-                    'delete is an unsupported array modification'
-                );
+                throw new Error('delete is an unsupported array modification');
             },
         }
     );
@@ -254,15 +243,13 @@ function createMapProxy<T>(
                 return original;
             },
             set(target, prop) {
-                throw new AppError(
-                    Cx.none(),
+                throw new Error(
                     'unsupported map modification: direct set of property ' +
                         prop.toString()
                 );
             },
             deleteProperty(target, prop) {
-                throw new AppError(
-                    Cx.none(),
+                throw new Error(
                     'unsupported map modification: delete of property ' +
                         prop.toString()
                 );
@@ -287,10 +274,7 @@ function createObjectProxy<T extends object>(subject: T, log: OpLog): T {
             );
 
             if (typeof prop === 'symbol') {
-                throw new AppError(
-                    Cx.none(),
-                    'symbols as object keys are not supported'
-                );
+                throw new Error('symbols as object keys are not supported');
             }
 
             log.push({
@@ -306,10 +290,7 @@ function createObjectProxy<T extends object>(subject: T, log: OpLog): T {
             const result = Reflect.deleteProperty(target, prop);
 
             if (typeof prop === 'symbol') {
-                throw new AppError(
-                    Cx.none(),
-                    'symbols as object keys are not supported'
-                );
+                throw new Error('symbols as object keys are not supported');
             }
 
             log.push({
@@ -340,7 +321,7 @@ function createProxy<T>(value: T, log: OpLog): T {
     } else if (value.constructor === Object) {
         return createObjectProxy(value, log) as T;
     } else {
-        throw new AppError(Cx.none(), 'unsupported value for proxy: ' + value);
+        throw new Error('unsupported value for proxy: ' + value);
     }
 }
 

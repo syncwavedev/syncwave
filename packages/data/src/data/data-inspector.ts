@@ -1,7 +1,6 @@
 import {z, ZodType} from 'zod';
 import {astream} from '../async-stream.js';
 import {decodeString, encodeString} from '../codec.js';
-import {Cx} from '../context.js';
 import {Uint8Transaction} from '../kv/kv-store.js';
 import {zUint8Array} from '../utils.js';
 import {decodeUuid} from '../uuid.js';
@@ -31,44 +30,33 @@ export function zDataNodeDto(): ZodType<DataNodeDto> {
 }
 
 function createTreeVisitor(
-    cx: Cx,
     key: Uint8Array,
     name: string
 ): DataNodeVisitor<Promise<DataNodeDto>> {
     return {
-        doc: async cx => ({
+        doc: async () => ({
             key,
             name,
             type: 'doc',
             childrenPreview: [],
         }),
-        aggregate: async (cx, agg) => ({
+        aggregate: async agg => ({
             key,
             name,
             type: 'aggregate',
-            childrenPreview: await astream(
-                agg.queryChildren(cx, new Uint8Array())
-            )
-                .mapParallel(async (cx, {key, node}) =>
-                    node.visit(
-                        cx,
-                        createTreeVisitor(cx, key, decodeString(cx, key))
-                    )
+            childrenPreview: await astream(agg.queryChildren(new Uint8Array()))
+                .mapParallel(async ({key, node}) =>
+                    node.visit(createTreeVisitor(key, decodeString(key)))
                 )
                 .toArray(),
         }),
-        repo: async (cx, repo) => ({
+        repo: async repo => ({
             key,
             name,
             type: 'repo',
-            childrenPreview: await astream(
-                repo.queryChildren(cx, new Uint8Array())
-            )
-                .mapParallel(async (cx, {key, node}) =>
-                    node.visit(
-                        cx,
-                        createTreeVisitor(cx, key, decodeUuid(cx, key))
-                    )
+            childrenPreview: await astream(repo.queryChildren(new Uint8Array()))
+                .mapParallel(async ({key, node}) =>
+                    node.visit(createTreeVisitor(key, decodeUuid(key)))
                 )
                 .take(100)
                 .toArray(),
@@ -87,24 +75,21 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
     getDbTree: handler({
         req: z.object({}),
         res: zDataNodeDto(),
-        handle: async (cx, {dataNode}, _) => {
+        handle: async ({dataNode}, _) => {
             return await dataNode.visit(
-                cx,
-                createTreeVisitor(cx, encodeString(cx, 'root'), 'root')
+                createTreeVisitor(encodeString('root'), 'root')
             );
         },
     }),
     truncateDb: handler({
         req: z.object({}),
         res: z.void(),
-        handle: async (cx, {rootTx}, _) => {
-            const keys = await astream(
-                rootTx.query(cx, {gte: new Uint8Array()})
-            )
-                .map((cx, node) => node.key)
+        handle: async ({rootTx}, _) => {
+            const keys = await astream(rootTx.query({gte: new Uint8Array()}))
+                .map(node => node.key)
                 .toArray();
             for (const key of keys) {
-                await rootTx.delete(cx, key);
+                await rootTx.delete(key);
             }
         },
     }),
@@ -115,19 +100,19 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
             z.object({type: z.literal('doc'), snapshot: z.any()}),
             z.object({type: z.literal('repo')}),
         ]),
-        handle: async (cx, {dataNode}, {path}) => {
+        handle: async ({dataNode}, {path}) => {
             let current: DataNode = new AggregateDataNode({root: dataNode});
             for (const key of path) {
-                current = current.child(cx, key);
+                current = current.child(key);
             }
 
-            return current.visit<Promise<DataNodeInfo>>(cx, {
-                aggregate: async cx => ({type: 'aggregate'}),
-                doc: async (cx, doc) => ({
+            return current.visit<Promise<DataNodeInfo>>({
+                aggregate: async () => ({type: 'aggregate'}),
+                doc: async doc => ({
                     type: 'doc',
-                    snapshot: await doc.snapshot(cx),
+                    snapshot: await doc.snapshot(),
                 }),
-                repo: async cx => ({type: 'repo'}),
+                repo: async () => ({type: 'repo'}),
             });
         },
     }),

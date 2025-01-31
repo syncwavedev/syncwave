@@ -48,12 +48,12 @@ export class WsClientConnection<T> implements Connection<T> {
 		this.setupListeners();
 	}
 
-	async cx(cx: Cx, message: T): Promise<void> {
+	async cx(message: T): Promise<void> {
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 	}
 
-	cx(cx: Cx, cb: Observer<T>) {
+	cx(cb: Observer<T>) {
 		return this.subject.subscribe(cx, cb);
 	}
 

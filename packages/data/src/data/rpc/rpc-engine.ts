@@ -9,12 +9,7 @@ import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {ContextManager} from '../../context-manager.js';
 import {CancelledError, Cx} from '../../context.js';
 import {Deferred} from '../../deferred.js';
-import {
-    AppError,
-    BusinessError,
-    getReadableError,
-    toError,
-} from '../../errors.js';
+import {BusinessError, Error, getReadableError, toError} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {
     assertNever,
@@ -64,13 +59,13 @@ async function proxyStreamerCall(
         }
     });
 
-    async function complete(cx: Cx) {
+    async function complete() {
         state = 'complete';
         cancelCx();
         exe.end();
     }
 
-    async function cancel(cx: Cx, err: unknown) {
+    async function cancel(err: unknown) {
         state = 'complete';
         cancelCx();
         await whenAll(cx, [
@@ -90,17 +85,17 @@ async function proxyStreamerCall(
                 return;
             }
 
-            function open(cx: Cx) {
+            function open() {
                 state = 'open';
                 cancelTimeout();
             }
 
-            async function cancelInvalid(cx: Cx, error: string) {
+            async function cancelInvalid(error: string) {
                 logger.error(cx, 'rpc protocol violation', error);
                 await cancel(cx, error);
             }
 
-            async function acknowledge(cx: Cx) {
+            async function acknowledge() {
                 await conn.send(cx, {
                     id: createMessageId(),
                     type: 'ack',
@@ -122,7 +117,7 @@ async function proxyStreamerCall(
                     await acknowledge(cx);
                 } else if (msg.payload.type === 'error') {
                     await exe.throw(
-                        new AppError(cx, 'rpc error: ' + msg.payload.message)
+                        new Error(cx, 'rpc error: ' + msg.payload.message)
                     );
                     await acknowledge(cx);
                 } else if (msg.payload.type === 'end') {
@@ -181,7 +176,7 @@ async function proxyHandlerCall(
         const requestId = createMessageId();
         const result = new Deferred<any>();
         cx.onCancel(() => {
-            result.reject(new AppError(cx, 'handler cancellation requested'));
+            result.reject(new Error(cx, 'handler cancellation requested'));
         });
 
         // wait for the response
@@ -194,7 +189,7 @@ async function proxyHandlerCall(
                 try {
                     if (msg.payload.type === 'error') {
                         result.reject(
-                            new AppError(
+                            new Error(
                                 cx,
                                 `rpc call failed: ${msg.payload.message}`
                             )
@@ -203,7 +198,7 @@ async function proxyHandlerCall(
                         result.resolve(cx, msg.payload.result);
                     } else {
                         result.reject(
-                            new AppError(
+                            new Error(
                                 cx,
                                 `got '${msg.payload.type}' for handler`
                             )
@@ -219,16 +214,14 @@ async function proxyHandlerCall(
             },
             close: () => {
                 cancel();
-                result.reject(
-                    new AppError(cx, 'lost connection to rpc server')
-                );
+                result.reject(new Error(cx, 'lost connection to rpc server'));
             },
         });
 
         ignoreCancel(wait(cx, RPC_CALL_TIMEOUT_MS))
             .then(() => {
                 if (result.state === 'pending') {
-                    result.reject(new AppError(cx, 'rpc call failed: timeout'));
+                    result.reject(new Error(cx, 'rpc call failed: timeout'));
                     cancel();
                 }
             })
@@ -255,7 +248,7 @@ function createProcessorProxy(
     processor: Processor<any, any, any>,
     name: string
 ) {
-    return (cx: Cx, arg: unknown, headers?: MessageHeaders) => {
+    return (arg: unknown, headers?: MessageHeaders) => {
         if (processor.type === 'handler') {
             return proxyHandlerCall(
                 cx,
@@ -343,19 +336,16 @@ export function createRpcClient<TApi extends Api<any>>(
 ): InferRpcClient<TApi> {
     function get(_target: unknown, nameOrSymbol: string | symbol) {
         if (typeof nameOrSymbol !== 'string') {
-            return (cx: Cx) => {
-                throw new AppError(
-                    cx,
-                    'rpc client supports only string methods'
-                );
+            return () => {
+                throw new Error(cx, 'rpc client supports only string methods');
             };
         }
         const name = nameOrSymbol;
 
         const processor = api[name];
         if (!processor) {
-            return (cx: Cx) => {
-                throw new AppError(cx, `unknown rpc endpoint: ${name}`);
+            return () => {
+                throw new Error(cx, `unknown rpc endpoint: ${name}`);
             };
         }
 
@@ -406,7 +396,7 @@ async function waitMessage<S extends Message>(
         .then(() => {
             if (result.state === 'pending') {
                 result.reject(
-                    new AppError(cx, `stream timeout after ${timeoutMs}`)
+                    new Error(cx, `stream timeout after ${timeoutMs}`)
                 );
             }
             cancelCx();
@@ -426,17 +416,17 @@ export class RpcServer<TState> {
         private readonly serverName: string
     ) {}
 
-    async launch(cx: Cx): Promise<void> {
+    async launch(): Promise<void> {
         await this.transport.launch(cx, (cx, conn) =>
             this.handleConnection(cx, conn)
         );
     }
 
-    async close(cx: Cx) {
+    async close() {
         await this.transport.close(cx);
     }
 
-    private handleConnection(cx: Cx, conn: Connection<Message>): void {
+    private handleConnection(conn: Connection<Message>): void {
         setupRpcServerConnection(
             Cx.todo(),
             this.api,
@@ -448,7 +438,6 @@ export class RpcServer<TState> {
 }
 
 async function handleRequestStreamer<TState>(
-    cx: Cx,
     conn: Connection<Message>,
     processor: Streamer<TState, any, any>,
     msg: RequestMessage,
@@ -524,7 +513,6 @@ async function handleRequestStreamer<TState>(
 }
 
 async function handleRequestHandler<TState>(
-    cx: Cx,
     conn: Connection<Message>,
     handler: Handler<TState, any, any>,
     msg: RequestMessage,
@@ -546,7 +534,6 @@ async function handleRequestHandler<TState>(
 }
 
 async function handleRequest<TState>(
-    cx: Cx,
     conn: Connection<Message>,
     msg: RequestMessage,
     api: Api<TState>,
@@ -587,12 +574,7 @@ async function handleRequest<TState>(
     }
 }
 
-function logRpcError(
-    cx: Cx,
-    err: unknown,
-    procedureName: string,
-    serverName: string
-) {
+function logRpcError(err: unknown, procedureName: string, serverName: string) {
     if (isCancelledError(err) && !cx.alive) {
         logger.warn(
             cx,

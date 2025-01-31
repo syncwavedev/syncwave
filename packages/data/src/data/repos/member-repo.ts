@@ -1,6 +1,5 @@
 import {z} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
-import {Cx} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Brand} from '../../utils.js';
@@ -36,9 +35,9 @@ export function zMember() {
 export class MemberRepo {
     public readonly rawRepo: DocRepo<Member>;
 
-    constructor(cx: Cx, tx: Uint8Transaction, onChange: OnDocChange<Member>) {
-        this.rawRepo = new DocRepo<Member>(cx, {
-            tx: withPrefix(cx, 'd/')(tx),
+    constructor(tx: Uint8Transaction, onChange: OnDocChange<Member>) {
+        this.rawRepo = new DocRepo<Member>({
+            tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
                 [USER_ID_BOARD_ID_INDEX]: {
@@ -51,41 +50,31 @@ export class MemberRepo {
         });
     }
 
-    getById(cx: Cx, id: MemberId): Promise<Member | undefined> {
-        return this.rawRepo.getById(cx, id);
+    getById(id: MemberId): Promise<Member | undefined> {
+        return this.rawRepo.getById(id);
     }
 
-    getByUserId(
-        cx: Cx,
-        userId: UserId,
-        activeOnly = true
-    ): AsyncStream<Member> {
+    getByUserId(userId: UserId, activeOnly = true): AsyncStream<Member> {
         return this.rawRepo
-            .get(cx, USER_ID_BOARD_ID_INDEX, [userId])
-            .filter((cx, x) => x.active || !activeOnly);
+            .get(USER_ID_BOARD_ID_INDEX, [userId])
+            .filter(x => x.active || !activeOnly);
     }
 
-    getByBoardId(
-        cx: Cx,
-        boardId: BoardId,
-        activeOnly = true
-    ): AsyncStream<Member> {
+    getByBoardId(boardId: BoardId, activeOnly = true): AsyncStream<Member> {
         return this.rawRepo
-            .get(cx, BOARD_ID_INDEX, [boardId])
-            .filter((cx, x) => x.active || !activeOnly);
+            .get(BOARD_ID_INDEX, [boardId])
+            .filter(x => x.active || !activeOnly);
     }
 
     async getByUserIdAndBoardId(
-        cx: Cx,
         userId: UserId,
         boardId: BoardId,
         activeOnly = true
     ): Promise<Member | undefined> {
-        const result = await this.rawRepo.getUnique(
-            cx,
-            USER_ID_BOARD_ID_INDEX,
-            [userId, boardId]
-        );
+        const result = await this.rawRepo.getUnique(USER_ID_BOARD_ID_INDEX, [
+            userId,
+            boardId,
+        ]);
 
         if (!result) {
             return undefined;
@@ -98,9 +87,8 @@ export class MemberRepo {
         return result;
     }
 
-    async apply(cx: Cx, id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
         return await this.rawRepo.apply(
-            cx,
             id,
             diff,
             createWriteableChecker({
@@ -109,11 +97,11 @@ export class MemberRepo {
         );
     }
 
-    create(cx: Cx, member: Member): Promise<Member> {
-        return this.rawRepo.create(cx, member);
+    create(member: Member): Promise<Member> {
+        return this.rawRepo.create(member);
     }
 
-    update(cx: Cx, id: MemberId, recipe: Recipe<Member>): Promise<Member> {
-        return this.rawRepo.update(cx, id, recipe);
+    update(id: MemberId, recipe: Recipe<Member>): Promise<Member> {
+        return this.rawRepo.update(id, recipe);
     }
 }

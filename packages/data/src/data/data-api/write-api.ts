@@ -21,7 +21,6 @@ export class WriteApiState {
     ensureAuthenticated(cx: Cx): UserId {
         if (this.auth.userId === undefined) {
             throw new BusinessError(
-                cx,
                 'user is not authenticated',
                 'not_authenticated'
             );
@@ -30,11 +29,11 @@ export class WriteApiState {
         return this.auth.userId;
     }
 
-    async ensureBoardReadAccess(cx: Cx, boardId: BoardId): Promise<Member> {
+    async ensureBoardReadAccess(boardId: BoardId): Promise<Member> {
         return await this.ensureBoardWriteAccess(cx, boardId);
     }
 
-    async ensureBoardWriteAccess(cx: Cx, boardId: BoardId): Promise<Member> {
+    async ensureBoardWriteAccess(boardId: BoardId): Promise<Member> {
         const meId = this.ensureAuthenticated(cx);
         const member = await this.tx.members.getByUserIdAndBoardId(
             cx,

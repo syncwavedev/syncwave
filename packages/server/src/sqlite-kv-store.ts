@@ -10,10 +10,7 @@ import {
     mapCondition,
 } from 'ground-data'; // adjust import as needed
 
-function buildConditionSql(
-    cx: Cx,
-    condition: Condition<Uint8Array>
-): {
+function buildConditionSql(condition: Condition<Uint8Array>): {
     clause: string;
     param: Uint8Array;
     order: string;
@@ -39,7 +36,7 @@ interface Row {
 class SqliteTransaction implements Uint8Transaction {
     constructor(private readonly db: Database) {}
 
-    public async get(cx: Cx, key: Uint8Array): Promise<Uint8Array | undefined> {
+    public async get(key: Uint8Array): Promise<Uint8Array | undefined> {
         const row = this.db
             .prepare('SELECT value FROM kv_store WHERE key = ?')
             .get(key) as Row;
@@ -47,7 +44,6 @@ class SqliteTransaction implements Uint8Transaction {
     }
 
     public async *query(
-        cx: Cx,
         condition: Condition<Uint8Array>
     ): AsyncIterable<[Cx, Entry<Uint8Array, Uint8Array>]> {
         const {clause, param, order} = buildConditionSql(cx, condition);
@@ -68,11 +64,7 @@ class SqliteTransaction implements Uint8Transaction {
         }
     }
 
-    public async put(
-        cx: Cx,
-        key: Uint8Array,
-        value: Uint8Array
-    ): Promise<void> {
+    public async put(key: Uint8Array, value: Uint8Array): Promise<void> {
         this.db
             .prepare(
                 'INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)'
@@ -80,7 +72,7 @@ class SqliteTransaction implements Uint8Transaction {
             .run(key, value);
     }
 
-    public async delete(cx: Cx, key: Uint8Array): Promise<void> {
+    public async delete(key: Uint8Array): Promise<void> {
         this.db.prepare('DELETE FROM kv_store WHERE key = ?').run(key);
     }
 }
@@ -100,8 +92,7 @@ export class SqliteUint8KVStore implements Uint8KVStore {
     }
 
     async transact<TResult>(
-        cx: Cx,
-        fn: (cx: Cx, tx: Uint8Transaction) => Promise<TResult>
+        fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
             this.db.exec('BEGIN');

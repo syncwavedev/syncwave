@@ -1,11 +1,10 @@
 import {z} from 'zod';
 import {astream, AsyncStream, ColdStream} from './async-stream.js';
-import {CancelledError, Cx} from './context.js';
+import {CancelledError, context} from './context.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
     AggregateError,
-    AppError,
     BusinessError,
 } from './errors.js';
 import {logger} from './logger.js';
@@ -14,9 +13,11 @@ export type Brand<T, B> = T & {__brand: () => B | undefined};
 
 export type Nothing = void | undefined;
 
+export type Unsubscribe = () => void;
+
 export interface Observer<T> {
-    next: (cx: Cx, value: T) => Promise<void>;
-    throw: (error: AppError) => Promise<void>;
+    next: (value: T) => Promise<void>;
+    throw: (error: Error) => Promise<void>;
     close: () => Nothing;
 }
 
@@ -32,48 +33,50 @@ export class Subject<TValue> {
         return this.subs.length > 0;
     }
 
-    subscribe(cx: Cx, observer: Observer<TValue>): void {
-        this.ensureOpen(cx);
+    subscribe(observer: Observer<TValue>): Unsubscribe {
+        this.ensureOpen();
 
         // wrap if the same observer is used twice for subscription, so unsubscribe wouldn't filter both out
         const sub = {observer};
 
         this.subs.push(sub);
-        cx.onCancel(() => {
+        return () => {
             this.subs = this.subs.filter(x => x !== sub);
-        });
+        };
     }
 
-    value$(cx: Cx): AsyncStream<TValue> {
+    value$(): AsyncStream<TValue> {
         const stream = new ColdStream<TValue>(exe => {
-            this.subscribe(cx, {
-                next: (cx, value) => exe.next(cx, value),
+            this.subscribe({
+                next: value => exe.next(value),
                 throw: error => exe.throw(error),
                 close: () => exe.end(),
             });
 
             return () => {
-                exe.throw(new CancelledError(Cx.todo())).finally(() =>
-                    exe.end()
-                );
+                exe.throw(new CancelledError())
+                    .finally(() => exe.end())
+                    .catch(error => {
+                        logger.error('Subject.value$ unsubscribe', error);
+                    });
             };
         });
         return astream(stream);
     }
 
-    async next(cx: Cx, value: TValue): Promise<void> {
-        this.ensureOpen(cx);
+    async next(value: TValue): Promise<void> {
+        this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
-        // await whenAll([...this.subs].map(sub => sub.observer.next(cx, value)));
+        // await whenAll([...this.subs].map(sub => sub.observer.next(value)));
 
         // to preserve stack
         for (const sub of [...this.subs]) {
-            await sub.observer.next(cx, value);
+            await sub.observer.next(value);
         }
     }
 
-    async throw(error: AppError): Promise<void> {
-        this.ensureOpen(Cx.todo());
+    async throw(error: Error): Promise<void> {
+        this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
         // await whenAll(
         //     [...this.subs].map(sub =>
@@ -87,48 +90,48 @@ export class Subject<TValue> {
         }
     }
 
-    async close(cx: Cx): Promise<void> {
+    async close(): Promise<void> {
         if (this._open) {
             this._open = false;
             for (const sub of [...this.subs]) {
                 sub.observer.close();
             }
         } else {
-            logger.warn(cx, 'subject already closed');
+            logger.warn('subject already closed');
         }
     }
 
-    private ensureOpen(cx: Cx) {
+    private ensureOpen() {
         if (!this._open) {
-            throw new AppError(cx, 'subject is closed');
+            throw new Error('subject is closed');
         }
     }
 }
 
-export function assertNever(cx: Cx, value: never): never {
-    throw new AppError(cx, 'assertNever failed: ' + value);
+export function assertNever(value: never): never {
+    throw new Error('assertNever failed: ' + value);
 }
 
-export function assert(cx: Cx, expression: boolean): asserts expression {
+export function assert(expression: boolean): asserts expression {
     if (!expression) {
-        throw new AppError(cx, 'assertion failed');
+        throw new Error('assertion failed');
     }
 }
 
-export function assertDefined<T>(cx: Cx, value: T | undefined | null): T {
+export function assertDefined<T>(value: T | undefined | null): T {
     if (value === null || value === undefined) {
-        throw new AppError(cx, 'assertion failed: value is not defined');
+        throw new Error('assertion failed: value is not defined');
     }
 
     return value;
 }
 
-export function wait(cx: Cx, ms: number): Promise<void> {
+export function wait(ms: number): Promise<void> {
     const result = new Deferred<void>();
-    const timeoutId = setTimeout(() => result.resolve(cx), ms);
+    const timeoutId = setTimeout(() => result.resolve(), ms);
 
-    cx.onCancel(() => {
-        result.reject(new CancelledError(Cx.todo()));
+    context().onCancel(() => {
+        result.reject(new CancelledError());
         clearTimeout(timeoutId);
     });
     return result.promise;
@@ -137,7 +140,7 @@ export function wait(cx: Cx, ms: number): Promise<void> {
 export function isCancelledError(error: unknown): boolean {
     return (
         error instanceof CancelledError ||
-        (error instanceof AppError && isCancelledError(error.cause))
+        (error instanceof Error && isCancelledError(error.cause))
     );
 }
 
@@ -152,17 +155,16 @@ export async function ignoreCancel<T>(promise: Promise<T>): Promise<T | never> {
     }
 }
 
-export function interval(ms: number, cx: Cx): AsyncStream<number> {
-    return astream(_interval(cx, ms));
+export function interval(ms: number): AsyncStream<number> {
+    return astream(_interval(ms));
 }
 
-async function* _interval(cx: Cx, ms: number): AsyncIterable<[Cx, number]> {
+async function* _interval(ms: number): AsyncIterable<number> {
     let index = 0;
-    while (cx.alive) {
-        cx.ensureAlive(cx);
-        yield [cx, index];
+    while (true) {
+        yield index;
         index += 1;
-        await wait(cx, ms);
+        await wait(ms);
     }
 }
 
@@ -239,12 +241,8 @@ export function distinct<T>(items: T[]): T[] {
     return [...new Set(items).values()];
 }
 
-export function zip<T1, T2>(
-    cx: Cx,
-    a: readonly T1[],
-    b: readonly T2[]
-): [T1, T2][] {
-    assert(cx, a.length === b.length);
+export function zip<T1, T2>(a: readonly T1[], b: readonly T2[]): [T1, T2][] {
+    assert(a.length === b.length);
 
     const result: [T1, T2][] = [];
     for (let i = 0; i < a.length; i += 1) {
@@ -273,12 +271,12 @@ export function bufStartsWith(buf: Uint8Array, prefix: Uint8Array): boolean {
     return compareUint8Array(bufPrefix, prefix) === 0;
 }
 
-export function unreachable(cx: Cx): never {
-    throw new AppError(cx, 'unreachable');
+export function unreachable(): never {
+    throw new Error('unreachable');
 }
 
-export function unimplemented(cx: Cx): never {
-    throw new AppError(cx, 'unimplemented');
+export function unimplemented(): never {
+    throw new Error('unimplemented');
 }
 
 export function arrayEqual<T>(a: T[], b: T[]) {
@@ -299,7 +297,6 @@ export function arrayEqual<T>(a: T[], b: T[]) {
  * In contrast to Promise.all, whenAll waits for all rejections and combines them into AggregateError
  */
 export async function whenAll<const T extends Promise<any>[]>(
-    cx: Cx,
     promises: T
 ): ReturnType<typeof Promise.all<T>> {
     const result = await Promise.allSettled(promises);
@@ -313,21 +310,15 @@ export async function whenAll<const T extends Promise<any>[]>(
         throw rejected[0].reason;
     } else {
         if (rejected.every(x => x.reason instanceof BusinessError)) {
-            throw new AggregateBusinessError(
-                cx,
-                rejected.map(x => x.reason)
-            );
+            throw new AggregateBusinessError(rejected.map(x => x.reason));
         } else {
-            throw new AggregateError(
-                cx,
-                rejected.map(x => x.reason)
-            );
+            throw new AggregateError(rejected.map(x => x.reason));
         }
     }
 }
 
-export async function whenAny<T>(cx: Cx, promises: Promise<T>[]) {
-    assert(cx, promises.length > 0);
+export async function whenAny<T>(promises: Promise<T>[]) {
+    assert(promises.length > 0);
 
     const withId = promises.map((promise, idx) =>
         promise.then(result => ({result, idx}))
@@ -347,16 +338,15 @@ export function zUint8Array() {
 }
 
 export interface ObservableOptions<T> {
-    get: (cx: Cx) => Promise<T>;
+    get: () => Promise<T>;
     update$: Promise<AsyncIterable<any>>;
 }
 
 export async function observable<T>(
-    cx: Cx,
     options: ObservableOptions<T>
-): Promise<[initialValue: T, update$: AsyncIterable<[Cx, T]>]> {
+): Promise<[initialValue: T, update$: AsyncIterable<T>]> {
     return [
-        await options.get(cx),
-        astream(await options.update$).map(cx => options.get(cx)),
+        await options.get(),
+        astream(await options.update$).map(cx => options.get()),
     ];
 }

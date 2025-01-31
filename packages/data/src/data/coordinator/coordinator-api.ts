@@ -1,4 +1,3 @@
-import {Cx} from '../../context.js';
 import {BusinessError} from '../../errors.js';
 import {AuthContext, AuthContextParser} from '../auth-context.js';
 import {EventStoreReader} from '../communication/event-store.js';
@@ -29,31 +28,28 @@ export interface CoordinatorApiInputState {
     crypto: CryptoService;
 }
 
-export function createCoordinatorApi(cx: Cx) {
+export function createCoordinatorApi() {
     const adaptedWriteApi = applyMiddleware(
-        cx,
         createWriteApi(),
-        async (cx, next, state: CoordinatorApiState) => {
-            await state.transact(cx, async (cx, tx) => {
-                await next(cx, new WriteApiState(tx, state.auth));
+        async (next, state: CoordinatorApiState) => {
+            await state.transact(async tx => {
+                await next(new WriteApiState(tx, state.auth));
             });
         }
     );
 
     const adaptedReadApi = mapApiState(
-        cx,
         createReadApi(),
-        (cx, state: CoordinatorApiState) => {
+        (state: CoordinatorApiState) => {
             return new ReadApiState(state.transact, state.esReader, state.auth);
         }
     );
 
     const adaptedInspectorApi = applyMiddleware(
-        cx,
         dataInspectorApi,
-        async (cx, next, state: CoordinatorApiState) => {
-            await state.transact(cx, async (cx, tx) => {
-                await next(cx, {
+        async (next, state: CoordinatorApiState) => {
+            await state.transact(async tx => {
+                await next({
                     dataNode: tx.dataNode,
                     rootTx: tx.tx,
                 });
@@ -62,17 +58,15 @@ export function createCoordinatorApi(cx: Cx) {
     );
 
     const wrappedAndAdaptedInspectorApi = applyMiddleware(
-        cx,
         adaptedInspectorApi,
-        async (cx, next, state: CoordinatorApiState) => {
+        async (next, state: CoordinatorApiState) => {
             if (!state.auth.superadmin) {
                 throw new BusinessError(
-                    cx,
                     `only superadmins can use inspector api. id = ${state.auth.identityId}`,
                     'forbidden'
                 );
             }
-            await next(cx, state);
+            await next(state);
         }
     );
 
@@ -80,9 +74,9 @@ export function createCoordinatorApi(cx: Cx) {
         AuthApiState,
         CoordinatorApiState,
         AuthApi
-    >(cx, createAuthApi(), async (cx, next, state) => {
-        await state.transact(cx, async (cx, tx) => {
-            await next(cx, {
+    >(createAuthApi(), async (next, state) => {
+        await state.transact(async tx => {
+            await next({
                 crypto: state.crypto,
                 cx: tx,
                 emailService: state.emailService,
@@ -107,10 +101,8 @@ export function createCoordinatorApi(cx: Cx) {
         CoordinatorApiInputState,
         typeof combinedApi
     >(
-        cx,
         combinedApi,
         async (
-            cx,
             next,
             {dataLayer, authContextParser, jwt, emailService, crypto, config},
             headers
@@ -128,7 +120,7 @@ export function createCoordinatorApi(cx: Cx) {
                 esReader: dataLayer.esReader,
             };
 
-            return await next(cx, state);
+            return await next(state);
         }
     );
 

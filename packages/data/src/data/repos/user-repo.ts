@@ -1,4 +1,3 @@
-import {Cx} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Brand} from '../../utils.js';
@@ -21,22 +20,21 @@ export function zUser() {
 export class UserRepo {
     public readonly rawRepo: DocRepo<User>;
 
-    constructor(cx: Cx, tx: Uint8Transaction, onChange: OnDocChange<User>) {
-        this.rawRepo = new DocRepo<User>(cx, {
-            tx: withPrefix(cx, 'd/')(tx),
+    constructor(tx: Uint8Transaction, onChange: OnDocChange<User>) {
+        this.rawRepo = new DocRepo<User>({
+            tx: withPrefix('d/')(tx),
             onChange,
             indexes: {},
             schema: zUser(),
         });
     }
 
-    getById(cx: Cx, id: UserId): Promise<User | undefined> {
-        return this.rawRepo.getById(cx, id);
+    getById(id: UserId): Promise<User | undefined> {
+        return this.rawRepo.getById(id);
     }
 
-    async apply(cx: Cx, id: Uuid, diff: CrdtDiff<User>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {
         return await this.rawRepo.apply(
-            cx,
             id,
             diff,
             createWriteableChecker({
@@ -45,11 +43,11 @@ export class UserRepo {
         );
     }
 
-    async create(cx: Cx, user: User): Promise<User> {
-        return this.rawRepo.create(cx, user);
+    async create(user: User): Promise<User> {
+        return this.rawRepo.create(user);
     }
 
-    update(cx: Cx, id: UserId, recipe: Recipe<User>): Promise<User> {
-        return this.rawRepo.update(cx, id, recipe);
+    update(id: UserId, recipe: Recipe<User>): Promise<User> {
+        return this.rawRepo.update(id, recipe);
     }
 }

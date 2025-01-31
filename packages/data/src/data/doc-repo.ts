@@ -1,8 +1,6 @@
 import {z, ZodType} from 'zod';
 import {astream, AsyncStream} from '../async-stream.js';
-import {Cx} from '../context.js';
 import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
-import {AppError} from '../errors.js';
 import {createIndex, Index, IndexKey} from '../kv/data-index.js';
 import {
     Condition,
@@ -43,7 +41,6 @@ export type IndexSpec<T> =
 export type IndexMap<T> = Record<string, IndexSpec<T>>;
 
 export type OnDocChange<T extends Doc> = (
-    cx: Cx,
     id: T['id'],
     diff: CrdtDiff<T>
 ) => Promise<void>;
@@ -55,7 +52,7 @@ export interface DocStoreOptions<T extends Doc> {
     onChange: OnDocChange<T>;
 }
 
-export type Recipe<T> = (cx: Cx, doc: T) => T | void;
+export type Recipe<T> = (doc: T) => T | void;
 
 export class DocRepo<T extends Doc> {
     private readonly indexes: Map<string, Index<T>>;
@@ -64,12 +61,11 @@ export class DocRepo<T extends Doc> {
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
 
-    constructor(cx: Cx, {tx, indexes, onChange, schema}: DocStoreOptions<T>) {
+    constructor({tx, indexes, onChange, schema}: DocStoreOptions<T>) {
         this.indexes = new Map(
             Object.entries(indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
-                    throw new AppError(
-                        cx,
+                    throw new Error(
                         'index name cannot contain /: ' + indexName
                     );
                 }
@@ -77,7 +73,7 @@ export class DocRepo<T extends Doc> {
                 return [
                     indexName,
                     createIndex({
-                        tx: withPrefix(cx, `i/${indexName}/`)(tx),
+                        tx: withPrefix(`i/${indexName}/`)(tx),
                         idSelector: x => x.id,
                         keySelector:
                             typeof spec === 'function' ? spec : spec.key,
@@ -92,7 +88,7 @@ export class DocRepo<T extends Doc> {
         );
         this.primaryKeyRaw = pipe(
             tx,
-            withPrefix(cx, 'd/'),
+            withPrefix('d/'),
             withValueCodec(new CrdtCodec())
         );
         this.primary = withKeyCodec(new UuidCodec())(this.primaryKeyRaw);
@@ -100,60 +96,51 @@ export class DocRepo<T extends Doc> {
         this.schema = schema;
     }
 
-    async getById(cx: Cx, id: Uuid): Promise<T | undefined> {
-        const doc = await this.primary.get(cx, id);
-        return doc?.snapshot(cx);
+    async getById(id: Uuid): Promise<T | undefined> {
+        const doc = await this.primary.get(id);
+        return doc?.snapshot();
     }
 
-    get(cx: Cx, indexName: string, key: IndexKey): AsyncStream<T> {
-        const index = this._index(cx, indexName);
-        return this._mapToDocs(index.get(cx, key));
+    get(indexName: string, key: IndexKey): AsyncStream<T> {
+        const index = this._index(indexName);
+        return this._mapToDocs(index.get(key));
     }
 
-    async getUnique(
-        cx: Cx,
-        indexName: string,
-        key: IndexKey
-    ): Promise<T | undefined> {
-        const index = this._index(cx, indexName);
-        const ids = await astream(index.get(cx, key)).take(2).toArray();
+    async getUnique(indexName: string, key: IndexKey): Promise<T | undefined> {
+        const index = this._index(indexName);
+        const ids = await astream(index.get(key)).take(2).toArray();
         if (ids.length > 1) {
-            throw new AppError(
-                cx,
+            throw new Error(
                 `index ${indexName} contains multiple docs for the key: ${key}`
             );
         } else if (ids.length === 1) {
-            return await this.getById(cx, ids[0]);
+            return await this.getById(ids[0]);
         } else {
             return undefined;
         }
     }
 
-    getAll(cx: Cx, prefix?: Uint8Array): AsyncStream<T> {
+    getAll(prefix?: Uint8Array): AsyncStream<T> {
         return astream(
-            queryStartsWith(cx, this.primaryKeyRaw, prefix ?? new Uint8Array())
-        ).map((_mapCx, x) => x.value.snapshot(cx));
+            queryStartsWith(this.primaryKeyRaw, prefix ?? new Uint8Array())
+        ).map(x => x.value.snapshot());
     }
 
-    query(
-        cx: Cx,
-        indexName: string,
-        condition: Condition<IndexKey>
-    ): AsyncStream<T> {
-        const index = this._index(cx, indexName);
+    query(indexName: string, condition: Condition<IndexKey>): AsyncStream<T> {
+        const index = this._index(indexName);
 
-        return this._mapToDocs(index.query(cx, condition));
+        return this._mapToDocs(index.query(condition));
     }
 
-    async update(cx: Cx, id: Uuid, recipe: Recipe<T>): Promise<T> {
-        const doc = await this.primary.get(cx, id);
+    async update(id: Uuid, recipe: Recipe<T>): Promise<T> {
+        const doc = await this.primary.get(id);
         if (!doc) {
-            throw new AppError(cx, 'doc not found: ' + id);
+            throw new Error('doc not found: ' + id);
         }
 
-        const prev = doc.snapshot(cx);
-        const diff = doc.update(cx, (cx, draft) => {
-            const result = recipe(cx, draft) ?? draft;
+        const prev = doc.snapshot();
+        const diff = doc.update(draft => {
+            const result = recipe(draft) ?? draft;
 
             result.updatedAt = getNow();
 
@@ -163,12 +150,12 @@ export class DocRepo<T extends Doc> {
             // no change were made to the document
             return prev;
         }
-        const next = doc.snapshot(cx);
+        const next = doc.snapshot();
         this.ensureValid(next);
 
-        await whenAll(cx, [
-            this.primary.put(cx, id, doc),
-            this._sync(cx, id, prev, next, diff),
+        await whenAll([
+            this.primary.put(id, doc),
+            this._sync(id, prev, next, diff),
         ]);
 
         return next;
@@ -176,77 +163,75 @@ export class DocRepo<T extends Doc> {
 
     // todo: add tests
     async apply(
-        cx: Cx,
         id: Uuid,
         diff: CrdtDiff<T>,
         updateChecker?: UpdateChecker<T>
     ): Promise<void> {
-        let doc: Crdt<T> | undefined = await this.primary.get(cx, id);
+        let doc: Crdt<T> | undefined = await this.primary.get(id);
         let prev: T | undefined;
         let next: T;
         if (doc) {
-            prev = doc.snapshot(cx);
+            prev = doc.snapshot();
             doc.apply(diff);
-            next = doc.snapshot(cx);
+            next = doc.snapshot();
         } else {
             prev = undefined;
             doc = Crdt.load(diff);
-            next = doc.snapshot(cx);
+            next = doc.snapshot();
         }
 
         if (next.id !== id) {
-            throw new AppError(cx, 'invalid diff: diff updates id ' + id);
+            throw new Error('invalid diff: diff updates id ' + id);
         }
 
         if (prev && updateChecker) {
-            updateChecker(cx, prev, next);
+            updateChecker(prev, next);
         }
 
         this.ensureValid(next);
     }
 
-    async create(cx: Cx, doc: T): Promise<T> {
-        const existing = await this.primary.get(cx, doc.id);
+    async create(doc: T): Promise<T> {
+        const existing = await this.primary.get(doc.id);
         if (existing) {
-            throw new AppError(cx, `doc ${doc.id} already exists`);
+            throw new Error(`doc ${doc.id} already exists`);
         }
 
         const now = getNow();
-        const crdt = Crdt.from(cx, {...doc, createdAt: now, updatedAt: now});
-        await whenAll(cx, [
-            this.primary.put(cx, doc.id, crdt),
-            this._sync(cx, doc.id, undefined, doc, crdt.state()),
+        const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
+        await whenAll([
+            this.primary.put(doc.id, crdt),
+            this._sync(doc.id, undefined, doc, crdt.state()),
         ]);
 
-        return crdt.snapshot(cx);
+        return crdt.snapshot();
     }
 
-    private _index(cx: Cx, indexName: string): Index<T> {
+    private _index(indexName: string): Index<T> {
         const index = this.indexes.get(indexName);
         if (!index) {
-            throw new AppError(cx, 'index not found: ' + indexName);
+            throw new Error('index not found: ' + indexName);
         }
         return index;
     }
 
     private async _sync(
-        cx: Cx,
         id: Uuid,
         prev: T | undefined,
         next: T | undefined,
         diff: CrdtDiff<T>
     ): Promise<void> {
-        await whenAll(cx, [
-            ...[...this.indexes.values()].map(x => x.sync(cx, prev, next)),
-            this.onChange(cx, id, diff),
+        await whenAll([
+            ...[...this.indexes.values()].map(x => x.sync(prev, next)),
+            this.onChange(id, diff),
         ]);
     }
 
-    private _mapToDocs(ids: AsyncIterable<[Cx, Uuid]>): AsyncStream<T> {
+    private _mapToDocs(ids: AsyncIterable<Uuid>): AsyncStream<T> {
         return astream(ids)
-            .mapParallel((cx, id) => this.primary.get(cx, id))
-            .assert((cx, x) => x !== undefined)
-            .map((cx, doc) => doc.snapshot(cx));
+            .mapParallel(id => this.primary.get(id))
+            .assert(x => x !== undefined)
+            .map(doc => doc.snapshot());
     }
 
     private ensureValid(value: T) {

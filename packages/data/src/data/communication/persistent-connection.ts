@@ -1,6 +1,6 @@
 import {RECONNECT_WAIT_MS} from '../../constants.js';
 import {Cx} from '../../context.js';
-import {AppError} from '../../errors.js';
+import {Error} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {Observer, Subject, wait} from '../../utils.js';
 import {Connection, TransportClient} from './transport.js';
@@ -15,7 +15,7 @@ export class PersistentConnection<T> implements Connection<T> {
 
     constructor(private readonly transport: TransportClient<T>) {}
 
-    async send(cx: Cx, message: T): Promise<void> {
+    async send(message: T): Promise<void> {
         const connection = await this.getConnection();
         if (connection === 'closed_during_connect') {
             return;
@@ -24,7 +24,7 @@ export class PersistentConnection<T> implements Connection<T> {
         await connection.send(cx, message);
     }
 
-    subscribe(cx: Cx, cb: Observer<T>): void {
+    subscribe(cb: Observer<T>): void {
         this.assertOpen(cx);
         // connect if not already
         this.getConnection().catch(err => {
@@ -67,7 +67,7 @@ export class PersistentConnection<T> implements Connection<T> {
                         this.connection = undefined;
                         try {
                             await this.subject.throw(
-                                new AppError(
+                                new Error(
                                     cx,
                                     'connection is lost, reconnection...'
                                 )
@@ -126,7 +126,7 @@ export class PersistentConnection<T> implements Connection<T> {
 
     private assertOpen(cx: Cx) {
         if (this.closed) {
-            throw new AppError(cx, 'connection is closed');
+            throw new Error(cx, 'connection is closed');
         }
     }
 }

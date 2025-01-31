@@ -1,6 +1,5 @@
 import {describe, expect, it} from 'vitest';
 import {MsgpackCodec, StringCodec} from './codec.js';
-import {Cx} from './context.js';
 import {createUuid} from './uuid.js';
 
 const testData = [
@@ -19,16 +18,14 @@ const testData = [
     {input: Buffer.from('buffer data'), description: 'Buffer object'},
 ];
 
-const cx = Cx.todo();
-
 describe('MsgpackrCode', () => {
     const codec = new MsgpackCodec();
 
     describe('round-trip', () => {
         testData.forEach(({input, description}) => {
             it(`should correctly encode and decode ${description}`, () => {
-                const encoded = codec.encode(cx, input);
-                const decoded = codec.decode(cx, encoded);
+                const encoded = codec.encode(input);
+                const decoded = codec.decode(encoded);
                 expect(decoded).toEqual(input);
                 expect(encoded).toBeInstanceOf(Uint8Array);
             });
@@ -36,8 +33,8 @@ describe('MsgpackrCode', () => {
 
         it('uuid', () => {
             const uuid = createUuid();
-            const encoded = codec.encode(cx, {uuid});
-            const {uuid: result} = codec.decode(cx, encoded);
+            const encoded = codec.encode({uuid});
+            const {uuid: result} = codec.decode(encoded);
 
             expect(result).toEqual(uuid);
         });
@@ -46,12 +43,12 @@ describe('MsgpackrCode', () => {
     describe('edge cases', () => {
         it('should throw an error for invalid input to decode', () => {
             const invalidData = new Uint8Array([255, 255, 255]);
-            expect(() => codec.decode(cx, invalidData)).toThrow();
+            expect(() => codec.decode(invalidData)).toThrow();
         });
 
         it('should handle empty buffer during decode', () => {
             const emptyBuffer = new Uint8Array();
-            expect(() => codec.decode(cx, emptyBuffer)).toThrow();
+            expect(() => codec.decode(emptyBuffer)).toThrow();
         });
     });
 });
@@ -61,28 +58,28 @@ describe('StringCodec', () => {
 
     describe('encode', () => {
         it('should encode an empty string to an empty Uint8Array', () => {
-            const result = codec.encode(cx, '');
+            const result = codec.encode('');
             expect(result).toBeInstanceOf(Uint8Array);
             expect(result.length).toBe(0);
         });
 
         it('should encode a simple string correctly', () => {
             const data = 'hello';
-            const result = codec.encode(cx, data);
+            const result = codec.encode(data);
             expect(result).toBeInstanceOf(Uint8Array);
             expect(new TextDecoder().decode(result)).toBe(data);
         });
 
         it('should encode a string with special characters correctly', () => {
             const data = '你好, мир! 🌍';
-            const result = codec.encode(cx, data);
+            const result = codec.encode(data);
             expect(result).toBeInstanceOf(Uint8Array);
             expect(new TextDecoder().decode(result)).toBe(data);
         });
 
         it('should encode a string with emojis correctly', () => {
             const data = '😀😁😂🤣😃';
-            const result = codec.encode(cx, data);
+            const result = codec.encode(data);
             expect(result).toBeInstanceOf(Uint8Array);
             expect(new TextDecoder().decode(result)).toBe(data);
         });
@@ -90,28 +87,28 @@ describe('StringCodec', () => {
 
     describe('decode', () => {
         it('should decode an empty Uint8Array to an empty string', () => {
-            const result = codec.decode(cx, new Uint8Array());
+            const result = codec.decode(new Uint8Array());
             expect(result).toBe('');
         });
 
         it('should decode a Uint8Array back to the original string', () => {
             const data = 'hello';
-            const encoded = codec.encode(cx, data);
-            const result = codec.decode(cx, encoded);
+            const encoded = codec.encode(data);
+            const result = codec.decode(encoded);
             expect(result).toBe(data);
         });
 
         it('should decode a Uint8Array with special characters back to the original string', () => {
             const data = '你好, мир! 🌍';
-            const encoded = codec.encode(cx, data);
-            const result = codec.decode(cx, encoded);
+            const encoded = codec.encode(data);
+            const result = codec.decode(encoded);
             expect(result).toBe(data);
         });
 
         it('should decode a Uint8Array with emojis back to the original string', () => {
             const data = '😀😁😂🤣😃';
-            const encoded = codec.encode(cx, data);
-            const result = codec.decode(cx, encoded);
+            const encoded = codec.encode(data);
+            const result = codec.decode(encoded);
             expect(result).toBe(data);
         });
     });
@@ -119,37 +116,37 @@ describe('StringCodec', () => {
     describe('encode and decode integration', () => {
         it('should encode and decode a simple string to the same value', () => {
             const data = 'Simple test';
-            const encoded = codec.encode(cx, data);
-            const decoded = codec.decode(cx, encoded);
+            const encoded = codec.encode(data);
+            const decoded = codec.decode(encoded);
             expect(decoded).toBe(data);
         });
 
         it('should encode and decode a string with special characters to the same value', () => {
             const data = 'Spécial characters! ñ å';
-            const encoded = codec.encode(cx, data);
-            const decoded = codec.decode(cx, encoded);
+            const encoded = codec.encode(data);
+            const decoded = codec.decode(encoded);
             expect(decoded).toBe(data);
         });
 
         it('should encode and decode a string with emojis to the same value', () => {
             const data = '🎉🚀✨💻📱';
-            const encoded = codec.encode(cx, data);
-            const decoded = codec.decode(cx, encoded);
+            const encoded = codec.encode(data);
+            const decoded = codec.decode(encoded);
             expect(decoded).toBe(data);
         });
 
         it('should handle large strings', () => {
             const data = 'a'.repeat(100000); // Large string
-            const encoded = codec.encode(cx, data);
-            const decoded = codec.decode(cx, encoded);
+            const encoded = codec.encode(data);
+            const decoded = codec.decode(encoded);
             expect(decoded).toBe(data);
         });
 
         it('should handle mixed content', () => {
             const data =
                 'Hello 🌍! Here are some special characters: 你好, мир, ñ, å, 🚀';
-            const encoded = codec.encode(cx, data);
-            const decoded = codec.decode(cx, encoded);
+            const encoded = codec.encode(data);
+            const decoded = codec.decode(encoded);
             expect(decoded).toBe(data);
         });
     });

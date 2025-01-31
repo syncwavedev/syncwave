@@ -1,9 +1,7 @@
 import {assert, describe, expect, it} from 'vitest';
-import {Cx} from './context.js';
 import {
     AggregateBusinessError,
     AggregateError,
-    AppError,
     BusinessError,
 } from './errors.js';
 import {
@@ -18,8 +16,6 @@ import {
     whenAll,
     zip,
 } from './utils.js';
-
-const cx = Cx.todo();
 
 describe('bufStartsWith', () => {
     it('should return true if buffer starts with the given prefix', () => {
@@ -167,7 +163,7 @@ describe('compareUint8Array', () => {
 
 describe('assertNever', () => {
     it('should throw an error when called with a non-never value', () => {
-        expect(() => assertNever(cx, 'unexpected' as never)).toThrowError(
+        expect(() => assertNever('unexpected' as never)).toThrowError(
             'assertNever failed: unexpected'
         );
     });
@@ -186,16 +182,16 @@ describe('assert', () => {
 describe('assertDefined', () => {
     it('should return the value when it is defined', () => {
         const value = 'defined value';
-        const result = assertDefined(cx, value);
+        const result = assertDefined(value);
         expect(result).toBe(value);
     });
 
     it('should throw an error when the value is null', () => {
-        expect(() => assertDefined(cx, null)).toThrowError();
+        expect(() => assertDefined(null)).toThrowError();
     });
 
     it('should throw an error when the value is undefined', () => {
-        expect(() => assertDefined(cx, undefined)).toThrowError();
+        expect(() => assertDefined(undefined)).toThrowError();
     });
 });
 
@@ -356,7 +352,7 @@ describe('zip', () => {
         const arrayA = [1, 2, 3];
         const arrayB = ['a', 'b', 'c'];
 
-        const result = zip(cx, arrayA, arrayB);
+        const result = zip(arrayA, arrayB);
         expect(result).toEqual([
             [1, 'a'],
             [2, 'b'],
@@ -368,14 +364,14 @@ describe('zip', () => {
         const arrayA = [1, 2];
         const arrayB = ['a', 'b', 'c'];
 
-        expect(() => zip(cx, arrayA, arrayB)).toThrowError('assertion failed');
+        expect(() => zip(arrayA, arrayB)).toThrowError('assertion failed');
     });
 
     it('should handle empty arrays', () => {
         const arrayA: number[] = [];
         const arrayB: string[] = [];
 
-        const result = zip(cx, arrayA, arrayB);
+        const result = zip(arrayA, arrayB);
         expect(result).toEqual([]);
     });
 
@@ -383,7 +379,7 @@ describe('zip', () => {
         const arrayA = [{id: 1}, {id: 2}];
         const arrayB = [{name: 'Alice'}, {name: 'Bob'}];
 
-        const result = zip(cx, arrayA, arrayB);
+        const result = zip(arrayA, arrayB);
         expect(result).toEqual([
             [{id: 1}, {name: 'Alice'}],
             [{id: 2}, {name: 'Bob'}],
@@ -394,7 +390,7 @@ describe('zip', () => {
         const arrayA = [true, false];
         const arrayB = [1, 0];
 
-        const result = zip(cx, arrayA, arrayB);
+        const result = zip(arrayA, arrayB);
         expect(result).toEqual([
             [true, 1],
             [false, 0],
@@ -444,60 +440,52 @@ describe('whenAll', () => {
             Promise.resolve(2),
             Promise.resolve(3),
         ];
-        const result = await whenAll(cx, promises);
+        const result = await whenAll(promises);
         expect(result).toEqual([1, 2, 3]);
     });
 
     it('should throw the single rejection reason if one promise rejects', async () => {
         const promises = [
             Promise.resolve(1),
-            Promise.reject(new AppError(cx, 'Test Error')),
+            Promise.reject(new Error('Test Error')),
             Promise.resolve(3),
         ];
 
-        await expect(whenAll(cx, promises)).rejects.toThrowError('Test Error');
+        await expect(whenAll(promises)).rejects.toThrowError('Test Error');
     });
 
     it('should throw AggregateError if multiple promises reject', async () => {
         const promises = [
-            Promise.reject(new AppError(cx, 'Error 1')),
-            Promise.reject(new AppError(cx, 'Error 2')),
+            Promise.reject(new Error('Error 1')),
+            Promise.reject(new Error('Error 2')),
             Promise.resolve(3),
         ];
 
-        await expect(whenAll(cx, promises)).rejects.toThrow(AggregateError);
+        await expect(whenAll(promises)).rejects.toThrow(AggregateError);
     });
 
     it('should throw AggregateBusinessError if all rejections are BusinessErrors', async () => {
         const promises = [
-            Promise.reject(
-                new BusinessError(cx, 'Business Error 1', 'forbidden')
-            ),
-            Promise.reject(
-                new BusinessError(cx, 'Business Error 2', 'forbidden')
-            ),
+            Promise.reject(new BusinessError('Business Error 1', 'forbidden')),
+            Promise.reject(new BusinessError('Business Error 2', 'forbidden')),
         ];
 
-        await expect(whenAll(cx, promises)).rejects.toThrow(
-            AggregateBusinessError
-        );
+        await expect(whenAll(promises)).rejects.toThrow(AggregateBusinessError);
     });
 
     it('should handle a mix of fulfilled and rejected promises', async () => {
         const promises = [
             Promise.resolve(1),
-            Promise.reject(
-                new BusinessError(cx, 'Business Error', 'forbidden')
-            ),
+            Promise.reject(new BusinessError('Business Error', 'forbidden')),
             Promise.resolve(3),
         ];
 
-        await expect(whenAll(cx, promises)).rejects.toThrow(BusinessError);
+        await expect(whenAll(promises)).rejects.toThrow(BusinessError);
     });
 
     it('should resolve with an empty array when no promises are provided', async () => {
         const promises: Promise<any>[] = [];
-        const result = await whenAll(cx, promises);
+        const result = await whenAll(promises);
         expect(result).toEqual([]);
     });
 });

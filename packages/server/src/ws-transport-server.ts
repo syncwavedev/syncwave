@@ -27,10 +27,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
 
     constructor(private readonly opt: WsTransportServerOptions<T>) {}
 
-    launch(
-        cx: Cx,
-        cb: (cx: Cx, connection: Connection<T>) => Nothing
-    ): Promise<void> {
+    launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', (ws: WebSocket) => {
@@ -94,7 +91,7 @@ export class WsConnection<T> implements Connection<T> {
         this.setupListeners(Cx.todo());
     }
 
-    async send(cx: Cx, message: T): Promise<void> {
+    async send(message: T): Promise<void> {
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(cx, message);
             this.ws.send(data, (error?: unknown) => {
@@ -110,7 +107,7 @@ export class WsConnection<T> implements Connection<T> {
         });
     }
 
-    subscribe(cx: Cx, observer: Observer<T>) {
+    subscribe(observer: Observer<T>) {
         return this.subject.subscribe(cx, observer);
     }
 

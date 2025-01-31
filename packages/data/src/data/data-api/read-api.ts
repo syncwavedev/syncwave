@@ -38,16 +38,11 @@ export class ReadApiState {
         return this.auth.userId;
     }
 
-    async ensureBoardReadAccess(
-        cx: Cx,
-        tx: DataTx,
-        boardId: BoardId
-    ): Promise<Member> {
+    async ensureBoardReadAccess(tx: DataTx, boardId: BoardId): Promise<Member> {
         return await this.ensureBoardWriteAccess(cx, tx, boardId);
     }
 
     async ensureBoardWriteAccess(
-        cx: Cx,
         tx: DataTx,
         boardId: BoardId
     ): Promise<Member> {

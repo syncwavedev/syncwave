@@ -1,6 +1,6 @@
 import {Codec} from '../../codec.js';
 import {Cx} from '../../context.js';
-import {AppError} from '../../errors.js';
+import {Error} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {Nothing, Observer, Subject, wait} from '../../utils.js';
 import {Connection, TransportClient, TransportServer} from './transport.js';
@@ -21,7 +21,7 @@ export class MemConnection<T> implements Connection<T> {
 
     private constructor(private readonly codec: Codec<T>) {}
 
-    async send(cx: Cx, message: T): Promise<void> {
+    async send(message: T): Promise<void> {
         this.ensureOpen(cx);
 
         await wait(cx, 0);
@@ -32,7 +32,7 @@ export class MemConnection<T> implements Connection<T> {
         });
     }
 
-    subscribe(cx: Cx, observer: Observer<T>) {
+    subscribe(observer: Observer<T>) {
         this.ensureOpen(cx);
 
         this.subject.subscribe(cx, observer);
@@ -55,7 +55,7 @@ export class MemConnection<T> implements Connection<T> {
 
     private ensureOpen(cx: Cx) {
         if (!this.subject.open) {
-            throw new AppError(cx, 'connection is closed');
+            throw new Error(cx, 'connection is closed');
         }
     }
 }
@@ -74,7 +74,7 @@ export class MemTransportClient<T> implements TransportClient<T> {
 }
 
 export class MemTransportServer<T> implements TransportServer<T> {
-    private listener?: (cx: Cx, connection: Connection<T>) => Nothing;
+    private listener?: (connection: Connection<T>) => Nothing;
 
     constructor(private readonly codec: Codec<T>) {}
 
@@ -86,17 +86,14 @@ export class MemTransportServer<T> implements TransportServer<T> {
         return new MemTransportClient(this, this.codec);
     }
 
-    launch(
-        cx: Cx,
-        cb: (cx: Cx, connection: Connection<T>) => Nothing
-    ): Promise<void> {
+    launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
         this.listener = cb;
         return Promise.resolve();
     }
 
-    accept(cx: Cx, connection: MemConnection<T>): void {
+    accept(connection: MemConnection<T>): void {
         if (this.listener === undefined) {
-            throw new AppError(cx, 'server is not active');
+            throw new Error(cx, 'server is not active');
         }
 
         this.listener(Cx.todo(), connection);

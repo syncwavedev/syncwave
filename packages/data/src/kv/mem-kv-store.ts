@@ -1,6 +1,5 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
-import {Cx} from '../context.js';
-import {AppError} from '../errors.js';
+import {context} from '../context.js';
 import {logger} from '../logger.js';
 import {compareUint8Array} from '../utils.js';
 import {
@@ -11,23 +10,22 @@ import {
     Transaction,
 } from './kv-store.js';
 
-export class CursorClosedError extends AppError {
-    constructor(cx: Cx) {
-        super(cx, 'cursor is closed');
+export class CursorClosedError extends Error {
+    constructor() {
+        super('cursor is closed');
     }
 }
 
 export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
     constructor(public tree: Tree<Uint8Array, Uint8Array>) {}
 
-    async get(_ctx: Cx, key: Uint8Array): Promise<Uint8Array | undefined> {
+    async get(key: Uint8Array): Promise<Uint8Array | undefined> {
         return this.tree.get(key) ?? undefined;
     }
 
     async *query(
-        cx: Cx,
         condition: Condition<Uint8Array>
-    ): AsyncIterable<[Cx, Entry<Uint8Array, Uint8Array>]> {
+    ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         let iterator: Iterator<Uint8Array, Uint8Array>;
         let useNext: boolean;
         if (condition.gt) {
@@ -43,18 +41,15 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
             iterator = this.tree.le(condition.lte);
             useNext = false;
         } else {
-            throw new InvalidQueryCondition(cx, condition);
+            throw new InvalidQueryCondition(condition);
         }
 
         while (iterator.valid) {
-            cx.ensureAlive(cx);
-            yield [
-                cx,
-                {
-                    key: iterator.key!,
-                    value: iterator.value!,
-                },
-            ];
+            context().ensureAlive();
+            yield {
+                key: iterator.key!,
+                value: iterator.value!,
+            };
 
             if (useNext) {
                 iterator.next();
@@ -64,11 +59,11 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
         }
     }
 
-    async put(_ctx: Cx, key: Uint8Array, value: Uint8Array): Promise<void> {
+    async put(key: Uint8Array, value: Uint8Array): Promise<void> {
         this.tree = this.tree.remove(key).insert(key, value);
     }
 
-    async delete(_ctx: Cx, key: Uint8Array): Promise<void> {
+    async delete(key: Uint8Array): Promise<void> {
         this.tree = this.tree.remove(key);
     }
 }
@@ -82,11 +77,7 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
     constructor() {}
 
     async transact<TResult>(
-        cx: Cx,
-        fn: (
-            cx: Cx,
-            tx: Transaction<Uint8Array, Uint8Array>
-        ) => Promise<TResult>
+        fn: (tx: Transaction<Uint8Array, Uint8Array>) => Promise<TResult>
     ): Promise<TResult> {
         return await this.locker.lock(this, async () => {
             const retries = 10;
@@ -94,7 +85,7 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
             for (let attempt = 0; attempt <= retries; attempt += 1) {
                 const tx = new MemTransaction(this.tree);
                 try {
-                    const result = await fn(cx, tx);
+                    const result = await fn(tx);
 
                     this.tree = tx.tree;
 
@@ -106,7 +97,7 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
                 }
             }
 
-            throw new AppError(cx, 'unreachable');
+            throw new Error('unreachable');
         });
     }
 }
@@ -136,7 +127,6 @@ export class MemLocker<TKey> {
                 this.fnQueueMap.set(key, []);
                 execute().catch(err => {
                     logger.error(
-                        Cx.todo(),
                         'unexpected error during execute inside mem-locker: ',
                         err
                     );
@@ -162,7 +152,6 @@ export class MemLocker<TKey> {
         if (nextFn) {
             nextFn().catch(err => {
                 logger.error(
-                    Cx.todo(),
                     'unexpected error during nextFn in mem-locker: ',
                     err
                 );

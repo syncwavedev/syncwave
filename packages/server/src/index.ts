@@ -3,11 +3,12 @@ import 'dotenv/config';
 import Router from '@koa/router';
 import {createHash, randomBytes} from 'crypto';
 import {
+    AppError,
     assertDefined,
     astream,
-    Context,
     CoordinatorServer,
     CryptoService,
+    Cx,
     decodeNumber,
     Deferred,
     encodeNumber,
@@ -16,6 +17,7 @@ import {
     getGoogleUser,
     JwtPayload,
     JwtService,
+    logger,
     MsgpackCodec,
     PrefixedKVStore,
     Uint8KVStore,
@@ -27,11 +29,16 @@ import Koa from 'koa';
 import {SesEmailService} from './ses-email-service.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
-const STAGE = assertDefined(process.env.STAGE);
-const AWS_REGION = assertDefined(process.env.AWS_DEFAULT_REGION);
-const JWT_SECRET = assertDefined(process.env.JWT_SECRET);
-const GOOGLE_CLIENT_ID = assertDefined(process.env.GOOGLE_CLIENT_ID);
-const GOOGLE_CLIENT_SECRET = assertDefined(process.env.GOOGLE_CLIENT_SECRET);
+const cx = Cx.background();
+
+const STAGE = assertDefined(cx, process.env.STAGE);
+const AWS_REGION = assertDefined(cx, process.env.AWS_DEFAULT_REGION);
+const JWT_SECRET = assertDefined(cx, process.env.JWT_SECRET);
+const GOOGLE_CLIENT_ID = assertDefined(cx, process.env.GOOGLE_CLIENT_ID);
+const GOOGLE_CLIENT_SECRET = assertDefined(
+    cx,
+    process.env.GOOGLE_CLIENT_SECRET
+);
 
 const PORT = ENVIRONMENT === 'prod' ? 80 : 4567;
 
@@ -55,7 +62,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL} = (() => {
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
         };
     } else {
-        throw new Error(`unknown STAGE: ${STAGE}`);
+        throw new AppError(cx, `unknown STAGE: ${STAGE}`);
     }
 })();
 
@@ -101,25 +108,25 @@ const jwtService: JwtService = {
 
 async function getKVStore(): Promise<Uint8KVStore> {
     if (STAGE === 'local') {
-        console.log('[INF] using SQLite as primary store');
+        logger.info(cx, 'using SQLite as primary store');
         return await import('./sqlite-kv-store.js').then(
             x => new x.SqliteUint8KVStore('./dev.sqlite')
         );
     } else {
-        console.log('[INF] using FoundationDB as a primary store');
+        logger.info(cx, 'using FoundationDB as a primary store');
         const fdbStore = await import('./fdb-kv-store.js').then(
             x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
         );
-        return new PrefixedKVStore(fdbStore, `/ground-${STAGE}/`);
+        return new PrefixedKVStore(cx, fdbStore, `/ground-${STAGE}/`);
     }
 }
 
-async function upgradeKVStore(upgradeCx: Context, kvStore: Uint8KVStore) {
-    const versionKey = encodeString('version');
+async function upgradeKVStore(upgradeCx: Cx, kvStore: Uint8KVStore) {
+    const versionKey = encodeString(cx, 'version');
     const version = await kvStore.transact(upgradeCx, async (txCx, tx) => {
         const ver = await tx.get(txCx, versionKey);
         if (ver) {
-            return decodeNumber(ver);
+            return decodeNumber(cx, ver);
         } else {
             return 0;
         }
@@ -129,22 +136,25 @@ async function upgradeKVStore(upgradeCx: Context, kvStore: Uint8KVStore) {
         await kvStore.transact(upgradeCx, async (cx, tx) => {
             const keys = await astream(tx.query(cx, {gte: new Uint8Array()}))
                 .map((cx, entry) => entry.key)
-                .toArray(cx);
+                .toArray();
 
             if (keys.length > 1000) {
-                throw new Error('too many keys to truncate the database');
+                throw new AppError(
+                    cx,
+                    'too many keys to truncate the database'
+                );
             }
 
             for (const key of keys) {
                 await tx.delete(cx, key);
             }
 
-            await tx.put(cx, versionKey, encodeNumber(1));
+            await tx.put(cx, versionKey, encodeNumber(cx, 1));
         });
     }
 }
 
-async function launch(launchCx: Context) {
+async function launch(launchCx: Cx) {
     const kvStore = await getKVStore();
     await upgradeKVStore(launchCx, kvStore);
 
@@ -157,6 +167,7 @@ async function launch(launchCx: Context) {
     const httpServer = createServer(app.callback());
 
     const coordinator = new CoordinatorServer(
+        cx,
         new WsTransportServer({
             codec: new MsgpackCodec(),
             server: httpServer,
@@ -169,24 +180,25 @@ async function launch(launchCx: Context) {
     );
 
     async function shutdown() {
-        console.log('[INF] shutting down...');
-        await coordinator.cx();
-        console.log('[INF] coordinator is closed');
+        logger.info(cx, 'shutting down...');
+        await coordinator.close(cx);
+        logger.info(cx, 'coordinator is closed');
         const httpServerCloseSignal = new Deferred<void>();
-        httpServer.on('close', () => httpServerCloseSignal.resolve());
+        httpServer.on('close', () => httpServerCloseSignal.resolve(cx));
         httpServer.close();
 
         await httpServerCloseSignal.promise;
 
         // wait one event loop cycle for resources to clean up
-        await wait(Context.todo(), 0);
+        await wait(Cx.todo(), 0);
 
         const activeResources = process
             .getActiveResourcesInfo()
             .filter(x => x !== 'TTYWrap');
         if (activeResources.length > 0) {
-            console.error(
-                '[ERR] failed to gracefully shutdown, active resources:',
+            logger.error(
+                cx,
+                'failed to gracefully shutdown, active resources:',
                 activeResources
             );
         }
@@ -199,8 +211,8 @@ async function launch(launchCx: Context) {
     });
 
     const serverStarted = new Deferred<void>();
-    httpServer.listen(PORT, () => serverStarted.resolve());
-    await coordinator.launch();
+    httpServer.listen(PORT, () => serverStarted.resolve(cx));
+    await coordinator.launch(cx);
 
     return await serverStarted.promise;
 }
@@ -223,14 +235,15 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
         }
 
         if (!result.user.verified_email || !result.user.email) {
-            console.warn(
-                `[WRN] Google user has unverified email: ${result.user.email}`
+            logger.warn(
+                cx,
+                `Google user has unverified email: ${result.user.email}`
             );
             return request.redirect(`${APP_URL}/log-in/failed`);
         }
 
         const jwtToken = await coordinator().issueJwtByUserEmail(
-            Context.todo(),
+            Cx.todo(),
             result.user.email
         );
         const jwtTokenComponent = encodeURIComponent(jwtToken);
@@ -244,15 +257,15 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
     });
 }
 
-const [mainCx, cancelMain] = Context.background().withCancel();
+const [mainCx, cancelMain] = Cx.background().withCancel();
 
 process.once('SIGINT', () => cancelMain());
 process.once('SIGTERM', () => cancelMain());
 
 launch(mainCx)
     .then(() => {
-        console.log(`[INF] coordinator is running on port ${PORT}`);
+        logger.info(cx, `coordinator is running on port ${PORT}`);
     })
     .catch(err => {
-        logger.error('', err);
+        logger.error(cx, '', err);
     });

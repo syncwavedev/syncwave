@@ -43,7 +43,7 @@ export class TaskRepo {
 
     constructor(cx: Cx, tx: Uint8Transaction, onChange: OnDocChange<Task>) {
         this.rawRepo = new DocRepo<Task>(cx, {
-            tx: withPrefix('d/')(tx),
+            tx: withPrefix(cx, 'd/')(tx),
             onChange,
             indexes: {
                 [BOARD_ID_COUNTER_INDEX]: {

@@ -25,7 +25,7 @@ describe('Deferred', () => {
         const deferred = new Deferred();
         const error = new AppError(cx, 'testError');
 
-        deferred.reject(cx, error);
+        deferred.reject(error);
 
         expect(deferred.state).toBe('rejected');
         await expect(deferred.promise).rejects.toThrow();
@@ -48,9 +48,9 @@ describe('Deferred', () => {
         const firstError = new AppError(cx, 'firstError');
         const secondError = new AppError(cx, 'secondError');
 
-        deferred.reject(cx, firstError);
+        deferred.reject(firstError);
         const result1 = await deferred.promise.catch(err => err);
-        deferred.reject(cx, secondError);
+        deferred.reject(secondError);
         const result2 = await deferred.promise.catch(err => err);
 
         expect(deferred.state).toBe('rejected');
@@ -62,7 +62,7 @@ describe('Deferred', () => {
         const error = new AppError(cx, 'testError');
         const value = 'testValue';
 
-        deferred.reject(cx, error);
+        deferred.reject(error);
         deferred.resolve(cx, value);
 
         expect(deferred.state).toBe('rejected');
@@ -75,7 +75,7 @@ describe('Deferred', () => {
         const error = new AppError(cx, 'testError');
 
         deferred.resolve(cx, value);
-        deferred.reject(cx, error);
+        deferred.reject(error);
 
         expect(deferred.state).toBe('fulfilled');
         await expect(deferred.promise).resolves.toBe(value);
@@ -100,7 +100,7 @@ describe('Deferred', () => {
         const onRejected = vi.fn();
 
         deferred.promise.catch(onRejected);
-        deferred.reject(cx, error);
+        deferred.reject(error);
 
         try {
             await deferred.promise;
@@ -126,7 +126,7 @@ describe('Deferred', () => {
         const deferred = new Deferred();
         const error = new AppError(cx, 'testError');
 
-        deferred.reject(cx, error);
+        deferred.reject(error);
 
         deferred.promise.catch(() => {});
 

@@ -20,11 +20,11 @@ export class Collection<T> {
     private readonly counter: Counter;
     private readonly log: Transaction<number, T>;
 
-    constructor(tx: Uint8Transaction, codec: Codec<T>) {
-        this.counter = new Counter(pipe(tx, withPrefix('i/')), 0);
+    constructor(cx: Cx, tx: Uint8Transaction, codec: Codec<T>) {
+        this.counter = new Counter(pipe(tx, withPrefix(cx, 'i/')), 0);
         this.log = pipe(
             tx,
-            withPrefix('l/'),
+            withPrefix(cx, 'l/'),
             withKeyCodec(new NumberCodec()),
             withValueCodec(codec)
         );
@@ -51,11 +51,12 @@ export class Collection<T> {
         cx: Cx,
         start: number,
         end?: number
-    ): AsyncIterable<CollectionEntry<T>> {
-        for await (const {key, value} of this.log.query(cx, {gte: start})) {
+    ): AsyncIterable<[Cx, CollectionEntry<T>]> {
+        const stream = this.log.query(cx, {gte: start});
+        for await (const [cx, {key, value}] of stream) {
             if (end !== undefined && key >= end) return;
 
-            yield {offset: key, data: value};
+            yield [cx, {offset: key, data: value}];
         }
     }
 }

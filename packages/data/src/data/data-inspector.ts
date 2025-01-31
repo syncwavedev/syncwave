@@ -55,7 +55,7 @@ function createTreeVisitor(
                         createTreeVisitor(cx, key, decodeString(cx, key))
                     )
                 )
-                .toArray(cx),
+                .toArray(),
         }),
         repo: async (cx, repo) => ({
             key,
@@ -71,7 +71,7 @@ function createTreeVisitor(
                     )
                 )
                 .take(100)
-                .toArray(cx),
+                .toArray(),
         }),
     };
 }
@@ -102,7 +102,7 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
                 rootTx.query(cx, {gte: new Uint8Array()})
             )
                 .map((cx, node) => node.key)
-                .toArray(cx);
+                .toArray();
             for (const key of keys) {
                 await rootTx.delete(cx, key);
             }

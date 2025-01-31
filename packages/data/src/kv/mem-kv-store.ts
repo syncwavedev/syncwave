@@ -1,5 +1,7 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
 import {Cx} from '../context.js';
+import {AppError} from '../errors.js';
+import {logger} from '../logger.js';
 import {compareUint8Array} from '../utils.js';
 import {
     Condition,
@@ -9,9 +11,9 @@ import {
     Transaction,
 } from './kv-store.js';
 
-export class CursorClosedError extends Error {
-    constructor() {
-        super('cursor is closed');
+export class CursorClosedError extends AppError {
+    constructor(cx: Cx) {
+        super(cx, 'cursor is closed');
     }
 }
 
@@ -25,7 +27,7 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
     async *query(
         cx: Cx,
         condition: Condition<Uint8Array>
-    ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
+    ): AsyncIterable<[Cx, Entry<Uint8Array, Uint8Array>]> {
         let iterator: Iterator<Uint8Array, Uint8Array>;
         let useNext: boolean;
         if (condition.gt) {
@@ -41,15 +43,18 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
             iterator = this.tree.le(condition.lte);
             useNext = false;
         } else {
-            throw new InvalidQueryCondition(condition);
+            throw new InvalidQueryCondition(cx, condition);
         }
 
         while (iterator.valid) {
-            cx.ensureAlive();
-            yield {
-                key: iterator.key!,
-                value: iterator.value!,
-            };
+            cx.ensureAlive(cx);
+            yield [
+                cx,
+                {
+                    key: iterator.key!,
+                    value: iterator.value!,
+                },
+            ];
 
             if (useNext) {
                 iterator.next();
@@ -101,7 +106,7 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
                 }
             }
 
-            throw new Error('unreachable');
+            throw new AppError(cx, 'unreachable');
         });
     }
 }
@@ -130,7 +135,8 @@ export class MemLocker<TKey> {
             if (!fnQueue) {
                 this.fnQueueMap.set(key, []);
                 execute().catch(err => {
-                    console.error(
+                    logger.error(
+                        Cx.todo(),
                         'unexpected error during execute inside mem-locker: ',
                         err
                     );
@@ -155,7 +161,8 @@ export class MemLocker<TKey> {
         const nextFn = fnQueue.shift();
         if (nextFn) {
             nextFn().catch(err => {
-                console.error(
+                logger.error(
+                    Cx.todo(),
                     'unexpected error during nextFn in mem-locker: ',
                     err
                 );

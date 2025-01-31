@@ -112,27 +112,27 @@ export class DataLayer {
 
             const users = new UserRepo(
                 cx,
-                withPrefix('users/')(tx),
+                withPrefix(cx, 'users/')(tx),
                 (cx, id, diff) => logUserChange(cx, dataTx, id, diff)
             );
             const identities = new IdentityRepo(
                 cx,
-                withPrefix('identities/')(tx),
+                withPrefix(cx, 'identities/')(tx),
                 (cx, id, diff) => logIdentityChange(cx, dataTx, id, diff)
             );
             const members = new MemberRepo(
                 cx,
-                withPrefix('members/')(tx),
+                withPrefix(cx, 'members/')(tx),
                 (cx, id, diff) => logMemberChange(cx, dataTx, id, diff)
             );
             const boards = new BoardRepo(
                 cx,
-                withPrefix('boards/')(tx),
+                withPrefix(cx, 'boards/')(tx),
                 (cx, id, diff) => logBoardChange(cx, dataTx, id, diff)
             );
             const tasks = new TaskRepo(
                 cx,
-                withPrefix('tasks/')(tx),
+                withPrefix(cx, 'tasks/')(tx),
                 (cx, id, diff) => logTaskChange(cx, dataTx, id, diff)
             );
 
@@ -145,12 +145,13 @@ export class DataLayer {
             });
 
             const events = new CollectionManager<ChangeEvent>(
-                withPrefix('events/')(tx),
+                cx,
+                withPrefix(cx, 'events/')(tx),
                 new MsgpackCodec()
             );
 
             const eventStoreId = new ReadonlyCell(
-                withPrefix('events-id/')(tx),
+                withPrefix(cx, 'events-id/')(tx),
                 createUuid()
             );
 
@@ -219,9 +220,7 @@ async function logIdentityChange(
 ) {
     const identity = await tx.identities.getById(cx, id);
     assert(cx, identity !== undefined);
-    const members = await tx.members
-        .getByUserId(cx, identity.userId)
-        .toArray(cx);
+    const members = await tx.members.getByUserId(cx, identity.userId).toArray();
     const ts = getNow();
     const event: IdentityChangeEvent = {type: 'identity', id, diff, ts};
     await whenAll(cx, [
@@ -238,7 +237,7 @@ async function logUserChange(
     id: UserId,
     diff: CrdtDiff<User>
 ) {
-    const members = await tx.members.getByUserId(cx, id).toArray(cx);
+    const members = await tx.members.getByUserId(cx, id).toArray();
     const ts = getNow();
     const event: UserChangeEvent = {type: 'user', id, diff, ts};
     await whenAll(cx, [
@@ -255,7 +254,7 @@ async function logBoardChange(
     id: BoardId,
     diff: CrdtDiff<Board>
 ) {
-    const members = await tx.members.getByBoardId(cx, id).toArray(cx);
+    const members = await tx.members.getByBoardId(cx, id).toArray();
     const ts = getNow();
     const event: BoardChangeEvent = {type: 'board', id, diff, ts};
     await whenAll(cx, [

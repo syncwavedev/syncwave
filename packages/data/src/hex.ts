@@ -1,4 +1,6 @@
 import {Codec} from './codec.js';
+import {Cx} from './context.js';
+import {AppError} from './errors.js';
 
 const hexRegex = /^([0-9a-fA-F]{2}( [0-9a-fA-F]{2})*)?$/;
 
@@ -7,9 +9,9 @@ export function validateHexString(hexString: unknown): boolean {
 }
 
 export class HexCodec implements Codec<string> {
-    encode(hexString: string): Uint8Array {
+    encode(cx: Cx, hexString: string): Uint8Array {
         if (!validateHexString(hexString)) {
-            throw new Error('Invalid hex string format: ' + hexString);
+            throw new AppError(cx, 'Invalid hex string format: ' + hexString);
         }
 
         if (hexString === '') {
@@ -21,7 +23,7 @@ export class HexCodec implements Codec<string> {
         );
     }
 
-    decode(buf: Uint8Array): string {
+    decode(cx: Cx, buf: Uint8Array): string {
         const hexString = Array.from(buf)
             .map(byte => byte.toString(16).padStart(2, '0'))
             .join(' ');
@@ -30,5 +32,5 @@ export class HexCodec implements Codec<string> {
 }
 
 const hexCodec = new HexCodec();
-export const encodeHex = (data: string) => hexCodec.encode(data);
-export const decodeHex = (buf: Uint8Array) => hexCodec.decode(buf);
+export const encodeHex = (cx: Cx, data: string) => hexCodec.encode(cx, data);
+export const decodeHex = (cx: Cx, buf: Uint8Array) => hexCodec.decode(cx, buf);

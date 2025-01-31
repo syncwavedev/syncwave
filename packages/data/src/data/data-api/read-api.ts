@@ -104,7 +104,7 @@ export function createReadApi() {
                                     tx.boards.getById(cx, member.boardId)
                                 )
                                 .assert((cx, x) => x !== undefined)
-                                .toArray(cx);
+                                .toArray();
                         });
                     },
                     update$: st.esReader.subscribe(cx, userEvents(userId)),
@@ -119,7 +119,7 @@ export function createReadApi() {
                     async get(cx) {
                         return await st.transact(cx, async (cx, tx) => {
                             const [tasks] = await whenAll(cx, [
-                                tx.tasks.getByBoardId(cx, boardId).toArray(cx),
+                                tx.tasks.getByBoardId(cx, boardId).toArray(),
                                 st.ensureBoardReadAccess(cx, tx, boardId),
                             ]);
 

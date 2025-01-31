@@ -1,11 +1,14 @@
 import {
+    AppError,
     Codec,
     Connection,
-    Context,
+    Cx,
     Deferred,
+    logger,
     Nothing,
     Observer,
     Subject,
+    toError,
     TransportServer,
     whenAll,
 } from 'ground-data';
@@ -24,52 +27,58 @@ export class WsTransportServer<T> implements TransportServer<T> {
 
     constructor(private readonly opt: WsTransportServerOptions<T>) {}
 
-    launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
+    launch(
+        cx: Cx,
+        cb: (cx: Cx, connection: Connection<T>) => Nothing
+    ): Promise<void> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', (ws: WebSocket) => {
             const conn = new WsConnection<T>(ws, this.opt.codec);
 
-            conn.cx(Context.todo(), {
+            conn.subscribe(Cx.todo(), {
                 next: () => Promise.resolve(),
                 throw: () => Promise.resolve(),
-                close: async () => {
+                close: () => {
                     this.conns = this.conns.filter(x => x !== conn);
                 },
             });
             this.conns.push(conn);
 
-            cb(conn);
+            cb(cx, conn);
         });
 
         const listening = new Deferred<void>();
 
         this.wss.on('listening', () => {
-            listening.resolve();
+            listening.resolve(Cx.todo());
         });
 
         this.wss.on('close', async () => {
             try {
-                await this.closeConns();
-                this.closeSignal.resolve();
+                await this.closeConns(cx);
+                this.closeSignal.resolve(cx);
             } catch (error) {
-                this.closeSignal.reject(error);
+                this.closeSignal.reject(toError(cx, error));
             }
         });
 
         return listening.promise;
     }
 
-    async cx(): Promise<void> {
+    async close(cx: Cx): Promise<void> {
         if (this.wss) {
-            await this.closeConns();
+            await this.closeConns(cx);
             this.wss.close();
             await this.closeSignal.promise;
         }
     }
 
-    private async closeConns() {
-        await whenAll(this.conns.map(x => x.cx()));
+    private async closeConns(cx: Cx) {
+        await whenAll(
+            cx,
+            this.conns.map(x => x.close())
+        );
         this.conns = [];
     }
 }
@@ -82,39 +91,40 @@ export class WsConnection<T> implements Connection<T> {
         private readonly ws: WebSocket,
         private readonly codec: Codec<T>
     ) {
-        this.setupListeners();
+        this.setupListeners(Cx.todo());
     }
 
-    async cx(cx: Context, message: T): Promise<void> {
+    async send(cx: Cx, message: T): Promise<void> {
         return new Promise((resolve, reject) => {
-            const data = this.codec.encode(message);
-            this.ws.send(data, (error?: Error) => {
+            const data = this.codec.encode(cx, message);
+            this.ws.send(data, (error?: unknown) => {
                 if (error) {
+                    // eslint-disable-next-line no-restricted-globals
                     const err = new Error();
                     err.cause = error;
                     err.message = 'got message + ' + JSON.stringify(message);
-                    return reject(err);
+                    return reject(toError(cx, err));
                 }
                 resolve();
             });
         });
     }
 
-    cx(cx: Context, observer: Observer<T>) {
+    subscribe(cx: Cx, observer: Observer<T>) {
         return this.subject.subscribe(cx, observer);
     }
 
-    async cx(): Promise<void> {
+    async close(): Promise<void> {
         this.ws.close();
         await this.closedSignal.promise;
     }
 
-    private setupListeners(): void {
+    private setupListeners(cx: Cx): void {
         this.ws.on('message', async (rawData: Buffer) => {
             try {
-                const message = this.codec.decode(rawData);
+                const message = this.codec.decode(cx, rawData);
 
-                await this.subject.next(Context.todo(), message);
+                await this.subject.next(Cx.todo(), message);
             } catch (error) {
                 logger.error(cx, 'ws.message', error);
             }
@@ -122,7 +132,7 @@ export class WsConnection<T> implements Connection<T> {
 
         this.ws.on('error', async error => {
             try {
-                await this.subject.throw(Context.todo(), error);
+                await this.subject.throw(toError(cx, error));
             } catch (error) {
                 logger.error(cx, 'ws.error', error);
             }
@@ -131,23 +141,19 @@ export class WsConnection<T> implements Connection<T> {
         this.ws.on('unexpected-response', async () => {
             try {
                 await this.subject.throw(
-                    Context.todo(),
-                    new Error('ws.unexpected response')
+                    new AppError(cx, 'ws.unexpected response')
                 );
             } catch (error) {
-                console.error(
-                    '[ERR] error during ws.unexpected-response',
-                    error
-                );
+                logger.error(cx, 'error during ws.unexpected-response', error);
             }
         });
 
         this.ws.on('close', async () => {
             try {
-                await this.subject.close(Context.todo());
-                this.closedSignal.resolve();
+                await this.subject.close(Cx.todo());
+                this.closedSignal.resolve(Cx.todo());
             } catch (error) {
-                this.closedSignal.reject(error);
+                this.closedSignal.reject(toError(cx, error));
             }
         });
     }

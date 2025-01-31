@@ -77,7 +77,7 @@ export class DocRepo<T extends Doc> {
                 return [
                     indexName,
                     createIndex({
-                        tx: withPrefix(`i/${indexName}/`)(tx),
+                        tx: withPrefix(cx, `i/${indexName}/`)(tx),
                         idSelector: x => x.id,
                         keySelector:
                             typeof spec === 'function' ? spec : spec.key,
@@ -92,7 +92,7 @@ export class DocRepo<T extends Doc> {
         );
         this.primaryKeyRaw = pipe(
             tx,
-            withPrefix('d/'),
+            withPrefix(cx, 'd/'),
             withValueCodec(new CrdtCodec())
         );
         this.primary = withKeyCodec(new UuidCodec())(this.primaryKeyRaw);
@@ -116,7 +116,7 @@ export class DocRepo<T extends Doc> {
         key: IndexKey
     ): Promise<T | undefined> {
         const index = this._index(cx, indexName);
-        const ids = await astream(index.get(cx, key)).take(2).toArray(cx);
+        const ids = await astream(index.get(cx, key)).take(2).toArray();
         if (ids.length > 1) {
             throw new AppError(
                 cx,
@@ -242,7 +242,7 @@ export class DocRepo<T extends Doc> {
         ]);
     }
 
-    private _mapToDocs(ids: AsyncIterable<Uuid>): AsyncStream<T> {
+    private _mapToDocs(ids: AsyncIterable<[Cx, Uuid]>): AsyncStream<T> {
         return astream(ids)
             .mapParallel((cx, id) => this.primary.get(cx, id))
             .assert((cx, x) => x !== undefined)

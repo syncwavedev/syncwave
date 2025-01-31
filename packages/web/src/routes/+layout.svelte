@@ -4,7 +4,7 @@
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
 	import {browser} from '$app/environment';
-	import {MsgpackCodec, ConsoleLogger, ParticipantClient, Context} from 'ground-data';
+	import {MsgpackCodec, ConsoleLogger, ParticipantClient, Cx} from 'ground-data';
 	import {appConfig} from '../lib/config';
 	import {WsTransportClient} from '../ws-transport-client';
 	import {Toaster} from '$lib/components/ui/sonner/index.js';
@@ -25,7 +25,7 @@
 			logger: new ConsoleLogger(),
 		});
 		const jwt = authManager.getJwt();
-		const participant = new ParticipantClient(transport, jwt);
+		const participant = new ParticipantClient(Cx.todo(), transport, jwt);
 
 		return participant;
 	}
@@ -34,7 +34,7 @@
 	setContext(ParticipantClient, participantClient);
 
 	onDestroy(() => {
-		participantClient.close(Context.todo());
+		participantClient.close(Cx.todo());
 	});
 
 	let devToolsOpen = $state(false);

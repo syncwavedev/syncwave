@@ -38,7 +38,7 @@ export class MemberRepo {
 
     constructor(cx: Cx, tx: Uint8Transaction, onChange: OnDocChange<Member>) {
         this.rawRepo = new DocRepo<Member>(cx, {
-            tx: withPrefix('d/')(tx),
+            tx: withPrefix(cx, 'd/')(tx),
             onChange,
             indexes: {
                 [USER_ID_BOARD_ID_INDEX]: {
@@ -62,7 +62,7 @@ export class MemberRepo {
     ): AsyncStream<Member> {
         return this.rawRepo
             .get(cx, USER_ID_BOARD_ID_INDEX, [userId])
-            .filter(x => x.active || !activeOnly);
+            .filter((cx, x) => x.active || !activeOnly);
     }
 
     getByBoardId(
@@ -72,7 +72,7 @@ export class MemberRepo {
     ): AsyncStream<Member> {
         return this.rawRepo
             .get(cx, BOARD_ID_INDEX, [boardId])
-            .filter(x => x.active || !activeOnly);
+            .filter((cx, x) => x.active || !activeOnly);
     }
 
     async getByUserIdAndBoardId(

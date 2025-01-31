@@ -78,8 +78,8 @@ describe('Cell', () => {
         const store = new MemKVStore();
 
         await store.transact(cx, async (cx, tx) => {
-            const cell1 = new Cell(withPrefix('1/')(tx), initialValue);
-            const cell2 = new Cell(withPrefix('2/')(tx), 100);
+            const cell1 = new Cell(withPrefix(cx, '1/')(tx), initialValue);
+            const cell2 = new Cell(withPrefix(cx, '2/')(tx), 100);
             await cell1.put(cx, 400);
             await cell2.put(cx, 500);
 

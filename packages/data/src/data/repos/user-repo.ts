@@ -23,7 +23,7 @@ export class UserRepo {
 
     constructor(cx: Cx, tx: Uint8Transaction, onChange: OnDocChange<User>) {
         this.rawRepo = new DocRepo<User>(cx, {
-            tx: withPrefix('d/')(tx),
+            tx: withPrefix(cx, 'd/')(tx),
             onChange,
             indexes: {},
             schema: zUser(),

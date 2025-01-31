@@ -131,7 +131,7 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
             };
 
             const results = await store.transact(cx, (cx, tx) =>
-                astream(tx.query(cx, condition)).toArray(cx)
+                astream(tx.query(cx, condition)).toArray()
             );
 
             expect(results.map(r => Array.from(r.key))).toEqual([
@@ -148,7 +148,8 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
             await store.transact(cx, async (cx, tx) => {
-                for await (const kv of tx.query(cx, condition)) {
+                const kv$ = tx.query(cx, condition);
+                for await (const [cx, kv] of kv$) {
                     results.push(kv);
                 }
             });
@@ -168,7 +169,8 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
             await store.transact(cx, async (cx, tx) => {
-                for await (const kv of tx.query(cx, condition)) {
+                const kv$ = tx.query(cx, condition);
+                for await (const [cx, kv] of kv$) {
                     results.push(kv);
                 }
             });
@@ -187,7 +189,8 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
             await store.transact(cx, async (cx, tx) => {
-                for await (const kv of tx.query(cx, condition)) {
+                const kv$ = tx.query(cx, condition);
+                for await (const [cx, kv] of kv$) {
                     results.push(kv);
                 }
             });

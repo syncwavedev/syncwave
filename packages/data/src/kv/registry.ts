@@ -1,3 +1,5 @@
+import {Cx} from '../context.js';
+import {AppError} from '../errors.js';
 import {Uint8Transaction, withPrefix} from './kv-store.js';
 
 export class Registry<T> {
@@ -6,11 +8,11 @@ export class Registry<T> {
         private readonly factory: (tx: Uint8Transaction) => T
     ) {}
 
-    get(name: string): T {
+    get(cx: Cx, name: string): T {
         if (name.indexOf('/') !== -1) {
-            throw new Error('invalid item name, / is not allowed');
+            throw new AppError(cx, 'invalid item name, / is not allowed');
         }
 
-        return this.factory(withPrefix(`t/${name}/`)(this.tx));
+        return this.factory(withPrefix(cx, `t/${name}/`)(this.tx));
     }
 }

@@ -23,30 +23,30 @@ export class ContextManager<T extends Uuid> {
         }
     }
 
-    cancel(cx: Cx, id: T) {
+    cancel(id: T) {
         if (this.runningJobs.has(id)) {
-            this.runningJobs.get(id)![1](cx);
+            this.runningJobs.get(id)![1]();
             this.runningJobs.delete(id);
             this.cancelledJobs.add(id);
         } else if (this.cancelledJobs.has(id)) {
-            logger.warn(cx, `job ${id} is already cancelled`);
+            logger.warn(Cx.todo(), `job ${id} is already cancelled`);
         } else {
-            logger.warn(cx, `unknown job: ${id}`);
+            logger.warn(Cx.todo(), `unknown job: ${id}`);
         }
     }
 
-    finish(cx: Cx, job: T) {
+    finish(job: T) {
         if (this.runningJobs.has(job) || this.cancelledJobs.has(job)) {
-            this.runningJobs.get(job)?.[1](cx);
+            this.runningJobs.get(job)?.[1]();
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
         } else {
-            logger.warn(cx, `unknown job: ${job}`);
+            logger.warn(Cx.todo(), `unknown job: ${job}`);
         }
     }
 
-    finishAll(cx: Cx) {
+    finishAll() {
         const runningSnapshot = [...this.runningJobs.keys()];
-        runningSnapshot.forEach(job => this.finish(cx, job));
+        runningSnapshot.forEach(job => this.finish(job));
     }
 }

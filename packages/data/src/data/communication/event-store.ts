@@ -32,7 +32,7 @@ export class EventStoreWriter<T> implements EventStoreWriter<T> {
     async append(cx: Cx, collection: string, event: T): Promise<void> {
         const [id] = await whenAll(cx, [
             this.id.get(cx),
-            this.events.get(collection).append(cx, event),
+            this.events.get(cx, collection).append(cx, event),
         ]);
         const topic = getEventHubTopic(id, collection);
         this.scheduleEffect(cx => this.hub.publish(cx, topic, undefined));
@@ -60,12 +60,12 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
         offsetArg?: number
     ): Promise<AsyncStream<T>> {
         // we wanna trigger event store iteration immediately if we didn't reach the end of the topic
-        const selfTrigger = new StreamPuppet<void>(cx);
+        const selfTrigger = new StreamPuppet<void>();
 
         let offset =
             offsetArg === undefined
                 ? await this.transact(cx, async (cx, topics) =>
-                      topics.get(collection).length(cx)
+                      topics.get(cx, collection).length(cx)
                   )
                 : offsetArg;
 
@@ -77,7 +77,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
         return mergeStreams<void>([
             // make the first check immediately
-            astream([undefined]),
+            astream([[cx, undefined]]),
             astream(selfTrigger),
             hubEvent$.map(() => undefined),
             interval(EVENT_STORE_PULL_INTERVAL_MS, cx).map(() => undefined),
@@ -85,11 +85,11 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             try {
                 const events = await this.transact(cx, async (cx, topics) => {
                     const result = await topics
-                        .get(collection)
+                        .get(cx, collection)
                         .list(cx, offset)
                         .take(EVENT_STORE_MAX_PULL_COUNT)
                         .map((cx, entry) => entry.data)
-                        .toArray(cx);
+                        .toArray();
 
                     // check if there are potentially more values to pull from the topic
                     if (result.length === EVENT_STORE_MAX_PULL_COUNT) {
@@ -107,7 +107,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                 offset += events.length;
 
-                return events;
+                return events.map(x => [cx, x]);
             } catch (error) {
                 logger.error(cx, 'EventStoreReader.subscribe', error);
                 return [];

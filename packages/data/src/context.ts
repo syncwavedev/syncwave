@@ -8,7 +8,7 @@ export class CancelledError extends AppError {}
 
 // todo: make cancel synchronous (without Promises)
 
-export type Cancel = (cx: Cx) => undefined;
+export type Cancel = () => undefined;
 
 type AsyncRemap<T extends Promise<any> | AsyncIterable<any>> =
     T extends AsyncIterable<infer R>
@@ -43,7 +43,7 @@ function createScopedFunc<
         try {
             return await result;
         } finally {
-            cancelCx(this);
+            cancelCx();
         }
     }
 
@@ -55,7 +55,7 @@ function createScopedFunc<
         try {
             yield* result;
         } finally {
-            cancelCx(this);
+            cancelCx();
         }
     }
 
@@ -108,7 +108,7 @@ export class Cx {
 
     private constructor() {}
 
-    private readonly cleaners: Array<(cx: Cx) => Promise<void> | void> = [];
+    private readonly cleaners: Array<() => Promise<void> | void> = [];
     private _cancelled = false;
     private children: Cx[] = [];
 
@@ -118,7 +118,7 @@ export class Cx {
 
     async race<T>(cx: Cx, promise: Promise<T>, message?: string) {
         const result = await Promise.race([
-            this.cancelPromise(cx).then(cx => ({
+            this.cancelPromise().then(() => ({
                 type: 'cancel' as const,
             })),
             promise.then(value => ({type: 'value' as const, value})),
@@ -141,17 +141,17 @@ export class Cx {
         }
     }
 
-    cancelPromise(cx: Cx) {
+    cancelPromise(): Promise<void> {
         const signal = new Deferred<void>();
-        this.onCancel(cx, cx => {
-            signal.resolve(cx);
+        this.onCancel(() => {
+            signal.resolve(Cx.todo());
         });
         return signal.promise;
     }
 
-    onCancel(cx: Cx, cb: (cx: Cx) => Nothing): void {
+    onCancel(cb: () => Nothing): void {
         if (this._cancelled) {
-            cb(cx);
+            cb();
         } else {
             this.cleaners.push(cb);
         }
@@ -162,20 +162,20 @@ export class Cx {
         this.children.push(child);
         return [
             child,
-            (cx: Cx) => {
-                child.cancel(cx);
+            () => {
+                child.cancel();
                 this.children = this.children.filter(x => x !== child);
             },
         ];
     }
 
-    private cancel(cx: Cx) {
+    private cancel() {
         if (this._cancelled) {
             return;
         }
 
         this._cancelled = true;
-        this.children.forEach(x => x.cancel(cx));
-        this.cleaners.forEach(cb => cb(cx));
+        this.children.forEach(x => x.cancel());
+        this.cleaners.forEach(cb => cb());
     }
 }

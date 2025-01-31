@@ -2,9 +2,9 @@ import {Cx} from './context.js';
 import {AppError} from './errors.js';
 
 type DeferredState<T> =
-    | {readonly type: 'fulfilled'; readonly value: T}
+    | {readonly type: 'fulfilled'; readonly value: [Cx, T]}
     | {readonly type: 'pending'}
-    | {readonly type: 'rejected'; readonly reason: any};
+    | {readonly type: 'rejected'; readonly reason: AppError};
 
 export class Deferred<T> {
     private _state: DeferredState<T> = {type: 'pending'};
@@ -27,15 +27,15 @@ export class Deferred<T> {
 
     resolve(cx: Cx, value: T) {
         if (this._state.type === 'pending') {
-            this._state = {type: 'fulfilled', value};
+            this._state = {type: 'fulfilled', value: [cx, value]};
             this._resolve(value);
         }
     }
 
-    reject(cx: Cx, reason: AppError) {
+    reject(error: AppError) {
         if (this._state.type === 'pending') {
-            this._state = {type: 'rejected', reason};
-            this._reject(new AppError(cx, 'Deferred.reject', {cause: reason}));
+            this._state = {type: 'rejected', reason: error};
+            this._reject(error);
         }
     }
 }

@@ -255,7 +255,8 @@ describe('DocStore with MemKVStore', () => {
                 schema,
             });
             const results: MyDoc[] = [];
-            for await (const d of repo.get(cx, 'byName', ['Dana'])) {
+            const doc$ = repo.get(cx, 'byName', ['Dana']);
+            for await (const [cx, d] of doc$) {
                 results.push(d);
             }
             return results;
@@ -276,7 +277,8 @@ describe('DocStore with MemKVStore', () => {
                 schema,
             });
             const results: MyDoc[] = [];
-            for await (const d of repo.get(cx, 'byAge', [25])) {
+            const doc$ = repo.get(cx, 'byAge', [25]);
+            for await (const [cx, d] of doc$) {
                 results.push(d);
             }
             return results;
@@ -347,7 +349,8 @@ describe('DocStore with MemKVStore', () => {
 
             const results: MyDoc[] = [];
             // We can handle one side of the range first (e.g., ">= 15")
-            for await (const d of repo.query(cx, 'byAge', ageGte15)) {
+            const doc$ = repo.query(cx, 'byAge', ageGte15);
+            for await (const [cx, d] of doc$) {
                 // Then manually filter to "<= 25"
                 // Typically you'd do a combined condition, but the Condition type above
                 // suggests using either {gt, gte} or {lt, lte} in a single call.
@@ -411,7 +414,8 @@ describe('DocStore with MemKVStore', () => {
         await store.transact(cx, async (cx, tx) => {
             repo = new DocRepo<MyDoc>(cx, {tx, indexes, onChange, schema});
             const zedEntries: MyDoc[] = [];
-            for await (const zedDoc of repo.get(cx, 'byName', ['Zed'])) {
+            const zedDoc$ = repo.get(cx, 'byName', ['Zed']);
+            for await (const [cx, zedDoc] of zedDoc$) {
                 zedEntries.push(zedDoc);
             }
             // Let's delete one of them

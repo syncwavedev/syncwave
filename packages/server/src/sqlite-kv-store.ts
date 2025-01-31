@@ -49,7 +49,7 @@ class SqliteTransaction implements Uint8Transaction {
     public async *query(
         cx: Cx,
         condition: Condition<Uint8Array>
-    ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
+    ): AsyncIterable<[Cx, Entry<Uint8Array, Uint8Array>]> {
         const {clause, param, order} = buildConditionSql(cx, condition);
         const stmt = this.db.prepare(
             `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order}`
@@ -58,10 +58,13 @@ class SqliteTransaction implements Uint8Transaction {
         for (const row of stmt.iterate(param)) {
             cx.ensureAlive(cx);
 
-            yield {
-                key: new Uint8Array((row as Row).key),
-                value: new Uint8Array((row as Row).value),
-            };
+            yield [
+                cx,
+                {
+                    key: new Uint8Array((row as Row).key),
+                    value: new Uint8Array((row as Row).value),
+                },
+            ];
         }
     }
 

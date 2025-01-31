@@ -47,16 +47,16 @@ export class HubClient<T> {
 
     async subscribe(cx: Cx, topic: string): Promise<AsyncStream<T>> {
         const result = new Deferred<AsyncStream<T>>();
-        const updateStream = new StreamPuppet<any>(cx);
+        const updateStream = new StreamPuppet<any>();
         (async () => {
             const observerStream = astream(
                 this.server.subscribe(cx, {topic}) as AsyncIterable<
-                    {type: 'start'} | {type: 'message'; message: T}
+                    [Cx, {type: 'start'} | {type: 'message'; message: T}]
                 >
             );
 
             try {
-                for await (const item of observerStream) {
+                for await (const [cx, item] of observerStream) {
                     if (item.type === 'start') {
                         result.resolve(cx, astream(updateStream));
                     } else if (item.type === 'message') {
@@ -66,19 +66,19 @@ export class HubClient<T> {
                     }
                 }
             } catch (error) {
-                result.reject(cx, toError(cx, error));
-                await updateStream.throw(cx, error);
+                result.reject(toError(cx, error));
+                await updateStream.throw(error);
             } finally {
                 updateStream.end();
             }
         })()
             .catch((error: unknown) => {
                 logger.error(cx, 'HubClient.subscribe', error);
-                result.reject(cx, toError(cx, error));
-                return updateStream.throw(cx, error);
+                result.reject(toError(cx, error));
+                return updateStream.throw(error);
             })
             .finally(() => {
-                result.reject(cx, new CancelledError(cx));
+                result.reject(new CancelledError(cx));
                 updateStream.end();
             });
 
@@ -123,7 +123,7 @@ class SubjectManager<T> {
     }
 
     async throw(cx: Cx, topic: string, error: AppError) {
-        await this.subjects.get(topic)?.throw(cx, error);
+        await this.subjects.get(topic)?.throw(error);
     }
 
     subscribe(cx: Cx, topic: string, observer: Observer<T>) {
@@ -134,9 +134,9 @@ class SubjectManager<T> {
         }
         subject.subscribe(cx, {
             next: (cx, value) => observer.next(cx, value),
-            throw: (cx, error) => observer.throw(cx, error),
-            close: async cx => {
-                await observer.close(cx);
+            throw: error => observer.throw(error),
+            close: () => {
+                observer.close();
                 if (!subject.anyObservers) {
                     this.subjects.delete(topic);
                 }
@@ -203,7 +203,7 @@ function createHubServerApi<T>(cx: Cx, zMessage: ZodType<T>) {
             > {
                 const message$ = subjects.value$(cx, topic);
                 yield {type: 'start'};
-                for await (const message of message$) {
+                for await (const [cx, message] of message$) {
                     yield {type: 'message', message};
                 }
             },

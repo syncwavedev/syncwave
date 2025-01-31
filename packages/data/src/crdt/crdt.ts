@@ -92,7 +92,7 @@ export class Crdt<T> {
                 replayLog(cx, log, locator);
             }
         }, options?.origin);
-        cancelSubscription(cx);
+        cancelSubscription();
 
         // todo: add tests for returned diff
         return diff;
@@ -111,7 +111,7 @@ export class Crdt<T> {
             next(state as CrdtDiff<T>, {origin: origin ?? undefined});
         this.doc.on('updateV2', fn);
 
-        cx.onCancel(cx, cx => {
+        cx.onCancel(() => {
             this.doc.off('updateV2', fn);
         });
     }

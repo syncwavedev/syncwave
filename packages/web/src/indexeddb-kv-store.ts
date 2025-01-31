@@ -1,4 +1,4 @@
-import type {Context, Entry} from 'ground-data';
+import type {Cx, Entry} from 'ground-data';
 import {
 	astream,
 	ENVIRONMENT,
@@ -74,13 +74,13 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		}
 	}
 
-	public async get(cx: Context, key: Uint8Array): Promise<Uint8Array | undefined> {
+	public async get(cx: Cx, key: Uint8Array): Promise<Uint8Array | undefined> {
 		this.assertActive();
 		return await this.tx.objectStore(STORE_NAME).get(key);
 	}
 
 	public async *query(
-		cx: Context,
+		cx: Cx,
 		condition: Condition<Uint8Array>
 	): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
 		this.assertActive();
@@ -92,12 +92,12 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		}
 	}
 
-	public async put(cx: Context, key: Uint8Array, value: Uint8Array): Promise<void> {
+	public async put(cx: Cx, key: Uint8Array, value: Uint8Array): Promise<void> {
 		this.assertActive();
 		await this.tx.objectStore(STORE_NAME).put(value, key);
 	}
 
-	public async delete(cx: Context, key: Uint8Array): Promise<void> {
+	public async delete(cx: Cx, key: Uint8Array): Promise<void> {
 		this.assertActive();
 		await this.tx.objectStore(STORE_NAME).delete(key);
 	}
@@ -117,8 +117,8 @@ export class IndexedDBKVStore implements Uint8KVStore {
 	}
 
 	public async transact<TResult>(
-		cx: Context,
-		fn: (cx: Context, tx: Uint8Transaction) => Promise<TResult>
+		cx: Cx,
+		fn: (cx: Cx, tx: Uint8Transaction) => Promise<TResult>
 	): Promise<TResult> {
 		const db = await this.dbPromise;
 		const tx = db.transaction(STORE_NAME, 'readwrite');

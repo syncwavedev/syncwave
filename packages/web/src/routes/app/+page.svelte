@@ -29,7 +29,7 @@
 
 			boards = initialBoards;
 
-			for await (const nextBoards of boards$) {
+			for await (const [cx, nextBoards] of boards$) {
 				boards = nextBoards;
 			}
 		})();

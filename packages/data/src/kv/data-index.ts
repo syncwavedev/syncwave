@@ -4,7 +4,12 @@ import {Cx} from '../context.js';
 import {AppError} from '../errors.js';
 import {assert, compareUint8Array, zip} from '../utils.js';
 import {decodeUuid, encodeUuid, Uuid, UuidCodec} from '../uuid.js';
-import {Condition, mapCondition, Uint8Transaction} from './kv-store.js';
+import {
+    Condition,
+    mapCondition,
+    Uint8Entry,
+    Uint8Transaction,
+} from './kv-store.js';
 
 export interface IndexGetOptions {
     order?: 'asc' | 'desc';
@@ -22,8 +27,8 @@ export interface Index<TValue> {
         prev: TValue | undefined,
         next: TValue | undefined
     ): Promise<void>;
-    get(cx: Cx, key: IndexKey): AsyncIterable<Uuid>;
-    query(cx: Cx, condition: Condition<IndexKey>): AsyncIterable<Uuid>;
+    get(cx: Cx, key: IndexKey): AsyncIterable<[Cx, Uuid]>;
+    query(cx: Cx, condition: Condition<IndexKey>): AsyncIterable<[Cx, Uuid]>;
 }
 
 export interface IndexOptions<TValue> {
@@ -56,7 +61,10 @@ export function createIndex<TValue>({
 
     const filter = originalFilter ?? (() => true);
 
-    async function* queryInternal(cx: Cx, condition: Condition<IndexKey>) {
+    async function* queryInternal(
+        cx: Cx,
+        condition: Condition<IndexKey>
+    ): AsyncIterable<[Cx, Uint8Entry]> {
         const conditionKey = mapCondition(cx, condition, {
             gt: cond => cond.gt,
             gte: cond => cond.gte,
@@ -93,14 +101,14 @@ export function createIndex<TValue>({
 
         const iterator = tx.query(cx, queryCondition);
 
-        for await (const entry of iterator) {
+        for await (const [cx, entry] of iterator) {
             const entryKey = keyCodec.decode(cx, entry.key);
             for (let i = 0; i < conditionKey.length - 1; i += 1) {
                 if (compareIndexKeyPart(entryKey[i], conditionKey[i]) !== 0) {
                     return;
                 }
             }
-            yield entry;
+            yield [cx, entry];
         }
     }
 
@@ -111,9 +119,8 @@ export function createIndex<TValue>({
         _debug: {
             async keys(cx: Cx) {
                 const result: IndexKey[] = [];
-                for await (const {key} of tx.query(cx, {
-                    gte: new Uint8Array(),
-                })) {
+                const stream = tx.query(cx, {gte: new Uint8Array()});
+                for await (const [cx, {key}] of stream) {
                     result.push(keyCodec.decode(cx, key));
                 }
 
@@ -193,13 +200,15 @@ export function createIndex<TValue>({
                 }
             }
         },
-        async *query(cx: Cx, condition) {
-            for await (const entry of queryInternal(cx, condition)) {
-                yield decodeUuid(cx, entry.value);
+        async *query(cx: Cx, condition): AsyncIterable<[Cx, Uuid]> {
+            const stream = queryInternal(cx, condition);
+            for await (const [cx, entry] of stream) {
+                yield [cx, decodeUuid(cx, entry.value)];
             }
         },
-        async *get(cx: Cx, key) {
-            for await (const entry of queryInternal(cx, {gte: key})) {
+        async *get(cx: Cx, key): AsyncIterable<[Cx, Uuid]> {
+            const stream = queryInternal(cx, {gte: key});
+            for await (const [cx, entry] of stream) {
                 const entryKey = keyCodec.decode(cx, entry.key);
                 for (let i = 0; i < key.length; i += 1) {
                     if (key.length > 0) {
@@ -215,7 +224,7 @@ export function createIndex<TValue>({
                     }
                 }
 
-                yield decodeUuid(cx, entry.value);
+                yield [cx, decodeUuid(cx, entry.value)];
             }
         },
     };

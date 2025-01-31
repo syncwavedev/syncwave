@@ -1,12 +1,12 @@
-import {StringCodec} from '../codec.js';
+import {encodeString} from '../codec.js';
 import {Cx} from '../context.js';
 import {compareUint8Array, concatBuffers} from '../utils.js';
 import {
     Condition,
     Entry,
     KVStore,
-    Transaction,
     mapCondition,
+    Transaction,
 } from './kv-store.js';
 
 export class PrefixedTransaction<TValue>
@@ -15,11 +15,12 @@ export class PrefixedTransaction<TValue>
     private readonly prefix: Uint8Array;
 
     constructor(
+        cx: Cx,
         private readonly target: Transaction<Uint8Array, TValue>,
         prefix: string | Uint8Array
     ) {
         if (typeof prefix === 'string') {
-            this.prefix = new StringCodec().encode(prefix);
+            this.prefix = encodeString(cx, prefix);
         } else {
             this.prefix = prefix;
         }
@@ -32,20 +33,19 @@ export class PrefixedTransaction<TValue>
     async *query(
         cx: Cx,
         condition: Condition<Uint8Array>
-    ): AsyncIterable<Entry<Uint8Array, TValue>> {
+    ): AsyncIterable<[Cx, Entry<Uint8Array, TValue>]> {
         const prefixedCondition = mapCondition<
             Uint8Array,
             Condition<Uint8Array>
-        >(condition, {
+        >(cx, condition, {
             gt: cond => ({gt: concatBuffers(this.prefix, cond.gt)}),
             gte: cond => ({gte: concatBuffers(this.prefix, cond.gte)}),
             lt: cond => ({lt: concatBuffers(this.prefix, cond.lt)}),
             lte: cond => ({lte: concatBuffers(this.prefix, cond.lte)}),
         });
-        for await (const {key, value} of this.target.query(
-            cx,
-            prefixedCondition
-        )) {
+
+        const stream = this.target.query(cx, prefixedCondition);
+        for await (const [cx, {key, value}] of stream) {
             if (
                 compareUint8Array(
                     key.slice(0, this.prefix.length),
@@ -55,7 +55,7 @@ export class PrefixedTransaction<TValue>
                 return;
             }
 
-            yield {key: key.slice(this.prefix.length), value};
+            yield [cx, {key: key.slice(this.prefix.length), value}];
         }
     }
 
@@ -72,11 +72,12 @@ export class PrefixedKVStore<TValue> implements KVStore<Uint8Array, TValue> {
     private readonly prefix: Uint8Array;
 
     constructor(
+        cx: Cx,
         private readonly target: KVStore<Uint8Array, TValue>,
         prefix: string | Uint8Array
     ) {
         if (typeof prefix === 'string') {
-            this.prefix = new StringCodec().encode(prefix);
+            this.prefix = encodeString(cx, prefix);
         } else {
             this.prefix = prefix;
         }
@@ -87,7 +88,7 @@ export class PrefixedKVStore<TValue> implements KVStore<Uint8Array, TValue> {
         fn: (cx: Cx, tx: Transaction<Uint8Array, TValue>) => Promise<TResult>
     ): Promise<TResult> {
         return await this.target.transact(cx, (cx, tx) =>
-            fn(cx, new PrefixedTransaction(tx, this.prefix))
+            fn(cx, new PrefixedTransaction(cx, tx, this.prefix))
         );
     }
 }

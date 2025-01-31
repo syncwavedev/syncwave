@@ -51,7 +51,7 @@ export class IdentityRepo {
 
     constructor(cx: Cx, tx: Uint8Transaction, onChange: OnDocChange<Identity>) {
         this.rawRepo = new DocRepo<Identity>(cx, {
-            tx: withPrefix('d/')(tx),
+            tx: withPrefix(cx, 'd/')(tx),
             indexes: {
                 [EMAIL_INDEX]: {
                     key: x => [x.email],

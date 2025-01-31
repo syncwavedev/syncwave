@@ -28,7 +28,7 @@ export interface Streamer<TState, TRequest, TItem> {
         state: TState,
         req: TRequest,
         headers: MessageHeaders
-    ): AsyncIterable<TItem>;
+    ): AsyncIterable<[Cx, TItem]>;
 }
 
 export type ObserverItem<T> = z.infer<ReturnType<typeof zObserverItem<T>>>;
@@ -159,7 +159,7 @@ export interface ObserverOptions<
     ) => Promise<
         [
             initialValue: TypeOf<TValueSchema>,
-            stream: AsyncIterable<TypeOf<TValueSchema>>,
+            stream: AsyncIterable<[Cx, TypeOf<TValueSchema>]>,
         ]
     >;
 }
@@ -183,12 +183,14 @@ export function observer<
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
-    ): AsyncIterable<TypeOf<TValueSchema>> {
+    ): AsyncIterable<[Cx, TypeOf<TValueSchema>]> {
         req = options.req.parse(req);
-        return astream(options.observe(cx, state, req, headers)).flatMap(
+        return astream<
+            [TypeOf<TValueSchema>, AsyncIterable<[Cx, TypeOf<TValueSchema>]>]
+        >(options.observe(cx, state, req, headers).then(x => [cx, x])).flatMap(
             (cx, [initialValue, stream]) => {
                 return astream<ObserverItem<TypeOf<TValueSchema>>>([
-                    {type: 'start', initialValue},
+                    [cx, {type: 'start', initialValue}],
                 ]).concat(
                     astream(stream).map((cx, value) => ({
                         type: 'next',
@@ -325,7 +327,7 @@ export function applyMiddleware<
                             error
                         );
                     } else {
-                        signal.reject(cx, error);
+                        signal.reject(error);
                     }
                 });
 

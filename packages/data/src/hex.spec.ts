@@ -1,5 +1,8 @@
 import {describe, expect, it} from 'vitest';
+import {Cx} from './context.js';
 import {HexCodec, validateHexString} from './hex.js';
+
+const cx = Cx.todo();
 
 // Test suite for validateHexString
 describe('validateHexString', () => {
@@ -41,22 +44,22 @@ describe('HexCodec', () => {
         it('should encode a valid hex string into Uint8Array', () => {
             const hexString = 'ff 0a 1b';
             const expected = new Uint8Array([255, 10, 27]);
-            expect(codec.encode(hexString)).toEqual(expected);
+            expect(codec.encode(cx, hexString)).toEqual(expected);
         });
 
         it('should encode an empty hex string into an empty Uint8Array', () => {
-            expect(codec.encode('')).toEqual(new Uint8Array([]));
+            expect(codec.encode(cx, '')).toEqual(new Uint8Array([]));
         });
 
         it('should throw an error for invalid hex string', () => {
-            expect(() => codec.encode('zz 11')).toThrowError(
+            expect(() => codec.encode(cx, 'zz 11')).toThrowError(
                 'Invalid hex string format: zz 11'
             );
         });
 
         it('should throw an error for null or undefined input', () => {
-            expect(() => codec.encode(null as any)).toThrowError();
-            expect(() => codec.encode(undefined as any)).toThrowError();
+            expect(() => codec.encode(cx, null as any)).toThrowError();
+            expect(() => codec.encode(cx, undefined as any)).toThrowError();
         });
     });
 
@@ -64,23 +67,23 @@ describe('HexCodec', () => {
         it('should decode a Uint8Array into a hex string', () => {
             const buf = new Uint8Array([255, 10, 27]);
             const expected = 'ff 0a 1b';
-            expect(codec.decode(buf)).toBe(expected);
+            expect(codec.decode(cx, buf)).toBe(expected);
         });
 
         it('should decode an empty Uint8Array into an empty string', () => {
-            expect(codec.decode(new Uint8Array([]))).toBe('');
+            expect(codec.decode(cx, new Uint8Array([]))).toBe('');
         });
 
         it('should decode a Uint8Array with leading zeros correctly', () => {
             const buf = new Uint8Array([0, 15, 255]);
             const expected = '00 0f ff';
-            expect(codec.decode(buf)).toBe(expected);
+            expect(codec.decode(cx, buf)).toBe(expected);
         });
 
         it('should handle large Uint8Array inputs correctly', () => {
             const buf = new Uint8Array([0, 127, 255, 128, 64, 32]);
             const expected = '00 7f ff 80 40 20';
-            expect(codec.decode(buf)).toBe(expected);
+            expect(codec.decode(cx, buf)).toBe(expected);
         });
     });
 });

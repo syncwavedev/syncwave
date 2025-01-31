@@ -1,10 +1,9 @@
 import {StringCodec} from '../codec.js';
 import {Cx} from '../context.js';
-import {createUuid, UuidCodec} from '../uuid.js';
+import {createUuid, encodeUuid} from '../uuid.js';
 import {Uint8Transaction} from './kv-store.js';
 
 export class OptimisticLock {
-    private readonly uuidCodec = new UuidCodec();
     private readonly stringCodec = new StringCodec();
 
     constructor(private readonly tx: Uint8Transaction) {}
@@ -14,8 +13,8 @@ export class OptimisticLock {
             key === undefined
                 ? new Uint8Array()
                 : typeof key === 'string'
-                  ? this.stringCodec.encode(key)
+                  ? this.stringCodec.encode(cx, key)
                   : key;
-        await this.tx.put(cx, keyBuf, this.uuidCodec.encode(createUuid()));
+        await this.tx.put(cx, keyBuf, encodeUuid(cx, createUuid()));
     }
 }

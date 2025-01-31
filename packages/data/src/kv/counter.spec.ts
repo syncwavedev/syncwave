@@ -47,8 +47,8 @@ describe('Counter', () => {
 
     it('should handle concurrent transactions correctly', async () => {
         await kvStore.transact(cx, async (cx, tx) => {
-            const counter1 = new Counter(withPrefix('1/')(tx), 10);
-            const counter2 = new Counter(withPrefix('2/')(tx), 10);
+            const counter1 = new Counter(withPrefix(cx, '1/')(tx), 10);
+            const counter2 = new Counter(withPrefix(cx, '2/')(tx), 10);
 
             const value1 = await counter1.increment(cx);
             const value2 = await counter2.increment(cx);
@@ -86,8 +86,8 @@ describe('Counter', () => {
 
     it('should initialize multiple counters independently', async () => {
         await kvStore.transact(cx, async (cx, tx) => {
-            const counter1 = new Counter(withPrefix('1/')(tx), 3);
-            const counter2 = new Counter(withPrefix('2/')(tx), 10);
+            const counter1 = new Counter(withPrefix(cx, '1/')(tx), 3);
+            const counter2 = new Counter(withPrefix(cx, '2/')(tx), 10);
 
             const value1 = await counter1.get(cx);
             const value2 = await counter2.get(cx);

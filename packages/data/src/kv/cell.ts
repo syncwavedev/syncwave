@@ -20,11 +20,13 @@ export class Cell<T> {
         if (result) {
             return result.value;
         }
-        await this.put(cx, this.initialValue);
+        [cx, x] = await this.put(cx, this.initialValue);
         return this.initialValue;
     }
 
-    async put(cx: Cx, value: T): Promise<void> {
+    async put(cx: Cx, value: T): Promise<[Cx, void]> {
         await this.tx.put(cx, key, {value});
+
+        return [cx, undefined];
     }
 }

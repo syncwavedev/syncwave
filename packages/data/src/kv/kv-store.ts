@@ -76,7 +76,7 @@ export interface Transaction<TKey, TValue> {
     query(
         cx: Cx,
         condition: Condition<TKey>
-    ): AsyncIterable<Entry<TKey, TValue>>;
+    ): AsyncIterable<[Cx, Entry<TKey, TValue>]>;
     put(cx: Cx, key: TKey, value: TValue): Promise<void>;
     delete(cx: Cx, key: TKey): Promise<void>;
 }
@@ -136,11 +136,12 @@ function createEncodingMapper<TData>(
 }
 
 export function withPrefix(
+    cx: Cx,
     prefix: Uint8Array | string
 ): <TValue>(
     store: Transaction<Uint8Array, TValue>
 ) => Transaction<Uint8Array, TValue> {
-    return store => new PrefixedTransaction(store, prefix);
+    return store => new PrefixedTransaction(cx, store, prefix);
 }
 
 export function withValueCodec<TData>(
@@ -179,12 +180,13 @@ async function* _queryStartsWith<T>(
     cx: Cx,
     tx: Transaction<Uint8Array, T>,
     prefix: Uint8Array
-): AsyncIterable<Entry<Uint8Array, T>> {
-    for await (const entry of tx.query(cx, {gte: prefix})) {
+): AsyncIterable<[Cx, Entry<Uint8Array, T>]> {
+    const stream = tx.query(cx, {gte: prefix});
+    for await (const [cx, entry] of stream) {
         if (!bufStartsWith(entry.key, prefix)) {
             return;
         }
 
-        yield entry;
+        yield [cx, entry];
     }
 }

@@ -8,13 +8,13 @@ const cx = Cx.test();
 
 describe('MappedTransaction with MemKVStore', () => {
     const keyMapper: Mapper<Uint8Array, string> = {
-        encode: key => Buffer.from(key, 'base64'),
-        decode: key => Buffer.from(key).toString('base64'),
+        encode: (cx, key) => Buffer.from(key, 'base64'),
+        decode: (cx, key) => Buffer.from(key).toString('base64'),
     };
 
     const valueMapper: Mapper<Uint8Array, string> = {
-        encode: value => Buffer.from(value, 'hex'),
-        decode: value => Buffer.from(value).toString('hex'),
+        encode: (cx, value) => Buffer.from(value, 'hex'),
+        decode: (cx, value) => Buffer.from(value).toString('hex'),
     };
 
     it('should get a value with mapped key and decode the value', async () => {
@@ -68,7 +68,8 @@ describe('MappedTransaction with MemKVStore', () => {
             gt: Buffer.from([2]).toString('base64'),
         };
         const results: Entry<string, string>[] = [];
-        for await (const entry of mappedTxn.query(cx, condition)) {
+        const entry$ = mappedTxn.query(cx, condition);
+        for await (const [cx, entry] of entry$) {
             results.push(entry);
         }
 
@@ -105,13 +106,13 @@ describe('MappedTransaction with MemKVStore', () => {
 
 describe('MappedKVStore with MemKVStore', () => {
     const keyMapper: Mapper<Uint8Array, string> = {
-        encode: key => Buffer.from(key, 'base64'),
-        decode: key => Buffer.from(key).toString('base64'),
+        encode: (cx, key) => Buffer.from(key, 'base64'),
+        decode: (cx, key) => Buffer.from(key).toString('base64'),
     };
 
     const valueMapper: Mapper<Uint8Array, string> = {
-        encode: value => Buffer.from(value, 'hex'),
-        decode: value => Buffer.from(value).toString('hex'),
+        encode: (cx, value) => Buffer.from(value, 'hex'),
+        decode: (cx, value) => Buffer.from(value).toString('hex'),
     };
 
     it('should execute a transaction with mapped keys and values', async () => {

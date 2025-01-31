@@ -40,15 +40,19 @@ export class MappedTransaction<
     async *query(
         cx: Cx,
         condition: Condition<TKeyPublic>
-    ): AsyncIterable<Entry<TKeyPublic, TValuePublic>> {
-        for await (const {key, value} of this.target.query(
+    ): AsyncIterable<[Cx, Entry<TKeyPublic, TValuePublic>]> {
+        const stream = this.target.query(
             cx,
             projectCondition(cx, condition, this.keyMapper)
-        )) {
-            yield {
-                key: this.keyMapper.decode(cx, key),
-                value: this.valueMapper.decode(cx, value),
-            };
+        );
+        for await (const [cx, {key, value}] of stream) {
+            yield [
+                cx,
+                {
+                    key: this.keyMapper.decode(cx, key),
+                    value: this.valueMapper.decode(cx, value),
+                },
+            ];
         }
     }
 

@@ -16,8 +16,8 @@ export type Nothing = void | undefined;
 
 export interface Observer<T> {
     next: (cx: Cx, value: T) => Promise<void>;
-    throw: (cx: Cx, error: AppError) => Promise<void>;
-    close: (cx: Cx) => Promise<void>;
+    throw: (error: AppError) => Promise<void>;
+    close: () => Nothing;
 }
 
 export class Subject<TValue> {
@@ -39,18 +39,24 @@ export class Subject<TValue> {
         const sub = {observer};
 
         this.subs.push(sub);
-        cx.onCancel(cx, cx => {
+        cx.onCancel(() => {
             this.subs = this.subs.filter(x => x !== sub);
         });
     }
 
     value$(cx: Cx): AsyncStream<TValue> {
-        const stream = new ColdStream<TValue>(cx, (cx, exe) => {
+        const stream = new ColdStream<TValue>(exe => {
             this.subscribe(cx, {
                 next: (cx, value) => exe.next(cx, value),
-                throw: (cx, error) => exe.throw(cx, error),
-                close: cx => Promise.resolve(exe.end(cx)),
+                throw: error => exe.throw(error),
+                close: () => exe.end(),
             });
+
+            return () => {
+                exe.throw(new CancelledError(Cx.todo())).finally(() =>
+                    exe.end()
+                );
+            };
         });
         return astream(stream);
     }
@@ -66,8 +72,8 @@ export class Subject<TValue> {
         }
     }
 
-    async throw(cx: Cx, error: AppError): Promise<void> {
-        this.ensureOpen(cx);
+    async throw(error: AppError): Promise<void> {
+        this.ensureOpen(Cx.todo());
         // copy in case if new subscribers are added/removed during notification
         // await whenAll(
         //     [...this.subs].map(sub =>
@@ -77,22 +83,15 @@ export class Subject<TValue> {
 
         // to preserve stack
         for (const sub of [...this.subs]) {
-            await sub.observer.throw(
-                cx,
-                new AppError(cx, 'Subject.throw', {cause: error})
-            );
+            await sub.observer.throw(error);
         }
     }
 
     async close(cx: Cx): Promise<void> {
         if (this._open) {
             this._open = false;
-            // copy in case if new subscribers are added/removed during notification
-            // await whenAll([...this.subs].map(sub => sub.observer.close(cx)));
-
-            // to preserve stack
             for (const sub of [...this.subs]) {
-                await sub.observer.close(cx);
+                sub.observer.close();
             }
         } else {
             logger.warn(cx, 'subject already closed');
@@ -127,10 +126,9 @@ export function assertDefined<T>(cx: Cx, value: T | undefined | null): T {
 export function wait(cx: Cx, ms: number): Promise<void> {
     const result = new Deferred<void>();
     const timeoutId = setTimeout(() => result.resolve(cx), ms);
-    // create CancelledError here to preserve call stack
-    const cancelError = new CancelledError(cx);
-    cx.onCancel(cx, cx => {
-        result.reject(cx, cancelError);
+
+    cx.onCancel(() => {
+        result.reject(new CancelledError(Cx.todo()));
         clearTimeout(timeoutId);
     });
     return result.promise;
@@ -158,11 +156,11 @@ export function interval(ms: number, cx: Cx): AsyncStream<number> {
     return astream(_interval(cx, ms));
 }
 
-async function* _interval(cx: Cx, ms: number): AsyncIterable<number> {
+async function* _interval(cx: Cx, ms: number): AsyncIterable<[Cx, number]> {
     let index = 0;
     while (cx.alive) {
         cx.ensureAlive(cx);
-        yield index;
+        yield [cx, index];
         index += 1;
         await wait(cx, ms);
     }
@@ -356,7 +354,7 @@ export interface ObservableOptions<T> {
 export async function observable<T>(
     cx: Cx,
     options: ObservableOptions<T>
-): Promise<[initialValue: T, update$: AsyncIterable<T>]> {
+): Promise<[initialValue: T, update$: AsyncIterable<[Cx, T]>]> {
     return [
         await options.get(cx),
         astream(await options.update$).map(cx => options.get(cx)),

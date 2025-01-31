@@ -67,7 +67,6 @@ export class PersistentConnection<T> implements Connection<T> {
                         this.connection = undefined;
                         try {
                             await this.subject.throw(
-                                cx,
                                 new AppError(
                                     cx,
                                     'connection is lost, reconnection...'
@@ -96,16 +95,18 @@ export class PersistentConnection<T> implements Connection<T> {
                     next: async (cx, event) => {
                         await this.subject.next(cx, event);
                     },
-                    throw: async (cx, error) => {
+                    throw: async error => {
                         logger.error(
-                            cx,
+                            Cx.todo(),
                             'error in underlying connection',
                             error
                         );
                         await reconnect(cx);
                     },
-                    close: async cx => {
-                        await reconnect(cx);
+                    close: () => {
+                        reconnect(cx).catch(error => {
+                            logger.error(cx, 'close => reconnect', error);
+                        });
                     },
                 });
 

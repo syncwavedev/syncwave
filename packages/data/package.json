@@ -40,6 +40,7 @@
         "vitest": "^1.6.0"
     },
     "dependencies": {
+        "@webfill/async-context": "^1.0.0",
         "async-channel": "^0.2.0",
         "bytewise": "^1.1.0",
         "deep-equal": "^2.2.3",

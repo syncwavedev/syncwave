@@ -21,7 +21,7 @@ export abstract class DataNode {
     abstract queryChildren(
         cx: Cx,
         prefix: Uint8Array
-    ): AsyncIterable<DataNodeChild>;
+    ): AsyncIterable<[Cx, DataNodeChild]>;
     abstract child(cx: Cx, part: Uint8Array): DataNode;
     abstract visit<T>(cx: Cx, visitor: DataNodeVisitor<T>): T;
 }
@@ -36,11 +36,11 @@ export class AggregateDataNode<
     async *queryChildren(
         cx: Cx,
         prefix: Uint8Array
-    ): AsyncIterable<DataNodeChild> {
+    ): AsyncIterable<[Cx, DataNodeChild]> {
         for (const [prop, node] of Object.entries(this.children)) {
             const key = encodeString(cx, prop);
             if (bufStartsWith(key, prefix)) {
-                yield {key, node};
+                yield [cx, {key, node}];
             }
         }
     }
@@ -48,7 +48,7 @@ export class AggregateDataNode<
     child(cx: Cx, key: Uint8Array): DataNode {
         const result = this.children[decodeString(cx, key)];
         if (!result) {
-            `AggregateDataNode does not have any children with key = ${decodeHex(key)}`;
+            `AggregateDataNode does not have any children with key = ${decodeHex(cx, key)}`;
         }
 
         return result;
@@ -67,7 +67,7 @@ export class RepoDataNode<T extends Doc> extends DataNode {
     async *queryChildren(
         cx: Cx,
         prefix: Uint8Array
-    ): AsyncIterable<DataNodeChild> {
+    ): AsyncIterable<[Cx, DataNodeChild]> {
         yield* this.repo.getAll(cx, prefix).map((cx, doc) => ({
             key: encodeUuid(cx, doc.id),
             node: new DocDataNode(doc.id, this.repo),
@@ -92,14 +92,14 @@ export class DocDataNode<T extends Doc> extends DataNode {
         super();
     }
 
-    async *queryChildren(): AsyncIterable<DataNodeChild> {
+    async *queryChildren(): AsyncIterable<[Cx, DataNodeChild]> {
         // no children
     }
 
     child(cx: Cx, key: Uint8Array): DataNode {
         throw new AppError(
             cx,
-            `DocDataNode does not have any children, part: ${decodeHex(key)}`
+            `DocDataNode does not have any children, part: ${decodeHex(cx, key)}`
         );
     }
 

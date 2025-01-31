@@ -41,7 +41,7 @@ export class BoardRepo {
 
     constructor(cx: cx, tx: Uint8Transaction, onChange: OnDocChange<Board>) {
         this.rawRepo = new DocRepo<Board>(cx, {
-            tx: withPrefix('d/')(tx),
+            tx: withPrefix(cx, 'd/')(tx),
             onChange,
             indexes: {
                 [SLUG_INDEX]: {
@@ -53,7 +53,7 @@ export class BoardRepo {
             schema: zBoard(),
         });
         this.counters = new Registry(
-            withPrefix('c/')(tx),
+            withPrefix(cx, 'c/')(tx),
             counterTxn => new Counter(counterTxn, 0)
         );
     }
@@ -84,7 +84,7 @@ export class BoardRepo {
     }
 
     async incrementBoardCounter(cx: cx, boardId: BoardId): Promise<number> {
-        return await this.counters.get(boardId.toString()).increment(cx);
+        return await this.counters.get(cx, boardId.toString()).increment(cx);
     }
 
     async create(cx: cx, board: Board): Promise<Board> {

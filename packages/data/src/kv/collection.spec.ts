@@ -4,10 +4,10 @@ import {Cx} from '../context.js';
 import {Collection, CollectionEntry} from './collection.js';
 import {MemKVStore} from './mem-kv-store.js';
 
-const ctx = Cx.test();
+const cx = Cx.test();
 const jsonCodec: Codec<any> = {
-    encode: data => encodeString(JSON.stringify(data)),
-    decode: bytes => JSON.parse(decodeString(bytes)),
+    encode: (cx, data) => encodeString(cx, JSON.stringify(data)),
+    decode: (cx, bytes) => JSON.parse(decodeString(cx, bytes)),
 };
 
 describe('Collection', () => {
@@ -18,18 +18,19 @@ describe('Collection', () => {
     });
 
     it('should append data into the collection and retrieve it with the correct offsets', async () => {
-        await store.transact(ctx, async (ctx, tx) => {
-            const collection = new Collection(tx, jsonCodec);
+        await store.transact(cx, async (cx, tx) => {
+            const collection = new Collection(cx, tx, jsonCodec);
 
             await collection.append(
-                ctx,
+                cx,
                 {value: 'A'},
                 {value: 'B'},
                 {value: 'C'}
             );
 
             const results: CollectionEntry<any>[] = [];
-            for await (const entry of collection.list(ctx, 0, 3)) {
+            const entry$ = collection.list(cx, 0, 3);
+            for await (const [cx, entry] of entry$) {
                 results.push(entry);
             }
 
@@ -42,14 +43,15 @@ describe('Collection', () => {
     });
 
     it('should handle appending data multiple times and retrieving by ranges', async () => {
-        await store.transact(ctx, async (ctx, tx) => {
-            const collection = new Collection(tx, jsonCodec);
+        await store.transact(cx, async (cx, tx) => {
+            const collection = new Collection(cx, tx, jsonCodec);
 
-            await collection.append(ctx, {value: 'X'}, {value: 'Y'});
-            await collection.append(ctx, {value: 'Z'});
+            await collection.append(cx, {value: 'X'}, {value: 'Y'});
+            await collection.append(cx, {value: 'Z'});
 
             const results: CollectionEntry<any>[] = [];
-            for await (const entry of collection.list(ctx, 1, 3)) {
+            const entry$ = collection.list(cx, 1, 3);
+            for await (const [cx, entry] of entry$) {
                 results.push(entry);
             }
 
@@ -61,13 +63,14 @@ describe('Collection', () => {
     });
 
     it('should return an empty list if the range is outside the offsets', async () => {
-        await store.transact(ctx, async (ctx, tx) => {
-            const collection = new Collection(tx, jsonCodec);
+        await store.transact(cx, async (cx, tx) => {
+            const collection = new Collection(cx, tx, jsonCodec);
 
-            await collection.append(ctx, {value: 'A'});
+            await collection.append(cx, {value: 'A'});
 
             const results: CollectionEntry<any>[] = [];
-            for await (const entry of collection.list(ctx, 2, 5)) {
+            const entry$ = collection.list(cx, 2, 5);
+            for await (const [cx, entry] of entry$) {
                 results.push(entry);
             }
 
@@ -76,18 +79,19 @@ describe('Collection', () => {
     });
 
     it('should handle overlapping ranges correctly', async () => {
-        await store.transact(ctx, async (ctx, tx) => {
-            const collection = new Collection(tx, jsonCodec);
+        await store.transact(cx, async (cx, tx) => {
+            const collection = new Collection(cx, tx, jsonCodec);
 
             await collection.append(
-                ctx,
+                cx,
                 {value: 'D'},
                 {value: 'E'},
                 {value: 'F'}
             );
 
             const results: CollectionEntry<any>[] = [];
-            for await (const entry of collection.list(ctx, 0, 2)) {
+            const entry$ = collection.list(cx, 0, 2);
+            for await (const [cx, entry] of entry$) {
                 results.push(entry);
             }
 
@@ -99,16 +103,17 @@ describe('Collection', () => {
     });
 
     it('should support querying with large ranges', async () => {
-        await store.transact(ctx, async (ctx, tx) => {
-            const collection = new Collection(tx, jsonCodec);
+        await store.transact(cx, async (cx, tx) => {
+            const collection = new Collection(cx, tx, jsonCodec);
 
             await collection.append(
-                ctx,
+                cx,
                 ...Array.from({length: 1000}, (_, i) => ({value: i}))
             );
 
             const results: CollectionEntry<any>[] = [];
-            for await (const entry of collection.list(ctx, 990, 1000)) {
+            const entry$ = collection.list(cx, 990, 1000);
+            for await (const [cx, entry] of entry$) {
                 results.push(entry);
             }
 
@@ -119,21 +124,22 @@ describe('Collection', () => {
     });
 
     it('should increment offset correctly across transactions', async () => {
-        await store.transact(ctx, async (ctx, tx) => {
-            const collection = new Collection(tx, jsonCodec);
-            await collection.append(ctx, {value: 'First'});
+        await store.transact(cx, async (cx, tx) => {
+            const collection = new Collection(cx, tx, jsonCodec);
+            await collection.append(cx, {value: 'First'});
         });
 
-        await store.transact(ctx, async (ctx, tx) => {
-            const collection = new Collection(tx, jsonCodec);
-            await collection.append(ctx, {value: 'Second'});
+        await store.transact(cx, async (cx, tx) => {
+            const collection = new Collection(cx, tx, jsonCodec);
+            await collection.append(cx, {value: 'Second'});
         });
 
-        await store.transact(ctx, async (ctx, tx) => {
-            const collection = new Collection(tx, jsonCodec);
+        await store.transact(cx, async (cx, tx) => {
+            const collection = new Collection(cx, tx, jsonCodec);
 
             const results: CollectionEntry<any>[] = [];
-            for await (const entry of collection.list(ctx, 0, 3)) {
+            const entry$ = collection.list(cx, 0, 3);
+            for await (const [cx, entry] of entry$) {
                 results.push(entry);
             }
 

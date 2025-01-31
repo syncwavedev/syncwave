@@ -1,11 +1,11 @@
 import 'fake-indexeddb/auto';
-import {Context, whenAll} from 'ground-data';
+import {Cx, whenAll} from 'ground-data';
 import {deleteDB, openDB} from 'idb';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {IndexedDBKVStore, IndexedDBTransaction} from './indexeddb-kv-store.js';
 
 let dbName = 'test-db';
-const cx = Context.todo();
+const cx = Cx.todo();
 
 beforeEach(() => {
 	dbName = 'test-db-' + Math.random().toString().split('.')[1];

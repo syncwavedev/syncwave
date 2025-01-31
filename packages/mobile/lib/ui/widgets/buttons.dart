@@ -18,12 +18,12 @@ class _BaseButton extends StatefulWidget {
     this.onLongPress,
     this.width,
     this.height,
-    this.iconSize,
+    this.iconTheme,
+    this.textStyle,
     this.borderRadius = 8.0,
     this.padding,
-    this.outerPadding,
+    // ignore: unused_element
     this.backgroundColor,
-    this.foregroundColor,
   });
 
   final Widget child;
@@ -31,12 +31,11 @@ class _BaseButton extends StatefulWidget {
   final VoidCallback? onLongPress;
   final double? width;
   final double? height;
-  final double? iconSize;
+  final IconThemeData? iconTheme;
+  final TextStyle? textStyle;
   final double borderRadius;
   final EdgeInsets? padding;
-  final EdgeInsets? outerPadding;
   final Color? backgroundColor;
-  final Color? foregroundColor;
 
   bool get enabled => onPressed != null || onLongPress != null;
 
@@ -50,10 +49,8 @@ class _BaseButton extends StatefulWidget {
       ..add(FlagProperty('enabled', value: enabled, ifFalse: 'disabled'))
       ..add(DoubleProperty('width', width))
       ..add(DoubleProperty('height', height))
-      ..add(DoubleProperty('iconSize', iconSize, defaultValue: 24.0))
       ..add(DoubleProperty('borderRadius', borderRadius, defaultValue: 8.0))
-      ..add(DiagnosticsProperty<EdgeInsets?>('padding', padding))
-      ..add(DiagnosticsProperty<EdgeInsets?>('outerPadding', outerPadding));
+      ..add(DiagnosticsProperty<EdgeInsets?>('padding', padding));
   }
 }
 
@@ -80,10 +77,9 @@ class _BaseButtonState extends State<_BaseButton> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: widget.width,
       height: widget.height,
-      padding: widget.outerPadding,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: widget.enabled ? _handleTapDown : null,
@@ -101,14 +97,9 @@ class _BaseButtonState extends State<_BaseButton> {
             ),
             padding: widget.padding,
             child: IconTheme(
-              data: IconThemeData(
-                color: widget.foregroundColor,
-                size: widget.iconSize,
-              ),
+              data: widget.iconTheme ?? IconTheme.of(context),
               child: DefaultTextStyle(
-                style: TextStyle(
-                  color: widget.foregroundColor,
-                ),
+                style: widget.textStyle ?? DefaultTextStyle.of(context).style,
                 child: Center(
                   child: widget.child,
                 ),
@@ -119,11 +110,6 @@ class _BaseButtonState extends State<_BaseButton> {
       ),
     );
   }
-}
-
-enum _IconButtonStyle {
-  plain,
-  filled,
 }
 
 class IconButton extends StatelessWidget {
@@ -138,46 +124,29 @@ class IconButton extends StatelessWidget {
     this.onPressed,
     this.onLongPress,
     this.size = ButtonSize.medium,
-  }) : _style = _IconButtonStyle.plain;
-
-  const IconButton.filled({
-    super.key,
-    required this.child,
-    this.size = ButtonSize.medium,
-    this.onPressed,
-    this.onLongPress,
-  }) : _style = _IconButtonStyle.filled;
-
-  final _IconButtonStyle _style;
+  });
 
   static const Map<ButtonSize, EdgeInsets> _iconButtonPaddingMap = {
     ButtonSize.compact: EdgeInsets.all(0.0),
-    ButtonSize.small: EdgeInsets.all(2.0),
-    ButtonSize.medium: EdgeInsets.all(4.0),
-    ButtonSize.large: EdgeInsets.all(6.0),
+    ButtonSize.small: EdgeInsets.all(6.0),
+    ButtonSize.medium: EdgeInsets.all(8.0),
+    ButtonSize.large: EdgeInsets.all(10.0),
   };
 
   @override
   Widget build(BuildContext context) {
     final double tapAreaSize = size == ButtonSize.compact ? 36.0 : 44.0;
     final EdgeInsets padding = _iconButtonPaddingMap[size]!;
-    const EdgeInsets outerPadding = EdgeInsets.all(4.0);
 
-    final double effectiveIconSize =
-        tapAreaSize - padding.horizontal - outerPadding.horizontal;
+    final double effectiveIconSize = tapAreaSize - padding.horizontal;
 
     return _BaseButton(
       onPressed: onPressed,
       onLongPress: onLongPress,
       borderRadius: 100.0,
       padding: padding,
-      outerPadding: outerPadding,
-      backgroundColor:
-          _style == _IconButtonStyle.filled ? context.colors.subtle4 : null,
-      foregroundColor: _style == _IconButtonStyle.filled
-          ? context.colors.alwaysWhite
-          : context.colors.ink,
-      iconSize: effectiveIconSize,
+      iconTheme:
+          IconThemeData(size: effectiveIconSize, color: context.colors.ink),
       width: tapAreaSize,
       height: tapAreaSize,
       child: child,
@@ -187,80 +156,36 @@ class IconButton extends StatelessWidget {
 
 class Button extends StatelessWidget {
   final ButtonSize size;
-  final Widget label;
-  final Widget? icon;
   final VoidCallback? onPressed;
   final VoidCallback? onLongPress;
+  final Widget child;
 
   const Button({
     super.key,
-    required this.label,
-    this.icon,
     this.onPressed,
     this.onLongPress,
     this.size = ButtonSize.medium,
-  }) : _style = _ButtonStyle.plain;
-
-  const Button.filled({
-    super.key,
-    required this.label,
-    this.icon,
-    this.onPressed,
-    this.onLongPress,
-    this.size = ButtonSize.medium,
-  }) : _style = _ButtonStyle.filled;
-
-  final _ButtonStyle _style;
+    required this.child,
+  });
 
   static const Map<ButtonSize, EdgeInsets> _paddingMap = {
-    ButtonSize.compact: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-    ButtonSize.small: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-    ButtonSize.medium: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-    ButtonSize.large: EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+    ButtonSize.compact: EdgeInsets.symmetric(vertical: 4.0),
+    ButtonSize.small: EdgeInsets.symmetric(vertical: 8.0),
+    ButtonSize.medium: EdgeInsets.symmetric(vertical: 12.0),
+    ButtonSize.large: EdgeInsets.symmetric(vertical: 16.0),
   };
-
-  EdgeInsets get padding => _paddingMap[size]!;
 
   @override
   Widget build(BuildContext context) {
     return _BaseButton(
       onPressed: onPressed,
       onLongPress: onLongPress,
-      padding: padding,
-      outerPadding: const EdgeInsets.all(4.0),
-      backgroundColor:
-          _style == _ButtonStyle.filled ? context.colors.subtle4 : null,
-      foregroundColor: _style == _ButtonStyle.filled
-          ? context.colors.alwaysWhite
-          : context.colors.ink,
-      child: _ButtonContent(icon: icon, label: label),
+      padding: _paddingMap[size]!,
+      iconTheme: IconThemeData(size: 24.0, color: context.colors.ink),
+      textStyle: context.text.body.copyWith(
+        color: context.colors.action,
+      ),
+      child: child,
     );
   }
-}
-
-class _ButtonContent extends StatelessWidget {
-  const _ButtonContent({
-    required this.icon,
-    required this.label,
-  });
-
-  final Widget? icon;
-  final Widget label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (icon != null) icon!,
-        if (icon != null) const SizedBox(width: 8),
-        Flexible(child: label),
-      ],
-    );
-  }
-}
-
-enum _ButtonStyle {
-  plain,
-  filled,
 }

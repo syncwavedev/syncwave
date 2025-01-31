@@ -28,12 +28,15 @@ class TaskScreen extends StatelessWidget {
       bottomBar: BottomBar(
         children: [
           Expanded(
-            child: TextField(
-              placeholder: 'Message',
-              maxLines: 5,
-              minLines: 1,
-              style: context.text.body.copyWith(
-                height: context.text.relaxed,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: TextField(
+                placeholder: 'Message',
+                maxLines: 5,
+                minLines: 1,
+                style: context.text.body.copyWith(
+                  height: context.text.relaxed,
+                ),
               ),
             ),
           ),
@@ -54,20 +57,7 @@ class TaskScreen extends StatelessWidget {
                 ),
                 SizedBox(height: context.spacing.md),
                 const Divider(),
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: context.spacing.md),
-                  child: Row(children: [
-                    const CircularStatus(
-                        currentStep: 1, totalSteps: 2, size: 24),
-                    SizedBox(width: context.spacing.sm),
-                    Text(
-                      'In Progress',
-                      style: context.text.body.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ]),
-                ),
+                TaskStatusButton(),
                 const Divider(),
               ]),
             ),
@@ -80,6 +70,26 @@ class TaskScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class TaskStatusButton extends StatelessWidget {
+  const TaskStatusButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Button(
+      onPressed: () {
+        debugPrint('Change task status');
+      },
+      child: Row(children: [
+        const CircularStatus(currentStep: 1, totalSteps: 2, size: 24),
+        SizedBox(width: context.spacing.sm),
+        Text(
+          'In Progress',
+        ),
+      ]),
     );
   }
 }

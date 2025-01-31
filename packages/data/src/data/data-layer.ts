@@ -1,9 +1,10 @@
 import {MsgpackCodec} from '../codec.js';
-import {Context} from '../context.js';
+import {Cx} from '../context.js';
 import {CrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {ReadonlyCell} from '../kv/readonly-cell.js';
+import {logger} from '../logger.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {assert, whenAll} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
@@ -75,12 +76,12 @@ export type ChangeEvent =
     | TaskChangeEvent
     | IdentityChangeEvent;
 
-export type DataEffect = (ctx: Context) => Promise<void>;
+export type DataEffect = (cx: Cx) => Promise<void>;
 export type DataEffectScheduler = (effect: DataEffect) => void;
 
 export type Transact = <T>(
-    ctx: Context,
-    fn: (ctx: Context, tx: DataTx) => Promise<T>
+    cx: Cx,
+    fn: (cx: Cx, tx: DataTx) => Promise<T>
 ) => Promise<T>;
 
 export class DataLayer {
@@ -92,42 +93,47 @@ export class DataLayer {
         private readonly jwtSecret: string
     ) {
         this.esReader = new EventStoreReader(
-            (ctx, fn) =>
-                this.transact(ctx, (ctx, data) =>
-                    fn(ctx, data.events, data.eventStoreId)
+            (cx, fn) =>
+                this.transact(cx, (cx, data) =>
+                    fn(cx, data.events, data.eventStoreId)
                 ),
             hub
         );
     }
 
     async transact<T>(
-        ctx: Context,
-        fn: (ctx: Context, tx: DataTx) => Promise<T>
+        cx: Cx,
+        fn: (cx: Cx, tx: DataTx) => Promise<T>
     ): Promise<T> {
         let effects: DataEffect[] = [];
-        const result = await this.kv.transact(ctx, async (ctx, tx) => {
+        const result = await this.kv.transact(cx, async (cx, tx) => {
             // clear effect because of transaction retries
             effects = [];
 
             const users = new UserRepo(
+                cx,
                 withPrefix('users/')(tx),
-                (ctx, id, diff) => logUserChange(ctx, dataTx, id, diff)
+                (cx, id, diff) => logUserChange(cx, dataTx, id, diff)
             );
             const identities = new IdentityRepo(
+                cx,
                 withPrefix('identities/')(tx),
-                (ctx, id, diff) => logIdentityChange(ctx, dataTx, id, diff)
+                (cx, id, diff) => logIdentityChange(cx, dataTx, id, diff)
             );
             const members = new MemberRepo(
+                cx,
                 withPrefix('members/')(tx),
-                (ctx, id, diff) => logMemberChange(ctx, dataTx, id, diff)
+                (cx, id, diff) => logMemberChange(cx, dataTx, id, diff)
             );
             const boards = new BoardRepo(
+                cx,
                 withPrefix('boards/')(tx),
-                (ctx, id, diff) => logBoardChange(ctx, dataTx, id, diff)
+                (cx, id, diff) => logBoardChange(cx, dataTx, id, diff)
             );
             const tasks = new TaskRepo(
+                cx,
                 withPrefix('tasks/')(tx),
-                (ctx, id, diff) => logTaskChange(ctx, dataTx, id, diff)
+                (cx, id, diff) => logTaskChange(cx, dataTx, id, diff)
             );
 
             const dataNode = new AggregateDataNode({
@@ -148,7 +154,7 @@ export class DataLayer {
                 createUuid()
             );
 
-            const scheduleEffect = effect => effects.push(effect);
+            const scheduleEffect = (effect: DataEffect) => effects.push(effect);
 
             const esWriter = new EventStoreWriter(
                 events,
@@ -174,7 +180,7 @@ export class DataLayer {
                 scheduleEffect,
             };
 
-            const result = await fn(ctx, dataTx);
+            const result = await fn(cx, dataTx);
 
             return result;
         });
@@ -183,10 +189,13 @@ export class DataLayer {
             const effectsSnapshot = effects;
             effects = [];
 
-            await whenAll(effectsSnapshot.map(effect => effect(ctx)));
+            await whenAll(
+                cx,
+                effectsSnapshot.map(effect => effect(cx))
+            );
 
             if (effects.length > 0) {
-                console.info('[INF] effect recursion detected');
+                logger.info(cx, 'effect recursion detected');
             }
         }
 
@@ -203,85 +212,85 @@ export function boardEvents(boardId: BoardId) {
 }
 
 async function logIdentityChange(
-    ctx: Context,
+    cx: Cx,
     tx: DataTx,
     id: IdentityId,
     diff: CrdtDiff<Identity>
 ) {
-    const identity = await tx.identities.getById(ctx, id);
-    assert(identity !== undefined);
+    const identity = await tx.identities.getById(cx, id);
+    assert(cx, identity !== undefined);
     const members = await tx.members
-        .getByUserId(ctx, identity.userId)
-        .toArray(ctx);
+        .getByUserId(cx, identity.userId)
+        .toArray(cx);
     const ts = getNow();
     const event: IdentityChangeEvent = {type: 'identity', id, diff, ts};
-    await whenAll([
-        tx.esWriter.append(ctx, userEvents(identity.userId), event),
+    await whenAll(cx, [
+        tx.esWriter.append(cx, userEvents(identity.userId), event),
         ...members.map(member =>
-            tx.esWriter.append(ctx, boardEvents(member.boardId), event)
+            tx.esWriter.append(cx, boardEvents(member.boardId), event)
         ),
     ]);
 }
 
 async function logUserChange(
-    ctx: Context,
+    cx: Cx,
     tx: DataTx,
     id: UserId,
     diff: CrdtDiff<User>
 ) {
-    const members = await tx.members.getByUserId(ctx, id).toArray(ctx);
+    const members = await tx.members.getByUserId(cx, id).toArray(cx);
     const ts = getNow();
     const event: UserChangeEvent = {type: 'user', id, diff, ts};
-    await whenAll([
-        tx.esWriter.append(ctx, userEvents(id), event),
+    await whenAll(cx, [
+        tx.esWriter.append(cx, userEvents(id), event),
         ...members.map(member =>
-            tx.esWriter.append(ctx, boardEvents(member.boardId), event)
+            tx.esWriter.append(cx, boardEvents(member.boardId), event)
         ),
     ]);
 }
 
 async function logBoardChange(
-    ctx: Context,
+    cx: Cx,
     tx: DataTx,
     id: BoardId,
     diff: CrdtDiff<Board>
 ) {
-    const members = await tx.members.getByBoardId(ctx, id).toArray(ctx);
+    const members = await tx.members.getByBoardId(cx, id).toArray(cx);
     const ts = getNow();
     const event: BoardChangeEvent = {type: 'board', id, diff, ts};
-    await whenAll([
-        tx.esWriter.append(ctx, boardEvents(id), event),
+    await whenAll(cx, [
+        tx.esWriter.append(cx, boardEvents(id), event),
         ...members.map(member =>
-            tx.esWriter.append(ctx, userEvents(member.userId), event)
+            tx.esWriter.append(cx, userEvents(member.userId), event)
         ),
     ]);
 }
 
 async function logMemberChange(
-    ctx: Context,
+    cx: Cx,
     tx: DataTx,
     id: MemberId,
     diff: CrdtDiff<Member>
 ) {
-    const member = await tx.members.getById(ctx, id);
-    assert(member !== undefined);
+    const member = await tx.members.getById(cx, id);
+    assert(cx, member !== undefined);
     const ts = getNow();
     const event: MemberChangeEvent = {type: 'member', id, diff, ts};
-    await whenAll([
-        tx.esWriter.append(ctx, boardEvents(member.boardId), event),
-        tx.esWriter.append(ctx, userEvents(member.userId), event),
+    await whenAll(cx, [
+        tx.esWriter.append(cx, boardEvents(member.boardId), event),
+        tx.esWriter.append(cx, userEvents(member.userId), event),
     ]);
 }
 
 async function logTaskChange(
-    ctx: Context,
+    cx: Cx,
     tx: DataTx,
     id: TaskId,
     diff: CrdtDiff<Task>
 ) {
-    const task = await tx.tasks.getById(ctx, id);
-    assert(task !== undefined);
+    const task = await tx.tasks.getById(cx, id);
+    assert(cx, task !== undefined);
     const ts = getNow();
     const event: TaskChangeEvent = {type: 'task', id, diff, ts};
-    await tx.esWriter.append(ctx, boardEvents(task.boardId), event);
+    await tx.esWriter.append(cx, boardEvents(task.boardId), event);
 }

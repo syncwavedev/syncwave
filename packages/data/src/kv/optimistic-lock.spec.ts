@@ -1,11 +1,11 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {encodeString} from '../codec.js';
-import {Context} from '../context.js';
+import {Cx} from '../context.js';
 import {whenAll} from '../utils.js';
 import {MemKVStore} from './mem-kv-store.js';
 import {OptimisticLock} from './optimistic-lock.js';
 
-const ctx = Context.test();
+const cx = Cx.test();
 
 describe('OptimisticLock', () => {
     let kvStore: MemKVStore;
@@ -15,12 +15,12 @@ describe('OptimisticLock', () => {
     });
 
     it('should create a lock with an empty key if no key is provided', async () => {
-        await kvStore.transact(ctx, async (ctx, tx) => {
+        await kvStore.transact(cx, async (cx, tx) => {
             const lock = new OptimisticLock(tx);
-            await lock.lock(ctx);
+            await lock.lock(cx);
 
             const emptyKey = new Uint8Array();
-            const value = await tx.get(ctx, emptyKey);
+            const value = await tx.get(cx, emptyKey);
             expect(value).toBeDefined();
         });
     });
@@ -28,12 +28,12 @@ describe('OptimisticLock', () => {
     it('should create a lock with a string key', async () => {
         const key = 'test-key';
 
-        await kvStore.transact(ctx, async (ctx, tx) => {
+        await kvStore.transact(cx, async (cx, tx) => {
             const lock = new OptimisticLock(tx);
-            await lock.lock(ctx, key);
+            await lock.lock(cx, key);
 
             const encodedKey = encodeString(key);
-            const value = await tx.get(ctx, encodedKey);
+            const value = await tx.get(cx, encodedKey);
             expect(value).toBeDefined();
         });
     });
@@ -41,11 +41,11 @@ describe('OptimisticLock', () => {
     it('should create a lock with a Uint8Array key', async () => {
         const key = encodeString('test-key');
 
-        await kvStore.transact(ctx, async (ctx, tx) => {
+        await kvStore.transact(cx, async (cx, tx) => {
             const lock = new OptimisticLock(tx);
-            await lock.lock(ctx, key);
+            await lock.lock(cx, key);
 
-            const value = await tx.get(ctx, key);
+            const value = await tx.get(cx, key);
             expect(value).toBeDefined();
         });
     });
@@ -53,15 +53,15 @@ describe('OptimisticLock', () => {
     it('should overwrite the existing lock value for the same key', async () => {
         const key = 'test-key';
 
-        await kvStore.transact(ctx, async (ctx, tx) => {
+        await kvStore.transact(cx, async (cx, tx) => {
             const lock = new OptimisticLock(tx);
-            await lock.lock(ctx, key);
+            await lock.lock(cx, key);
 
             const encodedKey = encodeString(key);
-            const firstValue = await tx.get(ctx, encodedKey);
+            const firstValue = await tx.get(cx, encodedKey);
 
-            await lock.lock(ctx, key);
-            const secondValue = await tx.get(ctx, encodedKey);
+            await lock.lock(cx, key);
+            const secondValue = await tx.get(cx, encodedKey);
 
             expect(secondValue).not.toEqual(firstValue);
         });
@@ -71,16 +71,16 @@ describe('OptimisticLock', () => {
         const key1 = 'key1';
         const key2 = 'key2';
 
-        await kvStore.transact(ctx, async (ctx, tx) => {
+        await kvStore.transact(cx, async (cx, tx) => {
             const lock = new OptimisticLock(tx);
-            await lock.lock(ctx, key1);
-            await lock.lock(ctx, key2);
+            await lock.lock(cx, key1);
+            await lock.lock(cx, key2);
 
             const encodedKey1 = encodeString(key1);
             const encodedKey2 = encodeString(key2);
 
-            const value1 = await tx.get(ctx, encodedKey1);
-            const value2 = await tx.get(ctx, encodedKey2);
+            const value1 = await tx.get(cx, encodedKey1);
+            const value2 = await tx.get(cx, encodedKey2);
 
             expect(value1).toBeDefined();
             expect(value2).toBeDefined();
@@ -91,11 +91,11 @@ describe('OptimisticLock', () => {
     it('should handle locking an empty Uint8Array key', async () => {
         const key = new Uint8Array();
 
-        await kvStore.transact(ctx, async (ctx, tx) => {
+        await kvStore.transact(cx, async (cx, tx) => {
             const lock = new OptimisticLock(tx);
-            await lock.lock(ctx, key);
+            await lock.lock(cx, key);
 
-            const value = await tx.get(ctx, key);
+            const value = await tx.get(cx, key);
             expect(value).toBeDefined();
         });
     });
@@ -105,18 +105,18 @@ describe('OptimisticLock', () => {
         const key2 = 'key2';
 
         await whenAll([
-            kvStore.transact(ctx, async (ctx, tx) => {
+            kvStore.transact(cx, async (cx, tx) => {
                 const lock = new OptimisticLock(tx);
-                await lock.lock(ctx, key1);
+                await lock.lock(cx, key1);
                 const encodedKey1 = encodeString(key1);
-                const value1 = await tx.get(ctx, encodedKey1);
+                const value1 = await tx.get(cx, encodedKey1);
                 expect(value1).toBeDefined();
             }),
-            kvStore.transact(ctx, async (ctx, tx) => {
+            kvStore.transact(cx, async (cx, tx) => {
                 const lock = new OptimisticLock(tx);
-                await lock.lock(ctx, key2);
+                await lock.lock(cx, key2);
                 const encodedKey2 = encodeString(key2);
-                const value2 = await tx.get(ctx, encodedKey2);
+                const value2 = await tx.get(cx, encodedKey2);
                 expect(value2).toBeDefined();
             }),
         ]);

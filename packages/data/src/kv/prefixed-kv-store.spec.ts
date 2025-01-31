@@ -1,47 +1,47 @@
 import {describe, expect, it} from 'vitest';
 import {astream} from '../async-stream.js';
 import {encodeString} from '../codec.js';
-import {Context} from '../context.js';
+import {Cx} from '../context.js';
 import {Entry} from './kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
 import {PrefixedKVStore, PrefixedTransaction} from './prefixed-kv-store.js';
 
-const ctx = Context.test();
+const cx = Cx.test();
 
 describe('PrefixedTransaction', () => {
     it('should get a value with the correct prefixed key', async () => {
         const store = new MemKVStore();
-        await store.transact(ctx, async (ctx, tx) => {
-            await tx.put(ctx, encodeString('key1'), encodeString('value1'));
-            await tx.put(ctx, encodeString('key3'), encodeString('value3'));
+        await store.transact(cx, async (cx, tx) => {
+            await tx.put(cx, encodeString('key1'), encodeString('value1'));
+            await tx.put(cx, encodeString('key3'), encodeString('value3'));
         });
 
-        await store.transact(ctx, async (ctx, tx) => {
+        await store.transact(cx, async (cx, tx) => {
             const prefixedTxn = new PrefixedTransaction(tx, 'prefix:');
             await prefixedTxn.put(
-                ctx,
+                cx,
                 encodeString('key2'),
                 encodeString('value2')
             );
 
-            const value1 = await prefixedTxn.get(ctx, encodeString('key1'));
-            const value2 = await prefixedTxn.get(ctx, encodeString('key2'));
+            const value1 = await prefixedTxn.get(cx, encodeString('key1'));
+            const value2 = await prefixedTxn.get(cx, encodeString('key2'));
             const gte = await astream(
-                prefixedTxn.query(ctx, {gte: new Uint8Array()})
-            ).toArray(ctx);
+                prefixedTxn.query(cx, {gte: new Uint8Array()})
+            ).toArray(cx);
             const gt = await astream(
-                prefixedTxn.query(ctx, {gt: new Uint8Array()})
-            ).toArray(ctx);
+                prefixedTxn.query(cx, {gt: new Uint8Array()})
+            ).toArray(cx);
             const lte = await astream(
-                prefixedTxn.query(ctx, {
+                prefixedTxn.query(cx, {
                     lte: new Uint8Array(Array(100).fill(255)),
                 })
-            ).toArray(ctx);
+            ).toArray(cx);
             const lt = await astream(
-                prefixedTxn.query(ctx, {
+                prefixedTxn.query(cx, {
                     lt: new Uint8Array(Array(100).fill(255)),
                 })
-            ).toArray(ctx);
+            ).toArray(cx);
 
             const all = [
                 {key: encodeString('key2'), value: encodeString('value2')},
@@ -58,67 +58,63 @@ describe('PrefixedTransaction', () => {
 
     it('should put a value with the correct prefixed key', async () => {
         const store = new MemKVStore();
-        await store.transact(ctx, async (ctx, tx) => {
+        await store.transact(cx, async (cx, tx) => {
             const prefixedTxn = new PrefixedTransaction(tx, 'prefix:');
             await prefixedTxn.put(
-                ctx,
+                cx,
                 encodeString('key'),
                 encodeString('value')
             );
         });
 
-        await store.transact(ctx, async (ctx, tx) => {
-            const value = await tx.get(ctx, encodeString('prefix:key'));
+        await store.transact(cx, async (cx, tx) => {
+            const value = await tx.get(cx, encodeString('prefix:key'));
             expect(value).toEqual(encodeString('value'));
         });
     });
 
     it('should delete a value with the correct prefixed key', async () => {
         const store = new MemKVStore();
-        await store.transact(ctx, async (ctx, tx) => {
-            await tx.put(
-                ctx,
-                encodeString('prefix:key'),
-                encodeString('value')
-            );
+        await store.transact(cx, async (cx, tx) => {
+            await tx.put(cx, encodeString('prefix:key'), encodeString('value'));
         });
 
-        await store.transact(ctx, async (ctx, tx) => {
+        await store.transact(cx, async (cx, tx) => {
             const prefixedTxn = new PrefixedTransaction(tx, 'prefix:');
-            await prefixedTxn.delete(ctx, encodeString('key'));
+            await prefixedTxn.delete(cx, encodeString('key'));
         });
 
-        await store.transact(ctx, async (ctx, tx) => {
-            const value = await tx.get(ctx, encodeString('prefix:key'));
+        await store.transact(cx, async (cx, tx) => {
+            const value = await tx.get(cx, encodeString('prefix:key'));
             expect(value).toBeUndefined();
         });
     });
 
     it('should query with a prefixed condition', async () => {
         const store = new MemKVStore();
-        await store.transact(ctx, async (ctx, tx) => {
+        await store.transact(cx, async (cx, tx) => {
             await tx.put(
-                ctx,
+                cx,
                 encodeString('prefix:key1'),
                 encodeString('value1')
             );
             await tx.put(
-                ctx,
+                cx,
                 encodeString('prefix:key2'),
                 encodeString('value2')
             );
             await tx.put(
-                ctx,
+                cx,
                 encodeString('other:key3'),
                 encodeString('value3')
             );
         });
 
-        await store.transact(ctx, async (ctx, tx) => {
+        await store.transact(cx, async (cx, tx) => {
             const prefixedTxn = new PrefixedTransaction(tx, 'prefix:');
             const results: Entry<Uint8Array, Uint8Array>[] = [];
 
-            for await (const entry of prefixedTxn.query(ctx, {
+            for await (const entry of prefixedTxn.query(cx, {
                 gte: encodeString('key1'),
             })) {
                 results.push(entry);
@@ -137,14 +133,14 @@ describe('PrefixedKVStore', () => {
         const store = new MemKVStore();
         const prefixedStore = new PrefixedKVStore(store, 'prefix:');
 
-        await prefixedStore.transact(ctx, async (ctx, tx) => {
-            await tx.put(ctx, encodeString('key1'), encodeString('value1'));
-            const value = await tx.get(ctx, encodeString('key1'));
+        await prefixedStore.transact(cx, async (cx, tx) => {
+            await tx.put(cx, encodeString('key1'), encodeString('value1'));
+            const value = await tx.get(cx, encodeString('key1'));
             expect(value).toEqual(encodeString('value1'));
         });
 
-        await store.transact(ctx, async (ctx, tx) => {
-            const value = await tx.get(ctx, encodeString('prefix:key1'));
+        await store.transact(cx, async (cx, tx) => {
+            const value = await tx.get(cx, encodeString('prefix:key1'));
             expect(value).toEqual(encodeString('value1'));
         });
     });
@@ -154,12 +150,12 @@ describe('PrefixedKVStore', () => {
         const prefixedStore1 = new PrefixedKVStore(store, 'prefix1:');
         const prefixedStore2 = new PrefixedKVStore(store, 'prefix2:');
 
-        await prefixedStore1.transact(ctx, async (ctx, tx) => {
-            await tx.put(ctx, encodeString('key'), encodeString('value1'));
+        await prefixedStore1.transact(cx, async (cx, tx) => {
+            await tx.put(cx, encodeString('key'), encodeString('value1'));
         });
 
-        await prefixedStore2.transact(ctx, async (ctx, tx) => {
-            const value = await tx.get(ctx, encodeString('key'));
+        await prefixedStore2.transact(cx, async (cx, tx) => {
+            const value = await tx.get(cx, encodeString('key'));
             expect(value).toBeUndefined();
         });
     });

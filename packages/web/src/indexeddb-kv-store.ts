@@ -74,30 +74,30 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		}
 	}
 
-	public async get(ctx: Context, key: Uint8Array): Promise<Uint8Array | undefined> {
+	public async get(cx: Context, key: Uint8Array): Promise<Uint8Array | undefined> {
 		this.assertActive();
 		return await this.tx.objectStore(STORE_NAME).get(key);
 	}
 
 	public async *query(
-		ctx: Context,
+		cx: Context,
 		condition: Condition<Uint8Array>
 	): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
 		this.assertActive();
 		const keyRange = createKeyRange(condition);
 
-		const entries = astream(this.tx.objectStore(STORE_NAME).iterate(keyRange)).withContext(ctx);
+		const entries = astream(this.tx.objectStore(STORE_NAME).iterate(keyRange)).withContext(cx);
 		for await (const {key, value} of entries) {
 			yield {key: new Uint8Array(key), value: new Uint8Array(value)};
 		}
 	}
 
-	public async put(ctx: Context, key: Uint8Array, value: Uint8Array): Promise<void> {
+	public async put(cx: Context, key: Uint8Array, value: Uint8Array): Promise<void> {
 		this.assertActive();
 		await this.tx.objectStore(STORE_NAME).put(value, key);
 	}
 
-	public async delete(ctx: Context, key: Uint8Array): Promise<void> {
+	public async delete(cx: Context, key: Uint8Array): Promise<void> {
 		this.assertActive();
 		await this.tx.objectStore(STORE_NAME).delete(key);
 	}
@@ -117,8 +117,8 @@ export class IndexedDBKVStore implements Uint8KVStore {
 	}
 
 	public async transact<TResult>(
-		ctx: Context,
-		fn: (ctx: Context, tx: Uint8Transaction) => Promise<TResult>
+		cx: Context,
+		fn: (cx: Context, tx: Uint8Transaction) => Promise<TResult>
 	): Promise<TResult> {
 		const db = await this.dbPromise;
 		const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -126,7 +126,7 @@ export class IndexedDBKVStore implements Uint8KVStore {
 
 		try {
 			tx.done.catch(() => {});
-			const result = await fn(ctx, wrappedTxn);
+			const result = await fn(cx, wrappedTxn);
 			wrappedTxn.markDone();
 			tx.commit();
 			await tx.done;

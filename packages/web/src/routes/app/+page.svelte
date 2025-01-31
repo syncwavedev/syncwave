@@ -2,7 +2,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
-	import {Context, type Board} from 'ground-data';
+	import {Cx, type Board} from 'ground-data';
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
@@ -17,7 +17,7 @@
 	const topic = `topic-${Math.random().toString().split('.')[1]}`;
 
 	async function publish() {
-		await sdk.streamPut(Context.todo(), {
+		await sdk.streamPut(Cx.todo(), {
 			topic,
 			value: itemValue,
 		});
@@ -25,7 +25,7 @@
 
 	$effect(() => {
 		(async () => {
-			const [initialBoards, boards$] = await sdk.getMyBoards(Context.todo(), {});
+			const [initialBoards, boards$] = await sdk.getMyBoards(Cx.todo(), {});
 
 			boards = initialBoards;
 

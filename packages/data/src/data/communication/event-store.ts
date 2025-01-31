@@ -8,9 +8,10 @@ import {
     EVENT_STORE_MAX_PULL_COUNT,
     EVENT_STORE_PULL_INTERVAL_MS,
 } from '../../constants.js';
-import {Context} from '../../context.js';
+import {Cx} from '../../context.js';
 import {CollectionManager} from '../../kv/collection-manager.js';
 import {ReadonlyCell} from '../../kv/readonly-cell.js';
+import {logger} from '../../logger.js';
 import {interval, whenAll} from '../../utils.js';
 import {Uuid} from '../../uuid.js';
 import {DataEffectScheduler} from '../data-layer.js';
@@ -28,20 +29,20 @@ export class EventStoreWriter<T> implements EventStoreWriter<T> {
         private readonly scheduleEffect: DataEffectScheduler
     ) {}
 
-    async append(ctx: Context, collection: string, event: T): Promise<void> {
-        const [id] = await whenAll([
-            this.id.get(ctx),
-            this.events.get(collection).append(ctx, event),
+    async append(cx: Cx, collection: string, event: T): Promise<void> {
+        const [id] = await whenAll(cx, [
+            this.id.get(cx),
+            this.events.get(collection).append(cx, event),
         ]);
         const topic = getEventHubTopic(id, collection);
-        this.scheduleEffect(ctx => this.hub.publish(ctx, topic, undefined));
+        this.scheduleEffect(cx => this.hub.publish(cx, topic, undefined));
     }
 }
 
 type EventStoreReaderTransact<T> = <TResult>(
-    ctx: Context,
+    cx: Cx,
     fn: (
-        ctx: Context,
+        cx: Cx,
         events: CollectionManager<T>,
         id: ReadonlyCell<Uuid>
     ) => Promise<TResult>
@@ -54,23 +55,23 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
     ) {}
 
     async subscribe(
-        ctx: Context,
+        cx: Cx,
         collection: string,
         offsetArg?: number
     ): Promise<AsyncStream<T>> {
         // we wanna trigger event store iteration immediately if we didn't reach the end of the topic
-        const selfTrigger = new StreamPuppet<void>(ctx);
+        const selfTrigger = new StreamPuppet<void>(cx);
 
         let offset =
             offsetArg === undefined
-                ? await this.transact(ctx, async (ctx, topics) =>
-                      topics.get(collection).length(ctx)
+                ? await this.transact(cx, async (cx, topics) =>
+                      topics.get(collection).length(cx)
                   )
                 : offsetArg;
 
-        const id = await this.transact(ctx, (ctx, _, id) => id.get(ctx));
+        const id = await this.transact(cx, (cx, _, id) => id.get(cx));
         const hubEvent$ = await this.hub.subscribe(
-            ctx,
+            cx,
             getEventHubTopic(id, collection)
         );
 
@@ -79,23 +80,24 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             astream([undefined]),
             astream(selfTrigger),
             hubEvent$.map(() => undefined),
-            interval(EVENT_STORE_PULL_INTERVAL_MS, ctx).map(() => undefined),
-        ]).flatMap(async ctx => {
+            interval(EVENT_STORE_PULL_INTERVAL_MS, cx).map(() => undefined),
+        ]).flatMap(async cx => {
             try {
-                const events = await this.transact(ctx, async (ctx, topics) => {
+                const events = await this.transact(cx, async (cx, topics) => {
                     const result = await topics
                         .get(collection)
-                        .list(ctx, offset)
+                        .list(cx, offset)
                         .take(EVENT_STORE_MAX_PULL_COUNT)
-                        .map((ctx, entry) => entry.data)
-                        .toArray(ctx);
+                        .map((cx, entry) => entry.data)
+                        .toArray(cx);
 
                     // check if there are potentially more values to pull from the topic
                     if (result.length === EVENT_STORE_MAX_PULL_COUNT) {
                         // we don't wanna block on this call to avoid a deadlock
-                        selfTrigger.next().catch(error => {
-                            console.error(
-                                '[ERR] failed to trigger event store iteration',
+                        selfTrigger.next(cx).catch(error => {
+                            logger.error(
+                                cx,
+                                'failed to trigger event store iteration',
                                 error
                             );
                         });
@@ -107,7 +109,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                 return events;
             } catch (error) {
-                console.error('[ERR] EventStoreReader.subscribe', error);
+                logger.error(cx, 'EventStoreReader.subscribe', error);
                 return [];
             }
         });

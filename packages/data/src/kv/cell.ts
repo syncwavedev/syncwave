@@ -1,5 +1,5 @@
 import {MsgpackCodec} from '../codec.js';
-import {Context} from '../context.js';
+import {Cx} from '../context.js';
 import {pipe} from '../utils.js';
 import {Transaction, Uint8Transaction, withValueCodec} from './kv-store.js';
 
@@ -15,16 +15,16 @@ export class Cell<T> {
         this.tx = pipe(tx, withValueCodec(new MsgpackCodec()));
     }
 
-    async get(ctx: Context): Promise<T> {
-        const result = await this.tx.get(ctx, key);
+    async get(cx: Cx): Promise<T> {
+        const result = await this.tx.get(cx, key);
         if (result) {
             return result.value;
         }
-        await this.put(ctx, this.initialValue);
+        await this.put(cx, this.initialValue);
         return this.initialValue;
     }
 
-    async put(ctx: Context, value: T): Promise<void> {
-        await this.tx.put(ctx, key, {value});
+    async put(cx: Cx, value: T): Promise<void> {
+        await this.tx.put(cx, key, {value});
     }
 }

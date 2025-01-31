@@ -1,4 +1,4 @@
-import {Context} from '../context.js';
+import {Cx} from '../context.js';
 import {
     Condition,
     Entry,
@@ -8,8 +8,8 @@ import {
 } from './kv-store.js';
 
 export interface Mapper<TPrivate, TPublic> {
-    decode(x: TPrivate): TPublic;
-    encode(x: TPublic): TPrivate;
+    decode(cx: Cx, x: TPrivate): TPublic;
+    encode(cx: Cx, x: TPublic): TPrivate;
 }
 
 export class MappedTransaction<
@@ -25,47 +25,43 @@ export class MappedTransaction<
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
 
-    async get(
-        ctx: Context,
-        key: TKeyPublic
-    ): Promise<TValuePublic | undefined> {
-        const result = await this.target.get(ctx, this.keyMapper.encode(key));
+    async get(cx: Cx, key: TKeyPublic): Promise<TValuePublic | undefined> {
+        const result = await this.target.get(
+            cx,
+            this.keyMapper.encode(cx, key)
+        );
         if (result) {
-            return this.valueMapper.decode(result);
+            return this.valueMapper.decode(cx, result);
         } else {
             return undefined;
         }
     }
 
     async *query(
-        ctx: Context,
+        cx: Cx,
         condition: Condition<TKeyPublic>
     ): AsyncIterable<Entry<TKeyPublic, TValuePublic>> {
         for await (const {key, value} of this.target.query(
-            ctx,
-            projectCondition(condition, this.keyMapper)
+            cx,
+            projectCondition(cx, condition, this.keyMapper)
         )) {
             yield {
-                key: this.keyMapper.decode(key),
-                value: this.valueMapper.decode(value),
+                key: this.keyMapper.decode(cx, key),
+                value: this.valueMapper.decode(cx, value),
             };
         }
     }
 
-    async put(
-        ctx: Context,
-        key: TKeyPublic,
-        value: TValuePublic
-    ): Promise<void> {
+    async put(cx: Cx, key: TKeyPublic, value: TValuePublic): Promise<void> {
         return await this.target.put(
-            ctx,
-            this.keyMapper.encode(key),
-            this.valueMapper.encode(value)
+            cx,
+            this.keyMapper.encode(cx, key),
+            this.valueMapper.encode(cx, value)
         );
     }
 
-    async delete(ctx: Context, key: TKeyPublic): Promise<void> {
-        await this.target.delete(ctx, this.keyMapper.encode(key));
+    async delete(cx: Cx, key: TKeyPublic): Promise<void> {
+        await this.target.delete(cx, this.keyMapper.encode(cx, key));
     }
 }
 
@@ -79,26 +75,27 @@ export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
     ) {}
 
     transact<TResult>(
-        ctx: Context,
+        cx: Cx,
         fn: (
-            ctx: Context,
+            cx: Cx,
             tx: Transaction<TKeyPublic, TValuePublic>
         ) => Promise<TResult>
     ): Promise<TResult> {
-        return this.store.transact(ctx, (ctx, tx) =>
-            fn(ctx, new MappedTransaction(tx, this.keyMapper, this.valueMapper))
+        return this.store.transact(cx, (cx, tx) =>
+            fn(cx, new MappedTransaction(tx, this.keyMapper, this.valueMapper))
         );
     }
 }
 
 function projectCondition<TKeySource, TKeyTarget>(
+    cx: Cx,
     condition: Condition<TKeyTarget>,
     keyMapper: Mapper<TKeySource, TKeyTarget>
 ): Condition<TKeySource> {
-    return mapCondition<TKeyTarget, Condition<TKeySource>>(condition, {
-        gt: cond => ({gt: keyMapper.encode(cond.gt)}),
-        gte: cond => ({gte: keyMapper.encode(cond.gte)}),
-        lt: cond => ({lt: keyMapper.encode(cond.lt)}),
-        lte: cond => ({lte: keyMapper.encode(cond.lte)}),
+    return mapCondition<TKeyTarget, Condition<TKeySource>>(cx, condition, {
+        gt: cond => ({gt: keyMapper.encode(cx, cond.gt)}),
+        gte: cond => ({gte: keyMapper.encode(cx, cond.gte)}),
+        lt: cond => ({lt: keyMapper.encode(cx, cond.lt)}),
+        lte: cond => ({lte: keyMapper.encode(cx, cond.lte)}),
     });
 }

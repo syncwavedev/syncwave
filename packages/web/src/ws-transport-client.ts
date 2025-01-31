@@ -48,16 +48,16 @@ export class WsClientConnection<T> implements Connection<T> {
 		this.setupListeners();
 	}
 
-	async send(ctx: Context, message: T): Promise<void> {
+	async cx(cx: Context, message: T): Promise<void> {
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 	}
 
-	subscribe(ctx: Context, cb: Observer<T>) {
-		return this.subject.subscribe(ctx, cb);
+	cx(cx: Context, cb: Observer<T>) {
+		return this.subject.subscribe(cx, cb);
 	}
 
-	async close(): Promise<void> {
+	async cx(): Promise<void> {
 		this.ws.close();
 		await this.closedSignal.promise;
 	}

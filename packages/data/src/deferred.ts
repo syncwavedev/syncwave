@@ -1,3 +1,6 @@
+import {Cx} from './context.js';
+import {AppError} from './errors.js';
+
 type DeferredState<T> =
     | {readonly type: 'fulfilled'; readonly value: T}
     | {readonly type: 'pending'}
@@ -7,7 +10,7 @@ export class Deferred<T> {
     private _state: DeferredState<T> = {type: 'pending'};
 
     private _resolve!: (value: T) => void;
-    private _reject!: (error: any) => void;
+    private _reject!: (error: AppError) => void;
 
     public readonly promise: Promise<T>;
 
@@ -22,17 +25,17 @@ export class Deferred<T> {
         return this._state.type;
     }
 
-    resolve(value: T) {
+    resolve(cx: Cx, value: T) {
         if (this._state.type === 'pending') {
             this._state = {type: 'fulfilled', value};
             this._resolve(value);
         }
     }
 
-    reject(reason: any) {
+    reject(cx: Cx, reason: AppError) {
         if (this._state.type === 'pending') {
             this._state = {type: 'rejected', reason};
-            this._reject(new Error('Deferred.reject', {cause: reason}));
+            this._reject(new AppError(cx, 'Deferred.reject', {cause: reason}));
         }
     }
 }

@@ -17,6 +17,14 @@
                 "message": "use whenAll instead (it awaits all errors)."
             }
         ],
+        "no-restricted-globals": [
+            "error",
+            {
+                "name": "Error",
+                "message": "Use 'AppError' instead of 'Error'."
+            }
+        ],
+        "no-console": "error",
         "no-constant-condition": "off",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/await-thenable": "error",
@@ -24,7 +32,7 @@
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/no-unused-vars": [
-            "warn",
+            "off",
             {
                 "argsIgnorePattern": "^_",
                 "varsIgnorePattern": "^_",

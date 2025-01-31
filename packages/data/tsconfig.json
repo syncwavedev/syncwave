@@ -3,7 +3,11 @@
     "compilerOptions": {
         "rootDir": ".",
         "outDir": "./dist/esm",
-        "lib": ["es2022"]
+        "lib": ["es2022"],
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true
     },
     "include": ["src/**/*.ts", "tests/**/*.ts"]
 }

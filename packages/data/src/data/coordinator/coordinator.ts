@@ -1,7 +1,8 @@
 import {z} from 'zod';
 import {MsgpackCodec} from '../../codec.js';
-import {Context} from '../../context.js';
+import {Cx} from '../../context.js';
 import {Uint8KVStore} from '../../kv/kv-store.js';
+import {logger} from '../../logger.js';
 import {AuthContextParser} from '../auth-context.js';
 import {HubClient, HubServer} from '../communication/hub.js';
 import {
@@ -24,6 +25,7 @@ export class CoordinatorServer {
     private readonly rpcServer: RpcServer<CoordinatorApiInputState>;
 
     constructor(
+        cx: Cx,
         transport: TransportServer<Message>,
         kv: Uint8KVStore,
         private readonly jwt: JwtService,
@@ -37,16 +39,18 @@ export class CoordinatorServer {
         const hubMessageSchema = z.unknown();
         const hubAuthSecret = 'hub-auth-secret';
         const hubServer = new HubServer(
+            cx,
             hubMemTransportServer,
             hubMessageSchema,
             hubAuthSecret
         );
 
-        hubServer.launch().catch(error => {
-            console.error('HubServer failed to launch', error);
+        hubServer.launch(Cx.todo()).catch(error => {
+            logger.error(Cx.todo(), 'HubServer failed to launch', error);
         });
 
         const hubClient = new HubClient(
+            cx,
             new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
             hubMessageSchema,
             hubAuthSecret
@@ -56,7 +60,7 @@ export class CoordinatorServer {
         const authContextParser = new AuthContextParser(4, jwt);
         this.rpcServer = new RpcServer(
             transport,
-            createCoordinatorApi(),
+            createCoordinatorApi(cx),
             {
                 authContextParser,
                 dataLayer: this.dataLayer,
@@ -71,20 +75,20 @@ export class CoordinatorServer {
         );
     }
 
-    async launch(): Promise<void> {
-        await this.rpcServer.launch();
+    async launch(cx: Cx): Promise<void> {
+        await this.rpcServer.launch(cx);
     }
 
-    async close() {
-        await this.rpcServer.close();
+    async close(cx: Cx) {
+        await this.rpcServer.close(cx);
     }
 
-    async issueJwtByUserEmail(ctx: Context, email: string): Promise<string> {
-        return await this.dataLayer.transact(ctx, async (ctx, dataCtx) => {
+    async issueJwtByUserEmail(cx: Cx, email: string): Promise<string> {
+        return await this.dataLayer.transact(cx, async (cx, dataCx) => {
             const identity = await getIdentity(
-                ctx,
-                dataCtx.identities,
-                dataCtx.users,
+                cx,
+                dataCx.identities,
+                dataCx.users,
                 email,
                 this.crypto
             );

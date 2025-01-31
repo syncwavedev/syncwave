@@ -30,7 +30,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss.on('connection', (ws: WebSocket) => {
             const conn = new WsConnection<T>(ws, this.opt.codec);
 
-            conn.subscribe(Context.todo(), {
+            conn.cx(Context.todo(), {
                 next: () => Promise.resolve(),
                 throw: () => Promise.resolve(),
                 close: async () => {
@@ -60,7 +60,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         return listening.promise;
     }
 
-    async close(): Promise<void> {
+    async cx(): Promise<void> {
         if (this.wss) {
             await this.closeConns();
             this.wss.close();
@@ -69,7 +69,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
     }
 
     private async closeConns() {
-        await whenAll(this.conns.map(x => x.close()));
+        await whenAll(this.conns.map(x => x.cx()));
         this.conns = [];
     }
 }
@@ -85,7 +85,7 @@ export class WsConnection<T> implements Connection<T> {
         this.setupListeners();
     }
 
-    async send(ctx: Context, message: T): Promise<void> {
+    async cx(cx: Context, message: T): Promise<void> {
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: Error) => {
@@ -100,11 +100,11 @@ export class WsConnection<T> implements Connection<T> {
         });
     }
 
-    subscribe(ctx: Context, observer: Observer<T>) {
-        return this.subject.subscribe(ctx, observer);
+    cx(cx: Context, observer: Observer<T>) {
+        return this.subject.subscribe(cx, observer);
     }
 
-    async close(): Promise<void> {
+    async cx(): Promise<void> {
         this.ws.close();
         await this.closedSignal.promise;
     }
@@ -116,7 +116,7 @@ export class WsConnection<T> implements Connection<T> {
 
                 await this.subject.next(Context.todo(), message);
             } catch (error) {
-                console.error('[ERR] ws.message', error);
+                logger.error(cx, 'ws.message', error);
             }
         });
 
@@ -124,7 +124,7 @@ export class WsConnection<T> implements Connection<T> {
             try {
                 await this.subject.throw(Context.todo(), error);
             } catch (error) {
-                console.error('[ERR] ws.error', error);
+                logger.error(cx, 'ws.error', error);
             }
         });
 

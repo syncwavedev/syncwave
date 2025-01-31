@@ -1,6 +1,6 @@
-import {Context} from '../../context.js';
+import {Cx} from '../../context.js';
 import {assertNever} from '../../utils.js';
-import {Message} from '../communication/message.js';
+import {Message, MessageHeaders} from '../communication/message.js';
 import {PersistentConnection} from '../communication/persistent-connection.js';
 import {Connection, TransportClient} from '../communication/transport.js';
 import {
@@ -22,10 +22,10 @@ export class ParticipantState {
 
     public readonly coordinator: CoordinatorRpc;
 
-    constructor(transport: TransportClient<Message>) {
+    constructor(cx: Cx, transport: TransportClient<Message>) {
         this.connection = new PersistentConnection(transport);
         this.coordinator = createRpcClient(
-            createCoordinatorApi(),
+            createCoordinatorApi(cx),
             this.connection,
             () => ({})
         );
@@ -44,14 +44,15 @@ export class ParticipantState {
     }
 
     async close(): Promise<void> {
-        await this.connection.close(Context.todo());
+        await this.connection.close(Cx.todo());
     }
 }
 
-export function createParticipantApi() {
-    const coordinatorApi = createCoordinatorApi();
+export function createParticipantApi(cx: Cx) {
+    const coordinatorApi = createCoordinatorApi(cx);
 
     function proxy<K extends keyof typeof coordinatorApi>(
+        cx: Cx,
         name: K
     ): MapProcessorState<(typeof coordinatorApi)[K], ParticipantState> {
         const processor = coordinatorApi[name];
@@ -60,8 +61,13 @@ export function createParticipantApi() {
                 type: 'handler',
                 req: processor.req,
                 res: processor.res,
-                handle: async (ctx, state, req, headers) => {
-                    return await state.coordinator[name](ctx, req, headers);
+                handle: async (
+                    cx: Cx,
+                    state: any,
+                    req: any,
+                    headers: MessageHeaders
+                ) => {
+                    return await state.coordinator[name](cx, req, headers);
                 },
             } as any;
         } else if (processor.type === 'streamer') {
@@ -71,8 +77,13 @@ export function createParticipantApi() {
                     req: processor.req,
                     item: processor.item,
                     observer: processor.observer,
-                    stream: (ctx, state, req, headers) => {
-                        return state.coordinator[name](ctx, req, headers);
+                    stream: (
+                        cx: Cx,
+                        state: any,
+                        req: any,
+                        headers: MessageHeaders
+                    ) => {
+                        return state.coordinator[name](cx, req, headers);
                     },
                 } as any;
             } else {
@@ -81,27 +92,32 @@ export function createParticipantApi() {
                     req: processor.req,
                     item: processor.item,
                     observer: processor.observer,
-                    stream: (ctx, state, req, headers) => {
-                        return state.coordinator[name](ctx, req, headers);
+                    stream: (
+                        cx: Cx,
+                        state: any,
+                        req: any,
+                        headers: MessageHeaders
+                    ) => {
+                        return state.coordinator[name](cx, req, headers);
                     },
                 } as any;
             }
         } else {
-            assertNever(processor);
+            assertNever(cx, processor);
         }
     }
 
     return createApi<ParticipantState>()({
-        streamPut: proxy('streamPut'),
-        getStream: proxy('getStream'),
-        debug: proxy('debug'),
-        sendSignInEmail: proxy('sendSignInEmail'),
-        createBoard: proxy('createBoard'),
-        verifySignInCode: proxy('verifySignInCode'),
-        getDbTree: proxy('getDbTree'),
-        getDbItem: proxy('getDbItem'),
-        truncateDb: proxy('truncateDb'),
-        getMyBoards: proxy('getMyBoards'),
+        streamPut: proxy(cx, 'streamPut'),
+        getStream: proxy(cx, 'getStream'),
+        debug: proxy(cx, 'debug'),
+        sendSignInEmail: proxy(cx, 'sendSignInEmail'),
+        createBoard: proxy(cx, 'createBoard'),
+        verifySignInCode: proxy(cx, 'verifySignInCode'),
+        getDbTree: proxy(cx, 'getDbTree'),
+        getDbItem: proxy(cx, 'getDbItem'),
+        truncateDb: proxy(cx, 'truncateDb'),
+        getMyBoards: proxy(cx, 'getMyBoards'),
     });
 }
 

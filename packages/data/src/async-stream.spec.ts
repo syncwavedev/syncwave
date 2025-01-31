@@ -1,18 +1,18 @@
 import {describe, expect, it} from 'vitest';
 import {ColdStream, astream} from './async-stream.js';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
-import {Context} from './context.js';
+import {Cx} from './context.js';
 
-const ctx = Context.test();
+const cx = Cx.test();
 
 describe('DeferredStream', () => {
     it('should emit values using the executor', async () => {
         const values = [1, 2, 3];
-        const stream = new ColdStream<number>(ctx, (ctx, {next, end}) => {
+        const stream = new ColdStream<number>(cx, (cx, {next, end}) => {
             for (const value of values) {
-                const _ = next(ctx, value);
+                const _ = next(cx, value);
             }
-            const _ = end(ctx);
+            const _ = end(cx);
         });
 
         const result: number[] = [];
@@ -25,8 +25,8 @@ describe('DeferredStream', () => {
 
     it('should propagate errors from the executor', async () => {
         const error = new Error('Test error');
-        const stream = new ColdStream<number>(ctx, (ctx, exe) => {
-            const _ = exe.throw(ctx, error);
+        const stream = new ColdStream<number>(cx, (cx, exe) => {
+            const _ = exe.throw(cx, error);
         });
 
         await expect(async () => {
@@ -47,7 +47,7 @@ describe('AsyncStream', () => {
         })();
 
         const stream = astream(source);
-        const result = await stream.toArray(ctx);
+        const result = await stream.toArray(cx);
 
         expect(result).toEqual(values);
     });
@@ -56,7 +56,7 @@ describe('AsyncStream', () => {
         const values = [1, 2, 3, 4];
         const stream = astream(values);
 
-        const result = await stream.drop(2).toArray(ctx);
+        const result = await stream.drop(2).toArray(cx);
         expect(result).toEqual([3, 4]);
     });
 
@@ -64,7 +64,7 @@ describe('AsyncStream', () => {
         const values = [1, 2, 3, 4];
         const stream = astream(values);
 
-        const result = await stream.take(2).toArray(ctx);
+        const result = await stream.take(2).toArray(cx);
         expect(result).toEqual([1, 2]);
     });
 
@@ -74,7 +74,7 @@ describe('AsyncStream', () => {
 
         const result = await stream
             .filter(value => value % 2 === 0)
-            .toArray(ctx);
+            .toArray(cx);
         expect(result).toEqual([2, 4]);
     });
 
@@ -83,8 +83,8 @@ describe('AsyncStream', () => {
         const stream = astream(values);
 
         const result = await stream
-            .mapParallel(async (ctx, value) => value * 2)
-            .toArray(ctx);
+            .mapParallel(async (cx, value) => value * 2)
+            .toArray(cx);
         expect(result).toEqual([2, 4, 6]);
     });
 
@@ -93,8 +93,8 @@ describe('AsyncStream', () => {
         const stream = astream(values);
 
         const result = await stream
-            .map(async (ctx, value) => value * 2)
-            .toArray(ctx);
+            .map(async (cx, value) => value * 2)
+            .toArray(cx);
         expect(result).toEqual([2, 4, 6]);
     });
 
@@ -135,8 +135,8 @@ describe('AsyncStream', () => {
         const stream = astream(values);
 
         const result = await stream
-            .mapParallel((ctx, value) => value + 1)
-            .toArray(ctx);
+            .mapParallel((cx, value) => value + 1)
+            .toArray(cx);
         expect(result).toEqual(Array(MAX_LOOKAHEAD_COUNT + 1).fill(2));
     });
 });

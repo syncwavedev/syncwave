@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type {PageProps} from './$types';
-	import {unimplemented} from 'ground-data';
+	import {Cx, unimplemented} from 'ground-data';
 	import {goto} from '$app/navigation';
 	import {getAuthManager, showErrorToast} from '$lib/utils';
 
@@ -11,7 +11,7 @@
 		const store = getAuthManager();
 		store.logIn(token);
 	} else {
-		unimplemented();
+		unimplemented(Cx.todo());
 	}
 
 	if (redirectUrl) {

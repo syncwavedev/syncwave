@@ -1,22 +1,24 @@
 import BetterSqlite3, {Database} from 'better-sqlite3';
 import {
+    AppError,
     Condition,
-    Context,
-    Deferred,
+    Cx,
     Entry,
-    MemLocker,
     TXN_RETRIES_COUNT,
     Uint8KVStore,
     Uint8Transaction,
     mapCondition,
 } from 'ground-data'; // adjust import as needed
 
-function buildConditionSql(condition: Condition<Uint8Array>): {
+function buildConditionSql(
+    cx: Cx,
+    condition: Condition<Uint8Array>
+): {
     clause: string;
     param: Uint8Array;
     order: string;
 } {
-    return mapCondition(condition, {
+    return mapCondition(cx, condition, {
         gt: cond => ({
             clause: 'key > ?',
             param: cond.gt,
@@ -35,66 +37,48 @@ interface Row {
 
 // todo: use context
 class SqliteTransaction implements Uint8Transaction {
-    private opLock = new MemLocker<''>();
-
     constructor(private readonly db: Database) {}
 
-    public async get(
-        ctx: Context,
-        key: Uint8Array
-    ): Promise<Uint8Array | undefined> {
-        return await this.opLock.lock('', async () => {
-            const row = this.db
-                .prepare('SELECT value FROM kv_store WHERE key = ?')
-                .get(key) as Row;
-            return row ? new Uint8Array(row.value) : undefined;
-        });
+    public async get(cx: Cx, key: Uint8Array): Promise<Uint8Array | undefined> {
+        const row = this.db
+            .prepare('SELECT value FROM kv_store WHERE key = ?')
+            .get(key) as Row;
+        return row ? new Uint8Array(row.value) : undefined;
     }
 
     public async *query(
-        ctx: Context,
+        cx: Cx,
         condition: Condition<Uint8Array>
     ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
-        const unlockSignal = new Deferred<void>();
-        try {
-            await this.opLock.lock('', () => unlockSignal.promise);
+        const {clause, param, order} = buildConditionSql(cx, condition);
+        const stmt = this.db.prepare(
+            `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order}`
+        );
 
-            const {clause, param, order} = buildConditionSql(condition);
-            const stmt = this.db.prepare(
-                `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order}`
-            );
+        for (const row of stmt.iterate(param)) {
+            cx.ensureAlive(cx);
 
-            for (const row of stmt.iterate(param)) {
-                ctx.ensureAlive();
-
-                yield {
-                    key: new Uint8Array((row as Row).key),
-                    value: new Uint8Array((row as Row).value),
-                };
-            }
-        } finally {
-            unlockSignal.resolve();
+            yield {
+                key: new Uint8Array((row as Row).key),
+                value: new Uint8Array((row as Row).value),
+            };
         }
     }
 
     public async put(
-        ctx: Context,
+        cx: Cx,
         key: Uint8Array,
         value: Uint8Array
     ): Promise<void> {
-        return await this.opLock.lock('', async () => {
-            this.db
-                .prepare(
-                    'INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)'
-                )
-                .run(key, value);
-        });
+        this.db
+            .prepare(
+                'INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)'
+            )
+            .run(key, value);
     }
 
-    public async delete(ctx: Context, key: Uint8Array): Promise<void> {
-        await this.opLock.lock('', async () => {
-            this.db.prepare('DELETE FROM kv_store WHERE key = ?').run(key);
-        });
+    public async delete(cx: Cx, key: Uint8Array): Promise<void> {
+        this.db.prepare('DELETE FROM kv_store WHERE key = ?').run(key);
     }
 }
 
@@ -112,34 +96,30 @@ export class SqliteUint8KVStore implements Uint8KVStore {
         `);
     }
 
-    private txLock = new MemLocker();
-
     async transact<TResult>(
-        ctx: Context,
-        fn: (ctx: Context, tx: Uint8Transaction) => Promise<TResult>
+        cx: Cx,
+        fn: (cx: Cx, tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
-        return await this.txLock.lock('tx', async () => {
-            for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
-                this.db.exec('BEGIN');
+        for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
+            this.db.exec('BEGIN');
 
-                try {
-                    const tx = new SqliteTransaction(this.db);
-                    const result = await fn(ctx, tx);
+            try {
+                const tx = new SqliteTransaction(this.db);
+                const result = await fn(cx, tx);
 
-                    this.db.exec('COMMIT');
+                this.db.exec('COMMIT');
 
-                    return result;
-                } catch (error) {
-                    this.db.exec('ROLLBACK');
+                return result;
+            } catch (error) {
+                this.db.exec('ROLLBACK');
 
-                    if (attempt === TXN_RETRIES_COUNT) {
-                        throw error;
-                    }
+                if (attempt === TXN_RETRIES_COUNT) {
+                    throw error;
                 }
             }
+        }
 
-            throw new Error('unreachable');
-        });
+        throw new AppError(cx, 'unreachable');
     }
 
     async close(): Promise<void> {

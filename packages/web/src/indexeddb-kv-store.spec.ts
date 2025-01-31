@@ -5,7 +5,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {IndexedDBKVStore, IndexedDBTransaction} from './indexeddb-kv-store.js';
 
 let dbName = 'test-db';
-const ctx = Context.todo();
+const cx = Context.todo();
 
 beforeEach(() => {
 	dbName = 'test-db-' + Math.random().toString().split('.')[1];
@@ -24,7 +24,7 @@ describe('IndexedDBKVStore', () => {
 
 	it('should initialize a database without errors', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async () => {});
+		await store.transact(cx, async () => {});
 		const db = await openDB(dbName);
 		expect(db.objectStoreNames.contains('index')).toBe(true);
 		db.close();
@@ -32,9 +32,9 @@ describe('IndexedDBKVStore', () => {
 
 	it('should put and get a value', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async (ctx, tx) => {
-			await tx.put(ctx, key1, value1);
-			const retrievedValue = await tx.get(ctx, key1);
+		await store.transact(cx, async (cx, tx) => {
+			await tx.put(cx, key1, value1);
+			const retrievedValue = await tx.get(cx, key1);
 			expect(retrievedValue).toEqual(value1);
 		});
 	});
@@ -42,8 +42,8 @@ describe('IndexedDBKVStore', () => {
 	it('should throw if transaction auto-commited before user tx', async () => {
 		const store = new IndexedDBKVStore(dbName);
 		await expect(
-			store.transact(ctx, async (ctx, tx) => {
-				await tx.put(ctx, key1, value1);
+			store.transact(cx, async (cx, tx) => {
+				await tx.put(cx, key1, value1);
 				await new Promise(setImmediate);
 			})
 		).rejects.toThrowError(/transaction is already completed or aborted/i);
@@ -51,30 +51,30 @@ describe('IndexedDBKVStore', () => {
 
 	it('should return undefined for a non-existent key', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async (ctx, tx) => {
-			const retrievedValue = await tx.get(ctx, key1);
+		await store.transact(cx, async (cx, tx) => {
+			const retrievedValue = await tx.get(cx, key1);
 			expect(retrievedValue).toBeUndefined();
 		});
 	});
 
 	it('should delete a value', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async (ctx, tx) => {
-			await tx.put(ctx, key1, value1);
-			await tx.delete(ctx, key1);
-			const retrievedValue = await tx.get(ctx, key1);
+		await store.transact(cx, async (cx, tx) => {
+			await tx.put(cx, key1, value1);
+			await tx.delete(cx, key1);
+			const retrievedValue = await tx.get(cx, key1);
 			expect(retrievedValue).toBeUndefined();
 		});
 	});
 
 	it('should query values with a condition (gte)', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async (ctx, tx) => {
-			await tx.put(ctx, key1, value1);
-			await tx.put(ctx, key2, value2);
+		await store.transact(cx, async (cx, tx) => {
+			await tx.put(cx, key1, value1);
+			await tx.put(cx, key2, value2);
 
 			const entries = [];
-			for await (const entry of tx.query(ctx, {gte: key1})) {
+			for await (const entry of tx.query(cx, {gte: key1})) {
 				entries.push(entry);
 			}
 
@@ -88,10 +88,10 @@ describe('IndexedDBKVStore', () => {
 
 	it('should throw an error when accessing a completed transaction', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async (ctx, tx) => {
-			await tx.put(ctx, key1, value1);
+		await store.transact(cx, async (cx, tx) => {
+			await tx.put(cx, key1, value1);
 			(tx as IndexedDBTransaction).markDone();
-			await expect(tx.get(ctx, key1)).rejects.toThrowError(
+			await expect(tx.get(cx, key1)).rejects.toThrowError(
 				'IDB request made after transaction function has resolved.'
 			);
 		});
@@ -100,8 +100,8 @@ describe('IndexedDBKVStore', () => {
 	it('should handle transaction aborts gracefully', async () => {
 		const store = new IndexedDBKVStore(dbName);
 		await expect(
-			store.transact(ctx, async (ctx, tx) => {
-				await tx.put(ctx, key1, value1);
+			store.transact(cx, async (cx, tx) => {
+				await tx.put(cx, key1, value1);
 				throw new Error('Simulated error');
 			})
 		).rejects.toThrowError('Simulated error');
@@ -114,12 +114,12 @@ describe('IndexedDBKVStore', () => {
 
 	it('should support querying with upper and lower bounds', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async (ctx, tx) => {
-			await tx.put(ctx, key1, value1);
-			await tx.put(ctx, key2, value2);
+		await store.transact(cx, async (cx, tx) => {
+			await tx.put(cx, key1, value1);
+			await tx.put(cx, key2, value2);
 
 			const entries = [];
-			for await (const entry of tx.query(ctx, {lt: key2})) {
+			for await (const entry of tx.query(cx, {lt: key2})) {
 				entries.push(entry);
 			}
 
@@ -130,25 +130,25 @@ describe('IndexedDBKVStore', () => {
 
 	it('should overwrite an existing value', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async (ctx, tx) => {
-			await tx.put(ctx, key1, value1);
-			const initialRetrievedValue = await tx.get(ctx, key1);
+		await store.transact(cx, async (cx, tx) => {
+			await tx.put(cx, key1, value1);
+			const initialRetrievedValue = await tx.get(cx, key1);
 			expect(initialRetrievedValue).toEqual(value1);
 
-			await tx.put(ctx, key1, value2);
-			const updatedRetrievedValue = await tx.get(ctx, key1);
+			await tx.put(cx, key1, value2);
+			const updatedRetrievedValue = await tx.get(cx, key1);
 			expect(updatedRetrievedValue).toEqual(value2);
 		});
 	});
 
 	it('should handle transactions with multiple operations', async () => {
 		const store = new IndexedDBKVStore(dbName);
-		await store.transact(ctx, async (ctx, tx) => {
-			await tx.put(ctx, key1, value1);
-			await tx.put(ctx, key2, value2);
+		await store.transact(cx, async (cx, tx) => {
+			await tx.put(cx, key1, value1);
+			await tx.put(cx, key2, value2);
 
-			const retrievedValue1 = await tx.get(ctx, key1);
-			const retrievedValue2 = await tx.get(ctx, key2);
+			const retrievedValue1 = await tx.get(cx, key1);
+			const retrievedValue2 = await tx.get(cx, key2);
 
 			expect(retrievedValue1).toEqual(value1);
 			expect(retrievedValue2).toEqual(value2);
@@ -159,17 +159,17 @@ describe('IndexedDBKVStore', () => {
 		const store = new IndexedDBKVStore(dbName);
 
 		await whenAll([
-			store.transact(ctx, async (ctx, tx) => {
-				await tx.put(ctx, key1, value1);
+			store.transact(cx, async (cx, tx) => {
+				await tx.put(cx, key1, value1);
 			}),
-			store.transact(ctx, async (ctx, tx) => {
-				await tx.put(ctx, key2, value2);
+			store.transact(cx, async (cx, tx) => {
+				await tx.put(cx, key2, value2);
 			}),
 		]);
 
-		await store.transact(ctx, async (ctx, tx) => {
-			const retrievedValue1 = await tx.get(ctx, key1);
-			const retrievedValue2 = await tx.get(ctx, key2);
+		await store.transact(cx, async (cx, tx) => {
+			const retrievedValue1 = await tx.get(cx, key1);
+			const retrievedValue2 = await tx.get(cx, key2);
 
 			expect(retrievedValue1).toEqual(value1);
 			expect(retrievedValue2).toEqual(value2);

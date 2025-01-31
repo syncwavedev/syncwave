@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {AsyncStream} from '../../async-stream.js';
-import {Context} from '../../context.js';
+import {Cx} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
@@ -41,8 +41,8 @@ export function zTask() {
 export class TaskRepo {
     public readonly rawRepo: DocRepo<Task>;
 
-    constructor(tx: Uint8Transaction, onChange: OnDocChange<Task>) {
-        this.rawRepo = new DocRepo<Task>({
+    constructor(cx: Cx, tx: Uint8Transaction, onChange: OnDocChange<Task>) {
+        this.rawRepo = new DocRepo<Task>(cx, {
             tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
@@ -57,17 +57,17 @@ export class TaskRepo {
         });
     }
 
-    getById(ctx: Context, id: TaskId): Promise<Task | undefined> {
-        return this.rawRepo.getById(ctx, id);
+    getById(cx: Cx, id: TaskId): Promise<Task | undefined> {
+        return this.rawRepo.getById(cx, id);
     }
 
-    getByBoardId(ctx: Context, boardId: BoardId): AsyncStream<Task> {
-        return this.rawRepo.get(ctx, BOARD_ID, [boardId]);
+    getByBoardId(cx: Cx, boardId: BoardId): AsyncStream<Task> {
+        return this.rawRepo.get(cx, BOARD_ID, [boardId]);
     }
 
-    async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
+    async apply(cx: Cx, id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
         return await this.rawRepo.apply(
-            ctx,
+            cx,
             id,
             diff,
             createWriteableChecker({
@@ -77,11 +77,11 @@ export class TaskRepo {
         );
     }
 
-    create(ctx: Context, user: Task): Promise<Task> {
-        return this.rawRepo.create(ctx, user);
+    create(cx: Cx, user: Task): Promise<Task> {
+        return this.rawRepo.create(cx, user);
     }
 
-    update(ctx: Context, id: TaskId, recipe: Recipe<Task>): Promise<Task> {
-        return this.rawRepo.update(ctx, id, recipe);
+    update(cx: Cx, id: TaskId, recipe: Recipe<Task>): Promise<Task> {
+        return this.rawRepo.update(cx, id, recipe);
     }
 }

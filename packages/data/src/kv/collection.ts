@@ -1,6 +1,6 @@
 import {astream, AsyncStream} from '../async-stream.js';
 import {Codec, NumberCodec} from '../codec.js';
-import {Context} from '../context.js';
+import {Cx} from '../context.js';
 import {pipe, whenAll} from '../utils.js';
 import {Counter} from './counter.js';
 import {
@@ -30,30 +30,29 @@ export class Collection<T> {
         );
     }
 
-    async length(ctx: Context) {
-        return await this.counter.get(ctx);
+    async length(cx: Cx) {
+        return await this.counter.get(cx);
     }
 
-    async append(ctx: Context, ...data: T[]): Promise<void> {
+    async append(cx: Cx, ...data: T[]): Promise<void> {
         const offset =
-            (await this.counter.increment(ctx, data.length)) - data.length;
-        await whenAll(data.map((x, idx) => this.log.put(ctx, offset + idx, x)));
+            (await this.counter.increment(cx, data.length)) - data.length;
+        await whenAll(
+            cx,
+            data.map((x, idx) => this.log.put(cx, offset + idx, x))
+        );
     }
 
-    list(
-        ctx: Context,
-        start: number,
-        end?: number
-    ): AsyncStream<CollectionEntry<T>> {
-        return astream(this._list(ctx, start, end));
+    list(cx: Cx, start: number, end?: number): AsyncStream<CollectionEntry<T>> {
+        return astream(this._list(cx, start, end));
     }
 
     private async *_list(
-        ctx: Context,
+        cx: Cx,
         start: number,
         end?: number
     ): AsyncIterable<CollectionEntry<T>> {
-        for await (const {key, value} of this.log.query(ctx, {gte: start})) {
+        for await (const {key, value} of this.log.query(cx, {gte: start})) {
             if (end !== undefined && key >= end) return;
 
             yield {offset: key, data: value};

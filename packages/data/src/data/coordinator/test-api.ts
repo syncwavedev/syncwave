@@ -17,15 +17,15 @@ export function createTestApi() {
         getArr: streamer({
             req: z.object({}),
             item: z.number(),
-            async *stream(ctx) {
+            async *stream(cx) {
                 yield 1;
-                await wait(ctx, 1000);
+                await wait(cx, 1000);
                 yield 2;
-                await wait(ctx, 1000);
+                await wait(cx, 1000);
                 yield 3;
-                await wait(ctx, 1000);
+                await wait(cx, 1000);
                 yield 4;
-                await wait(ctx, 1000);
+                await wait(cx, 1000);
                 yield 5;
             },
         }),
@@ -33,25 +33,25 @@ export function createTestApi() {
         getStream: observer({
             req: z.object({topic: z.string()}),
             value: z.object({index: z.number(), value: z.string()}),
-            async observe(ctx, {esReader}, {topic}) {
-                return observable(ctx, {
-                    async get(ctx) {
+            async observe(cx, {esReader}, {topic}) {
+                return observable(cx, {
+                    async get(cx) {
                         return {index: 1, value: 'sdf'};
                     },
-                    update$: esReader.subscribe(ctx, topic, 0),
+                    update$: esReader.subscribe(cx, topic, 0),
                 });
             },
         }),
         streamPut: handler({
             req: z.object({topic: z.string(), value: z.string()}),
             res: z.object({}),
-            handle: async (ctx, state, {topic, value}) => {
-                await state.transact(ctx, async (ctx, tx) => {
-                    await tx.esWriter.append(ctx, topic, {
+            handle: async (cx, state, {topic, value}) => {
+                await state.transact(cx, async (cx, tx) => {
+                    await tx.esWriter.append(cx, topic, {
                         type: 'user',
                         id: createUserId(),
                         ts: getNow(),
-                        diff: Crdt.from<User>({
+                        diff: Crdt.from<User>(cx, {
                             id: createUserId(),
                             createdAt: getNow(),
                             updatedAt: getNow(),

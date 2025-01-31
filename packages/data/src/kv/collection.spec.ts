@@ -1,10 +1,10 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {Codec, decodeString, encodeString} from '../codec.js';
-import {Context} from '../context.js';
+import {Cx} from '../context.js';
 import {Collection, CollectionEntry} from './collection.js';
 import {MemKVStore} from './mem-kv-store.js';
 
-const ctx = Context.test();
+const ctx = Cx.test();
 const jsonCodec: Codec<any> = {
     encode: data => encodeString(JSON.stringify(data)),
     decode: bytes => JSON.parse(decodeString(bytes)),

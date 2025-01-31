@@ -1,51 +1,52 @@
-import {Cancel, Context} from './context.js';
+import {Cancel, Cx} from './context.js';
+import {logger} from './logger.js';
 import {Uuid} from './uuid.js';
 
 export class ContextManager<T extends Uuid> {
-    private readonly runningJobs = new Map<T, [Context, Cancel]>();
+    private readonly runningJobs = new Map<T, [Cx, Cancel]>();
     private readonly cancelledJobs = new Set<T>();
 
-    constructor(private readonly parentCtx: Context) {}
+    constructor(private readonly parentCx: Cx) {}
 
-    start(id: T) {
+    start(cx: Cx, id: T) {
         if (this.runningJobs.has(id)) {
-            console.warn(`[WRN] job ${id} is already running`);
-            const [ctx] = this.runningJobs.get(id)!;
-            return ctx;
+            logger.warn(cx, `job ${id} is already running`);
+            const [jobCx] = this.runningJobs.get(id)!;
+            return jobCx;
         } else if (this.cancelledJobs.has(id)) {
-            console.warn(`[WRN] job ${id} is already finished`);
-            return Context.cancelled();
+            logger.warn(cx, `job ${id} is already finished`);
+            return Cx.cancelled();
         } else {
-            const [ctx, cancel] = this.parentCtx.withCancel();
-            this.runningJobs.set(id, [ctx, cancel]);
-            return ctx;
+            const [cx, cancel] = this.parentCx.withCancel();
+            this.runningJobs.set(id, [cx, cancel]);
+            return cx;
         }
     }
 
-    cancel(id: T) {
+    cancel(cx: Cx, id: T) {
         if (this.runningJobs.has(id)) {
-            this.runningJobs.get(id)![1]();
+            this.runningJobs.get(id)![1](cx);
             this.runningJobs.delete(id);
             this.cancelledJobs.add(id);
         } else if (this.cancelledJobs.has(id)) {
-            console.warn(`[WRN] job ${id} is already cancelled`);
+            logger.warn(cx, `job ${id} is already cancelled`);
         } else {
-            console.warn(`[WRN] unknown job: ${id}`);
+            logger.warn(cx, `unknown job: ${id}`);
         }
     }
 
-    finish(job: T) {
+    finish(cx: Cx, job: T) {
         if (this.runningJobs.has(job) || this.cancelledJobs.has(job)) {
-            this.runningJobs.get(job)?.[1]();
+            this.runningJobs.get(job)?.[1](cx);
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
         } else {
-            console.warn(`[WRN] unknown job: ${job}`);
+            logger.warn(cx, `unknown job: ${job}`);
         }
     }
 
-    finishAll() {
+    finishAll(cx: Cx) {
         const runningSnapshot = [...this.runningJobs.keys()];
-        runningSnapshot.forEach(job => this.finish(job));
+        runningSnapshot.forEach(job => this.finish(cx, job));
     }
 }

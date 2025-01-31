@@ -1,7 +1,8 @@
 import {TypeOf, z, ZodType} from 'zod';
 import {astream, AsyncStream} from '../../async-stream.js';
-import {Context} from '../../context.js';
+import {Cx} from '../../context.js';
 import {Deferred} from '../../deferred.js';
+import {logger} from '../../logger.js';
 import {assertNever} from '../../utils.js';
 import {MessageHeaders} from '../communication/message.js';
 
@@ -10,7 +11,7 @@ export interface Handler<TState, TRequest, TResponse> {
     req: ZodType<TRequest>;
     res: ZodType<TResponse>;
     handle(
-        ctx: Context,
+        cx: Cx,
         state: TState,
         req: TRequest,
         headers: MessageHeaders
@@ -23,7 +24,7 @@ export interface Streamer<TState, TRequest, TItem> {
     item: ZodType<TItem>;
     observer: boolean;
     stream(
-        ctx: Context,
+        cx: Cx,
         state: TState,
         req: TRequest,
         headers: MessageHeaders
@@ -56,7 +57,7 @@ export interface HandlerOptions<
     req: TRequestSchema;
     res: TResponseSchema;
     handle: (
-        ctx: Context,
+        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -71,13 +72,13 @@ export function handler<
     options: HandlerOptions<TState, TRequestSchema, TResponseSchema>
 ): Handler<TState, TypeOf<TRequestSchema>, TypeOf<TResponseSchema>> {
     async function wrapper(
-        ctx: Context,
+        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
     ) {
         req = options.req.parse(req);
-        const res = await options.handle(ctx, state, req, headers);
+        const res = await options.handle(cx, state, req, headers);
         return options.res.parse(res);
     }
 
@@ -103,7 +104,7 @@ export interface StreamerOptions<
     req: TRequestSchema;
     item: TItemSchema;
     stream: (
-        ctx: Context,
+        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -118,13 +119,13 @@ export function streamer<
     options: StreamerOptions<TState, TRequestSchema, TItemSchema>
 ): Streamer<TState, TypeOf<TRequestSchema>, TypeOf<TItemSchema>> {
     async function* wrapper(
-        ctx: Context,
+        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
     ): AsyncIterable<TypeOf<TItemSchema>> {
         req = options.req.parse(req);
-        for await (const item of options.stream(ctx, state, req, headers)) {
+        for await (const item of options.stream(cx, state, req, headers)) {
             yield options.item.parse(item);
         }
     }
@@ -151,7 +152,7 @@ export interface ObserverOptions<
     req: TRequestSchema;
     value: TValueSchema;
     observe: (
-        ctx: Context,
+        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
@@ -178,18 +179,18 @@ export function observer<
     options: ObserverOptions<TState, TRequestSchema, TValueSchema>
 ): Observer<TState, TypeOf<TRequestSchema>, TypeOf<TValueSchema>> {
     function wrapper(
-        ctx: Context,
+        cx: Cx,
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
     ): AsyncIterable<TypeOf<TValueSchema>> {
         req = options.req.parse(req);
-        return astream(options.observe(ctx, state, req, headers)).flatMap(
-            (ctx, [initialValue, stream]) => {
+        return astream(options.observe(cx, state, req, headers)).flatMap(
+            (cx, [initialValue, stream]) => {
                 return astream<ObserverItem<TypeOf<TValueSchema>>>([
                     {type: 'start', initialValue},
                 ]).concat(
-                    astream(stream).map((ctx, value) => ({
+                    astream(stream).map((cx, value) => ({
                         type: 'next',
                         value,
                     }))
@@ -235,15 +236,14 @@ export function mapApiState<
     TStatePublic,
     TApi extends Api<TStatePrivate>,
 >(
+    cx: Cx,
     api: TApi,
-    map: (
-        ctx: Context,
-        state: TStatePublic
-    ) => TStatePrivate | Promise<TStatePrivate>
+    map: (cx: Cx, state: TStatePublic) => TStatePrivate | Promise<TStatePrivate>
 ): MapApiState<TApi, TStatePublic> {
     return applyMiddleware(
+        cx,
         api,
-        async (ctx, next, state) => await next(ctx, map(ctx, state))
+        async (cx, next, state) => await next(cx, map(cx, state))
     );
 }
 
@@ -252,14 +252,16 @@ export function decorateApi<
     TStatePublic,
     TApi extends Api<TStatePrivate>,
 >(
+    cx: Cx,
     api: TApi,
     decorate: (
+        cx: Cx,
         processor: Processor<TStatePrivate, unknown, any>
     ) => Processor<TStatePublic, unknown, any>
 ): MapApiState<TApi, TStatePublic> {
     const result: Api<any> = {};
     for (const key of Object.keys(api)) {
-        result[key] = decorate(api[key]);
+        result[key] = decorate(cx, api[key]);
     }
 
     return result as any;
@@ -270,125 +272,115 @@ export function applyMiddleware<
     TStatePublic,
     TApi extends Api<TStatePrivate>,
 >(
+    cx: Cx,
     api: TApi,
     middleware: (
-        ctx: Context,
-        next: (ctx: Context, state: TStatePrivate) => Promise<void>,
+        cx: Cx,
+        next: (cx: Cx, state: TStatePrivate) => Promise<void>,
         state: TStatePublic,
         headers: MessageHeaders
     ) => Promise<void>
 ): MapApiState<TApi, TStatePublic> {
-    return decorateApi<TStatePrivate, TStatePublic, TApi>(api, processor => {
-        async function work(
-            ctx: Context,
-            state: TStatePublic,
-            req: unknown,
-            headers: MessageHeaders
-        ) {
-            const signal = new Deferred<any>();
-            middleware(
-                ctx,
-                async (ctx, newState) => {
-                    if (processor.type === 'handler') {
-                        const result = await processor.handle(
-                            ctx,
-                            newState,
-                            req,
-                            headers
+    return decorateApi<TStatePrivate, TStatePublic, TApi>(
+        cx,
+        api,
+        (cx, processor) => {
+            async function work(
+                cx: Cx,
+                state: TStatePublic,
+                req: unknown,
+                headers: MessageHeaders
+            ) {
+                const signal = new Deferred<any>();
+                middleware(
+                    cx,
+                    async (cx, newState) => {
+                        if (processor.type === 'handler') {
+                            const result = await processor.handle(
+                                cx,
+                                newState,
+                                req,
+                                headers
+                            );
+                            signal.resolve(cx, result);
+                        } else if (processor.type === 'streamer') {
+                            const result = processor.stream(
+                                cx,
+                                newState,
+                                req,
+                                headers
+                            );
+                            signal.resolve(cx, result);
+                        } else {
+                            assertNever(cx, processor);
+                        }
+                    },
+                    state,
+                    headers
+                ).catch(error => {
+                    if (signal.state !== 'pending') {
+                        logger.error(
+                            cx,
+                            'middleware failed after next()',
+                            error
                         );
-                        signal.resolve(result);
-                    } else if (processor.type === 'streamer') {
-                        const result = processor.stream(
-                            ctx,
-                            newState,
-                            req,
-                            headers
-                        );
-                        signal.resolve(result);
                     } else {
-                        assertNever(processor);
+                        signal.reject(cx, error);
                     }
-                },
-                state,
-                headers
-            ).catch(error => {
-                if (signal.state !== 'pending') {
-                    console.error(
-                        '[ERR] middleware failed after next()',
-                        error
-                    );
-                } else {
-                    signal.reject(error);
-                }
-            });
+                });
 
-            return await signal.promise;
+                return await signal.promise;
+            }
+            if (processor.type === 'handler') {
+                return {
+                    type: 'handler',
+                    req: processor.req,
+                    res: processor.res,
+                    handle: async (cx, state, request, headers) => {
+                        return work(cx, state, request, headers);
+                    },
+                } satisfies Handler<TStatePublic, any, any>;
+            } else if (processor.type === 'streamer') {
+                return {
+                    type: 'streamer',
+                    req: processor.req,
+                    item: processor.item,
+                    observer: processor.observer,
+                    stream: async function* (cx, state, request, headers) {
+                        yield* await work(cx, state, request, headers);
+                    },
+                } satisfies Streamer<TStatePublic, any, any>;
+            } else {
+                assertNever(cx, processor);
+            }
         }
-        if (processor.type === 'handler') {
-            return {
-                type: 'handler',
-                req: processor.req,
-                res: processor.res,
-                handle: async (ctx, state, request, headers) => {
-                    return work(ctx, state, request, headers);
-                },
-            } satisfies Handler<TStatePublic, any, any>;
-        } else if (processor.type === 'streamer') {
-            return {
-                type: 'streamer',
-                req: processor.req,
-                item: processor.item,
-                observer: processor.observer,
-                stream: async function* (ctx, state, request, headers) {
-                    yield* await work(ctx, state, request, headers);
-                },
-            } satisfies Streamer<TStatePublic, any, any>;
-        } else {
-            assertNever(processor);
-        }
-    });
+    );
 }
 
 export type InferRpcClient<T extends Api<any>> = {
     [K in keyof T]: T[K] extends Observer<any, infer TReq, infer TValue>
         ? (
-              ctx: Context,
+              cx: Cx,
               req: TReq,
               headers?: MessageHeaders
           ) => Promise<[initialValue: TValue, AsyncStream<TValue>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
-          ? (
-                ctx: Context,
-                req: TReq,
-                headers?: MessageHeaders
-            ) => AsyncStream<TItem>
+          ? (cx: Cx, req: TReq, headers?: MessageHeaders) => AsyncStream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
-            ? (
-                  ctx: Context,
-                  req: TReq,
-                  headers?: MessageHeaders
-              ) => Promise<TRes>
+            ? (cx: Cx, req: TReq, headers?: MessageHeaders) => Promise<TRes>
             : never;
 };
 
 export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
     [K in keyof T]: T[K] extends Observer<any, infer TReq, infer TValue>
         ? (
-              ctx: Context,
+              cx: Cx,
               req: TReq,
               headers: MessageHeaders
           ) => Promise<[initialValue: TValue, AsyncStream<TValue>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
-          ? (
-                ctx: Context,
-                req: TReq,
-                headers: MessageHeaders
-            ) => AsyncStream<TItem>
+          ? (cx: Cx, req: TReq, headers: MessageHeaders) => AsyncStream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
-            ? (
-                  ctx: Context,
-                  req: TReq,
-                  headers: MessageHeaders
-              ) => Promise<TRes>
+            ? (cx: Cx, req: TReq, headers: MessageHeaders) => Promise<TRes>
             : never;
 };

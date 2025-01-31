@@ -1,14 +1,15 @@
 import {decodeString, encodeString} from '../codec.js';
-import {Context} from '../context.js';
+import {Cx} from '../context.js';
+import {AppError} from '../errors.js';
 import {decodeHex} from '../hex.js';
 import {bufStartsWith} from '../utils.js';
 import {decodeUuid, encodeUuid, Uuid} from '../uuid.js';
 import {Doc, DocRepo} from './doc-repo.js';
 
 export interface DataNodeVisitor<T> {
-    repo(node: RepoDataNode<any>): T;
-    doc(node: DocDataNode<any>): T;
-    aggregate(node: AggregateDataNode<Record<string, DataNode>>): T;
+    repo(cx: Cx, node: RepoDataNode<any>): T;
+    doc(cx: Cx, node: DocDataNode<any>): T;
+    aggregate(cx: Cx, node: AggregateDataNode<Record<string, DataNode>>): T;
 }
 
 export interface DataNodeChild {
@@ -18,11 +19,11 @@ export interface DataNodeChild {
 
 export abstract class DataNode {
     abstract queryChildren(
-        ctx: Context,
+        cx: Cx,
         prefix: Uint8Array
     ): AsyncIterable<DataNodeChild>;
-    abstract child(part: Uint8Array): DataNode;
-    abstract visit<T>(visitor: DataNodeVisitor<T>): T;
+    abstract child(cx: Cx, part: Uint8Array): DataNode;
+    abstract visit<T>(cx: Cx, visitor: DataNodeVisitor<T>): T;
 }
 
 export class AggregateDataNode<
@@ -33,19 +34,19 @@ export class AggregateDataNode<
     }
 
     async *queryChildren(
-        ctx: Context,
+        cx: Cx,
         prefix: Uint8Array
     ): AsyncIterable<DataNodeChild> {
         for (const [prop, node] of Object.entries(this.children)) {
-            const key = encodeString(prop);
+            const key = encodeString(cx, prop);
             if (bufStartsWith(key, prefix)) {
                 yield {key, node};
             }
         }
     }
 
-    child(key: Uint8Array): DataNode {
-        const result = this.children[decodeString(key)];
+    child(cx: Cx, key: Uint8Array): DataNode {
+        const result = this.children[decodeString(cx, key)];
         if (!result) {
             `AggregateDataNode does not have any children with key = ${decodeHex(key)}`;
         }
@@ -53,8 +54,8 @@ export class AggregateDataNode<
         return result;
     }
 
-    visit<T>(visitor: DataNodeVisitor<T>): T {
-        return visitor.aggregate(this);
+    visit<T>(cx: Cx, visitor: DataNodeVisitor<T>): T {
+        return visitor.aggregate(cx, this);
     }
 }
 
@@ -64,22 +65,22 @@ export class RepoDataNode<T extends Doc> extends DataNode {
     }
 
     async *queryChildren(
-        ctx: Context,
+        cx: Cx,
         prefix: Uint8Array
     ): AsyncIterable<DataNodeChild> {
-        yield* this.repo.getAll(ctx, prefix).map((ctx, doc) => ({
-            key: encodeUuid(doc.id),
+        yield* this.repo.getAll(cx, prefix).map((cx, doc) => ({
+            key: encodeUuid(cx, doc.id),
             node: new DocDataNode(doc.id, this.repo),
         }));
     }
 
-    child(key: Uint8Array): DataNode {
-        const uuid = decodeUuid(key);
+    child(cx: Cx, key: Uint8Array): DataNode {
+        const uuid = decodeUuid(cx, key);
         return new DocDataNode(uuid, this.repo);
     }
 
-    visit<TResult>(visitor: DataNodeVisitor<TResult>): TResult {
-        return visitor.repo(this);
+    visit<TResult>(cx: Cx, visitor: DataNodeVisitor<TResult>): TResult {
+        return visitor.repo(cx, this);
     }
 }
 
@@ -95,17 +96,18 @@ export class DocDataNode<T extends Doc> extends DataNode {
         // no children
     }
 
-    child(key: Uint8Array): DataNode {
-        throw new Error(
+    child(cx: Cx, key: Uint8Array): DataNode {
+        throw new AppError(
+            cx,
             `DocDataNode does not have any children, part: ${decodeHex(key)}`
         );
     }
 
-    visit<T>(visitor: DataNodeVisitor<T>): T {
-        return visitor.doc(this);
+    visit<T>(cx: Cx, visitor: DataNodeVisitor<T>): T {
+        return visitor.doc(cx, this);
     }
 
-    async snapshot(ctx: Context): Promise<T | undefined> {
-        return await this.repo.getById(ctx, this.docId);
+    async snapshot(cx: Cx): Promise<T | undefined> {
+        return await this.repo.getById(cx, this.docId);
     }
 }

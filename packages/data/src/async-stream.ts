@@ -1,40 +1,44 @@
 import {Channel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
-import {CancelledError, Context} from './context.js';
+import {CancelledError, Cx} from './context.js';
+import {AppError} from './errors.js';
+import {logger} from './logger.js';
 import {assert, Nothing} from './utils.js';
 
 export interface ColdStreamExecutor<T> {
-    next: (ctx: Context, value: T) => Promise<void>;
-    throw: (ctx: Context, error: any) => Promise<void>;
-    end: (ctx: Context) => void;
+    next: (cx: Cx, value: T) => Promise<void>;
+    throw: (cx: Cx, error: any) => Promise<void>;
+    end: (cx: Cx) => void;
 }
 
 export class StreamPuppet<T> implements AsyncIterable<T> {
     private chan = new Channel<T>();
 
-    constructor(ctx: Context) {
-        ctx.onCancel(() => {
-            this.throw(new CancelledError())
+    constructor(cx: Cx) {
+        cx.onCancel(cx, cx => {
+            this.throw(cx, new CancelledError(cx))
                 .then(() => this.end())
                 .catch(error => {
-                    console.error('[ERR] HotStream onCancel', error);
+                    logger.error(cx, 'HotStream onCancel', error);
                 });
         });
     }
 
-    async next(value: T) {
+    async next(cx: Cx, value: T) {
         if (this.chan.closed) {
             return;
         }
         await this.chan.push(value);
     }
 
-    async throw(error: any) {
+    async throw(cx: Cx, error: any) {
         if (this.chan.closed) {
             return;
         }
-        await this.chan.throw(new Error('HotStream.throw', {cause: error}));
+        await this.chan.throw(
+            new AppError(cx, 'HotStream.throw', {cause: error})
+        );
     }
 
     end() {
@@ -53,35 +57,33 @@ export class StreamPuppet<T> implements AsyncIterable<T> {
 
 export class ColdStream<T> implements AsyncIterable<T> {
     constructor(
-        private readonly parentCtx: Context,
+        private readonly parentCx: Cx,
         private readonly execute: (
-            ctx: Context,
+            cx: Cx,
             executor: ColdStreamExecutor<T>
         ) => Nothing
     ) {}
 
     async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
-        const [ctx, cancelCtx] = this.parentCtx.withCancel();
-        ctx.onCancel(() => {
+        const [cx, cancelCx] = this.parentCx.withCancel();
+        cx.onCancel(cx, cx => {
             stream
-                .throw(new CancelledError())
+                .throw(cx, new CancelledError(cx))
                 .then(() => stream.end())
-                .catch(error =>
-                    console.error('[ERR] ColdStream onCancel', error)
-                );
+                .catch(error => logger.error(cx, 'ColdStream onCancel', error));
         });
 
-        const stream = new StreamPuppet<T>(ctx);
+        const stream = new StreamPuppet<T>(cx);
 
         try {
-            this.execute(ctx, {
-                next: async (ctx, value) => stream.next(value),
-                throw: (ctx, error) => stream.throw(error),
+            this.execute(cx, {
+                next: async (cx, value) => stream.next(cx, value),
+                throw: (cx, error) => stream.throw(cx, error),
                 end: () => stream.end(),
             });
             yield* stream;
         } finally {
-            cancelCtx();
+            cancelCx(cx);
         }
     }
 }
@@ -90,11 +92,11 @@ export function astream<T>(
     source: AsyncIterable<T> | T[] | Promise<T>
 ): AsyncStream<T> {
     if (source instanceof Promise) {
-        const stream = new ColdStream<T>(Context.todo(), (ctx, exe) => {
+        const stream = new ColdStream<T>(Cx.todo(), (cx, exe) => {
             source
-                .then(value => exe.next(ctx, value))
-                .catch(error => exe.throw(ctx, error))
-                .finally(() => exe.end(ctx));
+                .then(value => exe.next(cx, value))
+                .catch(error => exe.throw(cx, error))
+                .finally(() => exe.end(cx));
         });
         return astream(stream);
     } else if (Array.isArray(source)) {
@@ -119,8 +121,23 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return astream(this._take(count));
     }
 
-    assert<S extends T>(validator: (value: T) => value is S): AsyncStream<S> {
+    assert<S extends T>(
+        validator: (cx: Cx, value: T) => value is S
+    ): AsyncStream<S> {
         return astream(this._assert(validator)) as AsyncStream<S>;
+    }
+
+    private async *_assert(validator: (cx: Cx, value: T) => boolean) {
+        const [cx, cancel] = Cx.create();
+        try {
+            for await (const item of this.source) {
+                assert(cx, validator(cx, item));
+
+                yield item;
+            }
+        } finally {
+            cancel(cx);
+        }
     }
 
     concat(...streams: AsyncIterable<T>[]): AsyncStream<T> {
@@ -132,14 +149,6 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
         for (const stream of streams) {
             yield* stream;
-        }
-    }
-
-    private async *_assert(validator: (value: T) => boolean) {
-        for await (const item of this.source) {
-            assert(validator(item));
-
-            yield item;
         }
     }
 
@@ -158,46 +167,40 @@ export class AsyncStream<T> implements AsyncIterable<T> {
     }
 
     flatCatch<R>(
-        flatMap: (
-            ctx: Context,
-            error: unknown
-        ) => R[] | Promise<R> | AsyncIterable<R>
+        flatMap: (cx: Cx, error: unknown) => R[] | Promise<R> | AsyncIterable<R>
     ): AsyncStream<T | R> {
         return astream(this._flatCatch(flatMap));
     }
 
     private async *_flatCatch<R>(
-        flatMap: (
-            ctx: Context,
-            error: unknown
-        ) => R[] | Promise<R> | AsyncIterable<R>
+        flatMap: (cx: Cx, error: unknown) => R[] | Promise<R> | AsyncIterable<R>
     ): AsyncIterable<T | R> {
-        const [ctx, cancel] = Context.create();
+        const [cx, cancel] = Cx.create();
         try {
             yield* this.source;
         } catch (error) {
-            yield* astream(flatMap(ctx, error));
+            yield* astream(flatMap(cx, error));
         } finally {
-            cancel();
+            cancel(cx);
         }
     }
 
     catch<R>(
-        map: (ctx: Context, error: unknown) => Promise<R> | R
+        map: (cx: Cx, error: unknown) => Promise<R> | R
     ): AsyncStream<T | R> {
         return astream(this._catch(map));
     }
 
     async *_catch<R>(
-        map: (ctx: Context, error: unknown) => Promise<R> | R
+        map: (cx: Cx, error: unknown) => Promise<R> | R
     ): AsyncIterable<T | R> {
-        const [ctx, cancel] = Context.create();
+        const [cx, cancel] = Cx.create();
         try {
             yield* this.source;
         } catch (error) {
-            yield await map(ctx, error);
+            yield await map(cx, error);
         } finally {
-            cancel();
+            cancel(cx);
         }
     }
 
@@ -223,21 +226,21 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return false;
     }
 
-    withContext(ctx: Context) {
+    withContext(cx: Cx) {
         return astream<T>(
-            new ColdStream(ctx, (ctx, exe) => {
+            new ColdStream(cx, (cx, exe) => {
                 (async () => {
                     try {
                         for await (const value of this.source) {
-                            await exe.next(ctx, value);
+                            await exe.next(cx, value);
                         }
                     } catch (error) {
-                        await exe.throw(ctx, error);
+                        await exe.throw(cx, error);
                     } finally {
-                        exe.end(ctx);
+                        exe.end(cx);
                     }
                 })().catch(error => {
-                    console.error('[ERR] AsyncStream.withContext', error);
+                    logger.error(cx, 'AsyncStream.withContext', error);
                 });
             })
         );
@@ -261,7 +264,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     flatMap<TResult>(
         flatMapper: (
-            ctx: Context,
+            cx: Cx,
             value: T
         ) => TResult[] | Promise<TResult[]> | AsyncIterable<TResult>
     ): AsyncStream<TResult> {
@@ -270,41 +273,41 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     private async *_flatMap<TResult>(
         flatMapper: (
-            ctx: Context,
+            cx: Cx,
             value: T
         ) => TResult[] | Promise<TResult[]> | AsyncIterable<TResult>
     ): AsyncIterable<TResult> {
         for await (const item of this.source) {
-            yield* await flatMapper(Context.todo(), item);
+            yield* await flatMapper(Cx.todo(), item);
         }
     }
 
-    tap(cb: (ctx: Context, value: T) => Promise<void> | void): AsyncStream<T> {
-        return this.map(async (ctx, value) => {
-            await cb(ctx, value);
+    tap(cb: (cx: Cx, value: T) => Promise<void> | void): AsyncStream<T> {
+        return this.map(async (cx, value) => {
+            await cb(cx, value);
             return value;
         });
     }
 
     map<TResult>(
-        mapper: (ctx: Context, value: T) => TResult | Promise<TResult>
+        mapper: (cx: Cx, value: T) => TResult | Promise<TResult>
     ): AsyncStream<TResult> {
         return astream(this._map(mapper));
     }
 
     private async *_map<TResult>(
-        mapper: (context: Context, value: T) => TResult | Promise<TResult>
+        mapper: (context: Cx, value: T) => TResult | Promise<TResult>
     ): AsyncIterable<TResult> {
         for await (const item of this.source) {
-            yield await mapper(Context.todo(), item);
+            yield await mapper(Cx.todo(), item);
         }
     }
 
     mapParallel<TResult>(
-        mapper: (ctx: Context, value: T) => Promise<TResult>
+        mapper: (cx: Cx, value: T) => Promise<TResult>
     ): AsyncStream<TResult> {
         return astream(
-            new ColdStream(Context.todo(), (ctx, {next, end}) => {
+            new ColdStream(Cx.todo(), (cx, {next, end}) => {
                 (async () => {
                     let left = 0;
                     let right = 0;
@@ -314,36 +317,36 @@ export class AsyncStream<T> implements AsyncIterable<T> {
                     >();
 
                     for await (const item of astream(this.source).withContext(
-                        ctx
+                        cx
                     )) {
                         if (pending.size >= MAX_LOOKAHEAD_COUNT) {
-                            assert(pending.has(left));
-                            await next(ctx, await pending.get(left)!);
+                            assert(cx, pending.has(left));
+                            await next(cx, await pending.get(left)!);
                             pending.delete(left);
                             left += 1;
                         }
 
-                        pending.set(right, mapper(ctx, item));
+                        pending.set(right, mapper(cx, item));
                         right += 1;
                     }
 
                     for (; left < right; left += 1) {
-                        assert(pending.has(left));
-                        await next(ctx, await pending.get(left)!);
+                        assert(cx, pending.has(left));
+                        await next(cx, await pending.get(left)!);
                         pending.delete(left);
                     }
 
-                    end(ctx);
+                    end(cx);
                 })().catch(error => {
-                    console.error('[ERR] error in mapParallel', error);
+                    logger.error(cx, 'error in mapParallel', error);
                 });
             })
         );
     }
 
-    async toArray(ctx: Context): Promise<T[]> {
+    async toArray(cx: Cx): Promise<T[]> {
         const result: T[] = [];
-        for await (const item of astream(this.source).withContext(ctx)) {
+        for await (const item of astream(this.source).withContext(cx)) {
             result.push(item);
         }
 

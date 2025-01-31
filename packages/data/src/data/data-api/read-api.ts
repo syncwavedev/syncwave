@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {astream} from '../../async-stream.js';
-import {Context} from '../../context.js';
+import {Cx} from '../../context.js';
 import {BusinessError} from '../../errors.js';
 import {assert, observable, whenAll} from '../../utils.js';
 import {zUuid} from '../../uuid.js';
@@ -26,9 +26,10 @@ export class ReadApiState {
         public readonly auth: AuthContext
     ) {}
 
-    ensureAuthenticated(): UserId {
+    ensureAuthenticated(cx: Cx): UserId {
         if (this.auth.userId === undefined) {
             throw new BusinessError(
+                cx,
                 'user is not authenticated',
                 'not_authenticated'
             );
@@ -38,26 +39,27 @@ export class ReadApiState {
     }
 
     async ensureBoardReadAccess(
-        ctx: Context,
+        cx: Cx,
         tx: DataTx,
         boardId: BoardId
     ): Promise<Member> {
-        return await this.ensureBoardWriteAccess(ctx, tx, boardId);
+        return await this.ensureBoardWriteAccess(cx, tx, boardId);
     }
 
     async ensureBoardWriteAccess(
-        ctx: Context,
+        cx: Cx,
         tx: DataTx,
         boardId: BoardId
     ): Promise<Member> {
-        const meId = this.ensureAuthenticated();
+        const meId = this.ensureAuthenticated(cx);
         const member = await tx.members.getByUserIdAndBoardId(
-            ctx,
+            cx,
             meId,
             boardId
         );
         if (!member) {
             throw new BusinessError(
+                cx,
                 `user ${meId} does not have access to board ${boardId}`,
                 'forbidden'
             );
@@ -72,86 +74,85 @@ export function createReadApi() {
         getMe: observer({
             req: z.object({}),
             value: zUser(),
-            observe: async (ctx, st) => {
-                const userId = st.ensureAuthenticated();
+            observe: async (cx, st) => {
+                const userId = st.ensureAuthenticated(cx);
 
-                return observable(ctx, {
-                    async get(ctx: Context) {
-                        return await st.transact(ctx, async (ctx, tx) => {
-                            const user = await tx.users.getById(ctx, userId);
-                            assert(user !== undefined);
+                return observable(cx, {
+                    async get(cx: Cx) {
+                        return await st.transact(cx, async (cx, tx) => {
+                            const user = await tx.users.getById(cx, userId);
+                            assert(cx, user !== undefined);
                             return user;
                         });
                     },
-                    update$: st.esReader.subscribe(ctx, userEvents(userId)),
+                    update$: st.esReader.subscribe(cx, userEvents(userId)),
                 });
             },
         }),
         getMyBoards: observer({
             req: z.object({}),
             value: z.array(zBoard()),
-            observe: async (ctx, st) => {
-                const userId = st.ensureAuthenticated();
+            observe: async (cx, st) => {
+                const userId = st.ensureAuthenticated(cx);
 
-                return observable(ctx, {
-                    async get(ctx) {
-                        return st.transact(ctx, async (ctx, tx) => {
-                            const members = tx.members.getByUserId(ctx, userId);
+                return observable(cx, {
+                    async get(cx) {
+                        return st.transact(cx, async (cx, tx) => {
+                            const members = tx.members.getByUserId(cx, userId);
                             return await astream(members)
-                                .mapParallel((ctx, member) =>
-                                    tx.boards.getById(ctx, member.boardId)
+                                .mapParallel((cx, member) =>
+                                    tx.boards.getById(cx, member.boardId)
                                 )
-                                .assert(x => x !== undefined)
-                                .toArray(ctx);
+                                .assert((cx, x) => x !== undefined)
+                                .toArray(cx);
                         });
                     },
-                    update$: st.esReader.subscribe(ctx, userEvents(userId)),
+                    update$: st.esReader.subscribe(cx, userEvents(userId)),
                 });
             },
         }),
         getBoardTasks: observer({
             req: z.object({boardId: zUuid<BoardId>()}),
             value: z.array(zTask()),
-            observe: async (ctx, st, {boardId}) => {
-                return observable(ctx, {
-                    async get(ctx) {
-                        return await st.transact(ctx, async (ctx, tx) => {
-                            const [tasks] = await whenAll([
-                                tx.tasks
-                                    .getByBoardId(ctx, boardId)
-                                    .toArray(ctx),
-                                st.ensureBoardReadAccess(ctx, tx, boardId),
+            observe: async (cx, st, {boardId}) => {
+                return observable(cx, {
+                    async get(cx) {
+                        return await st.transact(cx, async (cx, tx) => {
+                            const [tasks] = await whenAll(cx, [
+                                tx.tasks.getByBoardId(cx, boardId).toArray(cx),
+                                st.ensureBoardReadAccess(cx, tx, boardId),
                             ]);
 
                             return tasks;
                         });
                     },
-                    update$: st.esReader.subscribe(ctx, boardEvents(boardId)),
+                    update$: st.esReader.subscribe(cx, boardEvents(boardId)),
                 });
             },
         }),
         getTask: observer({
             req: z.object({taskId: zUuid<TaskId>()}),
             value: zTask().optional(),
-            observe: async (ctx, st, {taskId}) => {
-                const task = await st.transact(ctx, (ctx, tx) =>
-                    tx.tasks.getById(ctx, taskId)
+            observe: async (cx, st, {taskId}) => {
+                const task = await st.transact(cx, (cx, tx) =>
+                    tx.tasks.getById(cx, taskId)
                 );
                 if (!task) {
                     throw new BusinessError(
+                        cx,
                         `task with id ${taskId} not found`,
                         'task_not_found'
                     );
                 }
-                return observable(ctx, {
-                    async get(ctx) {
-                        return await st.transact(ctx, async (ctx, tx) => {
-                            const task = await tx.tasks.getById(ctx, taskId);
+                return observable(cx, {
+                    async get(cx) {
+                        return await st.transact(cx, async (cx, tx) => {
+                            const task = await tx.tasks.getById(cx, taskId);
                             if (!task) {
                                 return undefined;
                             }
                             await st.ensureBoardReadAccess(
-                                ctx,
+                                cx,
                                 tx,
                                 task.boardId
                             );
@@ -160,7 +161,7 @@ export function createReadApi() {
                         });
                     },
                     update$: st.esReader.subscribe(
-                        ctx,
+                        cx,
                         boardEvents(task.boardId)
                     ),
                 });
@@ -171,19 +172,19 @@ export function createReadApi() {
                 boardId: zUuid<BoardId>(),
             }),
             value: zBoard().optional(),
-            observe: async (ctx, st, {boardId}) => {
-                return observable(ctx, {
-                    async get(ctx) {
-                        return await st.transact(ctx, async (ctx, tx) => {
-                            const [board] = await whenAll([
-                                tx.boards.getById(ctx, boardId),
-                                st.ensureBoardReadAccess(ctx, tx, boardId),
+            observe: async (cx, st, {boardId}) => {
+                return observable(cx, {
+                    async get(cx) {
+                        return await st.transact(cx, async (cx, tx) => {
+                            const [board] = await whenAll(cx, [
+                                tx.boards.getById(cx, boardId),
+                                st.ensureBoardReadAccess(cx, tx, boardId),
                             ]);
 
                             return board;
                         });
                     },
-                    update$: st.esReader.subscribe(ctx, boardEvents(boardId)),
+                    update$: st.esReader.subscribe(cx, boardEvents(boardId)),
                 });
             },
         }),

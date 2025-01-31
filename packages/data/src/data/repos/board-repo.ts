@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {Context} from '../../context.js';
+import {Cx as cx} from '../../context.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {Counter} from '../../kv/counter.js';
@@ -39,8 +39,8 @@ export class BoardRepo {
     public readonly rawRepo: DocRepo<Board>;
     protected readonly counters: Registry<Counter>;
 
-    constructor(tx: Uint8Transaction, onChange: OnDocChange<Board>) {
-        this.rawRepo = new DocRepo<Board>({
+    constructor(cx: cx, tx: Uint8Transaction, onChange: OnDocChange<Board>) {
+        this.rawRepo = new DocRepo<Board>(cx, {
             tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
@@ -58,21 +58,21 @@ export class BoardRepo {
         );
     }
 
-    async getById(ctx: Context, id: BoardId): Promise<Board | undefined> {
-        return await this.rawRepo.getById(ctx, id);
+    async getById(cx: cx, id: BoardId): Promise<Board | undefined> {
+        return await this.rawRepo.getById(cx, id);
     }
 
-    async checkSlugAvailable(ctx: Context, slug: string): Promise<boolean> {
-        const existingBoard = await this.rawRepo.getUnique(ctx, SLUG_INDEX, [
+    async checkSlugAvailable(cx: cx, slug: string): Promise<boolean> {
+        const existingBoard = await this.rawRepo.getUnique(cx, SLUG_INDEX, [
             slug,
         ]);
 
         return existingBoard === undefined;
     }
 
-    async apply(ctx: Context, id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
+    async apply(cx: cx, id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
         return await this.rawRepo.apply(
-            ctx,
+            cx,
             id,
             diff,
             createWriteableChecker({
@@ -83,20 +83,18 @@ export class BoardRepo {
         );
     }
 
-    async incrementBoardCounter(
-        ctx: Context,
-        boardId: BoardId
-    ): Promise<number> {
-        return await this.counters.get(boardId.toString()).increment(ctx);
+    async incrementBoardCounter(cx: cx, boardId: BoardId): Promise<number> {
+        return await this.counters.get(boardId.toString()).increment(cx);
     }
 
-    async create(ctx: Context, board: Board): Promise<Board> {
+    async create(cx: cx, board: Board): Promise<Board> {
         try {
-            return await this.rawRepo.create(ctx, board);
+            return await this.rawRepo.create(cx, board);
         } catch (err) {
             // todo: map errors in AggregateError
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
                 throw new BusinessError(
+                    cx,
                     `board with slug ${board.slug} already exists`,
                     'board_slug_taken'
                 );
@@ -106,16 +104,13 @@ export class BoardRepo {
         }
     }
 
-    async update(
-        ctx: Context,
-        id: BoardId,
-        recipe: Recipe<Board>
-    ): Promise<Board> {
+    async update(cx: cx, id: BoardId, recipe: Recipe<Board>): Promise<Board> {
         try {
-            return await this.rawRepo.update(ctx, id, recipe);
+            return await this.rawRepo.update(cx, id, recipe);
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
                 throw new BusinessError(
+                    cx,
                     'board with slug already exists',
                     'board_slug_taken'
                 );

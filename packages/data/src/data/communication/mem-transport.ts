@@ -1,5 +1,7 @@
 import {Codec} from '../../codec.js';
-import {Context} from '../../context.js';
+import {Cx} from '../../context.js';
+import {AppError} from '../../errors.js';
+import {logger} from '../../logger.js';
 import {Nothing, Observer, Subject, wait} from '../../utils.js';
 import {Connection, TransportClient, TransportServer} from './transport.js';
 
@@ -19,43 +21,41 @@ export class MemConnection<T> implements Connection<T> {
 
     private constructor(private readonly codec: Codec<T>) {}
 
-    async send(ctx: Context, message: T): Promise<void> {
-        this.ensureOpen();
+    async send(cx: Cx, message: T): Promise<void> {
+        this.ensureOpen(cx);
 
-        await wait(ctx, 0);
+        await wait(cx, 0);
 
         // don't wait for peer to respond
-        this.peer.receive(this.codec.encode(message)).catch(err => {
-            console.error('error during peer receive', err);
+        this.peer.receive(this.codec.encode(cx, message)).catch(err => {
+            logger.error(cx, 'error during peer receive', err);
         });
     }
 
-    subscribe(ctx: Context, observer: Observer<T>) {
-        this.ensureOpen();
+    subscribe(cx: Cx, observer: Observer<T>) {
+        this.ensureOpen(cx);
 
-        this.subject.subscribe(ctx, observer);
+        this.subject.subscribe(cx, observer);
     }
 
-    async close(ctx: Context): Promise<void> {
-        await this.subject.close(ctx);
+    async close(cx: Cx): Promise<void> {
+        await this.subject.close(cx);
         if (this.peer.subject.open) {
             // don't wait for peer to respond
-            this.peer.close(ctx).catch(err => {
-                console.error('error during peer receive', err);
+            this.peer.close(cx).catch(err => {
+                logger.error(cx, 'error during peer receive', err);
             });
         }
     }
 
     private async receive(message: Uint8Array): Promise<void> {
-        await this.subject.next(
-            Context.background(),
-            this.codec.decode(message)
-        );
+        const cx = Cx.background();
+        await this.subject.next(cx, this.codec.decode(cx, message));
     }
 
-    private ensureOpen() {
+    private ensureOpen(cx: Cx) {
         if (!this.subject.open) {
-            throw new Error('connection is closed');
+            throw new AppError(cx, 'connection is closed');
         }
     }
 }
@@ -66,15 +66,15 @@ export class MemTransportClient<T> implements TransportClient<T> {
         private readonly codec: Codec<T>
     ) {}
 
-    async connect(): Promise<Connection<T>> {
+    async connect(cx: Cx): Promise<Connection<T>> {
         const [a, b] = MemConnection.create<T>(this.codec);
-        this.server.accept(a);
+        this.server.accept(cx, a);
         return b;
     }
 }
 
 export class MemTransportServer<T> implements TransportServer<T> {
-    private listener?: (connection: Connection<T>) => Nothing;
+    private listener?: (cx: Cx, connection: Connection<T>) => Nothing;
 
     constructor(private readonly codec: Codec<T>) {}
 
@@ -86,16 +86,19 @@ export class MemTransportServer<T> implements TransportServer<T> {
         return new MemTransportClient(this, this.codec);
     }
 
-    launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
+    launch(
+        cx: Cx,
+        cb: (cx: Cx, connection: Connection<T>) => Nothing
+    ): Promise<void> {
         this.listener = cb;
         return Promise.resolve();
     }
 
-    accept(connection: MemConnection<T>): void {
+    accept(cx: Cx, connection: MemConnection<T>): void {
         if (this.listener === undefined) {
-            throw new Error('server is not active');
+            throw new AppError(cx, 'server is not active');
         }
 
-        this.listener(connection);
+        this.listener(Cx.todo(), connection);
     }
 }

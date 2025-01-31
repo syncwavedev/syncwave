@@ -114,10 +114,10 @@ async function getKVStore(): Promise<Uint8KVStore> {
     }
 }
 
-async function upgradeKVStore(upgradeCtx: Context, kvStore: Uint8KVStore) {
+async function upgradeKVStore(upgradeCx: Context, kvStore: Uint8KVStore) {
     const versionKey = encodeString('version');
-    const version = await kvStore.transact(upgradeCtx, async (txCtx, tx) => {
-        const ver = await tx.get(txCtx, versionKey);
+    const version = await kvStore.transact(upgradeCx, async (txCx, tx) => {
+        const ver = await tx.get(txCx, versionKey);
         if (ver) {
             return decodeNumber(ver);
         } else {
@@ -126,27 +126,27 @@ async function upgradeKVStore(upgradeCtx: Context, kvStore: Uint8KVStore) {
     });
 
     if (!version) {
-        await kvStore.transact(upgradeCtx, async (ctx, tx) => {
-            const keys = await astream(tx.query(ctx, {gte: new Uint8Array()}))
-                .map((ctx, entry) => entry.key)
-                .toArray(ctx);
+        await kvStore.transact(upgradeCx, async (cx, tx) => {
+            const keys = await astream(tx.query(cx, {gte: new Uint8Array()}))
+                .map((cx, entry) => entry.key)
+                .toArray(cx);
 
             if (keys.length > 1000) {
                 throw new Error('too many keys to truncate the database');
             }
 
             for (const key of keys) {
-                await tx.delete(ctx, key);
+                await tx.delete(cx, key);
             }
 
-            await tx.put(ctx, versionKey, encodeNumber(1));
+            await tx.put(cx, versionKey, encodeNumber(1));
         });
     }
 }
 
-async function launch(launchCtx: Context) {
+async function launch(launchCx: Context) {
     const kvStore = await getKVStore();
-    await upgradeKVStore(launchCtx, kvStore);
+    await upgradeKVStore(launchCx, kvStore);
 
     const router = new Router();
     setupRouter(() => coordinator, router);
@@ -170,7 +170,7 @@ async function launch(launchCtx: Context) {
 
     async function shutdown() {
         console.log('[INF] shutting down...');
-        await coordinator.close();
+        await coordinator.cx();
         console.log('[INF] coordinator is closed');
         const httpServerCloseSignal = new Deferred<void>();
         httpServer.on('close', () => httpServerCloseSignal.resolve());
@@ -192,9 +192,9 @@ async function launch(launchCtx: Context) {
         }
     }
 
-    launchCtx.onCancel(() => {
+    launchCx.onCancel(() => {
         shutdown().catch(error => {
-            console.error('[ERR] failed to shutdown', error);
+            logger.error(cx, 'failed to shutdown', error);
         });
     });
 
@@ -244,15 +244,15 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
     });
 }
 
-const [mainCtx, cancelMain] = Context.background().withCancel();
+const [mainCx, cancelMain] = Context.background().withCancel();
 
 process.once('SIGINT', () => cancelMain());
 process.once('SIGTERM', () => cancelMain());
 
-launch(mainCtx)
+launch(mainCx)
     .then(() => {
         console.log(`[INF] coordinator is running on port ${PORT}`);
     })
     .catch(err => {
-        console.error('[ERR]', err);
+        logger.error('', err);
     });

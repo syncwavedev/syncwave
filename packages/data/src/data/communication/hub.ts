@@ -1,6 +1,5 @@
 import {z, ZodType} from 'zod';
 import {astream, AsyncStream, StreamPuppet} from '../../async-stream.js';
-import {CancelledError} from '../../context.js';
 import {Deferred} from '../../deferred.js';
 import {toError} from '../../errors.js';
 import {logger} from '../../logger.js';
@@ -44,13 +43,13 @@ export class HubClient<T> {
         const result = new Deferred<AsyncStream<T>>();
         const updateStream = new StreamPuppet<any>();
         (async () => {
-            const observerStream = astream(
-                this.server.subscribe({topic}) as AsyncIterable<
-                    {type: 'start'} | {type: 'message'; message: T}
-                >
-            );
-
             try {
+                const observerStream = astream(
+                    this.server.subscribe({topic}) as AsyncIterable<
+                        {type: 'start'} | {type: 'message'; message: T}
+                    >
+                );
+
                 for await (const item of observerStream) {
                     if (item.type === 'start') {
                         result.resolve(astream(updateStream));
@@ -73,7 +72,7 @@ export class HubClient<T> {
                 return updateStream.throw(error);
             })
             .finally(() => {
-                result.reject(new CancelledError());
+                result.resolve(astream([]));
                 updateStream.end();
             });
 
@@ -104,8 +103,8 @@ export class HubServer<T> {
         await this.rpcServer.launch();
     }
 
-    async close() {
-        await this.rpcServer.close();
+    close() {
+        this.rpcServer.close();
     }
 }
 
@@ -145,7 +144,7 @@ class SubjectManager<T> {
             this.subjects.set(topic, subject);
         }
 
-        return subject.value$(cx).finally(() => {
+        return subject.value$().finally(() => {
             if (!subject.anyObservers) {
                 this.subjects.delete(topic);
             }
@@ -193,10 +192,14 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 | {type: 'start'}
                 | {type: 'message'; message: z.infer<typeof zMessage>}
             > {
+                logger.info('hub subscribe');
                 const message$ = subjects.value$(topic);
                 yield {type: 'start'};
-                for await (const [message] of message$) {
+                logger.info('hub subscribe after start');
+                for await (const message of message$) {
+                    logger.info('hub yield message');
                     yield {type: 'message', message};
+                    logger.info('hub yield after');
                 }
             },
         }),

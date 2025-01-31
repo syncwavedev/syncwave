@@ -1,6 +1,5 @@
 import {z} from 'zod';
 import {MsgpackCodec} from '../../codec.js';
-import {Cx} from '../../context.js';
 import {Uint8KVStore} from '../../kv/kv-store.js';
 import {logger} from '../../logger.js';
 import {AuthContextParser} from '../auth-context.js';
@@ -35,21 +34,19 @@ export class CoordinatorServer {
         const hubMemTransportServer = new MemTransportServer(
             new MsgpackCodec()
         );
-        const hubMessageSchema = z.unknown();
+        const hubMessageSchema = z.void();
         const hubAuthSecret = 'hub-auth-secret';
         const hubServer = new HubServer(
-            cx,
             hubMemTransportServer,
             hubMessageSchema,
             hubAuthSecret
         );
 
-        hubServer.launch(Cx.todo()).catch(error => {
-            logger.error(Cx.todo(), 'HubServer failed to launch', error);
+        hubServer.launch().catch(error => {
+            logger.error('HubServer failed to launch', error);
         });
 
         const hubClient = new HubClient(
-            cx,
             new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
             hubMessageSchema,
             hubAuthSecret
@@ -59,7 +56,7 @@ export class CoordinatorServer {
         const authContextParser = new AuthContextParser(4, jwt);
         this.rpcServer = new RpcServer(
             transport,
-            createCoordinatorApi(cx),
+            createCoordinatorApi(),
             {
                 authContextParser,
                 dataLayer: this.dataLayer,
@@ -74,18 +71,17 @@ export class CoordinatorServer {
         );
     }
 
-    async launch(cx: Cx): Promise<void> {
-        await this.rpcServer.launch(cx);
+    async launch(): Promise<void> {
+        await this.rpcServer.launch();
     }
 
-    async close(cx: Cx) {
-        await this.rpcServer.close(cx);
+    close() {
+        this.rpcServer.close();
     }
 
     async issueJwtByUserEmail(email: string): Promise<string> {
-        return await this.dataLayer.transact(cx, async (cx, dataCx) => {
+        return await this.dataLayer.transact(async dataCx => {
             const identity = await getIdentity(
-                cx,
                 dataCx.identities,
                 dataCx.users,
                 email,

@@ -85,7 +85,7 @@ export class DataLayer {
 
     constructor(
         private readonly kv: Uint8KVStore,
-        private readonly hub: HubClient<unknown>,
+        private readonly hub: HubClient<void>,
         private readonly jwtSecret: string
     ) {
         this.esReader = new EventStoreReader(

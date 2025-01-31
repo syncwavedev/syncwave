@@ -1,3 +1,4 @@
+import {createTraceId} from '../../context.js';
 import {Message} from '../communication/message.js';
 import {PersistentConnection} from '../communication/persistent-connection.js';
 import {Connection, TransportClient} from '../communication/transport.js';
@@ -18,11 +19,12 @@ export class ParticipantClient {
             this.connection,
             () => ({
                 auth: this.authToken,
+                traceId: createTraceId(),
             })
         );
     }
 
-    async close(): Promise<void> {
-        await this.connection.close();
+    close(): void {
+        this.connection.close();
     }
 }

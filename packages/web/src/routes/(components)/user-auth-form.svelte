@@ -8,7 +8,6 @@
 	import AuthFooter from './auth-footer.svelte';
 	import {goto} from '$app/navigation';
 	import * as Alert from '$lib/components/ui/alert/index.js';
-	import {Cx} from 'ground-data';
 
 	const googleSignInUrl = (() => {
 		const authState = {redirectUrl: '/'};
@@ -53,7 +52,7 @@
 		error = undefined;
 		try {
 			console.log('hello');
-			const result = await sdk.sendSignInEmail(Cx.todo(), {email});
+			const result = await sdk.sendSignInEmail({email});
 			console.log('end');
 			if (result.type === 'success') {
 				goto(

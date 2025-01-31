@@ -1,13 +1,12 @@
 import {
 	assert,
-	Cx,
-	Deferred,
 	Subject,
 	type Codec,
 	type Connection,
 	type Logger,
 	type Observer,
 	type TransportClient,
+	type Unsubscribe,
 } from 'ground-data';
 
 export interface WsTransportClientOptions<T> {
@@ -38,7 +37,6 @@ export class WsTransportClient<T> implements TransportClient<T> {
 
 export class WsClientConnection<T> implements Connection<T> {
 	private subject = new Subject<T>();
-	private closedSignal = new Deferred<void>();
 
 	constructor(
 		private readonly ws: WebSocket,
@@ -48,18 +46,17 @@ export class WsClientConnection<T> implements Connection<T> {
 		this.setupListeners();
 	}
 
-	async cx(message: T): Promise<void> {
+	send(message: T): void {
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 	}
 
-	cx(cb: Observer<T>) {
-		return this.subject.subscribe(cx, cb);
+	subscribe(cb: Observer<T>): Unsubscribe {
+		return this.subject.subscribe(cb);
 	}
 
-	async cx(): Promise<void> {
+	close(): void {
 		this.ws.close();
-		await this.closedSignal.promise;
 	}
 
 	private setupListeners(): void {
@@ -67,28 +64,22 @@ export class WsClientConnection<T> implements Connection<T> {
 			try {
 				assert(event.data instanceof ArrayBuffer);
 				const message = this.codec.decode(new Uint8Array(event.data));
-				await this.subject.next(Cx.todo(), message);
+				await this.subject.next(message);
 			} catch (error) {
-				this.logger.error('[ERR] error during ws message', error);
+				this.logger.error('error during ws message', error);
 			}
 		});
 
 		this.ws.addEventListener('error', async error => {
 			try {
-				await this.subject.throw(Cx.todo(), new Error('ws.error: ' + error.toString()));
-				this.closedSignal.resolve();
+				await this.subject.throw(new Error('ws.error: ' + error.toString()));
 			} catch (error) {
-				this.closedSignal.reject(error);
+				this.logger.error('error during ws error', error);
 			}
 		});
 
-		this.ws.addEventListener('close', async () => {
-			try {
-				await this.subject.close(Cx.todo());
-				this.closedSignal.resolve();
-			} catch (error) {
-				this.closedSignal.reject(error);
-			}
+		this.ws.addEventListener('close', () => {
+			this.subject.close();
 		});
 	}
 }

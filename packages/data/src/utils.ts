@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {astream, AsyncStream, ColdStream} from './async-stream.js';
-import {CancelledError, context} from './context.js';
+import {CancelledError, Context, context} from './context.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
@@ -21,8 +21,14 @@ export interface Observer<T> {
     close: () => Nothing;
 }
 
-export class Subject<TValue> {
-    private subs: Array<{observer: Observer<TValue>}> = [];
+interface Subscriber<T> {
+    observer: Observer<T>;
+    context: Context;
+}
+
+// Subject runs observer in the same context .subscribe was called in
+export class Subject<T> {
+    private subs: Array<Subscriber<T>> = [];
     private _open = true;
 
     get open() {
@@ -33,11 +39,10 @@ export class Subject<TValue> {
         return this.subs.length > 0;
     }
 
-    subscribe(observer: Observer<TValue>): Unsubscribe {
+    subscribe(observer: Observer<T>): Unsubscribe {
         this.ensureOpen();
 
-        // wrap if the same observer is used twice for subscription, so unsubscribe wouldn't filter both out
-        const sub = {observer};
+        const sub: Subscriber<T> = {observer, context: context()};
 
         this.subs.push(sub);
         return () => {
@@ -45,8 +50,8 @@ export class Subject<TValue> {
         };
     }
 
-    value$(): AsyncStream<TValue> {
-        const stream = new ColdStream<TValue>(exe => {
+    value$(): AsyncStream<T> {
+        const stream = new ColdStream<T>(exe => {
             this.subscribe({
                 next: value => exe.next(value),
                 throw: error => exe.throw(error),
@@ -64,37 +69,33 @@ export class Subject<TValue> {
         return astream(stream);
     }
 
-    async next(value: TValue): Promise<void> {
+    async next(value: T): Promise<void> {
         this.ensureOpen();
-        // copy in case if new subscribers are added/removed during notification
-        // await whenAll([...this.subs].map(sub => sub.observer.next(value)));
 
-        // to preserve stack
-        for (const sub of [...this.subs]) {
-            await sub.observer.next(value);
-        }
+        logger.debug(`subject next, len = ${this.subs.length}`);
+        // copy in case if new subscribers are added/removed during notification
+        await whenAll(
+            [...this.subs].map(sub =>
+                sub.context.run(() => sub.observer.next(value))
+            )
+        );
     }
 
     async throw(error: Error): Promise<void> {
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
-        // await whenAll(
-        //     [...this.subs].map(sub =>
-        //         sub.observer.throw(cx, new ForwardedError(error))
-        //     )
-        // );
-
-        // to preserve stack
-        for (const sub of [...this.subs]) {
-            await sub.observer.throw(error);
-        }
+        await whenAll(
+            [...this.subs].map(sub =>
+                sub.context.run(() => sub.observer.throw(error))
+            )
+        );
     }
 
-    async close(): Promise<void> {
+    close(): void {
         if (this._open) {
             this._open = false;
-            for (const sub of [...this.subs]) {
-                sub.observer.close();
+            for (const sub of this.subs) {
+                sub.context.run(() => sub.observer.close());
             }
         } else {
             logger.warn('subject already closed');
@@ -131,7 +132,7 @@ export function wait(ms: number): Promise<void> {
     const timeoutId = setTimeout(() => result.resolve(), ms);
 
     context().onCancel(() => {
-        result.reject(new CancelledError());
+        // result.reject(new CancelledError());
         clearTimeout(timeoutId);
     });
     return result.promise;

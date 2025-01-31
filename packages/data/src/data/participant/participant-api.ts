@@ -42,13 +42,13 @@ export class ParticipantState {
         return this.coordinator;
     }
 
-    async close(): Promise<void> {
-        await this.connection.close(Cx.todo());
+    close(): void {
+        this.connection.close();
     }
 }
 
 export function createParticipantApi() {
-    const coordinatorApi = createCoordinatorApi(cx);
+    const coordinatorApi = createCoordinatorApi();
 
     function proxy<K extends keyof typeof coordinatorApi>(
         name: K

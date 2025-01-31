@@ -1,8 +1,6 @@
 import {RECONNECT_WAIT_MS} from '../../constants.js';
-import {Cx} from '../../context.js';
-import {Error} from '../../errors.js';
 import {logger} from '../../logger.js';
-import {Observer, Subject, wait} from '../../utils.js';
+import {Observer, Subject, Unsubscribe, wait} from '../../utils.js';
 import {Connection, TransportClient} from './transport.js';
 
 export class PersistentConnection<T> implements Connection<T> {
@@ -11,7 +9,6 @@ export class PersistentConnection<T> implements Connection<T> {
     private connection?: Promise<Connection<T>>;
     private closed = false;
     private subject = new Subject<T>();
-    private readonly connectionCx = Cx.background();
 
     constructor(private readonly transport: TransportClient<T>) {}
 
@@ -21,69 +18,62 @@ export class PersistentConnection<T> implements Connection<T> {
             return;
         }
 
-        await connection.send(cx, message);
+        connection.send(message);
     }
 
-    subscribe(cb: Observer<T>): void {
-        this.assertOpen(cx);
+    subscribe(cb: Observer<T>): Unsubscribe {
+        this.assertOpen();
+
+        logger.debug('persistent connection: subscribe');
+
         // connect if not already
         this.getConnection().catch(err => {
-            logger.error(cx, 'error while connection to the server: ', err);
+            logger.error('error while connection to the server: ', err);
         });
 
-        this.subject.subscribe(cx, cb);
+        return this.subject.subscribe(cb);
     }
 
-    async close(cx: Cx): Promise<void> {
+    async close(): Promise<void> {
         this.closed = true;
         if (this.connection) {
             const connection = this.connection;
             this.connection = undefined;
 
-            await connection.then(x => x.close(cx));
+            await connection.then(x => x.close());
         }
-        await this.subject.close(cx);
+        this.subject.close();
     }
 
-    // getConnection should not accept cx because it doesn't depend on it
     private async getConnection(): Promise<
         Connection<T> | 'closed_during_connect'
     > {
-        const cx = Cx.background();
-        this.assertOpen(cx);
+        this.assertOpen();
 
         if (this.connection === undefined) {
             this.connection = (async () => {
                 while (true) {
                     try {
-                        return await this.transport.connect(cx);
+                        return await this.transport.connect();
                     } catch {
-                        await wait(this.connectionCx, RECONNECT_WAIT_MS);
+                        await wait(RECONNECT_WAIT_MS);
                     }
                 }
             })().then(conn => {
-                const reconnect = async (cx: Cx) => {
+                const reconnect = async () => {
                     if (!this.closed) {
                         this.connection = undefined;
                         try {
                             await this.subject.throw(
-                                new Error(
-                                    cx,
-                                    'connection is lost, reconnection...'
-                                )
+                                new Error('connection is lost, reconnection...')
                             );
                         } catch (error) {
-                            logger.error(
-                                cx,
-                                'reconnect observers error',
-                                error
-                            );
+                            logger.error('reconnect observers error', error);
                         }
 
                         // reconnect
                         this.getConnection().catch(err => {
                             logger.error(
-                                cx,
                                 'error while reconnection to the server: ',
                                 err
                             );
@@ -91,21 +81,27 @@ export class PersistentConnection<T> implements Connection<T> {
                     }
                 };
 
-                conn.subscribe(this.connectionCx, {
-                    next: async (cx, event) => {
-                        await this.subject.next(cx, event);
+                logger.debug(
+                    'persistent connection: subscribe to underlying connection'
+                );
+
+                const unsub = conn.subscribe({
+                    next: async message => {
+                        logger.debug(
+                            'persistent connection: next message',
+                            message
+                        );
+                        await this.subject.next(message);
                     },
                     throw: async error => {
-                        logger.error(
-                            Cx.todo(),
-                            'error in underlying connection',
-                            error
-                        );
-                        await reconnect(cx);
+                        unsub();
+                        logger.error('error in underlying connection', error);
+                        await reconnect();
                     },
                     close: () => {
-                        reconnect(cx).catch(error => {
-                            logger.error(cx, 'close => reconnect', error);
+                        unsub();
+                        reconnect().catch(error => {
+                            logger.error('close => reconnect', error);
                         });
                     },
                 });
@@ -124,9 +120,9 @@ export class PersistentConnection<T> implements Connection<T> {
         return connection;
     }
 
-    private assertOpen(cx: Cx) {
+    private assertOpen() {
         if (this.closed) {
-            throw new Error(cx, 'connection is closed');
+            throw new Error('connection is closed');
         }
     }
 }

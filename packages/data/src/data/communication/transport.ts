@@ -1,13 +1,12 @@
-import {Cx} from '../../context.js';
-import {Nothing, Observer} from '../../utils.js';
+import {Nothing, Observer, Unsubscribe} from '../../utils.js';
 
 export interface TransportServer<T> {
     launch(cb: (connection: Connection<T>) => Nothing): Promise<void>;
-    close(cx: Cx): Promise<void>;
+    close(): void;
 }
 
 export interface TransportClient<T> {
-    connect(cx: Cx): Promise<Connection<T>>;
+    connect(): Promise<Connection<T>>;
 }
 
 export interface BaseConnectionEvent<TType extends string> {
@@ -22,7 +21,7 @@ export interface MessageConnectionEvent<T>
 }
 
 export interface Connection<T> {
-    send(message: T): Promise<void>;
-    subscribe(observer: Observer<T>): void;
-    close(cx: Cx): Promise<void>;
+    send(message: T): void;
+    subscribe(observer: Observer<T>): Unsubscribe;
+    close(): void;
 }

@@ -3,7 +3,6 @@ import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_HOURS,
 } from '../../constants.js';
-import {Error} from '../../errors.js';
 import {addHours, getNow} from '../../timestamp.js';
 import {whenAll} from '../../utils.js';
 import {DataEffectScheduler, DataTx} from '../data-layer.js';
@@ -44,14 +43,12 @@ export function createAuthApi() {
                 z.object({type: z.literal('cooldown')}),
             ]),
             handle: async (
-                cx,
                 {cx: {identities, users}, crypto, scheduleEffect, emailService},
                 {email}
             ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
                 const verificationCode = await createVerificationCode(crypto);
 
                 const identity = await getIdentity(
-                    cx,
                     identities,
                     users,
                     email,
@@ -62,7 +59,7 @@ export function createAuthApi() {
                     return {type: 'cooldown'};
                 }
 
-                await identities.update(cx, identity.id, (cx, doc) => {
+                await identities.update(identity.id, doc => {
                     doc.verificationCode = verificationCode;
                     pushActivityLog(doc);
                 });
@@ -111,13 +108,12 @@ export function createAuthApi() {
                 z.object({type: z.literal('cooldown')}),
             ]),
             handle: async (
-                cx,
                 {cx: {identities, config}, jwt},
                 {email, code}
             ): Promise<VerifySignInCodeResponse> => {
-                const identity = await identities.getByEmail(cx, email);
+                const identity = await identities.getByEmail(email);
                 if (!identity) {
-                    throw new Error(cx, 'invalid email, no identity found');
+                    throw new Error('invalid email, no identity found');
                 }
 
                 if (await needsCooldown(identity)) {
@@ -125,14 +121,14 @@ export function createAuthApi() {
                 }
 
                 if (identity.verificationCode === undefined) {
-                    throw new Error(cx, 'verification code was not requested');
+                    throw new Error('verification code was not requested');
                 }
 
                 if (getNow() > identity.verificationCode.expires) {
                     return {type: 'code_expired'};
                 }
 
-                await identities.update(cx, identity.id, (cx, x) => {
+                await identities.update(identity.id, x => {
                     pushActivityLog(x);
                 });
 
@@ -212,7 +208,7 @@ export async function getIdentity(
     email: string,
     crypto: CryptoService
 ): Promise<Identity> {
-    const existingIdentity = await identities.getByEmail(cx, email);
+    const existingIdentity = await identities.getByEmail(email);
     if (existingIdentity) {
         return existingIdentity;
     }
@@ -220,8 +216,8 @@ export async function getIdentity(
     const now = getNow();
     const userId = createUserId();
 
-    const [identity] = await whenAll(cx, [
-        identities.create(cx, {
+    const [identity] = await whenAll([
+        identities.create({
             id: createIdentityId(),
             createdAt: now,
             updatedAt: now,
@@ -230,7 +226,7 @@ export async function getIdentity(
             verificationCode: await createVerificationCode(crypto),
             authActivityLog: [],
         }),
-        users.create(cx, {
+        users.create({
             id: userId,
             createdAt: now,
             updatedAt: now,

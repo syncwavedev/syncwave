@@ -1,5 +1,4 @@
 import {z} from 'zod';
-import {Cx} from '../../context.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
 import {whenAll} from '../../utils.js';
@@ -18,7 +17,7 @@ export class WriteApiState {
         public readonly auth: AuthContext
     ) {}
 
-    ensureAuthenticated(cx: Cx): UserId {
+    ensureAuthenticated(): UserId {
         if (this.auth.userId === undefined) {
             throw new BusinessError(
                 'user is not authenticated',
@@ -30,19 +29,17 @@ export class WriteApiState {
     }
 
     async ensureBoardReadAccess(boardId: BoardId): Promise<Member> {
-        return await this.ensureBoardWriteAccess(cx, boardId);
+        return await this.ensureBoardWriteAccess(boardId);
     }
 
     async ensureBoardWriteAccess(boardId: BoardId): Promise<Member> {
-        const meId = this.ensureAuthenticated(cx);
+        const meId = this.ensureAuthenticated();
         const member = await this.tx.members.getByUserIdAndBoardId(
-            cx,
             meId,
             boardId
         );
         if (!member) {
             throw new BusinessError(
-                cx,
                 `user ${meId} does not have access to board ${boardId}`,
                 'forbidden'
             );
@@ -61,15 +58,13 @@ export function createWriteApi() {
                 title: z.string(),
             }),
             res: zTask(),
-            handle: async (cx, st, {boardId, taskId, title}) => {
-                const meId = st.ensureAuthenticated(cx);
-                await st.ensureBoardWriteAccess(cx, boardId);
+            handle: async (st, {boardId, taskId, title}) => {
+                const meId = st.ensureAuthenticated();
+                await st.ensureBoardWriteAccess(boardId);
                 const now = getNow();
 
-                const counter = await st.tx.boards.incrementBoardCounter(
-                    cx,
-                    boardId
-                );
+                const counter =
+                    await st.tx.boards.incrementBoardCounter(boardId);
 
                 const task: Task = {
                     id: taskId,
@@ -81,7 +76,7 @@ export function createWriteApi() {
                     title: title,
                     counter,
                 };
-                await st.tx.tasks.create(cx, task);
+                await st.tx.tasks.create(task);
 
                 return task;
             },
@@ -93,10 +88,10 @@ export function createWriteApi() {
                 slug: z.string().optional(),
             }),
             res: zBoard(),
-            handle: async (cx, st, req) => {
+            handle: async (st, req) => {
                 const now = getNow();
 
-                const userId = st.ensureAuthenticated(cx);
+                const userId = st.ensureAuthenticated();
 
                 const board: Board = {
                     id: req.boardId,
@@ -107,8 +102,8 @@ export function createWriteApi() {
                     ownerId: userId,
                     slug: req.slug,
                 };
-                await st.tx.boards.create(cx, board);
-                await st.tx.members.create(cx, {
+                await st.tx.boards.create(board);
+                await st.tx.members.create({
                     id: createMemberId(),
                     boardId: board.id,
                     createdAt: now,
@@ -126,12 +121,12 @@ export function createWriteApi() {
                 name: z.string(),
             }),
             res: zBoard(),
-            handle: async (cx, st, {boardId, name}) => {
-                const [board] = await whenAll(cx, [
-                    st.tx.boards.update(cx, boardId, (cx, draft) => {
+            handle: async (st, {boardId, name}) => {
+                const [board] = await whenAll([
+                    st.tx.boards.update(boardId, draft => {
                         draft.name = name;
                     }),
-                    st.ensureBoardWriteAccess(cx, boardId),
+                    st.ensureBoardWriteAccess(boardId),
                 ]);
 
                 return board;
@@ -143,15 +138,11 @@ export function createWriteApi() {
                 title: z.string(),
             }),
             res: zTask(),
-            handle: async (cx, st, {taskId, title}) => {
-                const task = await st.tx.tasks.update(
-                    cx,
-                    taskId,
-                    (cx, draft) => {
-                        draft.title = title;
-                    }
-                );
-                await st.ensureBoardWriteAccess(cx, task.boardId);
+            handle: async (st, {taskId, title}) => {
+                const task = await st.tx.tasks.update(taskId, draft => {
+                    draft.title = title;
+                });
+                await st.ensureBoardWriteAccess(task.boardId);
 
                 return task;
             },

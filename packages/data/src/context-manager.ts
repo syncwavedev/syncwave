@@ -1,25 +1,25 @@
-import {Cancel, spawnContext} from './context.js';
+import {Cancel, context, TraceId} from './context.js';
 import {logger} from './logger.js';
-import {Nothing} from './utils.js';
-import {Uuid} from './uuid.js';
 
-export class ContextManager<T extends Uuid> {
+export class ContextManager<T extends string> {
     private readonly runningJobs = new Map<T, Cancel>();
     private readonly cancelledJobs = new Set<T>();
 
     constructor() {}
 
-    start(id: T, fn: () => Nothing) {
+    async start(
+        id: T,
+        traceId: TraceId,
+        fn: () => Promise<void>
+    ): Promise<void> {
         if (this.runningJobs.has(id)) {
-            logger.warn(`job ${id} is already running`);
-            return;
+            throw new Error(`job ${id} is already running`);
         } else if (this.cancelledJobs.has(id)) {
-            logger.warn(`job ${id} is already finished`);
-            return;
+            throw new Error(`job ${id} is already finished`);
         } else {
-            const cancel = spawnContext(fn);
+            const [ctx, cancel] = context().spawn({traceId});
             this.runningJobs.set(id, cancel);
-            return cancel;
+            await ctx.run(fn);
         }
     }
 

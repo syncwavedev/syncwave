@@ -4,7 +4,7 @@
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import {getSdk} from '$lib/utils';
-	import {Cx, type DataNodeDto} from 'ground-data';
+	import {type DataNodeDto} from 'ground-data';
 	import {ChevronDown, Dot} from 'lucide-svelte';
 
 	let source: 'client' | 'server' = $state('server');
@@ -13,12 +13,12 @@
 	let itemsPromise: Promise<DataNodeDto> | undefined = $state(undefined);
 
 	$effect(() => {
-		itemsPromise = sdk.getDbTree(Cx.todo(), {});
+		itemsPromise = sdk.getDbTree({});
 	});
 
 	function openDetails(path: Uint8Array[]) {
 		detailsPromise = (async () => {
-			const info = await sdk.getDbItem(Cx.todo(), {path});
+			const info = await sdk.getDbItem({path});
 			return JSON.stringify(info, null, 2);
 		})();
 	}
@@ -26,7 +26,7 @@
 	let detailsPromise: Promise<string> | undefined = $state(undefined);
 </script>
 
-<Button variant="destructive" onclick={() => sdk.truncateDb(Cx.todo(), {})}>Reset store</Button>
+<Button variant="destructive" onclick={() => sdk.truncateDb({})}>Reset store</Button>
 <div class="flex gap-8">
 	<div>
 		{#if itemsPromise}

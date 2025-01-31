@@ -1,6 +1,5 @@
 import {TypeOf, z, ZodType} from 'zod';
 import {astream, AsyncStream} from '../../async-stream.js';
-import {Cx} from '../../context.js';
 import {Deferred} from '../../deferred.js';
 import {logger} from '../../logger.js';
 import {assertNever} from '../../utils.js';
@@ -26,7 +25,7 @@ export interface Streamer<TState, TRequest, TItem> {
         state: TState,
         req: TRequest,
         headers: MessageHeaders
-    ): AsyncIterable<[Cx, TItem]>;
+    ): AsyncIterable<TItem>;
 }
 
 export type ObserverItem<T> = z.infer<ReturnType<typeof zObserverItem<T>>>;
@@ -74,7 +73,7 @@ export function handler<
         headers: MessageHeaders
     ) {
         req = options.req.parse(req);
-        const res = await options.handle(cx, state, req, headers);
+        const res = await options.handle(state, req, headers);
         return options.res.parse(res);
     }
 
@@ -119,7 +118,7 @@ export function streamer<
         headers: MessageHeaders
     ): AsyncIterable<TypeOf<TItemSchema>> {
         req = options.req.parse(req);
-        for await (const item of options.stream(cx, state, req, headers)) {
+        for await (const item of options.stream(state, req, headers)) {
             yield options.item.parse(item);
         }
     }
@@ -152,7 +151,7 @@ export interface ObserverOptions<
     ) => Promise<
         [
             initialValue: TypeOf<TValueSchema>,
-            stream: AsyncIterable<[Cx, TypeOf<TValueSchema>]>,
+            stream: AsyncIterable<TypeOf<TValueSchema>>,
         ]
     >;
 }
@@ -175,16 +174,16 @@ export function observer<
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
-    ): AsyncIterable<[Cx, TypeOf<TValueSchema>]> {
+    ): AsyncIterable<TypeOf<TValueSchema>> {
         req = options.req.parse(req);
         return astream<
-            [TypeOf<TValueSchema>, AsyncIterable<[Cx, TypeOf<TValueSchema>]>]
-        >(options.observe(cx, state, req, headers).then(x => [cx, x])).flatMap(
-            (cx, [initialValue, stream]) => {
+            [TypeOf<TValueSchema>, AsyncIterable<TypeOf<TValueSchema>>]
+        >(options.observe(state, req, headers)).flatMap(
+            ([initialValue, stream]) => {
                 return astream<ObserverItem<TypeOf<TValueSchema>>>([
-                    [cx, {type: 'start', initialValue}],
+                    {type: 'start', initialValue},
                 ]).concat(
-                    astream(stream).map((cx, value) => ({
+                    astream(stream).map(value => ({
                         type: 'next',
                         value,
                     }))
@@ -233,11 +232,7 @@ export function mapApiState<
     api: TApi,
     map: (state: TStatePublic) => TStatePrivate | Promise<TStatePrivate>
 ): MapApiState<TApi, TStatePublic> {
-    return applyMiddleware(
-        cx,
-        api,
-        async (cx, next, state) => await next(cx, map(cx, state))
-    );
+    return applyMiddleware(api, async (next, state) => await next(map(state)));
 }
 
 export function decorateApi<
@@ -252,7 +247,7 @@ export function decorateApi<
 ): MapApiState<TApi, TStatePublic> {
     const result: Api<any> = {};
     for (const key of Object.keys(api)) {
-        result[key] = decorate(cx, api[key]);
+        result[key] = decorate(api[key]);
     }
 
     return result as any;
@@ -270,79 +265,64 @@ export function applyMiddleware<
         headers: MessageHeaders
     ) => Promise<void>
 ): MapApiState<TApi, TStatePublic> {
-    return decorateApi<TStatePrivate, TStatePublic, TApi>(
-        cx,
-        api,
-        (cx, processor) => {
-            async function work(
-                state: TStatePublic,
-                req: unknown,
-                headers: MessageHeaders
-            ) {
-                const signal = new Deferred<any>();
-                middleware(
-                    cx,
-                    async (cx, newState) => {
-                        if (processor.type === 'handler') {
-                            const result = await processor.handle(
-                                cx,
-                                newState,
-                                req,
-                                headers
-                            );
-                            signal.resolve(cx, result);
-                        } else if (processor.type === 'streamer') {
-                            const result = processor.stream(
-                                cx,
-                                newState,
-                                req,
-                                headers
-                            );
-                            signal.resolve(cx, result);
-                        } else {
-                            assertNever(cx, processor);
-                        }
-                    },
-                    state,
-                    headers
-                ).catch(error => {
-                    if (signal.state !== 'pending') {
-                        logger.error(
-                            cx,
-                            'middleware failed after next()',
-                            error
+    return decorateApi<TStatePrivate, TStatePublic, TApi>(api, processor => {
+        async function work(
+            state: TStatePublic,
+            req: unknown,
+            headers: MessageHeaders
+        ) {
+            const signal = new Deferred<any>();
+            middleware(
+                async newState => {
+                    if (processor.type === 'handler') {
+                        const result = await processor.handle(
+                            newState,
+                            req,
+                            headers
                         );
+                        signal.resolve(result);
+                    } else if (processor.type === 'streamer') {
+                        const result = processor.stream(newState, req, headers);
+                        signal.resolve(result);
                     } else {
-                        signal.reject(error);
+                        assertNever(processor);
                     }
-                });
+                },
+                state,
+                headers
+            ).catch(error => {
+                if (signal.state !== 'pending') {
+                    logger.error('middleware failed after next()', error);
+                } else {
+                    signal.reject(error);
+                }
+            });
 
-                return await signal.promise;
-            }
-            if (processor.type === 'handler') {
-                return {
-                    type: 'handler',
-                    req: processor.req,
-                    res: processor.res,
-                    handle: async (cx, state, request, headers) => {
-                        return work(cx, state, request, headers);
-                    },
-                } satisfies Handler<TStatePublic, any, any>;
-            } else if (processor.type === 'streamer') {
-                return {
-                    type: 'streamer',
-                    req: processor.req,
-                    item: processor.item,
-                    observer: processor.observer,
-                    stream: async function* (cx, state, request, headers) {
-                        yield* await work(cx, state, request, headers);
-                    },
-                } satisfies Streamer<TStatePublic, any, any>;
-            } else {
-                assertNever(cx, processor);
-            }
+            return await signal.promise;
         }
-    );
+        if (processor.type === 'handler') {
+            return {
+                type: 'handler',
+                req: processor.req,
+                res: processor.res,
+                handle: async (state, request, headers) => {
+                    return work(state, request, headers);
+                },
+            } satisfies Handler<TStatePublic, any, any>;
+        } else if (processor.type === 'streamer') {
+            return {
+                type: 'streamer',
+                req: processor.req,
+                item: processor.item,
+                observer: processor.observer,
+                stream: async function* (state, request, headers) {
+                    yield* await work(state, request, headers);
+                },
+            } satisfies Streamer<TStatePublic, any, any>;
+        } else {
+            assertNever(processor);
+        }
+    });
 }
 
 export type InferRpcClient<T extends Api<any>> = {

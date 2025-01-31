@@ -1,69 +1,14 @@
 import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
-import {astream, AsyncStream} from './async-stream.js';
 import {Deferred} from './deferred.js';
+import {logger} from './logger.js';
 import {assert, Brand, Nothing} from './utils.js';
 
-export class CancelledError extends Error {}
-
-// todo: make cancel synchronous (without Promises)
-
-export type Cancel = () => undefined;
-
-type AsyncRemap<T extends Promise<any> | AsyncIterable<any>> =
-    T extends AsyncIterable<infer R>
-        ? AsyncStream<R>
-        : T extends Promise<infer R>
-          ? Promise<R>
-          : never;
-
-export function scoped() {
-    return createScopedFunc;
+export class CancelledError extends Error {
+    public readonly traceId = context().traceId;
 }
 
-function createScopedFunc<
-    T extends (
-        cx: Context,
-        ...args: any[]
-    ) => Promise<any> | AsyncIterable<any>,
->(originalMethod: T): (...args: Parameters<T>) => AsyncRemap<ReturnType<T>> {
-    function scopedMethod(this: any, ...args: Parameters<T>): any {
-        const [childScope, cancelChild] = args[0].withCancel();
-        const result = originalMethod.call(this, childScope, ...args.slice(1));
-
-        if ('then' in result) {
-            return scopedPromise(cancelChild, result);
-        } else {
-            return astream(scopedIterable(cancelChild, result));
-        }
-    }
-
-    async function scopedPromise(
-        this: any,
-        cancelCx: Cancel,
-        result: PromiseLike<any>
-    ): Promise<any> {
-        try {
-            return await result;
-        } finally {
-            cancelCx();
-        }
-    }
-
-    async function* scopedIterable(
-        this: any,
-        cancelCx: Cancel,
-        result: AsyncIterable<any>
-    ): AsyncIterable<any> {
-        try {
-            yield* result;
-        } finally {
-            cancelCx();
-        }
-    }
-
-    return scopedMethod;
-}
+export type Cancel = () => Nothing;
 
 const traceNanoId = customAlphabet('1234567890abcdef', 10);
 
@@ -74,48 +19,17 @@ export function createTraceId(): TraceId {
 }
 
 export class Context {
-    public readonly traceId = createTraceId();
-
-    // this should not exist
-    static create() {
-        return Context.background().withCancel();
-    }
-
-    static scope<T extends (child: Context) => Promise<T> | AsyncIterable<T>>(
-        fn: T
-    ): AsyncRemap<ReturnType<T>> {
-        return (createScopedFunc(fn) as any)(Context.background());
-    }
-
-    static background() {
+    static root() {
         return new Context();
     }
 
-    static todo() {
-        return Context.background();
-    }
-
-    static none() {
-        return Context.todo();
-    }
-
-    static test() {
-        return Context.todo();
-    }
-
-    static cancelled() {
-        const cx = new Context();
-        cx._cancelled = true;
-        return cx;
-    }
-
-    private constructor() {}
+    private constructor(public readonly traceId = createTraceId()) {}
 
     private readonly cleaners: Array<() => Promise<void> | void> = [];
     private _cancelled = false;
     private children: Context[] = [];
 
-    get alive() {
+    get active() {
         return !this._cancelled;
     }
 
@@ -134,12 +48,12 @@ export class Context {
         return result.value;
     }
 
-    scope<T extends (child: Context) => Promise<T> | AsyncIterable<T>>(fn: T) {
-        return createScopedFunc(fn);
+    run<R>(fn: () => R): R {
+        return _ctx.run(this, fn);
     }
 
-    ensureAlive(message?: string) {
-        if (!this.alive) {
+    ensureActive(message?: string) {
+        if (!this.active) {
             throw new CancelledError(message);
         }
     }
@@ -152,6 +66,7 @@ export class Context {
         return signal.promise;
     }
 
+    // todo: add Unsubscribe
     onCancel(cb: () => Nothing): void {
         if (this._cancelled) {
             cb();
@@ -160,12 +75,13 @@ export class Context {
         }
     }
 
-    withCancel(): [Context, Cancel] {
-        const child = new Context();
+    spawn(options?: {traceId?: TraceId}): [Context, Cancel] {
+        const child = new Context(options?.traceId);
         this.children.push(child);
         return [
             child,
             () => {
+                logger.debug(`cancel ${this.traceId}`);
                 child.cancel();
                 this.children = this.children.filter(x => x !== child);
             },
@@ -183,18 +99,12 @@ export class Context {
     }
 }
 
-const _ctx = new AsyncContext.Variable<Context>({});
+const _ctx = new AsyncContext.Variable<Context | undefined>({
+    defaultValue: Context.root(),
+});
 export function context() {
     const result = _ctx.get();
     assert(result !== undefined);
 
     return result;
-}
-
-export function spawnContext(fn: () => Nothing) {
-    const [child, cancelChild] = context().withCancel();
-
-    _ctx.run(child, fn);
-
-    return cancelChild;
 }

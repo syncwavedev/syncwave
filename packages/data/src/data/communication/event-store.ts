@@ -24,7 +24,7 @@ export class EventStoreWriter<T> implements EventStoreWriter<T> {
     constructor(
         private readonly events: CollectionManager<T>,
         private readonly id: ReadonlyCell<Uuid>,
-        private readonly hub: HubClient<unknown>,
+        private readonly hub: HubClient<void>,
         private readonly scheduleEffect: DataEffectScheduler
     ) {}
 
@@ -48,7 +48,7 @@ type EventStoreReaderTransact<T> = <TResult>(
 export class EventStoreReader<T> implements EventStoreReader<T> {
     constructor(
         private transact: EventStoreReaderTransact<T>,
-        private readonly hub: HubClient<unknown>
+        private readonly hub: HubClient<void>
     ) {}
 
     async subscribe(
@@ -61,18 +61,18 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
         let offset =
             offsetArg === undefined
                 ? await this.transact(async topics =>
-                      topics.get(collection).length(cx)
+                      topics.get(collection).length()
                   )
                 : offsetArg;
 
-        const id = await this.transact((_, id) => id.get(cx));
+        const id = await this.transact((_, id) => id.get());
         const hubEvent$ = await this.hub.subscribe(
             getEventHubTopic(id, collection)
         );
 
         return mergeStreams<void>([
             // make the first check immediately
-            astream<void>([[undefined]]),
+            astream<void>([undefined]),
             astream(selfTrigger),
             hubEvent$.map(() => undefined),
             interval(EVENT_STORE_PULL_INTERVAL_MS).map(() => undefined),
@@ -101,7 +101,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                 offset += events.length;
 
-                return events.map(x => [x]);
+                return events.map(x => x);
             } catch (error) {
                 logger.error('EventStoreReader.subscribe', error);
                 return [];

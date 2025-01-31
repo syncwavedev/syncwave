@@ -1,12 +1,11 @@
 import BetterSqlite3, {Database} from 'better-sqlite3';
 import {
-    AppError,
     Condition,
-    Cx,
     Entry,
     TXN_RETRIES_COUNT,
     Uint8KVStore,
     Uint8Transaction,
+    context,
     mapCondition,
 } from 'ground-data'; // adjust import as needed
 
@@ -15,7 +14,7 @@ function buildConditionSql(condition: Condition<Uint8Array>): {
     param: Uint8Array;
     order: string;
 } {
-    return mapCondition(cx, condition, {
+    return mapCondition(condition, {
         gt: cond => ({
             clause: 'key > ?',
             param: cond.gt,
@@ -45,22 +44,19 @@ class SqliteTransaction implements Uint8Transaction {
 
     public async *query(
         condition: Condition<Uint8Array>
-    ): AsyncIterable<[Cx, Entry<Uint8Array, Uint8Array>]> {
-        const {clause, param, order} = buildConditionSql(cx, condition);
+    ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
+        const {clause, param, order} = buildConditionSql(condition);
         const stmt = this.db.prepare(
             `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order}`
         );
 
         for (const row of stmt.iterate(param)) {
-            cx.ensureAlive(cx);
+            context().ensureActive();
 
-            yield [
-                cx,
-                {
-                    key: new Uint8Array((row as Row).key),
-                    value: new Uint8Array((row as Row).value),
-                },
-            ];
+            yield {
+                key: new Uint8Array((row as Row).key),
+                value: new Uint8Array((row as Row).value),
+            };
         }
     }
 
@@ -99,7 +95,7 @@ export class SqliteUint8KVStore implements Uint8KVStore {
 
             try {
                 const tx = new SqliteTransaction(this.db);
-                const result = await fn(cx, tx);
+                const result = await fn(tx);
 
                 this.db.exec('COMMIT');
 
@@ -113,7 +109,7 @@ export class SqliteUint8KVStore implements Uint8KVStore {
             }
         }
 
-        throw new AppError(cx, 'unreachable');
+        throw new Error('unreachable');
     }
 
     async close(): Promise<void> {

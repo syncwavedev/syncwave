@@ -29,7 +29,7 @@ export class ConsoleLogger implements Logger {
     }
     error(message: string, error?: unknown): void {
         const cx = context();
-        if (arguments.length >= 3) {
+        if (arguments.length >= 2) {
             console.error(`[${cx.traceId}] [ERR] ${message}`, toError(error));
         } else {
             console.error(`[${cx.traceId}] [ERR] ${message}`);

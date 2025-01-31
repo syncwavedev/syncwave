@@ -16,6 +16,7 @@ export class StreamPuppet<T> implements AsyncIterable<T> {
 
     async next(value: T) {
         if (this.chan.closed) {
+            logger.debug('StreamPuppet closed, next', value);
             return;
         }
         await this.chan.push(value);
@@ -29,6 +30,7 @@ export class StreamPuppet<T> implements AsyncIterable<T> {
     }
 
     end() {
+        logger.debug('StreamPuppet close');
         if (this.chan.closed) {
             return;
         }
@@ -55,10 +57,11 @@ export class ColdStream<T> implements AsyncIterable<T> {
         let cancel: (() => Nothing) | undefined = undefined;
         try {
             cancel = this.execute({
-                next: async value => stream.next(value),
+                next: value => stream.next(value),
                 throw: error => stream.throw(error),
                 end: () => stream.end(),
             });
+
             yield* stream;
         } finally {
             cancel?.();

@@ -1,7 +1,6 @@
 import * as fdb from 'foundationdb';
 import {
     Condition,
-    Cx,
     Entry,
     GtCondition,
     GteCondition,
@@ -26,7 +25,7 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
         this.tx = tx;
     }
 
-    async get(cx: Cx, key: Uint8Array): Promise<Uint8Array | undefined> {
+    async get(key: Uint8Array): Promise<Uint8Array | undefined> {
         const val = await this.tx.get(Buffer.from(key));
         if (val === undefined) {
             return undefined;
@@ -35,15 +34,14 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
     }
 
     async *query(
-        cx: Cx,
         condition: Condition<Uint8Array>
-    ): AsyncIterable<[Cx, Entry<Uint8Array, Uint8Array>]> {
+    ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         const bigKey = Buffer.from([255]);
         const smallKey = Buffer.from(new Uint8Array([]));
         const [start, end, reverse] = mapCondition<
             Uint8Array,
             [fdb.KeySelector<Buffer>, fdb.KeySelector<Buffer>, boolean]
-        >(cx, condition, {
+        >(condition, {
             gt: (cond: GtCondition<Uint8Array>) => [
                 fdb.keySelector.firstGreaterThan(Buffer.from(cond.gt)),
                 fdb.keySelector.firstGreaterOrEqual(bigKey),
@@ -66,8 +64,9 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
             ],
         });
 
-        const range = astream(this.tx.getRange(start, end, {reverse}));
-        for await (const [kBuf, vBuf] of range) {
+        for await (const [kBuf, vBuf] of astream(
+            this.tx.getRange(start, end, {reverse})
+        )) {
             yield {
                 key: new Uint8Array(kBuf),
                 value: new Uint8Array(vBuf),
@@ -75,11 +74,11 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
         }
     }
 
-    async put(cx: Cx, key: Uint8Array, value: Uint8Array): Promise<void> {
+    async put(key: Uint8Array, value: Uint8Array): Promise<void> {
         this.tx.set(Buffer.from(key), Buffer.from(value));
     }
 
-    async delete(cx: Cx, key: Uint8Array): Promise<void> {
+    async delete(key: Uint8Array): Promise<void> {
         this.tx.clear(Buffer.from(key));
     }
 }
@@ -92,17 +91,15 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
     }
 
     async transact<TResult>(
-        cx: Cx,
-        fn: (cx: Cx, tx: Uint8Transaction) => Promise<TResult>
+        fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         return this.db.doTransaction(async nativeTxn => {
             const wrappedTxn = new FoundationDBUint8Transaction(nativeTxn);
             // we use prefix to avoid reserved range starting with 0xff
-            const prefixedTxn = withPrefix(
-                cx,
-                new Uint8Array([MAGIC_BYTE])
-            )(wrappedTxn);
-            return fn(cx, prefixedTxn);
+            const prefixedTxn = withPrefix(new Uint8Array([MAGIC_BYTE]))(
+                wrappedTxn
+            );
+            return fn(prefixedTxn);
         });
     }
 

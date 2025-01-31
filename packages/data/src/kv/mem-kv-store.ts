@@ -45,7 +45,7 @@ export class MemTransaction implements Transaction<Uint8Array, Uint8Array> {
         }
 
         while (iterator.valid) {
-            context().ensureAlive();
+            context().ensureActive();
             yield {
                 key: iterator.key!,
                 value: iterator.value!,

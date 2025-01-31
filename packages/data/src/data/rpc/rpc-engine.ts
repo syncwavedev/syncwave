@@ -7,16 +7,15 @@ import {
 } from '../../async-stream.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {ContextManager} from '../../context-manager.js';
-import {CancelledError, Cx} from '../../context.js';
+import {CancelledError, context, createTraceId} from '../../context.js';
 import {Deferred} from '../../deferred.js';
-import {BusinessError, Error, getReadableError, toError} from '../../errors.js';
+import {BusinessError, getReadableError, toError} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {
     assertNever,
     ignoreCancel,
     isCancelledError,
     wait,
-    whenAll,
 } from '../../utils.js';
 import {
     createMessageId,
@@ -37,66 +36,74 @@ import {
 } from './rpc.js';
 
 async function proxyStreamerCall(
-    parentCx: Cx,
     conn: Connection<Message>,
     exe: ColdStreamExecutor<any>,
     name: string,
     arg: any,
     headers: MessageHeaders
 ) {
+    context().ensureActive();
+
     const requestId = createMessageId();
 
     let state: 'pending' | 'open' | 'complete' = 'pending';
 
-    const [cx, cancelCx] = parentCx.withCancel();
-    const [timeoutCx, cancelTimeout] = cx.withCancel();
-
-    cx.onCancel(() => {
+    context().onCancel(() => {
         if (state !== 'complete') {
-            cancel(Cx.todo(), 'cancelled').catch(error => {
-                logger.error(cx, 'proxyStreamerCall cx.onCancel', error);
+            cancel('cancelled').catch(error => {
+                logger.error('proxyStreamerCall cx.onCancel', error);
             });
         }
     });
 
     async function complete() {
+        logger.debug(`streamer (complete) ${state} => complete`);
         state = 'complete';
-        cancelCx();
+        unsub();
         exe.end();
     }
 
     async function cancel(err: unknown) {
+        logger.debug(`streamer (cancel) ${state} => complete`, err);
         state = 'complete';
-        cancelCx();
-        await whenAll(cx, [
-            conn.send(parentCx, {
-                id: createMessageId(),
-                type: 'cancel',
-                requestId,
-                headers: {},
-            }),
-            exe.throw(toError(cx, err)).then(() => exe.end()),
-        ]);
+        unsub();
+        conn.send({
+            id: createMessageId(),
+            type: 'cancel',
+            requestId,
+            headers: {},
+        });
+        await exe
+            .throw(toError(err))
+            .finally(() => exe.end())
+            .catch(error => {
+                logger.error('proxyStreamerCall cancel', error);
+            });
     }
 
-    conn.subscribe(cx, {
-        next: async (cx, msg) => {
+    const unsub = conn.subscribe({
+        next: async msg => {
             if (msg.type !== 'response' || msg.requestId !== requestId) {
+                logger.debug('streamer unrelated message', msg);
                 return;
             }
 
+            logger.debug('streamer related message', msg);
+
             function open() {
+                logger.debug(`streamer (open) ${state} => open`);
                 state = 'open';
-                cancelTimeout();
             }
 
             async function cancelInvalid(error: string) {
-                logger.error(cx, 'rpc protocol violation', error);
-                await cancel(cx, error);
+                logger.debug('streamer (cancelInvalid)', error);
+                logger.error('rpc protocol violation', error);
+                await cancel(error);
             }
 
             async function acknowledge() {
-                await conn.send(cx, {
+                logger.debug('streamer acknowledge');
+                conn.send({
                     id: createMessageId(),
                     type: 'ack',
                     headers,
@@ -106,130 +113,131 @@ async function proxyStreamerCall(
 
             if (state === 'pending') {
                 if (msg.payload.type === 'start') {
-                    open(cx);
+                    open();
                 } else {
                     const error = `got '${msg.payload.type}' for pending stream`;
-                    await cancelInvalid(cx, error);
+                    await cancelInvalid(error);
                 }
             } else if (state === 'open') {
                 if (msg.payload.type === 'item') {
-                    await exe.next(cx, msg.payload.item);
-                    await acknowledge(cx);
+                    await exe.next(msg.payload.item);
+                    await acknowledge();
                 } else if (msg.payload.type === 'error') {
                     await exe.throw(
-                        new Error(cx, 'rpc error: ' + msg.payload.message)
+                        new Error('rpc error: ' + msg.payload.message)
                     );
-                    await acknowledge(cx);
+                    await acknowledge();
                 } else if (msg.payload.type === 'end') {
-                    await complete(cx);
+                    await complete();
                 } else {
                     const error = `got '${msg.payload.type}' for open stream`;
-                    await cancelInvalid(cx, error);
+                    await cancelInvalid(error);
                 }
             } else if (state === 'complete') {
                 const error = `got '${msg.payload.type}' for open stream`;
-                await cancelInvalid(cx, error);
+                await cancelInvalid(error);
             } else {
-                assertNever(cx, state);
+                assertNever(state);
             }
         },
         throw: async error => {
-            await cancel(Cx.todo(), error);
+            await cancel(error);
         },
         close: () => {
-            cancel(Cx.todo(), 'lost connection to rpc server').catch(error => {
-                logger.error(Cx.todo(), 'failed to close rpc server', error);
+            cancel('lost connection to rpc server').catch(error => {
+                logger.error('failed to close rpc server', error);
             });
         },
     });
 
     try {
-        await conn.send(parentCx, {
+        logger.debug('streamer send request...');
+        conn.send({
             id: requestId,
             type: 'request',
             headers,
             payload: {name, arg},
         });
     } catch (error) {
-        await cancel(cx, error);
+        await cancel(error);
     }
 
-    ignoreCancel(wait(timeoutCx, RPC_CALL_TIMEOUT_MS))
+    ignoreCancel(wait(RPC_CALL_TIMEOUT_MS))
         .then(async () => {
-            await cancel(Cx.todo(), 'stream failed to start');
+            logger.info('streamer timeout fired at state ' + state);
+            if (state === 'pending') {
+                await cancel('stream failed to start');
+            }
         })
-        .catch(err => {
-            logger.error(cx, 'unexpected error after rpc timed out', err);
+        .catch(error => {
+            logger.error('unexpected error after rpc timed out', error);
         });
 }
 
 async function proxyHandlerCall(
-    parentCx: Cx,
     conn: Connection<Message>,
     name: string,
     arg: unknown,
     headers: MessageHeaders
 ) {
-    const [cx, cancel] = parentCx.withCancel();
+    const requestId = createMessageId();
+    const result = new Deferred<any>();
+    context().onCancel(() => {
+        result.reject(new Error('handler cancellation requested'));
+    });
+
+    const unsub = conn.subscribe({
+        next: async msg => {
+            if (!(msg.type === 'response' && msg.requestId === requestId)) {
+                logger.trace('got unrelated message for rpc response');
+                return;
+            }
+
+            logger.debug('proxyHandlerCall: get response', msg);
+
+            try {
+                if (msg.payload.type === 'error') {
+                    result.reject(
+                        new Error(`rpc call failed: ${msg.payload.message}`)
+                    );
+                } else if (msg.payload.type === 'success') {
+                    result.resolve(msg.payload.result);
+                } else {
+                    result.reject(
+                        new Error(`got '${msg.payload.type}' for handler`)
+                    );
+                }
+            } finally {
+                unsub();
+            }
+        },
+        throw: async error => {
+            logger.debug('proxyHandlerCall: got error', error);
+            unsub();
+            result.reject(error);
+        },
+        close: () => {
+            logger.debug('proxyHandlerCall: connection closed');
+            unsub();
+            result.reject(new Error('lost connection to rpc server'));
+        },
+    });
 
     try {
-        const requestId = createMessageId();
-        const result = new Deferred<any>();
-        cx.onCancel(() => {
-            result.reject(new Error(cx, 'handler cancellation requested'));
-        });
-
-        // wait for the response
-        conn.subscribe(cx, {
-            next: async (cx, msg) => {
-                if (!(msg.type === 'response' && msg.requestId === requestId)) {
-                    return;
-                }
-
-                try {
-                    if (msg.payload.type === 'error') {
-                        result.reject(
-                            new Error(
-                                cx,
-                                `rpc call failed: ${msg.payload.message}`
-                            )
-                        );
-                    } else if (msg.payload.type === 'success') {
-                        result.resolve(cx, msg.payload.result);
-                    } else {
-                        result.reject(
-                            new Error(
-                                cx,
-                                `got '${msg.payload.type}' for handler`
-                            )
-                        );
-                    }
-                } finally {
-                    cancel();
-                }
-            },
-            throw: async error => {
-                cancel();
-                result.reject(error);
-            },
-            close: () => {
-                cancel();
-                result.reject(new Error(cx, 'lost connection to rpc server'));
-            },
-        });
-
-        ignoreCancel(wait(cx, RPC_CALL_TIMEOUT_MS))
+        ignoreCancel(wait(RPC_CALL_TIMEOUT_MS))
             .then(() => {
                 if (result.state === 'pending') {
-                    result.reject(new Error(cx, 'rpc call failed: timeout'));
-                    cancel();
+                    result.reject(new Error('rpc call failed: timeout'));
+                    unsub();
                 }
             })
             .catch(err => {
-                logger.error(cx, 'unexpected error after rpc timed out', err);
+                logger.error('unexpected error after rpc timed out', err);
             });
 
-        await conn.send(cx, {
+        logger.debug(`send rpc request: ${name}`);
+
+        conn.send({
             id: requestId,
             type: 'request',
             headers,
@@ -238,7 +246,8 @@ async function proxyHandlerCall(
 
         return await result.promise;
     } finally {
-        cancel();
+        logger.debug(`rpc request '${name}' finally`);
+        unsub();
     }
 }
 
@@ -248,30 +257,22 @@ function createProcessorProxy(
     processor: Processor<any, any, any>,
     name: string
 ) {
-    return (arg: unknown, headers?: MessageHeaders) => {
+    return (arg: unknown, partialHeaders?: MessageHeaders) => {
+        const headers = Object.assign(
+            {traceId: createTraceId()},
+            getHeaders(),
+            partialHeaders ?? {}
+        );
         if (processor.type === 'handler') {
-            return proxyHandlerCall(
-                cx,
-                conn,
-                name,
-                arg,
-                Object.assign({}, getHeaders(), headers ?? {})
-            );
+            return proxyHandlerCall(conn, name, arg, headers);
         } else if (processor.type === 'streamer') {
             const coldStream = new ColdStream<any>(exe => {
-                proxyStreamerCall(
-                    cx,
-                    conn,
-                    exe,
-                    name,
-                    arg,
-                    Object.assign({}, getHeaders(), headers ?? {})
-                ).catch(error => exe.throw(error));
+                proxyStreamerCall(conn, exe, name, arg, headers).catch(error =>
+                    exe.throw(error)
+                );
 
                 return () => {
-                    exe.throw(new CancelledError(Cx.todo())).finally(() =>
-                        exe.end()
-                    );
+                    exe.throw(new CancelledError()).finally(() => exe.end());
                 };
             });
 
@@ -281,41 +282,36 @@ function createProcessorProxy(
                 >();
                 const updateStream = new StreamPuppet<any>();
                 (async () => {
-                    const observerStream: AsyncIterable<
-                        [Cx, ObserverItem<any>]
-                    > = coldStream;
+                    const observerStream: AsyncIterable<ObserverItem<any>> =
+                        coldStream;
 
                     try {
-                        for await (const [cx, item] of observerStream) {
+                        for await (const item of observerStream) {
                             if (item.type === 'start') {
-                                result.resolve(cx, [
+                                result.resolve([
                                     item.initialValue,
                                     astream(updateStream),
                                 ]);
                             } else if (item.type === 'next') {
-                                await updateStream.next(cx, item.value);
+                                await updateStream.next(item.value);
                             } else {
-                                assertNever(cx, item);
+                                assertNever(item);
                             }
                         }
                     } catch (error) {
-                        result.reject(toError(cx, error));
+                        result.reject(toError(error));
                         await updateStream.throw(error);
                     } finally {
                         updateStream.end();
                     }
                 })()
                     .catch(error => {
-                        logger.error(
-                            cx,
-                            'createProcessorProxy observer',
-                            error
-                        );
+                        logger.error('createProcessorProxy observer', error);
                         result.reject(error);
                         return updateStream.throw(error);
                     })
                     .finally(() => {
-                        result.reject(new CancelledError(cx));
+                        result.reject(new CancelledError());
                         updateStream.end();
                     });
 
@@ -324,7 +320,7 @@ function createProcessorProxy(
                 return astream(coldStream);
             }
         } else {
-            assertNever(cx, processor);
+            assertNever(processor);
         }
     };
 }
@@ -337,7 +333,7 @@ export function createRpcClient<TApi extends Api<any>>(
     function get(_target: unknown, nameOrSymbol: string | symbol) {
         if (typeof nameOrSymbol !== 'string') {
             return () => {
-                throw new Error(cx, 'rpc client supports only string methods');
+                throw new Error('rpc client supports only string methods');
             };
         }
         const name = nameOrSymbol;
@@ -345,7 +341,7 @@ export function createRpcClient<TApi extends Api<any>>(
         const processor = api[name];
         if (!processor) {
             return () => {
-                throw new Error(cx, `unknown rpc endpoint: ${name}`);
+                throw new Error(`unknown rpc endpoint: ${name}`);
             };
         }
 
@@ -356,53 +352,47 @@ export function createRpcClient<TApi extends Api<any>>(
 }
 
 async function waitMessage<S extends Message>(
-    parentCx: Cx,
     conn: Connection<Message>,
     predicate: (msg: Message) => msg is S,
     timeoutMs: number
 ): Promise<S | undefined>;
 async function waitMessage(
-    parentCx: Cx,
     conn: Connection<Message>,
     predicate: (msg: Message) => boolean,
     timeoutMs: number
 ): Promise<Message | undefined>;
 async function waitMessage<S extends Message>(
-    parentCx: Cx,
     conn: Connection<Message>,
     predicate: ((msg: Message) => msg is Message) | ((msg: Message) => boolean),
     timeoutMs: number
 ): Promise<S | undefined> {
     const result = new Deferred<S | undefined>();
-    const [cx, cancelCx] = parentCx.withCancel();
-    conn.subscribe(cx, {
-        next: async (cx, msg) => {
+    const unsub = conn.subscribe({
+        next: async msg => {
             if (predicate(msg)) {
-                result.resolve(cx, msg as any);
-                cancelCx();
+                result.resolve(msg as any);
+                unsub();
             }
         },
         throw: async error => {
             result.reject(error);
-            cancelCx();
+            unsub();
         },
         close: () => {
-            result.resolve(cx, undefined);
-            cancelCx();
+            result.resolve(undefined);
+            unsub();
         },
     });
 
-    ignoreCancel(wait(cx, timeoutMs))
+    ignoreCancel(wait(timeoutMs))
         .then(() => {
             if (result.state === 'pending') {
-                result.reject(
-                    new Error(cx, `stream timeout after ${timeoutMs}`)
-                );
+                result.reject(new Error(`stream timeout after ${timeoutMs}`));
             }
-            cancelCx();
+            unsub();
         })
-        .catch(err => {
-            logger.error(cx, 'unexpected error after timed out', err);
+        .catch(error => {
+            logger.error('unexpected error after timed out', error);
         });
 
     return await result.promise;
@@ -417,23 +407,15 @@ export class RpcServer<TState> {
     ) {}
 
     async launch(): Promise<void> {
-        await this.transport.launch(cx, (cx, conn) =>
-            this.handleConnection(cx, conn)
-        );
+        await this.transport.launch(conn => this.handleConnection(conn));
     }
 
-    async close() {
-        await this.transport.close(cx);
+    close() {
+        this.transport.close();
     }
 
     private handleConnection(conn: Connection<Message>): void {
-        setupRpcServerConnection(
-            Cx.todo(),
-            this.api,
-            conn,
-            this.state,
-            this.serverName
-        );
+        setupRpcServerConnection(this.api, conn, this.state, this.serverName);
     }
 }
 
@@ -447,7 +429,7 @@ async function handleRequestStreamer<TState>(
     const requestId = msg.id;
 
     try {
-        await conn.send(cx, {
+        conn.send({
             id: createMessageId(),
             type: 'response',
             requestId,
@@ -456,12 +438,12 @@ async function handleRequestStreamer<TState>(
         });
 
         const processorStream = astream(
-            processor.stream(cx, state, msg.payload.arg, msg.headers)
+            processor.stream(state, msg.payload.arg, msg.headers)
         )
-            .map((cx, value) => ({type: 'next' as const, value}))
-            .catch(error => [cx, {type: 'error' as const, error}]);
-        for await (const [cx, item] of processorStream) {
-            if (!cx.alive) {
+            .map(value => ({type: 'next' as const, value}))
+            .catch(error => ({type: 'error' as const, error}));
+        for await (const item of processorStream) {
+            if (!context().active) {
                 break;
             }
 
@@ -469,7 +451,6 @@ async function handleRequestStreamer<TState>(
 
             // we must subscribe for an ack before sending the message
             const ack = waitMessage(
-                cx,
                 conn,
                 msg => msg.type === 'ack' && msg.itemId === itemMessageId,
                 RPC_ACK_TIMEOUT_MS
@@ -479,17 +460,17 @@ async function handleRequestStreamer<TState>(
             if (item.type === 'next') {
                 payload = {type: 'item', item: item.value};
             } else if (item.type === 'error') {
-                logRpcError(cx, item.error, msg.payload.name, serverName);
+                logRpcError(item.error, msg.payload.name, serverName);
 
                 payload = {
                     type: 'error',
                     message: getReadableError(item.error),
                 };
             } else {
-                assertNever(cx, item);
+                assertNever(item);
             }
 
-            await conn.send(cx, {
+            conn.send({
                 id: itemMessageId,
                 type: 'response',
                 requestId,
@@ -500,8 +481,8 @@ async function handleRequestStreamer<TState>(
             await ack;
         }
     } finally {
-        if (cx.alive) {
-            await conn.send(cx, {
+        if (context().active) {
+            conn.send({
                 id: createMessageId(),
                 type: 'response',
                 requestId,
@@ -518,13 +499,8 @@ async function handleRequestHandler<TState>(
     msg: RequestMessage,
     state: TState
 ) {
-    const result = await handler.handle(
-        cx,
-        state,
-        msg.payload.arg,
-        msg.headers
-    );
-    await conn.send(cx, {
+    const result = await handler.handle(state, msg.payload.arg, msg.headers);
+    conn.send({
         id: createMessageId(),
         type: 'response',
         requestId: msg.id,
@@ -543,12 +519,9 @@ async function handleRequest<TState>(
     try {
         const processor = api[msg.payload.name];
         if (processor.type === 'handler') {
-            logger.debug(cx, 'start rpc handle', msg.payload.name);
-            await handleRequestHandler(cx, conn, processor, msg, state);
-            logger.debug(cx, 'finish rpc handle', msg.payload.name);
+            await handleRequestHandler(conn, processor, msg, state);
         } else if (processor.type === 'streamer') {
             await handleRequestStreamer(
-                cx,
                 conn,
                 processor,
                 msg,
@@ -556,12 +529,12 @@ async function handleRequest<TState>(
                 serverName
             );
         } else {
-            assertNever(cx, processor);
+            assertNever(processor);
         }
-    } catch (err: any) {
-        logRpcError(cx, err, msg.payload.name, serverName);
+    } catch (err: unknown) {
+        logRpcError(err, msg.payload.name, serverName);
 
-        await conn.send(cx, {
+        conn.send({
             id: createMessageId(),
             type: 'response',
             requestId: msg.id,
@@ -574,52 +547,57 @@ async function handleRequest<TState>(
     }
 }
 
-function logRpcError(err: unknown, procedureName: string, serverName: string) {
-    if (isCancelledError(err) && !cx.alive) {
+function logRpcError(
+    error: unknown,
+    procedureName: string,
+    serverName: string
+) {
+    if (isCancelledError(error) && !context().active) {
         logger.warn(
-            cx,
             `[${serverName}] cancel during ${procedureName} RPC request`
         );
-    } else if (err instanceof BusinessError) {
+    } else if (error instanceof BusinessError) {
         logger.warn(
-            cx,
             `[${serverName}] error during ${procedureName} RPC request:`,
-            getReadableError(err)
+            getReadableError(error)
         );
     } else {
         logger.error(
-            cx,
             `[${serverName}] error during ${procedureName} RPC request:`,
-            err
+            error
         );
     }
 }
 
 export function setupRpcServerConnection<TState>(
-    connectionCx: Cx,
     api: Api<TState>,
     conn: Connection<Message>,
     state: TState,
     serverName: string
 ): void {
     // we use requestId as stream id
-    const [serverCx, serverCancel] = connectionCx.withCancel();
-    const contextManager = new ContextManager<MessageId>(serverCx);
+    const contextManager = new ContextManager<MessageId>();
 
-    conn.subscribe(serverCx, {
-        next: async (cx, message) => {
+    const serverCancel = conn.subscribe({
+        next: async message => {
             if (message.type === 'request') {
                 try {
-                    const requestCx = contextManager.start(cx, message.id);
-                    await handleRequest(
-                        requestCx,
-                        conn,
-                        message,
-                        api,
-                        state,
-                        serverName
+                    await contextManager.start(
+                        message.id,
+                        message.headers.traceId ?? createTraceId(),
+                        async () => {
+                            logger.debug(`start job ${message.id}`);
+                            await handleRequest(
+                                conn,
+                                message,
+                                api,
+                                state,
+                                serverName
+                            );
+                        }
                     );
                 } finally {
+                    logger.debug(`finish job ${message.id}`);
                     contextManager.finish(message.id);
                 }
             } else if (message.type === 'response') {
@@ -627,16 +605,18 @@ export function setupRpcServerConnection<TState>(
             } else if (message.type === 'ack') {
                 // nothing to do
             } else if (message.type === 'cancel') {
+                logger.debug(`cancel job ${message.requestId}`);
                 contextManager.cancel(message.requestId);
             } else {
-                assertNever(cx, message);
+                assertNever(message);
             }
         },
         throw: async error => {
-            logger.error(serverCx, 'serverRpcServerConnection throw', error);
+            logger.error('serverRpcServerConnection throw', error);
             contextManager.finishAll();
         },
         close: () => {
+            logger.info('rpc server connection close');
             serverCancel();
         },
     });

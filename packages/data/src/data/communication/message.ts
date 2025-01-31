@@ -1,14 +1,15 @@
+import {createTraceId, TraceId} from '../../context.js';
 import {Brand} from '../../utils.js';
-import {createUuid, Uuid} from '../../uuid.js';
 
-export type MessageId = Brand<Uuid, 'message_id'>;
+export type MessageId = Brand<string, 'message_id'>;
 
 export function createMessageId(): MessageId {
-    return createUuid() as MessageId;
+    return createTraceId() as MessageId;
 }
 
 export interface MessageHeaders {
     readonly auth?: string;
+    readonly traceId?: TraceId;
 }
 
 export interface BaseMessage<TType extends string> {

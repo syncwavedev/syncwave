@@ -19,13 +19,13 @@ export function createTestApi() {
             item: z.number(),
             async *stream(cx) {
                 yield 1;
-                await wait(cx, 1000);
+                await wait(1000);
                 yield 2;
-                await wait(cx, 1000);
+                await wait(1000);
                 yield 3;
-                await wait(cx, 1000);
+                await wait(1000);
                 yield 4;
-                await wait(cx, 1000);
+                await wait(1000);
                 yield 5;
             },
         }),
@@ -33,25 +33,25 @@ export function createTestApi() {
         getStream: observer({
             req: z.object({topic: z.string()}),
             value: z.object({index: z.number(), value: z.string()}),
-            async observe(cx, {esReader}, {topic}) {
-                return observable(cx, {
-                    async get(cx) {
+            async observe({esReader}, {topic}) {
+                return observable({
+                    async get() {
                         return {index: 1, value: 'sdf'};
                     },
-                    update$: esReader.subscribe(cx, topic, 0),
+                    update$: esReader.subscribe(topic, 0),
                 });
             },
         }),
         streamPut: handler({
             req: z.object({topic: z.string(), value: z.string()}),
             res: z.object({}),
-            handle: async (cx, state, {topic, value}) => {
-                await state.transact(cx, async (cx, tx) => {
-                    await tx.esWriter.append(cx, topic, {
+            handle: async (state, {topic, value}) => {
+                await state.transact(async tx => {
+                    await tx.esWriter.append(topic, {
                         type: 'user',
                         id: createUserId(),
                         ts: getNow(),
-                        diff: Crdt.from<User>(cx, {
+                        diff: Crdt.from<User>({
                             id: createUserId(),
                             createdAt: getNow(),
                             updatedAt: getNow(),

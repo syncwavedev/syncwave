@@ -1,8 +1,7 @@
 import {z} from 'zod';
 import {logger} from '../../logger.js';
 import {Observable, Stream, toStream} from '../../stream.js';
-import {assertNever, Brand} from '../../utils.js';
-import {createUuid, Uuid, zUuid} from '../../uuid.js';
+import {assertNever} from '../../utils.js';
 import {Message, MessageHeaders} from '../communication/message.js';
 import {Connection} from '../communication/transport.js';
 import {
@@ -32,15 +31,6 @@ export function launchRpcObserverServer<T>(
     conn: Connection<Message>
 ) {
     launchRpcStreamerServer(createRpcObserverServerApi(api), state, conn);
-}
-
-type StreamId = Brand<Uuid, 'stream_id'>;
-function createStreamId() {
-    return createUuid() as StreamId;
-}
-
-function zStreamId() {
-    return zUuid<StreamId>();
 }
 
 function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {

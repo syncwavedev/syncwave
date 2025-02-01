@@ -10,11 +10,13 @@
 
 	async function createBoard() {
 		const boardId = createBoardId();
-		const board = await sdk.createBoard({
-			boardId,
-			name: 'Untitled',
-			slug: boardId,
-		});
+		const board = await sdk(rpc =>
+			rpc.createBoard({
+				boardId,
+				name: 'Untitled',
+				slug: boardId,
+			})
+		);
 
 		goto(`/app/b/${board.id}`);
 	}

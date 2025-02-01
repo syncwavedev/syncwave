@@ -28,6 +28,7 @@ import Koa from 'koa';
 import {SesEmailService} from './ses-email-service.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
+const FORCE_FOUNDATIONDB = process.env.FORCE_FOUNDATIONDB === 'true';
 const STAGE = assertDefined(process.env.STAGE);
 const AWS_REGION = assertDefined(process.env.AWS_DEFAULT_REGION);
 const JWT_SECRET = assertDefined(process.env.JWT_SECRET);
@@ -101,7 +102,7 @@ const jwtService: JwtService = {
 };
 
 async function getKVStore(): Promise<Uint8KVStore> {
-    if (STAGE === 'local' && false) {
+    if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
         logger.log('using SQLite as primary store');
         return await import('./sqlite-kv-store.js').then(
             x => new x.SqliteUint8KVStore('./dev.sqlite')

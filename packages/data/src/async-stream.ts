@@ -366,12 +366,13 @@ export async function toObservable<TInitial, TNext>(
     }
     const initialValue = firstResult.value.initialValue;
 
-    // Define an async generator for the "next" updates.
     async function* updates(): AsyncGenerator<TNext> {
         try {
             while (true) {
                 const result = await iterator.next();
-                if (result.done) return; // end of source iterable
+                if (result.done) {
+                    return;
+                }
                 const event = result.value;
                 if (event.type === 'next') {
                     yield event.value;
@@ -390,6 +391,5 @@ export async function toObservable<TInitial, TNext>(
         }
     }
 
-    // Return the initial value along with the updates async iterable.
     return [initialValue, astream(updates())];
 }

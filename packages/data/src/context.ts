@@ -2,7 +2,7 @@ import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
 import {logger} from './logger.js';
-import {assert, Brand, Nothing} from './utils.js';
+import {Brand, Nothing} from './utils.js';
 
 export class CancelledError extends Error {
     public readonly traceId = context().traceId;
@@ -19,8 +19,9 @@ export function createTraceId(): TraceId {
 }
 
 export class Context {
+    private static _root = new Context();
     static root() {
-        return new Context();
+        return Context._root;
     }
 
     private constructor(public readonly traceId = createTraceId()) {}
@@ -102,9 +103,6 @@ export class Context {
 const _ctx = new AsyncContext.Variable<Context | undefined>({
     defaultValue: Context.root(),
 });
-export function context() {
-    const result = _ctx.get();
-    assert(result !== undefined);
-
-    return result;
+export function context(): Context {
+    return _ctx.get() ?? Context.root();
 }

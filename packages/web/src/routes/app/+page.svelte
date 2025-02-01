@@ -2,7 +2,8 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
-	import {logger, type Board} from 'ground-data';
+	import {context, logger, type Board} from 'ground-data';
+	import {onDestroy} from 'svelte';
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
@@ -17,17 +18,14 @@
 	const topic = `topic-${Math.random().toString().split('.')[1]}`;
 
 	async function publish() {
-		await sdk.streamPut({
-			topic,
-			value: itemValue,
-		});
+		await sdk(rpc => rpc.streamPut({topic, value: itemValue}));
 	}
 
 	$effect(() => {
 		(async () => {
 			try {
 				logger.log('request boards...');
-				const [initialBoards, boards$] = await sdk.getMyBoards({});
+				const [initialBoards, boards$] = await sdk(x => x.getMyBoards({}));
 				boards = initialBoards;
 				logger.log('start reading boards...');
 				let index = 0;

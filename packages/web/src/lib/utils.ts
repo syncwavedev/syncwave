@@ -1,6 +1,6 @@
 import {clsx, type ClassValue} from 'clsx';
-import {ParticipantClient} from 'ground-data';
-import {getContext} from 'svelte';
+import {context, ParticipantClient, type ParticipantRpc} from 'ground-data';
+import {getContext, onDestroy} from 'svelte';
 import {toast} from 'svelte-sonner';
 import {twMerge} from 'tailwind-merge';
 import {AuthManager} from './auth-manager';
@@ -10,7 +10,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getSdk() {
-	return getContext<ParticipantClient>(ParticipantClient).rpc;
+	const client = getContext<ParticipantClient>(ParticipantClient);
+	const [ctx, cancelCtx] = context().spawn();
+	onDestroy(() => cancelCtx());
+	return <R>(rpc: (rpc: ParticipantRpc) => R) => ctx.run(() => rpc(client.rpc));
 }
 
 export function getAuthManager() {

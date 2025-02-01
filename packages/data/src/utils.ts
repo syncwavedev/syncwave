@@ -129,10 +129,13 @@ export function assertDefined<T>(value: T | undefined | null): T {
 
 export function wait(ms: number): Promise<void> {
     const result = new Deferred<void>();
-    const timeoutId = setTimeout(() => result.resolve(), ms);
+    const timeoutId = setTimeout(() => {
+        result.resolve();
+        cancelCleanup();
+    }, ms);
 
-    context().onCancel(() => {
-        // result.reject(new CancelledError());
+    const cancelCleanup = context().onCancel(() => {
+        result.reject(new CancelledError());
         clearTimeout(timeoutId);
     });
     return result.promise;

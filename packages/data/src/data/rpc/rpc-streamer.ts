@@ -239,8 +239,13 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             } else if (handler.type === 'streamer') {
                 const streamId = createStreamId();
 
-                context().onCancel(() => {
+                const cleanup = () => {
                     clientApiState.finish(streamId);
+                    cancelCleanup();
+                };
+
+                const cancelCleanup = context().onCancel(() => {
+                    cleanup();
                 });
 
                 return new Stream(writer => {
@@ -251,6 +256,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                         await server.stream({streamId, name, arg}, headers);
                         await channel.pipe(writer);
                     }).catch(error => {
+                        cleanup();
                         logger.error(
                             `failed to start streaming ${name}`,
                             error
@@ -258,12 +264,13 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                     });
 
                     return () => {
+                        cleanup();
                         server.cancel({streamId}).catch(error => {
                             logger.error('failed to cancel stream', error);
                         });
                     };
                 }).finally(() => {
-                    clientApiState.finish(streamId);
+                    cleanup();
                 });
             } else {
                 assertNever(handler);

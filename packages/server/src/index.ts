@@ -4,6 +4,7 @@ import Router from '@koa/router';
 import {createHash, randomBytes} from 'crypto';
 import {
     assertDefined,
+    CancelledError,
     context,
     CoordinatorServer,
     CryptoService,
@@ -103,12 +104,12 @@ const jwtService: JwtService = {
 
 async function getKVStore(): Promise<Uint8KVStore> {
     if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
-        logger.log('using SQLite as primary store');
+        logger.info('using SQLite as primary store');
         return await import('./sqlite-kv-store.js').then(
             x => new x.SqliteUint8KVStore('./dev.sqlite')
         );
     } else {
-        logger.log('using FoundationDB as a primary store');
+        logger.info('using FoundationDB as a primary store');
         const fdbStore = await import('./fdb-kv-store.js').then(
             x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
         );
@@ -171,9 +172,9 @@ async function launch() {
     );
 
     async function shutdown() {
-        logger.log('shutting down...');
+        logger.info('shutting down...');
         coordinator.close();
-        logger.log('coordinator is closed');
+        logger.info('coordinator is closed');
         const httpServerCloseSignal = new Deferred<void>();
         httpServer.on('close', () => httpServerCloseSignal.resolve());
         httpServer.close();
@@ -249,12 +250,20 @@ const [serverCtx, cancelServerCtx] = context().createChild();
 
 process.once('SIGINT', () => cancelServerCtx());
 process.once('SIGTERM', () => cancelServerCtx());
+process.on('unhandledRejection', reason => {
+    if (reason instanceof CancelledError) {
+        logger.info('unhandled cancellation');
+        return;
+    }
+
+    logger.error('unhandled rejection', reason);
+});
 
 serverCtx
     .run(async () => {
         try {
             await launch();
-            logger.log(`coordinator is running on port ${PORT}`);
+            logger.info(`coordinator is running on port ${PORT}`);
         } catch (err) {
             logger.error('', err);
         }

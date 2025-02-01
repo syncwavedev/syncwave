@@ -22,10 +22,13 @@ export function launchRpcHandlerServer<T>(
 ) {
     const contextManager = new ContextManager();
 
-    context().onCancel(() => {
+    const cancelCleanup = context().onCancel(cleanup);
+
+    function cleanup() {
         unsub();
         contextManager.finishAll();
-    });
+        cancelCleanup();
+    }
 
     const unsub = conn.subscribe({
         next: async msg => {
@@ -80,7 +83,7 @@ export function launchRpcHandlerServer<T>(
             contextManager.finishAll();
         },
         close: () => {
-            contextManager.finishAll();
+            cleanup();
         },
     });
 }
@@ -113,73 +116,97 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
 
 export class RpcError extends Error {}
 
+async function proxyRequest(
+    conn: Connection<Message>,
+    name: string,
+    arg: unknown,
+    headers: MessageHeaders
+) {
+    const requestId = createMessageId();
+    const result = new Deferred<any>();
+    const cancelCleanup = context().onCancel(() => {
+        cleanup();
+        result.reject(new CancelledError());
+    });
+
+    function cleanup() {
+        cancelCleanup();
+        unsub();
+    }
+
+    const unsub = conn.subscribe({
+        next: async msg => {
+            if (!(msg.type === 'response' && msg.requestId === requestId)) {
+                return;
+            }
+
+            try {
+                if (msg.payload.type === 'success') {
+                    result.resolve(msg.payload.result);
+                } else if (msg.payload.type === 'error') {
+                    result.reject(new RpcError(msg.payload.message));
+                } else {
+                    assertNever(msg.payload);
+                }
+            } finally {
+                cleanup();
+            }
+        },
+        throw: async error => {
+            cleanup();
+            result.reject(error);
+        },
+        close: () => {
+            cleanup();
+            result.reject(new Error('lost connection to rpc server'));
+        },
+    });
+
+    try {
+        ignoreCancel(wait(RPC_CALL_TIMEOUT_MS))
+            .then(() => {
+                if (result.state === 'pending') {
+                    result.reject(new Error('rpc call failed: timeout'));
+                    cleanup();
+                }
+            })
+            .catch(err => {
+                logger.error('unexpected error after rpc timed out', err);
+            });
+
+        await conn.send({
+            id: requestId,
+            type: 'request',
+            headers,
+            payload: {name, arg},
+        });
+
+        return await result.promise;
+    } finally {
+        cleanup();
+    }
+}
+
 function createHandlerProxy(
     conn: Connection<Message>,
     getHeaders: () => MessageHeaders,
     name: string
 ) {
     return async (arg: unknown, partialHeaders?: MessageHeaders) => {
-        const headers = Object.assign(
-            {traceId: createTraceId()},
-            getHeaders(),
-            partialHeaders ?? {}
-        );
+        const [requestCtx, cancelRequestCtx] = context().createChild();
 
-        const requestId = createMessageId();
-        const result = new Deferred<any>();
-        context().onCancel(() => {
-            result.reject(new CancelledError());
+        const result = await requestCtx.run(async () => {
+            const headers = Object.assign(
+                {traceId: createTraceId()},
+                getHeaders(),
+                partialHeaders ?? {}
+            );
+
+            return await proxyRequest(conn, name, arg, headers);
         });
 
-        const unsub = conn.subscribe({
-            next: async msg => {
-                if (!(msg.type === 'response' && msg.requestId === requestId)) {
-                    return;
-                }
+        cancelRequestCtx();
 
-                try {
-                    if (msg.payload.type === 'success') {
-                        result.resolve(msg.payload.result);
-                    } else if (msg.payload.type === 'error') {
-                        result.reject(new RpcError(msg.payload.message));
-                    } else {
-                        assertNever(msg.payload);
-                    }
-                } finally {
-                    unsub();
-                }
-            },
-            throw: async error => {
-                unsub();
-                result.reject(error);
-            },
-            close: () => {
-                result.reject(new Error('lost connection to rpc server'));
-            },
-        });
-
-        try {
-            ignoreCancel(wait(RPC_CALL_TIMEOUT_MS))
-                .then(() => {
-                    if (result.state === 'pending') {
-                        result.reject(new Error('rpc call failed: timeout'));
-                        unsub();
-                    }
-                })
-                .catch(err => {
-                    logger.error('unexpected error after rpc timed out', err);
-                });
-
-            await conn.send({
-                id: requestId,
-                type: 'request',
-                headers,
-                payload: {name, arg},
-            });
-
-            return await result.promise;
-        } finally {
-            unsub();
-        }
+        return result;
     };
 }

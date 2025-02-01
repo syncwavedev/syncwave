@@ -1,7 +1,7 @@
 import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
-import {Brand, Nothing} from './utils.js';
+import {Brand, Nothing, Unsubscribe} from './utils.js';
 
 export class CancelledError extends Error {
     public readonly traceId = context().traceId;
@@ -25,7 +25,7 @@ export class Context {
 
     private constructor(public readonly traceId = createTraceId()) {}
 
-    private readonly cleaners: Array<() => Promise<void> | void> = [];
+    private cleaners: Array<() => Promise<void> | void> = [];
     private _cancelled = false;
     private children: Context[] = [];
 
@@ -66,13 +66,19 @@ export class Context {
         return signal.promise;
     }
 
-    // todo: add Unsubscribe
-    onCancel(cb: () => Nothing): void {
+    onCancel(cb: () => Nothing): Unsubscribe {
+        // wrap to guarantee function uniqueness (needed for unsubscribe filtration)
+        const wrapper = () => cb();
+
         if (this._cancelled) {
-            cb();
+            wrapper();
         } else {
-            this.cleaners.push(cb);
+            this.cleaners.push(wrapper);
         }
+
+        return () => {
+            this.cleaners = this.cleaners.filter(x => x !== wrapper);
+        };
     }
 
     createChild(options?: {traceId?: TraceId}): [Context, Cancel] {

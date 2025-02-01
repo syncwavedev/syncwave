@@ -23,21 +23,21 @@
 	$effect(() => {
 		(async () => {
 			try {
-				logger.log('request boards...');
+				logger.info('request boards...');
 				const [initialBoards, boards$] = await sdk(x => x.getMyBoards({}));
 				boards = initialBoards;
-				logger.log('start reading boards...');
+				logger.info('start reading boards...');
 				let index = 0;
 				for await (const nextBoards of boards$) {
 					index += 1;
 					if (index >= 3) {
 						break;
 					}
-					logger.log('next boards', nextBoards.length);
+					logger.info('next boards', nextBoards.length);
 					boards = nextBoards;
 				}
 			} finally {
-				logger.log('boards stream closed');
+				logger.info('boards stream closed');
 			}
 		})();
 	});

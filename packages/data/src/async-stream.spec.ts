@@ -33,7 +33,7 @@ describe('DeferredStream', () => {
             for await (const _value of stream) {
                 // Iterate over the stream to trigger the executor.
             }
-        }).rejects.toThrow(/HotStream.throw/);
+        }).rejects.toThrow(/Test error/);
     });
 });
 

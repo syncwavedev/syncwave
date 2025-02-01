@@ -171,7 +171,7 @@ async function launch() {
 
     async function shutdown() {
         logger.log('shutting down...');
-        await coordinator.close();
+        coordinator.close();
         logger.log('coordinator is closed');
         const httpServerCloseSignal = new Deferred<void>();
         httpServer.on('close', () => httpServerCloseSignal.resolve());
@@ -249,11 +249,15 @@ const [serverCtx, cancelServerCtx] = context().spawn();
 process.once('SIGINT', () => cancelServerCtx());
 process.once('SIGTERM', () => cancelServerCtx());
 
-serverCtx.run(async () => {
-    try {
-        await launch();
-        logger.log(`coordinator is running on port ${PORT}`);
-    } catch (err) {
-        logger.error('', err);
-    }
-});
+serverCtx
+    .run(async () => {
+        try {
+            await launch();
+            logger.log(`coordinator is running on port ${PORT}`);
+        } catch (err) {
+            logger.error('', err);
+        }
+    })
+    .catch(error => {
+        logger.error('error during launch', error);
+    });

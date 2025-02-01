@@ -20,7 +20,6 @@ export interface WsTransportServerOptions<T> {
 
 export class WsTransportServer<T> implements TransportServer<T> {
     private wss: WebSocketServer | undefined;
-    private readonly closeSignal = new Deferred<void>();
 
     constructor(private readonly opt: WsTransportServerOptions<T>) {}
 
@@ -31,8 +30,8 @@ export class WsTransportServer<T> implements TransportServer<T> {
 
         this.wss = new WebSocketServer({server: this.opt.server});
 
-        this.wss.on('connection', (ws: WebSocket) => {
-            launchCtx.run(async () => {
+        this.wss.on('connection', async (ws: WebSocket) => {
+            await launchCtx.run(async () => {
                 const conn = new WsConnection<T>(ws, this.opt.codec);
                 cb(conn);
             });
@@ -40,8 +39,8 @@ export class WsTransportServer<T> implements TransportServer<T> {
 
         const listening = new Deferred<void>();
 
-        this.wss.on('listening', () => {
-            launchCtx.run(async () => {
+        this.wss.on('listening', async () => {
+            await launchCtx.run(async () => {
                 listening.resolve();
             });
         });
@@ -99,8 +98,8 @@ export class WsConnection<T> implements Connection<T> {
     private setupListeners(): void {
         const capturedCtx = context();
 
-        this.ws.on('message', (rawData: Buffer) => {
-            capturedCtx.run(async () => {
+        this.ws.on('message', async (rawData: Buffer) => {
+            await capturedCtx.run(async () => {
                 try {
                     const message = this.codec.decode(rawData);
                     const {headers: _, ...messageWithoutHeaders} =
@@ -114,8 +113,8 @@ export class WsConnection<T> implements Connection<T> {
             });
         });
 
-        this.ws.on('error', error => {
-            capturedCtx.run(async () => {
+        this.ws.on('error', async error => {
+            await capturedCtx.run(async () => {
                 try {
                     logger.debug('WsConnection error', error);
                     await this.subject.throw(toError(error));
@@ -125,8 +124,8 @@ export class WsConnection<T> implements Connection<T> {
             });
         });
 
-        this.ws.on('unexpected-response', () => {
-            capturedCtx.run(async () => {
+        this.ws.on('unexpected-response', async () => {
+            await capturedCtx.run(async () => {
                 try {
                     logger.debug('WsConnection unexpected-response');
                     await this.subject.throw(
@@ -138,8 +137,8 @@ export class WsConnection<T> implements Connection<T> {
             });
         });
 
-        this.ws.on('close', () => {
-            capturedCtx.run(async () => {
+        this.ws.on('close', async () => {
+            await capturedCtx.run(async () => {
                 logger.debug('WsConnection close');
                 this.subject.close();
             });

@@ -2,7 +2,7 @@ import {
     astream,
     ColdStream,
     ColdStreamExecutor,
-    transformAsyncIterable,
+    toObservable,
 } from '../../async-stream.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {ContextManager} from '../../context-manager.js';
@@ -286,7 +286,7 @@ function createProcessorProxy(
             });
 
             if (processor.observer) {
-                return transformAsyncIterable(coldStream);
+                return toObservable(coldStream);
             } else {
                 return astream(coldStream);
             }

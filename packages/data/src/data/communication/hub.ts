@@ -1,9 +1,5 @@
 import {z, ZodType} from 'zod';
-import {
-    astream,
-    AsyncStream,
-    transformAsyncIterable,
-} from '../../async-stream.js';
+import {astream, AsyncStream, toObservable} from '../../async-stream.js';
 import {logger} from '../../logger.js';
 import {assertNever, Observer, Subject} from '../../utils.js';
 import {createRpcClient, RpcServer} from '../rpc/rpc-engine.js';
@@ -45,7 +41,7 @@ export class HubClient<T> {
         const response = this.server.subscribe({topic}) as AsyncIterable<
             {type: 'start'} | {type: 'message'; message: T}
         >;
-        return transformAsyncIterable(
+        return toObservable(
             astream(response).map(x => {
                 if (x.type === 'start') {
                     return {

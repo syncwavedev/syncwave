@@ -450,7 +450,7 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should call onChange callback with the correct diffs on create and update', async () => {
-        const onChange = vi.fn();
+        const onChange = vi.fn<Parameters<OnDocChange<MyDoc>>>();
 
         // 1) CREATE
         const createdDoc: MyDoc = {
@@ -474,7 +474,7 @@ describe('DocStore with MemKVStore', () => {
         // The CrdtDiff for a new doc basically has all fields in "added" or "modified".
         expect(onChange).toHaveBeenCalledTimes(1);
         let call = onChange.mock.calls[0];
-        expect(call[1]).toBe(createdDoc.id); // id
+        expect(call[0]).toBe(createdDoc.id); // id
         // call[1] is the diff. We can do a minimal check or more thorough.
         // For a brand-new doc, we expect the entire doc to be added.
 
@@ -495,7 +495,7 @@ describe('DocStore with MemKVStore', () => {
 
         expect(onChange).toHaveBeenCalledTimes(1);
         call = onChange.mock.calls[0];
-        expect(call[1]).toBe(createdDoc.id);
+        expect(call[0]).toBe(createdDoc.id);
         // call[1] is the diff.
         // For an age change, the diff should indicate old=1, new=2 for that field, etc.
     });

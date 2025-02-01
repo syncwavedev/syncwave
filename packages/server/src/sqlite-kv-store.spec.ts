@@ -1,8 +1,6 @@
 import {rm} from 'fs/promises';
 import {
-    AppError,
     Condition,
-    Cx,
     GtCondition,
     GteCondition,
     LtCondition,
@@ -11,8 +9,6 @@ import {
 } from 'ground-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {SqliteUint8KVStore} from './sqlite-kv-store.js';
-
-const cx = Cx.todo();
 
 describe('SqliteUint8KVStore (localhost:4500)', () => {
     let store: SqliteUint8KVStore;
@@ -27,8 +23,8 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
     });
 
     it('should return undefined for a missing key', async () => {
-        const result = await store.transact(cx, async (cx, tx) => {
-            return tx.get(cx, new Uint8Array([0xaa, 0xbb]));
+        const result = await store.transact(async tx => {
+            return tx.get(new Uint8Array([0xaa, 0xbb]));
         });
         expect(result).toBeUndefined();
     });
@@ -37,12 +33,12 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
         const key = new Uint8Array([0x01]);
         const value = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 
-        await store.transact(cx, async (cx, tx) => {
-            await tx.put(cx, key, value);
+        await store.transact(async tx => {
+            await tx.put(key, value);
         });
 
-        const fetchedValue = await store.transact(cx, async (cx, tx) => {
-            return tx.get(cx, key);
+        const fetchedValue = await store.transact(async tx => {
+            return tx.get(key);
         });
         expect(fetchedValue).toEqual(value);
     });
@@ -51,16 +47,16 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
         const keyToDelete = new Uint8Array([0x02]);
         const value = new Uint8Array([0x11, 0x22]);
 
-        await store.transact(cx, async (cx, tx) => {
-            await tx.put(cx, keyToDelete, value);
+        await store.transact(async tx => {
+            await tx.put(keyToDelete, value);
         });
 
-        await store.transact(cx, async (cx, tx) => {
-            await tx.delete(cx, keyToDelete);
+        await store.transact(async tx => {
+            await tx.delete(keyToDelete);
         });
 
-        const resultAfterDelete = await store.transact(cx, async (cx, tx) => {
-            return tx.get(cx, keyToDelete);
+        const resultAfterDelete = await store.transact(async tx => {
+            return tx.get(keyToDelete);
         });
         expect(resultAfterDelete).toBeUndefined();
     });
@@ -71,14 +67,14 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
         const valA = new Uint8Array([0xa1]);
         const valB = new Uint8Array([0xb2]);
 
-        await store.transact(cx, async (cx, tx) => {
-            await tx.put(cx, keyA, valA);
-            await tx.put(cx, keyB, valB);
+        await store.transact(async tx => {
+            await tx.put(keyA, valA);
+            await tx.put(keyB, valB);
         });
 
-        const [gotA, gotB] = await store.transact(cx, async (cx, tx) => {
-            const gA = await tx.get(cx, keyA);
-            const gB = await tx.get(cx, keyB);
+        const [gotA, gotB] = await store.transact(async tx => {
+            const gA = await tx.get(keyA);
+            const gB = await tx.get(keyB);
             return [gA, gB];
         });
 
@@ -91,19 +87,19 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
         const valRollback = new Uint8Array([0xcc]);
 
         try {
-            await store.transact(cx, async (cx, tx) => {
-                await tx.put(cx, keyRollback, valRollback);
+            await store.transact(async tx => {
+                await tx.put(keyRollback, valRollback);
 
                 // Force an error to simulate rollback
-                throw new AppError(cx, 'Simulated error for rollback test');
+                throw new Error('Simulated error for rollback test');
             });
         } catch (err) {
             // ignore
         }
 
         // If properly rolled back, the key should not exist:
-        const result = await store.transact(cx, async (cx, tx) => {
-            return tx.get(cx, keyRollback);
+        const result = await store.transact(async tx => {
+            return tx.get(keyRollback);
         });
         expect(result).toBeUndefined();
     });
@@ -117,9 +113,9 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
         ];
 
         beforeEach(async () => {
-            await store.transact(cx, async (cx, tx) => {
+            await store.transact(async tx => {
                 for (const [k, v] of keysAndValues) {
-                    await tx.put(cx, k, v);
+                    await tx.put(k, v);
                 }
             });
         });
@@ -130,8 +126,8 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
                 gt: new Uint8Array([0x11]) as GtCondition<Uint8Array>['gt'],
             };
 
-            const results = await store.transact(cx, (cx, tx) =>
-                astream(tx.query(cx, condition)).toArray()
+            const results = await store.transact(tx =>
+                astream(tx.query(condition)).toArray()
             );
 
             expect(results.map(r => Array.from(r.key))).toEqual([
@@ -147,9 +143,9 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
             };
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
-            await store.transact(cx, async (cx, tx) => {
-                const kv$ = tx.query(cx, condition);
-                for await (const [cx, kv] of kv$) {
+            await store.transact(async tx => {
+                const kv$ = tx.query(condition);
+                for await (const kv of kv$) {
                     results.push(kv);
                 }
             });
@@ -168,9 +164,9 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
             };
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
-            await store.transact(cx, async (cx, tx) => {
-                const kv$ = tx.query(cx, condition);
-                for await (const [cx, kv] of kv$) {
+            await store.transact(async tx => {
+                const kv$ = tx.query(condition);
+                for await (const kv of kv$) {
                     results.push(kv);
                 }
             });
@@ -188,9 +184,9 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
             };
 
             const results: Array<{key: Uint8Array; value: Uint8Array}> = [];
-            await store.transact(cx, async (cx, tx) => {
-                const kv$ = tx.query(cx, condition);
-                for await (const [cx, kv] of kv$) {
+            await store.transact(async tx => {
+                const kv$ = tx.query(condition);
+                for await (const kv of kv$) {
                     results.push(kv);
                 }
             });

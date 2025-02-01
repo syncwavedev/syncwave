@@ -350,7 +350,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
     }
 }
 
-export async function transformAsyncIterable<TInitial, TNext>(
+export async function toObservable<TInitial, TNext>(
     source: AsyncIterable<
         {type: 'start'; initialValue: TInitial} | {type: 'next'; value: TNext}
     >

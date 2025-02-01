@@ -19,7 +19,7 @@ export class MemConnection<T> implements Connection<T> {
 
     private constructor(private readonly codec: Codec<T>) {}
 
-    send(message: T): void {
+    async send(message: T) {
         this.ensureOpen();
 
         logger.debug('mem connection send', message);

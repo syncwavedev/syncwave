@@ -21,7 +21,7 @@ export interface MessageConnectionEvent<T>
 }
 
 export interface Connection<T> {
-    send(message: T): void;
+    send(message: T): Promise<void>;
     subscribe(observer: Observer<T>): Unsubscribe;
     close(): void;
 }

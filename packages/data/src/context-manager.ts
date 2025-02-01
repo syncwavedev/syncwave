@@ -17,7 +17,7 @@ export class ContextManager<T extends string> {
         } else if (this.cancelledJobs.has(id)) {
             throw new Error(`job ${id} is already finished`);
         } else {
-            const [ctx, cancel] = context().spawn({traceId});
+            const [ctx, cancel] = context().createBackground({traceId});
             this.runningJobs.set(id, cancel);
             await ctx.run(fn);
         }

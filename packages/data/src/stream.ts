@@ -2,12 +2,13 @@ import {Channel as AsyncChannel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cancel, CancelledError} from './context.js';
+import {toError} from './errors.js';
 import {logger} from './logger.js';
 import {assert, Nothing} from './utils.js';
 
 export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;
-    throw: (error: any) => Promise<void>;
+    throw: (error: Error) => Promise<void>;
     end: () => void;
 }
 
@@ -40,6 +41,18 @@ export class Channel<T> implements AsyncIterable<T>, ChannelWriter<T> {
     async *[Symbol.asyncIterator](): AsyncIterator<T> {
         for await (const item of this.chan) {
             yield item;
+        }
+    }
+
+    async pipe(writer: ChannelWriter<T>): Promise<void> {
+        try {
+            for await (const value of this) {
+                await writer.next(value);
+            }
+        } catch (error: unknown) {
+            await writer.throw(toError(error));
+        } finally {
+            writer.end();
         }
     }
 }
@@ -363,46 +376,4 @@ export class Stream<T> implements AsyncIterable<T> {
     }
 }
 
-export async function toObservable<TInitial, TNext>(
-    source: AsyncIterable<
-        {type: 'start'; initialValue: TInitial} | {type: 'next'; value: TNext}
-    >
-): Promise<[TInitial, Stream<TNext>]> {
-    const iterator = source[Symbol.asyncIterator]();
-
-    const firstResult = await iterator.next();
-    if (firstResult.done) {
-        throw new Error("Source iterable is empty; expected a 'start' event.");
-    }
-    if (firstResult.value.type !== 'start') {
-        throw new Error("Expected the first event to be 'start'.");
-    }
-    const initialValue = firstResult.value.initialValue;
-
-    async function* updates(): AsyncGenerator<TNext> {
-        try {
-            while (true) {
-                const result = await iterator.next();
-                if (result.done) {
-                    return;
-                }
-                const event = result.value;
-                if (event.type === 'next') {
-                    yield event.value;
-                } else {
-                    throw new Error(`Unexpected event type: ${event.type}`);
-                }
-            }
-        } finally {
-            if (typeof iterator.return === 'function') {
-                try {
-                    await iterator.return();
-                } catch (error) {
-                    logger.error('transformAsyncIterable finally', error);
-                }
-            }
-        }
-    }
-
-    return [initialValue, toStream(updates())];
-}
+export type Observable<TValue, TUpdate> = Promise<[TValue, Stream<TUpdate>]>;

@@ -8,9 +8,9 @@ import {
 } from '../coordinator/coordinator-api.js';
 import {createReadApi} from '../data-api/read-api.js';
 import {createWriteApi} from '../data-api/write-api.js';
-import {createRpcClient} from '../rpc/rpc-engine.js';
 import {
     createApi,
+    createRpcClient,
     InferRpcClient,
     InferRpcClientWithRequiredHeaders,
     MapProcessorState,
@@ -59,36 +59,29 @@ export function createParticipantApi() {
                 type: 'handler',
                 req: processor.req,
                 res: processor.res,
-                handle: async (
-                    state: any,
-                    req: any,
-                    headers: MessageHeaders
-                ) => {
-                    return await state.coordinator[name](req, headers);
+                handle: (state: any, req: any, headers: MessageHeaders) => {
+                    return state.coordinator[name](req, headers);
                 },
             } as any;
         } else if (processor.type === 'streamer') {
-            if (processor.observer) {
-                return {
-                    type: 'streamer',
-                    req: processor.req,
-                    item: processor.item,
-                    observer: processor.observer,
-                    stream: (state: any, req: any, headers: MessageHeaders) => {
-                        return state.coordinator[name](req, headers);
-                    },
-                } as any;
-            } else {
-                return {
-                    type: 'streamer',
-                    req: processor.req,
-                    item: processor.item,
-                    observer: processor.observer,
-                    stream: (state: any, req: any, headers: MessageHeaders) => {
-                        return state.coordinator[name](req, headers);
-                    },
-                } as any;
-            }
+            return {
+                type: 'streamer',
+                req: processor.req,
+                item: processor.item,
+                stream: (state: any, req: any, headers: MessageHeaders) => {
+                    return state.coordinator[name](req, headers);
+                },
+            } as any;
+        } else if (processor.type === 'observer') {
+            return {
+                type: 'observer',
+                req: processor.req,
+                value: processor.value,
+                update: processor.update,
+                stream: (state: any, req: any, headers: MessageHeaders) => {
+                    return state.coordinator[name](req, headers);
+                },
+            } as any;
         } else {
             assertNever(processor);
         }
@@ -105,6 +98,8 @@ export function createParticipantApi() {
         getDbItem: proxy('getDbItem'),
         truncateDb: proxy('truncateDb'),
         getMyBoards: proxy('getMyBoards'),
+        getObserve: proxy('getObserve'),
+        echo: proxy('echo'),
     });
 }
 

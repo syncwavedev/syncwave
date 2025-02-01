@@ -1,9 +1,11 @@
-import {TypeOf, z, ZodType} from 'zod';
+import {TypeOf, ZodType} from 'zod';
 import {Deferred} from '../../deferred.js';
 import {logger} from '../../logger.js';
-import {Stream, toStream} from '../../stream.js';
+import {Observable, Stream} from '../../stream.js';
 import {assertNever} from '../../utils.js';
-import {MessageHeaders} from '../communication/message.js';
+import {Message, MessageHeaders} from '../communication/message.js';
+import {Connection, TransportServer} from '../communication/transport.js';
+import {launchRpcObserverServer} from './rpc-observer.js';
 
 export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
@@ -28,17 +30,22 @@ export interface Streamer<TState, TRequest, TItem> {
     ): AsyncIterable<TItem>;
 }
 
-export type ObserverItem<T> = z.infer<ReturnType<typeof zObserverItem<T>>>;
-
-export interface Observer<TState, TRequest, TValue>
-    extends Streamer<TState, TRequest, ObserverItem<TValue>> {
-    _obs: true;
+export interface Observer<TState, TRequest, TValue, TUpdate> {
+    type: 'observer';
+    req: ZodType<TRequest>;
+    value: ZodType<TValue>;
+    update: ZodType<TUpdate>;
+    observe(
+        state: TState,
+        req: TRequest,
+        headers: MessageHeaders
+    ): Observable<TValue, TUpdate>;
 }
 
-export type Processor<TState, TRequest, TResult> =
+export type Processor<TState, TRequest, TResult, TUpdate> =
     | Handler<TState, TRequest, TResult>
     | Streamer<TState, TRequest, TResult>
-    | Observer<TState, TRequest, TResult>;
+    | Observer<TState, TRequest, TResult, TUpdate>;
 
 export type HandlerRequestSchema<T extends Handler<any, any, any>> =
     T extends Handler<any, infer R, any> ? R : never;
@@ -131,78 +138,71 @@ export function streamer<
     };
 }
 
-export type ObserverRequestSchema<T extends Observer<any, any, any>> =
-    T extends Observer<any, infer R, any> ? R : never;
+export type ObserverRequestSchema<T extends Observer<any, any, any, any>> =
+    T extends Observer<any, infer R, any, any> ? R : never;
 
-export type ObserverItemSchema<T extends Observer<any, any, any>> =
-    T extends Observer<any, any, infer R> ? R : never;
+export type ObserverItemSchema<T extends Observer<any, any, any, any>> =
+    T extends Observer<any, any, infer R, any> ? R : never;
+
+export type ObserverUpdateSchema<T extends Observer<any, any, any, any>> =
+    T extends Observer<any, any, any, infer R> ? R : never;
 
 export interface ObserverOptions<
     TState,
     TRequestSchema extends ZodType<any, any, any>,
     TValueSchema extends ZodType<any, any, any>,
+    TUpdateSchema extends ZodType<any, any, any>,
 > {
     req: TRequestSchema;
     value: TValueSchema;
+    update: TUpdateSchema;
     observe: (
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
-    ) => Promise<
-        [
-            initialValue: TypeOf<TValueSchema>,
-            stream: AsyncIterable<TypeOf<TValueSchema>>,
-        ]
-    >;
-}
-
-function zObserverItem<T>(valueSchema: ZodType<T>) {
-    return z.discriminatedUnion('type', [
-        z.object({type: z.literal('start'), initialValue: valueSchema}),
-        z.object({type: z.literal('next'), value: valueSchema}),
-    ]);
+    ) => Observable<TypeOf<TValueSchema>, TypeOf<TUpdateSchema>>;
 }
 
 export function observer<
     TState,
     TRequestSchema extends ZodType<any, any, any>,
     TValueSchema extends ZodType<any, any, any>,
+    TUpdateSchema extends ZodType<any, any, any>,
 >(
-    options: ObserverOptions<TState, TRequestSchema, TValueSchema>
-): Observer<TState, TypeOf<TRequestSchema>, TypeOf<TValueSchema>> {
-    function wrapper(
+    options: ObserverOptions<
+        TState,
+        TRequestSchema,
+        TValueSchema,
+        TUpdateSchema
+    >
+): Observer<
+    TState,
+    TypeOf<TRequestSchema>,
+    TypeOf<TValueSchema>,
+    TypeOf<TUpdateSchema>
+> {
+    async function wrapper(
         state: TState,
         req: TypeOf<TRequestSchema>,
         headers: MessageHeaders
-    ): AsyncIterable<TypeOf<TValueSchema>> {
+    ): Observable<TypeOf<TValueSchema>, TypeOf<TUpdateSchema>> {
         req = options.req.parse(req);
-        return toStream<
-            [TypeOf<TValueSchema>, AsyncIterable<TypeOf<TValueSchema>>]
-        >(options.observe(state, req, headers)).flatMap(
-            ([initialValue, stream]) => {
-                return toStream<ObserverItem<TypeOf<TValueSchema>>>([
-                    {type: 'start', initialValue},
-                ]).concat(
-                    toStream(stream).map(value => ({
-                        type: 'next',
-                        value,
-                    }))
-                );
-            }
-        );
+        const [value, update$] = await options.observe(state, req, headers);
+        options.value.parse(value);
+
+        return [value, update$.map(x => options.update.parse(x))];
     }
 
     return {
-        type: 'streamer' as const,
-        observer: true,
-        _obs: true,
+        type: 'observer' as const,
         req: options.req,
-        item: zObserverItem(options.value as ZodType<TypeOf<TValueSchema>>),
-        stream: wrapper,
+        value: options.value,
+        update: options.update,
+        observe: wrapper,
     };
 }
 
-export type Api<TState> = Record<string, Processor<TState, any, any>>;
+export type Api<TState> = Record<string, Processor<TState, any, any, any>>;
 
 export function createApi<TState>(): <T extends Api<TState>>(def: T) => T {
     return def => def;
@@ -213,11 +213,11 @@ type MapApiState<TApi extends Api<any>, TNewState> = {
 };
 
 export type MapProcessorState<
-    TProcessor extends Processor<any, any, any>,
+    TProcessor extends Processor<any, any, any, any>,
     TNewState,
 > =
-    TProcessor extends Observer<any, infer R, infer V>
-        ? Observer<TNewState, R, V>
+    TProcessor extends Observer<any, infer R, infer V, infer U>
+        ? Observer<TNewState, R, V, U>
         : TProcessor extends Streamer<any, infer R, infer I>
           ? Streamer<TNewState, R, I>
           : TProcessor extends Handler<any, infer TReq, infer TRes>
@@ -242,8 +242,8 @@ export function decorateApi<
 >(
     api: TApi,
     decorate: (
-        processor: Processor<TStatePrivate, unknown, any>
-    ) => Processor<TStatePublic, unknown, any>
+        processor: Processor<TStatePrivate, unknown, unknown, unknown>
+    ) => Processor<TStatePublic, unknown, unknown, unknown>
 ): MapApiState<TApi, TStatePublic> {
     const result: Api<any> = {};
     for (const key of Object.keys(api)) {
@@ -284,6 +284,13 @@ export function applyMiddleware<
                     } else if (processor.type === 'streamer') {
                         const result = processor.stream(newState, req, headers);
                         signal.resolve(result);
+                    } else if (processor.type === 'observer') {
+                        const result = processor.observe(
+                            newState,
+                            req,
+                            headers
+                        );
+                        signal.resolve(result);
                     } else {
                         assertNever(processor);
                     }
@@ -319,6 +326,16 @@ export function applyMiddleware<
                     yield* await work(state, request, headers);
                 },
             } satisfies Streamer<TStatePublic, any, any>;
+        } else if (processor.type === 'observer') {
+            return {
+                type: 'observer',
+                req: processor.req,
+                value: processor.value,
+                update: processor.update,
+                observe: async function (state, request, headers) {
+                    return work(state, request, headers);
+                },
+            } satisfies Observer<TStatePublic, any, any, any>;
         } else {
             assertNever(processor);
         }
@@ -326,11 +343,16 @@ export function applyMiddleware<
 }
 
 export type InferRpcClient<T extends Api<any>> = {
-    [K in keyof T]: T[K] extends Observer<any, infer TReq, infer TValue>
+    [K in keyof T]: T[K] extends Observer<
+        any,
+        infer TReq,
+        infer TValue,
+        infer TUpdate
+    >
         ? (
               req: TReq,
               headers?: MessageHeaders
-          ) => Promise<[initialValue: TValue, Stream<TValue>]>
+          ) => Promise<[initialValue: TValue, Stream<TUpdate>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
           ? (req: TReq, headers?: MessageHeaders) => Stream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
@@ -339,14 +361,44 @@ export type InferRpcClient<T extends Api<any>> = {
 };
 
 export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
-    [K in keyof T]: T[K] extends Observer<any, infer TReq, infer TValue>
+    [K in keyof T]: T[K] extends Observer<
+        any,
+        infer TReq,
+        infer TValue,
+        infer TUpdate
+    >
         ? (
               req: TReq,
               headers: MessageHeaders
-          ) => Promise<[initialValue: TValue, Stream<TValue>]>
+          ) => Promise<[initialValue: TValue, Stream<TUpdate>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
           ? (req: TReq, headers: MessageHeaders) => Stream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
             ? (req: TReq, headers: MessageHeaders) => Promise<TRes>
             : never;
 };
+
+export class RpcServer<TState> {
+    constructor(
+        private readonly transport: TransportServer<Message>,
+        private readonly api: Api<TState>,
+        private readonly state: TState
+    ) {}
+
+    async launch(): Promise<void> {
+        await this.transport.launch(conn => this.handleConnection(conn));
+    }
+
+    close() {
+        this.transport.close();
+    }
+
+    private handleConnection(conn: Connection<Message>): void {
+        launchRpcObserverServer(this.api, this.state, conn);
+    }
+}
+
+export {
+    createRpcObserverClient as createRpcClient,
+    launchRpcObserverServer,
+} from './rpc-observer.js';

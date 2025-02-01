@@ -12,7 +12,7 @@ import {Message} from '../communication/message.js';
 import {TransportServer} from '../communication/transport.js';
 import {DataLayer} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
-import {RpcServer} from '../rpc/rpc-engine.js';
+import {RpcServer} from '../rpc/rpc.js';
 import {getIdentity, signJwtToken} from './auth-api.js';
 import {
     CoordinatorApiInputState,
@@ -54,21 +54,16 @@ export class CoordinatorServer {
 
         this.dataLayer = new DataLayer(kv, hubClient, jwtSecret);
         const authContextParser = new AuthContextParser(4, jwt);
-        this.rpcServer = new RpcServer(
-            transport,
-            createCoordinatorApi(),
-            {
-                authContextParser,
-                dataLayer: this.dataLayer,
-                jwt,
-                crypto,
-                emailService: email,
-                config: {
-                    jwtSecret: this.jwtSecret,
-                },
+        this.rpcServer = new RpcServer(transport, createCoordinatorApi(), {
+            authContextParser,
+            dataLayer: this.dataLayer,
+            jwt,
+            crypto,
+            emailService: email,
+            config: {
+                jwtSecret: this.jwtSecret,
             },
-            'CRD'
-        );
+        });
     }
 
     async launch(): Promise<void> {

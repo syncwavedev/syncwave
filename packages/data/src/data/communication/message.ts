@@ -25,10 +25,6 @@ export interface RequestMessage extends BaseMessage<'request'> {
     };
 }
 
-export interface AckMessage extends BaseMessage<'ack'> {
-    readonly itemId: MessageId;
-}
-
 export interface CancelMessage extends BaseMessage<'cancel'> {
     readonly requestId: MessageId;
 }
@@ -41,32 +37,15 @@ export interface SuccessResponsePayload extends BaseResponsePayload<'success'> {
     readonly result: unknown;
 }
 
-export interface ItemResponsePayload extends BaseResponsePayload<'item'> {
-    readonly item: unknown;
-}
-
-export interface StartResponsePayload extends BaseResponsePayload<'start'> {}
-
-export interface EndResponsePayload extends BaseResponsePayload<'end'> {}
-
 export interface ErrorResponsePayload extends BaseResponsePayload<'error'> {
     readonly message: string;
 }
 
-export type ResponsePayload =
-    | SuccessResponsePayload
-    | ErrorResponsePayload
-    | ItemResponsePayload
-    | StartResponsePayload
-    | EndResponsePayload;
+export type ResponsePayload = SuccessResponsePayload | ErrorResponsePayload;
 
 export interface ResponseMessage extends BaseMessage<'response'> {
     readonly requestId: MessageId;
     readonly payload: ResponsePayload;
 }
 
-export type Message =
-    | RequestMessage
-    | AckMessage
-    | CancelMessage
-    | ResponseMessage;
+export type Message = RequestMessage | CancelMessage | ResponseMessage;

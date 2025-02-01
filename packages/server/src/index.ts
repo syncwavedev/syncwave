@@ -245,7 +245,7 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
     });
 }
 
-const [serverCtx, cancelServerCtx] = context().spawn();
+const [serverCtx, cancelServerCtx] = context().createChild();
 
 process.once('SIGINT', () => cancelServerCtx());
 process.once('SIGTERM', () => cancelServerCtx());

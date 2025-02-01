@@ -1,14 +1,14 @@
 import {z, ZodType} from 'zod';
-import {logger} from '../../logger.js';
-import {Stream, toObservable, toStream} from '../../stream.js';
-import {assertNever, Observer, Subject} from '../../utils.js';
-import {createRpcClient, RpcServer} from '../rpc/rpc-engine.js';
+import {Stream} from '../../stream.js';
+import {Observer, Subject} from '../../utils.js';
 import {
     applyMiddleware,
     createApi,
+    createRpcClient,
     handler,
     InferRpcClient,
-    streamer,
+    observer,
+    RpcServer,
 } from '../rpc/rpc.js';
 import {Message} from './message.js';
 import {PersistentConnection} from './persistent-connection.js';
@@ -38,26 +38,8 @@ export class HubClient<T> {
     }
 
     async subscribe(topic: string): Promise<Stream<T>> {
-        const response = this.server.subscribe({topic}) as AsyncIterable<
-            {type: 'start'} | {type: 'message'; message: T}
-        >;
-        return toObservable(
-            toStream(response).map(x => {
-                if (x.type === 'start') {
-                    return {
-                        type: 'start',
-                        initialValue: undefined,
-                    };
-                } else if (x.type === 'message') {
-                    return {
-                        type: 'next',
-                        value: x.message,
-                    };
-                } else {
-                    assertNever(x);
-                }
-            })
-        ).then(x => toStream<T>(x[1]));
+        const [, result] = await this.server.subscribe({topic});
+        return result;
     }
 }
 
@@ -69,15 +51,10 @@ export class HubServer<T> {
         schema: ZodType<T>,
         authSecret: string
     ) {
-        this.rpcServer = new RpcServer(
-            transport,
-            createHubServerApi(schema),
-            {
-                authSecret,
-                subjects: new SubjectManager(),
-            },
-            'HUB'
-        );
+        this.rpcServer = new RpcServer(transport, createHubServerApi(schema), {
+            authSecret,
+            subjects: new SubjectManager(),
+        });
     }
 
     async launch(): Promise<void> {
@@ -160,28 +137,13 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 );
             },
         }),
-        subscribe: streamer({
+        subscribe: observer({
             req: z.object({topic: z.string()}),
-            item: z.discriminatedUnion('type', [
-                z.object({type: z.literal('start')}),
-                z.object({type: z.literal('message'), message: zMessage}),
-            ]),
-            async *stream(
-                {subjects},
-                {topic}
-            ): AsyncIterable<
-                | {type: 'start'}
-                | {type: 'message'; message: z.infer<typeof zMessage>}
-            > {
-                logger.log('hub subscribe');
+            value: z.undefined(),
+            update: zMessage,
+            async observe({subjects}, {topic}) {
                 const message$ = subjects.value$(topic);
-                yield {type: 'start'};
-                logger.log('hub subscribe after start');
-                for await (const message of message$) {
-                    logger.log('hub yield message');
-                    yield {type: 'message', message};
-                    logger.log('hub yield after');
-                }
+                return [undefined, message$];
             },
         }),
     });

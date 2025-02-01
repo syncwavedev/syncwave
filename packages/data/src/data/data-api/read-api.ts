@@ -63,6 +63,7 @@ export function createReadApi() {
         getMe: observer({
             req: z.object({}),
             value: zUser(),
+            update: zUser(),
             observe: async st => {
                 const userId = st.ensureAuthenticated();
 
@@ -81,6 +82,7 @@ export function createReadApi() {
         getMyBoards: observer({
             req: z.object({}),
             value: z.array(zBoard()),
+            update: z.array(zBoard()),
             observe: async st => {
                 const userId = st.ensureAuthenticated();
 
@@ -107,6 +109,7 @@ export function createReadApi() {
         getBoardTasks: observer({
             req: z.object({boardId: zUuid<BoardId>()}),
             value: z.array(zTask()),
+            update: z.array(zTask()),
             observe: async (st, {boardId}) => {
                 return observable({
                     async get() {
@@ -126,6 +129,7 @@ export function createReadApi() {
         getTask: observer({
             req: z.object({taskId: zUuid<TaskId>()}),
             value: zTask().optional(),
+            update: zTask().optional(),
             observe: async (st, {taskId}) => {
                 const task = await st.transact(tx => tx.tasks.getById(taskId));
                 if (!task) {
@@ -155,6 +159,7 @@ export function createReadApi() {
                 boardId: zUuid<BoardId>(),
             }),
             value: zBoard().optional(),
+            update: zBoard().optional(),
             observe: async (st, {boardId}) => {
                 return observable({
                     async get() {

@@ -44,11 +44,26 @@ export class WsClientConnection<T> implements Connection<T> {
 		private readonly logger: Logger
 	) {
 		this.setupListeners();
+
+		this.subscribe({
+			next: async msg => {
+				this.logger.debug('ws got', msg);
+			},
+			throw: async err => {
+				this.logger.error('ws err', err);
+			},
+			close: () => {
+				this.logger.debug('ws closed');
+			},
+		});
 	}
 
-	send(message: T): void {
+	send(message: T): Promise<void> {
+		this.logger.debug('ws send message', message);
 		const data = this.codec.encode(message);
 		this.ws.send(data);
+
+		return Promise.resolve();
 	}
 
 	subscribe(cb: Observer<T>): Unsubscribe {

@@ -11,7 +11,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getSdk() {
 	const client = getContext<ParticipantClient>(ParticipantClient);
-	const [ctx, cancelCtx] = context().spawn();
+	const [ctx, cancelCtx] = context().createChild();
 	onDestroy(() => cancelCtx());
 	return <R>(rpc: (rpc: ParticipantRpc) => R) => ctx.run(() => rpc(client.rpc));
 }

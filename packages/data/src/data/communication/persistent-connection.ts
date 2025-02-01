@@ -18,13 +18,11 @@ export class PersistentConnection<T> implements Connection<T> {
             return;
         }
 
-        connection.send(message);
+        await connection.send(message);
     }
 
     subscribe(cb: Observer<T>): Unsubscribe {
         this.assertOpen();
-
-        logger.debug('persistent connection: subscribe');
 
         // connect if not already
         this.getConnection().catch(err => {
@@ -81,18 +79,8 @@ export class PersistentConnection<T> implements Connection<T> {
                     }
                 };
 
-                logger.debug(
-                    'persistent connection: subscribe to underlying connection'
-                );
-
                 const unsub = conn.subscribe({
-                    next: async message => {
-                        logger.debug(
-                            'persistent connection: next message',
-                            message
-                        );
-                        await this.subject.next(message);
-                    },
+                    next: message => this.subject.next(message),
                     throw: async error => {
                         unsub();
                         logger.error('error in underlying connection', error);

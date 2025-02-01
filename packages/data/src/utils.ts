@@ -7,7 +7,7 @@ import {
     BusinessError,
 } from './errors.js';
 import {logger} from './logger.js';
-import {Stream, toStream} from './stream.js';
+import {Observable, Stream, toStream} from './stream.js';
 
 export type Brand<T, B> = T & {__brand: () => B | undefined};
 
@@ -345,9 +345,13 @@ export interface ObservableOptions<T> {
 
 export async function observable<T>(
     options: ObservableOptions<T>
-): Promise<[initialValue: T, update$: AsyncIterable<T>]> {
+): Observable<T, T> {
     return [
         await options.get(),
         toStream(await options.update$).map(cx => options.get()),
     ];
+}
+
+export function run<R>(fn: () => R) {
+    return fn();
 }

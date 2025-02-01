@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {Crdt} from '../../crdt/crdt.js';
+import {logger} from '../../logger.js';
 import {getNow} from '../../timestamp.js';
 import {observable, wait} from '../../utils.js';
 import {EventStoreReader} from '../communication/event-store.js';
@@ -29,10 +30,31 @@ export function createTestApi() {
                 yield 5;
             },
         }),
+        echo: handler({
+            req: z.object({msg: z.string()}),
+            res: z.object({msg: z.string()}),
+            handle: async (state, {msg}) => {
+                return {msg};
+            },
+        }),
         // streaming example
-        getStream: observer({
+        getStream: streamer({
+            req: z.object({topic: z.string()}),
+            item: z.object({index: z.number(), value: z.string()}),
+            async *stream({esReader}, {topic}) {
+                logger.debug('stream start');
+                let index = 1;
+                while (true) {
+                    logger.debug('stream yield');
+                    yield {index: index++, value: 'sdf'};
+                    await wait(1000);
+                }
+            },
+        }),
+        getObserve: observer({
             req: z.object({topic: z.string()}),
             value: z.object({index: z.number(), value: z.string()}),
+            update: z.object({index: z.number(), value: z.string()}),
             async observe({esReader}, {topic}) {
                 return observable({
                     async get() {

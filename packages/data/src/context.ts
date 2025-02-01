@@ -1,7 +1,6 @@
 import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
-import {logger} from './logger.js';
 import {Brand, Nothing} from './utils.js';
 
 export class CancelledError extends Error {
@@ -76,17 +75,20 @@ export class Context {
         }
     }
 
-    spawn(options?: {traceId?: TraceId}): [Context, Cancel] {
+    createChild(options?: {traceId?: TraceId}): [Context, Cancel] {
         const child = new Context(options?.traceId);
         this.children.push(child);
         return [
             child,
             () => {
-                logger.debug(`cancel ${this.traceId}`);
                 child.cancel();
                 this.children = this.children.filter(x => x !== child);
             },
         ];
+    }
+
+    createBackground(options?: {traceId?: TraceId}): [Context, Cancel] {
+        return Context.root().createChild();
     }
 
     private cancel() {

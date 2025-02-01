@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {ContextManager} from '../../context-manager.js';
-import {context} from '../../context.js';
+import {CancelledError, context} from '../../context.js';
 import {toError} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {Channel, ChannelWriter, Stream} from '../../stream.js';
@@ -138,6 +138,20 @@ class RpcStreamerClientApiState {
         this.getChannel(streamId).end();
     }
 
+    finish(streamId: StreamId) {
+        const channel = this.channels.get(streamId);
+        if (!channel) {
+            return;
+        }
+        this.channels.delete(streamId);
+        channel
+            .throw(new CancelledError())
+            .finally(() => channel.end())
+            .catch(error => {
+                logger.error('failed to finish the channel', error);
+            });
+    }
+
     private getChannel(streamId: StreamId) {
         const channel = this.channels.get(streamId);
         if (!channel) {
@@ -219,6 +233,10 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             } else if (handler.type === 'streamer') {
                 const streamId = createStreamId();
 
+                context().onCancel(() => {
+                    clientApiState.finish(streamId);
+                });
+
                 return new Stream(writer => {
                     run(async () => {
                         const channel = new Channel();
@@ -238,6 +256,8 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             logger.error('failed to cancel stream', error);
                         });
                     };
+                }).finally(() => {
+                    clientApiState.finish(streamId);
                 });
             } else {
                 assertNever(handler);

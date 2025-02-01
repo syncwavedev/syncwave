@@ -1,7 +1,9 @@
 import {z, ZodType} from 'zod';
-import {astream, AsyncStream, StreamPuppet} from '../../async-stream.js';
-import {Deferred} from '../../deferred.js';
-import {toError} from '../../errors.js';
+import {
+    astream,
+    AsyncStream,
+    transformAsyncIterable,
+} from '../../async-stream.js';
 import {logger} from '../../logger.js';
 import {assertNever, Observer, Subject} from '../../utils.js';
 import {createRpcClient, RpcServer} from '../rpc/rpc-engine.js';
@@ -40,43 +42,26 @@ export class HubClient<T> {
     }
 
     async subscribe(topic: string): Promise<AsyncStream<T>> {
-        const result = new Deferred<AsyncStream<T>>();
-        const updateStream = new StreamPuppet<any>();
-        (async () => {
-            try {
-                const observerStream = astream(
-                    this.server.subscribe({topic}) as AsyncIterable<
-                        {type: 'start'} | {type: 'message'; message: T}
-                    >
-                );
-
-                for await (const item of observerStream) {
-                    if (item.type === 'start') {
-                        result.resolve(astream(updateStream));
-                    } else if (item.type === 'message') {
-                        await updateStream.next(item.message);
-                    } else {
-                        assertNever(item);
-                    }
+        const response = this.server.subscribe({topic}) as AsyncIterable<
+            {type: 'start'} | {type: 'message'; message: T}
+        >;
+        return transformAsyncIterable(
+            astream(response).map(x => {
+                if (x.type === 'start') {
+                    return {
+                        type: 'start',
+                        initialValue: undefined,
+                    };
+                } else if (x.type === 'message') {
+                    return {
+                        type: 'next',
+                        value: x.message,
+                    };
+                } else {
+                    assertNever(x);
                 }
-            } catch (error) {
-                result.reject(toError(error));
-                await updateStream.throw(error);
-            } finally {
-                updateStream.end();
-            }
-        })()
-            .catch((error: unknown) => {
-                logger.error('HubClient.subscribe', error);
-                result.reject(toError(error));
-                return updateStream.throw(error);
             })
-            .finally(() => {
-                result.resolve(astream([]));
-                updateStream.end();
-            });
-
-        return result.promise;
+        ).then(x => astream<T>(x[1]));
     }
 }
 
@@ -192,14 +177,14 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 | {type: 'start'}
                 | {type: 'message'; message: z.infer<typeof zMessage>}
             > {
-                logger.info('hub subscribe');
+                logger.log('hub subscribe');
                 const message$ = subjects.value$(topic);
                 yield {type: 'start'};
-                logger.info('hub subscribe after start');
+                logger.log('hub subscribe after start');
                 for await (const message of message$) {
-                    logger.info('hub yield message');
+                    logger.log('hub yield message');
                     yield {type: 'message', message};
-                    logger.info('hub yield after');
+                    logger.log('hub yield after');
                 }
             },
         }),

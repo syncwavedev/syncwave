@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import {astream} from '../../async-stream.js';
 import {BusinessError} from '../../errors.js';
+import {logger} from '../../logger.js';
 import {assert, observable, whenAll} from '../../utils.js';
 import {zUuid} from '../../uuid.js';
 import {AuthContext} from '../auth-context.js';
@@ -95,7 +96,11 @@ export function createReadApi() {
                                 .toArray();
                         });
                     },
-                    update$: st.esReader.subscribe(userEvents(userId)),
+                    update$: st.esReader.subscribe(userEvents(userId)).then(x =>
+                        x.finally(() => {
+                            logger.debug('getMyBoards finish updates');
+                        })
+                    ),
                 });
             },
         }),

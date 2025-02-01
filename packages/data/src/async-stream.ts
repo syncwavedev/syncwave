@@ -209,7 +209,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return astream(this._finally(fn));
     }
 
-    async *_finally(fn: () => Nothing) {
+    private async *_finally(fn: () => Nothing) {
         try {
             yield* this.source;
         } finally {
@@ -348,4 +348,48 @@ export class AsyncStream<T> implements AsyncIterable<T> {
     [Symbol.asyncIterator](): AsyncIterator<T> {
         return this.source[Symbol.asyncIterator]();
     }
+}
+
+export async function transformAsyncIterable<TInitial, TNext>(
+    source: AsyncIterable<
+        {type: 'start'; initialValue: TInitial} | {type: 'next'; value: TNext}
+    >
+): Promise<[TInitial, AsyncStream<TNext>]> {
+    const iterator = source[Symbol.asyncIterator]();
+
+    const firstResult = await iterator.next();
+    if (firstResult.done) {
+        throw new Error("Source iterable is empty; expected a 'start' event.");
+    }
+    if (firstResult.value.type !== 'start') {
+        throw new Error("Expected the first event to be 'start'.");
+    }
+    const initialValue = firstResult.value.initialValue;
+
+    // Define an async generator for the "next" updates.
+    async function* updates(): AsyncGenerator<TNext> {
+        try {
+            while (true) {
+                const result = await iterator.next();
+                if (result.done) return; // end of source iterable
+                const event = result.value;
+                if (event.type === 'next') {
+                    yield event.value;
+                } else {
+                    throw new Error(`Unexpected event type: ${event.type}`);
+                }
+            }
+        } finally {
+            if (typeof iterator.return === 'function') {
+                try {
+                    await iterator.return();
+                } catch (error) {
+                    logger.error('transformAsyncIterable finally', error);
+                }
+            }
+        }
+    }
+
+    // Return the initial value along with the updates async iterable.
+    return [initialValue, astream(updates())];
 }

@@ -1,9 +1,8 @@
 import {
     astream,
-    AsyncStream,
     ColdStream,
     ColdStreamExecutor,
-    StreamPuppet,
+    transformAsyncIterable,
 } from '../../async-stream.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {ContextManager} from '../../context-manager.js';
@@ -26,27 +25,29 @@ import {
     ResponsePayload,
 } from '../communication/message.js';
 import {Connection, TransportServer} from '../communication/transport.js';
-import {
-    Api,
-    Handler,
-    InferRpcClient,
-    ObserverItem,
-    Processor,
-    Streamer,
-} from './rpc.js';
+import {Api, Handler, InferRpcClient, Processor, Streamer} from './rpc.js';
 
 async function proxyStreamerCall(
     conn: Connection<Message>,
     exe: ColdStreamExecutor<any>,
     name: string,
     arg: any,
-    headers: MessageHeaders
+    headers: MessageHeaders,
+    cancelSignal: Promise<void>
 ) {
     context().ensureActive();
 
     const requestId = createMessageId();
 
     let state: 'pending' | 'open' | 'complete' = 'pending';
+
+    cancelSignal
+        .then(() => {
+            return cancel('stream cancellation requested by the consumer');
+        })
+        .catch(error => {
+            logger.error('cancelSignal failed', error);
+        });
 
     context().onCancel(() => {
         if (state !== 'complete') {
@@ -164,7 +165,7 @@ async function proxyStreamerCall(
 
     ignoreCancel(wait(RPC_CALL_TIMEOUT_MS))
         .then(async () => {
-            logger.info('streamer timeout fired at state ' + state);
+            logger.log('streamer timeout fired at state ' + state);
             if (state === 'pending') {
                 await cancel('stream failed to start');
             }
@@ -267,55 +268,25 @@ function createProcessorProxy(
             return proxyHandlerCall(conn, name, arg, headers);
         } else if (processor.type === 'streamer') {
             const coldStream = new ColdStream<any>(exe => {
-                proxyStreamerCall(conn, exe, name, arg, headers).catch(error =>
-                    exe.throw(error)
-                );
+                const cancelSignal = new Deferred<void>();
+                proxyStreamerCall(
+                    conn,
+                    exe,
+                    name,
+                    arg,
+                    headers,
+                    cancelSignal.promise
+                ).catch(error => exe.throw(error));
 
                 return () => {
+                    logger.debug('');
+                    cancelSignal.resolve();
                     exe.throw(new CancelledError()).finally(() => exe.end());
                 };
             });
 
             if (processor.observer) {
-                const result = new Deferred<
-                    [initialValue: unknown, AsyncStream<unknown>]
-                >();
-                const updateStream = new StreamPuppet<any>();
-                (async () => {
-                    const observerStream: AsyncIterable<ObserverItem<any>> =
-                        coldStream;
-
-                    try {
-                        for await (const item of observerStream) {
-                            if (item.type === 'start') {
-                                result.resolve([
-                                    item.initialValue,
-                                    astream(updateStream),
-                                ]);
-                            } else if (item.type === 'next') {
-                                await updateStream.next(item.value);
-                            } else {
-                                assertNever(item);
-                            }
-                        }
-                    } catch (error) {
-                        result.reject(toError(error));
-                        await updateStream.throw(error);
-                    } finally {
-                        updateStream.end();
-                    }
-                })()
-                    .catch(error => {
-                        logger.error('createProcessorProxy observer', error);
-                        result.reject(error);
-                        return updateStream.throw(error);
-                    })
-                    .finally(() => {
-                        result.reject(new CancelledError());
-                        updateStream.end();
-                    });
-
-                return result.promise;
+                return transformAsyncIterable(coldStream);
             } else {
                 return astream(coldStream);
             }
@@ -616,7 +587,7 @@ export function setupRpcServerConnection<TState>(
             contextManager.finishAll();
         },
         close: () => {
-            logger.info('rpc server connection close');
+            logger.log('rpc server connection close');
             serverCancel();
         },
     });

@@ -5,7 +5,7 @@ import {toError} from './errors.js';
 export interface Logger {
     trace(message: string, ...args: unknown[]): void;
     debug(message: string, ...args: unknown[]): void;
-    info(message: string, ...args: unknown[]): void;
+    log(message: string, ...args: unknown[]): void;
     warn(message: string, ...args: unknown[]): void;
     error(message: string, error: unknown): void;
 }
@@ -19,7 +19,7 @@ export class ConsoleLogger implements Logger {
         const cx = context();
         console.debug(`[${cx.traceId}] [DBG] ${message}`, ...args);
     }
-    info(message: string, ...args: unknown[]): void {
+    log(message: string, ...args: unknown[]): void {
         const cx = context();
         console.info(`[${cx.traceId}] [INF] ${message}`, ...args);
     }

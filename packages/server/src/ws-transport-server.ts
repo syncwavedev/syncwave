@@ -71,13 +71,17 @@ export class WsConnection<T> implements Connection<T> {
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: unknown) => {
-                if (error) {
-                    const err = new Error();
-                    err.cause = error;
-                    err.message = 'got message: ' + JSON.stringify(message);
-                    resolve(this.subject.throw(err));
+                try {
+                    if (error) {
+                        const err = new Error();
+                        err.cause = error;
+                        err.message = 'got message: ' + JSON.stringify(message);
+                        resolve(this.subject.throw(err));
+                    }
+                    resolve();
+                } catch (error) {
+                    reject(error);
                 }
-                resolve();
             });
         });
     }

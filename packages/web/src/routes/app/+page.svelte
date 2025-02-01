@@ -2,7 +2,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
-	import {type Board} from 'ground-data';
+	import {logger, type Board} from 'ground-data';
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
@@ -25,13 +25,22 @@
 
 	$effect(() => {
 		(async () => {
-			console.log('request boards...');
-			const [initialBoards, boards$] = await sdk.getMyBoards({});
-			boards = initialBoards;
-			console.log('start reading boards...');
-			for await (const nextBoards of boards$) {
-				console.log('next boards', nextBoards.length);
-				boards = nextBoards;
+			try {
+				logger.log('request boards...');
+				const [initialBoards, boards$] = await sdk.getMyBoards({});
+				boards = initialBoards;
+				logger.log('start reading boards...');
+				let index = 0;
+				for await (const nextBoards of boards$) {
+					index += 1;
+					if (index >= 3) {
+						break;
+					}
+					logger.log('next boards', nextBoards.length);
+					boards = nextBoards;
+				}
+			} finally {
+				logger.log('boards stream closed');
 			}
 		})();
 	});

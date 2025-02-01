@@ -51,9 +51,7 @@
 		isLoading = true;
 		error = undefined;
 		try {
-			console.log('hello');
 			const result = await sdk.sendSignInEmail({email});
-			console.log('end');
 			if (result.type === 'success') {
 				goto(
 					`/log-in/code?redirectUrl=${encodeURIComponent(redirectUrl)}&email=${encodeURIComponent(email)}`

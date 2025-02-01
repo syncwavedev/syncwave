@@ -175,7 +175,7 @@ export class DataLayer {
             await whenAll(effectsSnapshot.map(effect => effect()));
 
             if (effects.length > 0) {
-                logger.info('effect recursion detected');
+                logger.log('effect recursion detected');
             }
         }
 

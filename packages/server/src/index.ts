@@ -102,12 +102,12 @@ const jwtService: JwtService = {
 
 async function getKVStore(): Promise<Uint8KVStore> {
     if (STAGE === 'local' && false) {
-        logger.info('using SQLite as primary store');
+        logger.log('using SQLite as primary store');
         return await import('./sqlite-kv-store.js').then(
             x => new x.SqliteUint8KVStore('./dev.sqlite')
         );
     } else {
-        logger.info('using FoundationDB as a primary store');
+        logger.log('using FoundationDB as a primary store');
         const fdbStore = await import('./fdb-kv-store.js').then(
             x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
         );
@@ -170,9 +170,9 @@ async function launch() {
     );
 
     async function shutdown() {
-        logger.info('shutting down...');
+        logger.log('shutting down...');
         await coordinator.close();
-        logger.info('coordinator is closed');
+        logger.log('coordinator is closed');
         const httpServerCloseSignal = new Deferred<void>();
         httpServer.on('close', () => httpServerCloseSignal.resolve());
         httpServer.close();
@@ -252,7 +252,7 @@ process.once('SIGTERM', () => cancelServerCtx());
 serverCtx.run(async () => {
     try {
         await launch();
-        logger.info(`coordinator is running on port ${PORT}`);
+        logger.log(`coordinator is running on port ${PORT}`);
     } catch (err) {
         logger.error('', err);
     }

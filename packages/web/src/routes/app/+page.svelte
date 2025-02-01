@@ -2,8 +2,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
-	import {context, logger, type Board} from 'ground-data';
-	import {onDestroy} from 'svelte';
+	import {logger, type Board} from 'ground-data';
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();

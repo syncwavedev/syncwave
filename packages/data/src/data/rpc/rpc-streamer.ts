@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {ContextManager} from '../../context-manager.js';
-import {CancelledError, context} from '../../context.js';
+import {CancelledError, Context, context} from '../../context.js';
 import {toError} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {Channel, ChannelWriter, Stream} from '../../stream.js';
@@ -114,46 +114,52 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
 }
 
 class RpcStreamerClientApiState {
-    constructor(
-        private readonly channels: Map<StreamId, ChannelWriter<unknown>>
-    ) {}
+    private readonly subs = new Map<
+        StreamId,
+        {context: Context; writer: ChannelWriter<unknown>}
+    >();
 
     create(streamId: StreamId, writer: ChannelWriter<unknown>) {
-        if (this.channels.has(streamId)) {
+        if (this.subs.has(streamId)) {
             throw new Error(`stream ${streamId} already exists`);
         }
 
-        this.channels.set(streamId, writer);
+        this.subs.set(streamId, {context: context(), writer});
     }
 
     async next(streamId: StreamId, value: unknown) {
-        await this.getChannel(streamId).next(value);
+        const {context, writer} = this.getSub(streamId);
+        await context.run(() => writer.next(value));
     }
 
     async throw(streamId: StreamId, error: unknown) {
-        await this.getChannel(streamId).throw(toError(error));
+        const {context, writer} = this.getSub(streamId);
+        await context.run(() => writer.throw(toError(error)));
     }
 
     end(streamId: StreamId) {
-        this.getChannel(streamId).end();
+        const {context, writer} = this.getSub(streamId);
+        context.run(() => writer.end());
     }
 
     finish(streamId: StreamId) {
-        const channel = this.channels.get(streamId);
-        if (!channel) {
+        const sub = this.subs.get(streamId);
+        if (!sub) {
             return;
         }
-        this.channels.delete(streamId);
-        channel
-            .throw(new CancelledError())
-            .finally(() => channel.end())
+        const {context, writer} = sub;
+        this.subs.delete(streamId);
+        context
+            .run(() =>
+                writer.throw(new CancelledError()).finally(() => writer.end())
+            )
             .catch(error => {
                 logger.error('failed to finish the channel', error);
             });
     }
 
-    private getChannel(streamId: StreamId) {
-        const channel = this.channels.get(streamId);
+    private getSub(streamId: StreamId) {
+        const channel = this.subs.get(streamId);
         if (!channel) {
             throw new Error(`unknown streamId: ${streamId}`);
         }
@@ -203,7 +209,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     conn: Connection<Message>,
     getHeaders: () => MessageHeaders
 ): InferRpcClient<TApi> {
-    const clientApiState = new RpcStreamerClientApiState(new Map());
+    const clientApiState = new RpcStreamerClientApiState();
     launchRpcHandlerServer(createRpcStreamerClientApi(), clientApiState, conn);
 
     const server = createRpcHandlerClient(

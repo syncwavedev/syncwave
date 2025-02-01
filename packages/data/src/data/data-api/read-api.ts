@@ -1,7 +1,7 @@
 import {z} from 'zod';
-import {astream} from '../../async-stream.js';
 import {BusinessError} from '../../errors.js';
 import {logger} from '../../logger.js';
+import {toStream} from '../../stream.js';
 import {assert, observable, whenAll} from '../../utils.js';
 import {zUuid} from '../../uuid.js';
 import {AuthContext} from '../auth-context.js';
@@ -88,7 +88,7 @@ export function createReadApi() {
                     async get() {
                         return st.transact(async tx => {
                             const members = tx.members.getByUserId(userId);
-                            return await astream(members)
+                            return await toStream(members)
                                 .mapParallel(member =>
                                     tx.boards.getById(member.boardId)
                                 )

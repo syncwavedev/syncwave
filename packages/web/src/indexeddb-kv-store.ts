@@ -1,7 +1,7 @@
 import type {Entry} from 'ground-data';
 import {
-	astream,
 	ENVIRONMENT,
+	toStream,
 	type Condition,
 	type Uint8KVStore,
 	type Uint8Transaction,
@@ -85,7 +85,7 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		this.assertActive();
 		const keyRange = createKeyRange(condition);
 
-		const entries = astream(this.tx.objectStore(STORE_NAME).iterate(keyRange)).withContext(cx);
+		const entries = toStream(this.tx.objectStore(STORE_NAME).iterate(keyRange)).withContext(cx);
 		for await (const {key, value} of entries) {
 			yield {key: new Uint8Array(key), value: new Uint8Array(value)};
 		}

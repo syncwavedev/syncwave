@@ -1,6 +1,6 @@
 import {z, ZodType} from 'zod';
-import {astream, AsyncStream, toObservable} from '../../async-stream.js';
 import {logger} from '../../logger.js';
+import {Stream, toObservable, toStream} from '../../stream.js';
 import {assertNever, Observer, Subject} from '../../utils.js';
 import {createRpcClient, RpcServer} from '../rpc/rpc-engine.js';
 import {
@@ -37,12 +37,12 @@ export class HubClient<T> {
         await this.server.throw({topic, error});
     }
 
-    async subscribe(topic: string): Promise<AsyncStream<T>> {
+    async subscribe(topic: string): Promise<Stream<T>> {
         const response = this.server.subscribe({topic}) as AsyncIterable<
             {type: 'start'} | {type: 'message'; message: T}
         >;
         return toObservable(
-            astream(response).map(x => {
+            toStream(response).map(x => {
                 if (x.type === 'start') {
                     return {
                         type: 'start',
@@ -57,7 +57,7 @@ export class HubClient<T> {
                     assertNever(x);
                 }
             })
-        ).then(x => astream<T>(x[1]));
+        ).then(x => toStream<T>(x[1]));
     }
 }
 

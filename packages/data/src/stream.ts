@@ -1,22 +1,22 @@
-import {Channel} from 'async-channel';
+import {Channel as AsyncChannel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
-import {CancelledError} from './context.js';
+import {Cancel, CancelledError} from './context.js';
 import {logger} from './logger.js';
 import {assert, Nothing} from './utils.js';
 
-export interface ColdStreamExecutor<T> {
+export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;
     throw: (error: any) => Promise<void>;
     end: () => void;
 }
 
-export class StreamPuppet<T> implements AsyncIterable<T> {
-    private chan = new Channel<T>();
+export class Channel<T> implements AsyncIterable<T>, ChannelWriter<T> {
+    private chan = new AsyncChannel<T>();
 
     async next(value: T) {
         if (this.chan.closed) {
-            logger.debug('StreamPuppet closed, next', value);
+            logger.debug('Channel closed, next', value);
             return;
         }
         await this.chan.push(value);
@@ -30,7 +30,7 @@ export class StreamPuppet<T> implements AsyncIterable<T> {
     }
 
     end() {
-        logger.debug('StreamPuppet close');
+        logger.debug('Channel close');
         if (this.chan.closed) {
             return;
         }
@@ -44,36 +44,34 @@ export class StreamPuppet<T> implements AsyncIterable<T> {
     }
 }
 
-export class ColdStream<T> implements AsyncIterable<T> {
+class AsyncIteratorFactory<T> implements AsyncIterable<T> {
     constructor(
-        private readonly execute: (
-            executor: ColdStreamExecutor<T>
-        ) => () => Nothing
+        private readonly execute: (channel: ChannelWriter<T>) => () => Nothing
     ) {}
 
     async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
-        const stream = new StreamPuppet<T>();
+        const channel = new Channel<T>();
 
         let cancel: (() => Nothing) | undefined = undefined;
         try {
-            cancel = this.execute({
-                next: value => stream.next(value),
-                throw: error => stream.throw(error),
-                end: () => stream.end(),
-            });
+            cancel = this.execute(channel);
 
-            yield* stream;
+            yield* channel;
         } finally {
             cancel?.();
         }
     }
 }
 
-export function astream<T>(
-    source: AsyncIterable<T> | T[] | Promise<T>
-): AsyncStream<T> {
+export function toStream<T>(
+    source:
+        | AsyncIterable<T>
+        | T[]
+        | Promise<T>
+        | ((writer: ChannelWriter<T>) => Cancel)
+): Stream<T> {
     if (source instanceof Promise) {
-        const stream = new ColdStream<T>(exe => {
+        const factory = new AsyncIteratorFactory<T>(exe => {
             source
                 .then(value => exe.next(value))
                 .catch(error => exe.throw(error))
@@ -83,28 +81,43 @@ export function astream<T>(
                 exe.throw(new CancelledError())
                     .finally(() => exe.end())
                     .catch(error => {
-                        logger.error('astream unsubscribe', error);
+                        logger.error('stream unsubscribe', error);
                     });
             };
         });
-        return astream(stream);
+        return toStream(factory);
     } else if (Array.isArray(source)) {
-        return astream(of(...source));
+        return toStream(of(...source));
     }
 
-    return new AsyncStream(source);
+    return new Stream(source);
 }
 
-export function mergeStreams<T>(sources: AsyncIterable<T>[]): AsyncStream<T> {
-    const init: AsyncIterable<T> = astream<T>([]);
-    return astream<T>(merge(init, ...sources));
+export function mergeStreams<T>(sources: AsyncIterable<T>[]): Stream<T> {
+    const init: AsyncIterable<T> = toStream<T>([]);
+    return toStream<T>(merge(init, ...sources));
 }
 
-export class AsyncStream<T> implements AsyncIterable<T> {
-    constructor(private readonly source: AsyncIterable<T>) {}
+export class Stream<T> implements AsyncIterable<T> {
+    private readonly source: AsyncIterable<T>;
+
+    constructor(source: AsyncIterable<T>);
+    constructor(executor: (writer: ChannelWriter<T>) => Cancel);
+    constructor(
+        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
+    );
+    constructor(
+        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
+    ) {
+        if (Symbol.asyncIterator in source) {
+            this.source = source;
+        } else {
+            this.source = new AsyncIteratorFactory(source);
+        }
+    }
 
     drop(count: number) {
-        return astream(this._drop(count));
+        return toStream(this._drop(count));
     }
 
     private async *_drop(count: number) {
@@ -117,7 +130,7 @@ export class AsyncStream<T> implements AsyncIterable<T> {
     }
 
     take(count: number) {
-        return astream(this._take(count));
+        return toStream(this._take(count));
     }
 
     private async *_take(count: number) {
@@ -135,8 +148,8 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         }
     }
 
-    assert<S extends T>(validator: (value: T) => value is S): AsyncStream<S> {
-        return astream(this._assert(validator)) as AsyncStream<S>;
+    assert<S extends T>(validator: (value: T) => value is S): Stream<S> {
+        return toStream(this._assert(validator)) as Stream<S>;
     }
 
     private async *_assert(validator: (value: T) => boolean): AsyncIterable<T> {
@@ -147,14 +160,14 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         }
     }
 
-    concat(...streams: AsyncIterable<T>[]): AsyncStream<T> {
-        return astream(this._concat(...streams));
+    concat(...iterables: AsyncIterable<T>[]): Stream<T> {
+        return toStream(this._concat(...iterables));
     }
 
-    private async *_concat(...streams: AsyncIterable<T>[]) {
+    private async *_concat(...iterables: AsyncIterable<T>[]) {
         yield* this.source;
 
-        for (const stream of streams) {
+        for (const stream of iterables) {
             yield* stream;
         }
     }
@@ -177,8 +190,8 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     flatCatch<R>(
         flatMap: (error: unknown) => R[] | Promise<R> | AsyncIterable<R>
-    ): AsyncStream<T | R> {
-        return astream(this._flatCatch(flatMap));
+    ): Stream<T | R> {
+        return toStream(this._flatCatch(flatMap));
     }
 
     private async *_flatCatch<R>(
@@ -187,12 +200,12 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         try {
             yield* this.source;
         } catch (error) {
-            yield* astream(flatMap(error));
+            yield* toStream(flatMap(error));
         }
     }
 
-    catch<R>(map: (error: unknown) => Promise<R> | R): AsyncStream<T | R> {
-        return astream(this._catch(map));
+    catch<R>(map: (error: unknown) => Promise<R> | R): Stream<T | R> {
+        return toStream(this._catch(map));
     }
 
     async *_catch<R>(
@@ -205,8 +218,8 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         }
     }
 
-    finally(fn: () => undefined | void): AsyncStream<T> {
-        return astream(this._finally(fn));
+    finally(fn: () => undefined | void): Stream<T> {
+        return toStream(this._finally(fn));
     }
 
     private async *_finally(fn: () => Nothing) {
@@ -229,14 +242,14 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         return false;
     }
 
-    while<S extends T>(predicate: (value: T) => value is S): AsyncStream<S>;
-    while(predicate: (value: T) => Promise<boolean> | boolean): AsyncStream<T>;
+    while<S extends T>(predicate: (value: T) => value is S): Stream<S>;
+    while(predicate: (value: T) => Promise<boolean> | boolean): Stream<T>;
     while(
         predicate:
             | ((value: T) => Promise<boolean> | boolean)
             | ((value: T) => value is T)
-    ): AsyncStream<T> {
-        return astream(this._while(predicate)) as AsyncStream<any>;
+    ): Stream<T> {
+        return toStream(this._while(predicate)) as Stream<any>;
     }
 
     private async *_while(
@@ -248,14 +261,14 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         }
     }
 
-    filter<S extends T>(predicate: (value: T) => value is S): AsyncStream<S>;
-    filter(predicate: (value: T) => Promise<boolean> | boolean): AsyncStream<T>;
+    filter<S extends T>(predicate: (value: T) => value is S): Stream<S>;
+    filter(predicate: (value: T) => Promise<boolean> | boolean): Stream<T>;
     filter(
         predicate:
             | ((value: T) => Promise<boolean> | boolean)
             | ((value: T) => value is T)
-    ): AsyncStream<T> {
-        return astream(this._filter(predicate)) as AsyncStream<any>;
+    ): Stream<T> {
+        return toStream(this._filter(predicate)) as Stream<any>;
     }
 
     private async *_filter(
@@ -270,8 +283,8 @@ export class AsyncStream<T> implements AsyncIterable<T> {
 
     flatMap<R>(
         flatMapper: (value: T) => R[] | Promise<R[]> | AsyncIterable<R>
-    ): AsyncStream<R> {
-        return astream(this._flatMap(flatMapper));
+    ): Stream<R> {
+        return toStream(this._flatMap(flatMapper));
     }
 
     private async *_flatMap<R>(
@@ -282,15 +295,15 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         }
     }
 
-    tap(cb: (value: T) => Promise<void> | void): AsyncStream<T> {
+    tap(cb: (value: T) => Promise<void> | void): Stream<T> {
         return this.map(async value => {
             await cb(value);
             return value;
         });
     }
 
-    map<R>(mapper: (value: T) => R | Promise<R>): AsyncStream<R> {
-        return astream(this._map(mapper));
+    map<R>(mapper: (value: T) => R | Promise<R>): Stream<R> {
+        return toStream(this._map(mapper));
     }
 
     private async *_map<R>(
@@ -301,8 +314,8 @@ export class AsyncStream<T> implements AsyncIterable<T> {
         }
     }
 
-    mapParallel<R>(map: (value: T) => Promise<R>): AsyncStream<R> {
-        return astream(this._mapParallel(map));
+    mapParallel<R>(map: (value: T) => Promise<R>): Stream<R> {
+        return toStream(this._mapParallel(map));
     }
 
     private async *_mapParallel<R>(
@@ -354,7 +367,7 @@ export async function toObservable<TInitial, TNext>(
     source: AsyncIterable<
         {type: 'start'; initialValue: TInitial} | {type: 'next'; value: TNext}
     >
-): Promise<[TInitial, AsyncStream<TNext>]> {
+): Promise<[TInitial, Stream<TNext>]> {
     const iterator = source[Symbol.asyncIterator]();
 
     const firstResult = await iterator.next();
@@ -391,5 +404,5 @@ export async function toObservable<TInitial, TNext>(
         }
     }
 
-    return [initialValue, astream(updates())];
+    return [initialValue, toStream(updates())];
 }

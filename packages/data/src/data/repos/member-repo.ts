@@ -1,7 +1,7 @@
 import {z} from 'zod';
-import {AsyncStream} from '../../async-stream.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {Stream} from '../../stream.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
@@ -54,13 +54,13 @@ export class MemberRepo {
         return this.rawRepo.getById(id);
     }
 
-    getByUserId(userId: UserId, activeOnly = true): AsyncStream<Member> {
+    getByUserId(userId: UserId, activeOnly = true): Stream<Member> {
         return this.rawRepo
             .get(USER_ID_BOARD_ID_INDEX, [userId])
             .filter(x => x.active || !activeOnly);
     }
 
-    getByBoardId(boardId: BoardId, activeOnly = true): AsyncStream<Member> {
+    getByBoardId(boardId: BoardId, activeOnly = true): Stream<Member> {
         return this.rawRepo
             .get(BOARD_ID_INDEX, [boardId])
             .filter(x => x.active || !activeOnly);

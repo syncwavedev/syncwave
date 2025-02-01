@@ -1,7 +1,7 @@
 import {z, ZodType} from 'zod';
-import {astream} from '../async-stream.js';
 import {decodeString, encodeString} from '../codec.js';
 import {Uint8Transaction} from '../kv/kv-store.js';
+import {toStream} from '../stream.js';
 import {zUint8Array} from '../utils.js';
 import {decodeUuid} from '../uuid.js';
 import {AggregateDataNode, DataNode, DataNodeVisitor} from './data-node.js';
@@ -44,7 +44,7 @@ function createTreeVisitor(
             key,
             name,
             type: 'aggregate',
-            childrenPreview: await astream(agg.queryChildren(new Uint8Array()))
+            childrenPreview: await toStream(agg.queryChildren(new Uint8Array()))
                 .mapParallel(async ({key, node}) =>
                     node.visit(createTreeVisitor(key, decodeString(key)))
                 )
@@ -54,7 +54,9 @@ function createTreeVisitor(
             key,
             name,
             type: 'repo',
-            childrenPreview: await astream(repo.queryChildren(new Uint8Array()))
+            childrenPreview: await toStream(
+                repo.queryChildren(new Uint8Array())
+            )
                 .mapParallel(async ({key, node}) =>
                     node.visit(createTreeVisitor(key, decodeUuid(key)))
                 )
@@ -85,7 +87,7 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
         req: z.object({}),
         res: z.void(),
         handle: async ({rootTx}, _) => {
-            const keys = await astream(rootTx.query({gte: new Uint8Array()}))
+            const keys = await toStream(rootTx.query({gte: new Uint8Array()}))
                 .map(node => node.key)
                 .toArray();
             for (const key of keys) {

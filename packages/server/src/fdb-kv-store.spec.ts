@@ -6,7 +6,7 @@ import {
     LteCondition,
     PrefixedKVStore,
     Uint8KVStore,
-    astream,
+    toStream,
 } from 'ground-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {FoundationDBUint8KVStore} from './fdb-kv-store.js';
@@ -134,7 +134,7 @@ describe('FoundationDBUint8KVStore (localhost:4500)', () => {
             };
 
             const results = await store.transact(tx =>
-                astream(tx.query(condition)).toArray()
+                toStream(tx.query(condition)).toArray()
             );
 
             expect(results.map(r => Array.from(r.key))).toEqual([

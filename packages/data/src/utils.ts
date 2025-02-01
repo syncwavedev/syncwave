@@ -1,5 +1,4 @@
 import {z} from 'zod';
-import {astream, AsyncStream, ColdStream} from './async-stream.js';
 import {CancelledError, Context, context} from './context.js';
 import {Deferred} from './deferred.js';
 import {
@@ -8,6 +7,7 @@ import {
     BusinessError,
 } from './errors.js';
 import {logger} from './logger.js';
+import {Stream, toStream} from './stream.js';
 
 export type Brand<T, B> = T & {__brand: () => B | undefined};
 
@@ -50,8 +50,8 @@ export class Subject<T> {
         };
     }
 
-    value$(): AsyncStream<T> {
-        const stream = new ColdStream<T>(exe => {
+    value$(): Stream<T> {
+        const stream = new Stream<T>(exe => {
             this.subscribe({
                 next: value => exe.next(value),
                 throw: error => exe.throw(error),
@@ -66,7 +66,7 @@ export class Subject<T> {
                     });
             };
         });
-        return astream(stream);
+        return toStream(stream);
     }
 
     async next(value: T): Promise<void> {
@@ -156,8 +156,8 @@ export async function ignoreCancel<T>(promise: Promise<T>): Promise<T | never> {
     }
 }
 
-export function interval(ms: number): AsyncStream<number> {
-    return astream(_interval(ms));
+export function interval(ms: number): Stream<number> {
+    return toStream(_interval(ms));
 }
 
 async function* _interval(ms: number): AsyncIterable<number> {
@@ -348,6 +348,6 @@ export async function observable<T>(
 ): Promise<[initialValue: T, update$: AsyncIterable<T>]> {
     return [
         await options.get(),
-        astream(await options.update$).map(cx => options.get()),
+        toStream(await options.update$).map(cx => options.get()),
     ];
 }

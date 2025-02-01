@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {astream} from '../async-stream.js';
 import {encodeString} from '../codec.js';
+import {toStream} from '../stream.js';
 import {Entry} from './kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
 import {PrefixedKVStore, PrefixedTransaction} from './prefixed-kv-store.js';
@@ -19,18 +19,18 @@ describe('PrefixedTransaction', () => {
 
             const value1 = await prefixedTxn.get(encodeString('key1'));
             const value2 = await prefixedTxn.get(encodeString('key2'));
-            const gte = await astream(
+            const gte = await toStream(
                 prefixedTxn.query({gte: new Uint8Array()})
             ).toArray();
-            const gt = await astream(
+            const gt = await toStream(
                 prefixedTxn.query({gt: new Uint8Array()})
             ).toArray();
-            const lte = await astream(
+            const lte = await toStream(
                 prefixedTxn.query({
                     lte: new Uint8Array(Array(100).fill(255)),
                 })
             ).toArray();
-            const lt = await astream(
+            const lt = await toStream(
                 prefixedTxn.query({
                     lt: new Uint8Array(Array(100).fill(255)),
                 })

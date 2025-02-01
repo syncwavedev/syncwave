@@ -1,7 +1,7 @@
 import {TypeOf, z, ZodType} from 'zod';
-import {astream, AsyncStream} from '../../async-stream.js';
 import {Deferred} from '../../deferred.js';
 import {logger} from '../../logger.js';
+import {Stream, toStream} from '../../stream.js';
 import {assertNever} from '../../utils.js';
 import {MessageHeaders} from '../communication/message.js';
 
@@ -176,14 +176,14 @@ export function observer<
         headers: MessageHeaders
     ): AsyncIterable<TypeOf<TValueSchema>> {
         req = options.req.parse(req);
-        return astream<
+        return toStream<
             [TypeOf<TValueSchema>, AsyncIterable<TypeOf<TValueSchema>>]
         >(options.observe(state, req, headers)).flatMap(
             ([initialValue, stream]) => {
-                return astream<ObserverItem<TypeOf<TValueSchema>>>([
+                return toStream<ObserverItem<TypeOf<TValueSchema>>>([
                     {type: 'start', initialValue},
                 ]).concat(
-                    astream(stream).map(value => ({
+                    toStream(stream).map(value => ({
                         type: 'next',
                         value,
                     }))
@@ -330,9 +330,9 @@ export type InferRpcClient<T extends Api<any>> = {
         ? (
               req: TReq,
               headers?: MessageHeaders
-          ) => Promise<[initialValue: TValue, AsyncStream<TValue>]>
+          ) => Promise<[initialValue: TValue, Stream<TValue>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
-          ? (req: TReq, headers?: MessageHeaders) => AsyncStream<TItem>
+          ? (req: TReq, headers?: MessageHeaders) => Stream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
             ? (req: TReq, headers?: MessageHeaders) => Promise<TRes>
             : never;
@@ -343,9 +343,9 @@ export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
         ? (
               req: TReq,
               headers: MessageHeaders
-          ) => Promise<[initialValue: TValue, AsyncStream<TValue>]>
+          ) => Promise<[initialValue: TValue, Stream<TValue>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
-          ? (req: TReq, headers: MessageHeaders) => AsyncStream<TItem>
+          ? (req: TReq, headers: MessageHeaders) => Stream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
             ? (req: TReq, headers: MessageHeaders) => Promise<TRes>
             : never;

@@ -1,4 +1,3 @@
-export * from './async-stream.js';
 export * from './auth/google.js';
 export * from './codec.js';
 export * from './constants.js';
@@ -25,5 +24,6 @@ export * from './kv/mapped-kv-store.js';
 export * from './kv/mem-kv-store.js';
 export * from './kv/prefixed-kv-store.js';
 export * from './logger.js';
+export * from './stream.js';
 export * from './utils.js';
 export * from './uuid.js';

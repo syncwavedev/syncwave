@@ -1,16 +1,11 @@
 import {
-    astream,
-    AsyncStream,
-    mergeStreams,
-    StreamPuppet,
-} from '../../async-stream.js';
-import {
     EVENT_STORE_MAX_PULL_COUNT,
     EVENT_STORE_PULL_INTERVAL_MS,
 } from '../../constants.js';
 import {CollectionManager} from '../../kv/collection-manager.js';
 import {ReadonlyCell} from '../../kv/readonly-cell.js';
 import {logger} from '../../logger.js';
+import {Channel, mergeStreams, Stream, toStream} from '../../stream.js';
 import {interval, whenAll} from '../../utils.js';
 import {Uuid} from '../../uuid.js';
 import {DataEffectScheduler} from '../data-layer.js';
@@ -54,9 +49,9 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
     async subscribe(
         collection: string,
         offsetArg?: number
-    ): Promise<AsyncStream<T>> {
+    ): Promise<Stream<T>> {
         // we wanna trigger event store iteration immediately if we didn't reach the end of the topic
-        const selfTrigger = new StreamPuppet<void>();
+        const selfTrigger = new Channel<void>();
 
         let offset =
             offsetArg === undefined
@@ -72,8 +67,8 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
         return mergeStreams<void>([
             // make the first check immediately
-            astream<void>([undefined]),
-            astream(selfTrigger),
+            toStream<void>([undefined]),
+            toStream(selfTrigger),
             hubEvent$.map(() => undefined),
             interval(EVENT_STORE_PULL_INTERVAL_MS).map(() => undefined),
         ]).flatMap(async () => {
@@ -89,7 +84,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                     // check if there are potentially more values to pull from the topic
                     if (result.length === EVENT_STORE_MAX_PULL_COUNT) {
                         // we don't wanna block on this call to avoid a deadlock
-                        selfTrigger.next().catch(error => {
+                        selfTrigger.next().catch((error: unknown) => {
                             logger.error(
                                 'failed to trigger event store iteration',
                                 error
@@ -101,7 +96,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                 offset += events.length;
 
-                return events.map(x => x);
+                return events;
             } catch (error) {
                 logger.error('EventStoreReader.subscribe', error);
                 return [];

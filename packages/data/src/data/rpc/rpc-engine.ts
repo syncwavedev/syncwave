@@ -1,15 +1,10 @@
-import {
-    astream,
-    ColdStream,
-    ColdStreamExecutor,
-    toObservable,
-} from '../../async-stream.js';
 import {RPC_ACK_TIMEOUT_MS, RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {ContextManager} from '../../context-manager.js';
 import {CancelledError, context, createTraceId} from '../../context.js';
 import {Deferred} from '../../deferred.js';
 import {BusinessError, getReadableError, toError} from '../../errors.js';
 import {logger} from '../../logger.js';
+import {ChannelWriter, Stream, toObservable, toStream} from '../../stream.js';
 import {
     assertNever,
     ignoreCancel,
@@ -29,7 +24,7 @@ import {Api, Handler, InferRpcClient, Processor, Streamer} from './rpc.js';
 
 async function proxyStreamerCall(
     conn: Connection<Message>,
-    exe: ColdStreamExecutor<any>,
+    channel: ChannelWriter<any>,
     name: string,
     arg: any,
     headers: MessageHeaders,
@@ -61,7 +56,7 @@ async function proxyStreamerCall(
         logger.debug(`streamer (complete) ${state} => complete`);
         state = 'complete';
         unsub();
-        exe.end();
+        channel.end();
     }
 
     async function cancel(err: unknown) {
@@ -74,9 +69,9 @@ async function proxyStreamerCall(
             requestId,
             headers: {},
         });
-        await exe
+        await channel
             .throw(toError(err))
-            .finally(() => exe.end())
+            .finally(() => channel.end())
             .catch(error => {
                 logger.error('proxyStreamerCall cancel', error);
             });
@@ -121,10 +116,10 @@ async function proxyStreamerCall(
                 }
             } else if (state === 'open') {
                 if (msg.payload.type === 'item') {
-                    await exe.next(msg.payload.item);
+                    await channel.next(msg.payload.item);
                     await acknowledge();
                 } else if (msg.payload.type === 'error') {
-                    await exe.throw(
+                    await channel.throw(
                         new Error('rpc error: ' + msg.payload.message)
                     );
                     await acknowledge();
@@ -267,28 +262,29 @@ function createProcessorProxy(
         if (processor.type === 'handler') {
             return proxyHandlerCall(conn, name, arg, headers);
         } else if (processor.type === 'streamer') {
-            const coldStream = new ColdStream<any>(exe => {
+            const resultStream = new Stream<any>(channel => {
                 const cancelSignal = new Deferred<void>();
                 proxyStreamerCall(
                     conn,
-                    exe,
+                    channel,
                     name,
                     arg,
                     headers,
                     cancelSignal.promise
-                ).catch(error => exe.throw(error));
+                ).catch(error => channel.throw(error));
 
                 return () => {
-                    logger.debug('');
                     cancelSignal.resolve();
-                    exe.throw(new CancelledError()).finally(() => exe.end());
+                    channel
+                        .throw(new CancelledError())
+                        .finally(() => channel.end());
                 };
             });
 
             if (processor.observer) {
-                return toObservable(coldStream);
+                return toObservable(resultStream);
             } else {
-                return astream(coldStream);
+                return resultStream;
             }
         } else {
             assertNever(processor);
@@ -408,7 +404,7 @@ async function handleRequestStreamer<TState>(
             headers: {},
         });
 
-        const processorStream = astream(
+        const processorStream = toStream(
             processor.stream(state, msg.payload.arg, msg.headers)
         )
             .map(value => ({type: 'next' as const, value}))

@@ -4,7 +4,6 @@ import Router from '@koa/router';
 import {createHash, randomBytes} from 'crypto';
 import {
     assertDefined,
-    astream,
     context,
     CoordinatorServer,
     CryptoService,
@@ -19,6 +18,7 @@ import {
     logger,
     MsgpackCodec,
     PrefixedKVStore,
+    toStream,
     Uint8KVStore,
     wait,
 } from 'ground-data';
@@ -129,7 +129,7 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
 
     if (!version) {
         await kvStore.transact(async tx => {
-            const keys = await astream(tx.query({gte: new Uint8Array()}))
+            const keys = await toStream(tx.query({gte: new Uint8Array()}))
                 .map(entry => entry.key)
                 .toArray();
 

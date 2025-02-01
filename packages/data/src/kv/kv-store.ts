@@ -1,5 +1,5 @@
-import {astream, AsyncStream} from '../async-stream.js';
 import {Codec} from '../codec.js';
+import {Stream, toStream} from '../stream.js';
 import {bufStartsWith, unreachable} from '../utils.js';
 import {MappedTransaction, Mapper} from './mapped-kv-store.js';
 import {PrefixedTransaction} from './prefixed-kv-store.js';
@@ -160,16 +160,15 @@ export function withKeyCodec<TData>(
 export function queryStartsWith<T>(
     tx: Transaction<Uint8Array, T>,
     prefix: Uint8Array
-): AsyncStream<Entry<Uint8Array, T>> {
-    return astream(_queryStartsWith(tx, prefix));
+): Stream<Entry<Uint8Array, T>> {
+    return toStream(_queryStartsWith(tx, prefix));
 }
 
 async function* _queryStartsWith<T>(
     tx: Transaction<Uint8Array, T>,
     prefix: Uint8Array
 ): AsyncIterable<Entry<Uint8Array, T>> {
-    const stream = tx.query({gte: prefix});
-    for await (const entry of stream) {
+    for await (const entry of tx.query({gte: prefix})) {
         if (!bufStartsWith(entry.key, prefix)) {
             return;
         }

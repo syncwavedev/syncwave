@@ -1,7 +1,7 @@
 import {z} from 'zod';
-import {AsyncStream} from '../../async-stream.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {Stream} from '../../stream.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
@@ -60,7 +60,7 @@ export class TaskRepo {
         return this.rawRepo.getById(id);
     }
 
-    getByBoardId(boardId: BoardId): AsyncStream<Task> {
+    getByBoardId(boardId: BoardId): Stream<Task> {
         return this.rawRepo.get(BOARD_ID, [boardId]);
     }
 

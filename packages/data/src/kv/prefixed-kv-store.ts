@@ -41,8 +41,8 @@ export class PrefixedTransaction<TValue>
             lte: cond => ({lte: concatBuffers(this.prefix, cond.lte)}),
         });
 
-        const stream = this.target.query(prefixedCondition);
-        for await (const {key, value} of stream) {
+        const entries = this.target.query(prefixedCondition);
+        for await (const {key, value} of entries) {
             if (
                 compareUint8Array(
                     key.slice(0, this.prefix.length),

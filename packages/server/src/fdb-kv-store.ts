@@ -8,8 +8,8 @@ import {
     LteCondition,
     Uint8KVStore,
     Uint8Transaction,
-    astream,
     mapCondition,
+    toStream,
     withPrefix,
 } from 'ground-data';
 
@@ -64,7 +64,7 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
             ],
         });
 
-        for await (const [kBuf, vBuf] of astream(
+        for await (const [kBuf, vBuf] of toStream(
             this.tx.getRange(start, end, {reverse})
         )) {
             yield {

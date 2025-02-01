@@ -5,7 +5,7 @@ import {
     GteCondition,
     LtCondition,
     LteCondition,
-    astream,
+    toStream,
 } from 'ground-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {SqliteUint8KVStore} from './sqlite-kv-store.js';
@@ -127,7 +127,7 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
             };
 
             const results = await store.transact(tx =>
-                astream(tx.query(condition)).toArray()
+                toStream(tx.query(condition)).toArray()
             );
 
             expect(results.map(r => Array.from(r.key))).toEqual([

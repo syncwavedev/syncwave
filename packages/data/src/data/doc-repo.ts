@@ -1,5 +1,4 @@
 import {z, ZodType} from 'zod';
-import {astream, AsyncStream} from '../async-stream.js';
 import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
 import {createIndex, Index, IndexKey} from '../kv/data-index.js';
 import {
@@ -11,6 +10,7 @@ import {
     withPrefix,
     withValueCodec,
 } from '../kv/kv-store.js';
+import {Stream, toStream} from '../stream.js';
 import {getNow, Timestamp, zTimestamp} from '../timestamp.js';
 import {pipe, whenAll} from '../utils.js';
 import {Uuid, UuidCodec, zUuid} from '../uuid.js';
@@ -101,14 +101,14 @@ export class DocRepo<T extends Doc> {
         return doc?.snapshot();
     }
 
-    get(indexName: string, key: IndexKey): AsyncStream<T> {
+    get(indexName: string, key: IndexKey): Stream<T> {
         const index = this._index(indexName);
         return this._mapToDocs(index.get(key));
     }
 
     async getUnique(indexName: string, key: IndexKey): Promise<T | undefined> {
         const index = this._index(indexName);
-        const ids = await astream(index.get(key)).take(2).toArray();
+        const ids = await toStream(index.get(key)).take(2).toArray();
         if (ids.length > 1) {
             throw new Error(
                 `index ${indexName} contains multiple docs for the key: ${key}`
@@ -120,13 +120,13 @@ export class DocRepo<T extends Doc> {
         }
     }
 
-    getAll(prefix?: Uint8Array): AsyncStream<T> {
-        return astream(
+    getAll(prefix?: Uint8Array): Stream<T> {
+        return toStream(
             queryStartsWith(this.primaryKeyRaw, prefix ?? new Uint8Array())
         ).map(x => x.value.snapshot());
     }
 
-    query(indexName: string, condition: Condition<IndexKey>): AsyncStream<T> {
+    query(indexName: string, condition: Condition<IndexKey>): Stream<T> {
         const index = this._index(indexName);
 
         return this._mapToDocs(index.query(condition));
@@ -227,8 +227,8 @@ export class DocRepo<T extends Doc> {
         ]);
     }
 
-    private _mapToDocs(ids: AsyncIterable<Uuid>): AsyncStream<T> {
-        return astream(ids)
+    private _mapToDocs(ids: AsyncIterable<Uuid>): Stream<T> {
+        return toStream(ids)
             .mapParallel(id => this.primary.get(id))
             .assert(x => x !== undefined)
             .map(doc => doc.snapshot());

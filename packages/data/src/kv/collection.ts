@@ -1,5 +1,5 @@
-import {astream, AsyncStream} from '../async-stream.js';
 import {Codec, NumberCodec} from '../codec.js';
+import {Stream, toStream} from '../stream.js';
 import {pipe, whenAll} from '../utils.js';
 import {Counter} from './counter.js';
 import {
@@ -39,16 +39,15 @@ export class Collection<T> {
         await whenAll(data.map((x, idx) => this.log.put(offset + idx, x)));
     }
 
-    list(start: number, end?: number): AsyncStream<CollectionEntry<T>> {
-        return astream(this._list(start, end));
+    list(start: number, end?: number): Stream<CollectionEntry<T>> {
+        return toStream(this._list(start, end));
     }
 
     private async *_list(
         start: number,
         end?: number
     ): AsyncIterable<CollectionEntry<T>> {
-        const stream = this.log.query({gte: start});
-        for await (const {key, value} of stream) {
+        for await (const {key, value} of this.log.query({gte: start})) {
             if (end !== undefined && key >= end) return;
 
             yield {offset: key, data: value};

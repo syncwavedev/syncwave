@@ -24,7 +24,7 @@
         "strict": true,
         "alwaysStrict": true,
         "strictNullChecks": true,
-        "target": "ES2022"
+        "target": "ES2016" // we must use target before ES2017 because zone.js doesn't support native async / await
         // "noPropertyAccessFromIndexSignature": true,
         // "noUncheckedIndexedAccess": true
     },

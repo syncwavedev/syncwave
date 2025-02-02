@@ -14,7 +14,7 @@
 			rpc.createBoard({
 				boardId,
 				name: 'Untitled',
-				slug: boardId,
+				key: boardId,
 			})
 		);
 

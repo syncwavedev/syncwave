@@ -4,7 +4,7 @@ import {CancelledError, context, createTraceId} from '../../context.js';
 import {Deferred} from '../../deferred.js';
 import {getReadableError} from '../../errors.js';
 import {logger} from '../../logger.js';
-import {assertNever, ignoreCancel, wait} from '../../utils.js';
+import {assertNever, catchCancel, Unsubscribe, wait} from '../../utils.js';
 import {
     createMessageId,
     Message,
@@ -129,12 +129,14 @@ async function proxyRequest(
         result.reject(new CancelledError());
     });
 
+    let unsub: Unsubscribe | undefined = undefined;
+
     function cleanup() {
         cancelCleanup();
-        unsub();
+        unsub?.();
     }
 
-    const unsub = conn.subscribe({
+    unsub = conn.subscribe({
         next: async msg => {
             if (!(msg.type === 'response' && msg.requestId === requestId)) {
                 return;
@@ -163,7 +165,7 @@ async function proxyRequest(
     });
 
     try {
-        ignoreCancel(wait(RPC_CALL_TIMEOUT_MS))
+        catchCancel(wait(RPC_CALL_TIMEOUT_MS))
             .then(() => {
                 if (result.state === 'pending') {
                     result.reject(new Error('rpc call failed: timeout'));

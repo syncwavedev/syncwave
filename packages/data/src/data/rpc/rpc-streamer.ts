@@ -7,7 +7,7 @@ import {Channel, ChannelWriter, Stream} from '../../stream.js';
 import {assertNever, Brand, run} from '../../utils.js';
 import {createUuid, Uuid, zUuid} from '../../uuid.js';
 import {Message, MessageHeaders} from '../communication/message.js';
-import {Connection} from '../communication/transport.js';
+import {catchConnectionClosed, Connection} from '../communication/transport.js';
 import {createRpcHandlerClient, launchRpcHandlerServer} from './rpc-handler.js';
 import {createApi, handler, Handler, InferRpcClient, Streamer} from './rpc.js';
 
@@ -26,9 +26,29 @@ export function launchRpcStreamerServer<T>(
         conn,
         () => ({traceId: context().traceId})
     );
+
+    function cleanup() {
+        unsub();
+        serverApiState.close();
+        cancelCleanup();
+    }
+
+    const cancelCleanup = context().onCancel(cleanup);
+
+    const unsub = conn.subscribe({
+        next: () => Promise.resolve(),
+        throw: () => Promise.resolve(),
+        close: () => cleanup(),
+    });
+
+    const serverApiState = new RpcStreamerServerApiState(
+        state,
+        new ContextManager(),
+        client
+    );
     launchRpcHandlerServer(
         createRpcStreamerServerApi(api),
-        new RpcStreamerServerApiState(state, new ContextManager(), client),
+        serverApiState,
         conn
     );
 }
@@ -48,6 +68,10 @@ class RpcStreamerServerApiState<T> {
         public readonly contextManager: ContextManager<StreamId>,
         public readonly client: RpcStreamerClientRpc
     ) {}
+
+    close() {
+        this.contextManager.finishAll();
+    }
 }
 
 function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
@@ -85,12 +109,18 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                 arg,
                                 headers
                             )) {
-                                await state.client.next({streamId, value});
+                                await catchConnectionClosed(
+                                    state.client.next({streamId, value})
+                                );
                             }
                         } catch (error: unknown) {
-                            await state.client.throw({streamId, error});
+                            await catchConnectionClosed(
+                                state.client.throw({streamId, error})
+                            );
                         } finally {
-                            await state.client.end({streamId});
+                            await catchConnectionClosed(
+                                state.client.end({streamId})
+                            );
                             state.contextManager.finish(streamId);
                         }
                     })
@@ -128,18 +158,18 @@ class RpcStreamerClientApiState {
     }
 
     async next(streamId: StreamId, value: unknown) {
-        const {context, writer} = this.getSub(streamId);
-        await context.run(() => writer.next(value));
+        const sub = this.getSub(streamId);
+        await sub?.context.run(() => sub.writer.next(value));
     }
 
     async throw(streamId: StreamId, error: unknown) {
-        const {context, writer} = this.getSub(streamId);
-        await context.run(() => writer.throw(toError(error)));
+        const sub = this.getSub(streamId);
+        await sub?.context.run(() => sub.writer.throw(toError(error)));
     }
 
     end(streamId: StreamId) {
-        const {context, writer} = this.getSub(streamId);
-        context.run(() => writer.end());
+        const sub = this.getSub(streamId);
+        sub?.context.run(() => sub.writer.end());
     }
 
     finish(streamId: StreamId) {
@@ -161,7 +191,7 @@ class RpcStreamerClientApiState {
     private getSub(streamId: StreamId) {
         const channel = this.subs.get(streamId);
         if (!channel) {
-            throw new Error(`unknown streamId: ${streamId}`);
+            logger.debug(`unknown streamId: ${streamId}`);
         }
 
         return channel;

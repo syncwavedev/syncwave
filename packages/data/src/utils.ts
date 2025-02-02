@@ -151,12 +151,12 @@ export function isCancelledError(error: unknown): boolean {
     );
 }
 
-export async function ignoreCancel<T>(promise: Promise<T>): Promise<T | never> {
+export async function catchCancel<T>(promise: Promise<T>): Promise<T | void> {
     try {
         return await promise;
     } catch (error) {
         if (isCancelledError(error)) {
-            return new Promise(() => {});
+            return;
         }
         return await Promise.reject(error);
     }

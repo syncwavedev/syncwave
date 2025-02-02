@@ -21,7 +21,6 @@ import {
     PrefixedKVStore,
     toStream,
     Uint8KVStore,
-    wait,
 } from 'ground-data';
 import {createServer} from 'http';
 import jwt from 'jsonwebtoken';
@@ -175,14 +174,7 @@ async function launch() {
         logger.info('shutting down...');
         coordinator.close();
         logger.info('coordinator is closed');
-        const httpServerCloseSignal = new Deferred<void>();
-        httpServer.on('close', () => httpServerCloseSignal.resolve());
         httpServer.close();
-
-        await httpServerCloseSignal.promise;
-
-        // wait one event loop cycle for resources to clean up
-        await wait(0);
 
         const activeResources = process
             .getActiveResourcesInfo()
@@ -192,7 +184,12 @@ async function launch() {
                 'failed to gracefully shutdown, active resources:',
                 activeResources
             );
+        } else {
+            logger.info('finishing...');
         }
+
+        // eslint-disable-next-line n/no-process-exit
+        process.exit(0);
     }
 
     context().onCancel(() => {

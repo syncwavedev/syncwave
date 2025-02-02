@@ -1,6 +1,7 @@
 import {
     Codec,
     Connection,
+    ConnectionClosedError,
     context,
     Deferred,
     logger,
@@ -66,7 +67,7 @@ export class WsConnection<T> implements Connection<T> {
     }
 
     async send(message: T): Promise<void> {
-        logger.debug('WsConnection send', message);
+        this.ensureOpen();
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: unknown) => {
@@ -86,13 +87,18 @@ export class WsConnection<T> implements Connection<T> {
     }
 
     subscribe(observer: Observer<T>) {
-        logger.debug('WsConnection subscribe');
+        this.ensureOpen();
         return this.subject.subscribe(observer);
     }
 
     close(): void {
-        logger.debug('WsConnection close');
         this.ws.close();
+    }
+
+    private ensureOpen() {
+        if (!this.subject.open) {
+            throw new ConnectionClosedError();
+        }
     }
 
     private setupListeners(): void {
@@ -102,10 +108,6 @@ export class WsConnection<T> implements Connection<T> {
             await capturedCtx.run(async () => {
                 try {
                     const message = this.codec.decode(rawData);
-                    const {headers: _, ...messageWithoutHeaders} =
-                        message as any;
-                    logger.debug('WsConnection message', messageWithoutHeaders);
-
                     await this.subject.next(message);
                 } catch (error) {
                     logger.error('ws.message', error);

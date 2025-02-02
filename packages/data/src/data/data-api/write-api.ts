@@ -85,7 +85,7 @@ export function createWriteApi() {
             req: z.object({
                 boardId: zUuid<BoardId>(),
                 name: z.string(),
-                slug: z.string().optional(),
+                key: z.string(),
             }),
             res: zBoard(),
             handle: async (st, req) => {
@@ -100,7 +100,7 @@ export function createWriteApi() {
                     deleted: false,
                     name: req.name,
                     ownerId: userId,
-                    key: req.slug,
+                    key: req.key,
                 };
                 await st.tx.boards.create(board);
                 await st.tx.members.create({

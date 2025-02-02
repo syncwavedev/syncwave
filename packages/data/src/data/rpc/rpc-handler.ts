@@ -2,7 +2,12 @@ import {RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {ContextManager} from '../../context-manager.js';
 import {CancelledError, context, createTraceId} from '../../context.js';
 import {Deferred} from '../../deferred.js';
-import {getReadableError} from '../../errors.js';
+import {
+    BusinessError,
+    getErrorCode,
+    getErrorType,
+    getReadableError,
+} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {assertNever, catchCancel, Unsubscribe, wait} from '../../utils.js';
 import {
@@ -11,7 +16,7 @@ import {
     MessageHeaders,
 } from '../communication/message.js';
 import {Connection} from '../communication/transport.js';
-import {Handler, InferRpcClient} from './rpc.js';
+import {Handler, InferRpcClient, Processor} from './rpc.js';
 
 export type HandlerApi<TState> = Record<string, Handler<TState, any, any>>;
 
@@ -57,6 +62,7 @@ export function launchRpcHandlerServer<T>(
                             payload: {type: 'success', result},
                         });
                     } catch (error) {
+                        reportRpcError(error);
                         await conn.send({
                             id: createMessageId(),
                             headers: {traceId: context().traceId},
@@ -65,6 +71,8 @@ export function launchRpcHandlerServer<T>(
                             payload: {
                                 type: 'error',
                                 message: getReadableError(error),
+                                code: getErrorCode(error),
+                                errorType: getErrorType(error),
                             },
                         });
                     } finally {
@@ -108,7 +116,7 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
             };
         }
 
-        return createHandlerProxy(conn, getHeaders, name);
+        return createHandlerProxy(conn, getHeaders, handler, name);
     }
 
     return new Proxy<any>({}, {get});
@@ -146,7 +154,18 @@ async function proxyRequest(
                 if (msg.payload.type === 'success') {
                     result.resolve(msg.payload.result);
                 } else if (msg.payload.type === 'error') {
-                    result.reject(new RpcError(msg.payload.message));
+                    if (msg.payload.errorType === 'business') {
+                        result.reject(
+                            new BusinessError(
+                                msg.payload.message,
+                                msg.payload.code
+                            )
+                        );
+                    } else if (msg.payload.errorType === 'system') {
+                        result.reject(new RpcError(msg.payload.message));
+                    } else {
+                        assertNever(msg.payload.errorType);
+                    }
                 } else {
                     assertNever(msg.payload);
                 }
@@ -192,9 +211,13 @@ async function proxyRequest(
 function createHandlerProxy(
     conn: Connection<Message>,
     getHeaders: () => MessageHeaders,
+    processor: Processor<unknown, unknown, unknown, unknown>,
     name: string
 ) {
     return async (arg: unknown, partialHeaders?: MessageHeaders) => {
+        // validate argument
+        arg = processor.req.parse(arg);
+
         const [requestCtx, cancelRequestCtx] = context().createChild();
 
         const result = await requestCtx.run(async () => {
@@ -211,4 +234,14 @@ function createHandlerProxy(
 
         return result;
     };
+}
+
+export function reportRpcError(error: unknown) {
+    if (error instanceof BusinessError) {
+        logger.warn('business error', error);
+    } else if (error instanceof CancelledError) {
+        logger.debug('cancelled error', error);
+    } else {
+        logger.error('unexpected error', error);
+    }
 }

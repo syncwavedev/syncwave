@@ -2,9 +2,9 @@
 	import type {LayoutProps} from './$types';
 	import {page} from '$app/state';
 
-	let {children}: LayoutProps = $props();
+	let {children, data}: LayoutProps = $props();
 </script>
 
-{#key page.params.boardId}
+{#key data.boardKey}
 	{@render children()}
 {/key}

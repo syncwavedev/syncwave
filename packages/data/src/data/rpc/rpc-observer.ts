@@ -118,6 +118,9 @@ export function createRpcObserverClient<TApi extends ObserverApi<unknown>>(
         }
 
         return (arg: unknown, headers?: MessageHeaders) => {
+            // validate argument
+            arg = handler.req.parse(arg);
+
             if (handler.type === 'handler') {
                 return server.handle({name, arg}, headers);
             } else if (handler.type === 'streamer') {

@@ -36,7 +36,9 @@ export class AuthContextParser {
             const authContext: AuthContext = {
                 identityId: jwtPayload.sub as IdentityId | undefined,
                 userId: jwtPayload.uid as UserId | undefined,
-                superadmin: SUPERADMIN_IDS.includes(jwtPayload.sub ?? ''),
+                superadmin:
+                    SUPERADMIN_IDS.includes(jwtPayload.sub ?? '') ||
+                    SUPERADMIN_IDS.includes(jwtPayload.uid ?? ''),
             };
             this.authContextCache.set(jwtToken, authContext);
             return authContext;

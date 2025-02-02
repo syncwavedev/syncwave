@@ -95,6 +95,18 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
             }
         },
     }),
+    deleteDbItem: handler({
+        req: z.object({path: z.array(zUint8Array())}),
+        res: z.void(),
+        handle: async ({dataNode}, {path}) => {
+            let current: DataNode = new AggregateDataNode({root: dataNode});
+            for (const key of path) {
+                current = current.child(key);
+            }
+
+            await current.delete();
+        },
+    }),
     getDbItem: handler({
         req: z.object({path: z.array(zUint8Array())}),
         res: z.discriminatedUnion('type', [

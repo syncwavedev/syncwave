@@ -98,6 +98,7 @@ export function createParticipantApi() {
         getDbTree: proxy('getDbTree'),
         getDbItem: proxy('getDbItem'),
         truncateDb: proxy('truncateDb'),
+        deleteDbItem: proxy('deleteDbItem'),
         getMyBoards: proxy('getMyBoards'),
         getObserve: proxy('getObserve'),
         echo: proxy('echo'),

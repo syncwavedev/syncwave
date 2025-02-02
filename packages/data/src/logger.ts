@@ -13,27 +13,43 @@ export interface Logger {
 export class ConsoleLogger implements Logger {
     trace(message: string, ...args: unknown[]): void {
         const cx = context();
-        console.trace(`[${cx.traceId}] [TRC] ${message}`, ...args);
+        console.trace(
+            `[${cx.traceId}] [${this.ts()}] [TRC] ${message}`,
+            ...args
+        );
     }
     debug(message: string, ...args: unknown[]): void {
         const cx = context();
-        // console.debug(`[${cx.traceId}] [DBG] ${message}`, ...args);
+        // console.debug(`[${cx.traceId}] [${this.ts()}] [DBG] ${message}`, ...args);
     }
     info(message: string, ...args: unknown[]): void {
         const cx = context();
-        console.info(`[${cx.traceId}] [INF] ${message}`, ...args);
+        console.info(
+            `[${cx.traceId}] [${this.ts()}] [INF] ${message}`,
+            ...args
+        );
     }
     warn(message: string, ...args: unknown[]): void {
         const cx = context();
-        console.warn(`[${cx.traceId}] [WRN] ${message}`, ...args);
+        console.warn(
+            `[${cx.traceId}] [${this.ts()}] [WRN] ${message}`,
+            ...args
+        );
     }
     error(message: string, error?: unknown): void {
         const cx = context();
         if (arguments.length >= 2) {
-            console.error(`[${cx.traceId}] [ERR] ${message}`, toError(error));
+            console.error(
+                `[${cx.traceId}] [${this.ts()}] [ERR] ${message}`,
+                toError(error)
+            );
         } else {
-            console.error(`[${cx.traceId}] [ERR] ${message}`);
+            console.error(`[${cx.traceId}] [${this.ts()}] [ERR] ${message}`);
         }
+    }
+
+    private ts(): string {
+        return new Date().toISOString();
     }
 }
 

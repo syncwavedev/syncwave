@@ -24,7 +24,7 @@ export interface Board extends Doc<BoardId> {
     deleted: boolean;
 }
 
-const SLUG_INDEX = 'key';
+const BOARD_KEY_INDEX = 'key';
 
 export function zBoard() {
     return zDoc<BoardId>().extend({
@@ -44,7 +44,7 @@ export class BoardRepo {
             tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
-                [SLUG_INDEX]: {
+                [BOARD_KEY_INDEX]: {
                     key: x => [x.key],
                     unique: true,
                     include: x => x.key !== undefined,
@@ -62,8 +62,14 @@ export class BoardRepo {
         return await this.rawRepo.getById(id);
     }
 
+    async getByKey(key: string): Promise<Board | undefined> {
+        return await this.rawRepo.getUnique(BOARD_KEY_INDEX, [key]);
+    }
+
     async checkKeyAvailable(key: string): Promise<boolean> {
-        const existingBoard = await this.rawRepo.getUnique(SLUG_INDEX, [key]);
+        const existingBoard = await this.rawRepo.getUnique(BOARD_KEY_INDEX, [
+            key,
+        ]);
 
         return existingBoard === undefined;
     }
@@ -89,7 +95,10 @@ export class BoardRepo {
             return await this.rawRepo.create(board);
         } catch (err) {
             // todo: map errors in AggregateError
-            if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
+            if (
+                err instanceof UniqueError &&
+                err.indexName === BOARD_KEY_INDEX
+            ) {
                 throw new BusinessError(
                     `board with key ${board.key} already exists`,
                     'board_key_taken'
@@ -104,7 +113,10 @@ export class BoardRepo {
         try {
             return await this.rawRepo.update(id, recipe);
         } catch (err) {
-            if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
+            if (
+                err instanceof UniqueError &&
+                err.indexName === BOARD_KEY_INDEX
+            ) {
                 throw new BusinessError(
                     'board with key already exists',
                     'board_key_taken'

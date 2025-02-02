@@ -19,6 +19,7 @@ export abstract class DataNode {
     abstract queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild>;
     abstract child(part: Uint8Array): DataNode;
     abstract visit<T>(visitor: DataNodeVisitor<T>): T;
+    abstract delete(): Promise<void>;
 }
 
 export class AggregateDataNode<
@@ -28,7 +29,9 @@ export class AggregateDataNode<
         super();
     }
 
-    async *queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild> {
+    override async *queryChildren(
+        prefix: Uint8Array
+    ): AsyncIterable<DataNodeChild> {
         for (const [prop, node] of Object.entries(this.children)) {
             const key = encodeString(prop);
             if (bufStartsWith(key, prefix)) {
@@ -37,7 +40,7 @@ export class AggregateDataNode<
         }
     }
 
-    child(key: Uint8Array): DataNode {
+    override child(key: Uint8Array): DataNode {
         const result = this.children[decodeString(key)];
         if (!result) {
             `AggregateDataNode does not have any children with key = ${decodeHex(key)}`;
@@ -46,8 +49,14 @@ export class AggregateDataNode<
         return result;
     }
 
-    visit<T>(visitor: DataNodeVisitor<T>): T {
+    override visit<T>(visitor: DataNodeVisitor<T>): T {
         return visitor.aggregate(this);
+    }
+
+    override async delete(): Promise<void> {
+        for await (const child of this.queryChildren(new Uint8Array())) {
+            await child.node.delete();
+        }
     }
 }
 
@@ -56,20 +65,26 @@ export class RepoDataNode<T extends Doc> extends DataNode {
         super();
     }
 
-    async *queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild> {
+    override async *queryChildren(
+        prefix: Uint8Array
+    ): AsyncIterable<DataNodeChild> {
         yield* this.repo.getAll(prefix).map(doc => ({
             key: encodeUuid(doc.id),
             node: new DocDataNode(doc.id, this.repo),
         }));
     }
 
-    child(key: Uint8Array): DataNode {
+    override child(key: Uint8Array): DataNode {
         const uuid = decodeUuid(key);
         return new DocDataNode(uuid, this.repo);
     }
 
-    visit<TResult>(visitor: DataNodeVisitor<TResult>): TResult {
+    override visit<TResult>(visitor: DataNodeVisitor<TResult>): TResult {
         return visitor.repo(this);
+    }
+
+    override async delete(): Promise<void> {
+        await this.repo.unsafe_deleteAll();
     }
 }
 
@@ -81,21 +96,25 @@ export class DocDataNode<T extends Doc> extends DataNode {
         super();
     }
 
-    async *queryChildren(): AsyncIterable<DataNodeChild> {
+    override async *queryChildren(): AsyncIterable<DataNodeChild> {
         // no children
     }
 
-    child(key: Uint8Array): DataNode {
+    override child(key: Uint8Array): DataNode {
         throw new Error(
             `DocDataNode does not have any children, part: ${decodeHex(key)}`
         );
     }
 
-    visit<T>(visitor: DataNodeVisitor<T>): T {
+    override visit<T>(visitor: DataNodeVisitor<T>): T {
         return visitor.doc(this);
     }
 
     async snapshot(): Promise<T | undefined> {
         return await this.repo.getById(this.docId);
+    }
+
+    override async delete(): Promise<void> {
+        await this.repo.unsafe_delete(this.docId);
     }
 }

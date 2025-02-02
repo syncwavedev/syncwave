@@ -5,7 +5,11 @@ export type ErrorCode =
     | 'not_authenticated'
     | 'board_change_key_not_supported'
     | 'aggregate'
-    | 'task_not_found';
+    | 'task_not_found'
+    | 'board_not_found'
+    | 'unknown';
+
+export type ErrorType = 'business' | 'system';
 
 export class BusinessError extends Error {
     constructor(
@@ -59,4 +63,20 @@ export function toError(reason: unknown): Error {
     }
 
     return new Error('Unknown error: ' + reason, {cause: reason});
+}
+
+export function getErrorCode(error: unknown): ErrorCode {
+    if (error instanceof BusinessError) {
+        return error.code;
+    }
+
+    return 'unknown';
+}
+
+export function getErrorType(error: unknown): ErrorType {
+    if (error instanceof BusinessError) {
+        return 'business';
+    }
+
+    return 'system';
 }

@@ -2,30 +2,17 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import {Plus} from 'lucide-svelte';
 	import {Button} from '$lib/components/ui/button';
-	import {getSdk} from '$lib/utils';
-	import {createBoardId} from 'ground-data';
-	import {goto} from '$app/navigation';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import {ScrollArea} from '$lib/components/ui/scroll-area';
+	import AddBoardWizard from './add-board-wizard.svelte';
 
-	const sdk = getSdk();
-
-	async function createBoard() {
-		const boardId = createBoardId();
-		const board = await sdk(rpc =>
-			rpc.createBoard({
-				boardId,
-				name: 'Untitled',
-				key: boardId,
-			})
-		);
-
-		goto(`/app/b/${board.id}`);
-	}
+	let addBoardWizardOpen = $state(false);
 </script>
 
 <Sidebar.Menu>
 	<Sidebar.MenuItem>
 		<Sidebar.MenuButton
-			onclick={createBoard}
+			onclick={() => (addBoardWizardOpen = !addBoardWizardOpen)}
 			size="lg"
 			class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
 		>
@@ -45,3 +32,9 @@
 		</Sidebar.MenuButton>
 	</Sidebar.MenuItem>
 </Sidebar.Menu>
+
+<Dialog.Root bind:open={addBoardWizardOpen}>
+	<Dialog.Content>
+		<AddBoardWizard onCreate={() => (addBoardWizardOpen = false)} />
+	</Dialog.Content>
+</Dialog.Root>

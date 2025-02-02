@@ -5,7 +5,7 @@
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import {getSdk} from '$lib/utils';
 	import {type DataNodeDto} from 'ground-data';
-	import {ChevronDown, Dot} from 'lucide-svelte';
+	import {ChevronDown, Dot, Trash} from 'lucide-svelte';
 
 	let source: 'client' | 'server' = $state('server');
 
@@ -21,6 +21,13 @@
 			const info = await sdk(x => x.getDbItem({path}));
 			return JSON.stringify(info, null, 2);
 		})();
+	}
+
+	async function remove(path: Uint8Array[]): Promise<void> {
+		if (!confirm('Are you sure?')) return;
+		console.log('yes!');
+		const res = await sdk(x => x.deleteDbItem({path}));
+		console.log('res', res);
 	}
 
 	let detailsPromise: Promise<string> | undefined = $state(undefined);
@@ -47,6 +54,9 @@
 								{:else}
 									<Dot />
 								{/if}
+								<Button onclick={() => remove(path)} variant="ghost" size="icon">
+									<Trash />
+								</Button>
 								<Button variant="ghost" onclick={() => openDetails(path)}>
 									{item.name} <span class="text-gray-400">[{item.type}]</span>
 								</Button>

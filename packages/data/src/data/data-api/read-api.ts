@@ -169,11 +169,19 @@ export function createReadApi() {
         }),
         getBoard: observer({
             req: z.object({
-                boardId: zUuid<BoardId>(),
+                key: z.string(),
             }),
-            value: zBoard().optional(),
-            update: zBoard().optional(),
-            observe: async (st, {boardId}) => {
+            value: zBoard(),
+            update: zBoard(),
+            observe: async (st, {key}) => {
+                const board = await st.transact(tx => tx.boards.getByKey(key));
+                if (board === undefined) {
+                    throw new BusinessError(
+                        `board with key ${key} not found`,
+                        'board_not_found'
+                    );
+                }
+                const boardId = board.id;
                 return observable({
                     async get() {
                         return await st.transact(async tx => {
@@ -181,6 +189,12 @@ export function createReadApi() {
                                 tx.boards.getById(boardId),
                                 st.ensureBoardReadAccess(tx, boardId),
                             ]);
+                            if (board === undefined) {
+                                throw new BusinessError(
+                                    `board with key ${key} not found`,
+                                    'board_not_found'
+                                );
+                            }
 
                             return board;
                         });

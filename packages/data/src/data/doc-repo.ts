@@ -126,6 +126,26 @@ export class DocRepo<T extends Doc> {
         ).map(x => x.value.snapshot());
     }
 
+    async unsafe_deleteAll() {
+        for await (const {id} of this.getAll()) {
+            await this.unsafe_delete(id);
+        }
+    }
+
+    async unsafe_delete(id: Uuid) {
+        const doc = await this.primary.get(id);
+        if (!doc) {
+            throw new Error('doc not found: ' + id);
+        }
+        const prev = doc.snapshot();
+        const next = undefined;
+
+        await whenAll([
+            this.primary.delete(id),
+            ...[...this.indexes.values()].map(x => x.sync(prev, next)),
+        ]);
+    }
+
     query(indexName: string, condition: Condition<IndexKey>): Stream<T> {
         const index = this._index(indexName);
 

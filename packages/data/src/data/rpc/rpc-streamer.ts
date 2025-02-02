@@ -1,14 +1,18 @@
 import {z} from 'zod';
 import {ContextManager} from '../../context-manager.js';
-import {CancelledError, Context, context} from '../../context.js';
+import {Cancel, CancelledError, Context, context} from '../../context.js';
 import {toError} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {Channel, ChannelWriter, Stream} from '../../stream.js';
-import {assertNever, Brand, run} from '../../utils.js';
+import {assertNever, Brand, catchCancel, run} from '../../utils.js';
 import {createUuid, Uuid, zUuid} from '../../uuid.js';
 import {Message, MessageHeaders} from '../communication/message.js';
 import {catchConnectionClosed, Connection} from '../communication/transport.js';
-import {createRpcHandlerClient, launchRpcHandlerServer} from './rpc-handler.js';
+import {
+    createRpcHandlerClient,
+    launchRpcHandlerServer,
+    reportRpcError,
+} from './rpc-handler.js';
 import {createApi, handler, Handler, InferRpcClient, Streamer} from './rpc.js';
 
 export type StreamerApi<TState> = Record<
@@ -101,32 +105,37 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new Error('processor must be a streamer');
                 }
 
-                state.contextManager
-                    .start(streamId, context().traceId, async () => {
-                        try {
-                            for await (const value of processor.stream(
-                                state.state,
-                                arg,
-                                headers
-                            )) {
+                catchCancel(
+                    state.contextManager.start(
+                        streamId,
+                        context().traceId,
+                        async () => {
+                            try {
+                                for await (const value of processor.stream(
+                                    state.state,
+                                    arg,
+                                    headers
+                                )) {
+                                    await catchConnectionClosed(
+                                        state.client.next({streamId, value})
+                                    );
+                                }
+                            } catch (error: unknown) {
+                                reportRpcError(error);
                                 await catchConnectionClosed(
-                                    state.client.next({streamId, value})
+                                    state.client.throw({streamId, error})
                                 );
+                            } finally {
+                                await catchConnectionClosed(
+                                    state.client.end({streamId})
+                                );
+                                state.contextManager.finish(streamId);
                             }
-                        } catch (error: unknown) {
-                            await catchConnectionClosed(
-                                state.client.throw({streamId, error})
-                            );
-                        } finally {
-                            await catchConnectionClosed(
-                                state.client.end({streamId})
-                            );
-                            state.contextManager.finish(streamId);
                         }
-                    })
-                    .catch(error => {
-                        logger.error('stream failed', error);
-                    });
+                    )
+                ).catch(error => {
+                    logger.error('stream failed', error);
+                });
 
                 return {streamId};
             },
@@ -264,17 +273,21 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
         }
 
         return (arg: unknown, headers?: MessageHeaders) => {
+            // validate argument
+            arg = handler.req.parse(arg);
+
             if (handler.type === 'handler') {
                 return server.handle({name, arg}, headers);
             } else if (handler.type === 'streamer') {
                 const streamId = createStreamId();
 
+                let cancelCleanup: Cancel | undefined = undefined;
                 const cleanup = () => {
                     clientApiState.finish(streamId);
-                    cancelCleanup();
+                    cancelCleanup?.();
                 };
 
-                const cancelCleanup = context().onCancel(() => {
+                cancelCleanup = context().onCancel(() => {
                     cleanup();
                 });
 

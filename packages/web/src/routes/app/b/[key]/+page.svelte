@@ -5,9 +5,9 @@
 	import {getState} from '$lib/utils.svelte';
 
 	const {data} = $props();
-	const {boardId, initialBoard} = data;
+	const {boardKey, initialBoard} = data;
 
-	const board = getState(initialBoard, x => x.getBoard({boardId}));
+	const board = getState(initialBoard, x => x.getBoard({key: boardKey}));
 </script>
 
 <header

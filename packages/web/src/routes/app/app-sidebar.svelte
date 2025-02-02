@@ -14,8 +14,6 @@
 		...restProps
 	}: ComponentProps<typeof Sidebar.Root> & {initialBoards: Board[]} = $props();
 
-	console.log('initialBoards', initialBoards);
-
 	const boards = getState(initialBoards, x => x.getMyBoards({}));
 
 	const data = {

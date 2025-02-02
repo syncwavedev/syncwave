@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:ground/models/message.dart';
 
-import '../../widgets/divider.dart';
 import 'message_tile.dart';
 
 class MessageSilverList extends StatelessWidget {
@@ -12,13 +11,14 @@ class MessageSilverList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliverList.separated(
-      itemCount: messages.length,
-      separatorBuilder: (context, index) => const Divider(),
-      itemBuilder: (context, index) {
-        final message = messages[index];
-        return MessageTile(message: message);
-      },
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final message = messages[index];
+          return MessageTile(message: message);
+        },
+        childCount: messages.length,
+      ),
     );
   }
 }

@@ -207,7 +207,7 @@ class _BottomBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          color: context.colors.subtle1,
+          color: context.colors.bg,
           padding: EdgeInsets.only(
             bottom: math.max(MediaQuery.of(context).padding.bottom,
                 context.theme.spacing.sm),

@@ -35,6 +35,10 @@ class ContextMenuState extends State<ContextMenu>
   late final AnimationController _previewController;
   late final Animation<double> _previewAnimation;
 
+  // New scale animation controller and animation
+  late final AnimationController _scaleController;
+  late final Animation<double> _scaleAnimation;
+
   @override
   void initState() {
     super.initState();
@@ -47,12 +51,24 @@ class ContextMenuState extends State<ContextMenu>
       parent: _previewController,
       curve: Curves.decelerate,
     );
+
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.easeOutBack,
+      ),
+    );
   }
 
   @override
   void dispose() {
     _removeOverlay();
     _previewController.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
@@ -77,70 +93,72 @@ class ContextMenuState extends State<ContextMenu>
       builder: (context) => GestureDetector(
         onTap: _removeOverlay,
         behavior: HitTestBehavior.translucent,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: 12.0,
-                  sigmaY: 12.0,
-                ),
-                child: Container(
-                  color: context.colors.white.withAlpha(150),
+        child: RepaintBoundary(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: 12.0,
+                    sigmaY: 12.0,
+                  ),
+                  child: Container(
+                    color: context.colors.white.withAlpha(150),
+                  ),
                 ),
               ),
-            ),
-            Builder(builder: (context) {
-              final renderBox =
-                  _childKey.currentContext?.findRenderObject() as RenderBox?;
-              if (renderBox == null) return const SizedBox();
+              Builder(builder: (context) {
+                final renderBox =
+                    _childKey.currentContext?.findRenderObject() as RenderBox?;
+                if (renderBox == null) return const SizedBox();
 
-              final padding = MediaQuery.of(context).viewPadding;
-              final childPosition =
-                  renderBox.localToGlobal(Offset(padding.left, padding.top));
-              final screenSize = MediaQuery.of(context).size;
-              final availableHeight = screenSize.height;
+                final padding = MediaQuery.of(context).viewPadding;
+                final childPosition =
+                    renderBox.localToGlobal(Offset(padding.left, padding.top));
+                final screenSize = MediaQuery.of(context).size;
+                final availableHeight = screenSize.height;
 
-              final left = childPosition.dx;
-              final top = childPosition.dy - padding.top * 2;
+                final left = childPosition.dx;
+                final top = childPosition.dy - padding.top * 2;
 
-              return CustomMultiChildLayout(
-                delegate: _ContextMenuLayoutDelegate(
-                  preferredTopOffset: top,
-                  screenHeight: availableHeight,
-                ),
-                children: <Widget>[
-                  LayoutId(
-                    id: _ContextMenuSlot.content,
-                    child: SafeArea(
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: EdgeInsets.only(left: left),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              widget.previewBuilder != null
-                                  ? widget.previewBuilder!(
-                                      context, _previewAnimation)
-                                  : ConstrainedBox(
-                                      constraints: BoxConstraints.tightFor(
-                                        height: renderBox.size.height,
-                                        width: renderBox.size.width,
+                return CustomMultiChildLayout(
+                  delegate: _ContextMenuLayoutDelegate(
+                    preferredTopOffset: top,
+                    screenHeight: availableHeight,
+                  ),
+                  children: <Widget>[
+                    LayoutId(
+                      id: _ContextMenuSlot.content,
+                      child: SafeArea(
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: left),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                widget.previewBuilder != null
+                                    ? widget.previewBuilder!(
+                                        context, _previewAnimation)
+                                    : ConstrainedBox(
+                                        constraints: BoxConstraints.tightFor(
+                                          height: renderBox.size.height,
+                                          width: renderBox.size.width,
+                                        ),
+                                        child: _defaultPreviewBuilder(context),
                                       ),
-                                      child: _defaultPreviewBuilder(context),
-                                    ),
-                              SizedBox(height: 8),
-                              _ContextMenuSheet(actions: widget.actions),
-                            ],
+                                SizedBox(height: 8),
+                                _ContextMenuSheet(actions: widget.actions),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              );
-            }),
-          ],
+                  ],
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
@@ -162,8 +180,17 @@ class ContextMenuState extends State<ContextMenu>
   Widget build(BuildContext context) {
     return GestureDetector(
       key: _childKey,
+      onTapDown: (details) {
+        _scaleController.forward();
+      },
+      onTapCancel: () {
+        _scaleController.reverse();
+      },
       onLongPress: _onLongPress,
-      child: widget.child,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: widget.child,
+      ),
     );
   }
 }

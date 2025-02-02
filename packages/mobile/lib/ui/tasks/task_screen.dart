@@ -25,7 +25,7 @@ class TaskScreen extends StatelessWidget {
         child: Icons.chevronLeft,
         onPressed: () => context.popPage(),
       ),
-      bottomBar: BottomBar(
+      bottomBar: BottomBar.noBorder(
         children: [
           Expanded(
             child: Padding(

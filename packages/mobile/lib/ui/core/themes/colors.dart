@@ -55,7 +55,7 @@ final class ColorScheme with Diagnosticable {
 
 @immutable
 abstract final class ColorsLight {
-  static const Color black = Color.fromRGBO(51, 51, 51, 1);
+  static const Color black = Color.fromRGBO(0, 0, 0, 0);
   static const Color white = Color.fromRGBO(255, 255, 255, 1);
 
   static const Color alwaysBlack = Color.fromRGBO(0, 0, 0, 1);
@@ -80,8 +80,8 @@ abstract final class ColorsLight {
 @immutable
 abstract final class ColorsDark {
   // Core palette (True grayscale)
-  static const Color black = Color.fromRGBO(235, 235, 235, 1); // Near-white
-  static const Color white = Color.fromRGBO(28, 28, 28, 1); // Deep gray
+  static const Color black = Color.fromRGBO(255, 255, 255, 1);
+  static const Color white = Color.fromRGBO(0, 0, 0, 1);
 
   // Absolute values
   static const Color alwaysBlack = Color.fromRGBO(0, 0, 0, 1);

@@ -13,12 +13,12 @@
 	let itemsPromise: Promise<DataNodeDto> | undefined = $state(undefined);
 
 	$effect(() => {
-		itemsPromise = sdk.getDbTree({});
+		itemsPromise = sdk(x => x.getDbTree({}));
 	});
 
 	function openDetails(path: Uint8Array[]) {
 		detailsPromise = (async () => {
-			const info = await sdk.getDbItem({path});
+			const info = await sdk(x => x.getDbItem({path}));
 			return JSON.stringify(info, null, 2);
 		})();
 	}
@@ -26,7 +26,7 @@
 	let detailsPromise: Promise<string> | undefined = $state(undefined);
 </script>
 
-<Button variant="destructive" onclick={() => sdk.truncateDb({})}>Reset store</Button>
+<Button variant="destructive" onclick={() => sdk(x => x.truncateDb({}))}>Reset store</Button>
 <div class="flex gap-8">
 	<div>
 		{#if itemsPromise}

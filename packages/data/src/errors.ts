@@ -1,9 +1,9 @@
 export type ErrorCode =
-    | 'board_slug_taken'
+    | 'board_key_taken'
     | 'identity_email_taken'
     | 'forbidden'
     | 'not_authenticated'
-    | 'board_change_slug_not_supported'
+    | 'board_change_key_not_supported'
     | 'aggregate'
     | 'task_not_found';
 
@@ -58,5 +58,5 @@ export function toError(reason: unknown): Error {
         return reason;
     }
 
-    return new Error('Unknown error', {cause: reason});
+    return new Error('Unknown error: ' + reason, {cause: reason});
 }

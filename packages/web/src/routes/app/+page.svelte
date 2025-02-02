@@ -1,65 +1,36 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/button/button.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
-	import {logger, type Board} from 'ground-data';
+	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
+	import {Separator} from '$lib/components/ui/separator';
+	import * as Sidebar from '$lib/components/ui/sidebar';
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
-
-	const sdk = getSdk();
-
-	let cancelled = false;
-
-	let boards: Board[] = $state([]);
-	let itemValue: string = $state('');
-
-	const topic = `topic-${Math.random().toString().split('.')[1]}`;
-
-	async function publish() {
-		await sdk(rpc => rpc.streamPut({topic, value: itemValue}));
-	}
-
-	$effect(() => {
-		(async () => {
-			try {
-				logger.info('request boards...');
-				const [initialBoards, boards$] = await sdk(x => x.getMyBoards({}));
-				boards = initialBoards;
-				logger.info('start reading boards...');
-				let index = 0;
-				for await (const nextBoards of boards$) {
-					index += 1;
-					if (index >= 3) {
-						break;
-					}
-					logger.info('next boards', nextBoards.length);
-					boards = nextBoards;
-				}
-			} finally {
-				logger.info('boards stream closed');
-			}
-		})();
-	});
 </script>
 
-{#if idInfo}
-	<div>
-		<Button onclick={() => auth.logOut()}>Log out</Button>
+<header
+	class="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12"
+>
+	<div class="flex items-center gap-2 px-4">
+		<Sidebar.Trigger class="-ml-1" />
+		<Separator orientation="vertical" class="mr-2 h-4" />
+		<Breadcrumb.Root>
+			<Breadcrumb.List>
+				<Breadcrumb.Item class="hidden md:block">
+					<Breadcrumb.Link href="#">Ground board</Breadcrumb.Link>
+				</Breadcrumb.Item>
+			</Breadcrumb.List>
+		</Breadcrumb.Root>
 	</div>
-	User: {idInfo.userId}
-{:else}
-	<Button href="/log-in">Log in</Button>
-{/if}
-
-<Button onclick={() => (cancelled = true)}>Stop stream</Button>
-<Input bind:value={itemValue} type="text" />
-<Button onclick={publish}>Publish into stream</Button>
-
-<div>
-	{#each boards as board}
+</header>
+<div class="p-4">
+	{#if idInfo}
 		<div>
-			{board.createdAt} - {board.name}
+			<Button onclick={() => auth.logOut()}>Log out</Button>
 		</div>
-	{/each}
+		User: {idInfo.userId}
+	{:else}
+		<Button href="/auth/log-in">Log in</Button>
+	{/if}
 </div>

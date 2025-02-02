@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import {Plus} from 'lucide-svelte';
-	import {Button} from './ui/button';
+	import {Button} from '$lib/components/ui/button';
 	import {getSdk} from '$lib/utils';
 	import {createBoardId} from 'ground-data';
 	import {goto} from '$app/navigation';

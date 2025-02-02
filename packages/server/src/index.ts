@@ -213,7 +213,7 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
         const {code, state} = request.query;
 
         if (typeof code !== 'string') {
-            return request.redirect(`${APP_URL}/log-in/failed`);
+            return request.redirect(`${APP_URL}/auth/log-in/failed`);
         }
 
         const result = await getGoogleUser(code, {
@@ -222,14 +222,14 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
             redirectUri: GOOGLE_REDIRECT_URL,
         });
         if (result.type === 'error') {
-            return request.redirect(`${APP_URL}/log-in/failed`);
+            return request.redirect(`${APP_URL}/auth/log-in/failed`);
         }
 
         if (!result.user.verified_email || !result.user.email) {
             logger.warn(
                 `Google user has unverified email: ${result.user.email}`
             );
-            return request.redirect(`${APP_URL}/log-in/failed`);
+            return request.redirect(`${APP_URL}/auth/log-in/failed`);
         }
 
         const jwtToken = await coordinator().issueJwtByUserEmail(
@@ -241,7 +241,7 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
         );
 
         return request.redirect(
-            `${APP_URL}/log-in/callback/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
+            `${APP_URL}/auth/log-in/callback/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
         );
     });
 }

@@ -18,16 +18,17 @@ export function createBoardId(): BoardId {
 }
 
 export interface Board extends Doc<BoardId> {
-    readonly slug?: string;
+    readonly key: string;
     name: string;
     ownerId: UserId;
     deleted: boolean;
 }
 
-const SLUG_INDEX = 'slug';
+const SLUG_INDEX = 'key';
 
 export function zBoard() {
     return zDoc<BoardId>().extend({
+        key: z.string(),
         name: z.string(),
         ownerId: zUuid<UserId>(),
         deleted: z.boolean(),
@@ -44,9 +45,9 @@ export class BoardRepo {
             onChange,
             indexes: {
                 [SLUG_INDEX]: {
-                    key: x => [x.slug],
+                    key: x => [x.key],
                     unique: true,
-                    include: x => x.slug !== undefined,
+                    include: x => x.key !== undefined,
                 },
             },
             schema: zBoard(),
@@ -61,8 +62,8 @@ export class BoardRepo {
         return await this.rawRepo.getById(id);
     }
 
-    async checkSlugAvailable(slug: string): Promise<boolean> {
-        const existingBoard = await this.rawRepo.getUnique(SLUG_INDEX, [slug]);
+    async checkKeyAvailable(key: string): Promise<boolean> {
+        const existingBoard = await this.rawRepo.getUnique(SLUG_INDEX, [key]);
 
         return existingBoard === undefined;
     }
@@ -90,8 +91,8 @@ export class BoardRepo {
             // todo: map errors in AggregateError
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
                 throw new BusinessError(
-                    `board with slug ${board.slug} already exists`,
-                    'board_slug_taken'
+                    `board with key ${board.key} already exists`,
+                    'board_key_taken'
                 );
             }
 
@@ -105,8 +106,8 @@ export class BoardRepo {
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === SLUG_INDEX) {
                 throw new BusinessError(
-                    'board with slug already exists',
-                    'board_slug_taken'
+                    'board with key already exists',
+                    'board_key_taken'
                 );
             }
 

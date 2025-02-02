@@ -10,7 +10,7 @@
 		</p>
 
 		<div class="mt-6 flex justify-center gap-4">
-			<Button href="/log-in">Try Again</Button>
+			<Button href="/auth/log-in">Try Again</Button>
 			<Button variant="ghost" href="/">Go to Home</Button>
 		</div>
 	</div>

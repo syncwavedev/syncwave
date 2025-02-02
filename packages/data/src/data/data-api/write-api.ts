@@ -100,7 +100,7 @@ export function createWriteApi() {
                     deleted: false,
                     name: req.name,
                     ownerId: userId,
-                    slug: req.slug,
+                    key: req.slug,
                 };
                 await st.tx.boards.create(board);
                 await st.tx.members.create({

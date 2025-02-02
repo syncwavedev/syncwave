@@ -2,17 +2,13 @@
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
+	import type {Board} from 'ground-data';
+	import {formatTime} from '$lib/utils';
 
 	let {
 		boards,
 	}: {
-		boards: {
-			name: string;
-			description: string;
-			url: string;
-			avatar?: string;
-			time: string;
-		}[];
+		boards: Board[];
 	} = $props();
 
 	function generateAvatar(name: string): {avatar: string; color: string} {
@@ -52,7 +48,7 @@
 </script>
 
 <Sidebar.Menu>
-	{#each boards as item, idx (item.name)}
+	{#each boards as item (item.id)}
 		<ContextMenu.Root>
 			<ContextMenu.Trigger>
 				<Sidebar.MenuItem>
@@ -63,10 +59,10 @@
 						{#snippet child({props}: any)}
 							{@const {avatar, color} = generateAvatar(item.name)}
 
-							<a href={item.url} {...props}>
+							<a href={`/app/b/${item.key}`} {...props}>
 								<Avatar.Root class="h-8 w-8 rounded-lg">
-									{#if item.avatar}
-										<Avatar.Image src={item.avatar} alt={item.name} />
+									{#if false as any}
+										<Avatar.Image src={item.name} alt={item.name} />
 									{/if}
 									<Avatar.Fallback
 										class="rounded-lg"
@@ -83,11 +79,11 @@
 										</div>
 
 										<div class="text-xs">
-											{item.time}
+											{formatTime(item.createdAt)}
 										</div>
 									</div>
 									<div class="max-w-full truncate text-ellipsis text-xs">
-										{item.description}
+										{item.key}
 									</div>
 								</div>
 							</a>

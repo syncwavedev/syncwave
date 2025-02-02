@@ -23,7 +23,7 @@
 		"@swc/core": "^1.10.11",
 		"@tailwindcss/container-queries": "^0.1.1",
 		"autoprefixer": "^10.4.20",
-		"bits-ui": "^1.0.0-next.78",
+		"bits-ui": "^1.0.0-next.84",
 		"clsx": "^2.1.1",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",

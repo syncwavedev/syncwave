@@ -11,4 +11,4 @@
 	});
 </script>
 
-<Button href="/log-in">Sign in</Button>
+<Button href="/auth/log-in">Sign in</Button>

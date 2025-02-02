@@ -17,7 +17,7 @@
 	if (redirectUrl) {
 		window.location.href = redirectUrl;
 	} else {
-		goto(`/log-in?redirectUrl=${encodeURIComponent(redirectUrl ?? '/')}`);
+		goto(`/auth/log-in?redirectUrl=${encodeURIComponent(redirectUrl ?? '/')}`);
 		showErrorToast();
 	}
 </script>

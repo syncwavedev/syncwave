@@ -1,9 +1,9 @@
 import {
 	assert,
+	logger,
 	Subject,
 	type Codec,
 	type Connection,
-	type Logger,
 	type Observer,
 	type TransportClient,
 	type Unsubscribe,
@@ -12,7 +12,6 @@ import {
 export interface WsTransportClientOptions<T> {
 	readonly url: string;
 	readonly codec: Codec<T>;
-	readonly logger: Logger;
 }
 
 export class WsTransportClient<T> implements TransportClient<T> {
@@ -24,7 +23,7 @@ export class WsTransportClient<T> implements TransportClient<T> {
 			ws.binaryType = 'arraybuffer';
 
 			ws.addEventListener('open', () => {
-				const connection = new WsClientConnection<T>(ws, this.opt.codec, this.opt.logger);
+				const connection = new WsClientConnection<T>(ws, this.opt.codec);
 				resolve(connection);
 			});
 
@@ -40,26 +39,25 @@ export class WsClientConnection<T> implements Connection<T> {
 
 	constructor(
 		private readonly ws: WebSocket,
-		private readonly codec: Codec<T>,
-		private readonly logger: Logger
+		private readonly codec: Codec<T>
 	) {
 		this.setupListeners();
 
 		this.subscribe({
 			next: async msg => {
-				this.logger.debug('ws got', msg);
+				logger.debug('ws got', msg);
 			},
 			throw: async err => {
-				this.logger.error('ws err', err);
+				logger.error('ws err', err);
 			},
 			close: () => {
-				this.logger.debug('ws closed');
+				logger.debug('ws closed');
 			},
 		});
 	}
 
 	send(message: T): Promise<void> {
-		this.logger.debug('ws send message', message);
+		logger.debug('ws send message', message);
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 
@@ -81,7 +79,7 @@ export class WsClientConnection<T> implements Connection<T> {
 				const message = this.codec.decode(new Uint8Array(event.data));
 				await this.subject.next(message);
 			} catch (error) {
-				this.logger.error('error during ws message', error);
+				logger.error('error during ws message', error);
 			}
 		});
 
@@ -89,7 +87,7 @@ export class WsClientConnection<T> implements Connection<T> {
 			try {
 				await this.subject.throw(new Error('ws.error: ' + error.toString()));
 			} catch (error) {
-				this.logger.error('error during ws error', error);
+				logger.error('error during ws error', error);
 			}
 		});
 

@@ -100,6 +100,7 @@ export function createParticipantApi() {
         getMyBoards: proxy('getMyBoards'),
         getObserve: proxy('getObserve'),
         echo: proxy('echo'),
+        getBoard: proxy('getBoard'),
     });
 }
 

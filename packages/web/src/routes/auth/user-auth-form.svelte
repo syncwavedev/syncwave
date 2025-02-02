@@ -54,7 +54,7 @@
 			const result = await sdk(rpc => rpc.sendSignInEmail({email}));
 			if (result.type === 'success') {
 				goto(
-					`/log-in/code?redirectUrl=${encodeURIComponent(redirectUrl)}&email=${encodeURIComponent(email)}`
+					`/auth/log-in/code?redirectUrl=${encodeURIComponent(redirectUrl)}&email=${encodeURIComponent(email)}`
 				);
 			} else {
 				error = result.type;

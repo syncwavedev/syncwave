@@ -4,6 +4,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import {useSidebar} from '$lib/components/ui/sidebar/index.js';
 	import {getAuthManager} from '$lib/utils';
+	import type {Identity, User} from 'ground-data';
 	import BadgeCheck from 'lucide-svelte/icons/badge-check';
 	import Bell from 'lucide-svelte/icons/bell';
 	import ChevronsUpDown from 'lucide-svelte/icons/chevrons-up-down';
@@ -11,7 +12,7 @@
 	import LogOut from 'lucide-svelte/icons/log-out';
 	import Sparkles from 'lucide-svelte/icons/sparkles';
 
-	let {user}: {user: {name: string; email: string; avatar: string}} = $props();
+	let {me}: {me: {user: User; identity: Identity}} = $props();
 	const sidebar = useSidebar();
 	const authManager = getAuthManager();
 </script>
@@ -27,12 +28,12 @@
 						{...props}
 					>
 						<Avatar.Root class="h-8 w-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
+							<Avatar.Image src="/avatar-example.jpeg" alt={me.user.id} />
 							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-semibold">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+							<span class="truncate font-semibold">{me.user.id}</span>
+							<span class="truncate text-xs">{me.identity.email}</span>
 						</div>
 						<ChevronsUpDown class="ml-auto size-4" />
 					</Sidebar.MenuButton>
@@ -47,12 +48,12 @@
 				<DropdownMenu.Label class="p-0 font-normal">
 					<div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 						<Avatar.Root class="h-8 w-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
+							<Avatar.Image src="/avatar-example.jpeg" alt={me.user.id} />
 							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-semibold">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+							<span class="truncate font-semibold">{me.user.id}</span>
+							<span class="truncate text-xs">{me.identity.email}</span>
 						</div>
 					</div>
 				</DropdownMenu.Label>

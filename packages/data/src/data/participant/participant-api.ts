@@ -91,6 +91,7 @@ export function createParticipantApi() {
         streamPut: proxy('streamPut'),
         getStream: proxy('getStream'),
         debug: proxy('debug'),
+        getMe: proxy('getMe'),
         sendSignInEmail: proxy('sendSignInEmail'),
         createBoard: proxy('createBoard'),
         verifySignInCode: proxy('verifySignInCode'),

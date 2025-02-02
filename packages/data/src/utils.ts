@@ -113,9 +113,12 @@ export function assertNever(value: never): never {
     throw new Error('assertNever failed: ' + value);
 }
 
-export function assert(expression: boolean): asserts expression {
+export function assert(
+    expression: boolean,
+    message?: string
+): asserts expression {
     if (!expression) {
-        throw new Error('assertion failed');
+        throw new Error('assertion failed: ' + message);
     }
 }
 

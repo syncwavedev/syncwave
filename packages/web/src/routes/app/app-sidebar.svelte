@@ -4,30 +4,27 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import type {ComponentProps} from 'svelte';
 	import NewBoardMenu from './new-board-menu.svelte';
-	import {getState} from '$lib/utils.svelte';
-	import type {Board} from 'ground-data';
+	import {getState, type State} from '$lib/utils.svelte';
+	import type {Board, Identity, User} from 'ground-data';
 
 	let {
 		initialBoards,
+		initialMe,
 		ref = $bindable(null),
 		collapsible = 'icon',
 		...restProps
-	}: ComponentProps<typeof Sidebar.Root> & {initialBoards: Board[]} = $props();
+	}: ComponentProps<typeof Sidebar.Root> & {
+		initialBoards: Board[];
+		initialMe: {user: User; identity: Identity};
+	} = $props();
 
 	const boards = getState(initialBoards, x => x.getMyBoards({}));
-
-	const data = {
-		user: {
-			name: 'Dmitry Tilyupo',
-			email: 'tilyupo@gmail.com',
-			avatar: '/avatar-example.jpeg',
-		},
-	};
+	const me = getState(initialMe, x => x.getMe({}));
 </script>
 
 <Sidebar.Root bind:ref {collapsible} {...restProps}>
 	<Sidebar.Header>
-		<NavUser user={data.user} />
+		<NavUser me={me.value} />
 	</Sidebar.Header>
 	<Sidebar.Content>
 		<Sidebar.Group>

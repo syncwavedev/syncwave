@@ -14,6 +14,7 @@ import {
     userEvents,
 } from '../data-layer.js';
 import {BoardId, zBoard} from '../repos/board-repo.js';
+import {zIdentity} from '../repos/identity-repo.js';
 import {Member} from '../repos/member-repo.js';
 import {TaskId, zTask} from '../repos/task-repo.js';
 import {UserId, zUser} from '../repos/user-repo.js';
@@ -62,8 +63,14 @@ export function createReadApi() {
     return createApi<ReadApiState>()({
         getMe: observer({
             req: z.object({}),
-            value: zUser(),
-            update: zUser(),
+            value: z.object({
+                user: zUser(),
+                identity: zIdentity(),
+            }),
+            update: z.object({
+                user: zUser(),
+                identity: zIdentity(),
+            }),
             observe: async st => {
                 const userId = st.ensureAuthenticated();
 
@@ -71,8 +78,14 @@ export function createReadApi() {
                     async get() {
                         return await st.transact(async tx => {
                             const user = await tx.users.getById(userId);
-                            assert(user !== undefined);
-                            return user;
+                            assert(user !== undefined, 'getMe: user not found');
+                            const identity =
+                                await tx.identities.getByUserId(userId);
+                            assert(
+                                identity !== undefined,
+                                'getMe: identity not found'
+                            );
+                            return {user, identity};
                         });
                     },
                     update$: st.esReader.subscribe(userEvents(userId)),

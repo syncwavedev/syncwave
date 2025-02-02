@@ -17,7 +17,7 @@ export class ConsoleLogger implements Logger {
     }
     debug(message: string, ...args: unknown[]): void {
         const cx = context();
-        console.debug(`[${cx.traceId}] [DBG] ${message}`, ...args);
+        // console.debug(`[${cx.traceId}] [DBG] ${message}`, ...args);
     }
     info(message: string, ...args: unknown[]): void {
         const cx = context();

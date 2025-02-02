@@ -6,7 +6,7 @@
 </script>
 
 <Sidebar.Provider>
-	<AppSidebar initialBoards={data.initialBoards} />
+	<AppSidebar initialMe={data.initialMe} initialBoards={data.initialBoards} />
 	<Sidebar.Inset>
 		{@render children()}
 	</Sidebar.Inset>

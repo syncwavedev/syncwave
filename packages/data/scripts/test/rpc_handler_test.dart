@@ -26,7 +26,7 @@ void main() {
       // Define a simple API: echo returns its input argument.
       final api =
           <String, Future<dynamic> Function(String, dynamic, MessageHeaders)>{
-        'echo': (state, arg, headers) async => arg,
+        'echo': (state, arg, headers) async => "$state: $arg",
       };
 
       // Launch RPC handler on the server connection.
@@ -37,7 +37,7 @@ void main() {
           RpcHandlerClient(api, clientConn, () => {'traceId': 'test'});
       final result = await rpcClient.call('echo', 'hello');
 
-      expect(result, equals('hello'));
+      expect(result, equals('dummy state: hello'));
     });
 
     test('rpc call with unknown endpoint throws exception', () async {

@@ -14,7 +14,7 @@ class CancelledError implements Exception {
 }
 
 String getErrorCode(dynamic error) =>
-    error is BusinessError ? error.code : 'UNKNOWN';
+    error is BusinessError ? error.code : 'unknown';
 
 ErrorType getErrorType(dynamic error) =>
     error is BusinessError ? ErrorType.business : ErrorType.system;

@@ -54,7 +54,7 @@ class ContextMenuState extends State<ContextMenu>
 
     _scaleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 500),
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(
@@ -103,7 +103,7 @@ class ContextMenuState extends State<ContextMenu>
                     sigmaY: 12.0,
                   ),
                   child: Container(
-                    color: context.colors.white.withAlpha(150),
+                    color: context.colors.subtle4.withAlpha(100),
                   ),
                 ),
               ),

@@ -55,7 +55,7 @@ final class ColorScheme with Diagnosticable {
 
 @immutable
 abstract final class ColorsLight {
-  static const Color black = Color.fromRGBO(0, 0, 0, 0);
+  static const Color black = Color.fromRGBO(0, 0, 0, 1);
   static const Color white = Color.fromRGBO(255, 255, 255, 1);
 
   static const Color alwaysBlack = Color.fromRGBO(0, 0, 0, 1);

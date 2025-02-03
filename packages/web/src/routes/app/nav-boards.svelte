@@ -72,8 +72,8 @@
 									</Avatar.Fallback>
 								</Avatar.Root>
 
-								<div class="min-w-0">
-									<div class="flex justify-between">
+								<div class="w-full min-w-0">
+									<div class="flex w-full justify-between">
 										<div class="truncate font-semibold">
 											{item.name}
 										</div>

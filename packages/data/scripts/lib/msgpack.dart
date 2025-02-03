@@ -36,7 +36,6 @@ Map<String, dynamic> dynamicMapToString(Map<dynamic, dynamic> data) {
   return result;
 }
 
-// decode message
 Message decodeMessage(Uint8List bytes) {
   var json = m2.deserialize(bytes);
   return Message.fromJson(dynamicMapToString(json));

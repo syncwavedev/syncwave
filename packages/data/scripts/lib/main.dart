@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-import 'package:ground_data/msgpack.dart';
-
+import 'msgpack.dart';
 import 'message.dart';
 
 num add<T extends num>(T a, T b) {

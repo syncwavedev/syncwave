@@ -34,10 +34,13 @@
         "@types/bytewise": "^1.1.2",
         "@types/deep-equal": "^1.0.4",
         "@types/functional-red-black-tree": "^1.0.6",
+        "quicktype": "^23.0.171",
+        "quicktype-core": "^23.0.171",
         "rimraf": "^6.0.1",
         "tsx": "^4.17.0",
         "typedoc": "^0.26.5",
-        "vitest": "^1.6.0"
+        "vitest": "^1.6.0",
+        "zod-to-json-schema": "^3.24.1"
     },
     "dependencies": {
         "@webfill/async-context": "^1.0.0",
@@ -50,6 +53,7 @@
         "msgpackr": "^1.11.2",
         "nanoid": "^5.0.9",
         "typescript": "^5.7.0",
+        "uninstall": "^0.0.0",
         "uuid": "^11.0.3",
         "yjs": "^13.6.20",
         "zod": "^3.24.1"

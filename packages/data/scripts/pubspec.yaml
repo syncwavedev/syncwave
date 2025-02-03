@@ -1,0 +1,9 @@
+name: ground_data
+
+environment:
+    sdk: '^3.6.0'
+dev_dependencies:
+    test: ^1.25.14
+dependencies:
+    message_pack_dart: ^2.0.1
+    json_annotation: ^4.9.0

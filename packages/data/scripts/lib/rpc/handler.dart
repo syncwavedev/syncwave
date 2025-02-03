@@ -1,0 +1,152 @@
+// rpc.dart
+import 'dart:async';
+import 'package:ground_data/utils.dart';
+
+import '../constants.dart';
+import '../message.dart';
+import '../transport.dart';
+import '../errors.dart';
+import '../logger.dart';
+
+typedef Handler<TState> = Future<dynamic> Function(
+    TState state, dynamic arg, MessageHeaders headers);
+
+typedef HandlerApi<TState> = Map<String, Handler<TState>>;
+
+Future<void> handleRequestMessage<TState>(Connection conn, TState state,
+    HandlerApi<TState> api, RequestMessage msg) async {
+  final traceId = msg.headers.traceId ?? createTraceId();
+  try {
+    final handler = api[msg.payload.name];
+    if (handler == null) {
+      throw Exception('unknown handler name: ${msg.payload.name}');
+    }
+    final result = await handler(state, msg.payload.arg, msg.headers);
+    await conn.send(ResponseMessage(
+      id: createMessageId(),
+      headers: MessageHeaders(traceId: traceId, auth: null),
+      requestId: msg.id,
+      payload: ResponsePayloadSuccess(result: result),
+    ));
+  } catch (error) {
+    reportRpcError(error);
+    await conn.send(ResponseMessage(
+      id: createMessageId(),
+      headers: MessageHeaders(traceId: traceId, auth: null),
+      requestId: msg.id,
+      payload: ResponsePayloadError(
+        message: getReadableError(error),
+        code: getErrorCode(error),
+        errorType: getErrorType(error),
+      ),
+    ));
+  }
+}
+
+Future<void> launchRpcHandlerServer<TState>(
+    HandlerApi<TState> api, TState state, Connection conn) async {
+  await conn.subscribe().listen((msg) async {
+    final _ = switch (msg) {
+      RequestMessage req => await handleRequestMessage(conn, state, api, req),
+      CancelMessage() => null,
+      ResponseMessage() => null,
+    };
+  }, cancelOnError: true);
+}
+
+class RpcHandlerClient {
+  final Map<String, dynamic> api;
+  final Connection conn;
+  final Map<String, dynamic> Function() getHeaders;
+
+  RpcHandlerClient(this.api, this.conn, this.getHeaders);
+
+  Future<dynamic> call(String name, dynamic arg,
+      [Map<String, dynamic>? partialHeaders]) async {
+    if (!api.containsKey(name)) {
+      throw Exception('unknown rpc endpoint: $name');
+    }
+    final headers = {
+      ...getHeaders(),
+      ...?partialHeaders,
+    };
+    return await _proxyRequest(conn, name, arg, headers);
+  }
+}
+
+/// Internal: sends a request and returns the result.
+Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
+    Map<String, dynamic> headers) async {
+  final requestId = createMessageId();
+  final completer = Completer<dynamic>();
+
+  // Listen for the matching response.
+  late StreamSubscription<Message> subscription;
+  subscription = conn.subscribe().listen((msg) {
+    if (msg is ResponseMessage && msg.requestId == requestId) {
+      try {
+        final _ = switch (msg.payload) {
+          ResponsePayloadSuccess payload => completer.complete(payload.result),
+          ResponsePayloadError payload => switch (payload.errorType) {
+              ErrorType.business => completer
+                  .completeError(BusinessError(payload.message, payload.code)),
+              ErrorType.system => completer.completeError(RpcException(
+                  payload.message, payload.code, ErrorType.system)),
+            },
+        };
+      } finally {
+        subscription.cancel();
+      }
+    }
+  }, onError: (error) {
+    subscription.cancel();
+    completer.completeError(error);
+  }, onDone: () {
+    subscription.cancel();
+    if (!completer.isCompleted) {
+      completer.completeError(Exception('Lost connection to RPC server'));
+    }
+  });
+
+  // Set up a timeout.
+  final timer = Timer(Duration(milliseconds: RPC_CALL_TIMEOUT_MS), () {
+    if (!completer.isCompleted) {
+      completer.completeError(Exception('rpc call failed: timeout'));
+      subscription.cancel();
+    }
+  });
+
+  try {
+    // Send the request.
+    await conn.send(RequestMessage(
+      id: requestId,
+      headers: MessageHeaders.fromJson(headers),
+      payload: RequestMessagePayload(name: name, arg: arg),
+    ));
+
+    return await completer.future;
+  } finally {
+    timer.cancel();
+  }
+}
+
+/// A custom error type for RPC errors.
+class RpcException implements Exception {
+  final String message;
+  final String code;
+  final ErrorType errorType;
+  RpcException(this.message, this.code, this.errorType);
+  @override
+  String toString() => 'RpcError: $message';
+}
+
+/// Logs errors according to their type.
+void reportRpcError(dynamic error) {
+  if (error is BusinessError) {
+    logger.warn('business error', error);
+  } else if (error is CancelledError) {
+    logger.debug('cancelled error', error);
+  } else {
+    logger.error('unexpected error', error);
+  }
+}

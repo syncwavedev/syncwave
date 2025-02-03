@@ -1,3 +1,5 @@
+String createMessageId() => DateTime.now().microsecondsSinceEpoch.toString();
+
 class MessageHeaders {
   final String? auth;
   final String? traceId;
@@ -24,16 +26,12 @@ sealed class Message {
 
   factory Message.fromJson(Map<String, dynamic> json) {
     final type = json['type'] as String;
-    switch (type) {
-      case 'request':
-        return RequestMessage.fromJson(json);
-      case 'cancel':
-        return CancelMessage.fromJson(json);
-      case 'response':
-        return ResponseMessage.fromJson(json);
-      default:
-        throw FormatException('Unknown message type: $type');
-    }
+    return switch (type) {
+      'request' => RequestMessage.fromJson(json),
+      'cancel' => CancelMessage.fromJson(json),
+      'response' => ResponseMessage.fromJson(json),
+      _ => throw FormatException('Unknown message type: $type'),
+    };
   }
 
   Map<String, dynamic> toJson() => {
@@ -115,14 +113,11 @@ sealed class ResponsePayload {
 
   factory ResponsePayload.fromJson(Map<String, dynamic> json) {
     final type = json['type'] as String;
-    switch (type) {
-      case 'success':
-        return ResponsePayloadSuccess.fromJson(json);
-      case 'error':
-        return ResponsePayloadError.fromJson(json);
-      default:
-        throw FormatException('Unknown response payload type: $type');
-    }
+    return switch (type) {
+      'success' => ResponsePayloadSuccess.fromJson(json),
+      'error' => ResponsePayloadError.fromJson(json),
+      _ => throw FormatException('Unknown response payload type: $type'),
+    };
   }
 
   Map<String, dynamic> toJson() => {

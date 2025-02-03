@@ -1,0 +1,1 @@
+const int RPC_CALL_TIMEOUT_MS = 5000;

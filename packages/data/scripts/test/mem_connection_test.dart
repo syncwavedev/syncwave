@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
-import 'package:ground_data/connection.dart';
-import 'package:ground_data/mem-connection.dart';
+import 'package:ground_data/transport.dart';
+import 'package:ground_data/mem_transport.dart';
 import 'package:ground_data/message.dart';
 
 void main() {
@@ -83,7 +83,7 @@ void main() {
     test('messages are isolated between different connection pairs', () async {
       // Create connection pairs
       final client1Conn = await client.connect();
-      final client2Conn = await client.connect();
+      await client.connect();
 
       // Get server connections
       final serverConns = await connections.take(2).toList();

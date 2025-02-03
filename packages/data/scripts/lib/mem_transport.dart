@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:ground_data/msgpack.dart';
 
-import 'connection.dart';
+import 'transport.dart';
 import 'message.dart';
 
 class MemTransportClient implements TransportClient {

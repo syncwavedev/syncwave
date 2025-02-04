@@ -13,9 +13,9 @@ Map<String, dynamic> dynamicMapToString(Map<dynamic, dynamic> data) {
     List<dynamic> dst = [];
     for (int i = 0; i < src.length; ++i) {
       if (src[i] is Map<dynamic, dynamic>) {
-        dst.add(dynamicMapToString(src[i]));
+        dst.add(dynamicMapToString(src[i] as Map<dynamic, dynamic>));
       } else if (src[i] is List<dynamic>) {
-        dst.add(_convertList(src[i]));
+        dst.add(_convertList(src[i] as List<dynamic>));
       } else {
         dst.add(src[i]);
       }
@@ -26,9 +26,10 @@ Map<String, dynamic> dynamicMapToString(Map<dynamic, dynamic> data) {
   Map<String, dynamic> result = {};
   for (dynamic key in data.keys) {
     if (data[key] is Map<dynamic, dynamic>) {
-      result[key.toString()] = dynamicMapToString(data[key]);
+      result[key.toString()] =
+          dynamicMapToString(data[key] as Map<dynamic, dynamic>);
     } else if (data[key] is List<dynamic>) {
-      result[key.toString()] = _convertList(data[key]);
+      result[key.toString()] = _convertList(data[key] as List<dynamic>);
     } else {
       result[key.toString()] = data[key];
     }
@@ -38,5 +39,5 @@ Map<String, dynamic> dynamicMapToString(Map<dynamic, dynamic> data) {
 
 Message decodeMessage(Uint8List bytes) {
   var json = m2.deserialize(bytes);
-  return Message.fromJson(dynamicMapToString(json));
+  return Message.fromJson(dynamicMapToString(json as Map<dynamic, dynamic>));
 }

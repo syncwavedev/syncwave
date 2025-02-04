@@ -69,8 +69,9 @@ void main() {
     });
 
     test('stream can be cancelled', () async {
+      final streamer = InfiniteStreamer();
       final api = {
-        'infinite': InfiniteStreamer(),
+        'infinite': streamer,
       };
 
       await launchRpcStreamerServer(api, "test-state", serverConn);
@@ -82,6 +83,8 @@ void main() {
       final stream = rpcClient.stream('infinite', null);
       final subscription = stream.listen(null);
 
+      expect(streamer.cancelledCount, equals(0));
+
       // Let it run for a bit
       await Future.delayed(Duration(milliseconds: 100));
 
@@ -90,6 +93,8 @@ void main() {
 
       // Wait a bit to ensure no more values are processed
       await Future.delayed(Duration(milliseconds: 100));
+
+      expect(streamer.cancelledCount, equals(1));
     });
 
     test('multiple concurrent streams work correctly', () async {
@@ -104,14 +109,24 @@ void main() {
           getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
 
       final streams = await Future.wait([
+        rpcClient.stream('counter', 0).toList(),
+        rpcClient.stream('counter', 1).toList(),
         rpcClient.stream('counter', 2).toList(),
         rpcClient.stream('counter', 3).toList(),
         rpcClient.stream('counter', 4).toList(),
+        rpcClient.stream('counter', 5).toList(),
+        rpcClient.stream('counter', 6).toList(),
+        rpcClient.stream('counter', 7).toList(),
       ]);
 
-      expect(streams[0], equals([0, 1]));
-      expect(streams[1], equals([0, 1, 2]));
-      expect(streams[2], equals([0, 1, 2, 3]));
+      expect(streams[0], equals([]));
+      expect(streams[1], equals([0]));
+      expect(streams[2], equals([0, 1]));
+      expect(streams[3], equals([0, 1, 2]));
+      expect(streams[4], equals([0, 1, 2, 3]));
+      expect(streams[5], equals([0, 1, 2, 3, 4]));
+      expect(streams[6], equals([0, 1, 2, 3, 4, 5]));
+      expect(streams[7], equals([0, 1, 2, 3, 4, 5, 6]));
     });
 
     test('connection close cancels all active streams', () async {
@@ -183,13 +198,19 @@ class FailingStreamer implements RpcStreamer {
 }
 
 class InfiniteStreamer implements RpcStreamer {
+  int cancelledCount = 0;
+
   @override
   Stream<int> stream(
       dynamic state, dynamic arg, MessageHeaders headers) async* {
-    var i = 0;
-    while (true) {
-      yield i++;
-      await Future.delayed(Duration(milliseconds: 10));
+    try {
+      var i = 0;
+      while (true) {
+        yield i++;
+        await Future.delayed(Duration(milliseconds: 10));
+      }
+    } finally {
+      cancelledCount += 1;
     }
   }
 }

@@ -37,8 +37,6 @@ StreamerApi<T> createRpcObserverServerApi<T>(ObserverApi<T> api) {
       final initialValue = result.$1;
       final updates = result.$2;
 
-      yield {'type': 'start', 'value': initialValue, 'update': null};
-
       // Wrap the updates stream in a controller so we can cancel it on stream cancellation.
       final controller = StreamController<dynamic>();
       // Listen to the updates stream and relay events to the controller.
@@ -55,6 +53,7 @@ StreamerApi<T> createRpcObserverServerApi<T>(ObserverApi<T> api) {
       );
 
       try {
+        yield {'type': 'start', 'value': initialValue, 'update': null};
         await for (final update in controller.stream) {
           yield {'type': 'update', 'value': null, 'update': update};
         }

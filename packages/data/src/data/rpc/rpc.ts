@@ -1,4 +1,5 @@
 import {TypeOf, ZodType} from 'zod';
+import {Cursor} from '../../cursor.js';
 import {Deferred} from '../../deferred.js';
 import {logger} from '../../logger.js';
 import {Observable, Stream} from '../../stream.js';
@@ -352,7 +353,7 @@ export type InferRpcClient<T extends Api<any>> = {
         ? (
               req: TReq,
               headers?: MessageHeaders
-          ) => Promise<[initialValue: TValue, Stream<TUpdate>]>
+          ) => Promise<[initialValue: TValue, Cursor<TUpdate>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
           ? (req: TReq, headers?: MessageHeaders) => Stream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
@@ -370,7 +371,7 @@ export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
         ? (
               req: TReq,
               headers: MessageHeaders
-          ) => Promise<[initialValue: TValue, Stream<TUpdate>]>
+          ) => Promise<[initialValue: TValue, Cursor<TUpdate>]>
         : T[K] extends Streamer<any, infer TReq, infer TItem>
           ? (req: TReq, headers: MessageHeaders) => Stream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>

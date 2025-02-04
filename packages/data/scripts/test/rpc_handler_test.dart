@@ -17,22 +17,18 @@ void main() {
     setUp(() async {
       server = MemTransportServer();
       client = MemTransportClient(server);
-      // Get the server connection from the launched stream.
       final serverConnFuture = server.launch().first;
       clientConn = await client.connect();
       serverConn = await serverConnFuture;
     });
 
     test('successful rpc call returns expected result', () async {
-      // Define a simple API: echo returns its input argument.
       final api = <String, RpcHandler<String>>{
         'echo': RpcHandler((state, arg, headers) async => "$state: $arg"),
       };
 
-      // Launch RPC handler on the server connection.
       launchRpcHandlerServer(api, "dummy state", serverConn);
 
-      // Create RPC client.
       final rpcClient = RpcHandlerClient(
           conn: clientConn,
           getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
@@ -71,10 +67,8 @@ void main() {
     });
 
     test('rpc call timeout results in error', () async {
-      // Handler that delays response beyond the RPC timeout.
       final api = <String, RpcHandler<String>>{
         'delayed': RpcHandler((state, arg, headers) async {
-          // Delay longer than the configured RPC_CALL_TIMEOUT_MS.
           await Future<void>.delayed(
               Duration(milliseconds: rpcCallTimeoutMs + 100));
           return 'delayed';

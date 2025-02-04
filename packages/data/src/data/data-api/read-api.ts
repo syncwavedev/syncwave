@@ -88,7 +88,9 @@ export function createReadApi() {
                             return {user, identity};
                         });
                     },
-                    update$: st.esReader.subscribe(userEvents(userId)),
+                    update$: st.esReader
+                        .subscribe(userEvents(userId))
+                        .then(x => x.map(() => undefined)),
                 });
             },
         }),
@@ -111,11 +113,14 @@ export function createReadApi() {
                                 .toArray();
                         });
                     },
-                    update$: st.esReader.subscribe(userEvents(userId)).then(x =>
-                        x.finally(() => {
-                            logger.debug('getMyBoards finish updates');
-                        })
-                    ),
+                    update$: st.esReader
+                        .subscribe(userEvents(userId))
+                        .then(x => x.map(() => undefined))
+                        .then(x =>
+                            x.finally(() => {
+                                logger.debug('getMyBoards finish updates');
+                            })
+                        ),
                 });
             },
         }),
@@ -135,7 +140,9 @@ export function createReadApi() {
                             return tasks;
                         });
                     },
-                    update$: st.esReader.subscribe(boardEvents(boardId)),
+                    update$: st.esReader
+                        .subscribe(boardEvents(boardId))
+                        .then(x => x.map(() => undefined)),
                 });
             },
         }),
@@ -163,7 +170,9 @@ export function createReadApi() {
                             return task;
                         });
                     },
-                    update$: st.esReader.subscribe(boardEvents(task.boardId)),
+                    update$: st.esReader
+                        .subscribe(boardEvents(task.boardId))
+                        .then(x => x.map(() => undefined)),
                 });
             },
         }),
@@ -199,7 +208,9 @@ export function createReadApi() {
                             return board;
                         });
                     },
-                    update$: st.esReader.subscribe(boardEvents(boardId)),
+                    update$: st.esReader
+                        .subscribe(boardEvents(boardId))
+                        .then(x => x.map(() => undefined)),
                 });
             },
         }),

@@ -2,10 +2,11 @@ import {
     EVENT_STORE_MAX_PULL_COUNT,
     EVENT_STORE_PULL_INTERVAL_MS,
 } from '../../constants.js';
+import {Cursor} from '../../cursor.js';
 import {CollectionManager} from '../../kv/collection-manager.js';
 import {ReadonlyCell} from '../../kv/readonly-cell.js';
 import {logger} from '../../logger.js';
-import {Channel, mergeStreams, Stream, toStream} from '../../stream.js';
+import {Channel, Stream, toStream} from '../../stream.js';
 import {interval, whenAll} from '../../utils.js';
 import {Uuid} from '../../uuid.js';
 import {DataEffectScheduler} from '../data-layer.js';
@@ -49,7 +50,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
     async subscribe(
         collection: string,
         offsetArg?: number
-    ): Promise<Stream<T>> {
+    ): Promise<Cursor<T>> {
         // we wanna trigger event store iteration immediately if we didn't reach the end of the topic
         const selfTrigger = new Channel<void>();
 
@@ -65,42 +66,44 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             getEventHubTopic(id, collection)
         );
 
-        return mergeStreams<void>([
+        return Stream.merge<void>([
             // make the first check immediately
             toStream<void>([undefined]),
             toStream(selfTrigger),
             hubEvent$.map(() => undefined),
             interval(EVENT_STORE_PULL_INTERVAL_MS).map(() => undefined),
-        ]).flatMap(async () => {
-            try {
-                const events = await this.transact(async topics => {
-                    const result = await topics
-                        .get(collection)
-                        .list(offset)
-                        .take(EVENT_STORE_MAX_PULL_COUNT)
-                        .map(entry => entry.data)
-                        .toArray();
+        ])
+            .flatMap(async () => {
+                try {
+                    const events = await this.transact(async topics => {
+                        const result = await topics
+                            .get(collection)
+                            .list(offset)
+                            .take(EVENT_STORE_MAX_PULL_COUNT)
+                            .map(entry => entry.data)
+                            .toArray();
 
-                    // check if there are potentially more values to pull from the topic
-                    if (result.length === EVENT_STORE_MAX_PULL_COUNT) {
-                        // we don't wanna block on this call to avoid a deadlock
-                        selfTrigger.next().catch((error: unknown) => {
-                            logger.error(
-                                'failed to trigger event store iteration',
-                                error
-                            );
-                        });
-                    }
-                    return result;
-                });
+                        // check if there are potentially more values to pull from the topic
+                        if (result.length === EVENT_STORE_MAX_PULL_COUNT) {
+                            // we don't wanna block on this call to avoid a deadlock
+                            selfTrigger.next().catch((error: unknown) => {
+                                logger.error(
+                                    'failed to trigger event store iteration',
+                                    error
+                                );
+                            });
+                        }
+                        return result;
+                    });
 
-                offset += events.length;
+                    offset += events.length;
 
-                return events;
-            } catch (error) {
-                logger.error('EventStoreReader.subscribe', error);
-                return [];
-            }
-        });
+                    return events;
+                } catch (error) {
+                    logger.error('EventStoreReader.subscribe', error);
+                    return [];
+                }
+            })
+            .toCursor();
     }
 }

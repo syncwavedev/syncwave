@@ -4,13 +4,12 @@ import 'package:ground_data/logger.dart';
 import '../errors.dart';
 import '../message.dart';
 import '../transport.dart';
-import 'handler.dart'; // for launchRpcHandlerServer, reportRpcError
+import 'handler.dart';
 import 'common.dart';
 
 class RpcStreamerServerApiState<T> {
   final T state;
   final RpcHandlerClient client;
-  // Store stream subscriptions instead of boolean flags
   final Map<String, StreamSubscription<dynamic>> _activeStreams = {};
 
   RpcStreamerServerApiState({required this.state, required this.client});
@@ -60,7 +59,6 @@ HandlerApi<RpcStreamerServerApiState<T>> createRpcStreamerServerApi<T>(
       }
       final processor = (api[name] as StreamerProcessorStreamer<T>).streamer;
 
-      // Create a subscription to manage the stream
       final subscription =
           processor.stream(state.state, arg, headers).asyncMap((value) async {
         await state.client
@@ -93,6 +91,7 @@ HandlerApi<RpcStreamerServerApiState<T>> createRpcStreamerServerApi<T>(
       return {};
     }),
     'cancel': RpcHandler((state, req, headers) async {
+      // req: { streamId }
       String streamId = req['streamId'] as String;
       await state.cancelStream(streamId);
       return {};
@@ -130,18 +129,21 @@ class RpcStreamerClientApiState {
 HandlerApi<RpcStreamerClientApiState> createRpcStreamerClientApi() {
   return {
     'next': RpcHandler((state, req, headers) async {
+      // req: { streamId, value }
       String streamId = req['streamId'] as String;
       final value = req['value'];
       await state.add(streamId, value);
       return {};
     }),
     'throw': RpcHandler((state, req, headers) async {
+      // req: { streamId, message, code }
       String streamId = req['streamId'] as String;
       await state.addError(streamId,
           reconstructError(req['message'] as String, req['code'] as String));
       return {};
     }),
     'end': RpcHandler((state, req, headers) async {
+      // req: { streamId }
       String streamId = req['streamId'] as String;
       state.close(streamId);
       return {};
@@ -157,7 +159,6 @@ class RpcStreamerClient {
 
   RpcStreamerClient({required this.conn, required this.getHeaders})
       : apiState = RpcStreamerClientApiState() {
-    // Launch RPC handler for client API
     launchRpcHandlerServer(createRpcStreamerClientApi(), apiState, conn);
     _rpcClient = RpcHandlerClient(conn: conn, getHeaders: getHeaders);
     conn.subscribe().listen(null,
@@ -165,7 +166,6 @@ class RpcStreamerClient {
         onDone: () => apiState.closeAll());
   }
 
-  /// Handle a regular RPC call
   Future<dynamic> handle(String name, dynamic arg,
       [MessageHeaders? partialHeaders]) async {
     return await _rpcClient.handle(
@@ -177,7 +177,6 @@ class RpcStreamerClient {
         partialHeaders);
   }
 
-  /// Create a stream for the given endpoint
   Stream<dynamic> stream(String name, dynamic arg,
       [MessageHeaders? partialHeaders]) async* {
     final streamId = createMessageId();
@@ -186,7 +185,6 @@ class RpcStreamerClient {
 
     var completed = false;
     try {
-      // Start the stream on server side
       await _rpcClient.handle(
           'stream',
           {
@@ -215,7 +213,6 @@ class RpcStreamerClient {
 
 Future<void> launchRpcStreamerServer<T>(
     StreamerApi<T> api, T state, Connection conn) async {
-  // Create a dummy client for streaming responses.
   final client = RpcHandlerClient(
       conn: conn, getHeaders: () => MessageHeaders(auth: null, traceId: ''));
   final serverState =

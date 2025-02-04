@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {toCursor} from '../../cursor.js';
 import {logger} from '../../logger.js';
 import {Observable, Stream, toStream} from '../../stream.js';
 import {assertNever} from '../../utils.js';
@@ -182,5 +183,5 @@ export async function toObservable<TValue, TUpdate>(
         }
     }
 
-    return [initialValue, toStream(updates())];
+    return [initialValue, toCursor(updates())];
 }

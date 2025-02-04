@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {CancelledError, Context, context} from './context.js';
+import {Cursor} from './cursor.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
@@ -346,16 +347,16 @@ export function zUint8Array() {
 
 export interface ObservableOptions<T> {
     get: () => Promise<T>;
-    update$: Promise<AsyncIterable<any>>;
+    update$: Promise<Cursor<void>>;
 }
 
 export async function observable<T>(
     options: ObservableOptions<T>
 ): Observable<T, T> {
-    return [
-        await options.get(),
-        toStream(await options.update$).map(cx => options.get()),
-    ];
+    // we need to open updates cursor before getting the initial value
+    // to ensure that we don't miss any updates in between initial value and updates cursor opening
+    const updateCursor = await options.update$;
+    return [await options.get(), updateCursor.map(cx => options.get())];
 }
 
 export function run<R>(fn: () => R) {

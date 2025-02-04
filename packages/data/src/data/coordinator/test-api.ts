@@ -60,7 +60,9 @@ export function createTestApi() {
                     async get() {
                         return {index: 1, value: 'sdf'};
                     },
-                    update$: esReader.subscribe(topic, 0),
+                    update$: esReader
+                        .subscribe(topic, 0)
+                        .then(x => x.map(() => undefined)),
                 });
             },
         }),

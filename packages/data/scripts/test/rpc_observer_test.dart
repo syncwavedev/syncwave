@@ -32,10 +32,10 @@ void main() {
           getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
 
       final result = await rpcClient.observe('counter', 3);
-      expect(result.$1, equals('Initial: 3')); // Initial value
+      expect(result.$1, equals('Initial: 3'));
 
       final values = await result.$2.take(3).toList();
-      expect(values, equals([0, 1, 2])); // Stream values
+      expect(values, equals([0, 1, 2]));
     });
 
     test('observer handles errors in initial value', () async {
@@ -67,7 +67,7 @@ void main() {
           getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
 
       final result = await rpcClient.observe('failing', null);
-      expect(result.$1, equals('OK')); // Initial value succeeds
+      expect(result.$1, equals('OK'));
 
       expect(
         () => result.$2.toList(),
@@ -89,19 +89,16 @@ void main() {
           getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
 
       final result = await rpcClient.observe('infinite', null);
-      expect(result.$1, equals(0)); // Initial value
+      expect(result.$1, equals(0));
 
       final subscription = result.$2.listen(null);
 
       expect(serverState.cancelledCount, equals(0));
 
-      // Let it run for a bit
       await Future<void>.delayed(Duration(milliseconds: 100));
 
-      // Cancel subscription
       await subscription.cancel();
 
-      // Wait a bit to ensure no more values are processed
       await Future<void>.delayed(Duration(milliseconds: 100));
 
       expect(serverState.cancelledCount, equals(1));

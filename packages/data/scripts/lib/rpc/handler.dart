@@ -1,4 +1,3 @@
-// rpc.dart
 import 'dart:async';
 import 'package:ground_data/rpc/common.dart';
 import 'package:ground_data/utils.dart';
@@ -65,13 +64,11 @@ class RpcHandlerClient {
   }
 }
 
-/// Internal: sends a request and returns the result.
 Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
     Map<String, dynamic> headers) async {
   final requestId = createMessageId();
   final completer = Completer<dynamic>();
 
-  // Listen for the matching response.
   late StreamSubscription<Message> subscription;
   subscription = conn.subscribe().listen((msg) {
     if (msg is ResponseMessage && msg.requestId == requestId) {
@@ -95,7 +92,6 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
     }
   });
 
-  // Set up a timeout.
   final timer = Timer(Duration(milliseconds: rpcCallTimeoutMs), () {
     if (!completer.isCompleted) {
       completer.completeError(Exception('rpc call failed: timeout'));
@@ -104,7 +100,6 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
   });
 
   try {
-    // Send the request.
     await conn.send(RequestMessage(
       id: requestId,
       headers: MessageHeaders.fromJson(headers),
@@ -117,7 +112,6 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
   }
 }
 
-/// Logs errors according to their type.
 void reportRpcError(dynamic error) {
   if (error is BusinessError) {
     logger.warn('business error', error);

@@ -1,5 +1,5 @@
 import {z, ZodType} from 'zod';
-import {Stream} from '../../stream.js';
+import {Cursor} from '../../cursor.js';
 import {Observer, Subject} from '../../utils.js';
 import {
     applyMiddleware,
@@ -37,7 +37,7 @@ export class HubClient<T> {
         await this.server.throw({topic, error});
     }
 
-    async subscribe(topic: string): Promise<Stream<T>> {
+    async subscribe(topic: string): Promise<Cursor<T>> {
         const [, result] = await this.server.subscribe({topic});
         return result;
     }
@@ -142,7 +142,7 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
             value: z.undefined(),
             update: zMessage,
             async observe({subjects}, {topic}) {
-                const message$ = subjects.value$(topic);
+                const message$ = subjects.value$(topic).toCursor();
                 return [undefined, message$];
             },
         }),

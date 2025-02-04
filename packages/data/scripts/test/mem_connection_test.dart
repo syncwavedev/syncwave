@@ -81,25 +81,20 @@ void main() {
     });
 
     test('messages are isolated between different connection pairs', () async {
-      // Create connection pairs
       final client1Conn = await client.connect();
       await client.connect();
 
-      // Get server connections
       final serverConns = await connections.take(2).toList();
       final server1Conn = serverConns[0];
       final server2Conn = serverConns[1];
 
-      // Setup message collection
       final messages1 = <Message>[];
       final messages2 = <Message>[];
 
-      // Create subscriptions
       final sub1 = server1Conn.subscribe().listen(messages1.add);
       final sub2 = server2Conn.subscribe().listen(messages2.add);
 
       try {
-        // Send test message
         final testMsg = RequestMessage(
           payload: RequestMessagePayload(name: 'test', arg: null),
           id: 'isolated',
@@ -108,15 +103,12 @@ void main() {
 
         await client1Conn.send(testMsg);
 
-        // Wait for potential message delivery
         await Future<void>.delayed(Duration(milliseconds: 50));
 
-        // Verify isolation
         expect(messages1, hasLength(1));
         expect(messages2, isEmpty);
         expect(messages1.first.id, equals('isolated'));
       } finally {
-        // Cleanup
         await sub1.cancel();
         await sub2.cancel();
       }
@@ -128,7 +120,6 @@ void main() {
       final messages = <Message>[];
       final subscription = serverConn.subscribe().listen(messages.add);
 
-      // Test all message types
       await clientConn.send(RequestMessage(
         payload: RequestMessagePayload(name: 'req', arg: null),
         id: 'req1',
@@ -151,7 +142,6 @@ void main() {
         headers: MessageHeaders(auth: null, traceId: null),
       ));
 
-      // Wait for message delivery
       await Future<void>.delayed(Duration(milliseconds: 50));
       await subscription.cancel();
 
@@ -256,8 +246,8 @@ void main() {
       test('multiple close calls are handled gracefully', () async {
         final conn = await client.connect();
         conn.close();
-        conn.close(); // Should not throw
-        conn.close(); // Should not throw
+        conn.close();
+        conn.close();
       });
 
       test('messages are not delivered after peer closes', () async {

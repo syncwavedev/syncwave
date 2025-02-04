@@ -2,6 +2,7 @@ import {Channel as AsyncChannel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cancel, CancelledError} from './context.js';
+import {Cursor} from './cursor.js';
 import {toError} from './errors.js';
 import {logger} from './logger.js';
 import {assert, Nothing} from './utils.js';
@@ -106,14 +107,39 @@ export function toStream<T>(
     return new Stream(source);
 }
 
-export function mergeStreams<T>(sources: AsyncIterable<T>[]): Stream<T> {
-    const init: AsyncIterable<T> = toStream<T>([]);
-    return toStream<T>(merge(init, ...sources));
-}
+export type Observable<TValue, TUpdate> = Promise<[TValue, Cursor<TUpdate>]>;
 
-export type Observable<TValue, TUpdate> = Promise<[TValue, Stream<TUpdate>]>;
+export class Stream<T> implements AsyncIterable<T> {
+    static merge<T>(sources: AsyncIterable<T>[]): Stream<T> {
+        const init: AsyncIterable<T> = toStream<T>([]);
+        return toStream<T>(merge(init, ...sources));
+    }
 
-export abstract class AsyncIterableX<T> implements AsyncIterable<T> {
+    private readonly source: AsyncIterable<T>;
+
+    protected createInstance<U>(source: AsyncIterable<U>): Stream<U> {
+        return new Stream<U>(source);
+    }
+
+    constructor(source: AsyncIterable<T>);
+    constructor(executor: (writer: ChannelWriter<T>) => Cancel);
+    constructor(
+        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
+    );
+    constructor(
+        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
+    ) {
+        if (Symbol.asyncIterator in source) {
+            this.source = source;
+        } else {
+            this.source = new AsyncIteratorFactory(source);
+        }
+    }
+
+    [Symbol.asyncIterator](): AsyncIterator<T> {
+        return this.source[Symbol.asyncIterator]();
+    }
+
     drop(count: number) {
         return toStream(this._drop(count));
     }
@@ -304,6 +330,10 @@ export abstract class AsyncIterableX<T> implements AsyncIterable<T> {
         return toStream(this._map(mapper));
     }
 
+    toCursor(): Cursor<T> {
+        return new Cursor(this[Symbol.asyncIterator]());
+    }
+
     private async *_map<R>(
         mapper: (value: T) => R | Promise<R>
     ): AsyncIterable<R> {
@@ -355,58 +385,4 @@ export abstract class AsyncIterableX<T> implements AsyncIterable<T> {
 
         return result;
     }
-
-    abstract [Symbol.asyncIterator](): AsyncIterator<T>;
-}
-
-export class Stream<T> extends AsyncIterableX<T> {
-    private readonly source: AsyncIterable<T>;
-
-    constructor(source: AsyncIterable<T>);
-    constructor(executor: (writer: ChannelWriter<T>) => Cancel);
-    constructor(
-        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
-    );
-    constructor(
-        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
-    ) {
-        super();
-
-        if (Symbol.asyncIterator in source) {
-            this.source = source;
-        } else {
-            this.source = new AsyncIteratorFactory(source);
-        }
-    }
-
-    [Symbol.asyncIterator](): AsyncIterator<T> {
-        return this.source[Symbol.asyncIterator]();
-    }
-}
-
-export class Cursor<T> extends AsyncIterableX<T> {
-    private isConsumed = false;
-
-    constructor(private readonly iter: AsyncIterator<T>) {
-        super();
-    }
-
-    [Symbol.asyncIterator](): AsyncIterator<T> {
-        if (this.isConsumed) {
-            throw new Error('Cursor already consumed');
-        }
-        this.isConsumed = true;
-
-        return this.iter;
-    }
-}
-
-export function toCursor<T>(
-    source: AsyncIterator<T> | AsyncIterable<T>
-): Cursor<T> {
-    if (Symbol.asyncIterator in source) {
-        return new Cursor(source[Symbol.asyncIterator]());
-    }
-
-    return new Cursor(source);
 }

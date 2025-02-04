@@ -149,24 +149,21 @@ void main() {
       // Let it run for a bit
       await Future<void>.delayed(Duration(milliseconds: 100));
 
-      // Close connection
       clientConn.close();
 
       // Wait a bit to ensure no more values are processed
       await Future<void>.delayed(Duration(milliseconds: 100));
       await subscription.cancel();
 
-      expect(receivedValues, isNotEmpty); // Should have received some values
+      expect(receivedValues, isNotEmpty);
       final count = receivedValues.length;
 
-      // Wait more to verify no new values arrive
       await Future<void>.delayed(Duration(milliseconds: 100));
       expect(receivedValues.length, equals(count));
     });
   });
 }
 
-// Test implementations
 class EchoHandler<T> extends StreamerProcessorHandler<T> {
   EchoHandler()
       : super((state, arg, headers) async {

@@ -10,6 +10,7 @@ import 'package:ground/ui/widgets/icons.dart';
 import 'package:ground/ui/widgets/navigation_stack.dart';
 import 'package:ground/ui/tasks/tasks_group_list.dart';
 
+import '../widgets/bottom_sheet.dart';
 import '../widgets/buttons.dart';
 
 class BoardScreen extends StatelessWidget {
@@ -47,6 +48,13 @@ class BoardScreen extends StatelessWidget {
             child: Icons.plus,
             onPressed: () {
               // Handle add task
+              showModalBottomSheet(
+                builder: (context) => SizedBox(
+                    width: 200,
+                    height: 400,
+                    child: Center(child: Text("Hello world!"))),
+                context: context,
+              );
               debugPrint('Add task');
             },
           ),

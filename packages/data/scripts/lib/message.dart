@@ -63,10 +63,8 @@ class RequestMessage extends Message {
   final RequestMessagePayload payload;
 
   RequestMessage(
-      {required this.payload,
-      required String id,
-      required MessageHeaders headers})
-      : super(type: 'request', id: id, headers: headers);
+      {required this.payload, required super.id, required super.headers})
+      : super(type: 'request');
 
   factory RequestMessage.fromJson(Map<String, dynamic> json) => RequestMessage(
         payload: RequestMessagePayload.fromJson(
@@ -87,10 +85,8 @@ class CancelMessage extends Message {
   final String requestId;
 
   CancelMessage(
-      {required String id,
-      required this.requestId,
-      required MessageHeaders headers})
-      : super(type: 'cancel', id: id, headers: headers);
+      {required super.id, required this.requestId, required super.headers})
+      : super(type: 'cancel');
 
   factory CancelMessage.fromJson(Map<String, dynamic> json) => CancelMessage(
         id: json['id'] as String,
@@ -169,10 +165,10 @@ class ResponseMessage extends Message {
 
   ResponseMessage(
       {required this.payload,
-      required String id,
+      required super.id,
       required this.requestId,
-      required MessageHeaders headers})
-      : super(type: 'response', id: id, headers: headers);
+      required super.headers})
+      : super(type: 'response');
 
   factory ResponseMessage.fromJson(Map<String, dynamic> json) =>
       ResponseMessage(

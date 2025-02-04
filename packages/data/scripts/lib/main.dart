@@ -5,7 +5,7 @@ void main() {
   () async {
     await for (var event in stream.stream) {
       print('listener1: $event before...');
-      await Future.delayed(Duration(seconds: 1));
+      await Future<void>.delayed(Duration(seconds: 1));
       print('listener1: $event after...');
     }
   }();

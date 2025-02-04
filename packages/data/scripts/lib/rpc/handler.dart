@@ -40,7 +40,7 @@ Future<void> handleRequestMessage<TState>(Connection conn, TState state,
 
 Future<void> launchRpcHandlerServer<TState>(
     HandlerApi<TState> api, TState state, Connection conn) async {
-  await conn.subscribe().listen((msg) async {
+  conn.subscribe().listen((msg) async {
     final _ = switch (msg) {
       RequestMessage req => await handleRequestMessage(conn, state, api, req),
       CancelMessage() => null,
@@ -85,9 +85,9 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
         subscription.cancel();
       }
     }
-  }, onError: (error) {
+  }, onError: (Object error) {
     subscription.cancel();
-    completer.completeError(error as Object);
+    completer.completeError(error);
   }, onDone: () {
     subscription.cancel();
     if (!completer.isCompleted) {
@@ -96,7 +96,7 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
   });
 
   // Set up a timeout.
-  final timer = Timer(Duration(milliseconds: RPC_CALL_TIMEOUT_MS), () {
+  final timer = Timer(Duration(milliseconds: rpcCallTimeoutMs), () {
     if (!completer.isCompleted) {
       completer.completeError(Exception('rpc call failed: timeout'));
       subscription.cancel();

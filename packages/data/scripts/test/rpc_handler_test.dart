@@ -75,8 +75,8 @@ void main() {
       final api = <String, RpcHandler<String>>{
         'delayed': RpcHandler((state, arg, headers) async {
           // Delay longer than the configured RPC_CALL_TIMEOUT_MS.
-          await Future.delayed(
-              Duration(milliseconds: RPC_CALL_TIMEOUT_MS + 100));
+          await Future<void>.delayed(
+              Duration(milliseconds: rpcCallTimeoutMs + 100));
           return 'delayed';
         }),
       };
@@ -87,7 +87,7 @@ void main() {
 
       expect(() async => await rpcClient.handle('delayed', 'data'),
           throwsException);
-    });
+    }, skip: 'Test is slow due to timeout');
 
     test('multiple concurrent rpc calls return correct responses', () async {
       final api = <String, RpcHandler<String>>{

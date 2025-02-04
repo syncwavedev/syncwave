@@ -86,13 +86,13 @@ void main() {
       expect(serverState.cancelledCount, equals(0));
 
       // Let it run for a bit
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration(milliseconds: 100));
 
       // Cancel subscription
       await subscription.cancel();
 
       // Wait a bit to ensure no more values are processed
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration(milliseconds: 100));
 
       expect(serverState.cancelledCount, equals(1));
     });
@@ -134,8 +134,7 @@ void main() {
         'infinite': InfiniteStreamer(),
       };
 
-      await launchRpcStreamerServer(
-          api, new InfiniteStreamerState(), serverConn);
+      await launchRpcStreamerServer(api, InfiniteStreamerState(), serverConn);
 
       final rpcClient = RpcStreamerClient(
           conn: clientConn,
@@ -144,24 +143,24 @@ void main() {
       final receivedValues = <int>[];
       final subscription = rpcClient.stream('infinite', null).listen(
             (x) => receivedValues.add(x as int),
-            onError: (error) => fail('Should not get error: $error'),
+            onError: (Object error) => fail('Should not get error: $error'),
           );
 
       // Let it run for a bit
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration(milliseconds: 100));
 
       // Close connection
       clientConn.close();
 
       // Wait a bit to ensure no more values are processed
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration(milliseconds: 100));
       await subscription.cancel();
 
       expect(receivedValues, isNotEmpty); // Should have received some values
       final count = receivedValues.length;
 
       // Wait more to verify no new values arrive
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration(milliseconds: 100));
       expect(receivedValues.length, equals(count));
     });
   });
@@ -181,7 +180,7 @@ class CounterStreamer<T> extends StreamerProcessorStreamer<T> {
           final count = arg as int;
           for (var i = 0; i < count; i++) {
             yield i;
-            await Future.delayed(Duration(milliseconds: 10));
+            await Future<void>.delayed(Duration(milliseconds: 10));
           }
         });
 }
@@ -206,7 +205,7 @@ class InfiniteStreamer
             var i = 0;
             while (true) {
               yield i++;
-              await Future.delayed(Duration(milliseconds: 10));
+              await Future<void>.delayed(Duration(milliseconds: 10));
             }
           } finally {
             state.cancelledCount += 1;

@@ -109,7 +109,7 @@ void main() {
         await client1Conn.send(testMsg);
 
         // Wait for potential message delivery
-        await Future.delayed(Duration(milliseconds: 50));
+        await Future<void>.delayed(Duration(milliseconds: 50));
 
         // Verify isolation
         expect(messages1, hasLength(1));
@@ -152,7 +152,7 @@ void main() {
       ));
 
       // Wait for message delivery
-      await Future.delayed(Duration(milliseconds: 50));
+      await Future<void>.delayed(Duration(milliseconds: 50));
       await subscription.cancel();
 
       expect(messages.length, equals(3));
@@ -279,7 +279,7 @@ void main() {
 
         final messages = <Message>[];
         final sub = serverConn.subscribe().listen(messages.add);
-        await Future.delayed(Duration(milliseconds: 50));
+        await Future<void>.delayed(Duration(milliseconds: 50));
         await sub.cancel();
 
         expect(messages, isEmpty);
@@ -324,7 +324,7 @@ void main() {
 
         await Future.wait(messages.map((msg) => clientConn.send(msg)));
 
-        await Future.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
         await sub.cancel();
 
         expect(receivedMessages.length, equals(messages.length));

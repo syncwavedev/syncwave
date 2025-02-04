@@ -9,13 +9,13 @@ Uint8List encodeMessage(Message message) {
 }
 
 Map<String, dynamic> dynamicMapToString(Map<dynamic, dynamic> data) {
-  List<dynamic> _convertList(List<dynamic> src) {
+  List<dynamic> convertList(List<dynamic> src) {
     List<dynamic> dst = [];
     for (int i = 0; i < src.length; ++i) {
       if (src[i] is Map<dynamic, dynamic>) {
         dst.add(dynamicMapToString(src[i] as Map<dynamic, dynamic>));
       } else if (src[i] is List<dynamic>) {
-        dst.add(_convertList(src[i] as List<dynamic>));
+        dst.add(convertList(src[i] as List<dynamic>));
       } else {
         dst.add(src[i]);
       }
@@ -29,7 +29,7 @@ Map<String, dynamic> dynamicMapToString(Map<dynamic, dynamic> data) {
       result[key.toString()] =
           dynamicMapToString(data[key] as Map<dynamic, dynamic>);
     } else if (data[key] is List<dynamic>) {
-      result[key.toString()] = _convertList(data[key] as List<dynamic>);
+      result[key.toString()] = convertList(data[key] as List<dynamic>);
     } else {
       result[key.toString()] = data[key];
     }

@@ -96,13 +96,13 @@ void main() {
       expect(serverState.cancelledCount, equals(0));
 
       // Let it run for a bit
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration(milliseconds: 100));
 
       // Cancel subscription
       await subscription.cancel();
 
       // Wait a bit to ensure no more values are processed
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(Duration(milliseconds: 100));
 
       expect(serverState.cancelledCount, equals(1));
     });
@@ -155,7 +155,7 @@ class InfiniteObserver
                 var i = 10;
                 while (true) {
                   yield i++;
-                  await Future.delayed(Duration(milliseconds: 10));
+                  await Future<void>.delayed(Duration(milliseconds: 10));
                 }
               } finally {
                 state.cancelledCount += 1;

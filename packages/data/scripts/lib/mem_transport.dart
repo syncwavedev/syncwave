@@ -60,6 +60,6 @@ class MemConnection implements Connection {
     _isClosed = true;
     _messageCtl.close();
     _peer.close();
-    Future.delayed(Duration.zero).then((_) => _peer.close());
+    Future<void>.delayed(Duration.zero).then((_) => _peer.close());
   }
 }

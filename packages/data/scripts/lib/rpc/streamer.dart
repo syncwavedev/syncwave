@@ -29,7 +29,7 @@ class RpcStreamerServerApiState<T> {
 
   bool hasStream(String streamId) => _activeStreams.containsKey(streamId);
 
-  cancelAll() {
+  void cancelAll() {
     _activeStreams.forEach((_, subscription) => subscription.cancel());
     _activeStreams.clear();
   }
@@ -65,7 +65,7 @@ HandlerApi<RpcStreamerServerApiState<T>> createRpcStreamerServerApi<T>(
           processor.stream(state.state, arg, headers).asyncMap((value) async {
         await state.client
             .handle('next', {'streamId': streamId, 'value': value});
-      }).listen(null, onError: (error) async {
+      }).listen(null, onError: (Object error) async {
         reportRpcError(error);
         try {
           await state.client.handle('throw', {
@@ -160,7 +160,7 @@ class RpcStreamerClient {
     // Launch RPC handler for client API
     launchRpcHandlerServer(createRpcStreamerClientApi(), apiState, conn);
     _rpcClient = RpcHandlerClient(conn: conn, getHeaders: getHeaders);
-    this.conn.subscribe().listen(null,
+    conn.subscribe().listen(null,
         onError: (error) => apiState.closeAll(),
         onDone: () => apiState.closeAll());
   }

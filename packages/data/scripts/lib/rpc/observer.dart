@@ -43,8 +43,8 @@ StreamerApi<T> createRpcObserverServerApi<T>(ObserverApi<T> api) {
         (x) {
           controller.add(x);
         },
-        onError: (error) {
-          controller.addError(error as Object);
+        onError: (Object error) {
+          controller.addError(error);
         },
         onDone: () {
           controller.close();
@@ -107,11 +107,11 @@ class RpcObserverClient {
           throw Exception('Invalid event type: ${event['type']}');
         }
       },
-      onError: (error) {
+      onError: (Object error) {
         if (!started) {
-          completer.completeError(error as Object);
+          completer.completeError(error);
         }
-        updatesController.addError(error as Object);
+        updatesController.addError(error);
       },
       onDone: () => updatesController.close(),
     );

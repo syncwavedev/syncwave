@@ -87,7 +87,7 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
     }
   }, onError: (error) {
     subscription.cancel();
-    completer.completeError(error);
+    completer.completeError(error as Object);
   }, onDone: () {
     subscription.cancel();
     if (!completer.isCompleted) {

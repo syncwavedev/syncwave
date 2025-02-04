@@ -8,7 +8,7 @@ import 'streamer.dart';
 StreamerApi<T> createRpcObserverServerApi<T>(ObserverApi<T> api) {
   return {
     'handle': StreamerProcessorHandler((state, req, headers) async {
-      String name = req['name'];
+      String name = req['name'] as String;
       var arg = req['arg'];
       if (api[name] is! ObserverProcessorHandler<T>) {
         throw Exception('processor must be a handler');
@@ -17,7 +17,7 @@ StreamerApi<T> createRpcObserverServerApi<T>(ObserverApi<T> api) {
       return await processor.handler.handle(state, arg, headers);
     }),
     'stream': StreamerProcessorStreamer((state, req, headers) {
-      String name = req['name'];
+      String name = req['name'] as String;
       var arg = req['arg'];
       if (api[name] is! ObserverProcessorStreamer<T>) {
         throw Exception('processor must be a streamer');
@@ -26,7 +26,7 @@ StreamerApi<T> createRpcObserverServerApi<T>(ObserverApi<T> api) {
       return processor.streamer.stream(state, arg, headers);
     }),
     'observe': StreamerProcessorStreamer((state, req, headers) async* {
-      String name = req['name'];
+      String name = req['name'] as String;
       var arg = req['arg'];
       if (api[name] is! ObserverProcessorObserver<T>) {
         throw Exception('processor must be an observer');
@@ -44,7 +44,7 @@ StreamerApi<T> createRpcObserverServerApi<T>(ObserverApi<T> api) {
           controller.add(x);
         },
         onError: (error) {
-          controller.addError(error);
+          controller.addError(error as Object);
         },
         onDone: () {
           controller.close();
@@ -88,7 +88,7 @@ class RpcObserverClient {
         _client.stream('observe', {'name': name, 'arg': arg}, partialHeaders);
 
     final completer = Completer<(dynamic, Stream<dynamic>)>();
-    StreamSubscription? subscription;
+    StreamSubscription<dynamic>? subscription;
     final updatesController = StreamController<dynamic>(
       onCancel: () => subscription?.cancel(),
       onPause: () => subscription?.cancel(),
@@ -109,9 +109,9 @@ class RpcObserverClient {
       },
       onError: (error) {
         if (!started) {
-          completer.completeError(error);
+          completer.completeError(error as Object);
         }
-        updatesController.addError(error);
+        updatesController.addError(error as Object);
       },
       onDone: () => updatesController.close(),
     );

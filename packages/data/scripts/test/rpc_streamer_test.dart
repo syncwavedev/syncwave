@@ -143,7 +143,7 @@ void main() {
 
       final receivedValues = <int>[];
       final subscription = rpcClient.stream('infinite', null).listen(
-            (x) => receivedValues.add(x),
+            (x) => receivedValues.add(x as int),
             onError: (error) => fail('Should not get error: $error'),
           );
 

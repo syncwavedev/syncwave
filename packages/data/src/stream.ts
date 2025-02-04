@@ -111,30 +111,15 @@ export function mergeStreams<T>(sources: AsyncIterable<T>[]): Stream<T> {
     return toStream<T>(merge(init, ...sources));
 }
 
-export class Stream<T> implements AsyncIterable<T> {
-    private readonly source: AsyncIterable<T>;
+export type Observable<TValue, TUpdate> = Promise<[TValue, Stream<TUpdate>]>;
 
-    constructor(source: AsyncIterable<T>);
-    constructor(executor: (writer: ChannelWriter<T>) => Cancel);
-    constructor(
-        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
-    );
-    constructor(
-        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
-    ) {
-        if (Symbol.asyncIterator in source) {
-            this.source = source;
-        } else {
-            this.source = new AsyncIteratorFactory(source);
-        }
-    }
-
+export abstract class AsyncIterableX<T> implements AsyncIterable<T> {
     drop(count: number) {
         return toStream(this._drop(count));
     }
 
     private async *_drop(count: number) {
-        for await (const item of this.source) {
+        for await (const item of this) {
             if (count <= 0) {
                 yield item;
             }
@@ -151,7 +136,7 @@ export class Stream<T> implements AsyncIterable<T> {
             return;
         }
 
-        for await (const item of this.source) {
+        for await (const item of this) {
             yield item;
 
             count -= 1;
@@ -166,7 +151,7 @@ export class Stream<T> implements AsyncIterable<T> {
     }
 
     private async *_assert(validator: (value: T) => boolean): AsyncIterable<T> {
-        for await (const item of this.source) {
+        for await (const item of this) {
             assert(validator(item));
 
             yield item;
@@ -178,7 +163,7 @@ export class Stream<T> implements AsyncIterable<T> {
     }
 
     private async *_concat(...iterables: AsyncIterable<T>[]) {
-        yield* this.source;
+        yield* this;
 
         for (const stream of iterables) {
             yield* stream;
@@ -192,7 +177,7 @@ export class Stream<T> implements AsyncIterable<T> {
     async find(
         predicate: (value: T) => Promise<boolean> | boolean
     ): Promise<T | undefined> {
-        for await (const item of this.source) {
+        for await (const item of this) {
             if (await predicate(item)) {
                 return item;
             }
@@ -211,7 +196,7 @@ export class Stream<T> implements AsyncIterable<T> {
         flatMap: (error: unknown) => R[] | Promise<R> | AsyncIterable<R>
     ): AsyncIterable<T | R> {
         try {
-            yield* this.source;
+            yield* this;
         } catch (error) {
             yield* toStream(flatMap(error));
         }
@@ -225,7 +210,7 @@ export class Stream<T> implements AsyncIterable<T> {
         map: (error: unknown) => Promise<R> | R
     ): AsyncIterable<T | R> {
         try {
-            yield* this.source;
+            yield* this;
         } catch (error) {
             yield await map(error);
         }
@@ -237,7 +222,7 @@ export class Stream<T> implements AsyncIterable<T> {
 
     private async *_finally(fn: () => Nothing) {
         try {
-            yield* this.source;
+            yield* this;
         } finally {
             fn();
         }
@@ -246,7 +231,7 @@ export class Stream<T> implements AsyncIterable<T> {
     async some(
         predicate?: (value: T) => Promise<boolean> | boolean
     ): Promise<boolean> {
-        for await (const item of this.source) {
+        for await (const item of this) {
             if (!predicate || (await predicate(item))) {
                 return true;
             }
@@ -268,7 +253,7 @@ export class Stream<T> implements AsyncIterable<T> {
     private async *_while(
         predicate: (value: T) => Promise<boolean> | boolean
     ): AsyncIterable<T> {
-        for await (const item of this.source) {
+        for await (const item of this) {
             if (!(await predicate(item))) break;
             yield item;
         }
@@ -287,7 +272,7 @@ export class Stream<T> implements AsyncIterable<T> {
     private async *_filter(
         predicate: (value: T) => Promise<boolean> | boolean
     ): AsyncIterable<T> {
-        for await (const item of this.source) {
+        for await (const item of this) {
             if (await predicate(item)) {
                 yield item;
             }
@@ -303,7 +288,7 @@ export class Stream<T> implements AsyncIterable<T> {
     private async *_flatMap<R>(
         flatMapper: (value: T) => R[] | Promise<R[]> | AsyncIterable<R>
     ): AsyncIterable<R> {
-        for await (const item of this.source) {
+        for await (const item of this) {
             yield* await flatMapper(item);
         }
     }
@@ -322,7 +307,7 @@ export class Stream<T> implements AsyncIterable<T> {
     private async *_map<R>(
         mapper: (value: T) => R | Promise<R>
     ): AsyncIterable<R> {
-        for await (const item of this.source) {
+        for await (const item of this) {
             yield await mapper(item);
         }
     }
@@ -338,7 +323,7 @@ export class Stream<T> implements AsyncIterable<T> {
         let right = 0;
         const pending = new Map<number, Promise<R> | R>();
 
-        for await (const item of this.source) {
+        for await (const item of this) {
             if (pending.size >= MAX_LOOKAHEAD_COUNT) {
                 assert(pending.has(left));
                 const pendingPromise = pending.get(left)!;
@@ -364,11 +349,34 @@ export class Stream<T> implements AsyncIterable<T> {
 
     async toArray(): Promise<T[]> {
         const result: T[] = [];
-        for await (const item of this.source) {
+        for await (const item of this) {
             result.push(item);
         }
 
         return result;
+    }
+
+    abstract [Symbol.asyncIterator](): AsyncIterator<T>;
+}
+
+export class Stream<T> extends AsyncIterableX<T> {
+    private readonly source: AsyncIterable<T>;
+
+    constructor(source: AsyncIterable<T>);
+    constructor(executor: (writer: ChannelWriter<T>) => Cancel);
+    constructor(
+        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
+    );
+    constructor(
+        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
+    ) {
+        super();
+
+        if (Symbol.asyncIterator in source) {
+            this.source = source;
+        } else {
+            this.source = new AsyncIteratorFactory(source);
+        }
     }
 
     [Symbol.asyncIterator](): AsyncIterator<T> {
@@ -376,4 +384,29 @@ export class Stream<T> implements AsyncIterable<T> {
     }
 }
 
-export type Observable<TValue, TUpdate> = Promise<[TValue, Stream<TUpdate>]>;
+export class Cursor<T> extends AsyncIterableX<T> {
+    private isConsumed = false;
+
+    constructor(private readonly iter: AsyncIterator<T>) {
+        super();
+    }
+
+    [Symbol.asyncIterator](): AsyncIterator<T> {
+        if (this.isConsumed) {
+            throw new Error('Cursor already consumed');
+        }
+        this.isConsumed = true;
+
+        return this.iter;
+    }
+}
+
+export function toCursor<T>(
+    source: AsyncIterator<T> | AsyncIterable<T>
+): Cursor<T> {
+    if (Symbol.asyncIterator in source) {
+        return new Cursor(source[Symbol.asyncIterator]());
+    }
+
+    return new Cursor(source);
+}

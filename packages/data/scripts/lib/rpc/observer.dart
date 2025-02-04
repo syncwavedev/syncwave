@@ -39,7 +39,6 @@ StreamerApi<T> createRpcObserverServerApi<T>(ObserverApi<T> api) {
 
       // Wrap the updates stream in a controller so we can cancel it on stream cancellation.
       final controller = StreamController<dynamic>();
-      // Listen to the updates stream and relay events to the controller.
       final subscription = updates.listen(
         (x) {
           controller.add(x);

@@ -1,5 +1,5 @@
 import {createTraceId, TraceId} from '../../context.js';
-import {ErrorCode, ErrorType} from '../../errors.js';
+import {ErrorCode} from '../../errors.js';
 import {Brand} from '../../utils.js';
 
 export type MessageId = Brand<string, 'message_id'>;
@@ -41,7 +41,6 @@ export interface SuccessResponsePayload extends BaseResponsePayload<'success'> {
 export interface ErrorResponsePayload extends BaseResponsePayload<'error'> {
     readonly message: string;
     readonly code: ErrorCode;
-    readonly errorType: ErrorType;
 }
 
 export type ResponsePayload = SuccessResponsePayload | ErrorResponsePayload;

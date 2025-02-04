@@ -4,8 +4,8 @@ import {CancelledError, context, createTraceId} from '../../context.js';
 import {Deferred} from '../../deferred.js';
 import {
     BusinessError,
+    ErrorCode,
     getErrorCode,
-    getErrorType,
     getReadableError,
 } from '../../errors.js';
 import {logger} from '../../logger.js';
@@ -72,7 +72,6 @@ export function launchRpcHandlerServer<T>(
                                 type: 'error',
                                 message: getReadableError(error),
                                 code: getErrorCode(error),
-                                errorType: getErrorType(error),
                             },
                         });
                     } finally {
@@ -154,18 +153,9 @@ async function proxyRequest(
                 if (msg.payload.type === 'success') {
                     result.resolve(msg.payload.result);
                 } else if (msg.payload.type === 'error') {
-                    if (msg.payload.errorType === 'business') {
-                        result.reject(
-                            new BusinessError(
-                                msg.payload.message,
-                                msg.payload.code
-                            )
-                        );
-                    } else if (msg.payload.errorType === 'system') {
-                        result.reject(new RpcError(msg.payload.message));
-                    } else {
-                        assertNever(msg.payload.errorType);
-                    }
+                    result.reject(
+                        reconstructError(msg.payload.message, msg.payload.code)
+                    );
                 } else {
                     assertNever(msg.payload);
                 }
@@ -243,5 +233,15 @@ export function reportRpcError(error: unknown) {
         logger.debug('cancelled error', error);
     } else {
         logger.error('unexpected error', error);
+    }
+}
+
+export function reconstructError(message: string, code: string) {
+    if (code === 'unknown') {
+        return new RpcError(message);
+    } else if (code === 'cancelled') {
+        return new CancelledError(message);
+    } else {
+        return new BusinessError(message, code as ErrorCode);
     }
 }

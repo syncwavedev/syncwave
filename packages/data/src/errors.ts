@@ -9,8 +9,6 @@ export type ErrorCode =
     | 'board_not_found'
     | 'unknown';
 
-export type ErrorType = 'business' | 'system';
-
 export class BusinessError extends Error {
     constructor(
         message: string,
@@ -71,12 +69,4 @@ export function getErrorCode(error: unknown): ErrorCode {
     }
 
     return 'unknown';
-}
-
-export function getErrorType(error: unknown): ErrorType {
-    if (error instanceof BusinessError) {
-        return 'business';
-    }
-
-    return 'system';
 }

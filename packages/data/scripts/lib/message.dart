@@ -140,31 +140,19 @@ class ResponsePayloadSuccess extends ResponsePayload {
       };
 }
 
-enum ErrorType { system, business }
-
-extension ErrorTypeFromString on ErrorType {
-  static ErrorType fromString(String value) {
-    return ErrorType.values.firstWhere(
-      (e) => e.name == value,
-      orElse: () => throw FormatException('Unknown ErrorType: $value'),
-    );
-  }
-}
-
 class ResponsePayloadError extends ResponsePayload {
   final String message;
   final String code;
-  final ErrorType errorType;
 
-  ResponsePayloadError(
-      {required this.message, required this.code, required this.errorType})
-      : super(type: 'error');
+  ResponsePayloadError({
+    required this.message,
+    required this.code,
+  }) : super(type: 'error');
 
   factory ResponsePayloadError.fromJson(Map<String, dynamic> json) =>
       ResponsePayloadError(
         message: json['message'] as String,
         code: json['code'] as String,
-        errorType: ErrorTypeFromString.fromString(json['errorType'] as String),
       );
 
   @override
@@ -172,7 +160,6 @@ class ResponsePayloadError extends ResponsePayload {
         ...super.toJson(),
         'message': message,
         'code': code,
-        'errorType': errorType.name,
       };
 }
 

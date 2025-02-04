@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {ContextManager} from '../../context-manager.js';
 import {Cancel, CancelledError, Context, context} from '../../context.js';
-import {toError} from '../../errors.js';
+import {getErrorCode, getReadableError, toError} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {Channel, ChannelWriter, Stream} from '../../stream.js';
 import {assertNever, Brand, catchCancel, run} from '../../utils.js';
@@ -11,6 +11,7 @@ import {catchConnectionClosed, Connection} from '../communication/transport.js';
 import {
     createRpcHandlerClient,
     launchRpcHandlerServer,
+    reconstructError,
     reportRpcError,
 } from './rpc-handler.js';
 import {createApi, handler, Handler, InferRpcClient, Streamer} from './rpc.js';
@@ -123,7 +124,11 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                             } catch (error: unknown) {
                                 reportRpcError(error);
                                 await catchConnectionClosed(
-                                    state.client.throw({streamId, error})
+                                    state.client.throw({
+                                        streamId,
+                                        message: getReadableError(error),
+                                        code: getErrorCode(error),
+                                    })
                                 );
                             } finally {
                                 await catchConnectionClosed(
@@ -219,10 +224,14 @@ function createRpcStreamerClientApi() {
             },
         }),
         throw: handler({
-            req: z.object({streamId: zStreamId(), error: z.unknown()}),
+            req: z.object({
+                streamId: zStreamId(),
+                message: z.string(),
+                code: z.string(),
+            }),
             res: z.object({}),
-            handle: async (state, {streamId, error}) => {
-                await state.throw(streamId, error);
+            handle: async (state, {streamId, message, code}) => {
+                await state.throw(streamId, reconstructError(message, code));
 
                 return {};
             },

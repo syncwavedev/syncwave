@@ -145,7 +145,6 @@ void main() {
         payload: ResponsePayloadError(
           message: 'error',
           code: 'E1',
-          errorType: ErrorType.business,
         ),
         id: 'resp1',
         requestId: 'req1',

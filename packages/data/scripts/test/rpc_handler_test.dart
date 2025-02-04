@@ -33,9 +33,10 @@ void main() {
       launchRpcHandlerServer(api, "dummy state", serverConn);
 
       // Create RPC client.
-      final rpcClient =
-          RpcHandlerClient(api, clientConn, () => {'traceId': 'test'});
-      final result = await rpcClient.call('echo', 'hello');
+      final rpcClient = RpcHandlerClient(
+          conn: clientConn,
+          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+      final result = await rpcClient.handle('echo', 'hello');
 
       expect(result, equals('dummy state: hello'));
     });
@@ -47,10 +48,11 @@ void main() {
       };
 
       launchRpcHandlerServer(api, "dummy state", serverConn);
-      final rpcClient =
-          RpcHandlerClient(api, clientConn, () => {'traceId': 'test'});
+      final rpcClient = RpcHandlerClient(
+          conn: clientConn,
+          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
 
-      expect(() async => await rpcClient.call('nonexistent', 'data'),
+      expect(() async => await rpcClient.handle('nonexistent', 'data'),
           throwsException);
     });
 
@@ -61,10 +63,12 @@ void main() {
       };
 
       launchRpcHandlerServer(api, "dummy state", serverConn);
-      final rpcClient =
-          RpcHandlerClient(api, clientConn, () => {'traceId': 'test'});
+      final rpcClient = RpcHandlerClient(
+          conn: clientConn,
+          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
 
-      expect(() async => await rpcClient.call('fail', 'data'), throwsException);
+      expect(
+          () async => await rpcClient.handle('fail', 'data'), throwsException);
     });
 
     test('rpc call timeout results in error', () async {
@@ -79,11 +83,12 @@ void main() {
         },
       };
       launchRpcHandlerServer(api, "dummy state", serverConn);
-      final rpcClient =
-          RpcHandlerClient(api, clientConn, () => {'traceId': 'test'});
+      final rpcClient = RpcHandlerClient(
+          conn: clientConn,
+          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
 
-      expect(
-          () async => await rpcClient.call('delayed', 'data'), throwsException);
+      expect(() async => await rpcClient.handle('delayed', 'data'),
+          throwsException);
     });
 
     test('multiple concurrent rpc calls return correct responses', () async {
@@ -92,11 +97,12 @@ void main() {
         'echo': (state, arg, headers) async => arg,
       };
       launchRpcHandlerServer(api, "dummy state", serverConn);
-      final rpcClient =
-          RpcHandlerClient(api, clientConn, () => {'traceId': 'test'});
+      final rpcClient = RpcHandlerClient(
+          conn: clientConn,
+          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
 
       final futures =
-          List.generate(10, (i) => rpcClient.call('echo', 'message $i'));
+          List.generate(10, (i) => rpcClient.handle('echo', 'message $i'));
       final responses = await Future.wait(futures);
 
       for (var i = 0; i < 10; i++) {

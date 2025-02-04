@@ -1,5 +1,3 @@
-import 'package:ground_data/message.dart';
-
 class BusinessError implements Exception {
   final String message;
   final String code;
@@ -16,7 +14,21 @@ class CancelledError implements Exception {
 String getErrorCode(dynamic error) =>
     error is BusinessError ? error.code : 'unknown';
 
-ErrorType getErrorType(dynamic error) =>
-    error is BusinessError ? ErrorType.business : ErrorType.system;
-
 String getReadableError(dynamic error) => error.toString();
+
+class RpcException implements Exception {
+  final String message;
+  RpcException(
+    this.message,
+  );
+  @override
+  String toString() => 'RpcException: $message';
+}
+
+Exception reconstructError(String message, String code) {
+  return switch (code) {
+    'cancelled' => CancelledError(),
+    'unknown' => RpcException(message),
+    _ => BusinessError(message, code),
+  };
+}

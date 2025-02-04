@@ -37,7 +37,6 @@ Future<void> handleRequestMessage<TState>(Connection conn, TState state,
       payload: ResponsePayloadError(
         message: getReadableError(error),
         code: getErrorCode(error),
-        errorType: getErrorType(error),
       ),
     ));
   }
@@ -55,20 +54,16 @@ Future<void> launchRpcHandlerServer<TState>(
 }
 
 class RpcHandlerClient {
-  final Map<String, dynamic> api;
   final Connection conn;
-  final Map<String, dynamic> Function() getHeaders;
+  final MessageHeaders Function() getHeaders;
 
-  RpcHandlerClient(this.api, this.conn, this.getHeaders);
+  RpcHandlerClient({required this.conn, required this.getHeaders});
 
-  Future<dynamic> call(String name, dynamic arg,
-      [Map<String, dynamic>? partialHeaders]) async {
-    if (!api.containsKey(name)) {
-      throw Exception('unknown rpc endpoint: $name');
-    }
+  Future<dynamic> handle(String name, dynamic arg,
+      [MessageHeaders? partialHeaders]) async {
     final headers = {
-      ...getHeaders(),
-      ...?partialHeaders,
+      ...getHeaders().toJson(),
+      ...?partialHeaders?.toJson(),
     };
     return await _proxyRequest(conn, name, arg, headers);
   }
@@ -87,12 +82,8 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
       try {
         final _ = switch (msg.payload) {
           ResponsePayloadSuccess payload => completer.complete(payload.result),
-          ResponsePayloadError payload => switch (payload.errorType) {
-              ErrorType.business => completer
-                  .completeError(BusinessError(payload.message, payload.code)),
-              ErrorType.system => completer.completeError(RpcException(
-                  payload.message, payload.code, ErrorType.system)),
-            },
+          ResponsePayloadError payload => completer
+              .completeError(reconstructError(payload.message, payload.code)),
         };
       } finally {
         subscription.cancel();
@@ -128,16 +119,6 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
   } finally {
     timer.cancel();
   }
-}
-
-/// A custom error type for RPC errors.
-class RpcException implements Exception {
-  final String message;
-  final String code;
-  final ErrorType errorType;
-  RpcException(this.message, this.code, this.errorType);
-  @override
-  String toString() => 'RpcError: $message';
 }
 
 /// Logs errors according to their type.

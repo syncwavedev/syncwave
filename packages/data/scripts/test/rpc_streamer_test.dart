@@ -1,28 +1,27 @@
 import 'dart:async';
-import 'package:ground_data/errors.dart';
 import 'package:test/test.dart';
+import 'package:ground_data/errors.dart';
 import 'package:ground_data/message.dart';
 import 'package:ground_data/transport.dart';
 import 'package:ground_data/mem_transport.dart';
 import 'package:ground_data/rpc/streamer.dart';
+import 'package:ground_data/rpc/common.dart';
 
 void main() {
   group('RpcStreamer', () {
-    late MemTransportServer server;
-    late MemTransportClient client;
     late Connection serverConn;
     late Connection clientConn;
 
     setUp(() async {
-      server = MemTransportServer();
-      client = MemTransportClient(server);
+      MemTransportServer server = MemTransportServer();
+      MemTransportClient client = MemTransportClient(server);
       final serverConnFuture = server.launch().first;
       clientConn = await client.connect();
       serverConn = await serverConnFuture;
     });
 
     test('successful handler call returns expected result', () async {
-      final api = {
+      final StreamerApi<String> api = {
         'echo': EchoHandler(),
       };
 
@@ -37,7 +36,7 @@ void main() {
     });
 
     test('successful stream yields expected values', () async {
-      final api = {
+      final StreamerApi<String> api = {
         'counter': CounterStreamer(),
       };
 
@@ -52,7 +51,7 @@ void main() {
     });
 
     test('stream handles errors', () async {
-      final api = {
+      final StreamerApi<String> api = {
         'failing': FailingStreamer(),
       };
 
@@ -70,11 +69,12 @@ void main() {
 
     test('stream can be cancelled', () async {
       final streamer = InfiniteStreamer();
-      final api = {
+      final StreamerApi<InfiniteStreamerState> api = {
         'infinite': streamer,
       };
 
-      await launchRpcStreamerServer(api, "test-state", serverConn);
+      final serverState = InfiniteStreamerState();
+      await launchRpcStreamerServer(api, serverState, serverConn);
 
       final rpcClient = RpcStreamerClient(
           conn: clientConn,
@@ -83,7 +83,7 @@ void main() {
       final stream = rpcClient.stream('infinite', null);
       final subscription = stream.listen(null);
 
-      expect(streamer.cancelledCount, equals(0));
+      expect(serverState.cancelledCount, equals(0));
 
       // Let it run for a bit
       await Future.delayed(Duration(milliseconds: 100));
@@ -94,11 +94,11 @@ void main() {
       // Wait a bit to ensure no more values are processed
       await Future.delayed(Duration(milliseconds: 100));
 
-      expect(streamer.cancelledCount, equals(1));
+      expect(serverState.cancelledCount, equals(1));
     });
 
     test('multiple concurrent streams work correctly', () async {
-      final api = {
+      final StreamerApi<String> api = {
         'counter': CounterStreamer(),
       };
 
@@ -130,11 +130,12 @@ void main() {
     });
 
     test('connection close cancels all active streams', () async {
-      final api = {
+      final StreamerApi<InfiniteStreamerState> api = {
         'infinite': InfiniteStreamer(),
       };
 
-      await launchRpcStreamerServer(api, "test-state", serverConn);
+      await launchRpcStreamerServer(
+          api, new InfiniteStreamerState(), serverConn);
 
       final rpcClient = RpcStreamerClient(
           conn: clientConn,
@@ -167,50 +168,48 @@ void main() {
 }
 
 // Test implementations
-
-class EchoHandler implements RpcHandler {
-  @override
-  Future<dynamic> handle(
-      dynamic state, dynamic arg, MessageHeaders headers) async {
-    return '$state: $arg';
-  }
+class EchoHandler<T> extends StreamerProcessorHandler<T> {
+  EchoHandler()
+      : super((state, arg, headers) async {
+          return '$state: $arg';
+        });
 }
 
-class CounterStreamer implements RpcStreamer {
-  @override
-  Stream<int> stream(
-      dynamic state, dynamic arg, MessageHeaders headers) async* {
-    final count = arg as int;
-    for (var i = 0; i < count; i++) {
-      yield i;
-      await Future.delayed(Duration(milliseconds: 10));
-    }
-  }
+class CounterStreamer<T> extends StreamerProcessorStreamer<T> {
+  CounterStreamer()
+      : super((state, arg, headers) async* {
+          final count = arg as int;
+          for (var i = 0; i < count; i++) {
+            yield i;
+            await Future.delayed(Duration(milliseconds: 10));
+          }
+        });
 }
 
-class FailingStreamer implements RpcStreamer {
-  @override
-  Stream<dynamic> stream(
-      dynamic state, dynamic arg, MessageHeaders headers) async* {
-    yield 1;
-    throw BusinessError('Simulated error', 'cancelled');
-  }
+class FailingStreamer<T> extends StreamerProcessorStreamer<T> {
+  FailingStreamer()
+      : super((state, arg, headers) async* {
+          yield 1;
+          throw BusinessError('Simulated error', 'cancelled');
+        });
 }
 
-class InfiniteStreamer implements RpcStreamer {
+class InfiniteStreamerState {
   int cancelledCount = 0;
+}
 
-  @override
-  Stream<int> stream(
-      dynamic state, dynamic arg, MessageHeaders headers) async* {
-    try {
-      var i = 0;
-      while (true) {
-        yield i++;
-        await Future.delayed(Duration(milliseconds: 10));
-      }
-    } finally {
-      cancelledCount += 1;
-    }
-  }
+class InfiniteStreamer
+    extends StreamerProcessorStreamer<InfiniteStreamerState> {
+  InfiniteStreamer()
+      : super((state, arg, headers) async* {
+          try {
+            var i = 0;
+            while (true) {
+              yield i++;
+              await Future.delayed(Duration(milliseconds: 10));
+            }
+          } finally {
+            state.cancelledCount += 1;
+          }
+        });
 }

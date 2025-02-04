@@ -5,15 +5,7 @@ import '../errors.dart';
 import '../message.dart';
 import '../transport.dart';
 import 'handler.dart'; // for launchRpcHandlerServer, reportRpcError
-
-// ----- Definitions for handler and streamer processors -----
-abstract class RpcHandler {
-  Future<dynamic> handle(dynamic state, dynamic arg, MessageHeaders headers);
-}
-
-abstract class RpcStreamer {
-  Stream<dynamic> stream(dynamic state, dynamic arg, MessageHeaders headers);
-}
+import 'common.dart';
 
 class RpcStreamerServerApiState<T> {
   final T state;
@@ -42,28 +34,30 @@ class RpcStreamerServerApiState<T> {
   }
 }
 
-HandlerApi<RpcStreamerServerApiState> createRpcStreamerServerApi<T>(
-    Map<String, dynamic> api) {
+HandlerApi<RpcStreamerServerApiState<T>> createRpcStreamerServerApi<T>(
+    StreamerApi<T> api) {
   return {
-    'handle': (state, req, headers) async {
+    'handle': RpcHandler((state, req, headers) async {
       // req: { name, arg }
       String name = req['name'];
       var arg = req['arg'];
-      if (api[name] is! RpcHandler) {
-        throw Exception('processor must be a handler');
-      }
-      RpcHandler processor = api[name] as RpcHandler;
-      return await processor.handle(state.state, arg, headers);
-    },
-    'stream': (state, req, headers) async {
+      return switch (api[name]) {
+        StreamerProcessorHandler(handler: final handler) =>
+          await handler.handle(state.state, arg, headers),
+        StreamerProcessorStreamer _ =>
+          throw Exception('processor must be a handler'),
+        null => throw Exception('processor $name not found'),
+      };
+    }),
+    'stream': RpcHandler((state, req, headers) async {
       // req: { name, arg, streamId }
       String name = req['name'];
       String streamId = req['streamId'];
       var arg = req['arg'];
-      if (api[name] is! RpcStreamer) {
+      if (api[name] is! StreamerProcessorStreamer<T>) {
         throw Exception('processor must be a streamer');
       }
-      RpcStreamer processor = api[name] as RpcStreamer;
+      final processor = (api[name] as StreamerProcessorStreamer<T>).streamer;
 
       // Create a subscription to manage the stream
       final subscription =
@@ -96,12 +90,12 @@ HandlerApi<RpcStreamerServerApiState> createRpcStreamerServerApi<T>(
       state.registerStream(streamId, subscription);
 
       return {};
-    },
-    'cancel': (state, req, headers) async {
+    }),
+    'cancel': RpcHandler((state, req, headers) async {
       String streamId = req['streamId'];
       await state.cancelStream(streamId);
       return {};
-    },
+    }),
   };
 }
 
@@ -134,23 +128,23 @@ class RpcStreamerClientApiState {
 
 HandlerApi<RpcStreamerClientApiState> createRpcStreamerClientApi() {
   return {
-    'next': (state, req, headers) async {
+    'next': RpcHandler((state, req, headers) async {
       String streamId = req['streamId'];
       final value = req['value'];
       await state.add(streamId, value);
       return {};
-    },
-    'throw': (state, req, headers) async {
+    }),
+    'throw': RpcHandler((state, req, headers) async {
       String streamId = req['streamId'];
       await state.addError(
           streamId, reconstructError(req['message'], req['code']));
       return {};
-    },
-    'end': (state, req, headers) async {
+    }),
+    'end': RpcHandler((state, req, headers) async {
       String streamId = req['streamId'];
       state.close(streamId);
       return {};
-    },
+    }),
   };
 }
 
@@ -219,7 +213,7 @@ class RpcStreamerClient {
 }
 
 Future<void> launchRpcStreamerServer<T>(
-    Map<String, dynamic> api, T state, Connection conn) async {
+    StreamerApi<T> api, T state, Connection conn) async {
   // Create a dummy client for streaming responses.
   final client = RpcHandlerClient(
       conn: conn, getHeaders: () => MessageHeaders(auth: null, traceId: ''));

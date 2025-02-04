@@ -1,5 +1,6 @@
 // rpc.dart
 import 'dart:async';
+import 'package:ground_data/rpc/common.dart';
 import 'package:ground_data/utils.dart';
 
 import '../constants.dart';
@@ -7,11 +8,6 @@ import '../message.dart';
 import '../transport.dart';
 import '../errors.dart';
 import '../logger.dart';
-
-typedef Handler<TState> = Future<dynamic> Function(
-    TState state, dynamic arg, MessageHeaders headers);
-
-typedef HandlerApi<TState> = Map<String, Handler<TState>>;
 
 Future<void> handleRequestMessage<TState>(Connection conn, TState state,
     HandlerApi<TState> api, RequestMessage msg) async {
@@ -21,7 +17,7 @@ Future<void> handleRequestMessage<TState>(Connection conn, TState state,
     if (handler == null) {
       throw Exception('unknown handler name: ${msg.payload.name}');
     }
-    final result = await handler(state, msg.payload.arg, msg.headers);
+    final result = await handler.handle(state, msg.payload.arg, msg.headers);
     await conn.send(ResponseMessage(
       id: createMessageId(),
       headers: MessageHeaders(traceId: traceId, auth: null),

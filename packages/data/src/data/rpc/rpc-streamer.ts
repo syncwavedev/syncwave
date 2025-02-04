@@ -202,6 +202,12 @@ class RpcStreamerClientApiState {
             });
     }
 
+    finishAll() {
+        for (const streamId of [...this.subs.keys()]) {
+            this.finish(streamId);
+        }
+    }
+
     private getSub(streamId: StreamId) {
         const channel = this.subs.get(streamId);
         if (!channel) {
@@ -265,6 +271,21 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
         conn,
         getHeaders
     );
+
+    let cancelCleanup: Cancel | undefined = undefined;
+    function cleanup() {
+        unsub();
+        clientApiState.finishAll();
+        cancelCleanup?.();
+    }
+
+    cancelCleanup = context().onCancel(cleanup);
+
+    const unsub = conn.subscribe({
+        next: () => Promise.resolve(),
+        throw: async () => clientApiState.finishAll(),
+        close: () => cleanup(),
+    });
 
     function get(_target: unknown, nameOrSymbol: string | symbol) {
         if (typeof nameOrSymbol !== 'string') {

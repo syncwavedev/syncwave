@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:ground_data/constants.dart';
+import 'package:ground_data/rpc/common.dart';
 import 'package:test/test.dart';
 import 'package:ground_data/rpc/handler.dart';
 import 'package:ground_data/transport.dart';
@@ -24,9 +25,8 @@ void main() {
 
     test('successful rpc call returns expected result', () async {
       // Define a simple API: echo returns its input argument.
-      final api =
-          <String, Future<dynamic> Function(String, dynamic, MessageHeaders)>{
-        'echo': (state, arg, headers) async => "$state: $arg",
+      final api = <String, RpcHandler<String>>{
+        'echo': RpcHandler((state, arg, headers) async => "$state: $arg"),
       };
 
       // Launch RPC handler on the server connection.
@@ -42,9 +42,8 @@ void main() {
     });
 
     test('rpc call with unknown endpoint throws exception', () async {
-      final api =
-          <String, Future<dynamic> Function(String, dynamic, MessageHeaders)>{
-        'echo': (state, arg, headers) async => arg,
+      final api = <String, RpcHandler<String>>{
+        'echo': RpcHandler((state, arg, headers) async => arg),
       };
 
       launchRpcHandlerServer(api, "dummy state", serverConn);
@@ -57,9 +56,9 @@ void main() {
     });
 
     test('rpc call propagates handler exceptions', () async {
-      final api =
-          <String, Future<dynamic> Function(String, dynamic, MessageHeaders)>{
-        'fail': (state, arg, headers) async => throw Exception('failure'),
+      final api = <String, RpcHandler<String>>{
+        'fail': RpcHandler(
+            (state, arg, headers) async => throw Exception('failure')),
       };
 
       launchRpcHandlerServer(api, "dummy state", serverConn);
@@ -73,14 +72,13 @@ void main() {
 
     test('rpc call timeout results in error', () async {
       // Handler that delays response beyond the RPC timeout.
-      final api =
-          <String, Future<dynamic> Function(String, dynamic, MessageHeaders)>{
-        'delayed': (state, arg, headers) async {
+      final api = <String, RpcHandler<String>>{
+        'delayed': RpcHandler((state, arg, headers) async {
           // Delay longer than the configured RPC_CALL_TIMEOUT_MS.
           await Future.delayed(
               Duration(milliseconds: RPC_CALL_TIMEOUT_MS + 100));
           return 'delayed';
-        },
+        }),
       };
       launchRpcHandlerServer(api, "dummy state", serverConn);
       final rpcClient = RpcHandlerClient(
@@ -92,9 +90,8 @@ void main() {
     });
 
     test('multiple concurrent rpc calls return correct responses', () async {
-      final api =
-          <String, Future<dynamic> Function(String, dynamic, MessageHeaders)>{
-        'echo': (state, arg, headers) async => arg,
+      final api = <String, RpcHandler<String>>{
+        'echo': RpcHandler((state, arg, headers) async => arg),
       };
       launchRpcHandlerServer(api, "dummy state", serverConn);
       final rpcClient = RpcHandlerClient(

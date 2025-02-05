@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:ground_data/rpc/common.dart';
-import 'package:ground_data/utils.dart';
 
 import '../constants.dart';
 import '../message.dart';

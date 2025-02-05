@@ -1,3 +1,5 @@
+import {logger} from '../logger.js';
+
 export interface GoogleOptions {
     readonly clientId: string;
     readonly clientSecret: string;
@@ -40,7 +42,7 @@ export async function getGoogleUser(
 
         return {type: 'success', user};
     } catch (err) {
-        console.warn('Cannot get google user', {err});
+        logger.warn('Cannot get google user', {err});
         return {type: 'error'};
     }
 }

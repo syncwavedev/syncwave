@@ -7,12 +7,9 @@ import {logger} from '../logger.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {assert, whenAll} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
-import {
-    EventStoreReader,
-    EventStoreWriter,
-} from './communication/event-store.js';
-import {HubClient} from './communication/hub.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
+import {EventStoreReader, EventStoreWriter} from './event-store.js';
+import {HubClient} from './hub.js';
 import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
 import {Identity, IdentityId, IdentityRepo} from './repos/identity-repo.js';
 import {Member, MemberId, MemberRepo} from './repos/member-repo.js';

@@ -2,10 +2,10 @@ import {z, ZodType} from 'zod';
 import {decodeString, encodeString} from '../codec.js';
 import {Uint8Transaction} from '../kv/kv-store.js';
 import {toStream} from '../stream.js';
+import {createApi, handler} from '../transport/rpc.js';
 import {zUint8Array} from '../utils.js';
 import {decodeUuid} from '../uuid.js';
 import {AggregateDataNode, DataNode, DataNodeVisitor} from './data-node.js';
-import {createApi, handler} from './rpc/rpc.js';
 
 export interface DataNodeDto {
     readonly key: Uint8Array;

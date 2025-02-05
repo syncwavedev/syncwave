@@ -1,5 +1,5 @@
 {
-    "name": "my-workspaces-powered-project",
+    "name": "syncwave",
     "workspaces": [
         "packages/*"
     ],

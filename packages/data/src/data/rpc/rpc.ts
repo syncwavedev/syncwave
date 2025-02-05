@@ -403,3 +403,14 @@ export {
     createRpcObserverClient as createRpcClient,
     launchRpcObserverServer,
 } from './rpc-observer.js';
+
+export function getRequiredProcessor<T, K extends keyof T>(
+    api: T,
+    name: K
+): T[K] {
+    const value = api[name];
+    if (value === undefined) {
+        throw new Error(`unknown processor ${String(name)}`);
+    }
+    return value;
+}

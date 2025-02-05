@@ -16,7 +16,12 @@ import {
     MessageHeaders,
 } from '../communication/message.js';
 import {Connection} from '../communication/transport.js';
-import {Handler, InferRpcClient, Processor} from './rpc.js';
+import {
+    getRequiredProcessor,
+    Handler,
+    InferRpcClient,
+    Processor,
+} from './rpc.js';
 
 export type HandlerApi<TState> = Record<string, Handler<TState, any, any>>;
 
@@ -41,12 +46,10 @@ export function launchRpcHandlerServer<T>(
                 const traceId = msg.headers.traceId ?? createTraceId();
                 await contextManager.start(msg.id, traceId, async () => {
                     try {
-                        const handler = api[msg.payload.name];
-                        if (!handler) {
-                            throw new Error(
-                                `unknown handler name: ${msg.payload.name}`
-                            );
-                        }
+                        const handler = getRequiredProcessor(
+                            api,
+                            msg.payload.name
+                        );
 
                         const result = await handler.handle(
                             state,

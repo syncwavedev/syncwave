@@ -11,6 +11,7 @@ import {
 } from './rpc-streamer.js';
 import {
     createApi,
+    getRequiredProcessor,
     handler,
     Handler,
     InferRpcClient,
@@ -52,7 +53,7 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
             req: z.object({name: z.string(), arg: z.unknown()}),
             item: z.unknown(),
             stream: (state, {name, arg}, headers) => {
-                const processor = api[name];
+                const processor = getRequiredProcessor(api, name);
                 if (processor.type !== 'streamer') {
                     throw new Error('processor must be a streamer');
                 }
@@ -73,7 +74,7 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
                 }),
             ]),
             stream: (state, {name, arg}, headers) => {
-                const processor = api[name];
+                const processor = getRequiredProcessor(api, name);
                 if (processor.type !== 'observer') {
                     throw new Error('processor must be an observer');
                 }

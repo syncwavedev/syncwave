@@ -14,7 +14,14 @@ import {
     reconstructError,
     reportRpcError,
 } from './rpc-handler.js';
-import {createApi, handler, Handler, InferRpcClient, Streamer} from './rpc.js';
+import {
+    createApi,
+    getRequiredProcessor,
+    handler,
+    Handler,
+    InferRpcClient,
+    Streamer,
+} from './rpc.js';
 
 export type StreamerApi<TState> = Record<
     string,
@@ -85,8 +92,8 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
             req: z.object({name: z.string(), arg: z.unknown()}),
             res: z.unknown(),
             handle: async (state, req, headers) => {
-                const processor = api[req.name];
-                if (processor?.type !== 'handler') {
+                const processor = getRequiredProcessor(api, req.name);
+                if (processor.type !== 'handler') {
                     throw new Error('processor must be a handler');
                 }
 
@@ -101,7 +108,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
             }),
             res: z.object({}),
             handle: async (state, {name, streamId, arg}, headers) => {
-                const processor = api[name];
+                const processor = getRequiredProcessor(api, name);
                 if (processor.type !== 'streamer') {
                     throw new Error('processor must be a streamer');
                 }

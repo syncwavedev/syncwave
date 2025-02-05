@@ -362,3 +362,15 @@ export async function observable<T>(
 export function run<R>(fn: () => R) {
     return fn();
 }
+
+export function getRequiredKey<T, K extends keyof T>(
+    obj: T,
+    key: K,
+    error: Error
+): T[K] {
+    const value = obj[key];
+    if (value === undefined) {
+        throw error;
+    }
+    return value;
+}

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
 import 'package:vector_graphics/vector_graphics.dart';
 
 /// A widget that displays an SVG icon using the ambient [IconTheme].

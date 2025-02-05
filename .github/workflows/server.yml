@@ -77,11 +77,11 @@ jobs:
             - uses: docker/build-push-action@v2
               with:
                   push: true
-                  tags: ghcr.io/groundhq/ground-server:${{ steps.config.outputs.TAG }}
+                  tags: ghcr.io/syncwaveapp/syncwave-server:${{ steps.config.outputs.TAG }}
                   context: '.'
                   file: ./packages/server/Dockerfile
-                  cache-from: type=registry,ref=ghcr.io/groundhq/ground-server:cache
-                  cache-to: type=registry,mode=max,ref=ghcr.io/groundhq/ground-server:cache
+                  cache-from: type=registry,ref=ghcr.io/syncwaveapp/syncwave-server:cache
+                  cache-to: type=registry,mode=max,ref=ghcr.io/syncwaveapp/syncwave-server:cache
 
             - name: Deploy containers
               if: success()
@@ -97,12 +97,12 @@ jobs:
 
                       docker system prune -af --filter until=30m
 
-                      docker pull ghcr.io/groundhq/ground-server:${{ steps.config.outputs.TAG }}
+                      docker pull ghcr.io/syncwaveapp/syncwave-server:${{ steps.config.outputs.TAG }}
 
-                      docker stop ground-server-${{ steps.config.outputs.STAGE }} || true
-                      docker rm ground-server-${{ steps.config.outputs.STAGE }} || true
+                      docker stop syncwave-server-${{ steps.config.outputs.STAGE }} || true
+                      docker rm syncwave-server-${{ steps.config.outputs.STAGE }} || true
                       docker run \
-                        --name ground-server-${{ steps.config.outputs.STAGE }} \
+                        --name syncwave-server-${{ steps.config.outputs.STAGE }} \
                         -p ${{ steps.config.outputs.PORT }}:80 \
                         -e NODE_ENV=production \
                         -e STAGE=${{ steps.config.outputs.STAGE }} \
@@ -115,4 +115,4 @@ jobs:
                         -d \
                         --network phoenix \
                         --restart unless-stopped \
-                        ghcr.io/groundhq/ground-server:${{ steps.config.outputs.TAG }}
+                        ghcr.io/syncwaveapp/syncwave-server:${{ steps.config.outputs.TAG }}

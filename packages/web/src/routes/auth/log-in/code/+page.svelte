@@ -10,7 +10,7 @@
 	import CircleAlert from 'lucide-svelte/icons/circle-alert';
 	import * as Alert from '$lib/components/ui/alert/index.js';
 	import {goto} from '$app/navigation';
-	import {wait} from 'ground-data';
+	import {wait} from 'syncwave-data';
 
 	const googleSignInUrl = (() => {
 		const authState = {redirectUrl: '/'};

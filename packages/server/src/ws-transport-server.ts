@@ -1,3 +1,4 @@
+import {Server} from 'http';
 import {
     Codec,
     Connection,
@@ -10,8 +11,7 @@ import {
     Subject,
     toError,
     TransportServer,
-} from 'ground-data';
-import {Server} from 'http';
+} from 'syncwave-data';
 import {WebSocket, WebSocketServer} from 'ws';
 
 export interface WsTransportServerOptions<T> {

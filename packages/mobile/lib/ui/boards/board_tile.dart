@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/models/board.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
-import 'package:ground/ui/widgets/avatar.dart';
+import 'package:syncwave/models/board.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/widgets/avatar.dart';
 
 class BoardTile extends StatelessWidget {
   final Board board;

@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/models/column.dart';
-import 'package:ground/models/task.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
-import 'package:ground/ui/tasks/task_tile.dart';
-import 'package:ground/ui/widgets/context_menu.dart';
-import 'package:ground/ui/widgets/context_menu_action.dart';
+import 'package:syncwave/models/column.dart';
+import 'package:syncwave/models/task.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/tasks/task_tile.dart';
+import 'package:syncwave/ui/widgets/context_menu.dart';
+import 'package:syncwave/ui/widgets/context_menu_action.dart';
 
 class TaskGroupList extends StatelessWidget {
   final List<TasksColumn> columns;

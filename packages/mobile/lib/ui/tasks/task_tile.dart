@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/models/task.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
-import 'package:ground/ui/widgets/buttons.dart';
+import 'package:syncwave/models/task.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/widgets/buttons.dart';
 import 'circular_status.dart';
-import 'package:ground/ui/widgets/avatar.dart';
+import 'package:syncwave/ui/widgets/avatar.dart';
 
 class TaskTile extends StatelessWidget {
   final Task task;

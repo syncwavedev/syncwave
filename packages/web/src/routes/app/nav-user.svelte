@@ -4,7 +4,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import {useSidebar} from '$lib/components/ui/sidebar/index.js';
 	import {getAuthManager} from '$lib/utils';
-	import type {Identity, User} from 'ground-data';
+	import type {Identity, User} from 'syncwave-data';
 	import BadgeCheck from 'lucide-svelte/icons/badge-check';
 	import Bell from 'lucide-svelte/icons/bell';
 	import ChevronsUpDown from 'lucide-svelte/icons/chevrons-up-down';

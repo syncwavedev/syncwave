@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
 
 /// A text field that allows users to enter text using a keyboard.
 ///

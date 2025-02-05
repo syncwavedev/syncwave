@@ -18,7 +18,7 @@
 		<Breadcrumb.Root>
 			<Breadcrumb.List>
 				<Breadcrumb.Item class="hidden md:block">
-					<Breadcrumb.Link href="#">Ground board</Breadcrumb.Link>
+					<Breadcrumb.Link href="#">SyncWave board</Breadcrumb.Link>
 				</Breadcrumb.Item>
 			</Breadcrumb.List>
 		</Breadcrumb.Root>

@@ -1,5 +1,5 @@
 {
-    "name": "ground-data",
+    "name": "syncwave-data",
     "private": true,
     "version": "0.1.0",
     "main": "dist/cjs/src/index.js",

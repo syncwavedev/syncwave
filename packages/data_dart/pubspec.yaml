@@ -1,4 +1,4 @@
-name: ground_data
+name: syncwave_data
 
 environment:
     sdk: '^3.6.0'

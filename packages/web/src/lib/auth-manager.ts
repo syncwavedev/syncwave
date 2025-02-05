@@ -1,4 +1,4 @@
-import {type JwtPayload, type UserId} from 'ground-data';
+import {type JwtPayload, type UserId} from 'syncwave-data';
 import type {UniversalStore} from './universal-store.js';
 
 function parseJwt(token: string): unknown {

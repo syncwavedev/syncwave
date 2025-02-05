@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:ground/ui/core/themes/colors.dart';
-import 'package:ground/ui/core/themes/icons.dart';
-import 'package:ground/ui/core/themes/radius.dart';
-import 'package:ground/ui/core/themes/spacing.dart';
-import 'package:ground/ui/core/themes/typography.dart';
+import 'package:syncwave/ui/core/themes/colors.dart';
+import 'package:syncwave/ui/core/themes/icons.dart';
+import 'package:syncwave/ui/core/themes/radius.dart';
+import 'package:syncwave/ui/core/themes/spacing.dart';
+import 'package:syncwave/ui/core/themes/typography.dart';
 
 /// Defines the visual properties for the application.
 ///

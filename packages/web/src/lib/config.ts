@@ -6,7 +6,7 @@ export interface AppConfig {
 	serverWsUrl: string;
 }
 
-// wss://api-ground-dev.edme.io:443
+// wss://api-syncwave-dev.edme.io:443
 export const appConfig: AppConfig = (() => {
 	if (PUBLIC_STAGE === 'local') {
 		return {
@@ -19,15 +19,15 @@ export const appConfig: AppConfig = (() => {
 		return {
 			googleClientId:
 				'848724615154-dt9ejfs9rfu1vfhkvlk19pg6rbvnue9u.apps.googleusercontent.com',
-			apiUrl: 'https://api-ground-dev.edme.io',
-			serverWsUrl: 'wss://api-ground-dev.edme.io',
+			apiUrl: 'https://api-syncwave-dev.edme.io',
+			serverWsUrl: 'wss://api-syncwave-dev.edme.io',
 		};
 	} else if (PUBLIC_STAGE === 'prod') {
 		return {
 			googleClientId:
 				'848724615154-0ln8g1cq9iiddeqtlgv1qfcqf0snbrng.apps.googleusercontent.com',
-			apiUrl: 'https://api-ground.edme.io',
-			serverWsUrl: 'wss://api-ground.edme.io',
+			apiUrl: 'https://api-syncwave.edme.io',
+			serverWsUrl: 'wss://api-syncwave.edme.io',
 		};
 	} else {
 		throw new Error(`unknown stage: ${PUBLIC_STAGE}`);

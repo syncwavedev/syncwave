@@ -99,7 +99,7 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  ground_data:
+  syncwave_data:
     dependency: "direct main"
     description:
       path: "../data_dart"

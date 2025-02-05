@@ -16,7 +16,7 @@
 
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
-	import {ParticipantClient, CancelledError} from 'ground-data';
+	import {ParticipantClient, CancelledError} from 'syncwave-data';
 	import {Toaster} from '$lib/components/ui/sonner/index.js';
 	import {AuthManager} from '$lib/auth-manager';
 	import * as Dialog from '$lib/components/ui/dialog';

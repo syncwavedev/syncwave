@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
 
 class CircularStatus extends StatelessWidget {
   final int currentStep;

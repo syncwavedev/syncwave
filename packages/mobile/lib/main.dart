@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/ui/core/navigator/navigator.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
-import 'package:ground/ui/core/themes/theme_controller.dart';
-import 'package:ground/ui/home/home_screen.dart';
+import 'package:syncwave/ui/core/navigator/navigator.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/core/themes/theme_controller.dart';
+import 'package:syncwave/ui/home/home_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {

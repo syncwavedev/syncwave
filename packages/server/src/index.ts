@@ -2,6 +2,9 @@ import 'dotenv/config';
 
 import Router from '@koa/router';
 import {createHash, randomBytes} from 'crypto';
+import {createServer} from 'http';
+import jwt from 'jsonwebtoken';
+import Koa from 'koa';
 import {
     assertDefined,
     CancelledError,
@@ -21,10 +24,7 @@ import {
     PrefixedKVStore,
     toStream,
     Uint8KVStore,
-} from 'ground-data';
-import {createServer} from 'http';
-import jwt from 'jsonwebtoken';
-import Koa from 'koa';
+} from 'syncwave-data';
 import {SesEmailService} from './ses-email-service.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
@@ -41,15 +41,15 @@ const {APP_URL, GOOGLE_REDIRECT_URL} = (() => {
     const GOOGLE_CALLBACK_PATH = '/callbacks/google';
     if (STAGE === 'dev') {
         return {
-            APP_URL: 'https://www-ground-dev.edme.io',
+            APP_URL: 'https://www-syncwave-dev.edme.io',
             GOOGLE_REDIRECT_URL:
-                'https://api-ground-dev.edme.io' + GOOGLE_CALLBACK_PATH,
+                'https://api-syncwave-dev.edme.io' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'prod') {
         return {
-            APP_URL: 'https://www-ground.edme.io',
+            APP_URL: 'https://www-syncwave.edme.io',
             GOOGLE_REDIRECT_URL:
-                'https://api-ground.edme.io' + GOOGLE_CALLBACK_PATH,
+                'https://api-syncwave.edme.io' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'local') {
         return {
@@ -112,7 +112,7 @@ async function getKVStore(): Promise<Uint8KVStore> {
         const fdbStore = await import('./fdb-kv-store.js').then(
             x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
         );
-        return new PrefixedKVStore(fdbStore, `/ground-${STAGE}/`);
+        return new PrefixedKVStore(fdbStore, `/syncwave-${STAGE}/`);
     }
 }
 

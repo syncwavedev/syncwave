@@ -2,8 +2,8 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
-import 'package:ground/ui/widgets/divider.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/widgets/divider.dart';
 
 typedef PreviewBuilder = Widget Function(
   BuildContext context,

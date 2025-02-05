@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
 
 class ContextMenuAction extends StatefulWidget {
   const ContextMenuAction({

@@ -1,7 +1,7 @@
 import {clsx, type ClassValue} from 'clsx';
-import {context, MsgpackCodec, ParticipantClient, type ParticipantRpc} from 'ground-data';
 import {getContext, onDestroy} from 'svelte';
 import {toast} from 'svelte-sonner';
+import {context, MsgpackCodec, ParticipantClient, type ParticipantRpc} from 'syncwave-data';
 import {twMerge} from 'tailwind-merge';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
 import {WsTransportClient} from '../ws-transport-client';

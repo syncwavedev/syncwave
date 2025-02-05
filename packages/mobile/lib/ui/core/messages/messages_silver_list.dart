@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/models/message.dart';
+import 'package:syncwave/models/message.dart';
 
 import 'message_tile.dart';
 

@@ -1,5 +1,5 @@
 {
-	"name": "ground-web",
+	"name": "syncwave-web",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -51,7 +51,7 @@
 	},
 	"dependencies": {
 		"@lucide/lab": "^0.1.2",
-		"ground-data": "*",
+		"syncwave-data": "*",
 		"idb": "^8.0.1"
 	}
 }

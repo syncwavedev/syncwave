@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
-import 'package:ground/ui/core/themes/theme.dart';
+import 'package:syncwave/ui/core/themes/theme.dart';
 
 class ThemeController extends ChangeNotifier {
   bool _isDark;

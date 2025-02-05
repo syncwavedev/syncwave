@@ -5,7 +5,7 @@
 	import type {ComponentProps} from 'svelte';
 	import NewBoardMenu from './new-board-menu.svelte';
 	import {getState, type State} from '$lib/utils.svelte';
-	import type {Board, Identity, User} from 'ground-data';
+	import type {Board, Identity, User} from 'syncwave-data';
 
 	let {
 		initialBoards,

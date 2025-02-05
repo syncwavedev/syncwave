@@ -2,7 +2,7 @@
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
-	import type {Board} from 'ground-data';
+	import type {Board} from 'syncwave-data';
 	import {formatTime} from '$lib/utils';
 
 	let {

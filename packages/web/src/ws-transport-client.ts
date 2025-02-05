@@ -7,7 +7,7 @@ import {
 	type Observer,
 	type TransportClient,
 	type Unsubscribe,
-} from 'ground-data';
+} from 'syncwave-data';
 
 export interface WsTransportClientOptions<T> {
 	readonly url: string;

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:test/test.dart';
-import 'package:ground_data/errors.dart';
-import 'package:ground_data/message.dart';
-import 'package:ground_data/transport.dart';
-import 'package:ground_data/mem_transport.dart';
-import 'package:ground_data/rpc/observer.dart';
-import 'package:ground_data/rpc/common.dart';
+import 'package:syncwave_data/errors.dart';
+import 'package:syncwave_data/message.dart';
+import 'package:syncwave_data/transport.dart';
+import 'package:syncwave_data/mem_transport.dart';
+import 'package:syncwave_data/rpc/observer.dart';
+import 'package:syncwave_data/rpc/common.dart';
 
 void main() {
   group('RpcObserver', () {

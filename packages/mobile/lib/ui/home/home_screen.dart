@@ -1,13 +1,13 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/models/board.dart';
-import 'package:ground/ui/boards/board_screen.dart';
-import 'package:ground/ui/boards/boards_list.dart';
-import 'package:ground/ui/core/navigator/navigator.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
-import 'package:ground/ui/widgets/avatar.dart';
-import 'package:ground/ui/widgets/bottom_bar.dart';
-import 'package:ground/ui/widgets/icons.dart';
-import 'package:ground/ui/widgets/navigation_stack.dart';
+import 'package:syncwave/models/board.dart';
+import 'package:syncwave/ui/boards/board_screen.dart';
+import 'package:syncwave/ui/boards/boards_list.dart';
+import 'package:syncwave/ui/core/navigator/navigator.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/ui/widgets/avatar.dart';
+import 'package:syncwave/ui/widgets/bottom_bar.dart';
+import 'package:syncwave/ui/widgets/icons.dart';
+import 'package:syncwave/ui/widgets/navigation_stack.dart';
 
 import '../widgets/buttons.dart';
 

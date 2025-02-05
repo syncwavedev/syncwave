@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {getSdk} from '$lib/utils';
-	import {BusinessError, createBoardId} from 'ground-data';
+	import {BusinessError, createBoardId} from 'syncwave-data';
 	import {goto} from '$app/navigation';
 	import {Input} from '$lib/components/ui/input/index.js';
 	import {Label} from '$lib/components/ui/label/index.js';

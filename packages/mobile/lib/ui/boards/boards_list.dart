@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/models/board.dart';
-import 'package:ground/ui/boards/board_tile.dart';
+import 'package:syncwave/models/board.dart';
+import 'package:syncwave/ui/boards/board_tile.dart';
 
 class BoardsList extends StatelessWidget {
   final List<Board> boards;

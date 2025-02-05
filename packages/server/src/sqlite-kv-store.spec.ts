@@ -6,7 +6,7 @@ import {
     LtCondition,
     LteCondition,
     toStream,
-} from 'ground-data';
+} from 'syncwave-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {SqliteUint8KVStore} from './sqlite-kv-store.js';
 

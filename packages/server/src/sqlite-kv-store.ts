@@ -7,7 +7,7 @@ import {
     Uint8Transaction,
     context,
     mapCondition,
-} from 'ground-data'; // adjust import as needed
+} from 'syncwave-data'; // adjust import as needed
 
 function buildConditionSql(condition: Condition<Uint8Array>): {
     clause: string;

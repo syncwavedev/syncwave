@@ -1,14 +1,14 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/models/board.dart';
-import 'package:ground/models/column.dart';
-import 'package:ground/models/message.dart';
-import 'package:ground/models/task.dart';
-import 'package:ground/ui/core/navigator/navigator.dart';
-import 'package:ground/ui/tasks/task_screen.dart';
-import 'package:ground/ui/widgets/bottom_bar.dart';
-import 'package:ground/ui/widgets/icons.dart';
-import 'package:ground/ui/widgets/navigation_stack.dart';
-import 'package:ground/ui/tasks/tasks_group_list.dart';
+import 'package:syncwave/models/board.dart';
+import 'package:syncwave/models/column.dart';
+import 'package:syncwave/models/message.dart';
+import 'package:syncwave/models/task.dart';
+import 'package:syncwave/ui/core/navigator/navigator.dart';
+import 'package:syncwave/ui/tasks/task_screen.dart';
+import 'package:syncwave/ui/widgets/bottom_bar.dart';
+import 'package:syncwave/ui/widgets/icons.dart';
+import 'package:syncwave/ui/widgets/navigation_stack.dart';
+import 'package:syncwave/ui/tasks/tasks_group_list.dart';
 
 import '../widgets/bottom_sheet.dart';
 import '../widgets/buttons.dart';

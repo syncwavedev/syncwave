@@ -70,23 +70,23 @@ export function createAuthApi() {
                         html: `<p>
                                     Hi there!<br />
                                     <br />
-                                    We noticed a request to sign into your Ground account.<br />
+                                    We noticed a request to sign into your SyncWave account.<br />
                                     If this wasn't you, no worries—just ignore this email.<br />
                                     <br />
                                     Your one-time code is: <strong>${verificationCode.code}</strong><br />
                                     <br />
                                     Have a great day!<br />
-                                    The Ground Team
+                                    The SyncWave Team
                                 </p>`,
-                        subject: 'Your Ground Account Sign-In Code',
+                        subject: 'Your SyncWave Account Sign-In Code',
                         text: `Hi there!
                     
-    We noticed a request to sign into your Ground account. If this wasn't you, no worries—just ignore this email.
+    We noticed a request to sign into your SyncWave account. If this wasn't you, no worries—just ignore this email.
     
     Your one-time code is: ${verificationCode.code}
     
     Have a great day!
-    The Ground Team`,
+    The SyncWave Team`,
                     });
                 });
 

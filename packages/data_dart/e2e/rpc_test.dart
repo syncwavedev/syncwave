@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:ground_data/errors.dart';
+import 'package:syncwave_data/errors.dart';
 import 'package:test/test.dart';
-import 'package:ground_data/message.dart';
-import 'package:ground_data/websocket_transport_client.dart';
-import 'package:ground_data/rpc/observer.dart';
+import 'package:syncwave_data/message.dart';
+import 'package:syncwave_data/websocket_transport_client.dart';
+import 'package:syncwave_data/rpc/observer.dart';
 
 const e2eApiUrl = "ws://127.0.0.1:4567";
 

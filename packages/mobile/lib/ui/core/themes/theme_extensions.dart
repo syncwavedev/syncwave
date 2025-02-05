@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/ui/core/themes/theme_controller.dart';
+import 'package:syncwave/ui/core/themes/theme_controller.dart';
 import 'package:provider/provider.dart';
 
 import 'radius.dart';

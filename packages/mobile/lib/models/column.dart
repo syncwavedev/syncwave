@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:ground/models/task.dart';
+import 'package:syncwave/models/task.dart';
 
 @immutable
 class TasksColumn {

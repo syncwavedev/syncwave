@@ -1,5 +1,5 @@
 import {SendEmailCommand, SESClient} from '@aws-sdk/client-ses';
-import {EmailMessage, EmailService} from 'ground-data';
+import {EmailMessage, EmailService} from 'syncwave-data';
 
 export class SesEmailService implements EmailService {
     private readonly ses: SESClient;
@@ -16,7 +16,7 @@ export class SesEmailService implements EmailService {
                 Destination: {
                     ToAddresses: [recipient],
                 },
-                Source: 'Ground <noreply@edme.io>',
+                Source: 'SyncWave <noreply@edme.io>',
                 Message: {
                     Subject: {
                         Data: subject,

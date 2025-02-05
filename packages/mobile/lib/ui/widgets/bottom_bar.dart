@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/ui/widgets/divider.dart';
+import 'package:syncwave/ui/widgets/divider.dart';
 
 class BottomBar extends StatelessWidget {
   final List<Widget> children;

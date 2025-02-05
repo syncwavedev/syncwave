@@ -11,7 +11,7 @@ import {
     mapCondition,
     toStream,
     withPrefix,
-} from 'ground-data';
+} from 'syncwave-data';
 
 fdb.setAPIVersion(620, 620);
 

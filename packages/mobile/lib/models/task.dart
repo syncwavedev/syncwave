@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:ground/models/message.dart';
+import 'package:syncwave/models/message.dart';
 
 @immutable
 class Task {

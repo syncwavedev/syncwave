@@ -1,5 +1,5 @@
 import {pageSdk} from '$lib/utils.js';
-import {whenAll} from 'ground-data';
+import {whenAll} from 'syncwave-data';
 import type {LayoutLoad} from './$types.js';
 
 export const load: LayoutLoad = async ({data}) => {

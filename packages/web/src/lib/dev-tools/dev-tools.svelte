@@ -4,7 +4,7 @@
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import {getSdk} from '$lib/utils';
-	import {type DataNodeDto} from 'ground-data';
+	import {type DataNodeDto} from 'syncwave-data';
 	import {ChevronDown, Dot, Trash} from 'lucide-svelte';
 
 	let source: 'client' | 'server' = $state('server');

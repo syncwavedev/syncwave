@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type {PageProps} from './$types';
-	import {unimplemented} from 'ground-data';
+	import {unimplemented} from 'syncwave-data';
 	import {goto} from '$app/navigation';
 	import {getAuthManager, showErrorToast} from '$lib/utils';
 

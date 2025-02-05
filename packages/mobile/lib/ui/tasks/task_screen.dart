@@ -1,14 +1,14 @@
 import 'package:flutter/widgets.dart';
-import 'package:ground/models/task.dart';
-import 'package:ground/ui/core/messages/messages_silver_list.dart';
-import 'package:ground/ui/core/navigator/navigator.dart';
-import 'package:ground/ui/tasks/circular_status.dart';
-import 'package:ground/ui/widgets/buttons.dart';
-import 'package:ground/ui/widgets/divider.dart';
-import 'package:ground/ui/widgets/icons.dart';
-import 'package:ground/ui/widgets/inputs.dart';
-import 'package:ground/ui/widgets/navigation_stack.dart';
-import 'package:ground/ui/core/themes/theme_extensions.dart';
+import 'package:syncwave/models/task.dart';
+import 'package:syncwave/ui/core/messages/messages_silver_list.dart';
+import 'package:syncwave/ui/core/navigator/navigator.dart';
+import 'package:syncwave/ui/tasks/circular_status.dart';
+import 'package:syncwave/ui/widgets/buttons.dart';
+import 'package:syncwave/ui/widgets/divider.dart';
+import 'package:syncwave/ui/widgets/icons.dart';
+import 'package:syncwave/ui/widgets/inputs.dart';
+import 'package:syncwave/ui/widgets/navigation_stack.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
 
 import '../widgets/bottom_bar.dart';
 

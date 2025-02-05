@@ -1,12 +1,12 @@
-import type {Entry} from 'ground-data';
+import {openDB, type DBSchema, type IDBPDatabase, type IDBPTransaction} from 'idb';
+import type {Entry} from 'syncwave-data';
 import {
 	ENVIRONMENT,
 	toStream,
 	type Condition,
 	type Uint8KVStore,
 	type Uint8Transaction,
-} from 'ground-data';
-import {openDB, type DBSchema, type IDBPDatabase, type IDBPTransaction} from 'idb';
+} from 'syncwave-data';
 
 function createKeyRange(condition: Condition<Uint8Array>): IDBKeyRange {
 	if (condition.gt !== undefined) {

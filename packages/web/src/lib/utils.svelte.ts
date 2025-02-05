@@ -1,6 +1,6 @@
 import {browser} from '$app/environment';
-import {Deferred, type Observable, type ParticipantRpc} from 'ground-data';
 import {onDestroy} from 'svelte';
+import {Deferred, type Observable, type ParticipantRpc} from 'syncwave-data';
 import {getSdk} from './utils';
 
 export interface State<T> {

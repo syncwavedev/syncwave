@@ -48,7 +48,7 @@ class BoardScreen extends StatelessWidget {
             child: Icons.plus,
             onPressed: () {
               // Handle add task
-              showModalBottomSheet(
+              showModalBottomSheet<void>(
                 builder: (context) => SizedBox(
                     width: 200,
                     height: 400,

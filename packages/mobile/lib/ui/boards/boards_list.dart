@@ -4,7 +4,7 @@ import 'package:ground/ui/boards/board_tile.dart';
 
 class BoardsList extends StatelessWidget {
   final List<Board> boards;
-  final Function(Board)? onBoardTap;
+  final void Function(Board)? onBoardTap;
 
   const BoardsList({
     super.key,

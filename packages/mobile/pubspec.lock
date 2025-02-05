@@ -102,7 +102,7 @@ packages:
   ground_data:
     dependency: "direct main"
     description:
-      path: "../data/dart_sdk"
+      path: "../data_dart"
       relative: true
     source: path
     version: "0.0.0"

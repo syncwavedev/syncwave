@@ -1,3 +1,5 @@
+import {CancelledError} from './context.js';
+
 export type ErrorCode =
     | 'board_key_taken'
     | 'identity_email_taken'
@@ -7,6 +9,8 @@ export type ErrorCode =
     | 'aggregate'
     | 'task_not_found'
     | 'board_not_found'
+    | 'unknown_processor'
+    | 'cancelled'
     | 'unknown';
 
 export class BusinessError extends Error {
@@ -66,6 +70,10 @@ export function toError(reason: unknown): Error {
 export function getErrorCode(error: unknown): ErrorCode {
     if (error instanceof BusinessError) {
         return error.code;
+    }
+
+    if (error instanceof CancelledError) {
+        return 'cancelled';
     }
 
     return 'unknown';

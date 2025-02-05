@@ -1,1 +1,1 @@
-const int rpcCallTimeoutMs = 5000;
+const int rpcCallTimeoutMs = 1000;

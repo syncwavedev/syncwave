@@ -1,8 +1,10 @@
 import {z} from 'zod';
+import {RPC_CALL_TIMEOUT_MS} from '../../constants.js';
+import {context} from '../../context.js';
 import {toCursor} from '../../cursor.js';
 import {logger} from '../../logger.js';
 import {Observable, Stream, toStream} from '../../stream.js';
-import {assertNever} from '../../utils.js';
+import {assertNever, catchCancel, wait} from '../../utils.js';
 import {Message, MessageHeaders} from '../communication/message.js';
 import {Connection} from '../communication/transport.js';
 import {
@@ -79,14 +81,36 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
                     throw new Error('processor must be an observer');
                 }
 
-                return toStream(processor.observe(state, arg, headers)).flatMap(
-                    ([value, updates]) => {
-                        return toStream<ObservableItem<unknown, unknown>>([
-                            {type: 'start', value},
-                        ]).concat(
-                            updates.map(update => ({type: 'update', update}))
+                const [ctx, cancelCtx] = context().createChild();
+                let resolved = false;
+
+                catchCancel(wait(RPC_CALL_TIMEOUT_MS))
+                    .then(() => {
+                        if (!resolved) {
+                            cancelCtx();
+                        }
+                    })
+                    .catch(error => {
+                        logger.error(
+                            'unexpected error during rpc observer cancellation',
+                            error
                         );
-                    }
+                    });
+
+                return ctx.run(() =>
+                    toStream(processor.observe(state, arg, headers)).flatMap(
+                        ([value, updates]) => {
+                            resolved = true;
+                            return toStream<ObservableItem<unknown, unknown>>([
+                                {type: 'start', value},
+                            ]).concat(
+                                updates.map(update => ({
+                                    type: 'update',
+                                    update,
+                                }))
+                            );
+                        }
+                    )
                 );
             },
         }),

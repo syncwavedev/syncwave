@@ -26,6 +26,7 @@ class RpcException implements Exception {
 }
 
 Exception reconstructError(String message, String code) {
+  print('get error: $message, code: $code');
   return switch (code) {
     'cancelled' => CancelledError(),
     'unknown' => RpcException(message),

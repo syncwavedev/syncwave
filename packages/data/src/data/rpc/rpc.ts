@@ -1,6 +1,7 @@
 import {TypeOf, ZodType} from 'zod';
 import {Cursor} from '../../cursor.js';
 import {Deferred} from '../../deferred.js';
+import {BusinessError} from '../../errors.js';
 import {logger} from '../../logger.js';
 import {Observable, Stream} from '../../stream.js';
 import {assertNever} from '../../utils.js';
@@ -410,7 +411,10 @@ export function getRequiredProcessor<T, K extends keyof T>(
 ): T[K] {
     const value = api[name];
     if (value === undefined) {
-        throw new Error(`unknown processor ${String(name)}`);
+        throw new BusinessError(
+            `unknown processor ${String(name)}`,
+            'unknown_processor'
+        );
     }
     return value;
 }

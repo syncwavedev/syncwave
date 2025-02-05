@@ -15,7 +15,7 @@ import {
     Message,
     MessageHeaders,
 } from '../communication/message.js';
-import {Connection} from '../communication/transport.js';
+import {catchConnectionClosed, Connection} from '../communication/transport.js';
 import {
     getRequiredProcessor,
     Handler,
@@ -57,26 +57,30 @@ export function launchRpcHandlerServer<T>(
                             msg.headers
                         );
 
-                        await conn.send({
-                            id: createMessageId(),
-                            headers: {traceId: context().traceId},
-                            type: 'response',
-                            requestId: msg.id,
-                            payload: {type: 'success', result},
-                        });
+                        await catchConnectionClosed(
+                            conn.send({
+                                id: createMessageId(),
+                                headers: {traceId: context().traceId},
+                                type: 'response',
+                                requestId: msg.id,
+                                payload: {type: 'success', result},
+                            })
+                        );
                     } catch (error) {
                         reportRpcError(error);
-                        await conn.send({
-                            id: createMessageId(),
-                            headers: {traceId: context().traceId},
-                            type: 'response',
-                            requestId: msg.id,
-                            payload: {
-                                type: 'error',
-                                message: getReadableError(error),
-                                code: getErrorCode(error),
-                            },
-                        });
+                        await catchConnectionClosed(
+                            conn.send({
+                                id: createMessageId(),
+                                headers: {traceId: context().traceId},
+                                type: 'response',
+                                requestId: msg.id,
+                                payload: {
+                                    type: 'error',
+                                    message: getReadableError(error),
+                                    code: getErrorCode(error),
+                                },
+                            })
+                        );
                     } finally {
                         contextManager.finish(msg.id);
                     }

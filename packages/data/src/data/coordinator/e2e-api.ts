@@ -1,5 +1,8 @@
 import {z} from 'zod';
+import {RPC_CALL_TIMEOUT_MS} from '../../constants.js';
 import {toCursor} from '../../cursor.js';
+import {BusinessError} from '../../errors.js';
+import {toStream} from '../../stream.js';
 import {observable, wait} from '../../utils.js';
 import {EventStoreReader} from '../communication/event-store.js';
 import {ChangeEvent, Transact} from '../data-layer.js';
@@ -56,7 +59,29 @@ export function createE2eApi() {
             req: z.object({}),
             res: z.object({}),
             handle: async () => {
-                throw new Error('Test error');
+                throw new BusinessError('Test error', 'unknown');
+            },
+        }),
+        e2eTimeout: handler({
+            req: z.object({}),
+            res: z.object({}),
+            handle: async () => {
+                await wait(RPC_CALL_TIMEOUT_MS + 1000);
+                return {};
+            },
+        }),
+        e2eTimeoutObserver: observer({
+            req: z.object({}),
+            value: z.number(),
+            update: z.number(),
+            async observe() {
+                await wait(RPC_CALL_TIMEOUT_MS + 1000);
+                return observable({
+                    async get() {
+                        return 1;
+                    },
+                    update$: Promise.resolve(toCursor(toStream([]))),
+                });
             },
         }),
     });

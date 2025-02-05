@@ -67,7 +67,7 @@ void main() {
             'payload': {
               'type': 'error',
               'message': 'unknown processor e2eUnknownHandler',
-              'code': 'unknown'
+              'code': 'unknown_processor'
             }
           }));
     });

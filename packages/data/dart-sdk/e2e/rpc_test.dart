@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:ground_data/errors.dart';
 import 'package:test/test.dart';
 import 'package:ground_data/message.dart';
 import 'package:ground_data/websocket_transport_client.dart';
 import 'package:ground_data/rpc/observer.dart';
+import 'package:ground_data/constants.dart';
 
 const e2eApiUrl = "ws://127.0.0.1:4567";
 
@@ -112,6 +114,39 @@ void main() {
       expect(firstBatch, equals([0, 1]));
 
       expect(() => stream.take(2).toList(), throwsA(isA<Error>()));
+    });
+
+    group('Timeout tests', () {
+      test('handler - times out after rpcTimeoutMs', () async {
+        expect(
+          () => rpc.handle('e2eTimeout', <String, dynamic>{}),
+          throwsA(predicate(
+              (e) => e is Exception && e.toString().contains('timeout'))),
+        );
+      });
+
+      test('observer - times out on initial value', () async {
+        expect(
+          () => rpc.observe('e2eTimeoutObserver', <String, dynamic>{}),
+          throwsA(isA<CancelledError>()),
+        );
+      });
+
+      test('concurrent timeouts dont affect other calls', () async {
+        // Start a call that will timeout
+        final timeoutFuture = rpc.handle('e2eTimeout', <String, dynamic>{});
+
+        // While that's running, make a normal call
+        final result = await rpc.handle('e2eEcho', {'msg': 'test'});
+        expect(result, equals({'msg': 'test'}));
+
+        // Verify the timeout still occurs
+        expect(
+          () => timeoutFuture,
+          throwsA(predicate(
+              (e) => e is Exception && e.toString().contains('timeout'))),
+        );
+      });
     });
   });
 }

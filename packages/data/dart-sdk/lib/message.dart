@@ -1,12 +1,13 @@
 import 'package:ground_data/utils.dart';
 
 String createMessageId() => createRandomUuid();
+String createTraceId() => createRandomUuid();
 
 class MessageHeaders {
   final String? auth;
   final String? traceId;
 
-  MessageHeaders({required this.auth, required this.traceId});
+  MessageHeaders({this.auth, this.traceId});
 
   factory MessageHeaders.fromJson(Map<String, dynamic> json) => MessageHeaders(
         auth: json['auth'] as String?,

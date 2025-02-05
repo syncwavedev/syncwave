@@ -5,7 +5,6 @@ import 'package:test/test.dart';
 import 'package:ground_data/message.dart';
 import 'package:ground_data/websocket_transport_client.dart';
 import 'package:ground_data/rpc/observer.dart';
-import 'package:ground_data/constants.dart';
 
 const e2eApiUrl = "ws://127.0.0.1:4567";
 
@@ -13,16 +12,66 @@ void main() {
   late WebsocketTransportClient client;
   late RpcObserverClient rpc;
 
+  Future<void> expectNoRunningProcesses() async {
+    final traceId = createTraceId();
+    final systemState = await rpc.handle('e2eSystemState', <String, dynamic>{},
+        MessageHeaders(traceId: traceId));
+    final runningProcessIds = systemState['runningProcessIds'] as List;
+    expect(
+      runningProcessIds,
+      equals(
+        [traceId],
+      ),
+    );
+  }
+
   setUp(() async {
     client = WebsocketTransportClient(Uri.parse(e2eApiUrl));
     final connection = await client.connect();
     rpc = RpcObserverClient(
       conn: connection,
-      getHeaders: () => MessageHeaders(auth: null, traceId: 'e2e-test'),
+      getHeaders: () => MessageHeaders(auth: null, traceId: createTraceId()),
     );
   });
 
+  tearDown(() async {
+    await expectNoRunningProcesses();
+  });
+
   group('E2E RPC Tests', () {
+    test('system state returns server info', () async {
+      final infoTraceId = createTraceId();
+      final state = await rpc.handle('e2eSystemState', <String, dynamic>{},
+          MessageHeaders(traceId: infoTraceId));
+      final runningProcessIds =
+          (state['runningProcessIds'] as List<dynamic>).toSet();
+      expect(runningProcessIds, equals({infoTraceId}));
+    });
+
+    test('system state returns running stream trace id', () async {
+      final streamTraceId = createTraceId();
+      final sub = rpc
+          .stream(
+              'e2eCounter',
+              {'count': 30},
+              MessageHeaders(
+                traceId: streamTraceId,
+              ))
+          .listen((_) {});
+      // wait for counter to start running
+      await Future<void>.delayed(Duration(milliseconds: 100));
+      final infoTraceId = createTraceId();
+      final state = await rpc.handle('e2eSystemState', <String, dynamic>{},
+          MessageHeaders(traceId: infoTraceId));
+      final runningProcessIds =
+          (state['runningProcessIds'] as List<dynamic>).toSet();
+      expect(runningProcessIds, equals({infoTraceId, streamTraceId}));
+
+      sub.cancel();
+      // wait for cancellation to propagate to api
+      await Future<void>.delayed(Duration(milliseconds: 100));
+    });
+
     test('handler - echo returns correct message', () async {
       final result = await rpc.handle('e2eEcho', {'msg': 'hello e2e'});
 
@@ -133,14 +182,11 @@ void main() {
       });
 
       test('concurrent timeouts dont affect other calls', () async {
-        // Start a call that will timeout
         final timeoutFuture = rpc.handle('e2eTimeout', <String, dynamic>{});
 
-        // While that's running, make a normal call
         final result = await rpc.handle('e2eEcho', {'msg': 'test'});
         expect(result, equals({'msg': 'test'}));
 
-        // Verify the timeout still occurs
         expect(
           () => timeoutFuture,
           throwsA(predicate(

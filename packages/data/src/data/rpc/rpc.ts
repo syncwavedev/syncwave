@@ -264,7 +264,8 @@ export function applyMiddleware<
     middleware: (
         next: (state: TStatePrivate) => Promise<void>,
         state: TStatePublic,
-        headers: MessageHeaders
+        headers: MessageHeaders,
+        processor: Processor<TStatePrivate, any, any, any>
     ) => Promise<void>
 ): MapApiState<TApi, TStatePublic> {
     return decorateApi<TStatePrivate, TStatePublic, TApi>(api, processor => {
@@ -298,7 +299,8 @@ export function applyMiddleware<
                     }
                 },
                 state,
-                headers
+                headers,
+                processor
             ).catch(error => {
                 if (signal.state !== 'pending') {
                     logger.error('middleware failed after next()', error);

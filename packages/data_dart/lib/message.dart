@@ -1,4 +1,4 @@
-import 'package:ground_data/utils.dart';
+import 'utils.dart';
 
 String createMessageId() => createRandomUuid();
 String createTraceId() => createRandomUuid();

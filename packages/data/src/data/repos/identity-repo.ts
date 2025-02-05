@@ -33,15 +33,24 @@ const USER_ID_INDEX = 'userId';
 
 export class EmailTakenIdentityRepoError extends BusinessError {}
 
+export function zVerificationCode() {
+    return z.object(
+        {
+            code: z.string(),
+            expires: zTimestamp(),
+        },
+        {
+            description: 'VerificationCode',
+        }
+    );
+}
+
 export function zIdentity() {
     return zDoc<IdentityId>().extend({
         userId: zUuid<UserId>(),
         email: z.string(),
         authActivityLog: z.array(zTimestamp()),
-        verificationCode: z.object({
-            code: z.string(),
-            expires: zTimestamp(),
-        }),
+        verificationCode: zVerificationCode(),
     });
 }
 

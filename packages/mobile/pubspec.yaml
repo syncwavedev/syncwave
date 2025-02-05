@@ -33,6 +33,8 @@ dependencies:
     sdk: flutter
   flutter_svg: ^2.0.17
   vector_graphics: ^1.1.15
+  ground_data:
+    path: ../data/dart_sdk
 
 dev_dependencies:
   flutter_test:

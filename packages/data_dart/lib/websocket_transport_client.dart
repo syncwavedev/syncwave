@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:ground_data/message.dart';
-import 'package:ground_data/msgpack.dart';
-import 'package:ground_data/transport.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+import 'message.dart';
+import 'msgpack.dart';
+import 'transport.dart';
 
 class WebsocketTransportClient implements TransportClient {
   final Uri uri;

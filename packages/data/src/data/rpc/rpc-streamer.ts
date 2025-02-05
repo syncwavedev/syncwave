@@ -86,7 +86,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
             res: z.unknown(),
             handle: async (state, req, headers) => {
                 const processor = api[req.name];
-                if (processor.type !== 'handler') {
+                if (processor?.type !== 'handler') {
                     throw new Error('processor must be a handler');
                 }
 

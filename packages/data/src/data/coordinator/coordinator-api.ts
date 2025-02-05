@@ -8,6 +8,7 @@ import {ChangeEvent, Config, DataLayer, Transact} from '../data-layer.js';
 import {CryptoService, EmailService, JwtService} from '../infra.js';
 import {Api, applyMiddleware, InferRpcClient, mapApiState} from '../rpc/rpc.js';
 import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
+import {createE2eApi} from './e2e-api.js';
 import {createTestApi} from './test-api.js';
 
 export interface CoordinatorApiState {
@@ -87,9 +88,11 @@ export function createCoordinatorApi() {
     });
 
     const testApi = createTestApi();
+    const e2eApi = createE2eApi();
 
     const combinedApi = {
         ...testApi,
+        ...e2eApi,
         ...adaptedReadApi,
         ...adaptedWriteApi,
         ...adaptedAuthApi,

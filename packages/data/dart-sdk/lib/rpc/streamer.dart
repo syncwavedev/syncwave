@@ -1,11 +1,14 @@
 import 'dart:async';
-import 'package:ground_data/logger.dart';
 
+import '../logger.dart';
 import '../errors.dart';
 import '../message.dart';
 import '../transport.dart';
+import '../utils.dart';
 import 'handler.dart';
 import 'common.dart';
+
+String createStreamId() => createRandomUuid();
 
 class RpcStreamerServerApiState<T> {
   final T state;
@@ -179,7 +182,7 @@ class RpcStreamerClient {
 
   Stream<dynamic> stream(String name, dynamic arg,
       [MessageHeaders? partialHeaders]) async* {
-    final streamId = createMessageId();
+    final streamId = createStreamId();
     final controller = StreamController<dynamic>();
     apiState.init(streamId, controller);
 

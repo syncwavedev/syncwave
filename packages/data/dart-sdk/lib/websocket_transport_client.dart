@@ -19,7 +19,13 @@ class WebsocketTransportClient implements TransportClient {
 
 class WebsocketConnection implements Connection {
   final WebSocketChannel channel;
-  WebsocketConnection(this.channel);
+  late final Stream<Message> _broadcastStream;
+
+  WebsocketConnection(this.channel) {
+    _broadcastStream = channel.stream
+        .map((bytes) => decodeMessage(bytes as Uint8List))
+        .asBroadcastStream();
+  }
 
   @override
   Future<void> send(Message message) async {
@@ -28,7 +34,7 @@ class WebsocketConnection implements Connection {
 
   @override
   Stream<Message> subscribe() {
-    return channel.stream.map((bytes) => decodeMessage(bytes as Uint8List));
+    return _broadcastStream;
   }
 
   @override

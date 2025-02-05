@@ -1,16 +1,9 @@
 import 'dart:async';
 
-void main() {
-  final stream = StreamController<int>();
-  () async {
-    await for (var event in stream.stream) {
-      print('listener1: $event before...');
-      await Future<void>.delayed(Duration(seconds: 1));
-      print('listener1: $event after...');
-    }
-  }();
+import 'package:ground_data/message.dart';
+import 'package:ground_data/rpc/streamer.dart';
+import 'package:ground_data/utils.dart';
 
-  for (var i = 0; i < 10; i += 1) {
-    stream.add(1);
-  }
+void main() {
+  print(createStreamId());
 }

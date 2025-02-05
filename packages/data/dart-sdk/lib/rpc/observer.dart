@@ -74,7 +74,7 @@ class RpcObserverClient {
 
   Future<dynamic> handle(String name, dynamic arg,
       [MessageHeaders? partialHeaders]) {
-    return _client.handle(name, {'name': name, 'arg': arg}, partialHeaders);
+    return _client.handle("handle", {'name': name, 'arg': arg}, partialHeaders);
   }
 
   Stream<dynamic> stream(String name, dynamic arg,

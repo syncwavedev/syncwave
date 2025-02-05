@@ -1,4 +1,6 @@
-String createMessageId() => DateTime.now().microsecondsSinceEpoch.toString();
+import 'package:ground_data/utils.dart';
+
+String createMessageId() => createRandomUuid();
 
 class MessageHeaders {
   final String? auth;

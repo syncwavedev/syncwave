@@ -1,5 +1,5 @@
 import 'package:ground_data/message.dart';
-import 'package:ground_data/websocket_transport.dart';
+import 'package:ground_data/websocket_transport_client.dart';
 import 'package:test/test.dart';
 
 // const e2eApiUrl = "wss://api-ground-dev.edme.io:443";
@@ -66,7 +66,7 @@ void main() {
             'headers': {'auth': null, 'traceId': isA<String>()},
             'payload': {
               'type': 'error',
-              'message': 'unknown handler name: e2eUnknownHandler',
+              'message': 'unknown processor e2eUnknownHandler',
               'code': 'unknown'
             }
           }));

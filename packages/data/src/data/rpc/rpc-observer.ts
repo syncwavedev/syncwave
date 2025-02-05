@@ -41,7 +41,7 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
             req: z.object({name: z.string(), arg: z.unknown()}),
             res: z.unknown(),
             handle: async (state, req, headers) => {
-                const processor = api[req.name];
+                const processor = getRequiredProcessor(api, req.name);
                 if (processor.type !== 'handler') {
                     throw new Error('processor must be a handler');
                 }

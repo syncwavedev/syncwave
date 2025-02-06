@@ -235,9 +235,15 @@ export class DocRepo<T extends Doc<IndexKey>> {
             throw new Error(`doc ${indexKeyToString(doc.pk)} already exists`);
         }
 
+        return await this.put(doc);
+    }
+
+    async put(doc: T): Promise<T> {
+        const existing = await this.primary.get(doc.pk);
+
         const now = getNow();
         const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
-        await this._put(undefined, crdt, crdt.state());
+        await this._put(existing?.snapshot(), crdt, crdt.state());
 
         return crdt.snapshot();
     }
@@ -250,7 +256,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         return index;
     }
 
-    private async _put(
+    async _put(
         prev: T | undefined,
         next: Crdt<T>,
         diff: CrdtDiff<T>

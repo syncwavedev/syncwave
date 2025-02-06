@@ -102,18 +102,25 @@ export class DataLayer {
             );
             const identities = new IdentityRepo(
                 withPrefix('identities/')(tx),
+                users,
                 (id, diff) => logIdentityChange(dataTx, id, diff)
-            );
-            const members = new MemberRepo(
-                withPrefix('members/')(tx),
-                (id, diff) => logMemberChange(dataTx, id, diff)
             );
             const boards = new BoardRepo(
                 withPrefix('boards/')(tx),
+                users,
                 (id, diff) => logBoardChange(dataTx, id, diff)
             );
-            const tasks = new TaskRepo(withPrefix('tasks/')(tx), (id, diff) =>
-                logTaskChange(dataTx, id, diff)
+            const members = new MemberRepo(
+                withPrefix('members/')(tx),
+                users,
+                boards,
+                (id, diff) => logMemberChange(dataTx, id, diff)
+            );
+            const tasks = new TaskRepo(
+                withPrefix('tasks/')(tx),
+                boards,
+                users,
+                (id, diff) => logTaskChange(dataTx, id, diff)
             );
 
             const dataNode = new AggregateDataNode({

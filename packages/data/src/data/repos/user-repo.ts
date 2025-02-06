@@ -26,6 +26,7 @@ export class UserRepo {
             onChange,
             indexes: {},
             schema: zUser(),
+            constraints: [],
         });
     }
 

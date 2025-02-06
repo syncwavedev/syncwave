@@ -45,11 +45,17 @@ export type OnDocChange<T extends Doc> = (
     diff: CrdtDiff<T>
 ) => Promise<void>;
 
+export interface Constraint<T extends Doc> {
+    readonly name: string;
+    readonly verify: (doc: T) => Promise<boolean>;
+}
+
 export interface DocStoreOptions<T extends Doc> {
     tx: Uint8Transaction;
     indexes: IndexMap<T>;
     schema: ZodType<T>;
     onChange: OnDocChange<T>;
+    constraints: readonly Constraint<T>[];
 }
 
 export type Recipe<T> = (doc: T) => T | void;
@@ -60,8 +66,15 @@ export class DocRepo<T extends Doc> {
     private readonly primaryKeyRaw: Transaction<Uint8Array, Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
+    private readonly constraints: readonly Constraint<T>[];
 
-    constructor({tx, indexes, onChange, schema}: DocStoreOptions<T>) {
+    constructor({
+        tx,
+        indexes,
+        onChange,
+        schema,
+        constraints,
+    }: DocStoreOptions<T>) {
         this.indexes = new Map(
             Object.entries(indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
@@ -94,6 +107,7 @@ export class DocRepo<T extends Doc> {
         this.primary = withKeyCodec(new UuidCodec())(this.primaryKeyRaw);
         this.onChange = onChange;
         this.schema = schema;
+        this.constraints = constraints;
     }
 
     async getById(id: Uuid): Promise<T | undefined> {
@@ -170,15 +184,9 @@ export class DocRepo<T extends Doc> {
             // no change were made to the document
             return prev;
         }
-        const next = doc.snapshot();
-        this.ensureValid(next);
+        await this._put(prev, doc, diff);
 
-        await whenAll([
-            this.primary.put(id, doc),
-            this._sync(id, prev, next, diff),
-        ]);
-
-        return next;
+        return doc.snapshot();
     }
 
     // todo: add tests
@@ -189,26 +197,23 @@ export class DocRepo<T extends Doc> {
     ): Promise<void> {
         let doc: Crdt<T> | undefined = await this.primary.get(id);
         let prev: T | undefined;
-        let next: T;
         if (doc) {
             prev = doc.snapshot();
             doc.apply(diff);
-            next = doc.snapshot();
         } else {
             prev = undefined;
             doc = Crdt.load(diff);
-            next = doc.snapshot();
         }
 
-        if (next.id !== id) {
+        if (doc.snapshot().id !== id) {
             throw new Error('invalid diff: diff updates id ' + id);
         }
 
         if (prev && updateChecker) {
-            updateChecker(prev, next);
+            updateChecker(prev, doc.snapshot());
         }
 
-        this.ensureValid(next);
+        await this._put(prev, doc, diff);
     }
 
     async create(doc: T): Promise<T> {
@@ -219,10 +224,7 @@ export class DocRepo<T extends Doc> {
 
         const now = getNow();
         const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
-        await whenAll([
-            this.primary.put(doc.id, crdt),
-            this._sync(doc.id, undefined, doc, crdt.state()),
-        ]);
+        await this._put(undefined, crdt, crdt.state());
 
         return crdt.snapshot();
     }
@@ -235,15 +237,25 @@ export class DocRepo<T extends Doc> {
         return index;
     }
 
-    private async _sync(
-        id: Uuid,
+    private async _put(
         prev: T | undefined,
-        next: T | undefined,
+        next: Crdt<T>,
         diff: CrdtDiff<T>
     ): Promise<void> {
+        const nextSnapshot = next.snapshot();
+        this.schema.parse(nextSnapshot);
         await whenAll([
-            ...[...this.indexes.values()].map(x => x.sync(prev, next)),
-            this.onChange(id, diff),
+            this.primary.put(nextSnapshot.id, next),
+            ...[...this.indexes.values()].map(x =>
+                x.sync(prev, next.snapshot())
+            ),
+            ...this.constraints.map(async c => {
+                const result = c.verify(nextSnapshot);
+                if (!result) {
+                    throw new Error(`constraint failed: ${c.name}`);
+                }
+            }),
+            this.onChange(nextSnapshot.id, diff),
         ]);
     }
 
@@ -252,9 +264,5 @@ export class DocRepo<T extends Doc> {
             .mapParallel(id => this.primary.get(id))
             .assert(x => x !== undefined)
             .map(doc => doc.snapshot());
-    }
-
-    private ensureValid(value: T) {
-        this.schema.parse(value);
     }
 }

@@ -6,8 +6,8 @@ import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
-import {BoardId} from './board-repo.js';
-import {UserId} from './user-repo.js';
+import {BoardId, BoardRepo} from './board-repo.js';
+import {UserId, UserRepo} from './user-repo.js';
 
 export type MemberId = Brand<Uuid, 'member_id'>;
 
@@ -35,7 +35,12 @@ export function zMember() {
 export class MemberRepo {
     public readonly rawRepo: DocRepo<Member>;
 
-    constructor(tx: Uint8Transaction, onChange: OnDocChange<Member>) {
+    constructor(
+        tx: Uint8Transaction,
+        userRepo: UserRepo,
+        boardRepo: BoardRepo,
+        onChange: OnDocChange<Member>
+    ) {
         this.rawRepo = new DocRepo<Member>({
             tx: withPrefix('d/')(tx),
             onChange,
@@ -47,6 +52,22 @@ export class MemberRepo {
                 [BOARD_ID_INDEX]: x => [x.boardId],
             },
             schema: zMember(),
+            constraints: [
+                {
+                    name: 'member.userId fk',
+                    verify: async member => {
+                        const user = await userRepo.getById(member.userId);
+                        return user !== undefined;
+                    },
+                },
+                {
+                    name: 'member.boardId fk',
+                    verify: async member => {
+                        const board = await boardRepo.getById(member.boardId);
+                        return board !== undefined;
+                    },
+                },
+            ],
         });
     }
 

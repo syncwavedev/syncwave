@@ -5,8 +5,8 @@ import {Stream} from '../../stream.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
-import {BoardId} from './board-repo.js';
-import {UserId} from './user-repo.js';
+import {BoardId, BoardRepo} from './board-repo.js';
+import {UserId, UserRepo} from './user-repo.js';
 
 export type TaskId = Uuid & {__task_id: true | undefined};
 
@@ -40,7 +40,12 @@ export function zTask() {
 export class TaskRepo {
     public readonly rawRepo: DocRepo<Task>;
 
-    constructor(tx: Uint8Transaction, onChange: OnDocChange<Task>) {
+    constructor(
+        tx: Uint8Transaction,
+        boardRepo: BoardRepo,
+        userRepo: UserRepo,
+        onChange: OnDocChange<Task>
+    ) {
         this.rawRepo = new DocRepo<Task>({
             tx: withPrefix('d/')(tx),
             onChange,
@@ -53,6 +58,22 @@ export class TaskRepo {
                 [BOARD_ID]: x => [x.boardId, x.counter],
             },
             schema: zTask(),
+            constraints: [
+                {
+                    name: 'task.authorId fk',
+                    verify: async task => {
+                        const user = await userRepo.getById(task.authorId);
+                        return user !== undefined;
+                    },
+                },
+                {
+                    name: 'task.boardId fk',
+                    verify: async task => {
+                        const board = await boardRepo.getById(task.boardId);
+                        return board !== undefined;
+                    },
+                },
+            ],
         });
     }
 

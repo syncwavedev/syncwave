@@ -8,7 +8,7 @@ import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
-import {UserId} from './user-repo.js';
+import {UserId, UserRepo} from './user-repo.js';
 
 export type IdentityId = Brand<Uuid, 'identity_id'>;
 
@@ -57,7 +57,11 @@ export function zIdentity() {
 export class IdentityRepo {
     public readonly rawRepo: DocRepo<Identity>;
 
-    constructor(tx: Uint8Transaction, onChange: OnDocChange<Identity>) {
+    constructor(
+        tx: Uint8Transaction,
+        userRepo: UserRepo,
+        onChange: OnDocChange<Identity>
+    ) {
         this.rawRepo = new DocRepo<Identity>({
             tx: withPrefix('d/')(tx),
             indexes: {
@@ -73,6 +77,15 @@ export class IdentityRepo {
             },
             onChange,
             schema: zIdentity(),
+            constraints: [
+                {
+                    name: 'identity.userId fk',
+                    verify: async identity => {
+                        const user = await userRepo.getById(identity.userId);
+                        return user !== undefined;
+                    },
+                },
+            ],
         });
     }
 

@@ -9,7 +9,7 @@ import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
-import {UserId} from './user-repo.js';
+import {UserId, UserRepo} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
 
@@ -39,7 +39,11 @@ export class BoardRepo {
     public readonly rawRepo: DocRepo<Board>;
     protected readonly counters: Registry<Counter>;
 
-    constructor(tx: Uint8Transaction, onChange: OnDocChange<Board>) {
+    constructor(
+        tx: Uint8Transaction,
+        userRepo: UserRepo,
+        onChange: OnDocChange<Board>
+    ) {
         this.rawRepo = new DocRepo<Board>({
             tx: withPrefix('d/')(tx),
             onChange,
@@ -51,6 +55,15 @@ export class BoardRepo {
                 },
             },
             schema: zBoard(),
+            constraints: [
+                {
+                    name: 'board.ownerId fk',
+                    verify: async board => {
+                        const user = await userRepo.getById(board.ownerId);
+                        return user !== undefined;
+                    },
+                },
+            ],
         });
         this.counters = new Registry(
             withPrefix('c/')(tx),

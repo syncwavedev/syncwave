@@ -1,6 +1,5 @@
 import {z} from 'zod';
-import {CancelledError, Context, context} from './context.js';
-import {Cursor} from './cursor.js';
+import {CancelBehavior, CancelledError, Context, context} from './context.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
@@ -8,7 +7,7 @@ import {
     BusinessError,
 } from './errors.js';
 import {logger} from './logger.js';
-import {Observable, Stream, toStream} from './stream.js';
+import {Stream, toStream} from './stream.js';
 
 export type Brand<T, B> = T & {__brand: () => B | undefined};
 
@@ -132,7 +131,15 @@ export function assertDefined<T>(value: T | undefined | null): T {
     return value;
 }
 
-export function wait(ms: number): Promise<void> {
+export interface WaitOptions {
+    ms: number;
+    onCancel: CancelBehavior;
+}
+
+export function wait({
+    ms,
+    onCancel: cancelBehavior,
+}: WaitOptions): Promise<void> {
     const result = new Deferred<void>();
     const timeoutId = setTimeout(() => {
         result.resolve();
@@ -140,8 +147,17 @@ export function wait(ms: number): Promise<void> {
     }, ms);
 
     const cancelCleanup = context().onCancel(() => {
-        result.reject(new CancelledError());
         clearTimeout(timeoutId);
+
+        if (cancelBehavior === 'reject') {
+            result.reject(new CancelledError());
+        } else if (cancelBehavior === 'resolve') {
+            result.resolve();
+        } else if (cancelBehavior === 'suspend') {
+            // do nothing
+        } else {
+            assertNever(cancelBehavior);
+        }
     });
     return result.promise;
 }
@@ -164,16 +180,32 @@ export async function catchCancel<T>(promise: Promise<T>): Promise<T | void> {
     }
 }
 
-export function interval(ms: number): Stream<number> {
-    return toStream(_interval(ms));
+export interface IntervalOptions {
+    ms: number;
+    onCancel: CancelBehavior;
 }
 
-async function* _interval(ms: number): AsyncIterable<number> {
+export function interval(options: IntervalOptions): Stream<number> {
+    return toStream(_interval(options));
+}
+
+async function* _interval({
+    ms,
+    onCancel: cancelBehavior,
+}: IntervalOptions): AsyncIterable<number> {
     let index = 0;
-    while (true) {
-        yield index;
-        index += 1;
-        await wait(ms);
+    let cancelled = false;
+    const cancelCleanup = context().onCancel(() => {
+        cancelled = true;
+    });
+    try {
+        while (!cancelled) {
+            yield index;
+            index += 1;
+            await wait({ms, onCancel: cancelBehavior});
+        }
+    } finally {
+        cancelCleanup();
     }
 }
 
@@ -344,20 +376,6 @@ export function zUint8Array() {
     return z.custom<Uint8Array>(x => x instanceof Uint8Array, {
         message: 'Uint8Array expected',
     });
-}
-
-export interface ObservableOptions<T> {
-    get: () => Promise<T>;
-    update$: Promise<Cursor<void>>;
-}
-
-export async function observable<T>(
-    options: ObservableOptions<T>
-): Observable<T, T> {
-    // we need to open updates cursor before getting the initial value
-    // to ensure that we don't miss any updates in between initial value and updates cursor opening
-    const updateCursor = await options.update$;
-    return [await options.get(), updateCursor.map(cx => options.get())];
 }
 
 export function run<R>(fn: () => R) {

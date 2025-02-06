@@ -108,8 +108,6 @@ export function toStream<T>(
     return new Stream(source);
 }
 
-export type Observable<TValue, TUpdate> = Promise<[TValue, Cursor<TUpdate>]>;
-
 export class Stream<T> implements AsyncIterable<T> {
     static merge<T>(sources: AsyncIterable<T>[]): Stream<T> {
         const init: AsyncIterable<T> = toStream<T>([]);
@@ -386,4 +384,20 @@ export class Stream<T> implements AsyncIterable<T> {
 
         return result;
     }
+}
+
+export type Observable<TValue, TUpdate> = Promise<[TValue, Cursor<TUpdate>]>;
+
+export interface ObservableOptions<T> {
+    get: () => Promise<T>;
+    update$: Promise<Cursor<void>>;
+}
+
+export async function observable<T>(
+    options: ObservableOptions<T>
+): Observable<T, T> {
+    // we need to open updates cursor before getting the initial value
+    // to ensure that we don't miss any updates in between initial value and updates cursor opening
+    const updateCursor = await options.update$;
+    return [await options.get(), updateCursor.map(cx => options.get())];
 }

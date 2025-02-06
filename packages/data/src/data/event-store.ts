@@ -71,7 +71,10 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             toStream<void>([undefined]),
             toStream(selfTrigger),
             hubEvent$.map(() => undefined),
-            interval(EVENT_STORE_PULL_INTERVAL_MS).map(() => undefined),
+            interval({
+                ms: EVENT_STORE_PULL_INTERVAL_MS,
+                onCancel: 'reject',
+            }).map(() => undefined),
         ])
             .flatMap(async () => {
                 try {

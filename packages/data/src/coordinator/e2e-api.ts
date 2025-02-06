@@ -5,7 +5,7 @@ import {toCursor} from '../cursor.js';
 import {ChangeEvent, Transact} from '../data/data-layer.js';
 import {EventStoreReader} from '../data/event-store.js';
 import {BusinessError} from '../errors.js';
-import {toStream} from '../stream.js';
+import {observable, toStream} from '../stream.js';
 import {
     createApi,
     decorateApi,
@@ -14,7 +14,7 @@ import {
     Processor,
     streamer,
 } from '../transport/rpc.js';
-import {assertNever, observable, wait} from '../utils.js';
+import {assertNever, wait} from '../utils.js';
 
 export interface E2eApiState {
     esReader: EventStoreReader<ChangeEvent>;
@@ -38,7 +38,7 @@ export function createE2eApi() {
             async *stream(state, {count}, headers) {
                 for (let i = 0; i < count; i++) {
                     yield i;
-                    await wait(100);
+                    await wait({ms: 100, onCancel: 'reject'});
                 }
             },
         }),
@@ -77,7 +77,10 @@ export function createE2eApi() {
             req: z.object({}),
             res: z.object({}),
             handle: async () => {
-                await wait(RPC_CALL_TIMEOUT_MS + 1000);
+                await wait({
+                    ms: RPC_CALL_TIMEOUT_MS + 1000,
+                    onCancel: 'reject',
+                });
                 return {};
             },
         }),
@@ -86,7 +89,10 @@ export function createE2eApi() {
             value: z.number(),
             update: z.number(),
             async observe() {
-                await wait(RPC_CALL_TIMEOUT_MS + 1000);
+                await wait({
+                    ms: RPC_CALL_TIMEOUT_MS + 1000,
+                    onCancel: 'reject',
+                });
                 return observable({
                     async get() {
                         return 1;

@@ -1,9 +1,9 @@
 import {z} from 'zod';
 import {BusinessError} from '../errors.js';
 import {logger} from '../logger.js';
-import {toStream} from '../stream.js';
+import {observable, toStream} from '../stream.js';
 import {createApi, InferRpcClient, observer} from '../transport/rpc.js';
-import {assert, observable, whenAll} from '../utils.js';
+import {assert, whenAll} from '../utils.js';
 import {zUuid} from '../uuid.js';
 import {AuthContext} from './auth-context.js';
 import {

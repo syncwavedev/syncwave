@@ -232,7 +232,7 @@ describe('MemLocker', () => {
 
     it('executes a single lock correctly', async () => {
         const fn = vi.fn(async () => {
-            await wait(50);
+            await wait({ms: 50, onCancel: 'reject'});
             return 'result';
         });
 
@@ -247,21 +247,21 @@ describe('MemLocker', () => {
 
         const fn1 = vi.fn(async () => {
             executionOrder.push(1);
-            await wait(100);
+            await wait({ms: 100, onCancel: 'reject'});
             executionOrder.push(2);
             return 'first';
         });
 
         const fn2 = vi.fn(async () => {
             executionOrder.push(3);
-            await wait(50);
+            await wait({ms: 50, onCancel: 'reject'});
             executionOrder.push(4);
             return 'second';
         });
 
         const fn3 = vi.fn(async () => {
             executionOrder.push(5);
-            await wait(10);
+            await wait({ms: 10, onCancel: 'reject'});
             executionOrder.push(6);
             return 'third';
         });
@@ -285,14 +285,14 @@ describe('MemLocker', () => {
 
         const fn1 = vi.fn(async () => {
             executionOrder.push('fn1_start');
-            await wait(100);
+            await wait({ms: 100, onCancel: 'reject'});
             executionOrder.push('fn1_end');
             return 'result1';
         });
 
         const fn2 = vi.fn(async () => {
             executionOrder.push('fn2_start');
-            await wait(50);
+            await wait({ms: 50, onCancel: 'reject'});
             executionOrder.push('fn2_end');
             return 'result2';
         });
@@ -320,14 +320,20 @@ describe('MemLocker', () => {
 
         const fn1 = vi.fn(async () => {
             executionOrder.push(1);
-            await wait(50);
+            await wait({
+                ms: 50,
+                onCancel: 'reject',
+            });
             executionOrder.push(2);
             throw new Error('Error in fn1');
         });
 
         const fn2 = vi.fn(async () => {
             executionOrder.push(3);
-            await wait(30);
+            await wait({
+                ms: 30,
+                onCancel: 'reject',
+            });
             executionOrder.push(4);
             return 'fn2 result';
         });
@@ -351,21 +357,21 @@ describe('MemLocker', () => {
 
         const fn1 = vi.fn(async () => {
             executionOrder.push('fn1_start');
-            await wait(50);
+            await wait({ms: 50, onCancel: 'reject'});
             executionOrder.push('fn1_end');
             return 'result1';
         });
 
         const fn2 = vi.fn(async () => {
             executionOrder.push('fn2_start');
-            await wait(20);
+            await wait({ms: 20, onCancel: 'reject'});
             executionOrder.push('fn2_end');
             return 'result2';
         });
 
         const fn3 = vi.fn(async () => {
             executionOrder.push('fn3_start');
-            await wait(10);
+            await wait({ms: 10, onCancel: 'reject'});
             executionOrder.push('fn3_end');
             return 'result3';
         });
@@ -397,7 +403,7 @@ describe('MemLocker', () => {
 
         const fn = vi.fn(async (id: number) => {
             executionOrder.push(id);
-            await wait(10);
+            await wait({ms: 10, onCancel: 'reject'});
             executionOrder.push(id + 100);
             return `result${id}`;
         });

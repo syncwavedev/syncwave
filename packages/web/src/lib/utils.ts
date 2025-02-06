@@ -69,7 +69,7 @@ export function createParticipantClient(serverCookies: CookieEntry[]) {
 	return participant;
 }
 
-export async function pageSdk<T>(
+export async function sdkOnce<T>(
 	cookies: CookieEntry[],
 	fn: (rpc: ParticipantRpc) => Promise<T>
 ): Promise<T> {

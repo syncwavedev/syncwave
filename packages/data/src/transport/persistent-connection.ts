@@ -54,7 +54,7 @@ export class PersistentConnection<T> implements Connection<T> {
                     try {
                         return await this.transport.connect();
                     } catch {
-                        await wait(RECONNECT_WAIT_MS);
+                        await wait({ms: RECONNECT_WAIT_MS, onCancel: 'reject'});
                     }
                 }
             })().then(conn => {

@@ -4,9 +4,10 @@ import {ChangeEvent, Transact} from '../data/data-layer.js';
 import {EventStoreReader} from '../data/event-store.js';
 import {createUserId, User} from '../data/repos/user-repo.js';
 import {logger} from '../logger.js';
+import {observable} from '../stream.js';
 import {getNow} from '../timestamp.js';
 import {createApi, handler, observer, streamer} from '../transport/rpc.js';
-import {observable, wait} from '../utils.js';
+import {wait} from '../utils.js';
 
 export interface TestApiState {
     esReader: EventStoreReader<ChangeEvent>;
@@ -20,13 +21,13 @@ export function createTestApi() {
             item: z.number(),
             async *stream(cx) {
                 yield 1;
-                await wait(1000);
+                await wait({ms: 1000, onCancel: 'reject'});
                 yield 2;
-                await wait(1000);
+                await wait({ms: 1000, onCancel: 'reject'});
                 yield 3;
-                await wait(1000);
+                await wait({ms: 1000, onCancel: 'reject'});
                 yield 4;
-                await wait(1000);
+                await wait({ms: 1000, onCancel: 'reject'});
                 yield 5;
             },
         }),
@@ -47,7 +48,7 @@ export function createTestApi() {
                 while (true) {
                     logger.debug('stream yield');
                     yield {index: index++, value: 'sdf'};
-                    await wait(1000);
+                    await wait({ms: 1000, onCancel: 'reject'});
                 }
             },
         }),

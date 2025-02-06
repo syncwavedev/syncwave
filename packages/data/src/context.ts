@@ -9,6 +9,8 @@ export class CancelledError extends Error {
 
 export type Cancel = () => Nothing;
 
+export type CancelBehavior = 'reject' | 'resolve' | 'suspend';
+
 const traceNanoId = customAlphabet('1234567890abcdef', 10);
 
 export type TraceId = Brand<string, 'trace_id'>;

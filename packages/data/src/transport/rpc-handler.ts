@@ -15,7 +15,7 @@ import {
     MessageHeaders,
 } from '../transport/message.js';
 import {catchConnectionClosed, Connection} from '../transport/transport.js';
-import {assertNever, catchCancel, Unsubscribe, wait} from '../utils.js';
+import {assertNever, Unsubscribe, wait} from '../utils.js';
 import {
     getRequiredProcessor,
     Handler,
@@ -181,7 +181,7 @@ async function proxyRequest(
     });
 
     try {
-        catchCancel(wait(RPC_CALL_TIMEOUT_MS))
+        wait({ms: RPC_CALL_TIMEOUT_MS, onCancel: 'resolve'})
             .then(() => {
                 if (result.state === 'pending') {
                     result.reject(new Error('rpc call failed: timeout'));

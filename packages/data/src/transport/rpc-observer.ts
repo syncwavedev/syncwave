@@ -6,7 +6,7 @@ import {logger} from '../logger.js';
 import {Observable, Stream, toStream} from '../stream.js';
 import {Message, MessageHeaders} from '../transport/message.js';
 import {Connection} from '../transport/transport.js';
-import {assertNever, catchCancel, wait} from '../utils.js';
+import {assertNever, wait} from '../utils.js';
 import {
     createRpcStreamerClient,
     launchRpcStreamerServer,
@@ -84,7 +84,7 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
                 const [ctx, cancelCtx] = context().createChild();
                 let resolved = false;
 
-                catchCancel(wait(RPC_CALL_TIMEOUT_MS))
+                wait({ms: RPC_CALL_TIMEOUT_MS, onCancel: 'resolve'})
                     .then(() => {
                         if (!resolved) {
                             cancelCtx();

@@ -52,16 +52,17 @@ export class Subject<T> {
     }
 
     value$(): Stream<T> {
-        const stream = new Stream<T>(exe => {
+        const stream = new Stream<T>(channel => {
             this.subscribe({
-                next: value => exe.next(value),
-                throw: error => exe.throw(error),
-                close: () => exe.end(),
+                next: value => channel.next(value),
+                throw: error => channel.throw(error),
+                close: () => channel.end(),
             });
 
             return () => {
-                exe.throw(new CancelledError())
-                    .finally(() => exe.end())
+                channel
+                    .throw(new CancelledError())
+                    .finally(() => channel.end())
                     .catch(error => {
                         logger.error('Subject.value$ unsubscribe', error);
                     });

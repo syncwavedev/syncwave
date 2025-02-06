@@ -16,6 +16,13 @@ import {pipe, whenAll} from '../utils.js';
 import {Uuid, UuidCodec, zUuid} from '../uuid.js';
 import {UpdateChecker} from './update-checker.js';
 
+export class ConstraintError extends Error {
+    constructor(public readonly constraintName: string) {
+        super('constraint failed: ' + constraintName);
+        this.name = 'ConstraintError';
+    }
+}
+
 export interface Doc<TId extends Uuid = Uuid> {
     id: TId;
     createdAt: Timestamp;
@@ -252,7 +259,7 @@ export class DocRepo<T extends Doc> {
             ...this.constraints.map(async c => {
                 const result = c.verify(nextSnapshot);
                 if (!result) {
-                    throw new Error(`constraint failed: ${c.name}`);
+                    throw new ConstraintError(c.name);
                 }
             }),
             this.onChange(nextSnapshot.id, diff),

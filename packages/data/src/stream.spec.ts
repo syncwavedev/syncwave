@@ -2,14 +2,14 @@ import {describe, expect, it} from 'vitest';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Stream, toStream} from './stream.js';
 
-describe('DeferredStream', () => {
+describe('Stream', () => {
     it('should emit values using the executor', async () => {
         const values = [1, 2, 3];
-        const valueStream = new Stream<number>(({next, end}) => {
+        const valueStream = new Stream<number>(channel => {
             for (const value of values) {
-                const _ = next(value);
+                const _ = channel.next(value);
             }
-            const _ = end();
+            const _ = channel.end();
 
             return () => {};
         });
@@ -24,8 +24,8 @@ describe('DeferredStream', () => {
 
     it('should propagate errors from the executor', async () => {
         const error = new Error('Test error');
-        const valueStream = new Stream<number>(exe => {
-            const _ = exe.throw(error);
+        const valueStream = new Stream<number>(channel => {
+            const _ = channel.throw(error);
             return () => {};
         });
 
@@ -37,7 +37,7 @@ describe('DeferredStream', () => {
     });
 });
 
-describe('AsyncStream', () => {
+describe('Stream', () => {
     it('should convert an async iterable to an AsyncStream and back to an array', async () => {
         const values = [1, 2, 3];
         const source = (async function* () {

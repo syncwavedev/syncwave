@@ -18,7 +18,7 @@ interface TestUser {
 
 const INDEX_NAME = 'some_index_name';
 
-const idSelector = (x: TestUser) => x.id;
+const idSelector = (x: TestUser) => [x.id];
 
 async function getTxn() {
     const store = new MemKVStore();

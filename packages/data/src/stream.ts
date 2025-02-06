@@ -85,15 +85,16 @@ export function toStream<T>(
         | ((writer: ChannelWriter<T>) => Cancel)
 ): Stream<T> {
     if (source instanceof Promise) {
-        const factory = new AsyncIteratorFactory<T>(exe => {
+        const factory = new AsyncIteratorFactory<T>(channel => {
             source
-                .then(value => exe.next(value))
-                .catch(error => exe.throw(error))
-                .finally(() => exe.end());
+                .then(value => channel.next(value))
+                .catch(error => channel.throw(error))
+                .finally(() => channel.end());
 
             return () => {
-                exe.throw(new CancelledError())
-                    .finally(() => exe.end())
+                channel
+                    .throw(new CancelledError())
+                    .finally(() => channel.end())
                     .catch(error => {
                         logger.error('stream unsubscribe', error);
                     });

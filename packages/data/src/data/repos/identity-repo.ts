@@ -88,6 +88,11 @@ export class IdentityRepo {
                     },
                 },
             ],
+            changeChecker: createWriteableChecker({
+                email: true,
+                verificationCode: true,
+                authActivityLog: true,
+            }),
         });
     }
 
@@ -104,15 +109,7 @@ export class IdentityRepo {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
-        return await this.rawRepo.apply(
-            [id],
-            diff,
-            createWriteableChecker({
-                email: true,
-                verificationCode: true,
-                authActivityLog: true,
-            })
-        );
+        return await this.rawRepo.apply([id], diff);
     }
 
     async create(identity: Omit<Identity, 'pk'>): Promise<Identity> {

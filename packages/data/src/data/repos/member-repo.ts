@@ -70,6 +70,9 @@ export class MemberRepo {
                     },
                 },
             ],
+            changeChecker: createWriteableChecker({
+                active: true,
+            }),
         });
     }
 
@@ -111,13 +114,7 @@ export class MemberRepo {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
-        return await this.rawRepo.apply(
-            [id],
-            diff,
-            createWriteableChecker({
-                active: true,
-            })
-        );
+        return await this.rawRepo.apply([id], diff);
     }
 
     create(member: Omit<Member, 'pk'>): Promise<Member> {

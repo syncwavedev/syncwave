@@ -69,6 +69,7 @@ export interface DocStoreOptions<T extends Doc<IndexKey>> {
     schema: ZodType<T>;
     onChange: OnDocChange<T>;
     constraints: readonly Constraint<T>[];
+    changeChecker: UpdateChecker<T>;
 }
 
 export type Recipe<T> = (doc: T) => T | void;
@@ -80,6 +81,8 @@ export class DocRepo<T extends Doc<IndexKey>> {
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
     private readonly constraints: readonly Constraint<T>[];
+    // todo: add tests
+    private readonly changeChecker: UpdateChecker<T>;
 
     constructor({
         tx,
@@ -87,6 +90,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         onChange,
         schema,
         constraints,
+        changeChecker: updateChecker,
     }: DocStoreOptions<T>) {
         this.indexes = new Map(
             Object.entries(indexes).map(([indexName, spec]) => {
@@ -121,6 +125,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         this.onChange = onChange;
         this.schema = schema;
         this.constraints = constraints;
+        this.changeChecker = updateChecker ?? (() => {});
     }
 
     async getById(id: IndexKey): Promise<T | undefined> {
@@ -185,7 +190,6 @@ export class DocRepo<T extends Doc<IndexKey>> {
             throw new Error('doc not found: ' + id);
         }
 
-        const prev = doc.snapshot();
         const diff = doc.update(draft => {
             const result = recipe(draft) ?? draft;
 
@@ -194,20 +198,17 @@ export class DocRepo<T extends Doc<IndexKey>> {
             return result;
         });
         if (!diff) {
-            // no change were made to the document
-            return prev;
+            // no changes were made to the document
+            return doc.snapshot();
         }
-        await this._put(prev, doc, diff);
+
+        await this.apply(id, diff);
 
         return doc.snapshot();
     }
 
     // todo: add tests
-    async apply(
-        pk: IndexKey,
-        diff: CrdtDiff<T>,
-        updateChecker?: UpdateChecker<T>
-    ): Promise<void> {
+    async apply(pk: IndexKey, diff: CrdtDiff<T>): Promise<void> {
         let doc: Crdt<T> | undefined = await this.primary.get(pk);
         let prev: T | undefined;
         if (doc) {
@@ -220,10 +221,6 @@ export class DocRepo<T extends Doc<IndexKey>> {
 
         if (compareIndexKey(doc.snapshot().pk, pk) !== 0) {
             throw new Error('invalid diff: diff updates id ' + pk);
-        }
-
-        if (prev && updateChecker) {
-            updateChecker(prev, doc.snapshot());
         }
 
         await this._put(prev, doc, diff);
@@ -264,6 +261,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         const nextSnapshot = next.snapshot();
         this.schema.parse(nextSnapshot);
         await whenAll([
+            this.changeChecker(prev, nextSnapshot),
             this.primary.put(nextSnapshot.pk, next),
             ...[...this.indexes.values()].map(x =>
                 x.sync(prev, next.snapshot())

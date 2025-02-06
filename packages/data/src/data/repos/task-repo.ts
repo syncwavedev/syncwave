@@ -76,6 +76,10 @@ export class TaskRepo {
                     },
                 },
             ],
+            changeChecker: createWriteableChecker({
+                deleted: true,
+                title: true,
+            }),
         });
     }
 
@@ -88,14 +92,7 @@ export class TaskRepo {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
-        return await this.rawRepo.apply(
-            [id],
-            diff,
-            createWriteableChecker({
-                deleted: true,
-                title: true,
-            })
-        );
+        return await this.rawRepo.apply([id], diff);
     }
 
     create(user: Omit<Task, 'pk'>): Promise<Task> {

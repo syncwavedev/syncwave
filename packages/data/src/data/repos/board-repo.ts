@@ -66,6 +66,11 @@ export class BoardRepo {
                     },
                 },
             ],
+            changeChecker: createWriteableChecker({
+                deleted: true,
+                name: true,
+                ownerId: true,
+            }),
         });
         this.counters = new Registry(
             withPrefix('c/')(tx),
@@ -90,15 +95,7 @@ export class BoardRepo {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
-        return await this.rawRepo.apply(
-            [id],
-            diff,
-            createWriteableChecker({
-                deleted: true,
-                name: true,
-                ownerId: true,
-            })
-        );
+        return await this.rawRepo.apply([id], diff);
     }
 
     async incrementBoardCounter(boardId: BoardId): Promise<number> {

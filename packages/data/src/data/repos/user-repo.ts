@@ -32,6 +32,9 @@ export class UserRepo {
             indexes: {},
             schema: zUser(),
             constraints: [],
+            changeChecker: createWriteableChecker({
+                name: true,
+            }),
         });
     }
 
@@ -40,13 +43,7 @@ export class UserRepo {
     }
 
     async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {
-        return await this.rawRepo.apply(
-            [id],
-            diff,
-            createWriteableChecker({
-                name: true,
-            })
-        );
+        return await this.rawRepo.apply([id], diff);
     }
 
     async create(user: Omit<User, 'pk'>): Promise<User> {

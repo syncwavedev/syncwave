@@ -1,4 +1,9 @@
-export type UpdateChecker<T> = (prev: T, next: T) => {errors: string[]} | void;
+import {whenAll} from '../utils.js';
+
+export type UpdateChecker<T> = (
+    prev: T | undefined,
+    next: T
+) => Promise<{errors: string[]} | void>;
 
 type WritableMap<T> = {
     [K in WritableKeys<T>]-?: IfEquals<
@@ -23,8 +28,11 @@ type IfEquals<X, Y> =
 
 export function createWriteableChecker<T extends object>(
     writable: WritableMap<Omit<T, 'updatedAt' | 'createdAt' | 'id'>>
-) {
-    return (prev: T, next: T) => {
+): UpdateChecker<T> {
+    return async (prev: T | undefined, next: T) => {
+        if (prev === undefined) {
+            return;
+        }
         const keys = new Set([
             ...Object.keys(prev),
             ...Object.keys(next),
@@ -54,9 +62,11 @@ export function combineUpdateCheckers<T>(
     checkers: Array<UpdateChecker<T>>
 ): UpdateChecker<T> {
     return checkers.reduce<UpdateChecker<T>>(
-        (a, b) => (prev: T, next: T) => {
-            const aResult = a(prev, next);
-            const bResult = b(prev, next);
+        (a, b) => async (prev: T | undefined, next: T) => {
+            const [aResult, bResult] = await whenAll([
+                a(prev, next),
+                b(prev, next),
+            ]);
             const errors: string[] = [];
             if (aResult) errors.push(...aResult.errors);
             if (bResult) errors.push(...bResult.errors);
@@ -67,6 +77,6 @@ export function combineUpdateCheckers<T>(
 
             return;
         },
-        () => {}
+        () => Promise.resolve()
     );
 }

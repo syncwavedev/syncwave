@@ -102,7 +102,7 @@ class SubjectManager<T> {
             this.subjects.set(topic, subject);
         }
 
-        return subject.value$().finally(() => {
+        return subject.stream().finally(() => {
             if (!subject.anyObservers) {
                 this.subjects.delete(topic);
             }

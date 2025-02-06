@@ -84,4 +84,38 @@ describe('bigFloat operations', () => {
             denominator: '1',
         });
     });
+
+    it('should handle negative numbers', () => {
+        expect(bigFloatAdd(-1, 2)).toEqual({
+            numerator: '1',
+            denominator: '1',
+        });
+
+        expect(bigFloatSub(-1, 2)).toEqual({
+            numerator: '-3',
+            denominator: '1',
+        });
+
+        expect(bigFloatMul(-1, 2)).toEqual({
+            numerator: '-2',
+            denominator: '1',
+        });
+
+        expect(bigFloatDiv(-1, 2)).toEqual({
+            numerator: '-1',
+            denominator: '2',
+        });
+    });
+
+    it('should handle huge numbers', () => {
+        expect(
+            bigFloatDiv(
+                BigInt('2' + '0'.repeat(1000)),
+                BigInt('1' + '0'.repeat(1000))
+            )
+        ).toEqual({
+            numerator: '2',
+            denominator: '1',
+        });
+    });
 });

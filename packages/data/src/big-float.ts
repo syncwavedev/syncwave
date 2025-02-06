@@ -22,17 +22,24 @@ export function zBigFloat() {
 
 export type BigFloat = z.infer<ReturnType<typeof zBigFloat>>;
 
-export function toBigFloat(x: BigFloat | number): BigFloat {
+export function toBigFloat(x: Num): BigFloat {
     if (typeof x === 'object') {
         return x;
     }
+
+    if (typeof x === 'number') {
+        x = BigInt(Math.trunc(x * 1_000_000_000_000_000));
+    } else {
+        x = BigInt(x) * BigInt(1_000_000_000_000_000);
+    }
+
     return simplify({
-        numerator: bigintCodec.encode(BigInt(Math.trunc(x * 1_000_000_000))),
+        numerator: bigintCodec.encode(x),
         denominator: bigintCodec.encode(BigInt(1_000_000_000_000_000)),
     });
 }
 
-export function bigFloatAbs(x: BigFloat | number): BigFloat {
+export function bigFloatAbs(x: Num): BigFloat {
     x = toBigFloat(x);
     const num = bigintCodec.decode(x.numerator);
     const den = bigintCodec.decode(x.denominator);
@@ -42,10 +49,7 @@ export function bigFloatAbs(x: BigFloat | number): BigFloat {
     return x;
 }
 
-export function bigFloatDiv(
-    a: BigFloat | number,
-    b: BigFloat | number
-): BigFloat {
+export function bigFloatDiv(a: Num, b: Num): BigFloat {
     a = toBigFloat(a);
     b = toBigFloat(b);
     const anum = bigintCodec.decode(a.numerator);
@@ -58,10 +62,7 @@ export function bigFloatDiv(
     });
 }
 
-export function bigFloatAdd(
-    a: BigFloat | number,
-    b: BigFloat | number
-): BigFloat {
+export function bigFloatAdd(a: Num, b: Num): BigFloat {
     a = toBigFloat(a);
     b = toBigFloat(b);
     const anum = bigintCodec.decode(a.numerator);
@@ -74,10 +75,9 @@ export function bigFloatAdd(
     });
 }
 
-export function bigFloatMul(
-    a: BigFloat | number,
-    b: BigFloat | number
-): BigFloat {
+export type Num = BigFloat | number | bigint;
+
+export function bigFloatMul(a: Num, b: Num): BigFloat {
     a = toBigFloat(a);
     b = toBigFloat(b);
     const anum = bigintCodec.decode(a.numerator);
@@ -90,10 +90,7 @@ export function bigFloatMul(
     });
 }
 
-export function bigFloatSub(
-    a: BigFloat | number,
-    b: BigFloat | number
-): BigFloat {
+export function bigFloatSub(a: Num, b: Num): BigFloat {
     a = toBigFloat(a);
     b = toBigFloat(b);
     const anum = bigintCodec.decode(a.numerator);
@@ -110,10 +107,30 @@ function simplify(x: BigFloat): BigFloat {
     const num = bigintCodec.decode(x.numerator);
     const den = bigintCodec.decode(x.denominator);
     const gcd = bigintGcd(num, den);
-    return {
+    return canonize({
         numerator: bigintCodec.encode(num / gcd),
         denominator: bigintCodec.encode(den / gcd),
-    };
+    });
+}
+
+function canonize(x: BigFloat): BigFloat {
+    const num = bigintCodec.decode(x.numerator);
+    const den = bigintCodec.decode(x.denominator);
+    if (num > BigInt(0) && den < BigInt(0)) {
+        x = {
+            numerator: bigintCodec.encode(-num),
+            denominator: bigintCodec.encode(-den),
+        };
+    }
+
+    if (num === BigInt(0)) {
+        x = {
+            numerator: bigintCodec.encode(BigInt(0)),
+            denominator: bigintCodec.encode(BigInt(1)),
+        };
+    }
+
+    return x;
 }
 
 export function bigintGcd(a: bigint, b: bigint): bigint {

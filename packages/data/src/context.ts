@@ -96,7 +96,7 @@ export class Context {
     }
 
     createBackground(options?: {traceId?: TraceId}): [Context, Cancel] {
-        return Context.root().createChild();
+        return Context.root().createChild(options);
     }
 
     private cancel() {

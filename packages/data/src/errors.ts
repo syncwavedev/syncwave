@@ -46,7 +46,6 @@ export function getReadableError(error: any) {
         return error;
     }
 
-    // eslint-disable-next-line no-restricted-globals
     if (error instanceof Error) {
         return error.message;
     }
@@ -59,7 +58,6 @@ export function getReadableError(error: any) {
 }
 
 export function toError(reason: unknown): Error {
-    // eslint-disable-next-line no-restricted-globals
     if (reason instanceof Error) {
         return reason;
     }

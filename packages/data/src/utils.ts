@@ -50,8 +50,8 @@ export class Subject<T> {
         };
     }
 
-    value$(): Stream<T> {
-        const stream = new Stream<T>(channel => {
+    stream(): Stream<T> {
+        return new Stream<T>(channel => {
             this.subscribe({
                 next: value => channel.next(value),
                 throw: error => channel.throw(error),
@@ -67,7 +67,6 @@ export class Subject<T> {
                     });
             };
         });
-        return toStream(stream);
     }
 
     async next(value: T): Promise<void> {

@@ -102,6 +102,16 @@ class ParticipantClient {
     );
   }
 
+  Future<CreateCategoryRes> createCategory(CreateCategoryReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createCategory', request.toJson(), headers);
+    return CreateCategoryRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<CreateTaskRes> createTask(CreateTaskReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createTask', request.toJson(), headers);
+    return CreateTaskRes.fromJson(json as Map<String, dynamic>);
+  }
+
   void close() {
     _rpc.close();
   }

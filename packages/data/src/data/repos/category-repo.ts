@@ -8,14 +8,14 @@ import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {BoardId, BoardRepo} from './board-repo.js';
 import {UserId, UserRepo} from './user-repo.js';
 
-export type ColumnId = Brand<Uuid, 'column_id'>;
+export type CategoryId = Brand<Uuid, 'category_id'>;
 
-export function createColumnId(): ColumnId {
-    return createUuid() as ColumnId;
+export function createCategoryId(): CategoryId {
+    return createUuid() as CategoryId;
 }
 
-export interface Column extends Doc<[ColumnId]> {
-    readonly id: ColumnId;
+export interface Category extends Doc<[CategoryId]> {
+    readonly id: CategoryId;
     readonly authorId: UserId;
     readonly boardId: BoardId;
     title: string;
@@ -24,11 +24,9 @@ export interface Column extends Doc<[ColumnId]> {
 
 const BOARD_ID = 'boardId';
 
-// todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
-
-export function zColumn() {
-    return zDoc(z.tuple([zUuid<ColumnId>()])).extend({
-        id: zUuid<ColumnId>(),
+export function zCategory() {
+    return zDoc(z.tuple([zUuid<CategoryId>()])).extend({
+        id: zUuid<CategoryId>(),
         authorId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
         title: z.string(),
@@ -36,34 +34,34 @@ export function zColumn() {
     });
 }
 
-export class ColumnRepo {
-    public readonly rawRepo: DocRepo<Column>;
+export class CategoryRepo {
+    public readonly rawRepo: DocRepo<Category>;
 
     constructor(
         tx: Uint8Transaction,
         boardRepo: BoardRepo,
         userRepo: UserRepo,
-        onChange: OnDocChange<Column>
+        onChange: OnDocChange<Category>
     ) {
-        this.rawRepo = new DocRepo<Column>({
+        this.rawRepo = new DocRepo<Category>({
             tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
                 [BOARD_ID]: x => [x.boardId],
             },
-            schema: zColumn(),
+            schema: zCategory(),
             constraints: [
                 {
-                    name: 'column.authorId fk',
-                    verify: async column => {
-                        const user = await userRepo.getById(column.authorId);
+                    name: 'category.authorId fk',
+                    verify: async category => {
+                        const user = await userRepo.getById(category.authorId);
                         return user !== undefined;
                     },
                 },
                 {
-                    name: 'column.boardId fk',
-                    verify: async column => {
-                        const board = await boardRepo.getById(column.boardId);
+                    name: 'category.boardId fk',
+                    verify: async category => {
+                        const board = await boardRepo.getById(category.boardId);
                         return board !== undefined;
                     },
                 },
@@ -78,23 +76,23 @@ export class ColumnRepo {
         });
     }
 
-    getById(id: ColumnId): Promise<Column | undefined> {
+    getById(id: CategoryId): Promise<Category | undefined> {
         return this.rawRepo.getById([id]);
     }
 
-    getByBoardId(boardId: BoardId): Stream<Column> {
+    getByBoardId(boardId: BoardId): Stream<Category> {
         return this.rawRepo.get(BOARD_ID, [boardId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Column>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Category>): Promise<void> {
         return await this.rawRepo.apply([id], diff);
     }
 
-    create(user: Omit<Column, 'pk'>): Promise<Column> {
+    create(user: Omit<Category, 'pk'>): Promise<Category> {
         return this.rawRepo.create({pk: [user.id], ...user});
     }
 
-    update(id: ColumnId, recipe: Recipe<Column>): Promise<Column> {
+    update(id: CategoryId, recipe: Recipe<Category>): Promise<Category> {
         return this.rawRepo.update([id], recipe);
     }
 }

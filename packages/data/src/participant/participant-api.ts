@@ -103,6 +103,8 @@ export function createParticipantApi() {
         getObserve: proxy('getObserve'),
         echo: proxy('echo'),
         getBoard: proxy('getBoard'),
+        createCategory: proxy('createCategory'),
+        createTask: proxy('createTask'),
     });
 }
 

@@ -11,11 +11,10 @@ export namespace Uuid {
 }
 
 export function zUuid<TBrand extends Uuid>() {
-    return z.custom<TBrand>(validate, {
-        message: 'Invalid UUID format or incompatible with Uuid class',
-    });
+    return z.string().refine(validate, {
+        message: 'Invalid UUID format',
+    }) as unknown as z.ZodType<TBrand>;
 }
-
 export function createUuid(): Uuid {
     return v7() as Uuid;
 }

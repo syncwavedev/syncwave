@@ -20,10 +20,7 @@ export function addYears(timestamp: Timestamp, years: number): Timestamp {
 }
 
 export function zTimestamp() {
-    return z.custom<Timestamp>(
-        value => typeof value === 'number' && !Number.isNaN(value),
-        {
-            message: 'Invalid timestamp',
-        }
-    );
+    return z.number().refine(value => !Number.isNaN(value), {
+        message: 'Invalid timestamp',
+    }) as unknown as z.ZodType<Timestamp>;
 }

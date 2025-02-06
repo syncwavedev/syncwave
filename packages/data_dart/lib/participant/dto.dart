@@ -34,6 +34,10 @@
 //     final getBoardReq = getBoardReqFromJson(jsonString);
 //     final getBoardValue = getBoardValueFromJson(jsonString);
 //     final getBoardUpdate = getBoardUpdateFromJson(jsonString);
+//     final createCategoryReq = createCategoryReqFromJson(jsonString);
+//     final createCategoryRes = createCategoryResFromJson(jsonString);
+//     final createTaskReq = createTaskReqFromJson(jsonString);
+//     final createTaskRes = createTaskResFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -173,6 +177,22 @@ GetBoardUpdate getBoardUpdateFromJson(String str) => GetBoardUpdate.fromJson(jso
 
 String getBoardUpdateToJson(GetBoardUpdate data) => json.encode(data.toJson());
 
+CreateCategoryReq createCategoryReqFromJson(String str) => CreateCategoryReq.fromJson(json.decode(str));
+
+String createCategoryReqToJson(CreateCategoryReq data) => json.encode(data.toJson());
+
+CreateCategoryRes createCategoryResFromJson(String str) => CreateCategoryRes.fromJson(json.decode(str));
+
+String createCategoryResToJson(CreateCategoryRes data) => json.encode(data.toJson());
+
+CreateTaskReq createTaskReqFromJson(String str) => CreateTaskReq.fromJson(json.decode(str));
+
+String createTaskReqToJson(CreateTaskReq data) => json.encode(data.toJson());
+
+CreateTaskRes createTaskResFromJson(String str) => CreateTaskRes.fromJson(json.decode(str));
+
+String createTaskResToJson(CreateTaskRes data) => json.encode(data.toJson());
+
 class StreamPutReq {
     String topic;
     String value;
@@ -290,13 +310,13 @@ class GetMeValue {
 }
 
 class GetMeValueIdentity {
-    List<dynamic> authActivityLog;
-    dynamic createdAt;
+    List<double> authActivityLog;
+    double createdAt;
     String email;
-    dynamic id;
-    List<dynamic> pk;
-    dynamic updatedAt;
-    dynamic userId;
+    String id;
+    List<String> pk;
+    double updatedAt;
+    String userId;
     
     ///VerificationCode
     PurpleVerificationCode verificationCode;
@@ -313,12 +333,12 @@ class GetMeValueIdentity {
     });
 
     factory GetMeValueIdentity.fromJson(Map<String, dynamic> json) => GetMeValueIdentity(
-        authActivityLog: List<dynamic>.from(json["authActivityLog"].map((x) => x)),
-        createdAt: json["createdAt"],
+        authActivityLog: List<double>.from(json["authActivityLog"].map((x) => x?.toDouble())),
+        createdAt: json["createdAt"]?.toDouble(),
         email: json["email"],
         id: json["id"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
         userId: json["userId"],
         verificationCode: PurpleVerificationCode.fromJson(json["verificationCode"]),
     );
@@ -339,7 +359,7 @@ class GetMeValueIdentity {
 ///VerificationCode
 class PurpleVerificationCode {
     String code;
-    dynamic expires;
+    double expires;
 
     PurpleVerificationCode({
         required this.code,
@@ -348,7 +368,7 @@ class PurpleVerificationCode {
 
     factory PurpleVerificationCode.fromJson(Map<String, dynamic> json) => PurpleVerificationCode(
         code: json["code"],
-        expires: json["expires"],
+        expires: json["expires"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -358,10 +378,10 @@ class PurpleVerificationCode {
 }
 
 class GetMeValueUser {
-    dynamic createdAt;
-    dynamic id;
-    List<dynamic> pk;
-    dynamic updatedAt;
+    double createdAt;
+    String id;
+    List<String> pk;
+    double updatedAt;
 
     GetMeValueUser({
         required this.createdAt,
@@ -371,10 +391,10 @@ class GetMeValueUser {
     });
 
     factory GetMeValueUser.fromJson(Map<String, dynamic> json) => GetMeValueUser(
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toDouble(),
         id: json["id"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -406,13 +426,13 @@ class GetMeUpdate {
 }
 
 class GetMeUpdateIdentity {
-    List<dynamic> authActivityLog;
-    dynamic createdAt;
+    List<double> authActivityLog;
+    double createdAt;
     String email;
-    dynamic id;
-    List<dynamic> pk;
-    dynamic updatedAt;
-    dynamic userId;
+    String id;
+    List<String> pk;
+    double updatedAt;
+    String userId;
     
     ///VerificationCode
     FluffyVerificationCode verificationCode;
@@ -429,12 +449,12 @@ class GetMeUpdateIdentity {
     });
 
     factory GetMeUpdateIdentity.fromJson(Map<String, dynamic> json) => GetMeUpdateIdentity(
-        authActivityLog: List<dynamic>.from(json["authActivityLog"].map((x) => x)),
-        createdAt: json["createdAt"],
+        authActivityLog: List<double>.from(json["authActivityLog"].map((x) => x?.toDouble())),
+        createdAt: json["createdAt"]?.toDouble(),
         email: json["email"],
         id: json["id"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
         userId: json["userId"],
         verificationCode: FluffyVerificationCode.fromJson(json["verificationCode"]),
     );
@@ -455,7 +475,7 @@ class GetMeUpdateIdentity {
 ///VerificationCode
 class FluffyVerificationCode {
     String code;
-    dynamic expires;
+    double expires;
 
     FluffyVerificationCode({
         required this.code,
@@ -464,7 +484,7 @@ class FluffyVerificationCode {
 
     factory FluffyVerificationCode.fromJson(Map<String, dynamic> json) => FluffyVerificationCode(
         code: json["code"],
-        expires: json["expires"],
+        expires: json["expires"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -474,10 +494,10 @@ class FluffyVerificationCode {
 }
 
 class GetMeUpdateUser {
-    dynamic createdAt;
-    dynamic id;
-    List<dynamic> pk;
-    dynamic updatedAt;
+    double createdAt;
+    String id;
+    List<String> pk;
+    double updatedAt;
 
     GetMeUpdateUser({
         required this.createdAt,
@@ -487,10 +507,10 @@ class GetMeUpdateUser {
     });
 
     factory GetMeUpdateUser.fromJson(Map<String, dynamic> json) => GetMeUpdateUser(
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toDouble(),
         id: json["id"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -544,7 +564,7 @@ final sendSignInEmailResTypeValues = EnumValues({
 });
 
 class CreateBoardReq {
-    dynamic boardId;
+    String boardId;
     String key;
     String name;
 
@@ -568,14 +588,14 @@ class CreateBoardReq {
 }
 
 class CreateBoardRes {
-    dynamic createdAt;
+    double createdAt;
     bool deleted;
-    dynamic id;
+    String id;
     String key;
     String name;
-    dynamic ownerId;
-    List<dynamic> pk;
-    dynamic updatedAt;
+    String ownerId;
+    List<String> pk;
+    double updatedAt;
 
     CreateBoardRes({
         required this.createdAt,
@@ -589,14 +609,14 @@ class CreateBoardRes {
     });
 
     factory CreateBoardRes.fromJson(Map<String, dynamic> json) => CreateBoardRes(
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -836,14 +856,14 @@ class GetMyBoardsReq {
 }
 
 class GetMyBoardsValue {
-    dynamic createdAt;
+    double createdAt;
     bool deleted;
-    dynamic id;
+    String id;
     String key;
     String name;
-    dynamic ownerId;
-    List<dynamic> pk;
-    dynamic updatedAt;
+    String ownerId;
+    List<String> pk;
+    double updatedAt;
 
     GetMyBoardsValue({
         required this.createdAt,
@@ -857,14 +877,14 @@ class GetMyBoardsValue {
     });
 
     factory GetMyBoardsValue.fromJson(Map<String, dynamic> json) => GetMyBoardsValue(
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -880,14 +900,14 @@ class GetMyBoardsValue {
 }
 
 class GetMyBoardsUpdate {
-    dynamic createdAt;
+    double createdAt;
     bool deleted;
-    dynamic id;
+    String id;
     String key;
     String name;
-    dynamic ownerId;
-    List<dynamic> pk;
-    dynamic updatedAt;
+    String ownerId;
+    List<String> pk;
+    double updatedAt;
 
     GetMyBoardsUpdate({
         required this.createdAt,
@@ -901,14 +921,14 @@ class GetMyBoardsUpdate {
     });
 
     factory GetMyBoardsUpdate.fromJson(Map<String, dynamic> json) => GetMyBoardsUpdate(
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -1028,14 +1048,14 @@ class GetBoardReq {
 }
 
 class GetBoardValue {
-    dynamic createdAt;
+    double createdAt;
     bool deleted;
-    dynamic id;
+    String id;
     String key;
     String name;
-    dynamic ownerId;
-    List<dynamic> pk;
-    dynamic updatedAt;
+    String ownerId;
+    List<String> pk;
+    double updatedAt;
 
     GetBoardValue({
         required this.createdAt,
@@ -1049,14 +1069,14 @@ class GetBoardValue {
     });
 
     factory GetBoardValue.fromJson(Map<String, dynamic> json) => GetBoardValue(
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -1072,14 +1092,14 @@ class GetBoardValue {
 }
 
 class GetBoardUpdate {
-    dynamic createdAt;
+    double createdAt;
     bool deleted;
-    dynamic id;
+    String id;
     String key;
     String name;
-    dynamic ownerId;
-    List<dynamic> pk;
-    dynamic updatedAt;
+    String ownerId;
+    List<String> pk;
+    double updatedAt;
 
     GetBoardUpdate({
         required this.createdAt,
@@ -1093,14 +1113,14 @@ class GetBoardUpdate {
     });
 
     factory GetBoardUpdate.fromJson(Map<String, dynamic> json) => GetBoardUpdate(
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
-        pk: List<dynamic>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -1112,6 +1132,170 @@ class GetBoardUpdate {
         "ownerId": ownerId,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
+    };
+}
+
+class CreateCategoryReq {
+    String boardId;
+    String columnId;
+    String title;
+
+    CreateCategoryReq({
+        required this.boardId,
+        required this.columnId,
+        required this.title,
+    });
+
+    factory CreateCategoryReq.fromJson(Map<String, dynamic> json) => CreateCategoryReq(
+        boardId: json["boardId"],
+        columnId: json["columnId"],
+        title: json["title"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "boardId": boardId,
+        "columnId": columnId,
+        "title": title,
+    };
+}
+
+class CreateCategoryRes {
+    String authorId;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String title;
+    double updatedAt;
+
+    CreateCategoryRes({
+        required this.authorId,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory CreateCategoryRes.fromJson(Map<String, dynamic> json) => CreateCategoryRes(
+        authorId: json["authorId"],
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "boardId": boardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class CreateTaskReq {
+    String boardId;
+    String taskId;
+    String title;
+
+    CreateTaskReq({
+        required this.boardId,
+        required this.taskId,
+        required this.title,
+    });
+
+    factory CreateTaskReq.fromJson(Map<String, dynamic> json) => CreateTaskReq(
+        boardId: json["boardId"],
+        taskId: json["taskId"],
+        title: json["title"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "boardId": boardId,
+        "taskId": taskId,
+        "title": title,
+    };
+}
+
+class CreateTaskRes {
+    String authorId;
+    String boardId;
+    CategoryPosition categoryPosition;
+    double counter;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String title;
+    double updatedAt;
+
+    CreateTaskRes({
+        required this.authorId,
+        required this.boardId,
+        required this.categoryPosition,
+        required this.counter,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory CreateTaskRes.fromJson(Map<String, dynamic> json) => CreateTaskRes(
+        authorId: json["authorId"],
+        boardId: json["boardId"],
+        categoryPosition: CategoryPosition.fromJson(json["categoryPosition"]),
+        counter: json["counter"]?.toDouble(),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "boardId": boardId,
+        "categoryPosition": categoryPosition.toJson(),
+        "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class CategoryPosition {
+    String denominator;
+    String numerator;
+
+    CategoryPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory CategoryPosition.fromJson(Map<String, dynamic> json) => CategoryPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 

@@ -1,11 +1,13 @@
-import {z} from 'zod';
+import {z, ZodType} from 'zod';
+import {BigFloat, zBigFloat} from '../../big-float.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {Brand} from '../../utils.js';
-import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {createUuid, Uuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {BoardId, BoardRepo} from './board-repo.js';
+import {CategoryId} from './category-repo.js';
 import {UserId, UserRepo} from './user-repo.js';
 
 export type TaskId = Brand<Uuid, 'task_id'>;
@@ -21,13 +23,15 @@ export interface Task extends Doc<[TaskId]> {
     readonly counter: number;
     title: string;
     deleted: boolean;
+    categoryPosition: BigFloat;
+    categoryId: CategoryId | null;
 }
 
 const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
 
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
-export function zTask() {
+export function zTask(): ZodType<Task> {
     return zDoc(z.tuple([zUuid<TaskId>()])).extend({
         id: zUuid<TaskId>(),
         authorId: zUuid<UserId>(),
@@ -35,6 +39,8 @@ export function zTask() {
         counter: z.number(),
         title: z.string(),
         deleted: z.boolean(),
+        categoryPosition: zBigFloat(),
+        categoryId: zUuid<CategoryId>().nullable(),
     });
 }
 
@@ -80,6 +86,8 @@ export class TaskRepo {
                 deleted: false,
                 title: false,
                 authorId: true,
+                categoryPosition: false,
+                categoryId: false,
             },
         });
     }

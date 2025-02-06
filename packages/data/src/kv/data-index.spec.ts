@@ -18,7 +18,7 @@ interface TestUser {
 
 const INDEX_NAME = 'some_index_name';
 
-const idSelector = (x: TestUser) => [x.id];
+const idSelector = (x: TestUser) => x.id;
 
 async function getTxn() {
     const store = new MemKVStore();
@@ -82,7 +82,9 @@ describe('data-index', async () => {
         await uniqueIndex.sync(undefined, {id: id1, houseId});
         await expect(
             uniqueIndex.sync(undefined, {id: createUuid(), houseId})
-        ).rejects.toThrow('unique index constraint violation');
+        ).rejects.toThrow(
+            'Unique index constraint violation. Index name: some_index_name'
+        );
     });
 
     it('should handle queries with undefined keys', async () => {
@@ -552,7 +554,9 @@ describe('partial indexes', async () => {
         // Attempt to add another item with the same key that satisfies the filter function
         await expect(
             uniquePartialIndex.sync(undefined, {id: id3, houseId, age: 30})
-        ).rejects.toThrow('unique index constraint violation');
+        ).rejects.toThrow(
+            'Unique index constraint violation. Index name: some_index_name'
+        );
     });
 
     it('should allow multiple items with the same key if excluded by filter function', async () => {
@@ -615,7 +619,9 @@ describe('partial indexes', async () => {
                 houseId,
                 ready: true,
             })
-        ).rejects.toThrow('unique index constraint violation');
+        ).rejects.toThrow(
+            'Unique index constraint violation. Index name: some_index_name'
+        );
 
         // Update id1 to no longer be included
         await uniquePartialIndex.sync(

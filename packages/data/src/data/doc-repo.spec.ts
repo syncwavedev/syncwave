@@ -62,6 +62,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
             await repo.create(doc);
         });
@@ -75,6 +76,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
             return repo2.getById(id);
         });
@@ -107,6 +109,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange: async () => {},
                 schema,
+                constraints: [],
             });
             await repo.create(doc);
         });
@@ -120,6 +123,7 @@ describe('DocStore with MemKVStore', () => {
                     indexes,
                     onChange: async () => {},
                     schema,
+                    constraints: [],
                 });
                 await repo.create(doc);
             })
@@ -140,13 +144,25 @@ describe('DocStore with MemKVStore', () => {
 
         // Create the doc
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+            repo = new DocRepo<MyDoc>({
+                tx,
+                indexes,
+                onChange,
+                schema,
+                constraints: [],
+            });
             await repo.create(doc);
         });
 
         // Update the doc
         const updated = await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+            repo = new DocRepo<MyDoc>({
+                tx,
+                indexes,
+                onChange,
+                schema,
+                constraints: [],
+            });
             return repo.update(id, current => {
                 current.age = 41;
             });
@@ -156,7 +172,13 @@ describe('DocStore with MemKVStore', () => {
 
         // Re-retrieve the doc
         const retrieved = await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+            repo = new DocRepo<MyDoc>({
+                tx,
+                indexes,
+                onChange,
+                schema,
+                constraints: [],
+            });
             return repo.getById(id);
         });
 
@@ -179,13 +201,25 @@ describe('DocStore with MemKVStore', () => {
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+            repo = new DocRepo<MyDoc>({
+                tx,
+                indexes,
+                onChange,
+                schema,
+                constraints: [],
+            });
             await repo.create(doc);
         });
 
         await expect(
             store.transact(async tx => {
-                repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+                repo = new DocRepo<MyDoc>({
+                    tx,
+                    indexes,
+                    onChange,
+                    schema,
+                    constraints: [],
+                });
                 return repo.update(id, current => {
                     (current as any).unknownProp = 'val';
                 });
@@ -201,7 +235,13 @@ describe('DocStore with MemKVStore', () => {
 
         await expect(
             store.transact(async tx => {
-                repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+                repo = new DocRepo<MyDoc>({
+                    tx,
+                    indexes,
+                    onChange,
+                    schema,
+                    constraints: [],
+                });
                 return repo.update(id, current => {
                     (current as any).id = 'val';
                 });
@@ -219,6 +259,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
             await repo.create({
                 id: createUuid(),
@@ -250,6 +291,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
             const results: MyDoc[] = [];
             const doc$ = repo.get('byName', ['Dana']);
@@ -272,6 +314,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
             const results: MyDoc[] = [];
             const doc$ = repo.get('byAge', [25]);
@@ -292,6 +335,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
             await repo.create({
                 id: createUuid(),
@@ -342,6 +386,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
 
             const results: MyDoc[] = [];
@@ -375,7 +420,13 @@ describe('DocStore with MemKVStore', () => {
         // Insert some docs
         let repo: DocRepo<MyDoc>;
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+            repo = new DocRepo<MyDoc>({
+                tx,
+                indexes,
+                onChange,
+                schema,
+                constraints: [],
+            });
             await repo.create({
                 id: createUuid(),
                 name: 'Zed',
@@ -396,7 +447,13 @@ describe('DocStore with MemKVStore', () => {
         // Because 'byName' is not unique in our example,
         // we should get an error if more than one doc matches.
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+            repo = new DocRepo<MyDoc>({
+                tx,
+                indexes,
+                onChange,
+                schema,
+                constraints: [],
+            });
             await expect(
                 repo.getUnique('byName', ['Zed'])
             ).rejects.toThrowError(/contains multiple docs/);
@@ -409,7 +466,13 @@ describe('DocStore with MemKVStore', () => {
 
         let firstZedId: Uuid | undefined;
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+            repo = new DocRepo<MyDoc>({
+                tx,
+                indexes,
+                onChange,
+                schema,
+                constraints: [],
+            });
             const zedEntries: MyDoc[] = [];
             const zedDoc$ = repo.get('byName', ['Zed']);
             for await (const zedDoc of zedDoc$) {
@@ -424,7 +487,13 @@ describe('DocStore with MemKVStore', () => {
 
         // Now only one 'Zed' doc remains, getUnique works
         const uniqueZedDoc = await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({tx, indexes, onChange, schema});
+            repo = new DocRepo<MyDoc>({
+                tx,
+                indexes,
+                onChange,
+                schema,
+                constraints: [],
+            });
             return repo.getUnique('byName', ['Zed']);
         });
         expect(uniqueZedDoc?.name).toBe('Zed');
@@ -441,6 +510,7 @@ describe('DocStore with MemKVStore', () => {
                     indexes,
                     onChange,
                     schema,
+                    constraints: [],
                 });
                 return repo.update(nonExistentId, doc => {
                     doc.name = 'Nope';
@@ -466,6 +536,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
             await repo.create(createdDoc);
         });
@@ -487,6 +558,7 @@ describe('DocStore with MemKVStore', () => {
                 indexes,
                 onChange,
                 schema,
+                constraints: [],
             });
             await repo.update(createdDoc.id, doc => {
                 doc.age = 2;

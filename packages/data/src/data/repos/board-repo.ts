@@ -7,9 +7,9 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Registry} from '../../kv/registry.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {DataTx} from '../data-layer.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
-import {createWriteableChecker} from '../update-checker.js';
-import {UserId, UserRepo} from './user-repo.js';
+import {UserId} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
 
@@ -43,7 +43,7 @@ export class BoardRepo {
 
     constructor(
         tx: Uint8Transaction,
-        userRepo: UserRepo,
+        dataTx: () => DataTx,
         onChange: OnDocChange<Board>
     ) {
         this.rawRepo = new DocRepo<Board>({
@@ -61,16 +61,20 @@ export class BoardRepo {
                 {
                     name: 'board.ownerId fk',
                     verify: async board => {
-                        const user = await userRepo.getById(board.ownerId);
+                        const user = await dataTx().users.getById(
+                            board.ownerId
+                        );
                         return user !== undefined;
                     },
                 },
             ],
-            changeChecker: createWriteableChecker({
-                deleted: true,
-                name: true,
-                ownerId: true,
-            }),
+            readonly: {
+                deleted: false,
+                name: false,
+                ownerId: false,
+                id: true,
+                key: true,
+            },
         });
         this.counters = new Registry(
             withPrefix('c/')(tx),

@@ -4,7 +4,6 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
-import {createWriteableChecker} from '../update-checker.js';
 import {BoardId, BoardRepo} from './board-repo.js';
 import {UserId, UserRepo} from './user-repo.js';
 
@@ -76,10 +75,14 @@ export class TaskRepo {
                     },
                 },
             ],
-            changeChecker: createWriteableChecker({
-                deleted: true,
-                title: true,
-            }),
+            readonly: {
+                boardId: true,
+                counter: true,
+                id: true,
+                deleted: false,
+                title: false,
+                authorId: true,
+            },
         });
     }
 

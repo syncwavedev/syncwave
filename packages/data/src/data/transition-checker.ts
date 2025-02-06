@@ -1,34 +1,26 @@
 import {whenAll} from '../utils.js';
 
-export type UpdateChecker<T> = (
+export type TransitionChecker<T> = (
     prev: T | undefined,
     next: T
 ) => Promise<{errors: string[]} | void>;
 
-type WritableMap<T> = {
-    [K in WritableKeys<T>]-?: IfEquals<
-        {[P in K]: T[K]},
-        {-readonly [P in K]: T[K]}
+export type ReadonlyDescriptor<T> = {
+    [K in keyof T]-?: Not<
+        IfEquals<{[P in K]: T[K]}, {-readonly [P in K]: T[K]}>
     >;
 };
 
-type WritableKeys<T> = {
-    [K in keyof T]-?: IfEquals<
-        {[P in K]: T[K]},
-        {-readonly [P in K]: T[K]}
-    > extends true
-        ? K
-        : never;
-}[keyof T];
+type Not<T> = T extends true ? false : true;
 
 type IfEquals<X, Y> =
     (<G>() => G extends X ? 1 : 2) extends <G>() => G extends Y ? 1 : 2
         ? true
         : false;
 
-export function createWriteableChecker<T extends object>(
-    writable: WritableMap<Omit<T, 'updatedAt' | 'createdAt' | 'id'>>
-): UpdateChecker<T> {
+export function createReadonlyTransitionChecker<T extends object>(
+    readonly: ReadonlyDescriptor<T>
+): TransitionChecker<T> {
     return async (prev: T | undefined, next: T) => {
         if (prev === undefined) {
             return;
@@ -46,8 +38,9 @@ export function createWriteableChecker<T extends object>(
                 );
             }
 
-            if (prev[key] !== next[key] && (writable as any)[key] === true) {
-                errors.push(`property ${key} is not writable`);
+            // we use !== false to check for undefined
+            if (prev[key] !== next[key] && (readonly as any)[key] !== false) {
+                errors.push(`property ${key} is readonly`);
             }
         }
 
@@ -58,10 +51,10 @@ export function createWriteableChecker<T extends object>(
         return;
     };
 }
-export function combineUpdateCheckers<T>(
-    checkers: Array<UpdateChecker<T>>
-): UpdateChecker<T> {
-    return checkers.reduce<UpdateChecker<T>>(
+export function combineTransitionCheckers<T>(
+    checkers: Array<TransitionChecker<T>>
+): TransitionChecker<T> {
+    return checkers.reduce<TransitionChecker<T>>(
         (a, b) => async (prev: T | undefined, next: T) => {
             const [aResult, bResult] = await whenAll([
                 a(prev, next),

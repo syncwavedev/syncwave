@@ -4,7 +4,6 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
-import {createWriteableChecker} from '../update-checker.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 
@@ -32,9 +31,9 @@ export class UserRepo {
             indexes: {},
             schema: zUser(),
             constraints: [],
-            changeChecker: createWriteableChecker({
-                name: true,
-            }),
+            readonly: {
+                id: true,
+            },
         });
     }
 

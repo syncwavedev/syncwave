@@ -20,7 +20,11 @@ import {
 import {Stream, toStream} from '../stream.js';
 import {getNow, Timestamp, zTimestamp} from '../timestamp.js';
 import {pipe, whenAll} from '../utils.js';
-import {UpdateChecker} from './update-checker.js';
+import {
+    createReadonlyTransitionChecker,
+    ReadonlyDescriptor,
+    TransitionChecker,
+} from './transition-checker.js';
 
 export class ConstraintError extends Error {
     constructor(public readonly constraintName: string) {
@@ -31,7 +35,7 @@ export class ConstraintError extends Error {
 
 export interface Doc<TKey extends IndexKey> {
     readonly pk: TKey;
-    createdAt: Timestamp;
+    readonly createdAt: Timestamp;
     updatedAt: Timestamp;
 }
 
@@ -69,7 +73,7 @@ export interface DocStoreOptions<T extends Doc<IndexKey>> {
     schema: ZodType<T>;
     onChange: OnDocChange<T>;
     constraints: readonly Constraint<T>[];
-    changeChecker: UpdateChecker<T>;
+    readonly: ReadonlyDescriptor<Omit<T, 'updatedAt' | 'createdAt' | 'pk'>>;
 }
 
 export type Recipe<T> = (doc: T) => T | void;
@@ -82,18 +86,11 @@ export class DocRepo<T extends Doc<IndexKey>> {
     private readonly schema: ZodType<T>;
     private readonly constraints: readonly Constraint<T>[];
     // todo: add tests
-    private readonly changeChecker: UpdateChecker<T>;
+    private readonly changeChecker: TransitionChecker<T>;
 
-    constructor({
-        tx,
-        indexes,
-        onChange,
-        schema,
-        constraints,
-        changeChecker: updateChecker,
-    }: DocStoreOptions<T>) {
+    constructor(options: DocStoreOptions<T>) {
         this.indexes = new Map(
-            Object.entries(indexes).map(([indexName, spec]) => {
+            Object.entries(options.indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
                     throw new Error(
                         'index name cannot contain /: ' + indexName
@@ -103,7 +100,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
                 return [
                     indexName,
                     createIndex({
-                        tx: withPrefix(`i/${indexName}/`)(tx),
+                        tx: withPrefix(`i/${indexName}/`)(options.tx),
                         idSelector: x => x.pk,
                         keySelector:
                             typeof spec === 'function' ? spec : spec.key,
@@ -117,15 +114,20 @@ export class DocRepo<T extends Doc<IndexKey>> {
             })
         );
         this.primaryKeyRaw = pipe(
-            tx,
+            options.tx,
             withPrefix('d/'),
             withValueCodec(new CrdtCodec())
         );
         this.primary = withKeyCodec(new IndexKeyCodec())(this.primaryKeyRaw);
-        this.onChange = onChange;
-        this.schema = schema;
-        this.constraints = constraints;
-        this.changeChecker = updateChecker ?? (() => {});
+        this.onChange = options.onChange;
+        this.schema = options.schema;
+        this.constraints = options.constraints;
+        this.changeChecker = createReadonlyTransitionChecker<Doc<IndexKey>>({
+            createdAt: true,
+            pk: true,
+            updatedAt: false,
+            ...options.readonly,
+        });
     }
 
     async getById(id: IndexKey): Promise<T | undefined> {

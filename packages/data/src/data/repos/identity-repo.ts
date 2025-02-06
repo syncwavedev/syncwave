@@ -7,7 +7,6 @@ import {Timestamp, zTimestamp} from '../../timestamp.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, zDoc} from '../doc-repo.js';
-import {createWriteableChecker} from '../update-checker.js';
 import {UserId, UserRepo} from './user-repo.js';
 
 export type IdentityId = Brand<Uuid, 'identity_id'>;
@@ -88,11 +87,13 @@ export class IdentityRepo {
                     },
                 },
             ],
-            changeChecker: createWriteableChecker({
-                email: true,
-                verificationCode: true,
-                authActivityLog: true,
-            }),
+            readonly: {
+                email: false,
+                verificationCode: false,
+                authActivityLog: false,
+                id: true,
+                userId: true,
+            },
         });
     }
 

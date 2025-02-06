@@ -5,7 +5,6 @@ import {Stream} from '../../stream.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
-import {createWriteableChecker} from '../update-checker.js';
 import {BoardId, BoardRepo} from './board-repo.js';
 import {UserId, UserRepo} from './user-repo.js';
 
@@ -70,9 +69,12 @@ export class MemberRepo {
                     },
                 },
             ],
-            changeChecker: createWriteableChecker({
-                active: true,
-            }),
+            readonly: {
+                active: false,
+                boardId: true,
+                id: true,
+                userId: true,
+            },
         });
     }
 

@@ -107,7 +107,7 @@ export class DataLayer {
             );
             const boards = new BoardRepo(
                 withPrefix('boards/')(tx),
-                users,
+                () => dataTx,
                 (pk, diff) => logBoardChange(dataTx, pk, diff)
             );
             const members = new MemberRepo(

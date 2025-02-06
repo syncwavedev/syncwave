@@ -71,12 +71,14 @@ export function createTestApi() {
             res: z.object({}),
             handle: async (state, {topic, value}) => {
                 await state.transact(async tx => {
+                    const userId = createUserId();
                     await tx.esWriter.append(topic, {
                         type: 'user',
                         id: createUserId(),
                         ts: getNow(),
                         diff: Crdt.from<User>({
-                            id: createUserId(),
+                            pk: [userId],
+                            id: userId,
                             createdAt: getNow(),
                             updatedAt: getNow(),
                         }).state(),

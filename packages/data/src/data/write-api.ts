@@ -1,9 +1,9 @@
 import {z} from 'zod';
 import {AuthContext} from '../data/auth-context.js';
 import {DataTx} from '../data/data-layer.js';
-import {Board, BoardId, zBoard} from '../data/repos/board-repo.js';
+import {BoardId, zBoard} from '../data/repos/board-repo.js';
 import {createMemberId, Member} from '../data/repos/member-repo.js';
-import {Task, TaskId, zTask} from '../data/repos/task-repo.js';
+import {TaskId, zTask} from '../data/repos/task-repo.js';
 import {UserId} from '../data/repos/user-repo.js';
 import {BusinessError} from '../errors.js';
 import {getNow} from '../timestamp.js';
@@ -66,7 +66,7 @@ export function createWriteApi() {
                 const counter =
                     await st.tx.boards.incrementBoardCounter(boardId);
 
-                const task: Task = {
+                return await st.tx.tasks.create({
                     id: taskId,
                     authorId: meId,
                     boardId: boardId,
@@ -75,10 +75,7 @@ export function createWriteApi() {
                     deleted: false,
                     title: title,
                     counter,
-                };
-                await st.tx.tasks.create(task);
-
-                return task;
+                });
             },
         }),
         createBoard: handler({
@@ -93,7 +90,7 @@ export function createWriteApi() {
 
                 const userId = st.ensureAuthenticated();
 
-                const board: Board = {
+                const board = await st.tx.boards.create({
                     id: req.boardId,
                     createdAt: now,
                     updatedAt: now,
@@ -101,8 +98,7 @@ export function createWriteApi() {
                     name: req.name,
                     ownerId: userId,
                     key: req.key,
-                };
-                await st.tx.boards.create(board);
+                });
                 await st.tx.members.create({
                     id: createMemberId(),
                     boardId: board.id,

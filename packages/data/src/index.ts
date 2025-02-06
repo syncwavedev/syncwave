@@ -4,7 +4,7 @@ export * from './constants.js';
 export * from './context.js';
 export * from './coordinator/coordinator.js';
 export * from './crdt/crdt.js';
-export * from './data/data-inspector.js';
+export * from './data/data-inspector-api.js';
 export * from './data/infra.js';
 export * from './data/repos/board-repo.js';
 export * from './data/repos/identity-repo.js';

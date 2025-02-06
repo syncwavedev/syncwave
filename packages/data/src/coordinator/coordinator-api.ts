@@ -1,5 +1,5 @@
 import {AuthContext, AuthContextParser} from '../data/auth-context.js';
-import {dataInspectorApi} from '../data/data-inspector.js';
+import {dataInspectorApi} from '../data/data-inspector-api.js';
 import {ChangeEvent, Config, DataLayer, Transact} from '../data/data-layer.js';
 import {EventStoreReader} from '../data/event-store.js';
 import {CryptoService, EmailService, JwtService} from '../data/infra.js';

@@ -212,6 +212,10 @@ class RpcStreamerClient {
       }
     }
   }
+
+  void close() {
+    _rpcClient.close();
+  }
 }
 
 Future<void> launchRpcStreamerServer<T>(

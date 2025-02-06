@@ -118,6 +118,10 @@ class RpcObserverClient {
 
     return completer.future;
   }
+
+  void close() {
+    _client.close();
+  }
 }
 
 Future<void> launchRpcObserverServer<T>(

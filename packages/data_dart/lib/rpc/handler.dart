@@ -61,6 +61,10 @@ class RpcHandlerClient {
     };
     return await _proxyRequest(conn, name, arg, headers);
   }
+
+  void close() async {
+    conn.close();
+  }
 }
 
 Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,

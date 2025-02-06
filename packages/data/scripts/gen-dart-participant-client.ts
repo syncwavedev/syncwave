@@ -1,5 +1,6 @@
 import {writeFile} from 'fs/promises';
 import {
+    assertNever,
     FetchingJSONSchemaStore,
     InputData,
     JSONSchemaInput,
@@ -8,6 +9,7 @@ import {
 import {zodToJsonSchema} from 'zod-to-json-schema';
 import {createParticipantApi} from '../src/index.js';
 import {logger} from '../src/logger.js';
+import {Api, Processor} from '../src/transport/rpc.js';
 
 interface Type {
     name: string;
@@ -38,45 +40,44 @@ function firstUpperCase(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-async function main() {
-    const api = createParticipantApi();
+async function genDto(api: Api<unknown>) {
     const result = await quicktypeJSONSchema(
         'dart',
         Object.entries(api).flatMap(([name, processor]) => {
             if (processor.type === 'handler') {
                 return [
                     {
-                        name: firstUpperCase(`${name}Request`),
+                        name: getRequestName(name),
                         schema: zodToJsonSchema(processor.req),
                     },
                     {
-                        name: firstUpperCase(`${name}Response`),
+                        name: getResponseName(name),
                         schema: zodToJsonSchema(processor.res),
                     },
                 ];
             } else if (processor.type === 'streamer') {
                 return [
                     {
-                        name: firstUpperCase(`${name}Request`),
+                        name: getRequestName(name),
                         schema: zodToJsonSchema(processor.req),
                     },
                     {
-                        name: firstUpperCase(`${name}Item`),
+                        name: getItemName(name),
                         schema: zodToJsonSchema(processor.item),
                     },
                 ];
             } else if (processor.type === 'observer') {
                 return [
                     {
-                        name: firstUpperCase(`${name}Request`),
+                        name: getRequestName(name),
                         schema: zodToJsonSchema(processor.req),
                     },
                     {
-                        name: firstUpperCase(`${name}Value`),
+                        name: getValueName(name),
                         schema: zodToJsonSchema(processor.value),
                     },
                     {
-                        name: firstUpperCase(`${name}Update`),
+                        name: getUpdateName(name),
                         schema: zodToJsonSchema(processor.update),
                     },
                 ];
@@ -86,10 +87,162 @@ async function main() {
         })
     );
 
+    logger.info('writing dto to ../data_dart/lib/participant/dto.dart');
+
     await writeFile(
         '../data_dart/lib/participant/dto.dart',
         result.lines.join('\n')
     );
+}
+
+function getRequestName(name: string) {
+    return firstUpperCase(`${name}Req`);
+}
+
+function getResponseName(name: string) {
+    return firstUpperCase(`${name}Res`);
+}
+
+function getItemName(name: string) {
+    return firstUpperCase(`${name}Item`);
+}
+
+function getValueName(name: string) {
+    return firstUpperCase(`${name}Value`);
+}
+
+function getUpdateName(name: string) {
+    return firstUpperCase(`${name}Update`);
+}
+
+function changeTabSize(code: string) {
+    return code
+        .split('\n')
+        .map(line => {
+            const match = /^ +/.exec(line);
+            if (match) {
+                const spaces = match[0].length;
+                return ' '.repeat(Math.floor(spaces / 2)) + line.slice(spaces);
+            } else {
+                return line;
+            }
+        })
+        .join('\n');
+}
+
+function formatDartCode(code: string) {
+    let lines = code.split('\n');
+    while (lines[0]?.trim() === '') {
+        lines = lines.slice(1);
+    }
+    while (lines[lines.length - 1]?.trim() === '') {
+        lines = lines.slice(0, -1);
+    }
+    const indent = Math.min(
+        ...lines
+            .filter(x => x.trim() !== '')
+            .map(line => {
+                const match = /^( +)/.exec(line);
+                if (match) {
+                    return match[0].length;
+                } else {
+                    return 0;
+                }
+            })
+    );
+
+    code = lines.map(line => line.slice(indent)).join('\n');
+    return code;
+}
+
+function addLinePrefix(code: string, prefix: string) {
+    return code
+        .split('\n')
+        .map(line => prefix + line)
+        .join('\n');
+}
+
+function genClientMethod(
+    name: string,
+    processor: Processor<unknown, unknown, unknown, unknown>
+) {
+    let result: string;
+    if (processor.type === 'handler') {
+        result = `
+            Future<${getResponseName(name)}> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async {
+                final json = await _rpc.handle('${name}', request.toJson(), headers);
+                return ${getResponseName(name)}.fromJson(json as Map<String, dynamic>);
+            }
+        `;
+    } else if (processor.type === 'streamer') {
+        result = `
+            Stream<${getItemName(name)}> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async* {
+                await for (final json in _rpc.stream('${name}', request.toJson(), headers)) {
+                    yield ${getItemName(name)}.fromJson(json as Map<String, dynamic>);
+                }
+            }
+        `;
+    } else if (processor.type === 'observer') {
+        result = `
+            Future<(${getValueName(name)}, Stream<${getUpdateName(name)}>)> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async {
+                final (dynamic, Stream<dynamic>) result = await _rpc.observe('${name}', request.toJson(), headers);
+
+                return (
+                    ${getValueName(name)}.fromJson(result.$1 as Map<String, dynamic>),
+                    result.$2.map((json) => ${getUpdateName(name)}.fromJson(json as Map<String, dynamic>))
+                );
+            }
+        `;
+    } else {
+        assertNever(processor);
+    }
+
+    return formatDartCode(result);
+}
+
+async function genClient(api: Api<unknown>) {
+    const code = `
+        import 'package:syncwave_data/message.dart';
+        import 'package:syncwave_data/participant/dto.dart';
+        import 'package:syncwave_data/rpc/observer.dart';
+        import 'package:syncwave_data/transport.dart';
+
+        class ParticipantClient {
+            final RpcObserverClient _rpc;
+
+            ParticipantClient({required Connection connection})
+                : _rpc = RpcObserverClient(
+                        conn: connection, getHeaders: () => MessageHeaders());
+
+        $$1
+
+            void close() {
+                _rpc.close();
+            }
+        }
+    `;
+
+    const formattedCode = formatDartCode(code);
+    const result = formattedCode.replace(
+        '$$1',
+        Object.entries(api)
+            .map(([name, processor]) => genClientMethod(name, processor))
+            .map(x => addLinePrefix(x, '    '))
+            .join('\n\n')
+    );
+
+    logger.info('writing client to ../data_dart/lib/participant/client.dart');
+
+    await writeFile(
+        '../data_dart/lib/participant/client.dart',
+        changeTabSize(result)
+    );
+}
+
+async function main() {
+    const api = createParticipantApi();
+    await genDto(api);
+    await genClient(api);
 }
 
 main().catch(error => {

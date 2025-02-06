@@ -1,69 +1,69 @@
 // To parse this JSON data, do
 //
-//     final streamPutRequest = streamPutRequestFromJson(jsonString);
-//     final streamPutResponse = streamPutResponseFromJson(jsonString);
-//     final getStreamRequest = getStreamRequestFromJson(jsonString);
+//     final streamPutReq = streamPutReqFromJson(jsonString);
+//     final streamPutRes = streamPutResFromJson(jsonString);
+//     final getStreamReq = getStreamReqFromJson(jsonString);
 //     final getStreamItem = getStreamItemFromJson(jsonString);
-//     final debugRequest = debugRequestFromJson(jsonString);
-//     final debugResponse = debugResponseFromJson(jsonString);
-//     final getMeRequest = getMeRequestFromJson(jsonString);
+//     final debugReq = debugReqFromJson(jsonString);
+//     final debugRes = debugResFromJson(jsonString);
+//     final getMeReq = getMeReqFromJson(jsonString);
 //     final getMeValue = getMeValueFromJson(jsonString);
 //     final getMeUpdate = getMeUpdateFromJson(jsonString);
-//     final sendSignInEmailRequest = sendSignInEmailRequestFromJson(jsonString);
-//     final sendSignInEmailResponse = sendSignInEmailResponseFromJson(jsonString);
-//     final createBoardRequest = createBoardRequestFromJson(jsonString);
-//     final createBoardResponse = createBoardResponseFromJson(jsonString);
-//     final verifySignInCodeRequest = verifySignInCodeRequestFromJson(jsonString);
-//     final verifySignInCodeResponse = verifySignInCodeResponseFromJson(jsonString);
-//     final getDbTreeRequest = getDbTreeRequestFromJson(jsonString);
-//     final getDbTreeResponse = getDbTreeResponseFromJson(jsonString);
-//     final getDbItemRequest = getDbItemRequestFromJson(jsonString);
-//     final getDbItemResponse = getDbItemResponseFromJson(jsonString);
-//     final truncateDbRequest = truncateDbRequestFromJson(jsonString);
-//     final truncateDbResponse = truncateDbResponseFromJson(jsonString);
-//     final deleteDbItemRequest = deleteDbItemRequestFromJson(jsonString);
-//     final deleteDbItemResponse = deleteDbItemResponseFromJson(jsonString);
-//     final getMyBoardsRequest = getMyBoardsRequestFromJson(jsonString);
+//     final sendSignInEmailReq = sendSignInEmailReqFromJson(jsonString);
+//     final sendSignInEmailRes = sendSignInEmailResFromJson(jsonString);
+//     final createBoardReq = createBoardReqFromJson(jsonString);
+//     final createBoardRes = createBoardResFromJson(jsonString);
+//     final verifySignInCodeReq = verifySignInCodeReqFromJson(jsonString);
+//     final verifySignInCodeRes = verifySignInCodeResFromJson(jsonString);
+//     final getDbTreeReq = getDbTreeReqFromJson(jsonString);
+//     final getDbTreeRes = getDbTreeResFromJson(jsonString);
+//     final getDbItemReq = getDbItemReqFromJson(jsonString);
+//     final getDbItemRes = getDbItemResFromJson(jsonString);
+//     final truncateDbReq = truncateDbReqFromJson(jsonString);
+//     final truncateDbRes = truncateDbResFromJson(jsonString);
+//     final deleteDbItemReq = deleteDbItemReqFromJson(jsonString);
+//     final deleteDbItemRes = deleteDbItemResFromJson(jsonString);
+//     final getMyBoardsReq = getMyBoardsReqFromJson(jsonString);
 //     final getMyBoardsValue = getMyBoardsValueFromJson(jsonString);
 //     final getMyBoardsUpdate = getMyBoardsUpdateFromJson(jsonString);
-//     final getObserveRequest = getObserveRequestFromJson(jsonString);
+//     final getObserveReq = getObserveReqFromJson(jsonString);
 //     final getObserveValue = getObserveValueFromJson(jsonString);
 //     final getObserveUpdate = getObserveUpdateFromJson(jsonString);
-//     final echoRequest = echoRequestFromJson(jsonString);
-//     final echoResponse = echoResponseFromJson(jsonString);
-//     final getBoardRequest = getBoardRequestFromJson(jsonString);
+//     final echoReq = echoReqFromJson(jsonString);
+//     final echoRes = echoResFromJson(jsonString);
+//     final getBoardReq = getBoardReqFromJson(jsonString);
 //     final getBoardValue = getBoardValueFromJson(jsonString);
 //     final getBoardUpdate = getBoardUpdateFromJson(jsonString);
 
 import 'dart:convert';
 
-StreamPutRequest streamPutRequestFromJson(String str) => StreamPutRequest.fromJson(json.decode(str));
+StreamPutReq streamPutReqFromJson(String str) => StreamPutReq.fromJson(json.decode(str));
 
-String streamPutRequestToJson(StreamPutRequest data) => json.encode(data.toJson());
+String streamPutReqToJson(StreamPutReq data) => json.encode(data.toJson());
 
-StreamPutResponse streamPutResponseFromJson(String str) => StreamPutResponse.fromJson(json.decode(str));
+StreamPutRes streamPutResFromJson(String str) => StreamPutRes.fromJson(json.decode(str));
 
-String streamPutResponseToJson(StreamPutResponse data) => json.encode(data.toJson());
+String streamPutResToJson(StreamPutRes data) => json.encode(data.toJson());
 
-GetStreamRequest getStreamRequestFromJson(String str) => GetStreamRequest.fromJson(json.decode(str));
+GetStreamReq getStreamReqFromJson(String str) => GetStreamReq.fromJson(json.decode(str));
 
-String getStreamRequestToJson(GetStreamRequest data) => json.encode(data.toJson());
+String getStreamReqToJson(GetStreamReq data) => json.encode(data.toJson());
 
 GetStreamItem getStreamItemFromJson(String str) => GetStreamItem.fromJson(json.decode(str));
 
 String getStreamItemToJson(GetStreamItem data) => json.encode(data.toJson());
 
-DebugRequest debugRequestFromJson(String str) => DebugRequest.fromJson(json.decode(str));
+DebugReq debugReqFromJson(String str) => DebugReq.fromJson(json.decode(str));
 
-String debugRequestToJson(DebugRequest data) => json.encode(data.toJson());
+String debugReqToJson(DebugReq data) => json.encode(data.toJson());
 
-DebugResponse debugResponseFromJson(String str) => DebugResponse.fromJson(json.decode(str));
+DebugRes debugResFromJson(String str) => DebugRes.fromJson(json.decode(str));
 
-String debugResponseToJson(DebugResponse data) => json.encode(data.toJson());
+String debugResToJson(DebugRes data) => json.encode(data.toJson());
 
-GetMeRequest getMeRequestFromJson(String str) => GetMeRequest.fromJson(json.decode(str));
+GetMeReq getMeReqFromJson(String str) => GetMeReq.fromJson(json.decode(str));
 
-String getMeRequestToJson(GetMeRequest data) => json.encode(data.toJson());
+String getMeReqToJson(GetMeReq data) => json.encode(data.toJson());
 
 GetMeValue getMeValueFromJson(String str) => GetMeValue.fromJson(json.decode(str));
 
@@ -73,65 +73,65 @@ GetMeUpdate getMeUpdateFromJson(String str) => GetMeUpdate.fromJson(json.decode(
 
 String getMeUpdateToJson(GetMeUpdate data) => json.encode(data.toJson());
 
-SendSignInEmailRequest sendSignInEmailRequestFromJson(String str) => SendSignInEmailRequest.fromJson(json.decode(str));
+SendSignInEmailReq sendSignInEmailReqFromJson(String str) => SendSignInEmailReq.fromJson(json.decode(str));
 
-String sendSignInEmailRequestToJson(SendSignInEmailRequest data) => json.encode(data.toJson());
+String sendSignInEmailReqToJson(SendSignInEmailReq data) => json.encode(data.toJson());
 
-SendSignInEmailResponse sendSignInEmailResponseFromJson(String str) => SendSignInEmailResponse.fromJson(json.decode(str));
+SendSignInEmailRes sendSignInEmailResFromJson(String str) => SendSignInEmailRes.fromJson(json.decode(str));
 
-String sendSignInEmailResponseToJson(SendSignInEmailResponse data) => json.encode(data.toJson());
+String sendSignInEmailResToJson(SendSignInEmailRes data) => json.encode(data.toJson());
 
-CreateBoardRequest createBoardRequestFromJson(String str) => CreateBoardRequest.fromJson(json.decode(str));
+CreateBoardReq createBoardReqFromJson(String str) => CreateBoardReq.fromJson(json.decode(str));
 
-String createBoardRequestToJson(CreateBoardRequest data) => json.encode(data.toJson());
+String createBoardReqToJson(CreateBoardReq data) => json.encode(data.toJson());
 
-CreateBoardResponse createBoardResponseFromJson(String str) => CreateBoardResponse.fromJson(json.decode(str));
+CreateBoardRes createBoardResFromJson(String str) => CreateBoardRes.fromJson(json.decode(str));
 
-String createBoardResponseToJson(CreateBoardResponse data) => json.encode(data.toJson());
+String createBoardResToJson(CreateBoardRes data) => json.encode(data.toJson());
 
-VerifySignInCodeRequest verifySignInCodeRequestFromJson(String str) => VerifySignInCodeRequest.fromJson(json.decode(str));
+VerifySignInCodeReq verifySignInCodeReqFromJson(String str) => VerifySignInCodeReq.fromJson(json.decode(str));
 
-String verifySignInCodeRequestToJson(VerifySignInCodeRequest data) => json.encode(data.toJson());
+String verifySignInCodeReqToJson(VerifySignInCodeReq data) => json.encode(data.toJson());
 
-VerifySignInCodeResponse verifySignInCodeResponseFromJson(String str) => VerifySignInCodeResponse.fromJson(json.decode(str));
+VerifySignInCodeRes verifySignInCodeResFromJson(String str) => VerifySignInCodeRes.fromJson(json.decode(str));
 
-String verifySignInCodeResponseToJson(VerifySignInCodeResponse data) => json.encode(data.toJson());
+String verifySignInCodeResToJson(VerifySignInCodeRes data) => json.encode(data.toJson());
 
-GetDbTreeRequest getDbTreeRequestFromJson(String str) => GetDbTreeRequest.fromJson(json.decode(str));
+GetDbTreeReq getDbTreeReqFromJson(String str) => GetDbTreeReq.fromJson(json.decode(str));
 
-String getDbTreeRequestToJson(GetDbTreeRequest data) => json.encode(data.toJson());
+String getDbTreeReqToJson(GetDbTreeReq data) => json.encode(data.toJson());
 
-GetDbTreeResponse getDbTreeResponseFromJson(String str) => GetDbTreeResponse.fromJson(json.decode(str));
+GetDbTreeRes getDbTreeResFromJson(String str) => GetDbTreeRes.fromJson(json.decode(str));
 
-String getDbTreeResponseToJson(GetDbTreeResponse data) => json.encode(data.toJson());
+String getDbTreeResToJson(GetDbTreeRes data) => json.encode(data.toJson());
 
-GetDbItemRequest getDbItemRequestFromJson(String str) => GetDbItemRequest.fromJson(json.decode(str));
+GetDbItemReq getDbItemReqFromJson(String str) => GetDbItemReq.fromJson(json.decode(str));
 
-String getDbItemRequestToJson(GetDbItemRequest data) => json.encode(data.toJson());
+String getDbItemReqToJson(GetDbItemReq data) => json.encode(data.toJson());
 
-GetDbItemResponse getDbItemResponseFromJson(String str) => GetDbItemResponse.fromJson(json.decode(str));
+GetDbItemRes getDbItemResFromJson(String str) => GetDbItemRes.fromJson(json.decode(str));
 
-String getDbItemResponseToJson(GetDbItemResponse data) => json.encode(data.toJson());
+String getDbItemResToJson(GetDbItemRes data) => json.encode(data.toJson());
 
-TruncateDbRequest truncateDbRequestFromJson(String str) => TruncateDbRequest.fromJson(json.decode(str));
+TruncateDbReq truncateDbReqFromJson(String str) => TruncateDbReq.fromJson(json.decode(str));
 
-String truncateDbRequestToJson(TruncateDbRequest data) => json.encode(data.toJson());
+String truncateDbReqToJson(TruncateDbReq data) => json.encode(data.toJson());
 
-dynamic truncateDbResponseFromJson(String str) => json.decode(str);
+TruncateDbRes truncateDbResFromJson(String str) => TruncateDbRes.fromJson(json.decode(str));
 
-String truncateDbResponseToJson(dynamic data) => json.encode(data);
+String truncateDbResToJson(TruncateDbRes data) => json.encode(data.toJson());
 
-DeleteDbItemRequest deleteDbItemRequestFromJson(String str) => DeleteDbItemRequest.fromJson(json.decode(str));
+DeleteDbItemReq deleteDbItemReqFromJson(String str) => DeleteDbItemReq.fromJson(json.decode(str));
 
-String deleteDbItemRequestToJson(DeleteDbItemRequest data) => json.encode(data.toJson());
+String deleteDbItemReqToJson(DeleteDbItemReq data) => json.encode(data.toJson());
 
-dynamic deleteDbItemResponseFromJson(String str) => json.decode(str);
+DeleteDbItemRes deleteDbItemResFromJson(String str) => DeleteDbItemRes.fromJson(json.decode(str));
 
-String deleteDbItemResponseToJson(dynamic data) => json.encode(data);
+String deleteDbItemResToJson(DeleteDbItemRes data) => json.encode(data.toJson());
 
-GetMyBoardsRequest getMyBoardsRequestFromJson(String str) => GetMyBoardsRequest.fromJson(json.decode(str));
+GetMyBoardsReq getMyBoardsReqFromJson(String str) => GetMyBoardsReq.fromJson(json.decode(str));
 
-String getMyBoardsRequestToJson(GetMyBoardsRequest data) => json.encode(data.toJson());
+String getMyBoardsReqToJson(GetMyBoardsReq data) => json.encode(data.toJson());
 
 List<GetMyBoardsValue> getMyBoardsValueFromJson(String str) => List<GetMyBoardsValue>.from(json.decode(str).map((x) => GetMyBoardsValue.fromJson(x)));
 
@@ -141,9 +141,9 @@ List<GetMyBoardsUpdate> getMyBoardsUpdateFromJson(String str) => List<GetMyBoard
 
 String getMyBoardsUpdateToJson(List<GetMyBoardsUpdate> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
-GetObserveRequest getObserveRequestFromJson(String str) => GetObserveRequest.fromJson(json.decode(str));
+GetObserveReq getObserveReqFromJson(String str) => GetObserveReq.fromJson(json.decode(str));
 
-String getObserveRequestToJson(GetObserveRequest data) => json.encode(data.toJson());
+String getObserveReqToJson(GetObserveReq data) => json.encode(data.toJson());
 
 GetObserveValue getObserveValueFromJson(String str) => GetObserveValue.fromJson(json.decode(str));
 
@@ -153,17 +153,17 @@ GetObserveUpdate getObserveUpdateFromJson(String str) => GetObserveUpdate.fromJs
 
 String getObserveUpdateToJson(GetObserveUpdate data) => json.encode(data.toJson());
 
-EchoRequest echoRequestFromJson(String str) => EchoRequest.fromJson(json.decode(str));
+EchoReq echoReqFromJson(String str) => EchoReq.fromJson(json.decode(str));
 
-String echoRequestToJson(EchoRequest data) => json.encode(data.toJson());
+String echoReqToJson(EchoReq data) => json.encode(data.toJson());
 
-EchoResponse echoResponseFromJson(String str) => EchoResponse.fromJson(json.decode(str));
+EchoRes echoResFromJson(String str) => EchoRes.fromJson(json.decode(str));
 
-String echoResponseToJson(EchoResponse data) => json.encode(data.toJson());
+String echoResToJson(EchoRes data) => json.encode(data.toJson());
 
-GetBoardRequest getBoardRequestFromJson(String str) => GetBoardRequest.fromJson(json.decode(str));
+GetBoardReq getBoardReqFromJson(String str) => GetBoardReq.fromJson(json.decode(str));
 
-String getBoardRequestToJson(GetBoardRequest data) => json.encode(data.toJson());
+String getBoardReqToJson(GetBoardReq data) => json.encode(data.toJson());
 
 GetBoardValue getBoardValueFromJson(String str) => GetBoardValue.fromJson(json.decode(str));
 
@@ -173,16 +173,16 @@ GetBoardUpdate getBoardUpdateFromJson(String str) => GetBoardUpdate.fromJson(jso
 
 String getBoardUpdateToJson(GetBoardUpdate data) => json.encode(data.toJson());
 
-class StreamPutRequest {
+class StreamPutReq {
     String topic;
     String value;
 
-    StreamPutRequest({
+    StreamPutReq({
         required this.topic,
         required this.value,
     });
 
-    factory StreamPutRequest.fromJson(Map<String, dynamic> json) => StreamPutRequest(
+    factory StreamPutReq.fromJson(Map<String, dynamic> json) => StreamPutReq(
         topic: json["topic"],
         value: json["value"],
     );
@@ -193,24 +193,24 @@ class StreamPutRequest {
     };
 }
 
-class StreamPutResponse {
-    StreamPutResponse();
+class StreamPutRes {
+    StreamPutRes();
 
-    factory StreamPutResponse.fromJson(Map<String, dynamic> json) => StreamPutResponse(
+    factory StreamPutRes.fromJson(Map<String, dynamic> json) => StreamPutRes(
     );
 
     Map<String, dynamic> toJson() => {
     };
 }
 
-class GetStreamRequest {
+class GetStreamReq {
     String topic;
 
-    GetStreamRequest({
+    GetStreamReq({
         required this.topic,
     });
 
-    factory GetStreamRequest.fromJson(Map<String, dynamic> json) => GetStreamRequest(
+    factory GetStreamReq.fromJson(Map<String, dynamic> json) => GetStreamReq(
         topic: json["topic"],
     );
 
@@ -239,30 +239,30 @@ class GetStreamItem {
     };
 }
 
-class DebugRequest {
-    DebugRequest();
+class DebugReq {
+    DebugReq();
 
-    factory DebugRequest.fromJson(Map<String, dynamic> json) => DebugRequest(
+    factory DebugReq.fromJson(Map<String, dynamic> json) => DebugReq(
     );
 
     Map<String, dynamic> toJson() => {
     };
 }
 
-class DebugResponse {
-    DebugResponse();
+class DebugRes {
+    DebugRes();
 
-    factory DebugResponse.fromJson(Map<String, dynamic> json) => DebugResponse(
+    factory DebugRes.fromJson(Map<String, dynamic> json) => DebugRes(
     );
 
     Map<String, dynamic> toJson() => {
     };
 }
 
-class GetMeRequest {
-    GetMeRequest();
+class GetMeReq {
+    GetMeReq();
 
-    factory GetMeRequest.fromJson(Map<String, dynamic> json) => GetMeRequest(
+    factory GetMeReq.fromJson(Map<String, dynamic> json) => GetMeReq(
     );
 
     Map<String, dynamic> toJson() => {
@@ -485,14 +485,14 @@ class GetMeUpdateUser {
     };
 }
 
-class SendSignInEmailRequest {
+class SendSignInEmailReq {
     String email;
 
-    SendSignInEmailRequest({
+    SendSignInEmailReq({
         required this.email,
     });
 
-    factory SendSignInEmailRequest.fromJson(Map<String, dynamic> json) => SendSignInEmailRequest(
+    factory SendSignInEmailReq.fromJson(Map<String, dynamic> json) => SendSignInEmailReq(
         email: json["email"],
     );
 
@@ -501,44 +501,44 @@ class SendSignInEmailRequest {
     };
 }
 
-class SendSignInEmailResponse {
-    SendSignInEmailResponseType type;
+class SendSignInEmailRes {
+    SendSignInEmailResType type;
 
-    SendSignInEmailResponse({
+    SendSignInEmailRes({
         required this.type,
     });
 
-    factory SendSignInEmailResponse.fromJson(Map<String, dynamic> json) => SendSignInEmailResponse(
-        type: sendSignInEmailResponseTypeValues.map[json["type"]]!,
+    factory SendSignInEmailRes.fromJson(Map<String, dynamic> json) => SendSignInEmailRes(
+        type: sendSignInEmailResTypeValues.map[json["type"]]!,
     );
 
     Map<String, dynamic> toJson() => {
-        "type": sendSignInEmailResponseTypeValues.reverse[type],
+        "type": sendSignInEmailResTypeValues.reverse[type],
     };
 }
 
-enum SendSignInEmailResponseType {
+enum SendSignInEmailResType {
     COOLDOWN,
     SUCCESS
 }
 
-final sendSignInEmailResponseTypeValues = EnumValues({
-    "cooldown": SendSignInEmailResponseType.COOLDOWN,
-    "success": SendSignInEmailResponseType.SUCCESS
+final sendSignInEmailResTypeValues = EnumValues({
+    "cooldown": SendSignInEmailResType.COOLDOWN,
+    "success": SendSignInEmailResType.SUCCESS
 });
 
-class CreateBoardRequest {
+class CreateBoardReq {
     dynamic boardId;
     String key;
     String name;
 
-    CreateBoardRequest({
+    CreateBoardReq({
         required this.boardId,
         required this.key,
         required this.name,
     });
 
-    factory CreateBoardRequest.fromJson(Map<String, dynamic> json) => CreateBoardRequest(
+    factory CreateBoardReq.fromJson(Map<String, dynamic> json) => CreateBoardReq(
         boardId: json["boardId"],
         key: json["key"],
         name: json["name"],
@@ -551,7 +551,7 @@ class CreateBoardRequest {
     };
 }
 
-class CreateBoardResponse {
+class CreateBoardRes {
     dynamic createdAt;
     bool deleted;
     dynamic id;
@@ -560,7 +560,7 @@ class CreateBoardResponse {
     dynamic ownerId;
     dynamic updatedAt;
 
-    CreateBoardResponse({
+    CreateBoardRes({
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -570,7 +570,7 @@ class CreateBoardResponse {
         required this.updatedAt,
     });
 
-    factory CreateBoardResponse.fromJson(Map<String, dynamic> json) => CreateBoardResponse(
+    factory CreateBoardRes.fromJson(Map<String, dynamic> json) => CreateBoardRes(
         createdAt: json["createdAt"],
         deleted: json["deleted"],
         id: json["id"],
@@ -591,16 +591,16 @@ class CreateBoardResponse {
     };
 }
 
-class VerifySignInCodeRequest {
+class VerifySignInCodeReq {
     String code;
     String email;
 
-    VerifySignInCodeRequest({
+    VerifySignInCodeReq({
         required this.code,
         required this.email,
     });
 
-    factory VerifySignInCodeRequest.fromJson(Map<String, dynamic> json) => VerifySignInCodeRequest(
+    factory VerifySignInCodeReq.fromJson(Map<String, dynamic> json) => VerifySignInCodeReq(
         code: json["code"],
         email: json["email"],
     );
@@ -611,65 +611,65 @@ class VerifySignInCodeRequest {
     };
 }
 
-class VerifySignInCodeResponse {
+class VerifySignInCodeRes {
     String? token;
-    VerifySignInCodeResponseType type;
+    VerifySignInCodeResType type;
 
-    VerifySignInCodeResponse({
+    VerifySignInCodeRes({
         this.token,
         required this.type,
     });
 
-    factory VerifySignInCodeResponse.fromJson(Map<String, dynamic> json) => VerifySignInCodeResponse(
+    factory VerifySignInCodeRes.fromJson(Map<String, dynamic> json) => VerifySignInCodeRes(
         token: json["token"],
-        type: verifySignInCodeResponseTypeValues.map[json["type"]]!,
+        type: verifySignInCodeResTypeValues.map[json["type"]]!,
     );
 
     Map<String, dynamic> toJson() => {
         "token": token,
-        "type": verifySignInCodeResponseTypeValues.reverse[type],
+        "type": verifySignInCodeResTypeValues.reverse[type],
     };
 }
 
-enum VerifySignInCodeResponseType {
+enum VerifySignInCodeResType {
     CODE_EXPIRED,
     COOLDOWN,
     INVALID_CODE,
     SUCCESS
 }
 
-final verifySignInCodeResponseTypeValues = EnumValues({
-    "code_expired": VerifySignInCodeResponseType.CODE_EXPIRED,
-    "cooldown": VerifySignInCodeResponseType.COOLDOWN,
-    "invalid_code": VerifySignInCodeResponseType.INVALID_CODE,
-    "success": VerifySignInCodeResponseType.SUCCESS
+final verifySignInCodeResTypeValues = EnumValues({
+    "code_expired": VerifySignInCodeResType.CODE_EXPIRED,
+    "cooldown": VerifySignInCodeResType.COOLDOWN,
+    "invalid_code": VerifySignInCodeResType.INVALID_CODE,
+    "success": VerifySignInCodeResType.SUCCESS
 });
 
-class GetDbTreeRequest {
-    GetDbTreeRequest();
+class GetDbTreeReq {
+    GetDbTreeReq();
 
-    factory GetDbTreeRequest.fromJson(Map<String, dynamic> json) => GetDbTreeRequest(
+    factory GetDbTreeReq.fromJson(Map<String, dynamic> json) => GetDbTreeReq(
     );
 
     Map<String, dynamic> toJson() => {
     };
 }
 
-class GetDbTreeResponse {
-    List<GetDbTreeRespons> childrenPreview;
+class GetDbTreeRes {
+    List<GetDbTreeRe> childrenPreview;
     dynamic key;
     String name;
     ChildrenPreviewType type;
 
-    GetDbTreeResponse({
+    GetDbTreeRes({
         required this.childrenPreview,
         required this.key,
         required this.name,
         required this.type,
     });
 
-    factory GetDbTreeResponse.fromJson(Map<String, dynamic> json) => GetDbTreeResponse(
-        childrenPreview: List<GetDbTreeRespons>.from(json["childrenPreview"].map((x) => GetDbTreeRespons.fromJson(x))),
+    factory GetDbTreeRes.fromJson(Map<String, dynamic> json) => GetDbTreeRes(
+        childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
         key: json["key"],
         name: json["name"],
         type: childrenPreviewTypeValues.map[json["type"]]!,
@@ -683,21 +683,21 @@ class GetDbTreeResponse {
     };
 }
 
-class GetDbTreeRespons {
-    List<GetDbTreeRespons> childrenPreview;
+class GetDbTreeRe {
+    List<GetDbTreeRe> childrenPreview;
     dynamic key;
     String name;
     ChildrenPreviewType type;
 
-    GetDbTreeRespons({
+    GetDbTreeRe({
         required this.childrenPreview,
         required this.key,
         required this.name,
         required this.type,
     });
 
-    factory GetDbTreeRespons.fromJson(Map<String, dynamic> json) => GetDbTreeRespons(
-        childrenPreview: List<GetDbTreeRespons>.from(json["childrenPreview"].map((x) => GetDbTreeRespons.fromJson(x))),
+    factory GetDbTreeRe.fromJson(Map<String, dynamic> json) => GetDbTreeRe(
+        childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
         key: json["key"],
         name: json["name"],
         type: childrenPreviewTypeValues.map[json["type"]]!,
@@ -723,14 +723,14 @@ final childrenPreviewTypeValues = EnumValues({
     "repo": ChildrenPreviewType.REPO
 });
 
-class GetDbItemRequest {
+class GetDbItemReq {
     List<dynamic> path;
 
-    GetDbItemRequest({
+    GetDbItemReq({
         required this.path,
     });
 
-    factory GetDbItemRequest.fromJson(Map<String, dynamic> json) => GetDbItemRequest(
+    factory GetDbItemReq.fromJson(Map<String, dynamic> json) => GetDbItemReq(
         path: List<dynamic>.from(json["path"].map((x) => x)),
     );
 
@@ -739,16 +739,16 @@ class GetDbItemRequest {
     };
 }
 
-class GetDbItemResponse {
+class GetDbItemRes {
     ChildrenPreviewType type;
     dynamic snapshot;
 
-    GetDbItemResponse({
+    GetDbItemRes({
         required this.type,
         this.snapshot,
     });
 
-    factory GetDbItemResponse.fromJson(Map<String, dynamic> json) => GetDbItemResponse(
+    factory GetDbItemRes.fromJson(Map<String, dynamic> json) => GetDbItemRes(
         type: childrenPreviewTypeValues.map[json["type"]]!,
         snapshot: json["snapshot"],
     );
@@ -759,24 +759,34 @@ class GetDbItemResponse {
     };
 }
 
-class TruncateDbRequest {
-    TruncateDbRequest();
+class TruncateDbReq {
+    TruncateDbReq();
 
-    factory TruncateDbRequest.fromJson(Map<String, dynamic> json) => TruncateDbRequest(
+    factory TruncateDbReq.fromJson(Map<String, dynamic> json) => TruncateDbReq(
     );
 
     Map<String, dynamic> toJson() => {
     };
 }
 
-class DeleteDbItemRequest {
+class TruncateDbRes {
+    TruncateDbRes();
+
+    factory TruncateDbRes.fromJson(Map<String, dynamic> json) => TruncateDbRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class DeleteDbItemReq {
     List<dynamic> path;
 
-    DeleteDbItemRequest({
+    DeleteDbItemReq({
         required this.path,
     });
 
-    factory DeleteDbItemRequest.fromJson(Map<String, dynamic> json) => DeleteDbItemRequest(
+    factory DeleteDbItemReq.fromJson(Map<String, dynamic> json) => DeleteDbItemReq(
         path: List<dynamic>.from(json["path"].map((x) => x)),
     );
 
@@ -785,10 +795,20 @@ class DeleteDbItemRequest {
     };
 }
 
-class GetMyBoardsRequest {
-    GetMyBoardsRequest();
+class DeleteDbItemRes {
+    DeleteDbItemRes();
 
-    factory GetMyBoardsRequest.fromJson(Map<String, dynamic> json) => GetMyBoardsRequest(
+    factory DeleteDbItemRes.fromJson(Map<String, dynamic> json) => DeleteDbItemRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class GetMyBoardsReq {
+    GetMyBoardsReq();
+
+    factory GetMyBoardsReq.fromJson(Map<String, dynamic> json) => GetMyBoardsReq(
     );
 
     Map<String, dynamic> toJson() => {
@@ -875,14 +895,14 @@ class GetMyBoardsUpdate {
     };
 }
 
-class GetObserveRequest {
+class GetObserveReq {
     String topic;
 
-    GetObserveRequest({
+    GetObserveReq({
         required this.topic,
     });
 
-    factory GetObserveRequest.fromJson(Map<String, dynamic> json) => GetObserveRequest(
+    factory GetObserveReq.fromJson(Map<String, dynamic> json) => GetObserveReq(
         topic: json["topic"],
     );
 
@@ -931,14 +951,14 @@ class GetObserveUpdate {
     };
 }
 
-class EchoRequest {
+class EchoReq {
     String msg;
 
-    EchoRequest({
+    EchoReq({
         required this.msg,
     });
 
-    factory EchoRequest.fromJson(Map<String, dynamic> json) => EchoRequest(
+    factory EchoReq.fromJson(Map<String, dynamic> json) => EchoReq(
         msg: json["msg"],
     );
 
@@ -947,14 +967,14 @@ class EchoRequest {
     };
 }
 
-class EchoResponse {
+class EchoRes {
     String msg;
 
-    EchoResponse({
+    EchoRes({
         required this.msg,
     });
 
-    factory EchoResponse.fromJson(Map<String, dynamic> json) => EchoResponse(
+    factory EchoRes.fromJson(Map<String, dynamic> json) => EchoRes(
         msg: json["msg"],
     );
 
@@ -963,14 +983,14 @@ class EchoResponse {
     };
 }
 
-class GetBoardRequest {
+class GetBoardReq {
     String key;
 
-    GetBoardRequest({
+    GetBoardReq({
         required this.key,
     });
 
-    factory GetBoardRequest.fromJson(Map<String, dynamic> json) => GetBoardRequest(
+    factory GetBoardReq.fromJson(Map<String, dynamic> json) => GetBoardReq(
         key: json["key"],
     );
 

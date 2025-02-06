@@ -85,7 +85,7 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
     }),
     truncateDb: handler({
         req: z.object({}),
-        res: z.void(),
+        res: z.object({}),
         handle: async ({rootTx}, _) => {
             const keys = await toStream(rootTx.query({gte: new Uint8Array()}))
                 .map(node => node.key)
@@ -93,11 +93,13 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
             for (const key of keys) {
                 await rootTx.delete(key);
             }
+
+            return {};
         },
     }),
     deleteDbItem: handler({
         req: z.object({path: z.array(zUint8Array())}),
-        res: z.void(),
+        res: z.object({}),
         handle: async ({dataNode}, {path}) => {
             let current: DataNode = new AggregateDataNode({root: dataNode});
             for (const key of path) {
@@ -105,13 +107,15 @@ export const dataInspectorApi = createApi<DataInspectorApiState>()({
             }
 
             await current.delete();
+
+            return {};
         },
     }),
     getDbItem: handler({
         req: z.object({path: z.array(zUint8Array())}),
         res: z.discriminatedUnion('type', [
             z.object({type: z.literal('aggregate')}),
-            z.object({type: z.literal('doc'), snapshot: z.any()}),
+            z.object({type: z.literal('doc'), snapshot: z.unknown()}),
             z.object({type: z.literal('repo')}),
         ]),
         handle: async ({dataNode}, {path}) => {

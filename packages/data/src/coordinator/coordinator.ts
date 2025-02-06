@@ -3,7 +3,11 @@ import {MsgpackCodec} from '../codec.js';
 import {AuthContextParser} from '../data/auth-context.js';
 import {DataLayer} from '../data/data-layer.js';
 import {HubClient, HubServer} from '../data/hub.js';
-import {CryptoService, EmailService, JwtService} from '../data/infra.js';
+import {
+    CryptoService,
+    EmailService,
+    JwtService,
+} from '../data/infrastructure.js';
 import {Uint8KVStore} from '../kv/kv-store.js';
 import {logger} from '../logger.js';
 import {

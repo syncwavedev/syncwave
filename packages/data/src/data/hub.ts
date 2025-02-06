@@ -12,7 +12,7 @@ import {
     RpcServer,
 } from '../transport/rpc.js';
 import {TransportClient, TransportServer} from '../transport/transport.js';
-import {Observer, Subject} from '../utils.js';
+import {Observer, pipe, Subject} from '../utils.js';
 
 export class HubClient<T> {
     private readonly server: HubServerRpc<T>;
@@ -116,52 +116,52 @@ interface HubServerRpcState<T> {
 }
 
 function createHubServerApi<T>(zMessage: ZodType<T>) {
-    const api1 = createApi<HubServerRpcState<T>>()({
-        publish: handler({
-            req: z.object({
-                topic: z.string(),
-                message: zMessage,
+    return pipe(
+        createApi<HubServerRpcState<T>>()({
+            publish: handler({
+                req: z.object({
+                    topic: z.string(),
+                    message: zMessage,
+                }),
+                res: z.void(),
+                handle: async (state, {topic, message}) => {
+                    await state.subjects.next(topic, message!);
+                },
             }),
-            res: z.void(),
-            handle: async (state, {topic, message}) => {
-                await state.subjects.next(topic, message!);
-            },
+            throw: handler({
+                req: z.object({topic: z.string(), error: z.string()}),
+                res: z.void(),
+                handle: async (state, {topic, error}) => {
+                    await state.subjects.throw(
+                        topic,
+                        new Error('EventHubServerApi.throw', {cause: error})
+                    );
+                },
+            }),
+            subscribe: observer({
+                req: z.object({topic: z.string()}),
+                value: z.undefined(),
+                update: zMessage,
+                async observe({subjects}, {topic}) {
+                    const message$ = subjects.value$(topic).toCursor();
+                    return [undefined, message$];
+                },
+            }),
         }),
-        throw: handler({
-            req: z.object({topic: z.string(), error: z.string()}),
-            res: z.void(),
-            handle: async (state, {topic, error}) => {
-                await state.subjects.throw(
-                    topic,
-                    new Error('EventHubServerApi.throw', {cause: error})
-                );
-            },
-        }),
-        subscribe: observer({
-            req: z.object({topic: z.string()}),
-            value: z.undefined(),
-            update: zMessage,
-            async observe({subjects}, {topic}) {
-                const message$ = subjects.value$(topic).toCursor();
-                return [undefined, message$];
-            },
-        }),
-    });
+        api =>
+            applyMiddleware(
+                api,
+                async (next, state: HubServerRpcState<T>, headers) => {
+                    if (headers.auth !== state.authSecret) {
+                        throw new Error(
+                            `HubServer: authentication failed: ${state.authSecret} !== ${headers.auth}`
+                        );
+                    }
 
-    const api2 = applyMiddleware(
-        api1,
-        async (next, state: HubServerRpcState<T>, headers) => {
-            if (headers.auth !== state.authSecret) {
-                throw new Error(
-                    `HubServer: authentication failed: ${state.authSecret} !== ${headers.auth}`
-                );
-            }
-
-            await next(state);
-        }
+                    await next(state);
+                }
+            )
     );
-
-    return api2;
 }
 
 type HubServerRpc<T> = InferRpcClient<ReturnType<typeof createHubServerApi<T>>>;

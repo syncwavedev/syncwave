@@ -1,6 +1,10 @@
 import {z} from 'zod';
 import {DataEffectScheduler, DataTx} from '../data/data-layer.js';
-import {CryptoService, EmailService, JwtService} from '../data/infra.js';
+import {
+    CryptoService,
+    EmailService,
+    JwtService,
+} from '../data/infrastructure.js';
 import {
     createIdentityId,
     Identity,

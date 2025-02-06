@@ -8,74 +8,68 @@ import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {BoardId, BoardRepo} from './board-repo.js';
 import {UserId, UserRepo} from './user-repo.js';
 
-export type TaskId = Brand<Uuid, 'task_id'>;
+export type ColumnId = Brand<Uuid, 'column_id'>;
 
-export function createTaskId(): TaskId {
-    return createUuid() as TaskId;
+export function createColumnId(): ColumnId {
+    return createUuid() as ColumnId;
 }
 
-export interface Task extends Doc<[TaskId]> {
-    readonly id: TaskId;
+export interface Column extends Doc<[ColumnId]> {
+    readonly id: ColumnId;
     readonly authorId: UserId;
     readonly boardId: BoardId;
-    readonly counter: number;
     title: string;
     deleted: boolean;
 }
 
-const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
+const BOARD_ID = 'boardId';
 
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
-export function zTask() {
-    return zDoc(z.tuple([zUuid<TaskId>()])).extend({
-        id: zUuid<TaskId>(),
+export function zColumn() {
+    return zDoc(z.tuple([zUuid<ColumnId>()])).extend({
+        id: zUuid<ColumnId>(),
         authorId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
-        counter: z.number(),
         title: z.string(),
         deleted: z.boolean(),
     });
 }
 
-export class TaskRepo {
-    public readonly rawRepo: DocRepo<Task>;
+export class ColumnRepo {
+    public readonly rawRepo: DocRepo<Column>;
 
     constructor(
         tx: Uint8Transaction,
         boardRepo: BoardRepo,
         userRepo: UserRepo,
-        onChange: OnDocChange<Task>
+        onChange: OnDocChange<Column>
     ) {
-        this.rawRepo = new DocRepo<Task>({
+        this.rawRepo = new DocRepo<Column>({
             tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
-                [BOARD_ID_COUNTER_INDEX]: {
-                    key: x => [x.boardId, x.counter],
-                    unique: true,
-                },
+                [BOARD_ID]: x => [x.boardId],
             },
-            schema: zTask(),
+            schema: zColumn(),
             constraints: [
                 {
-                    name: 'task.authorId fk',
-                    verify: async task => {
-                        const user = await userRepo.getById(task.authorId);
+                    name: 'column.authorId fk',
+                    verify: async column => {
+                        const user = await userRepo.getById(column.authorId);
                         return user !== undefined;
                     },
                 },
                 {
-                    name: 'task.boardId fk',
-                    verify: async task => {
-                        const board = await boardRepo.getById(task.boardId);
+                    name: 'column.boardId fk',
+                    verify: async column => {
+                        const board = await boardRepo.getById(column.boardId);
                         return board !== undefined;
                     },
                 },
             ],
             readonly: {
                 boardId: true,
-                counter: true,
                 id: true,
                 deleted: false,
                 title: false,
@@ -84,23 +78,23 @@ export class TaskRepo {
         });
     }
 
-    getById(id: TaskId): Promise<Task | undefined> {
+    getById(id: ColumnId): Promise<Column | undefined> {
         return this.rawRepo.getById([id]);
     }
 
-    getByBoardId(boardId: BoardId): Stream<Task> {
-        return this.rawRepo.get(BOARD_ID_COUNTER_INDEX, [boardId]);
+    getByBoardId(boardId: BoardId): Stream<Column> {
+        return this.rawRepo.get(BOARD_ID, [boardId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Column>): Promise<void> {
         return await this.rawRepo.apply([id], diff);
     }
 
-    create(user: Omit<Task, 'pk'>): Promise<Task> {
+    create(user: Omit<Column, 'pk'>): Promise<Column> {
         return this.rawRepo.create({pk: [user.id], ...user});
     }
 
-    update(id: TaskId, recipe: Recipe<Task>): Promise<Task> {
+    update(id: ColumnId, recipe: Recipe<Column>): Promise<Column> {
         return this.rawRepo.update([id], recipe);
     }
 }

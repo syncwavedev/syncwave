@@ -2,7 +2,11 @@ import {AuthContext, AuthContextParser} from '../data/auth-context.js';
 import {dataInspectorApi} from '../data/data-inspector-api.js';
 import {ChangeEvent, Config, DataLayer, Transact} from '../data/data-layer.js';
 import {EventStoreReader} from '../data/event-store.js';
-import {CryptoService, EmailService, JwtService} from '../data/infra.js';
+import {
+    CryptoService,
+    EmailService,
+    JwtService,
+} from '../data/infrastructure.js';
 import {createReadApi, ReadApiState} from '../data/read-api.js';
 import {createWriteApi, WriteApiState} from '../data/write-api.js';
 import {BusinessError} from '../errors.js';

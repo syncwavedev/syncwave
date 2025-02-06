@@ -84,9 +84,10 @@ export class DocRepo<T extends Doc<IndexKey>> {
     private readonly primaryKeyRaw: Transaction<Uint8Array, Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
+    // todo: add tests
     private readonly constraints: readonly Constraint<T>[];
     // todo: add tests
-    private readonly changeChecker: TransitionChecker<T>;
+    private readonly transitionChecker: TransitionChecker<T>;
 
     constructor(options: DocStoreOptions<T>) {
         this.indexes = new Map(
@@ -122,12 +123,14 @@ export class DocRepo<T extends Doc<IndexKey>> {
         this.onChange = options.onChange;
         this.schema = options.schema;
         this.constraints = options.constraints;
-        this.changeChecker = createReadonlyTransitionChecker<Doc<IndexKey>>({
-            createdAt: true,
-            pk: true,
-            updatedAt: false,
-            ...options.readonly,
-        });
+        this.transitionChecker = createReadonlyTransitionChecker<Doc<IndexKey>>(
+            {
+                createdAt: true,
+                pk: true,
+                updatedAt: false,
+                ...options.readonly,
+            }
+        );
     }
 
     async getById(id: IndexKey): Promise<T | undefined> {
@@ -263,13 +266,11 @@ export class DocRepo<T extends Doc<IndexKey>> {
         const nextSnapshot = next.snapshot();
         this.schema.parse(nextSnapshot);
         await whenAll([
-            this.changeChecker(prev, nextSnapshot),
+            this.transitionChecker(prev, nextSnapshot),
             this.primary.put(nextSnapshot.pk, next),
-            ...[...this.indexes.values()].map(x =>
-                x.sync(prev, next.snapshot())
-            ),
+            ...[...this.indexes.values()].map(x => x.sync(prev, nextSnapshot)),
             ...this.constraints.map(async c => {
-                const result = c.verify(nextSnapshot);
+                const result = await c.verify(nextSnapshot);
                 if (!result) {
                     throw new ConstraintError(c.name);
                 }

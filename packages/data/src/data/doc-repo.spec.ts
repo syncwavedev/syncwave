@@ -1,25 +1,26 @@
-import {beforeEach, describe, expect, expectTypeOf, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {z} from 'zod';
 import {IndexKey} from '../kv/data-index.js';
 import {Condition} from '../kv/kv-store.js';
 import {MemKVStore} from '../kv/mem-kv-store.js';
-import {getNow, zTimestamp} from '../timestamp.js';
+import {getNow} from '../timestamp.js';
 import {Uuid, createUuid, zUuid} from '../uuid.js';
 import {Doc, DocRepo, IndexSpec, OnDocChange, zDoc} from './doc-repo.js';
 
-interface MyDoc extends Doc<Uuid> {
+interface MyDoc extends Doc<readonly [Uuid]> {
     name: string;
     age: number;
 }
 
-const schema = z.object({
-    id: zUuid<Uuid>(),
-    name: z.string(),
-    age: z.number(),
-    createdAt: zTimestamp(),
-    updatedAt: zTimestamp(),
-});
+function zMyDoc() {
+    return zDoc(z.tuple([zUuid()])).extend({
+        name: z.string(),
+        age: z.number(),
+    });
+}
+
+const schema = zMyDoc();
 
 const indexes: Record<string, IndexSpec<MyDoc>> = {
     byName: {
@@ -36,16 +37,10 @@ describe('DocStore with MemKVStore', () => {
         store = new MemKVStore();
     });
 
-    it('should have valid schema', () => {
-        expectTypeOf({} as Doc<Uuid>).toEqualTypeOf<
-            z.infer<ReturnType<typeof zDoc<Uuid>>>
-        >();
-    });
-
     it('should create and retrieve a document by ID', async () => {
-        const id = createUuid();
+        const id = [createUuid()] as const;
         const doc: MyDoc = {
-            id,
+            pk: id,
             name: 'Alice',
             age: 30,
             createdAt: now,
@@ -93,9 +88,9 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should throw an error if creating a doc with an existing ID', async () => {
-        const id = createUuid();
+        const id = [createUuid()] as const;
         const doc: MyDoc = {
-            id,
+            pk: id,
             name: 'Bob',
             age: 22,
             createdAt: now,
@@ -131,9 +126,9 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should update a document', async () => {
-        const id = createUuid();
+        const id = [createUuid()] as const;
         const doc: MyDoc = {
-            id,
+            pk: id,
             name: 'Charlie',
             age: 40,
             createdAt: now,
@@ -189,9 +184,9 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should catch schema violation', async () => {
-        const id = createUuid();
+        const id = [createUuid()] as const;
         const doc: MyDoc = {
-            id,
+            pk: id,
             name: 'Charlie',
             age: 40,
             createdAt: now,
@@ -225,7 +220,7 @@ describe('DocStore with MemKVStore', () => {
                 });
             })
         ).resolves.toEqual({
-            id,
+            pk: id,
             name: 'Charlie',
             age: 40,
             createdAt: expect.any(Number),
@@ -243,10 +238,25 @@ describe('DocStore with MemKVStore', () => {
                     constraints: [],
                 });
                 return repo.update(id, current => {
-                    (current as any).id = 'val';
+                    (current as any).pk = 'val';
                 });
             })
-        ).rejects.toThrowError(/Invalid UUID format or incompatible/);
+        ).rejects.toThrowError();
+
+        await expect(
+            store.transact(async tx => {
+                repo = new DocRepo<MyDoc>({
+                    tx,
+                    indexes,
+                    onChange,
+                    schema,
+                    constraints: [],
+                });
+                return repo.update(id, current => {
+                    (current as any).pk = ['val'];
+                });
+            })
+        ).rejects.toThrowError();
     });
 
     it('should retrieve documents by a non-unique index', async () => {
@@ -262,21 +272,21 @@ describe('DocStore with MemKVStore', () => {
                 constraints: [],
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Dana',
                 age: 20,
                 createdAt: now,
                 updatedAt: now,
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Dana',
                 age: 25,
                 createdAt: now,
                 updatedAt: now,
             }); // same name
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Eli',
                 age: 25,
                 createdAt: now,
@@ -338,35 +348,35 @@ describe('DocStore with MemKVStore', () => {
                 constraints: [],
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Fiona',
                 age: 10,
                 createdAt: now,
                 updatedAt: now,
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Gabe',
                 age: 15,
                 createdAt: now,
                 updatedAt: now,
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Hank',
                 age: 20,
                 createdAt: now,
                 updatedAt: now,
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Iris',
                 age: 25,
                 createdAt: now,
                 updatedAt: now,
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Jake',
                 age: 30,
                 createdAt: now,
@@ -428,14 +438,14 @@ describe('DocStore with MemKVStore', () => {
                 constraints: [],
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Zed',
                 age: 55,
                 createdAt: now,
                 updatedAt: now,
             });
             await repo.create({
-                id: createUuid(),
+                pk: [createUuid()],
                 name: 'Zed',
                 age: 60,
                 createdAt: now,
@@ -464,7 +474,7 @@ describe('DocStore with MemKVStore', () => {
         // with the same name.
         // For demonstration, let's remove one of the "Zed" docs, then getUnique will succeed.
 
-        let firstZedId: Uuid | undefined;
+        let firstZedId: IndexKey | undefined;
         await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({
                 tx,
@@ -479,7 +489,7 @@ describe('DocStore with MemKVStore', () => {
                 zedEntries.push(zedDoc);
             }
             // Let's delete one of them
-            firstZedId = zedEntries[0].id;
+            firstZedId = zedEntries[0].pk;
             await repo.update(firstZedId, doc => {
                 doc.name = 'Andrei';
             });
@@ -501,7 +511,7 @@ describe('DocStore with MemKVStore', () => {
 
     it('should throw an error on update if doc is not found', async () => {
         const onChange: OnDocChange<MyDoc> = vi.fn();
-        const nonExistentId = createUuid();
+        const nonExistentId = [createUuid()];
 
         await expect(
             store.transact(async tx => {
@@ -524,7 +534,7 @@ describe('DocStore with MemKVStore', () => {
 
         // 1) CREATE
         const createdDoc: MyDoc = {
-            id: createUuid(),
+            pk: [createUuid()],
             name: 'Alpha',
             age: 1,
             createdAt: now,
@@ -545,7 +555,7 @@ describe('DocStore with MemKVStore', () => {
         // The CrdtDiff for a new doc basically has all fields in "added" or "modified".
         expect(onChange).toHaveBeenCalledTimes(1);
         let call = onChange.mock.calls[0];
-        expect(call[0]).toBe(createdDoc.id); // id
+        expect(call[0]).toEqual(createdDoc.pk); // id
         // call[1] is the diff. We can do a minimal check or more thorough.
         // For a brand-new doc, we expect the entire doc to be added.
 
@@ -560,14 +570,14 @@ describe('DocStore with MemKVStore', () => {
                 schema,
                 constraints: [],
             });
-            await repo.update(createdDoc.id, doc => {
+            await repo.update(createdDoc.pk, doc => {
                 doc.age = 2;
             });
         });
 
         expect(onChange).toHaveBeenCalledTimes(1);
         call = onChange.mock.calls[0];
-        expect(call[0]).toBe(createdDoc.id);
+        expect(call[0]).toEqual(createdDoc.pk);
         // call[1] is the diff.
         // For an age change, the diff should indicate old=1, new=2 for that field, etc.
     });

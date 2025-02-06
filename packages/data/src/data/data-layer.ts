@@ -103,24 +103,24 @@ export class DataLayer {
             const identities = new IdentityRepo(
                 withPrefix('identities/')(tx),
                 users,
-                (id, diff) => logIdentityChange(dataTx, id, diff)
+                (pk, diff) => logIdentityChange(dataTx, pk, diff)
             );
             const boards = new BoardRepo(
                 withPrefix('boards/')(tx),
                 users,
-                (id, diff) => logBoardChange(dataTx, id, diff)
+                (pk, diff) => logBoardChange(dataTx, pk, diff)
             );
             const members = new MemberRepo(
                 withPrefix('members/')(tx),
                 users,
                 boards,
-                (id, diff) => logMemberChange(dataTx, id, diff)
+                (pk, diff) => logMemberChange(dataTx, pk, diff)
             );
             const tasks = new TaskRepo(
                 withPrefix('tasks/')(tx),
                 boards,
                 users,
-                (id, diff) => logTaskChange(dataTx, id, diff)
+                (pk, diff) => logTaskChange(dataTx, pk, diff)
             );
 
             const dataNode = new AggregateDataNode({
@@ -197,7 +197,7 @@ export function boardEvents(boardId: BoardId) {
 
 async function logIdentityChange(
     tx: DataTx,
-    id: IdentityId,
+    [id]: [IdentityId],
     diff: CrdtDiff<Identity>
 ) {
     const identity = await tx.identities.getById(id);
@@ -213,7 +213,7 @@ async function logIdentityChange(
     ]);
 }
 
-async function logUserChange(tx: DataTx, id: UserId, diff: CrdtDiff<User>) {
+async function logUserChange(tx: DataTx, [id]: [UserId], diff: CrdtDiff<User>) {
     const members = await tx.members.getByUserId(id).toArray();
     const ts = getNow();
     const event: UserChangeEvent = {type: 'user', id, diff, ts};
@@ -225,7 +225,11 @@ async function logUserChange(tx: DataTx, id: UserId, diff: CrdtDiff<User>) {
     ]);
 }
 
-async function logBoardChange(tx: DataTx, id: BoardId, diff: CrdtDiff<Board>) {
+async function logBoardChange(
+    tx: DataTx,
+    [id]: [BoardId],
+    diff: CrdtDiff<Board>
+) {
     const members = await tx.members.getByBoardId(id).toArray();
     const ts = getNow();
     const event: BoardChangeEvent = {type: 'board', id, diff, ts};
@@ -239,7 +243,7 @@ async function logBoardChange(tx: DataTx, id: BoardId, diff: CrdtDiff<Board>) {
 
 async function logMemberChange(
     tx: DataTx,
-    id: MemberId,
+    [id]: [MemberId],
     diff: CrdtDiff<Member>
 ) {
     const member = await tx.members.getById(id);
@@ -252,7 +256,7 @@ async function logMemberChange(
     ]);
 }
 
-async function logTaskChange(tx: DataTx, id: TaskId, diff: CrdtDiff<Task>) {
+async function logTaskChange(tx: DataTx, [id]: [TaskId], diff: CrdtDiff<Task>) {
     const task = await tx.tasks.getById(id);
     assert(task !== undefined);
     const ts = getNow();

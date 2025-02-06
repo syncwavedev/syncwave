@@ -1,7 +1,8 @@
+import {z} from 'zod';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Brand} from '../../utils.js';
-import {Uuid, createUuid} from '../../uuid.js';
+import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {createWriteableChecker} from '../update-checker.js';
 
@@ -11,10 +12,14 @@ export function createUserId(): UserId {
     return createUuid() as UserId;
 }
 
-export interface User extends Doc<UserId> {}
+export interface User extends Doc<[UserId]> {
+    readonly id: UserId;
+}
 
 export function zUser() {
-    return zDoc<UserId>().extend({});
+    return zDoc(z.tuple([zUuid<UserId>()])).extend({
+        id: zUuid<UserId>(),
+    });
 }
 
 export class UserRepo {
@@ -31,12 +36,12 @@ export class UserRepo {
     }
 
     getById(id: UserId): Promise<User | undefined> {
-        return this.rawRepo.getById(id);
+        return this.rawRepo.getById([id]);
     }
 
     async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {
         return await this.rawRepo.apply(
-            id,
+            [id],
             diff,
             createWriteableChecker({
                 name: true,
@@ -44,11 +49,11 @@ export class UserRepo {
         );
     }
 
-    async create(user: User): Promise<User> {
-        return this.rawRepo.create(user);
+    async create(user: Omit<User, 'pk'>): Promise<User> {
+        return this.rawRepo.create({pk: [user.id], ...user});
     }
 
     update(id: UserId, recipe: Recipe<User>): Promise<User> {
-        return this.rawRepo.update(id, recipe);
+        return this.rawRepo.update([id], recipe);
     }
 }

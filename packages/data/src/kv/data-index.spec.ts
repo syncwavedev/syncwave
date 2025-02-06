@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {toStream} from '../stream.js';
 import {compareUint8Array} from '../utils.js';
 import {Uuid, createUuid} from '../uuid.js';
-import {IndexKeyCodec, createIndex} from './data-index.js';
+import {createIndex, decodeIndexKey, encodeIndexKey} from './data-index.js';
 import {MemKVStore} from './mem-kv-store.js';
 
 interface TestUser {
@@ -353,8 +353,6 @@ describe('data-index', async () => {
 });
 
 describe('KeySerializer', () => {
-    const serializer = new IndexKeyCodec();
-
     interface Testcase {
         name: string;
         a: any;
@@ -393,15 +391,15 @@ describe('KeySerializer', () => {
     testcases.forEach(({a, b, name, result}) => {
         it(name, () => {
             expect(
-                compareUint8Array(serializer.encode(a), serializer.encode(b))
+                compareUint8Array(encodeIndexKey(a), encodeIndexKey(b))
             ).toEqual(result);
         });
     });
 
     it('should ser/de uuid', () => {
         const uuid = [createUuid()];
-        const buf = serializer.encode(uuid);
-        const result = serializer.decode(buf);
+        const buf = encodeIndexKey(uuid);
+        const result = decodeIndexKey(buf);
 
         expect(uuid).toEqual(result);
     });

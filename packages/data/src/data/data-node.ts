@@ -1,7 +1,7 @@
 import {decodeString, encodeString} from '../codec.js';
 import {decodeHex} from '../hex.js';
+import {decodeIndexKey, encodeIndexKey, IndexKey} from '../kv/data-index.js';
 import {bufStartsWith} from '../utils.js';
-import {decodeUuid, encodeUuid, Uuid} from '../uuid.js';
 import {Doc, DocRepo} from './doc-repo.js';
 
 export interface DataNodeVisitor<T> {
@@ -60,7 +60,7 @@ export class AggregateDataNode<
     }
 }
 
-export class RepoDataNode<T extends Doc> extends DataNode {
+export class RepoDataNode<T extends Doc<any>> extends DataNode {
     constructor(private readonly repo: DocRepo<T>) {
         super();
     }
@@ -69,14 +69,14 @@ export class RepoDataNode<T extends Doc> extends DataNode {
         prefix: Uint8Array
     ): AsyncIterable<DataNodeChild> {
         yield* this.repo.getAll(prefix).map(doc => ({
-            key: encodeUuid(doc.id),
-            node: new DocDataNode(doc.id, this.repo),
+            key: encodeIndexKey(doc.pk),
+            node: new DocDataNode(doc.pk, this.repo),
         }));
     }
 
     override child(key: Uint8Array): DataNode {
-        const uuid = decodeUuid(key);
-        return new DocDataNode(uuid, this.repo);
+        const pk = decodeIndexKey(key);
+        return new DocDataNode(pk, this.repo);
     }
 
     override visit<TResult>(visitor: DataNodeVisitor<TResult>): TResult {
@@ -88,9 +88,9 @@ export class RepoDataNode<T extends Doc> extends DataNode {
     }
 }
 
-export class DocDataNode<T extends Doc> extends DataNode {
+export class DocDataNode<T extends Doc<IndexKey>> extends DataNode {
     constructor(
-        public readonly docId: Uuid,
+        public readonly pk: IndexKey,
         private readonly repo: DocRepo<T>
     ) {
         super();
@@ -111,10 +111,10 @@ export class DocDataNode<T extends Doc> extends DataNode {
     }
 
     async snapshot(): Promise<T | undefined> {
-        return await this.repo.getById(this.docId);
+        return await this.repo.getById(this.pk);
     }
 
     override async delete(): Promise<void> {
-        await this.repo.unsafe_delete(this.docId);
+        await this.repo.unsafe_delete(this.pk);
     }
 }

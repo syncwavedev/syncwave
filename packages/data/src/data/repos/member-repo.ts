@@ -15,7 +15,8 @@ export function createMemberId(): MemberId {
     return createUuid() as MemberId;
 }
 
-export interface Member extends Doc<MemberId> {
+export interface Member extends Doc<[MemberId]> {
+    readonly id: MemberId;
     readonly userId: UserId;
     readonly boardId: BoardId;
     active: boolean;
@@ -25,7 +26,8 @@ const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
 
 export function zMember() {
-    return zDoc<MemberId>().extend({
+    return zDoc(z.tuple([zUuid<MemberId>()])).extend({
+        id: zUuid<MemberId>(),
         userId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
         active: z.boolean(),
@@ -72,7 +74,7 @@ export class MemberRepo {
     }
 
     getById(id: MemberId): Promise<Member | undefined> {
-        return this.rawRepo.getById(id);
+        return this.rawRepo.getById([id]);
     }
 
     getByUserId(userId: UserId, activeOnly = true): Stream<Member> {
@@ -110,7 +112,7 @@ export class MemberRepo {
 
     async apply(id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
         return await this.rawRepo.apply(
-            id,
+            [id],
             diff,
             createWriteableChecker({
                 active: true,
@@ -118,11 +120,11 @@ export class MemberRepo {
         );
     }
 
-    create(member: Member): Promise<Member> {
-        return this.rawRepo.create(member);
+    create(member: Omit<Member, 'pk'>): Promise<Member> {
+        return this.rawRepo.create({pk: [member.id], ...member});
     }
 
     update(id: MemberId, recipe: Recipe<Member>): Promise<Member> {
-        return this.rawRepo.update(id, recipe);
+        return this.rawRepo.update([id], recipe);
     }
 }

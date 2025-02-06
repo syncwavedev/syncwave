@@ -1,7 +1,8 @@
 import bytewise from 'bytewise';
+import {z} from 'zod';
 import {Codec} from '../codec.js';
 import {assert, compareUint8Array, zip} from '../utils.js';
-import {Uuid, UuidCodec} from '../uuid.js';
+import {Uuid, UuidCodec, zUuid} from '../uuid.js';
 import {
     Condition,
     mapCondition,
@@ -48,8 +49,6 @@ export function createIndex<TValue>({
     indexName,
     filter: originalFilter,
 }: IndexOptions<TValue>): Index<TValue> {
-    const keyCodec = new IndexKeyCodec();
-
     const filter = originalFilter ?? (() => true);
 
     async function* queryInternal(
@@ -72,15 +71,15 @@ export function createIndex<TValue>({
             condition,
             {
                 gt: cond => ({
-                    gt: keyCodec.encode([
+                    gt: encodeIndexKey([
                         ...cond.gt,
                         ...Array(16).fill(undefined),
                     ]),
                 }),
-                gte: cond => ({gte: keyCodec.encode(cond.gte)}),
-                lt: cond => ({lt: keyCodec.encode(cond.lt)}),
+                gte: cond => ({gte: encodeIndexKey(cond.gte)}),
+                lt: cond => ({lt: encodeIndexKey(cond.lt)}),
                 lte: cond => ({
-                    lte: keyCodec.encode([
+                    lte: encodeIndexKey([
                         ...cond.lte,
                         ...Array(16).fill(undefined),
                     ]),
@@ -91,7 +90,7 @@ export function createIndex<TValue>({
         const iterator = tx.query(queryCondition);
 
         for await (const entry of iterator) {
-            const entryKey = keyCodec.decode(entry.key);
+            const entryKey = decodeIndexKey(entry.key);
             for (let i = 0; i < conditionKey.length - 1; i += 1) {
                 if (compareIndexKeyPart(entryKey[i], conditionKey[i]) !== 0) {
                     return;
@@ -109,7 +108,7 @@ export function createIndex<TValue>({
             async keys() {
                 const result: IndexKey[] = [];
                 for await (const {key} of tx.query({gte: new Uint8Array()})) {
-                    result.push(keyCodec.decode(key));
+                    result.push(decodeIndexKey(key));
                 }
 
                 return result;
@@ -154,9 +153,9 @@ export function createIndex<TValue>({
             if (prevIncluded) {
                 assert(prevKey !== undefined);
                 if (unique) {
-                    await tx.delete(keyCodec.encode(prevKey));
+                    await tx.delete(encodeIndexKey(prevKey));
                 } else {
-                    await tx.delete(keyCodec.encode([...prevKey, ...id]));
+                    await tx.delete(encodeIndexKey([...prevKey, ...id]));
                 }
             }
 
@@ -164,28 +163,28 @@ export function createIndex<TValue>({
             if (nextIncluded) {
                 assert(nextKey !== undefined);
                 if (unique) {
-                    const existing = await tx.get(keyCodec.encode(nextKey));
+                    const existing = await tx.get(encodeIndexKey(nextKey));
                     if (existing) {
                         throw new UniqueError(indexName);
                     }
 
-                    await tx.put(keyCodec.encode(nextKey), keyCodec.encode(id));
+                    await tx.put(encodeIndexKey(nextKey), encodeIndexKey(id));
                 } else {
                     await tx.put(
-                        keyCodec.encode([...nextKey, ...id]),
-                        keyCodec.encode(id)
+                        encodeIndexKey([...nextKey, ...id]),
+                        encodeIndexKey(id)
                     );
                 }
             }
         },
         async *query(condition): AsyncIterable<IndexKey> {
             for await (const entry of queryInternal(condition)) {
-                yield keyCodec.decode(entry.value);
+                yield decodeIndexKey(entry.value);
             }
         },
         async *get(key): AsyncIterable<IndexKey> {
             for await (const entry of queryInternal({gte: key})) {
-                const entryKey = keyCodec.decode(entry.key);
+                const entryKey = decodeIndexKey(entry.key);
                 for (let i = 0; i < key.length; i += 1) {
                     if (key.length > 0) {
                         // all parts up to the last were checked in queryInternal
@@ -200,7 +199,7 @@ export function createIndex<TValue>({
                     }
                 }
 
-                yield keyCodec.decode(entry.value);
+                yield decodeIndexKey(entry.value);
             }
         },
     };
@@ -230,7 +229,25 @@ export type IndexKeyPart =
 
 export type IndexKey = readonly IndexKeyPart[];
 
-function compareIndexKey(a: IndexKey, b: IndexKey) {
+export function zIndexKey() {
+    return z.array(
+        z.union([
+            z.null(),
+            z.boolean(),
+            z.number(),
+            z.string(),
+            zUuid(),
+            z.instanceof(Uint8Array),
+            z.undefined(),
+        ])
+    );
+}
+
+export function indexKeyToString(key: IndexKey): string {
+    return '[' + key.map(x => x?.toString()).join(',') + ']';
+}
+
+export function compareIndexKey(a: IndexKey, b: IndexKey) {
     const minLength = Math.min(a.length, b.length);
     for (let i = 0; i < minLength; i += 1) {
         const result = compareIndexKeyPart(a[i], b[i]);
@@ -282,6 +299,14 @@ export function compareIndexKeyPart(
     return getTypeIndex(a) > getTypeIndex(b) ? 1 : -1;
 }
 
+export function encodeIndexKey(key: IndexKey): Uint8Array {
+    return indexKeyCodec.encode(key);
+}
+
+export function decodeIndexKey(buf: Uint8Array): IndexKey {
+    return indexKeyCodec.decode(buf);
+}
+
 export class IndexKeyCodec implements Codec<IndexKey> {
     uuidCodec = new UuidCodec();
 
@@ -308,3 +333,5 @@ export class IndexKeyCodec implements Codec<IndexKey> {
         });
     }
 }
+
+export const indexKeyCodec = new IndexKeyCodec();

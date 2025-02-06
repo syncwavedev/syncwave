@@ -17,8 +17,9 @@ export function createBoardId(): BoardId {
     return createUuid() as BoardId;
 }
 
-export interface Board extends Doc<BoardId> {
+export interface Board extends Doc<[BoardId]> {
     readonly key: string;
+    readonly id: BoardId;
     name: string;
     ownerId: UserId;
     deleted: boolean;
@@ -27,7 +28,8 @@ export interface Board extends Doc<BoardId> {
 const BOARD_KEY_INDEX = 'key';
 
 export function zBoard() {
-    return zDoc<BoardId>().extend({
+    return zDoc(z.tuple([zUuid<BoardId>()])).extend({
+        id: zUuid<BoardId>(),
         key: z.string(),
         name: z.string(),
         ownerId: zUuid<UserId>(),
@@ -72,7 +74,7 @@ export class BoardRepo {
     }
 
     async getById(id: BoardId): Promise<Board | undefined> {
-        return await this.rawRepo.getById(id);
+        return await this.rawRepo.getById([id]);
     }
 
     async getByKey(key: string): Promise<Board | undefined> {
@@ -89,7 +91,7 @@ export class BoardRepo {
 
     async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
         return await this.rawRepo.apply(
-            id,
+            [id],
             diff,
             createWriteableChecker({
                 deleted: true,
@@ -103,9 +105,9 @@ export class BoardRepo {
         return await this.counters.get(boardId.toString()).increment();
     }
 
-    async create(board: Board): Promise<Board> {
+    async create(board: Omit<Board, 'pk'>): Promise<Board> {
         try {
-            return await this.rawRepo.create(board);
+            return await this.rawRepo.create({pk: [board.id], ...board});
         } catch (err) {
             // todo: map errors in AggregateError
             if (
@@ -124,7 +126,7 @@ export class BoardRepo {
 
     async update(id: BoardId, recipe: Recipe<Board>): Promise<Board> {
         try {
-            return await this.rawRepo.update(id, recipe);
+            return await this.rawRepo.update([id], recipe);
         } catch (err) {
             if (
                 err instanceof UniqueError &&

@@ -21,7 +21,8 @@ export interface VerificationCode {
     readonly expires: Timestamp;
 }
 
-export interface Identity extends Doc<IdentityId> {
+export interface Identity extends Doc<[IdentityId]> {
+    readonly id: IdentityId;
     readonly userId: UserId;
     email: string;
     verificationCode: VerificationCode;
@@ -46,7 +47,8 @@ export function zVerificationCode() {
 }
 
 export function zIdentity() {
-    return zDoc<IdentityId>().extend({
+    return zDoc(z.tuple([zUuid<IdentityId>()])).extend({
+        id: zUuid<IdentityId>(),
         userId: zUuid<UserId>(),
         email: z.string(),
         authActivityLog: z.array(zTimestamp()),
@@ -90,7 +92,7 @@ export class IdentityRepo {
     }
 
     getById(id: IdentityId): Promise<Identity | undefined> {
-        return this.rawRepo.getById(id);
+        return this.rawRepo.getById([id]);
     }
 
     getByEmail(email: string): Promise<Identity | undefined> {
@@ -103,7 +105,7 @@ export class IdentityRepo {
 
     async apply(id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
         return await this.rawRepo.apply(
-            id,
+            [id],
             diff,
             createWriteableChecker({
                 email: true,
@@ -113,9 +115,9 @@ export class IdentityRepo {
         );
     }
 
-    async create(identity: Identity): Promise<Identity> {
+    async create(identity: Omit<Identity, 'pk'>): Promise<Identity> {
         try {
-            return await this.rawRepo.create(identity);
+            return await this.rawRepo.create({pk: [identity.id], ...identity});
         } catch (err) {
             if (err instanceof UniqueError && err.indexName === EMAIL_INDEX) {
                 throw new EmailTakenIdentityRepoError(
@@ -132,6 +134,6 @@ export class IdentityRepo {
         id: IdentityId,
         recipe: (user: Identity) => Identity | void
     ): Promise<Identity> {
-        return this.rawRepo.update(id, recipe);
+        return this.rawRepo.update([id], recipe);
     }
 }

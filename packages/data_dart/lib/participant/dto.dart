@@ -294,6 +294,7 @@ class GetMeValueIdentity {
     dynamic createdAt;
     String email;
     dynamic id;
+    List<dynamic> pk;
     dynamic updatedAt;
     dynamic userId;
     
@@ -305,6 +306,7 @@ class GetMeValueIdentity {
         required this.createdAt,
         required this.email,
         required this.id,
+        required this.pk,
         required this.updatedAt,
         required this.userId,
         required this.verificationCode,
@@ -315,6 +317,7 @@ class GetMeValueIdentity {
         createdAt: json["createdAt"],
         email: json["email"],
         id: json["id"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
         userId: json["userId"],
         verificationCode: PurpleVerificationCode.fromJson(json["verificationCode"]),
@@ -325,6 +328,7 @@ class GetMeValueIdentity {
         "createdAt": createdAt,
         "email": email,
         "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
         "userId": userId,
         "verificationCode": verificationCode.toJson(),
@@ -356,23 +360,27 @@ class PurpleVerificationCode {
 class GetMeValueUser {
     dynamic createdAt;
     dynamic id;
+    List<dynamic> pk;
     dynamic updatedAt;
 
     GetMeValueUser({
         required this.createdAt,
         required this.id,
+        required this.pk,
         required this.updatedAt,
     });
 
     factory GetMeValueUser.fromJson(Map<String, dynamic> json) => GetMeValueUser(
         createdAt: json["createdAt"],
         id: json["id"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
     );
 
     Map<String, dynamic> toJson() => {
         "createdAt": createdAt,
         "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
@@ -402,6 +410,7 @@ class GetMeUpdateIdentity {
     dynamic createdAt;
     String email;
     dynamic id;
+    List<dynamic> pk;
     dynamic updatedAt;
     dynamic userId;
     
@@ -413,6 +422,7 @@ class GetMeUpdateIdentity {
         required this.createdAt,
         required this.email,
         required this.id,
+        required this.pk,
         required this.updatedAt,
         required this.userId,
         required this.verificationCode,
@@ -423,6 +433,7 @@ class GetMeUpdateIdentity {
         createdAt: json["createdAt"],
         email: json["email"],
         id: json["id"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
         userId: json["userId"],
         verificationCode: FluffyVerificationCode.fromJson(json["verificationCode"]),
@@ -433,6 +444,7 @@ class GetMeUpdateIdentity {
         "createdAt": createdAt,
         "email": email,
         "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
         "userId": userId,
         "verificationCode": verificationCode.toJson(),
@@ -464,23 +476,27 @@ class FluffyVerificationCode {
 class GetMeUpdateUser {
     dynamic createdAt;
     dynamic id;
+    List<dynamic> pk;
     dynamic updatedAt;
 
     GetMeUpdateUser({
         required this.createdAt,
         required this.id,
+        required this.pk,
         required this.updatedAt,
     });
 
     factory GetMeUpdateUser.fromJson(Map<String, dynamic> json) => GetMeUpdateUser(
         createdAt: json["createdAt"],
         id: json["id"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
     );
 
     Map<String, dynamic> toJson() => {
         "createdAt": createdAt,
         "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
@@ -558,6 +574,7 @@ class CreateBoardRes {
     String key;
     String name;
     dynamic ownerId;
+    List<dynamic> pk;
     dynamic updatedAt;
 
     CreateBoardRes({
@@ -567,6 +584,7 @@ class CreateBoardRes {
         required this.key,
         required this.name,
         required this.ownerId,
+        required this.pk,
         required this.updatedAt,
     });
 
@@ -577,6 +595,7 @@ class CreateBoardRes {
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
     );
 
@@ -587,6 +606,7 @@ class CreateBoardRes {
         "key": key,
         "name": name,
         "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
@@ -822,6 +842,7 @@ class GetMyBoardsValue {
     String key;
     String name;
     dynamic ownerId;
+    List<dynamic> pk;
     dynamic updatedAt;
 
     GetMyBoardsValue({
@@ -831,6 +852,7 @@ class GetMyBoardsValue {
         required this.key,
         required this.name,
         required this.ownerId,
+        required this.pk,
         required this.updatedAt,
     });
 
@@ -841,6 +863,7 @@ class GetMyBoardsValue {
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
     );
 
@@ -851,6 +874,7 @@ class GetMyBoardsValue {
         "key": key,
         "name": name,
         "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
@@ -862,6 +886,7 @@ class GetMyBoardsUpdate {
     String key;
     String name;
     dynamic ownerId;
+    List<dynamic> pk;
     dynamic updatedAt;
 
     GetMyBoardsUpdate({
@@ -871,6 +896,7 @@ class GetMyBoardsUpdate {
         required this.key,
         required this.name,
         required this.ownerId,
+        required this.pk,
         required this.updatedAt,
     });
 
@@ -881,6 +907,7 @@ class GetMyBoardsUpdate {
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
     );
 
@@ -891,6 +918,7 @@ class GetMyBoardsUpdate {
         "key": key,
         "name": name,
         "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
@@ -1006,6 +1034,7 @@ class GetBoardValue {
     String key;
     String name;
     dynamic ownerId;
+    List<dynamic> pk;
     dynamic updatedAt;
 
     GetBoardValue({
@@ -1015,6 +1044,7 @@ class GetBoardValue {
         required this.key,
         required this.name,
         required this.ownerId,
+        required this.pk,
         required this.updatedAt,
     });
 
@@ -1025,6 +1055,7 @@ class GetBoardValue {
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
     );
 
@@ -1035,6 +1066,7 @@ class GetBoardValue {
         "key": key,
         "name": name,
         "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
@@ -1046,6 +1078,7 @@ class GetBoardUpdate {
     String key;
     String name;
     dynamic ownerId;
+    List<dynamic> pk;
     dynamic updatedAt;
 
     GetBoardUpdate({
@@ -1055,6 +1088,7 @@ class GetBoardUpdate {
         required this.key,
         required this.name,
         required this.ownerId,
+        required this.pk,
         required this.updatedAt,
     });
 
@@ -1065,6 +1099,7 @@ class GetBoardUpdate {
         key: json["key"],
         name: json["name"],
         ownerId: json["ownerId"],
+        pk: List<dynamic>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"],
     );
 
@@ -1075,6 +1110,7 @@ class GetBoardUpdate {
         "key": key,
         "name": name,
         "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }

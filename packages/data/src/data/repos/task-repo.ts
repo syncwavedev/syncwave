@@ -14,7 +14,8 @@ export function createTaskId(): TaskId {
     return createUuid() as TaskId;
 }
 
-export interface Task extends Doc<TaskId> {
+export interface Task extends Doc<[TaskId]> {
+    readonly id: TaskId;
     readonly authorId: UserId;
     readonly boardId: BoardId;
     readonly counter: number | null;
@@ -28,7 +29,8 @@ const BOARD_ID = 'boardId';
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
 export function zTask() {
-    return zDoc<TaskId>().extend({
+    return zDoc(z.tuple([zUuid<TaskId>()])).extend({
+        id: zUuid<TaskId>(),
         authorId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
         counter: z.number().nullable(),
@@ -78,7 +80,7 @@ export class TaskRepo {
     }
 
     getById(id: TaskId): Promise<Task | undefined> {
-        return this.rawRepo.getById(id);
+        return this.rawRepo.getById([id]);
     }
 
     getByBoardId(boardId: BoardId): Stream<Task> {
@@ -87,7 +89,7 @@ export class TaskRepo {
 
     async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
         return await this.rawRepo.apply(
-            id,
+            [id],
             diff,
             createWriteableChecker({
                 deleted: true,
@@ -96,11 +98,11 @@ export class TaskRepo {
         );
     }
 
-    create(user: Task): Promise<Task> {
-        return this.rawRepo.create(user);
+    create(user: Omit<Task, 'pk'>): Promise<Task> {
+        return this.rawRepo.create({pk: [user.id], ...user});
     }
 
     update(id: TaskId, recipe: Recipe<Task>): Promise<Task> {
-        return this.rawRepo.update(id, recipe);
+        return this.rawRepo.update([id], recipe);
     }
 }

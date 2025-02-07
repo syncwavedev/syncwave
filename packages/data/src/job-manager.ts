@@ -1,8 +1,12 @@
 import {Cancel, context, TraceId} from './context.js';
 import {logger} from './logger.js';
 
-export class ContextManager<T extends string> {
-    private readonly runningJobs = new Map<T, Cancel>();
+interface Job {
+    readonly cancel: Cancel;
+}
+
+export class JobManager<T extends string> {
+    private readonly runningJobs = new Map<T, Job>();
     private readonly cancelledJobs = new Set<T>();
 
     constructor() {}
@@ -18,14 +22,14 @@ export class ContextManager<T extends string> {
             throw new Error(`job ${id} is already finished`);
         } else {
             const [ctx, cancel] = context().createBackground({traceId});
-            this.runningJobs.set(id, cancel);
+            this.runningJobs.set(id, {cancel});
             await ctx.run(fn);
         }
     }
 
     cancel(id: T) {
         if (this.runningJobs.has(id)) {
-            this.runningJobs.get(id)!();
+            this.runningJobs.get(id)!.cancel();
             this.runningJobs.delete(id);
             this.cancelledJobs.add(id);
         } else if (this.cancelledJobs.has(id)) {
@@ -37,7 +41,10 @@ export class ContextManager<T extends string> {
 
     finish(job: T) {
         if (this.runningJobs.has(job) || this.cancelledJobs.has(job)) {
-            this.runningJobs.get(job)?.();
+            const runningJob = this.runningJobs.get(job);
+            if (runningJob) {
+                runningJob.cancel();
+            }
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
         } else {

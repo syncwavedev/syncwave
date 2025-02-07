@@ -1,7 +1,7 @@
 import {z} from 'zod';
-import {ContextManager} from '../context-manager.js';
 import {Cancel, CancelledError, Context, context} from '../context.js';
 import {getErrorCode, getReadableError, toError} from '../errors.js';
+import {JobManager} from '../job-manager.js';
 import {logger} from '../logger.js';
 import {Channel, ChannelWriter, Stream} from '../stream.js';
 import {Message, MessageHeaders} from '../transport/message.js';
@@ -55,7 +55,7 @@ export function launchRpcStreamerServer<T>(
 
     const serverApiState = new RpcStreamerServerApiState(
         state,
-        new ContextManager(),
+        new JobManager(),
         client
     );
     launchRpcHandlerServer(
@@ -77,7 +77,7 @@ function zStreamId() {
 class RpcStreamerServerApiState<T> {
     constructor(
         public readonly state: T,
-        public readonly contextManager: ContextManager<StreamId>,
+        public readonly contextManager: JobManager<StreamId>,
         public readonly client: RpcStreamerClientRpc
     ) {}
 

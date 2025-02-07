@@ -19,6 +19,8 @@ export interface Logger {
     info(message: string, ...args: unknown[]): void;
     warn(message: string, ...args: unknown[]): void;
     error(message: string, error: unknown): void;
+
+    time<T>(name: string, fn: () => Promise<T>): Promise<T>;
 }
 
 export class ConsoleLogger implements Logger {
@@ -80,6 +82,14 @@ export class ConsoleLogger implements Logger {
         } else {
             console.error(`[${cx.traceId}] [${this.ts()}] [ERR] ${message}`);
         }
+    }
+
+    async time<T>(name: string, fn: () => Promise<T>): Promise<T> {
+        const start = performance.now();
+        const result = await fn();
+        const end = performance.now();
+        this.info(`${name} took ${end - start}ms`);
+        return result;
     }
 
     private ts(): string {

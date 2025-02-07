@@ -20,7 +20,8 @@ export class ParticipantClient {
             () => ({
                 auth: this.authToken,
                 traceId: createTraceId(),
-            })
+            }),
+            true
         );
     }
 

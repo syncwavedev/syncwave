@@ -23,9 +23,14 @@ export class HubClient<T> {
         authSecret: string
     ) {
         const conn = new PersistentConnection(transportClient);
-        this.server = createRpcClient(createHubServerApi(schema), conn, () => ({
-            auth: authSecret,
-        }));
+        this.server = createRpcClient(
+            createHubServerApi(schema),
+            conn,
+            () => ({
+                auth: authSecret,
+            }),
+            false
+        );
     }
 
     // next waits for all subscribers to do their work

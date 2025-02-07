@@ -1,4 +1,5 @@
 import pg from 'pg';
+import PgCursor from 'pg-cursor';
 import {
     Cancel,
     Condition,
@@ -46,19 +47,28 @@ class PostgresTransaction implements Uint8Transaction {
         condition: Condition<Uint8Array>
     ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
         const {clause, param, order} = buildConditionSql(condition);
-
-        const res = await this.client.query(
-            `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order}`,
-            [param]
+        const cursor = this.client.query(
+            new PgCursor(
+                `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order}`,
+                [param]
+            )
         );
 
-        for (const row of res.rows) {
-            context().ensureActive();
+        try {
+            while (true) {
+                const rows = await cursor.read(100);
+                if (rows.length === 0) break;
 
-            yield {
-                key: new Uint8Array(row.key),
-                value: new Uint8Array(row.value),
-            };
+                for (const row of rows) {
+                    context().ensureActive();
+                    yield {
+                        key: new Uint8Array(row.key),
+                        value: new Uint8Array(row.value),
+                    };
+                }
+            }
+        } finally {
+            await cursor.close();
         }
     }
 

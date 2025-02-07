@@ -1,5 +1,4 @@
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
-import {ContextManager} from '../context-manager.js';
 import {CancelledError, context, createTraceId} from '../context.js';
 import {Deferred} from '../deferred.js';
 import {
@@ -8,6 +7,7 @@ import {
     getErrorCode,
     getReadableError,
 } from '../errors.js';
+import {JobManager} from '../job-manager.js';
 import {logger} from '../logger.js';
 import {
     createMessageId,
@@ -34,13 +34,13 @@ export function launchRpcHandlerServer<T>(
     state: T,
     conn: Connection<Message>
 ) {
-    const contextManager = new ContextManager();
+    const jobManager = new JobManager();
 
     const cancelCleanup = context().onCancel(cleanup);
 
     function cleanup() {
         unsub();
-        contextManager.finishAll();
+        jobManager.finishAll();
         cancelCleanup();
     }
 
@@ -48,7 +48,7 @@ export function launchRpcHandlerServer<T>(
         next: async msg => {
             if (msg.type === 'request') {
                 const traceId = msg.headers.traceId ?? createTraceId();
-                await contextManager.start(msg.id, traceId, async () => {
+                await jobManager.start(msg.id, traceId, async () => {
                     try {
                         const handler = getRequiredProcessor(
                             api,
@@ -86,19 +86,19 @@ export function launchRpcHandlerServer<T>(
                             })
                         );
                     } finally {
-                        contextManager.finish(msg.id);
+                        jobManager.finish(msg.id);
                     }
                 });
             } else if (msg.type === 'response') {
                 // ignore
             } else if (msg.type === 'cancel') {
-                contextManager.cancel(msg.requestId);
+                jobManager.cancel(msg.requestId);
             } else {
                 assertNever(msg);
             }
         },
         throw: async () => {
-            contextManager.finishAll();
+            jobManager.finishAll();
         },
         close: () => {
             cleanup();

@@ -10,6 +10,7 @@ import {
 import {createReadApi, ReadApiState} from '../data/read-api.js';
 import {createWriteApi, WriteApiState} from '../data/write-api.js';
 import {BusinessError} from '../errors.js';
+import {logger} from '../logger.js';
 import {
     Api,
     applyMiddleware,
@@ -108,12 +109,26 @@ export function createCoordinatorApi() {
         ...wrappedAndAdaptedInspectorApi,
     } satisfies Api<CoordinatorApiState>;
 
-    const resultApi = applyMiddleware<
+    const timeLoggerApi = applyMiddleware<
         CoordinatorApiState,
-        CoordinatorApiInputState,
+        CoordinatorApiState,
         typeof combinedApi
     >(
         combinedApi,
+        async (next, state, headers, processor, processorName, arg) => {
+            return await logger.time(
+                `rpc ${processorName}(${JSON.stringify(arg)})`,
+                () => next(state)
+            );
+        }
+    );
+
+    const resultApi = applyMiddleware<
+        CoordinatorApiState,
+        CoordinatorApiInputState,
+        typeof timeLoggerApi
+    >(
+        timeLoggerApi,
         async (
             next,
             {dataLayer, authContextParser, jwt, emailService, crypto, config},

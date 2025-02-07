@@ -120,7 +120,8 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
 export function createRpcObserverClient<TApi extends ObserverApi<unknown>>(
     api: TApi,
     conn: Connection<Message>,
-    getHeaders: () => MessageHeaders
+    getHeaders: () => MessageHeaders,
+    logLatency: boolean
 ): InferRpcClient<TApi> {
     const server = createRpcStreamerClient(
         createRpcObserverServerApi(api),
@@ -148,14 +149,34 @@ export function createRpcObserverClient<TApi extends ObserverApi<unknown>>(
             arg = handler.req.parse(arg);
 
             if (handler.type === 'handler') {
-                return server.handle({name, arg}, headers);
+                const start = performance.now();
+                return server.handle({name, arg}, headers).finally(() => {
+                    const elapsed = performance.now() - start;
+                    if (logLatency) {
+                        logger.info(
+                            `${name}(${JSON.stringify(
+                                arg
+                            )}) took ${elapsed.toFixed(2)}ms`
+                        );
+                    }
+                });
             } else if (handler.type === 'streamer') {
                 return server.stream({name, arg}, headers);
             } else if (handler.type === 'observer') {
+                const start = performance.now();
                 const stream = server.observe({name, arg}, headers) as Stream<
                     ObservableItem<unknown, unknown>
                 >;
-                return toObservable(stream);
+                return toObservable(stream).finally(() => {
+                    const elapsed = performance.now() - start;
+                    if (logLatency) {
+                        logger.info(
+                            `${name}(${JSON.stringify(
+                                arg
+                            )}) took ${elapsed.toFixed(2)}ms`
+                        );
+                    }
+                });
             } else {
                 assertNever(handler);
             }

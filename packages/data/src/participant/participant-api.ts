@@ -26,7 +26,8 @@ export class ParticipantState {
         this.coordinator = createRpcClient(
             createCoordinatorApi(),
             this.connection,
-            () => ({})
+            () => ({}),
+            false
         );
     }
 

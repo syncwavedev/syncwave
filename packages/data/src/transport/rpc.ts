@@ -244,12 +244,13 @@ export function decorateApi<
 >(
     api: TApi,
     decorate: (
-        processor: Processor<TStatePrivate, unknown, unknown, unknown>
+        processor: Processor<TStatePrivate, unknown, unknown, unknown>,
+        processorName: string
     ) => Processor<TStatePublic, unknown, unknown, unknown>
 ): MapApiState<TApi, TStatePublic> {
     const result: Api<any> = {};
     for (const key of Object.keys(api)) {
-        result[key] = decorate(api[key]);
+        result[key] = decorate(api[key], key);
     }
 
     return result as any;
@@ -265,85 +266,96 @@ export function applyMiddleware<
         next: (state: TStatePrivate) => Promise<void>,
         state: TStatePublic,
         headers: MessageHeaders,
-        processor: Processor<TStatePrivate, any, any, any>
+        processor: Processor<TStatePrivate, any, any, any>,
+        processorName: string,
+        arg: unknown
     ) => Promise<void>
 ): MapApiState<TApi, TStatePublic> {
-    return decorateApi<TStatePrivate, TStatePublic, TApi>(api, processor => {
-        async function work(
-            state: TStatePublic,
-            req: unknown,
-            headers: MessageHeaders
-        ) {
-            const signal = new Deferred<any>();
-            middleware(
-                async newState => {
-                    if (processor.type === 'handler') {
-                        const result = await processor.handle(
-                            newState,
-                            req,
-                            headers
-                        );
-                        signal.resolve(result);
-                    } else if (processor.type === 'streamer') {
-                        const result = processor.stream(newState, req, headers);
-                        signal.resolve(result);
-                    } else if (processor.type === 'observer') {
-                        const result = processor.observe(
-                            newState,
-                            req,
-                            headers
-                        );
-                        signal.resolve(result);
+    return decorateApi<TStatePrivate, TStatePublic, TApi>(
+        api,
+        (processor, processorName) => {
+            async function work(
+                state: TStatePublic,
+                req: unknown,
+                headers: MessageHeaders
+            ) {
+                const signal = new Deferred<any>();
+                middleware(
+                    async newState => {
+                        if (processor.type === 'handler') {
+                            const result = await processor.handle(
+                                newState,
+                                req,
+                                headers
+                            );
+                            signal.resolve(result);
+                        } else if (processor.type === 'streamer') {
+                            const result = processor.stream(
+                                newState,
+                                req,
+                                headers
+                            );
+                            signal.resolve(result);
+                        } else if (processor.type === 'observer') {
+                            const result = await processor.observe(
+                                newState,
+                                req,
+                                headers
+                            );
+                            signal.resolve(result);
+                        } else {
+                            assertNever(processor);
+                        }
+                    },
+                    state,
+                    headers,
+                    processor,
+                    processorName,
+                    req
+                ).catch(error => {
+                    if (signal.state !== 'pending') {
+                        logger.error('middleware failed after next()', error);
                     } else {
-                        assertNever(processor);
+                        signal.reject(error);
                     }
-                },
-                state,
-                headers,
-                processor
-            ).catch(error => {
-                if (signal.state !== 'pending') {
-                    logger.error('middleware failed after next()', error);
-                } else {
-                    signal.reject(error);
-                }
-            });
+                });
 
-            return await signal.promise;
+                return await signal.promise;
+            }
+            if (processor.type === 'handler') {
+                return {
+                    type: 'handler',
+                    req: processor.req,
+                    res: processor.res,
+                    handle: async (state, request, headers) => {
+                        return work(state, request, headers);
+                    },
+                } satisfies Handler<TStatePublic, any, any>;
+            } else if (processor.type === 'streamer') {
+                return {
+                    type: 'streamer',
+                    req: processor.req,
+                    item: processor.item,
+                    observer: processor.observer,
+                    stream: async function* (state, request, headers) {
+                        yield* await work(state, request, headers);
+                    },
+                } satisfies Streamer<TStatePublic, any, any>;
+            } else if (processor.type === 'observer') {
+                return {
+                    type: 'observer',
+                    req: processor.req,
+                    value: processor.value,
+                    update: processor.update,
+                    observe: async function (state, request, headers) {
+                        return work(state, request, headers);
+                    },
+                } satisfies Observer<TStatePublic, any, any, any>;
+            } else {
+                assertNever(processor);
+            }
         }
-        if (processor.type === 'handler') {
-            return {
-                type: 'handler',
-                req: processor.req,
-                res: processor.res,
-                handle: async (state, request, headers) => {
-                    return work(state, request, headers);
-                },
-            } satisfies Handler<TStatePublic, any, any>;
-        } else if (processor.type === 'streamer') {
-            return {
-                type: 'streamer',
-                req: processor.req,
-                item: processor.item,
-                observer: processor.observer,
-                stream: async function* (state, request, headers) {
-                    yield* await work(state, request, headers);
-                },
-            } satisfies Streamer<TStatePublic, any, any>;
-        } else if (processor.type === 'observer') {
-            return {
-                type: 'observer',
-                req: processor.req,
-                value: processor.value,
-                update: processor.update,
-                observe: async function (state, request, headers) {
-                    return work(state, request, headers);
-                },
-            } satisfies Observer<TStatePublic, any, any, any>;
-        } else {
-            assertNever(processor);
-        }
-    });
+    );
 }
 
 export type InferRpcClient<T extends Api<any>> = {

@@ -230,7 +230,9 @@ export function createReadApi() {
                 tasks: z.array(zTask()),
             }),
             observe: async (st, {key}) => {
-                const board = await st.transact(tx => tx.boards.getByKey(key));
+                const board = await logger.time('getBoardView get board', () =>
+                    st.transact(tx => tx.boards.getByKey(key))
+                );
                 if (board === undefined) {
                     throw new BusinessError(
                         `board with key ${key} not found`,

@@ -1,16 +1,16 @@
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
-import {ContextManager} from './context-manager.js';
 import {context, createTraceId, TraceId} from './context.js';
+import {JobManager} from './job-manager.js';
 import {logger} from './logger.js';
 import {whenAll} from './utils.js';
 
-describe('ContextManager', () => {
-    let manager: ContextManager<string>;
+describe('JobManager', () => {
+    let manager: JobManager<string>;
     let traceId: TraceId;
 
     beforeEach(() => {
         logger.setLogLevel('none');
-        manager = new ContextManager();
+        manager = new JobManager();
         traceId = createTraceId();
     });
 

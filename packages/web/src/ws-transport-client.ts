@@ -62,7 +62,7 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	send(message: T): Promise<void> {
-		logger.trace('ws send message', message);
+		logger.trace('ws client: send', message);
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 
@@ -75,6 +75,7 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	close(): void {
+		logger.trace('ws client: close');
 		this.ws.close();
 	}
 
@@ -85,11 +86,12 @@ export class WsClientConnection<T> implements Connection<T> {
 				const message = this.codec.decode(new Uint8Array(event.data));
 				await this.subject.next(message);
 			} catch (error) {
-				logger.error('error during ws message', error);
+				logger.error('error during ws message', {error, open: this.subject.open});
 			}
 		});
 
 		this.ws.addEventListener('error', async error => {
+			logger.error('ws client: error event', error);
 			try {
 				await this.subject.throw(new Error('ws.error: ' + error.toString()));
 			} catch (error) {
@@ -98,6 +100,7 @@ export class WsClientConnection<T> implements Connection<T> {
 		});
 
 		this.ws.addEventListener('close', () => {
+			logger.trace('ws client: close event');
 			this.subject.close();
 		});
 	}

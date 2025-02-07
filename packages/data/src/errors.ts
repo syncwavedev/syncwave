@@ -62,7 +62,9 @@ export function toError(reason: unknown): Error {
         return reason;
     }
 
-    return new Error('Unknown error: ' + reason, {cause: reason});
+    return new Error('Unknown error: ' + JSON.stringify(reason), {
+        cause: reason,
+    });
 }
 
 export function getErrorCode(error: unknown): ErrorCode {

@@ -1,7 +1,13 @@
 import {clsx, type ClassValue} from 'clsx';
 import {getContext, onDestroy} from 'svelte';
 import {toast} from 'svelte-sonner';
-import {context, MsgpackCodec, ParticipantClient, type ParticipantRpc} from 'syncwave-data';
+import {
+	ConnectionPool,
+	context,
+	MsgpackCodec,
+	ParticipantClient,
+	type ParticipantRpc,
+} from 'syncwave-data';
 import {twMerge} from 'tailwind-merge';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
 import {WsTransportClient} from '../ws-transport-client';
@@ -57,14 +63,16 @@ export function createAuthManager(cookies: CookieEntry[]) {
 	return authManager;
 }
 
+const transport = new WsTransportClient({
+	url: appConfig.serverWsUrl,
+	codec: new MsgpackCodec(),
+});
+const connectionPool = new ConnectionPool(transport);
+
 export function createParticipantClient(serverCookies: CookieEntry[]) {
 	const authManager = createAuthManager(serverCookies);
-	const transport = new WsTransportClient({
-		url: appConfig.serverWsUrl,
-		codec: new MsgpackCodec(),
-	});
 	const jwt = authManager.getJwt();
-	const participant = new ParticipantClient(transport, jwt);
+	const participant = new ParticipantClient(connectionPool, jwt);
 
 	return participant;
 }
@@ -76,7 +84,11 @@ export async function sdkOnce<T>(
 	const [ctx, cancelCtx] = context().createChild();
 	const result = await ctx.run(async () => {
 		const participant = createParticipantClient(cookies);
-		return await fn(participant.rpc);
+		try {
+			return await fn(participant.rpc);
+		} finally {
+			participant.close();
+		}
 	});
 	cancelCtx();
 	return result;

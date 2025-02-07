@@ -1,6 +1,7 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {ContextManager} from './context-manager.js';
 import {context, createTraceId, TraceId} from './context.js';
+import {logger} from './logger.js';
 import {whenAll} from './utils.js';
 
 describe('ContextManager', () => {
@@ -8,8 +9,13 @@ describe('ContextManager', () => {
     let traceId: TraceId;
 
     beforeEach(() => {
+        logger.setLogLevel('none');
         manager = new ContextManager();
         traceId = createTraceId();
+    });
+
+    afterEach(() => {
+        logger.setLogLevel('info');
     });
 
     it('should start a job successfully', async () => {

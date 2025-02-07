@@ -25,9 +25,7 @@ export class MemConnection<T> implements Connection<T> {
         logger.debug('mem connection send', message);
 
         // don't wait for peer to respond
-        this.peer.receive(this.codec.encode(message)).catch(err => {
-            logger.error('error during peer receive', err);
-        });
+        await this.peer.receive(this.codec.encode(message));
     }
 
     subscribe(observer: Observer<T>): Unsubscribe {
@@ -38,16 +36,11 @@ export class MemConnection<T> implements Connection<T> {
         return this.subject.subscribe(observer);
     }
 
-    close(): void {
+    async close(): Promise<void> {
         logger.debug('mem connection close');
         this.subject.close();
         if (this.peer.subject.open) {
-            // don't wait for peer to respond
-            Promise.resolve()
-                .then(() => this.peer.close())
-                .catch(err => {
-                    logger.error('error during peer receive', err);
-                });
+            await this.peer.close();
         }
     }
 

@@ -1,14 +1,14 @@
 /* eslint-disable no-console */
 import {context} from './context.js';
-import {toError} from './errors.js';
 
-export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'none';
 const LOG_LEVELS: Record<LogLevel, number> = {
     trace: 0,
     debug: 1,
     info: 2,
     warn: 3,
     error: 4,
+    none: 5,
 };
 
 export interface Logger {
@@ -75,7 +75,7 @@ export class ConsoleLogger implements Logger {
         if (arguments.length >= 2) {
             console.error(
                 `[${cx.traceId}] [${this.ts()}] [ERR] ${message}`,
-                toError(error)
+                error
             );
         } else {
             console.error(`[${cx.traceId}] [${this.ts()}] [ERR] ${message}`);

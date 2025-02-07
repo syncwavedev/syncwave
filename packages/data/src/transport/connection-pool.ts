@@ -1,0 +1,68 @@
+import {context} from '../context.js';
+import {logger} from '../logger.js';
+import {Observer, Subject, Unsubscribe} from '../utils.js';
+import {Connection, TransportClient} from './transport.js';
+
+export class ReleasableConnection<T> implements Connection<T> {
+    private readonly subject = new Subject<T>();
+    private readonly subscription: Unsubscribe;
+
+    constructor(
+        private readonly connection: Connection<T>,
+        private readonly onRelease: () => void
+    ) {
+        this.subscription = this.connection.subscribe({
+            next: value => this.subject.next(value),
+            throw: error => this.subject.throw(error),
+            close: () => this.subject.close(),
+        });
+    }
+
+    send(message: T): Promise<void> {
+        return this.connection.send(message);
+    }
+
+    subscribe(observer: Observer<T>): Unsubscribe {
+        return this.subject.subscribe(observer);
+    }
+
+    close(): void {
+        this.subscription();
+        this.subject.close();
+        this.onRelease();
+    }
+}
+
+export class ConnectionPool<T> {
+    private freeConnections: Connection<T>[] = [];
+    private busyConnections: Connection<T>[] = [];
+
+    constructor(private readonly client: TransportClient<T>) {}
+
+    async connect(): Promise<ReleasableConnection<T>> {
+        let connection = this.freeConnections.pop();
+        if (!connection) {
+            // we create background context to prevent connection from closing when
+            const [ctx] = context().createBackground();
+            connection = await ctx.run(() => this.client.connect());
+        }
+
+        this.busyConnections.push(connection);
+
+        logger.debug(
+            `connection pool, free = ${this.freeConnections.length}, busy = ${this.busyConnections.length}`
+        );
+
+        return new ReleasableConnection(connection, () => {
+            this.freeConnections.push(connection);
+            this.busyConnections = this.busyConnections.filter(
+                x => x !== connection
+            );
+        });
+    }
+
+    async close(): Promise<void> {
+        this.freeConnections.forEach(conn => conn.close());
+        this.busyConnections.forEach(conn => conn.close());
+    }
+}

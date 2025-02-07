@@ -45,7 +45,7 @@
 </script>
 
 <div class="grid gap-6">
-	<form on:submit={onSubmit}>
+	<form onsubmit={onSubmit}>
 		<div class="grid gap-2">
 			<div class="grid gap-1">
 				<Label for="boardName">Board Name</Label>

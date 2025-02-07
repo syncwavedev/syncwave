@@ -310,9 +310,15 @@ describe('Doc', () => {
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
 
-        expect(callback).toHaveBeenCalledWith(expect.any(Uint8Array), {
-            tag: undefined,
-        });
+        expect(callback).toHaveBeenCalledWith(
+            {
+                timestamp: expect.any(Number),
+                payload: expect.any(Uint8Array),
+            },
+            {
+                tag: undefined,
+            }
+        );
 
         unsub();
     });

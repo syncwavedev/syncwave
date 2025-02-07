@@ -6,7 +6,8 @@ import {
     Map as YMap,
     Text as YText,
 } from 'yjs';
-import {Codec} from '../codec.js';
+import {Codec, MsgpackCodec} from '../codec.js';
+import {getNow, Timestamp} from '../timestamp.js';
 import {
     assert,
     assertNever,
@@ -18,7 +19,12 @@ import {
 import {Uuid} from '../uuid.js';
 import {observe, OpLog} from './observe.js';
 
-export type CrdtDiff<T> = Brand<Uint8Array, [T, 'doc_diff']>;
+export interface CrdtDiff<T> {
+    readonly timestamp: Timestamp;
+    readonly payload: CrdtDiffPayload<T>;
+}
+
+export type CrdtDiffPayload<T> = Brand<Uint8Array, [T, 'crdt_diff_buffer']>;
 
 const ROOT_KEY = 'root';
 const ROOT_VALUE = 'value';
@@ -36,7 +42,7 @@ export class Crdt<T> {
         return new Crdt(doc);
     }
 
-    static load<T>(diff: CrdtDiff<T>): Crdt<T> {
+    static load<T>({payload: diff}: CrdtDiff<T>): Crdt<T> {
         const doc = new YDoc();
         applyUpdateV2(doc, diff);
 
@@ -62,7 +68,10 @@ export class Crdt<T> {
     }
 
     state(): CrdtDiff<T> {
-        return encodeStateAsUpdateV2(this.doc) as CrdtDiff<T>;
+        return {
+            timestamp: getNow(),
+            payload: encodeStateAsUpdateV2(this.doc) as CrdtDiffPayload<T>,
+        };
     }
 
     map<TResult>(mapper: (snapshot: T) => TResult): TResult {
@@ -99,8 +108,8 @@ export class Crdt<T> {
         return diff;
     }
 
-    apply(diff: CrdtDiff<T>, options?: DiffOptions): void {
-        applyUpdateV2(this.doc, diff, options?.origin);
+    apply({payload}: CrdtDiff<T>, options?: DiffOptions): void {
+        applyUpdateV2(this.doc, payload, options?.origin);
     }
 
     subscribe(
@@ -108,7 +117,13 @@ export class Crdt<T> {
         next: (diff: CrdtDiff<T>, options: DiffOptions) => Nothing
     ): Unsubscribe {
         const fn = (state: Uint8Array, origin: string | undefined) =>
-            next(state as CrdtDiff<T>, {origin: origin ?? undefined});
+            next(
+                {
+                    timestamp: getNow(),
+                    payload: state as CrdtDiffPayload<T>,
+                },
+                {origin: origin ?? undefined}
+            );
         this.doc.on('updateV2', fn);
 
         return () => {
@@ -322,10 +337,13 @@ function replayLog(log: OpLog, locator: Locator): void {
 }
 
 export class CrdtCodec<T> implements Codec<Crdt<T>> {
+    private readonly msgpackCoder = new MsgpackCodec();
+
     encode(data: Crdt<T>): Uint8Array {
-        return data.state();
+        return this.msgpackCoder.encode(data.state());
     }
+
     decode(buf: Uint8Array): Crdt<T> {
-        return Crdt.load(buf as CrdtDiff<T>);
+        return Crdt.load(this.msgpackCoder.decode(buf));
     }
 }

@@ -9,7 +9,7 @@ describe('JobManager', () => {
     let traceId: TraceId;
 
     beforeEach(() => {
-        log.setLogLevel('none');
+        log.setLogLevel('silent');
         manager = new JobManager();
         traceId = createTraceId();
     });

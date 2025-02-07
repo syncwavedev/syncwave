@@ -1,7 +1,14 @@
 import {pino as createPino} from 'pino';
 import {context} from './context.js';
 
-export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
+export type LogLevel =
+    | 'trace'
+    | 'debug'
+    | 'info'
+    | 'warn'
+    | 'error'
+    | 'fatal'
+    | 'silent';
 
 export class Logger {
     private readonly pino = createPino();
@@ -24,6 +31,9 @@ export class Logger {
     }
     error(message: string, ...args: unknown[]): void {
         this.pino.error({pid: this.tid()}, message, ...args);
+    }
+    fatal(message: string, ...args: unknown[]): void {
+        this.pino.fatal({pid: this.tid()}, message, ...args);
     }
 
     private tid() {

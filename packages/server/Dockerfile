@@ -30,4 +30,6 @@ RUN npm run build
 
 EXPOSE 4567
 
+ENV NODE_OPTIONS='--enable-source-maps'
+
 CMD ["node", "dist/esm/src/index.js"]

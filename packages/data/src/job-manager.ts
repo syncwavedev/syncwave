@@ -28,6 +28,10 @@ export class JobManager<T extends string> {
         }
     }
 
+    isCancelled(id: T) {
+        return this.cancelledJobs.has(id);
+    }
+
     cancel(id: T) {
         if (this.runningJobs.has(id)) {
             this.runningJobs.get(id)!.cancel();

@@ -2,6 +2,8 @@ import {openDB, type DBSchema, type IDBPDatabase, type IDBPTransaction} from 'id
 import type {Entry} from 'syncwave-data';
 import {
 	ENVIRONMENT,
+	log,
+	toError,
 	toStream,
 	type Condition,
 	type Uint8KVStore,
@@ -124,7 +126,7 @@ export class IndexedDBKVStore implements Uint8KVStore {
 
 		try {
 			tx.done.catch(() => {});
-			const result = await fn(cx, wrappedTxn);
+			const result = await fn(wrappedTxn);
 			wrappedTxn.markDone();
 			tx.commit();
 			await tx.done;
@@ -138,10 +140,18 @@ export class IndexedDBKVStore implements Uint8KVStore {
 					tx.abort();
 				}
 			} catch (abortErr) {
-				console.error('Abort error:', abortErr);
+				log.error(toError(abortErr), 'Abort error:');
 			}
 			wrappedTxn.markDone();
 			throw err;
 		}
+	}
+
+	close(): void {
+		this.dbPromise
+			.then(db => db.close())
+			.catch(error => {
+				log.error(toError(error), 'failed to close idb');
+			});
 	}
 }

@@ -1,3 +1,4 @@
+import {AppError} from '../errors.js';
 import {Nothing, Observer, Unsubscribe} from '../utils.js';
 
 export interface TransportServer<T> {
@@ -5,7 +6,7 @@ export interface TransportServer<T> {
     close(): void;
 }
 
-export class TransportServerUnreachableError extends Error {}
+export class TransportServerUnreachableError extends AppError {}
 
 export interface TransportClient<T> {
     connect(): Promise<Connection<T>>;
@@ -28,7 +29,7 @@ export interface Connection<T> {
     close(): void;
 }
 
-export class ConnectionClosedError extends Error {
+export class ConnectionClosedError extends AppError {
     constructor() {
         super('Connection closed');
     }

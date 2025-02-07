@@ -44,5 +44,7 @@ USER node:node
 
 EXPOSE 3000
 
+ENV NODE_OPTIONS='--enable-source-maps'
+
 # This is the command that will be run inside the image when you tell Docker to start the container
 CMD ["node", "build/index.js"]

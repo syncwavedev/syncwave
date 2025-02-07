@@ -2,12 +2,12 @@ import {z} from 'zod';
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
 import {context} from '../context.js';
 import {toCursor} from '../cursor.js';
-import {toError} from '../errors.js';
+import {AppError, toError} from '../errors.js';
 import {log} from '../logger.js';
 import {Observable, Stream, toStream} from '../stream.js';
 import {Message, MessageHeaders} from '../transport/message.js';
 import {Connection} from '../transport/transport.js';
-import {assertNever, wait} from '../utils.js';
+import {assert, assertNever, wait} from '../utils.js';
 import {
     createRpcStreamerClient,
     launchRpcStreamerServer,
@@ -46,7 +46,7 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
             handle: async (state, req, headers) => {
                 const processor = getRequiredProcessor(api, req.name);
                 if (processor.type !== 'handler') {
-                    throw new Error('processor must be a handler');
+                    throw new AppError('processor must be a handler');
                 }
 
                 return await processor.handle(state, req.arg, headers);
@@ -58,7 +58,7 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
             stream: (state, {name, arg}, headers) => {
                 const processor = getRequiredProcessor(api, name);
                 if (processor.type !== 'streamer') {
-                    throw new Error('processor must be a streamer');
+                    throw new AppError('processor must be a streamer');
                 }
 
                 return processor.stream(state, arg, headers);
@@ -79,7 +79,7 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
             stream: (state, {name, arg}, headers) => {
                 const processor = getRequiredProcessor(api, name);
                 if (processor.type !== 'observer') {
-                    throw new Error('processor must be an observer');
+                    throw new AppError('processor must be an observer');
                 }
 
                 const [ctx, cancelCtx] = context().createChild();
@@ -133,7 +133,7 @@ export function createRpcObserverClient<TApi extends ObserverApi<unknown>>(
     function get(_target: unknown, nameOrSymbol: string | symbol) {
         if (typeof nameOrSymbol !== 'string') {
             return () => {
-                throw new Error('rpc client supports only string methods');
+                throw new AppError('rpc client supports only string methods');
             };
         }
         const name = nameOrSymbol;
@@ -141,47 +141,86 @@ export function createRpcObserverClient<TApi extends ObserverApi<unknown>>(
         const handler = api[name];
         if (!handler) {
             return () => {
-                throw new Error(`unknown rpc endpoint: ${name}`);
+                throw new AppError(`unknown rpc endpoint: ${name}`);
             };
         }
 
-        return (arg: unknown, headers?: MessageHeaders) => {
-            // validate argument
-            arg = handler.req.parse(arg);
+        return Object.assign(
+            (arg: unknown, headers?: MessageHeaders) => {
+                // validate argument
+                arg = handler.req.parse(arg);
 
-            if (handler.type === 'handler') {
-                const start = performance.now();
-                return server.handle({name, arg}, headers).finally(() => {
-                    const elapsed = performance.now() - start;
+                if (handler.type === 'handler') {
+                    const start = performance.now();
+                    return server.handle({name, arg}, headers).finally(() => {
+                        const elapsed = performance.now() - start;
+                        if (logLatency) {
+                            log.info(
+                                `${name}(${JSON.stringify(
+                                    arg
+                                )}) took ${elapsed.toFixed(2)}ms`
+                            );
+                        }
+                    });
+                } else if (handler.type === 'streamer') {
+                    return server.stream({name, arg}, headers);
+                } else if (handler.type === 'observer') {
+                    const start = performance.now();
+                    const stream = server.observe(
+                        {name, arg},
+                        headers
+                    ) as Stream<ObservableItem<unknown, unknown>>;
+                    return toObservable(stream).finally(() => {
+                        const elapsed = performance.now() - start;
+                        if (logLatency) {
+                            log.info(
+                                `${name}(${JSON.stringify(
+                                    arg
+                                )}) took ${elapsed.toFixed(2)}ms`
+                            );
+                        }
+                    });
+                } else {
+                    assertNever(handler);
+                }
+            },
+            {
+                async once(arg: unknown, headers?: MessageHeaders) {
+                    // validate argument
+                    arg = handler.req.parse(arg);
+
+                    assert(
+                        handler.type === 'observer',
+                        "expected observer for 'once'"
+                    );
+                    const start = performance.now();
+
+                    const stream = server.observe(
+                        {name, arg},
+                        headers
+                    ) as Stream<ObservableItem<unknown, unknown>>;
+                    const result = await stream.first();
                     if (logLatency) {
+                        const elapsed = performance.now() - start;
                         log.info(
                             `${name}(${JSON.stringify(
                                 arg
                             )}) took ${elapsed.toFixed(2)}ms`
                         );
                     }
-                });
-            } else if (handler.type === 'streamer') {
-                return server.stream({name, arg}, headers);
-            } else if (handler.type === 'observer') {
-                const start = performance.now();
-                const stream = server.observe({name, arg}, headers) as Stream<
-                    ObservableItem<unknown, unknown>
-                >;
-                return toObservable(stream).finally(() => {
-                    const elapsed = performance.now() - start;
-                    if (logLatency) {
-                        log.info(
-                            `${name}(${JSON.stringify(
-                                arg
-                            )}) took ${elapsed.toFixed(2)}ms`
-                        );
-                    }
-                });
-            } else {
-                assertNever(handler);
+                    assert(
+                        result !== undefined,
+                        'observable ended without start event'
+                    );
+                    assert(
+                        result.type === 'start',
+                        'observable must start with a start event'
+                    );
+
+                    return result.value;
+                },
             }
-        };
+        );
     }
 
     return new Proxy<any>({}, {get});
@@ -198,10 +237,12 @@ export async function toObservable<TValue, TUpdate>(
 
     const firstResult = await iterator.next();
     if (firstResult.done) {
-        throw new Error("Source iterable is empty; expected a 'start' event.");
+        throw new AppError(
+            "Source iterable is empty; expected a 'start' event."
+        );
     }
     if (firstResult.value.type !== 'start') {
-        throw new Error("Expected the first event to be 'start'.");
+        throw new AppError("Expected the first event to be 'start'.");
     }
     const initialValue = firstResult.value.value;
 
@@ -216,7 +257,7 @@ export async function toObservable<TValue, TUpdate>(
                 if (event.type === 'update') {
                     yield event.update;
                 } else {
-                    throw new Error(`Unexpected event type: ${event.type}`);
+                    throw new AppError(`Unexpected event type: ${event.type}`);
                 }
             }
         } finally {

@@ -30,10 +30,16 @@
 		console.log('res', res);
 	}
 
+	const auth = getAuthManager();
+	function signOut() {
+		auth.logOut();
+	}
+
 	let detailsPromise: Promise<string> | undefined = $state(undefined);
 </script>
 
 <Button variant="destructive" onclick={() => sdk(x => x.truncateDb({}))}>Reset store</Button>
+<Button variant="destructive" onclick={() => sdk(x => signOut())}>Sign out</Button>
 <div class="flex gap-8">
 	<div>
 		{#if itemsPromise}

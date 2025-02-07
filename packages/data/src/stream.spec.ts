@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
+import {AppError} from './errors.js';
 import {Stream, toStream} from './stream.js';
 
 describe('Stream', () => {
@@ -23,7 +24,7 @@ describe('Stream', () => {
     });
 
     it('should propagate errors from the executor', async () => {
-        const error = new Error('Test error');
+        const error = new AppError('Test error');
         const valueStream = new Stream<number>(channel => {
             const _ = channel.throw(error);
             return () => {};
@@ -121,7 +122,7 @@ describe('Stream', () => {
     });
 
     it('should handle MAX_LOOKAHEAD_COUNT during map parallel', async () => {
-        const values: number[] = Array(MAX_LOOKAHEAD_COUNT + 1).fill(1);
+        const values: number[] = Array<number>(MAX_LOOKAHEAD_COUNT + 1).fill(1);
 
         const result = await toStream(values)
             .mapParallel(value => Promise.resolve(value + 1))

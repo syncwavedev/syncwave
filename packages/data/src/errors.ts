@@ -4,9 +4,9 @@ import {context} from './context.js';
 export class AppError extends Error {
     toJSON() {
         return {
-            message: this.message,
+            name: `${this.constructor.name} (${this.name})`,
             stack: this.stack,
-            name: this.name,
+            cause: this.cause,
         };
     }
 }
@@ -99,6 +99,8 @@ export function toError(reason: unknown): AppError {
         const result = new AppError();
         result.stack = reason.stack;
         result.message = reason.message;
+        result.name = reason.name;
+        result.cause = reason;
         return result;
     }
 

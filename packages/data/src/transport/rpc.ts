@@ -365,10 +365,12 @@ export type InferRpcClient<T extends Api<any>> = {
         infer TValue,
         infer TUpdate
     >
-        ? (
+        ? ((
               req: TReq,
               headers?: MessageHeaders
-          ) => Promise<[initialValue: TValue, Cursor<TUpdate>]>
+          ) => Promise<[initialValue: TValue, Cursor<TUpdate>]>) & {
+              once(req: TReq, headers?: MessageHeaders): Promise<TValue>;
+          }
         : T[K] extends Streamer<any, infer TReq, infer TItem>
           ? (req: TReq, headers?: MessageHeaders) => Stream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>
@@ -383,10 +385,12 @@ export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
         infer TValue,
         infer TUpdate
     >
-        ? (
+        ? ((
               req: TReq,
               headers: MessageHeaders
-          ) => Promise<[initialValue: TValue, Cursor<TUpdate>]>
+          ) => Promise<[initialValue: TValue, Cursor<TUpdate>]>) & {
+              once(req: TReq, headers: MessageHeaders): Promise<TValue>;
+          }
         : T[K] extends Streamer<any, infer TReq, infer TItem>
           ? (req: TReq, headers: MessageHeaders) => Stream<TItem>
           : T[K] extends Handler<any, infer TReq, infer TRes>

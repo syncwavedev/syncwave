@@ -266,7 +266,7 @@ export function reportRpcError(error: unknown, context: string) {
     if (error instanceof BusinessError) {
         log.warn(error, `[${context}] rpc business error`);
     } else if (error instanceof CancelledError) {
-        log.debug(error, `[${context}] rpc cancelled`);
+        log.debug(`[${context}] rpc cancelled`);
     } else {
         log.error(
             toError(error),

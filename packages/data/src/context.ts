@@ -92,6 +92,11 @@ export class Context {
         ];
     }
 
+    detach(fn: () => Nothing): void {
+        const [ctx] = this.createBackground();
+        ctx.run(fn);
+    }
+
     createBackground(options?: {traceId?: TraceId}): [Context, Cancel] {
         return Context.root().createChild(options);
     }

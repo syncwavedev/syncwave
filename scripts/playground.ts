@@ -1,5 +1,6 @@
 import {from} from 'ix/asynciterable';
 import {map} from 'ix/asynciterable/operators';
+import {log} from '../packages/data/src/logger.js';
 
 // Example async iterable that might throw an error
 const source = async function* () {
@@ -17,7 +18,7 @@ const result = from(_catch(source(), err => ({type: 'err', err}))).pipe(
 // Consume the result
 const _ = (async () => {
     for await (const value of result) {
-        console.log(value);
+        log.info(JSON.stringify(value));
     }
 })();
 
@@ -33,11 +34,11 @@ function _catch<T, R>(
                     target
                         .next(value)
                         .then(res => {
-                            console.log('res', res);
+                            log.info('res: ' + res);
                             return res;
                         })
                         .catch(async error => {
-                            console.log('hello');
+                            log.info('hello');
                             return {
                                 done: false,
                                 value: await map(error),

@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev | pino-pretty --config ../../.pino-prettyrc",
+		"dev": "NODE_OPTIONS='--enable-source-maps' vite dev | pino-pretty --config ../../.pino-prettyrc",
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

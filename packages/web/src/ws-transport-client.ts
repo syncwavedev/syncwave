@@ -37,7 +37,8 @@ export class WsTransportClient<T> implements TransportClient<T> {
 			ws.addEventListener('error', err => {
 				log.trace('ws connect: error: ' + err.message);
 				const codes = ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EPIPE'];
-				if (codes.some(code => err.message.includes(code))) {
+				// err.message might be undefined
+				if (codes.some(code => err.message?.includes(code))) {
 					reject(new TransportServerUnreachableError(err.message));
 				} else {
 					reject(err);

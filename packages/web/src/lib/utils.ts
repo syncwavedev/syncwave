@@ -68,6 +68,7 @@ const transport = new WsTransportClient({
 	codec: new MsgpackCodec(),
 });
 const connectionPool = new ConnectionPool(transport);
+// const connectionPool = transport;
 
 export function createParticipantClient(serverCookies: CookieEntry[]) {
 	const authManager = createAuthManager(serverCookies);

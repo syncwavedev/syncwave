@@ -77,10 +77,22 @@ export class WsConnection<T> implements Connection<T> {
             this.ws.send(data, (error?: unknown) => {
                 try {
                     if (error) {
-                        const err = new AppError();
-                        err.cause = error;
-                        err.message = 'got message: ' + JSON.stringify(message);
-                        resolve(this.subject.throw(err));
+                        if (
+                            typeof error === 'object' &&
+                            'message' in error &&
+                            typeof error.message === 'string' &&
+                            error.message.includes('WebSocket is not open')
+                        ) {
+                            resolve(
+                                this.subject.throw(new ConnectionClosedError())
+                            );
+                        } else {
+                            const err = new AppError();
+                            err.cause = toError(error);
+                            err.message =
+                                'got message: ' + JSON.stringify(message);
+                            resolve(this.subject.throw(err));
+                        }
                     }
                     resolve();
                 } catch (error) {

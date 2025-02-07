@@ -22,9 +22,11 @@
 
 		// Generate the avatar
 		const avatar =
-			words.length > 1
-				? words[0][0].toUpperCase() + words[1][0].toUpperCase()
-				: words[0][0].toUpperCase();
+			words.length > 0
+				? words.length > 1
+					? words[0][0].toUpperCase() + words[1][0].toUpperCase()
+					: words[0][0].toUpperCase()
+				: '';
 
 		const colors = [
 			'#e66651',

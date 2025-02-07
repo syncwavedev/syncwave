@@ -10,7 +10,7 @@ import {
 import {createReadApi, ReadApiState} from '../data/read-api.js';
 import {createWriteApi, WriteApiState} from '../data/write-api.js';
 import {BusinessError} from '../errors.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {
     Api,
     applyMiddleware,
@@ -116,7 +116,7 @@ export function createCoordinatorApi() {
     >(
         combinedApi,
         async (next, state, headers, processor, processorName, arg) => {
-            return await logger.time(
+            return await log.time(
                 `rpc ${processorName}(${JSON.stringify(arg)})`,
                 () => next(state)
             );

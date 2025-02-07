@@ -1,4 +1,4 @@
-import {logger} from './logger.js';
+import {log} from './logger.js';
 import {Nothing} from './utils.js';
 
 export class Cursor<T> implements AsyncIterable<T> {
@@ -43,7 +43,7 @@ export class Cursor<T> implements AsyncIterable<T> {
         if (this.isConsumed) return;
 
         this.iter.return?.().catch(error => {
-            logger.error('failed to close cursor', error);
+            log.error('failed to close cursor', error);
         });
     }
 }

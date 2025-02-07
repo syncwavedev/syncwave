@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {BusinessError} from '../errors.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {observable, toStream} from '../stream.js';
 import {createApi, InferRpcClient, observer} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
@@ -119,7 +119,7 @@ export function createReadApi() {
                         .then(x => x.map(() => undefined))
                         .then(x =>
                             x.finally(() => {
-                                logger.debug('getMyBoards finish updates');
+                                log.debug('getMyBoards finish updates');
                             })
                         ),
                 });
@@ -230,7 +230,7 @@ export function createReadApi() {
                 tasks: z.array(zTask()),
             }),
             observe: async (st, {key}) => {
-                const board = await logger.time('getBoardView get board', () =>
+                const board = await log.time('getBoardView get board', () =>
                     st.transact(tx => tx.boards.getByKey(key))
                 );
                 if (board === undefined) {

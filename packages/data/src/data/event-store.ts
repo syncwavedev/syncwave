@@ -5,7 +5,7 @@ import {
 import {Cursor} from '../cursor.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {ReadonlyCell} from '../kv/readonly-cell.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {Channel, Stream, toStream} from '../stream.js';
 import {interval, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
@@ -90,7 +90,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                         if (result.length === EVENT_STORE_MAX_PULL_COUNT) {
                             // we don't wanna block on this call to avoid a deadlock
                             selfTrigger.next().catch((error: unknown) => {
-                                logger.error(
+                                log.error(
                                     'failed to trigger event store iteration',
                                     error
                                 );
@@ -103,7 +103,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                     return events;
                 } catch (error) {
-                    logger.error('EventStoreReader.subscribe', error);
+                    log.error('EventStoreReader.subscribe', error);
                     return [];
                 }
             })

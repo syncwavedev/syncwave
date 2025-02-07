@@ -5,7 +5,7 @@ import {
     ConnectionClosedError,
     context,
     Deferred,
-    logger,
+    log,
     Nothing,
     Observer,
     Subject,
@@ -32,7 +32,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', async (ws: WebSocket) => {
-            logger.trace('ws server connection');
+            log.trace('ws server connection');
             await launchCtx.run(async () => {
                 const conn = new WsConnection<T>(ws, this.opt.codec);
                 cb(conn);
@@ -42,7 +42,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         const listening = new Deferred<void>();
 
         this.wss.on('listening', async () => {
-            logger.trace('ws server running');
+            log.trace('ws server running');
             await launchCtx.run(async () => {
                 listening.resolve();
             });
@@ -70,7 +70,7 @@ export class WsConnection<T> implements Connection<T> {
 
     async send(message: T): Promise<void> {
         this.ensureOpen();
-        logger.trace('ws.send', message);
+        log.trace('ws.send', message);
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: unknown) => {
@@ -90,7 +90,7 @@ export class WsConnection<T> implements Connection<T> {
     }
 
     subscribe(observer: Observer<T>) {
-        logger.trace('ws.subscribe');
+        log.trace('ws.subscribe');
         this.ensureOpen();
         return this.subject.subscribe(observer);
     }
@@ -114,7 +114,7 @@ export class WsConnection<T> implements Connection<T> {
                     const message = this.codec.decode(rawData);
                     await this.subject.next(message);
                 } catch (error) {
-                    logger.error('ws.message', error);
+                    log.error('ws.message', error);
                 }
             });
         });
@@ -122,10 +122,10 @@ export class WsConnection<T> implements Connection<T> {
         this.ws.on('error', async error => {
             await capturedCtx.run(async () => {
                 try {
-                    logger.debug('WsConnection error', error);
+                    log.debug('WsConnection error', error);
                     await this.subject.throw(toError(error));
                 } catch (error) {
-                    logger.error('ws.error', error);
+                    log.error('ws.error', error);
                 }
             });
         });
@@ -133,19 +133,19 @@ export class WsConnection<T> implements Connection<T> {
         this.ws.on('unexpected-response', async () => {
             await capturedCtx.run(async () => {
                 try {
-                    logger.debug('WsConnection unexpected-response');
+                    log.debug('WsConnection unexpected-response');
                     await this.subject.throw(
                         new Error('ws.unexpected response')
                     );
                 } catch (error) {
-                    logger.error('error during ws.unexpected-response', error);
+                    log.error('error during ws.unexpected-response', error);
                 }
             });
         });
 
         this.ws.on('close', async () => {
             await capturedCtx.run(async () => {
-                logger.debug('WsConnection close');
+                log.debug('WsConnection close');
                 this.subject.close();
             });
         });

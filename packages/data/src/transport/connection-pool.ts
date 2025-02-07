@@ -1,5 +1,5 @@
 import {context} from '../context.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {Observer, Subject, Unsubscribe} from '../utils.js';
 import {Connection, TransportClient} from './transport.js';
 
@@ -65,7 +65,7 @@ export class ConnectionPool<T> {
 
         this.busyConnections.push(connection);
 
-        logger.debug(
+        log.debug(
             `connection pool, free = ${this.freeConnections.length}, busy = ${this.busyConnections.length}`
         );
 

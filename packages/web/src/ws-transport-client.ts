@@ -1,7 +1,7 @@
 import WebSocket from 'isomorphic-ws';
 import {
 	assert,
-	logger,
+	log,
 	Subject,
 	TransportServerUnreachableError,
 	type Codec,
@@ -20,20 +20,20 @@ export class WsTransportClient<T> implements TransportClient<T> {
 	constructor(private readonly opt: WsTransportClientOptions<T>) {}
 
 	connect(): Promise<Connection<T>> {
-		logger.trace('ws connect');
+		log.trace('ws connect');
 
 		return new Promise((resolve, reject) => {
 			const ws = new WebSocket(this.opt.url);
 			ws.binaryType = 'arraybuffer';
 
 			ws.addEventListener('open', () => {
-				logger.trace('ws connect: open');
+				log.trace('ws connect: open');
 				const connection = new WsClientConnection<T>(ws, this.opt.codec);
 				resolve(connection);
 			});
 
 			ws.addEventListener('error', err => {
-				logger.trace('ws connect: error', err.message);
+				log.trace('ws connect: error', err.message);
 				const codes = ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EPIPE'];
 				if (codes.some(code => err.message.includes(code))) {
 					reject(new TransportServerUnreachableError(err.message));
@@ -56,19 +56,19 @@ export class WsClientConnection<T> implements Connection<T> {
 
 		this.subscribe({
 			next: async msg => {
-				logger.debug('ws got', msg);
+				log.debug('ws got', msg);
 			},
 			throw: async err => {
-				logger.error('ws err', err);
+				log.error('ws err', err);
 			},
 			close: () => {
-				logger.debug('ws closed');
+				log.debug('ws closed');
 			},
 		});
 	}
 
 	send(message: T): Promise<void> {
-		logger.trace('ws client: send', message);
+		log.trace('ws client: send', message);
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 
@@ -76,12 +76,12 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	subscribe(cb: Observer<T>): Unsubscribe {
-		logger.trace('ws subscribe');
+		log.trace('ws subscribe');
 		return this.subject.subscribe(cb);
 	}
 
 	close(): void {
-		logger.trace('ws client: close');
+		log.trace('ws client: close');
 		this.ws.close();
 	}
 
@@ -92,21 +92,21 @@ export class WsClientConnection<T> implements Connection<T> {
 				const message = this.codec.decode(new Uint8Array(event.data));
 				await this.subject.next(message);
 			} catch (error) {
-				logger.error('error during ws message', {error, open: this.subject.open});
+				log.error('error during ws message', {error, open: this.subject.open});
 			}
 		});
 
 		this.ws.addEventListener('error', async error => {
-			logger.error('ws client: error event', error);
+			log.error('ws client: error event', error);
 			try {
 				await this.subject.throw(new Error('ws.error: ' + error.toString()));
 			} catch (error) {
-				logger.error('error during ws error', error);
+				log.error('error during ws error', error);
 			}
 		});
 
 		this.ws.addEventListener('close', () => {
-			logger.trace('ws client: close event');
+			log.trace('ws client: close event');
 			this.subject.close();
 		});
 	}

@@ -1,5 +1,5 @@
 import {RECONNECT_WAIT_MS} from '../constants.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {Observer, Subject, Unsubscribe, wait} from '../utils.js';
 import {
     Connection,
@@ -17,9 +17,9 @@ export class PersistentConnection<T> implements Connection<T> {
     constructor(private readonly transport: TransportClient<T>) {}
 
     async send(message: T): Promise<void> {
-        logger.trace('persistent connection: send', message);
+        log.trace('persistent connection: send', message);
         const connection = await this.getConnection();
-        logger.trace('persistent connection: got connection');
+        log.trace('persistent connection: got connection');
         if (connection === 'closed_during_connect') {
             return;
         }
@@ -32,7 +32,7 @@ export class PersistentConnection<T> implements Connection<T> {
 
         // connect if not already
         this.getConnection().catch(err => {
-            logger.error('error while connection to the server: ', err);
+            log.error('error while connection to the server: ', err);
         });
 
         return this.subject.subscribe(cb);
@@ -61,11 +61,11 @@ export class PersistentConnection<T> implements Connection<T> {
                         return await this.transport.connect();
                     } catch (error) {
                         if (error instanceof TransportServerUnreachableError) {
-                            logger.warn(
+                            log.warn(
                                 `server is unreachable (${error.message}), retrying...`
                             );
                         } else {
-                            logger.error(
+                            log.error(
                                 'persistent connection: error while connecting to the server: ',
                                 error
                             );
@@ -82,12 +82,12 @@ export class PersistentConnection<T> implements Connection<T> {
                                 new Error('connection is lost, reconnection...')
                             );
                         } catch (error) {
-                            logger.error('reconnect observers error', error);
+                            log.error('reconnect observers error', error);
                         }
 
                         // reconnect
                         this.getConnection().catch(err => {
-                            logger.error(
+                            log.error(
                                 'error while reconnection to the server: ',
                                 err
                             );
@@ -99,13 +99,13 @@ export class PersistentConnection<T> implements Connection<T> {
                     next: message => this.subject.next(message),
                     throw: async error => {
                         unsub();
-                        logger.error('error in underlying connection', error);
+                        log.error('error in underlying connection', error);
                         await reconnect();
                     },
                     close: () => {
                         unsub();
                         reconnect().catch(error => {
-                            logger.error('close => reconnect', error);
+                            log.error('close => reconnect', error);
                         });
                     },
                 });

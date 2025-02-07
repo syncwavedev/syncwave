@@ -8,7 +8,7 @@ import {
     getReadableError,
 } from '../errors.js';
 import {JobManager} from '../job-manager.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {
     createMessageId,
     Message,
@@ -197,7 +197,7 @@ async function proxyRequest(
                 }
             })
             .catch(err => {
-                logger.error('unexpected error after rpc timed out', err);
+                log.error('unexpected error after rpc timed out', err);
             });
 
         await conn.send({
@@ -250,11 +250,11 @@ function createHandlerProxy(
 
 export function reportRpcError(error: unknown) {
     if (error instanceof BusinessError) {
-        logger.warn('business error', error);
+        log.warn('business error', error);
     } else if (error instanceof CancelledError) {
-        logger.debug('cancelled error', error);
+        log.debug('cancelled error', error);
     } else {
-        logger.error('unexpected error', error);
+        log.error('unexpected error', error);
     }
 }
 

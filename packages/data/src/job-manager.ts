@@ -1,5 +1,5 @@
 import {Cancel, context, TraceId} from './context.js';
-import {logger} from './logger.js';
+import {log} from './logger.js';
 
 interface Job {
     readonly cancel: Cancel;
@@ -33,9 +33,9 @@ export class JobManager<T extends string> {
             this.runningJobs.delete(id);
             this.cancelledJobs.add(id);
         } else if (this.cancelledJobs.has(id)) {
-            logger.warn(`job ${id} is already cancelled`);
+            log.warn(`job ${id} is already cancelled`);
         } else {
-            logger.warn(`unknown job: ${id}`);
+            log.warn(`unknown job: ${id}`);
         }
     }
 
@@ -48,7 +48,7 @@ export class JobManager<T extends string> {
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
         } else {
-            logger.warn(`unknown job: ${job}`);
+            log.warn(`unknown job: ${job}`);
         }
     }
 

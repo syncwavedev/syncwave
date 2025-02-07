@@ -2,7 +2,7 @@ import {TypeOf, ZodType} from 'zod';
 import {Cursor} from '../cursor.js';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {Observable, Stream} from '../stream.js';
 import {Message, MessageHeaders} from '../transport/message.js';
 import {Connection, TransportServer} from '../transport/transport.js';
@@ -314,7 +314,7 @@ export function applyMiddleware<
                     req
                 ).catch(error => {
                     if (signal.state !== 'pending') {
-                        logger.error('middleware failed after next()', error);
+                        log.error('middleware failed after next()', error);
                     } else {
                         signal.reject(error);
                     }

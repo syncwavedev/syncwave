@@ -1,5 +1,5 @@
 import {Codec} from '../codec.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {Nothing, Observer, Subject, Unsubscribe} from '../utils.js';
 import {Connection, TransportClient, TransportServer} from './transport.js';
 
@@ -22,7 +22,7 @@ export class MemConnection<T> implements Connection<T> {
     async send(message: T) {
         this.ensureOpen();
 
-        logger.debug('mem connection send', message);
+        log.debug('mem connection send', message);
 
         // don't wait for peer to respond
         await this.peer.receive(this.codec.encode(message));
@@ -31,13 +31,13 @@ export class MemConnection<T> implements Connection<T> {
     subscribe(observer: Observer<T>): Unsubscribe {
         this.ensureOpen();
 
-        logger.debug('mem connection subscribe');
+        log.debug('mem connection subscribe');
 
         return this.subject.subscribe(observer);
     }
 
     async close(): Promise<void> {
-        logger.debug('mem connection close');
+        log.debug('mem connection close');
         this.subject.close();
         if (this.peer.subject.open) {
             await this.peer.close();
@@ -46,7 +46,7 @@ export class MemConnection<T> implements Connection<T> {
 
     private async receive(rawMessage: Uint8Array): Promise<void> {
         const message = this.codec.decode(rawMessage);
-        logger.debug('mem connection receive', message);
+        log.debug('mem connection receive', message);
         await this.subject.next(message);
     }
 

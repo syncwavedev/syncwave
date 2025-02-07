@@ -9,7 +9,7 @@ import {
     JwtService,
 } from '../data/infrastructure.js';
 import {Uint8KVStore} from '../kv/kv-store.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {
     MemTransportClient,
     MemTransportServer,
@@ -47,7 +47,7 @@ export class CoordinatorServer {
         );
 
         hubServer.launch().catch(error => {
-            logger.error('HubServer failed to launch', error);
+            log.error('HubServer failed to launch', error);
         });
 
         const hubClient = new HubClient(

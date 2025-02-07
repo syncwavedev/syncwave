@@ -1,7 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {context, createTraceId, TraceId} from './context.js';
 import {JobManager} from './job-manager.js';
-import {logger} from './logger.js';
+import {log} from './logger.js';
 import {whenAll} from './utils.js';
 
 describe('JobManager', () => {
@@ -9,13 +9,13 @@ describe('JobManager', () => {
     let traceId: TraceId;
 
     beforeEach(() => {
-        logger.setLogLevel('none');
+        log.setLogLevel('none');
         manager = new JobManager();
         traceId = createTraceId();
     });
 
     afterEach(() => {
-        logger.setLogLevel('info');
+        log.setLogLevel('info');
     });
 
     it('should start a job successfully', async () => {

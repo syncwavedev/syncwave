@@ -8,7 +8,7 @@ import {
     Uint8KVStore,
     Uint8Transaction,
     context,
-    logger,
+    log,
     mapCondition,
 } from 'syncwave-data';
 
@@ -118,7 +118,7 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                     this.pool
                         .query('SELECT pg_cancel_backend($1)', [pid])
                         .catch(error => {
-                            logger.error('Failed to cancel transaction', error);
+                            log.error('Failed to cancel transaction', error);
                         });
                 });
 
@@ -147,7 +147,7 @@ export class PostgresUint8KVStore implements Uint8KVStore {
         try {
             await this.pool.end();
         } catch (error) {
-            logger.error('Failed to close Postgres pool', error);
+            log.error('Failed to close Postgres pool', error);
         }
     }
 }

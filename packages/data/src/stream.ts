@@ -4,7 +4,7 @@ import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cancel, CancelledError} from './context.js';
 import {Cursor} from './cursor.js';
 import {toError} from './errors.js';
-import {logger} from './logger.js';
+import {log} from './logger.js';
 import {assert, Nothing} from './utils.js';
 
 export interface ChannelWriter<T> {
@@ -18,7 +18,7 @@ export class Channel<T> implements AsyncIterable<T>, ChannelWriter<T> {
 
     async next(value: T) {
         if (this.chan.closed) {
-            logger.debug('Channel closed, next', value);
+            log.debug('Channel closed, next', value);
             return;
         }
         await this.chan.push(value);
@@ -32,7 +32,7 @@ export class Channel<T> implements AsyncIterable<T>, ChannelWriter<T> {
     }
 
     end() {
-        logger.debug('Channel close');
+        log.debug('Channel close');
         if (this.chan.closed) {
             return;
         }
@@ -96,7 +96,7 @@ export function toStream<T>(
                     .throw(new CancelledError())
                     .finally(() => channel.end())
                     .catch(error => {
-                        logger.error('stream unsubscribe', error);
+                        log.error('stream unsubscribe', error);
                     });
             };
         });

@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {Cancel, CancelledError, Context, context} from '../context.js';
 import {getErrorCode, getReadableError, toError} from '../errors.js';
 import {JobManager} from '../job-manager.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {Channel, ChannelWriter, Stream} from '../stream.js';
 import {Message, MessageHeaders} from '../transport/message.js';
 import {catchConnectionClosed, Connection} from '../transport/transport.js';
@@ -146,7 +146,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         }
                     )
                 ).catch(error => {
-                    logger.error('stream failed', error);
+                    log.error('stream failed', error);
                 });
 
                 return {streamId};
@@ -205,7 +205,7 @@ class RpcStreamerClientApiState {
                 writer.throw(new CancelledError()).finally(() => writer.end())
             )
             .catch(error => {
-                logger.error('failed to finish the channel', error);
+                log.error('failed to finish the channel', error);
             });
     }
 
@@ -218,7 +218,7 @@ class RpcStreamerClientApiState {
     private getSub(streamId: StreamId) {
         const channel = this.subs.get(streamId);
         if (!channel) {
-            logger.debug(`unknown streamId: ${streamId}`);
+            log.debug(`unknown streamId: ${streamId}`);
         }
 
         return channel;
@@ -337,17 +337,14 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                         await channel.pipe(writer);
                     }).catch(error => {
                         cleanup();
-                        logger.error(
-                            `failed to start streaming ${name}`,
-                            error
-                        );
+                        log.error(`failed to start streaming ${name}`, error);
                     });
 
                     return () => {
                         cleanup();
                         catchConnectionClosed(server.cancel({streamId})).catch(
                             error => {
-                                logger.error('failed to cancel stream', error);
+                                log.error('failed to cancel stream', error);
                             }
                         );
                     };

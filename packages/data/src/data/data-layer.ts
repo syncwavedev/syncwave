@@ -3,7 +3,7 @@ import {CrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
 import {ReadonlyCell} from '../kv/readonly-cell.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {assert, whenAll} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
@@ -193,7 +193,7 @@ export class DataLayer {
             await whenAll(effectsSnapshot.map(effect => effect()));
 
             if (effects.length > 0) {
-                logger.info('effect recursion detected');
+                log.info('effect recursion detected');
             }
         }
 

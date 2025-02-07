@@ -1,6 +1,6 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
 import {context} from '../context.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {compareUint8Array} from '../utils.js';
 import {
     Condition,
@@ -130,7 +130,7 @@ export class MemLocker<TKey> {
             if (!fnQueue) {
                 this.fnQueueMap.set(key, []);
                 execute().catch(err => {
-                    logger.error(
+                    log.error(
                         'unexpected error during execute inside mem-locker: ',
                         err
                     );
@@ -155,7 +155,7 @@ export class MemLocker<TKey> {
         const nextFn = fnQueue.shift();
         if (nextFn) {
             nextFn().catch(err => {
-                logger.error(
+                log.error(
                     'unexpected error during nextFn in mem-locker: ',
                     err
                 );

@@ -7,7 +7,7 @@ import {
     AggregateError,
     BusinessError,
 } from './errors.js';
-import {logger} from './logger.js';
+import {log} from './logger.js';
 import {Stream, toStream} from './stream.js';
 
 export type Brand<T, B> = T & {__brand: () => B | undefined};
@@ -64,7 +64,7 @@ export class Subject<T> {
                     .throw(new CancelledError())
                     .finally(() => channel.end())
                     .catch(error => {
-                        logger.error('Subject.value$ unsubscribe', error);
+                        log.error('Subject.value$ unsubscribe', error);
                     });
             };
         });
@@ -73,7 +73,7 @@ export class Subject<T> {
     async next(value: T): Promise<void> {
         this.ensureOpen();
 
-        logger.debug(`subject next, len = ${this.subs.length}`);
+        log.debug(`subject next, len = ${this.subs.length}`);
         // copy in case if new subscribers are added/removed during notification
         await whenAll(
             [...this.subs].map(sub =>
@@ -99,7 +99,7 @@ export class Subject<T> {
                 sub.context.run(() => sub.observer.close());
             }
         } else {
-            logger.warn('subject already closed');
+            log.warn('subject already closed');
         }
     }
 

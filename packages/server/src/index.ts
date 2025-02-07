@@ -19,7 +19,7 @@ import {
     getGoogleUser,
     JwtPayload,
     JwtService,
-    logger,
+    log,
     MsgpackCodec,
     PrefixedKVStore,
     toStream,
@@ -106,12 +106,12 @@ const jwtService: JwtService = {
 
 async function getKVStore(): Promise<Uint8KVStore> {
     if (STAGE === 'sqlite') {
-        logger.info('using SQLite as primary store');
+        log.info('using SQLite as primary store');
         return await import('./sqlite-kv-store.js').then(
             x => new x.SqliteUint8KVStore('./dev.sqlite')
         );
     } else if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
-        logger.info('using PostgreSQL as primary store');
+        log.info('using PostgreSQL as primary store');
         return await import('./postgres-kv-store.js').then(
             x =>
                 new x.PostgresUint8KVStore({
@@ -123,7 +123,7 @@ async function getKVStore(): Promise<Uint8KVStore> {
                 })
         );
     } else {
-        logger.info('using FoundationDB as a primary store');
+        log.info('using FoundationDB as a primary store');
         const fdbStore = await import('./fdb-kv-store.js').then(
             x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
         );
@@ -186,21 +186,21 @@ async function launch() {
     );
 
     async function shutdown() {
-        logger.info('shutting down...');
+        log.info('shutting down...');
         coordinator.close();
-        logger.info('coordinator is closed');
+        log.info('coordinator is closed');
         httpServer.close();
 
         const activeResources = process
             .getActiveResourcesInfo()
             .filter(x => x !== 'TTYWrap');
         if (activeResources.length > 0) {
-            logger.error(
+            log.error(
                 'failed to gracefully shutdown, active resources:',
                 activeResources
             );
         } else {
-            logger.info('finishing...');
+            log.info('finishing...');
         }
 
         // eslint-disable-next-line n/no-process-exit
@@ -209,7 +209,7 @@ async function launch() {
 
     context().onCancel(() => {
         shutdown().catch(error => {
-            logger.error('failed to shutdown', error);
+            log.error('failed to shutdown', error);
         });
     });
 
@@ -238,9 +238,7 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
         }
 
         if (!result.user.verified_email || !result.user.email) {
-            logger.warn(
-                `Google user has unverified email: ${result.user.email}`
-            );
+            log.warn(`Google user has unverified email: ${result.user.email}`);
             return request.redirect(`${APP_URL}/auth/log-in/failed`);
         }
 
@@ -258,7 +256,7 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
     });
 }
 
-logger.setLogLevel(LOG_LEVEL);
+log.setLogLevel(LOG_LEVEL);
 
 const [serverCtx, cancelServerCtx] = context().createChild();
 
@@ -266,22 +264,22 @@ process.once('SIGINT', () => cancelServerCtx());
 process.once('SIGTERM', () => cancelServerCtx());
 process.on('unhandledRejection', reason => {
     if (reason instanceof CancelledError) {
-        logger.info('unhandled cancellation');
+        log.info('unhandled cancellation');
         return;
     }
 
-    logger.error('unhandled rejection', reason);
+    log.error('unhandled rejection', reason);
 });
 
 serverCtx
     .run(async () => {
         try {
             await launch();
-            logger.info(`coordinator is running on port ${PORT}`);
+            log.info(`coordinator is running on port ${PORT}`);
         } catch (err) {
-            logger.error('', err);
+            log.error('', err);
         }
     })
     .catch(error => {
-        logger.error('error during launch', error);
+        log.error('error during launch', error);
     });

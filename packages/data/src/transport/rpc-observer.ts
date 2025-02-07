@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
 import {context} from '../context.js';
 import {toCursor} from '../cursor.js';
-import {logger} from '../logger.js';
+import {log} from '../logger.js';
 import {Observable, Stream, toStream} from '../stream.js';
 import {Message, MessageHeaders} from '../transport/message.js';
 import {Connection} from '../transport/transport.js';
@@ -91,7 +91,7 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
                         }
                     })
                     .catch(error => {
-                        logger.error(
+                        log.error(
                             'unexpected error during rpc observer cancellation',
                             error
                         );
@@ -153,7 +153,7 @@ export function createRpcObserverClient<TApi extends ObserverApi<unknown>>(
                 return server.handle({name, arg}, headers).finally(() => {
                     const elapsed = performance.now() - start;
                     if (logLatency) {
-                        logger.info(
+                        log.info(
                             `${name}(${JSON.stringify(
                                 arg
                             )}) took ${elapsed.toFixed(2)}ms`
@@ -170,7 +170,7 @@ export function createRpcObserverClient<TApi extends ObserverApi<unknown>>(
                 return toObservable(stream).finally(() => {
                     const elapsed = performance.now() - start;
                     if (logLatency) {
-                        logger.info(
+                        log.info(
                             `${name}(${JSON.stringify(
                                 arg
                             )}) took ${elapsed.toFixed(2)}ms`
@@ -223,7 +223,7 @@ export async function toObservable<TValue, TUpdate>(
                 try {
                     await iterator.return();
                 } catch (error) {
-                    logger.error('transformAsyncIterable finally', error);
+                    log.error('transformAsyncIterable finally', error);
                 }
             }
         }

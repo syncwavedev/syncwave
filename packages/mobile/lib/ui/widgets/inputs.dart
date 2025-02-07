@@ -220,7 +220,7 @@ class _TextFieldState extends State<TextField> {
     return Positioned.fill(
       child: IgnorePointer(
         child: Text(
-          widget.placeholder!,
+          widget.placeholder ?? '',
           style: textStyle.copyWith(
             color: context.colors.inkSecondary.withAlpha(175),
           ),
@@ -234,8 +234,9 @@ class _TextFieldState extends State<TextField> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = (widget.style ?? TextStyle()).copyWith(
+    final textStyle = (widget.style ?? const TextStyle()).copyWith(
       color: widget.enabled ? context.colors.ink : context.colors.inkMuted,
+      fontSize: 14.0, // Add default font size
     );
 
     return MouseRegion(
@@ -274,7 +275,7 @@ class _TextFieldState extends State<TextField> {
       cursorColor: widget.cursorColor ?? context.colors.ink,
       backgroundCursorColor: context.colors.inkSecondary,
       cursorWidth: widget.cursorWidth,
-      cursorHeight: widget.cursorHeight ?? textStyle.fontSize!,
+      cursorHeight: widget.cursorHeight ?? textStyle.fontSize,
       cursorRadius: widget.cursorRadius,
       textAlign: widget.textAlign,
       textDirection: widget.textDirection,

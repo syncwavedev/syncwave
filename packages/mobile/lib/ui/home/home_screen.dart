@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:syncwave/models/board.dart';
 import 'package:syncwave/ui/boards/board_screen.dart';
 import 'package:syncwave/ui/boards/boards_list.dart';
+import 'package:syncwave/ui/boards/new_board.dart';
 import 'package:syncwave/ui/core/navigator/navigator.dart';
 import 'package:syncwave/ui/core/themes/theme_extensions.dart';
 import 'package:syncwave/ui/widgets/avatar.dart';
@@ -9,6 +10,7 @@ import 'package:syncwave/ui/widgets/bottom_bar.dart';
 import 'package:syncwave/ui/widgets/icons.dart';
 import 'package:syncwave/ui/widgets/navigation_stack.dart';
 
+import '../widgets/bottom_sheet.dart';
 import '../widgets/buttons.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -42,7 +44,12 @@ class HomeScreen extends StatelessWidget {
             child: Icons.plus,
             onPressed: () {
               // Handle add board
-              debugPrint('Search');
+              showModalBottomSheet<void>(
+                builder: (context) => NewBoard(),
+                isDismissible: false,
+                showDragHandle: false,
+                context: context,
+              );
             },
           ),
         ],

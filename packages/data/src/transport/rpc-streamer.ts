@@ -345,9 +345,11 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
 
                     return () => {
                         cleanup();
-                        server.cancel({streamId}).catch(error => {
-                            logger.error('failed to cancel stream', error);
-                        });
+                        catchConnectionClosed(server.cancel({streamId})).catch(
+                            error => {
+                                logger.error('failed to cancel stream', error);
+                            }
+                        );
                     };
                 }).finally(() => {
                     cleanup();

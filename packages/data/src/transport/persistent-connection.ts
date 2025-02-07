@@ -1,7 +1,11 @@
 import {RECONNECT_WAIT_MS} from '../constants.js';
 import {logger} from '../logger.js';
 import {Observer, Subject, Unsubscribe, wait} from '../utils.js';
-import {Connection, TransportClient} from './transport.js';
+import {
+    Connection,
+    TransportClient,
+    TransportServerUnreachableError,
+} from './transport.js';
 
 export class PersistentConnection<T> implements Connection<T> {
     // if we already initiated connection process, then we want subsequent sends to wait until the
@@ -56,10 +60,16 @@ export class PersistentConnection<T> implements Connection<T> {
                     try {
                         return await this.transport.connect();
                     } catch (error) {
-                        logger.error(
-                            'persistent connection: error while connecting to the server: ',
-                            error
-                        );
+                        if (error instanceof TransportServerUnreachableError) {
+                            logger.warn(
+                                `server is unreachable (${error.message}), retrying...`
+                            );
+                        } else {
+                            logger.error(
+                                'persistent connection: error while connecting to the server: ',
+                                error
+                            );
+                        }
                         await wait({ms: RECONNECT_WAIT_MS, onCancel: 'reject'});
                     }
                 }

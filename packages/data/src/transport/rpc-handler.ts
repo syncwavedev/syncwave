@@ -14,7 +14,11 @@ import {
     Message,
     MessageHeaders,
 } from '../transport/message.js';
-import {catchConnectionClosed, Connection} from '../transport/transport.js';
+import {
+    catchConnectionClosed,
+    Connection,
+    ConnectionClosedError,
+} from '../transport/transport.js';
 import {assertNever, Unsubscribe, wait} from '../utils.js';
 import {
     getRequiredProcessor,
@@ -176,7 +180,7 @@ async function proxyRequest(
         },
         close: () => {
             cleanup();
-            result.reject(new Error('lost connection to rpc server'));
+            result.reject(new ConnectionClosedError());
         },
     });
 

@@ -5,6 +5,8 @@ export interface TransportServer<T> {
     close(): void;
 }
 
+export class TransportServerUnreachableError extends Error {}
+
 export interface TransportClient<T> {
     connect(): Promise<Connection<T>>;
 }

@@ -22,8 +22,17 @@ export class BusinessError extends Error {
     }
 }
 
+export class AggregateCancelledError extends CancelledError {
+    constructor(public readonly errors: CancelledError[]) {
+        super(
+            `${errors.length} errors occurred:\n - ` +
+                errors.map(getReadableError).join('\n - ')
+        );
+    }
+}
+
 export class AggregateBusinessError extends BusinessError {
-    constructor(public readonly errors: any[]) {
+    constructor(public readonly errors: BusinessError[]) {
         super(
             `${errors.length} errors occurred:\n - ` +
                 errors.map(getReadableError).join('\n - '),

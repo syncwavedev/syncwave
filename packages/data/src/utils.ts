@@ -3,6 +3,7 @@ import {CancelBehavior, CancelledError, Context, context} from './context.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
+    AggregateCancelledError,
     AggregateError,
     BusinessError,
 } from './errors.js';
@@ -351,6 +352,8 @@ export async function whenAll<const T extends Promise<any>[]>(
     } else {
         if (rejected.every(x => x.reason instanceof BusinessError)) {
             throw new AggregateBusinessError(rejected.map(x => x.reason));
+        } else if (rejected.every(x => x.reason instanceof CancelledError)) {
+            throw new AggregateCancelledError(rejected.map(x => x.reason));
         } else {
             throw new AggregateError(rejected.map(x => x.reason));
         }

@@ -42,9 +42,25 @@ export class ConnectionPool<T> {
     async connect(): Promise<ReleasableConnection<T>> {
         let connection = this.freeConnections.pop();
         if (!connection) {
-            // we create background context to prevent connection from closing when
+            // we create background context to prevent connection from closing when parent context cancels
             const [ctx] = context().createBackground();
-            connection = await ctx.run(() => this.client.connect());
+            connection = await ctx.run(async () => {
+                const connection = await this.client.connect();
+                connection.subscribe({
+                    next: () => Promise.resolve(),
+                    throw: () => Promise.resolve(),
+                    close: () => {
+                        this.busyConnections = this.busyConnections.filter(
+                            x => x !== connection
+                        );
+                        this.freeConnections = this.freeConnections.filter(
+                            x => x !== connection
+                        );
+                    },
+                });
+
+                return connection;
+            });
         }
 
         this.busyConnections.push(connection);

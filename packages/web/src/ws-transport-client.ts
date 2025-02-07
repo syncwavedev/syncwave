@@ -3,6 +3,7 @@ import {
 	assert,
 	logger,
 	Subject,
+	TransportServerUnreachableError,
 	type Codec,
 	type Connection,
 	type Observer,
@@ -32,8 +33,13 @@ export class WsTransportClient<T> implements TransportClient<T> {
 			});
 
 			ws.addEventListener('error', err => {
-				logger.error('ws connect: error', err);
-				reject(err);
+				logger.trace('ws connect: error', err.message);
+				const codes = ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EPIPE'];
+				if (codes.some(code => err.message.includes(code))) {
+					reject(new TransportServerUnreachableError(err.message));
+				} else {
+					reject(err);
+				}
 			});
 		});
 	}

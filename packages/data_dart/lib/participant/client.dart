@@ -102,14 +102,23 @@ class ParticipantClient {
     );
   }
 
-  Future<CreateCategoryRes> createCategory(CreateCategoryReq request, [MessageHeaders? headers]) async {
-    final json = await _rpc.handle('createCategory', request.toJson(), headers);
-    return CreateCategoryRes.fromJson(json as Map<String, dynamic>);
+  Future<CreateColumnRes> createColumn(CreateColumnReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createColumn', request.toJson(), headers);
+    return CreateColumnRes.fromJson(json as Map<String, dynamic>);
   }
 
   Future<CreateTaskRes> createTask(CreateTaskReq request, [MessageHeaders? headers]) async {
     final json = await _rpc.handle('createTask', request.toJson(), headers);
     return CreateTaskRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<(GetBoardViewValue, Stream<GetBoardViewUpdate>)> getBoardView(GetBoardViewReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getBoardView', request.toJson(), headers);
+  
+    return (
+      GetBoardViewValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetBoardViewUpdate.fromJson(json as Map<String, dynamic>))
+    );
   }
 
   void close() {

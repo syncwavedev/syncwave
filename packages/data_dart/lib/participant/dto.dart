@@ -34,10 +34,13 @@
 //     final getBoardReq = getBoardReqFromJson(jsonString);
 //     final getBoardValue = getBoardValueFromJson(jsonString);
 //     final getBoardUpdate = getBoardUpdateFromJson(jsonString);
-//     final createCategoryReq = createCategoryReqFromJson(jsonString);
-//     final createCategoryRes = createCategoryResFromJson(jsonString);
+//     final createColumnReq = createColumnReqFromJson(jsonString);
+//     final createColumnRes = createColumnResFromJson(jsonString);
 //     final createTaskReq = createTaskReqFromJson(jsonString);
 //     final createTaskRes = createTaskResFromJson(jsonString);
+//     final getBoardViewReq = getBoardViewReqFromJson(jsonString);
+//     final getBoardViewValue = getBoardViewValueFromJson(jsonString);
+//     final getBoardViewUpdate = getBoardViewUpdateFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -177,13 +180,13 @@ GetBoardUpdate getBoardUpdateFromJson(String str) => GetBoardUpdate.fromJson(jso
 
 String getBoardUpdateToJson(GetBoardUpdate data) => json.encode(data.toJson());
 
-CreateCategoryReq createCategoryReqFromJson(String str) => CreateCategoryReq.fromJson(json.decode(str));
+CreateColumnReq createColumnReqFromJson(String str) => CreateColumnReq.fromJson(json.decode(str));
 
-String createCategoryReqToJson(CreateCategoryReq data) => json.encode(data.toJson());
+String createColumnReqToJson(CreateColumnReq data) => json.encode(data.toJson());
 
-CreateCategoryRes createCategoryResFromJson(String str) => CreateCategoryRes.fromJson(json.decode(str));
+CreateColumnRes createColumnResFromJson(String str) => CreateColumnRes.fromJson(json.decode(str));
 
-String createCategoryResToJson(CreateCategoryRes data) => json.encode(data.toJson());
+String createColumnResToJson(CreateColumnRes data) => json.encode(data.toJson());
 
 CreateTaskReq createTaskReqFromJson(String str) => CreateTaskReq.fromJson(json.decode(str));
 
@@ -192,6 +195,18 @@ String createTaskReqToJson(CreateTaskReq data) => json.encode(data.toJson());
 CreateTaskRes createTaskResFromJson(String str) => CreateTaskRes.fromJson(json.decode(str));
 
 String createTaskResToJson(CreateTaskRes data) => json.encode(data.toJson());
+
+GetBoardViewReq getBoardViewReqFromJson(String str) => GetBoardViewReq.fromJson(json.decode(str));
+
+String getBoardViewReqToJson(GetBoardViewReq data) => json.encode(data.toJson());
+
+GetBoardViewValue getBoardViewValueFromJson(String str) => GetBoardViewValue.fromJson(json.decode(str));
+
+String getBoardViewValueToJson(GetBoardViewValue data) => json.encode(data.toJson());
+
+GetBoardViewUpdate getBoardViewUpdateFromJson(String str) => GetBoardViewUpdate.fromJson(json.decode(str));
+
+String getBoardViewUpdateToJson(GetBoardViewUpdate data) => json.encode(data.toJson());
 
 class StreamPutReq {
     String topic;
@@ -1135,18 +1150,18 @@ class GetBoardUpdate {
     };
 }
 
-class CreateCategoryReq {
+class CreateColumnReq {
     String boardId;
     String columnId;
     String title;
 
-    CreateCategoryReq({
+    CreateColumnReq({
         required this.boardId,
         required this.columnId,
         required this.title,
     });
 
-    factory CreateCategoryReq.fromJson(Map<String, dynamic> json) => CreateCategoryReq(
+    factory CreateColumnReq.fromJson(Map<String, dynamic> json) => CreateColumnReq(
         boardId: json["boardId"],
         columnId: json["columnId"],
         title: json["title"],
@@ -1159,7 +1174,7 @@ class CreateCategoryReq {
     };
 }
 
-class CreateCategoryRes {
+class CreateColumnRes {
     String authorId;
     String boardId;
     double createdAt;
@@ -1169,7 +1184,7 @@ class CreateCategoryRes {
     String title;
     double updatedAt;
 
-    CreateCategoryRes({
+    CreateColumnRes({
         required this.authorId,
         required this.boardId,
         required this.createdAt,
@@ -1180,7 +1195,7 @@ class CreateCategoryRes {
         required this.updatedAt,
     });
 
-    factory CreateCategoryRes.fromJson(Map<String, dynamic> json) => CreateCategoryRes(
+    factory CreateColumnRes.fromJson(Map<String, dynamic> json) => CreateColumnRes(
         authorId: json["authorId"],
         boardId: json["boardId"],
         createdAt: json["createdAt"]?.toDouble(),
@@ -1205,12 +1220,14 @@ class CreateCategoryRes {
 
 class CreateTaskReq {
     String boardId;
+    String? columnId;
     Placement placement;
     String taskId;
     String title;
 
     CreateTaskReq({
         required this.boardId,
+        required this.columnId,
         required this.placement,
         required this.taskId,
         required this.title,
@@ -1218,6 +1235,7 @@ class CreateTaskReq {
 
     factory CreateTaskReq.fromJson(Map<String, dynamic> json) => CreateTaskReq(
         boardId: json["boardId"],
+        columnId: json["columnId"],
         placement: Placement.fromJson(json["placement"]),
         taskId: json["taskId"],
         title: json["title"],
@@ -1225,6 +1243,7 @@ class CreateTaskReq {
 
     Map<String, dynamic> toJson() => {
         "boardId": boardId,
+        "columnId": columnId,
         "placement": placement.toJson(),
         "taskId": taskId,
         "title": title,
@@ -1336,8 +1355,8 @@ final placementTypeValues = EnumValues({
 class CreateTaskRes {
     String authorId;
     String boardId;
-    String? categoryId;
-    CategoryPosition categoryPosition;
+    String? columnId;
+    CreateTaskResColumnPosition columnPosition;
     double counter;
     double createdAt;
     bool deleted;
@@ -1349,8 +1368,8 @@ class CreateTaskRes {
     CreateTaskRes({
         required this.authorId,
         required this.boardId,
-        required this.categoryId,
-        required this.categoryPosition,
+        required this.columnId,
+        required this.columnPosition,
         required this.counter,
         required this.createdAt,
         required this.deleted,
@@ -1363,8 +1382,8 @@ class CreateTaskRes {
     factory CreateTaskRes.fromJson(Map<String, dynamic> json) => CreateTaskRes(
         authorId: json["authorId"],
         boardId: json["boardId"],
-        categoryId: json["categoryId"],
-        categoryPosition: CategoryPosition.fromJson(json["categoryPosition"]),
+        columnId: json["columnId"],
+        columnPosition: CreateTaskResColumnPosition.fromJson(json["columnPosition"]),
         counter: json["counter"]?.toDouble(),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1377,8 +1396,8 @@ class CreateTaskRes {
     Map<String, dynamic> toJson() => {
         "authorId": authorId,
         "boardId": boardId,
-        "categoryId": categoryId,
-        "categoryPosition": categoryPosition.toJson(),
+        "columnId": columnId,
+        "columnPosition": columnPosition.toJson(),
         "counter": counter,
         "createdAt": createdAt,
         "deleted": deleted,
@@ -1389,16 +1408,408 @@ class CreateTaskRes {
     };
 }
 
-class CategoryPosition {
+class CreateTaskResColumnPosition {
     String denominator;
     String numerator;
 
-    CategoryPosition({
+    CreateTaskResColumnPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory CategoryPosition.fromJson(Map<String, dynamic> json) => CategoryPosition(
+    factory CreateTaskResColumnPosition.fromJson(Map<String, dynamic> json) => CreateTaskResColumnPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class GetBoardViewReq {
+    String key;
+
+    GetBoardViewReq({
+        required this.key,
+    });
+
+    factory GetBoardViewReq.fromJson(Map<String, dynamic> json) => GetBoardViewReq(
+        key: json["key"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "key": key,
+    };
+}
+
+class GetBoardViewValue {
+    GetBoardViewValueBoard board;
+    List<GetBoardViewValueColumn> columns;
+    List<GetBoardViewValueTask> tasks;
+
+    GetBoardViewValue({
+        required this.board,
+        required this.columns,
+        required this.tasks,
+    });
+
+    factory GetBoardViewValue.fromJson(Map<String, dynamic> json) => GetBoardViewValue(
+        board: GetBoardViewValueBoard.fromJson(json["board"]),
+        columns: List<GetBoardViewValueColumn>.from(json["columns"].map((x) => GetBoardViewValueColumn.fromJson(x))),
+        tasks: List<GetBoardViewValueTask>.from(json["tasks"].map((x) => GetBoardViewValueTask.fromJson(x))),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "board": board.toJson(),
+        "columns": List<dynamic>.from(columns.map((x) => x.toJson())),
+        "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
+    };
+}
+
+class GetBoardViewValueBoard {
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    String ownerId;
+    List<String> pk;
+    double updatedAt;
+
+    GetBoardViewValueBoard({
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.ownerId,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory GetBoardViewValueBoard.fromJson(Map<String, dynamic> json) => GetBoardViewValueBoard(
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        ownerId: json["ownerId"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardViewValueColumn {
+    String authorId;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String title;
+    double updatedAt;
+
+    GetBoardViewValueColumn({
+        required this.authorId,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory GetBoardViewValueColumn.fromJson(Map<String, dynamic> json) => GetBoardViewValueColumn(
+        authorId: json["authorId"],
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "boardId": boardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardViewValueTask {
+    String authorId;
+    String boardId;
+    String? columnId;
+    PurpleColumnPosition columnPosition;
+    double counter;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String title;
+    double updatedAt;
+
+    GetBoardViewValueTask({
+        required this.authorId,
+        required this.boardId,
+        required this.columnId,
+        required this.columnPosition,
+        required this.counter,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory GetBoardViewValueTask.fromJson(Map<String, dynamic> json) => GetBoardViewValueTask(
+        authorId: json["authorId"],
+        boardId: json["boardId"],
+        columnId: json["columnId"],
+        columnPosition: PurpleColumnPosition.fromJson(json["columnPosition"]),
+        counter: json["counter"]?.toDouble(),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "boardId": boardId,
+        "columnId": columnId,
+        "columnPosition": columnPosition.toJson(),
+        "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class PurpleColumnPosition {
+    String denominator;
+    String numerator;
+
+    PurpleColumnPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory PurpleColumnPosition.fromJson(Map<String, dynamic> json) => PurpleColumnPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class GetBoardViewUpdate {
+    GetBoardViewUpdateBoard board;
+    List<GetBoardViewUpdateColumn> columns;
+    List<GetBoardViewUpdateTask> tasks;
+
+    GetBoardViewUpdate({
+        required this.board,
+        required this.columns,
+        required this.tasks,
+    });
+
+    factory GetBoardViewUpdate.fromJson(Map<String, dynamic> json) => GetBoardViewUpdate(
+        board: GetBoardViewUpdateBoard.fromJson(json["board"]),
+        columns: List<GetBoardViewUpdateColumn>.from(json["columns"].map((x) => GetBoardViewUpdateColumn.fromJson(x))),
+        tasks: List<GetBoardViewUpdateTask>.from(json["tasks"].map((x) => GetBoardViewUpdateTask.fromJson(x))),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "board": board.toJson(),
+        "columns": List<dynamic>.from(columns.map((x) => x.toJson())),
+        "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
+    };
+}
+
+class GetBoardViewUpdateBoard {
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    String ownerId;
+    List<String> pk;
+    double updatedAt;
+
+    GetBoardViewUpdateBoard({
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.ownerId,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory GetBoardViewUpdateBoard.fromJson(Map<String, dynamic> json) => GetBoardViewUpdateBoard(
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        ownerId: json["ownerId"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardViewUpdateColumn {
+    String authorId;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String title;
+    double updatedAt;
+
+    GetBoardViewUpdateColumn({
+        required this.authorId,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory GetBoardViewUpdateColumn.fromJson(Map<String, dynamic> json) => GetBoardViewUpdateColumn(
+        authorId: json["authorId"],
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "boardId": boardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardViewUpdateTask {
+    String authorId;
+    String boardId;
+    String? columnId;
+    FluffyColumnPosition columnPosition;
+    double counter;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String title;
+    double updatedAt;
+
+    GetBoardViewUpdateTask({
+        required this.authorId,
+        required this.boardId,
+        required this.columnId,
+        required this.columnPosition,
+        required this.counter,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory GetBoardViewUpdateTask.fromJson(Map<String, dynamic> json) => GetBoardViewUpdateTask(
+        authorId: json["authorId"],
+        boardId: json["boardId"],
+        columnId: json["columnId"],
+        columnPosition: FluffyColumnPosition.fromJson(json["columnPosition"]),
+        counter: json["counter"]?.toDouble(),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "boardId": boardId,
+        "columnId": columnId,
+        "columnPosition": columnPosition.toJson(),
+        "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class FluffyColumnPosition {
+    String denominator;
+    String numerator;
+
+    FluffyColumnPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory FluffyColumnPosition.fromJson(Map<String, dynamic> json) => FluffyColumnPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );

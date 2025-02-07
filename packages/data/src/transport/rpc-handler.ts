@@ -221,7 +221,14 @@ function createHandlerProxy(
 ) {
     return async (arg: unknown, partialHeaders?: MessageHeaders) => {
         // validate argument
-        arg = processor.req.parse(arg);
+        try {
+            arg = processor.req.parse(arg);
+        } catch (error) {
+            return new Error(
+                `rpc ${name}(${JSON.stringify(arg)}) validation failed`,
+                {cause: error}
+            );
+        }
 
         const [requestCtx, cancelRequestCtx] = context().createChild();
 

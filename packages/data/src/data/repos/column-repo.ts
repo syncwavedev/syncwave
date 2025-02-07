@@ -8,14 +8,14 @@ import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {BoardId, BoardRepo} from './board-repo.js';
 import {UserId, UserRepo} from './user-repo.js';
 
-export type CategoryId = Brand<Uuid, 'category_id'>;
+export type ColumnId = Brand<Uuid, 'column_id'>;
 
-export function createCategoryId(): CategoryId {
-    return createUuid() as CategoryId;
+export function createColumnId(): ColumnId {
+    return createUuid() as ColumnId;
 }
 
-export interface Category extends Doc<[CategoryId]> {
-    readonly id: CategoryId;
+export interface Column extends Doc<[ColumnId]> {
+    readonly id: ColumnId;
     readonly authorId: UserId;
     readonly boardId: BoardId;
     title: string;
@@ -24,9 +24,9 @@ export interface Category extends Doc<[CategoryId]> {
 
 const BOARD_ID = 'boardId';
 
-export function zCategory() {
-    return zDoc(z.tuple([zUuid<CategoryId>()])).extend({
-        id: zUuid<CategoryId>(),
+export function zColumn() {
+    return zDoc(z.tuple([zUuid<ColumnId>()])).extend({
+        id: zUuid<ColumnId>(),
         authorId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
         title: z.string(),
@@ -34,40 +34,40 @@ export function zCategory() {
     });
 }
 
-export class CategoryRepo {
-    public readonly rawRepo: DocRepo<Category>;
+export class ColumnRepo {
+    public readonly rawRepo: DocRepo<Column>;
 
     constructor(
         tx: Uint8Transaction,
         boardRepo: BoardRepo,
         userRepo: UserRepo,
-        onChange: OnDocChange<Category>
+        onChange: OnDocChange<Column>
     ) {
-        this.rawRepo = new DocRepo<Category>({
+        this.rawRepo = new DocRepo<Column>({
             tx: withPrefix('d/')(tx),
             onChange,
             indexes: {
                 [BOARD_ID]: x => [x.boardId],
             },
-            schema: zCategory(),
+            schema: zColumn(),
             constraints: [
                 {
-                    name: 'category.authorId fk',
-                    verify: async category => {
-                        const user = await userRepo.getById(category.authorId);
+                    name: 'column.authorId fk',
+                    verify: async column => {
+                        const user = await userRepo.getById(column.authorId);
                         if (user === undefined) {
-                            return `user not found: ${category.authorId}`;
+                            return `user not found: ${column.authorId}`;
                         }
 
                         return;
                     },
                 },
                 {
-                    name: 'category.boardId fk',
-                    verify: async category => {
-                        const board = await boardRepo.getById(category.boardId);
+                    name: 'column.boardId fk',
+                    verify: async column => {
+                        const board = await boardRepo.getById(column.boardId);
                         if (board === undefined) {
-                            return `board not found: ${category.boardId}`;
+                            return `board not found: ${column.boardId}`;
                         }
                         return;
                     },
@@ -83,23 +83,23 @@ export class CategoryRepo {
         });
     }
 
-    getById(id: CategoryId): Promise<Category | undefined> {
+    getById(id: ColumnId): Promise<Column | undefined> {
         return this.rawRepo.getById([id]);
     }
 
-    getByBoardId(boardId: BoardId): Stream<Category> {
+    getByBoardId(boardId: BoardId): Stream<Column> {
         return this.rawRepo.get(BOARD_ID, [boardId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Category>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Column>): Promise<void> {
         return await this.rawRepo.apply([id], diff);
     }
 
-    create(user: Omit<Category, 'pk'>): Promise<Category> {
+    create(user: Omit<Column, 'pk'>): Promise<Column> {
         return this.rawRepo.create({pk: [user.id], ...user});
     }
 
-    update(id: CategoryId, recipe: Recipe<Category>): Promise<Category> {
+    update(id: ColumnId, recipe: Recipe<Column>): Promise<Column> {
         return this.rawRepo.update([id], recipe);
     }
 }

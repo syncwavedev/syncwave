@@ -1,13 +1,50 @@
 <script lang="ts">
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
+	import {Button} from '$lib/components/ui/button';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import {Separator} from '$lib/components/ui/separator';
 	import * as Sidebar from '$lib/components/ui/sidebar';
+	import {getSdk} from '$lib/utils';
 	import {getState} from '$lib/utils.svelte';
+	import {createTaskId} from 'syncwave-data';
+	import * as Select from '$lib/components/ui/select/index.js';
+
+	import {
+		createColumnId,
+		type ColumnId,
+	} from '../../../../../../data/dist/esm/src/data/repos/column-repo';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
 
-	const board = getState(initialBoard, x => x.getBoard({key: boardKey}));
+	const board = getState(initialBoard, x => x.getBoardView({key: boardKey}));
+
+	const sdk = getSdk();
+
+	let columnTitle = $state('');
+	async function addColumn() {
+		await sdk(rpc =>
+			rpc.createColumn({
+				boardId: board.value.board.id,
+				title: columnTitle,
+				columnId: createColumnId(),
+			})
+		);
+	}
+
+	let taskTitle = $state('');
+	let taskColumnId: string = $state('');
+	async function addTask() {
+		await sdk(rpc =>
+			rpc.createTask({
+				boardId: board.value.board.id,
+				title: taskTitle,
+				columnId: (taskColumnId as ColumnId) || null,
+				placement: {type: 'random'},
+				taskId: createTaskId(),
+			})
+		);
+	}
 </script>
 
 <header
@@ -20,11 +57,51 @@
 			<Breadcrumb.Root>
 				<Breadcrumb.List>
 					<Breadcrumb.Item class="hidden md:block">
-						<Breadcrumb.Link href="#">{board.value?.key}</Breadcrumb.Link>
+						<Breadcrumb.Link href="#">{board.value.board.key}</Breadcrumb.Link>
 					</Breadcrumb.Item>
 				</Breadcrumb.List>
 			</Breadcrumb.Root>
 		{/await}
 	</div>
 </header>
-<div class="p-4">Board {board.value?.id} - {board.value?.createdAt}</div>
+<div class="flex flex-col gap-4 p-4">
+	<div>
+		Board {board.value.board.id} - {board.value.board.createdAt}
+	</div>
+
+	<div>
+		Columns:
+		<div class="flex gap-4">
+			<Input bind:value={columnTitle} />
+			<Button onclick={addColumn}>Add column</Button>
+		</div>
+		{#each board.value.columns as column}
+			<div>
+				{column.id} - {column.title}
+			</div>
+		{/each}
+	</div>
+
+	<div>
+		Tasks:
+
+		<div class="flex gap-4">
+			<Input bind:value={taskTitle} placeholder="title" />
+			<Select.Root bind:value={taskColumnId} type="single">
+				<Select.Trigger class="w-[180px]"></Select.Trigger>
+				<Select.Content>
+					{#each board.value.columns as column}
+						<Select.Item value={column.id}>{column.title}</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
+			<Button onclick={addTask}>Add task</Button>
+		</div>
+
+		{#each board.value.tasks as task}
+			<div>
+				{task.id} - {task.title} - {task.columnId}
+			</div>
+		{/each}
+	</div>
+</div>

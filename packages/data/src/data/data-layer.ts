@@ -11,7 +11,7 @@ import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import {HubClient} from './hub.js';
 import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
-import {Category, CategoryId, CategoryRepo} from './repos/category-repo.js';
+import {Column, ColumnId, ColumnRepo} from './repos/column-repo.js';
 import {Identity, IdentityId, IdentityRepo} from './repos/identity-repo.js';
 import {Member, MemberId, MemberRepo} from './repos/member-repo.js';
 import {Task, TaskId, TaskRepo} from './repos/task-repo.js';
@@ -26,7 +26,7 @@ export interface DataTx {
     readonly members: MemberRepo;
     readonly boards: BoardRepo;
     readonly tasks: TaskRepo;
-    readonly categories: CategoryRepo;
+    readonly columns: ColumnRepo;
     readonly identities: IdentityRepo;
     readonly config: Config;
     readonly tx: Uint8Transaction;
@@ -67,8 +67,8 @@ export interface TaskChangeEvent
 export interface IdentityChangeEvent
     extends BaseChangeEvent<'identity', IdentityId, Identity> {}
 
-export interface CategoryChangeEvent
-    extends BaseChangeEvent<'category', CategoryId, Category> {}
+export interface ColumnChangeEvent
+    extends BaseChangeEvent<'column', ColumnId, Column> {}
 
 export type ChangeEvent =
     | UserChangeEvent
@@ -76,7 +76,7 @@ export type ChangeEvent =
     | BoardChangeEvent
     | TaskChangeEvent
     | IdentityChangeEvent
-    | CategoryChangeEvent;
+    | ColumnChangeEvent;
 
 export type DataEffect = () => Promise<void>;
 export type DataEffectScheduler = (effect: DataEffect) => void;
@@ -128,11 +128,11 @@ export class DataLayer {
                 users,
                 (pk, diff) => logTaskChange(dataTx, pk, diff)
             );
-            const categories = new CategoryRepo(
-                withPrefix('categories/')(tx),
+            const columns = new ColumnRepo(
+                withPrefix('columns/')(tx),
                 boards,
                 users,
-                (pk, diff) => logCategoryChange(dataTx, pk, diff)
+                (pk, diff) => logColumnChange(dataTx, pk, diff)
             );
 
             const dataNode = new AggregateDataNode({
@@ -140,7 +140,7 @@ export class DataLayer {
                 users: new RepoDataNode(users.rawRepo),
                 boards: new RepoDataNode(boards.rawRepo),
                 tasks: new RepoDataNode(tasks.rawRepo),
-                categories: new RepoDataNode(categories.rawRepo),
+                columns: new RepoDataNode(columns.rawRepo),
                 members: new RepoDataNode(members.rawRepo),
             });
 
@@ -166,7 +166,7 @@ export class DataLayer {
             const dataTx: DataTx = {
                 boards,
                 tasks,
-                categories,
+                columns,
                 events,
                 identities,
                 eventStoreId,
@@ -278,14 +278,14 @@ async function logTaskChange(tx: DataTx, [id]: [TaskId], diff: CrdtDiff<Task>) {
     await tx.esWriter.append(boardEvents(task.boardId), event);
 }
 
-async function logCategoryChange(
+async function logColumnChange(
     tx: DataTx,
-    [id]: [CategoryId],
-    diff: CrdtDiff<Category>
+    [id]: [ColumnId],
+    diff: CrdtDiff<Column>
 ) {
-    const category = await tx.categories.getById(id);
-    assert(category !== undefined);
+    const column = await tx.columns.getById(id);
+    assert(column !== undefined);
     const ts = getNow();
-    const event: CategoryChangeEvent = {type: 'category', id, diff, ts};
-    await tx.esWriter.append(boardEvents(category.boardId), event);
+    const event: ColumnChangeEvent = {type: 'column', id, diff, ts};
+    await tx.esWriter.append(boardEvents(column.boardId), event);
 }

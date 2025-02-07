@@ -7,7 +7,7 @@ import {Brand} from '../../utils.js';
 import {createUuid, Uuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {BoardId, BoardRepo} from './board-repo.js';
-import {CategoryId} from './category-repo.js';
+import {ColumnId} from './column-repo.js';
 import {UserId, UserRepo} from './user-repo.js';
 
 export type TaskId = Brand<Uuid, 'task_id'>;
@@ -23,8 +23,8 @@ export interface Task extends Doc<[TaskId]> {
     readonly counter: number;
     title: string;
     deleted: boolean;
-    categoryPosition: BigFloat;
-    categoryId: CategoryId | null;
+    columnPosition: BigFloat;
+    columnId: ColumnId | null;
 }
 
 const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
@@ -39,8 +39,8 @@ export function zTask(): ZodType<Task> {
         counter: z.number(),
         title: z.string(),
         deleted: z.boolean(),
-        categoryPosition: zBigFloat(),
-        categoryId: zUuid<CategoryId>().nullable(),
+        columnPosition: zBigFloat(),
+        columnId: zUuid<ColumnId>().nullable(),
     });
 }
 
@@ -92,8 +92,8 @@ export class TaskRepo {
                 deleted: false,
                 title: false,
                 authorId: true,
-                categoryPosition: false,
-                categoryId: false,
+                columnPosition: false,
+                columnId: false,
             },
         });
     }

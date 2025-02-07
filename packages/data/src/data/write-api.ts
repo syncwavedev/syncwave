@@ -12,7 +12,7 @@ import {createApi, handler, InferRpcClient} from '../transport/rpc.js';
 import {whenAll} from '../utils.js';
 import {zUuid} from '../uuid.js';
 import {toPosition} from './placement.js';
-import {CategoryId, zCategory} from './repos/category-repo.js';
+import {ColumnId, zColumn} from './repos/column-repo.js';
 
 export class WriteApiState {
     constructor(
@@ -50,6 +50,18 @@ export class WriteApiState {
 
         return member;
     }
+
+    async ensureColumnWriteAccess(columnId: ColumnId): Promise<Member> {
+        const column = await this.tx.columns.getById(columnId);
+
+        if (!column) {
+            throw new BusinessError(
+                `column ${columnId} doesn't exist`,
+                'column_not_found'
+            );
+        }
+        return await this.ensureBoardWriteAccess(column.boardId);
+    }
 }
 
 export function createWriteApi() {
@@ -58,6 +70,7 @@ export function createWriteApi() {
             req: z.object({
                 taskId: zUuid<TaskId>(),
                 boardId: zUuid<BoardId>(),
+                columnId: zUuid<ColumnId>().nullable(),
                 title: z.string(),
                 placement: z.discriminatedUnion('type', [
                     z.object({
@@ -79,7 +92,10 @@ export function createWriteApi() {
                 ]),
             }),
             res: zTask(),
-            handle: async (st, {boardId, taskId, title, placement}) => {
+            handle: async (
+                st,
+                {boardId, taskId, title, placement, columnId}
+            ) => {
                 const meId = st.ensureAuthenticated();
                 await st.ensureBoardWriteAccess(boardId);
                 const now = getNow();
@@ -96,24 +112,24 @@ export function createWriteApi() {
                     deleted: false,
                     title: title,
                     counter,
-                    categoryPosition: toPosition(placement),
-                    categoryId: null,
+                    columnPosition: toPosition(placement),
+                    columnId,
                 });
             },
         }),
-        createCategory: handler({
+        createColumn: handler({
             req: z.object({
-                columnId: zUuid<CategoryId>(),
+                columnId: zUuid<ColumnId>(),
                 boardId: zUuid<BoardId>(),
                 title: z.string(),
             }),
-            res: zCategory(),
+            res: zColumn(),
             handle: async (st, {boardId, columnId, title}) => {
                 const meId = st.ensureAuthenticated();
                 await st.ensureBoardWriteAccess(boardId);
                 const now = getNow();
 
-                return await st.tx.categories.create({
+                return await st.tx.columns.create({
                     id: columnId,
                     authorId: meId,
                     boardId: boardId,

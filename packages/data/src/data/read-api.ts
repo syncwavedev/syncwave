@@ -15,6 +15,7 @@ import {
 } from './data-layer.js';
 import {EventStoreReader} from './event-store.js';
 import {BoardId, zBoard} from './repos/board-repo.js';
+import {zColumn} from './repos/column-repo.js';
 import {zIdentity} from './repos/identity-repo.js';
 import {Member} from './repos/member-repo.js';
 import {TaskId, zTask} from './repos/task-repo.js';
@@ -206,6 +207,57 @@ export function createReadApi() {
                             }
 
                             return board;
+                        });
+                    },
+                    update$: st.esReader
+                        .subscribe(boardEvents(boardId))
+                        .then(x => x.map(() => undefined)),
+                });
+            },
+        }),
+        getBoardView: observer({
+            req: z.object({
+                key: z.string(),
+            }),
+            value: z.object({
+                board: zBoard(),
+                columns: z.array(zColumn()),
+                tasks: z.array(zTask()),
+            }),
+            update: z.object({
+                board: zBoard(),
+                columns: z.array(zColumn()),
+                tasks: z.array(zTask()),
+            }),
+            observe: async (st, {key}) => {
+                const board = await st.transact(tx => tx.boards.getByKey(key));
+                if (board === undefined) {
+                    throw new BusinessError(
+                        `board with key ${key} not found`,
+                        'board_not_found'
+                    );
+                }
+                const boardId = board.id;
+                return observable({
+                    async get() {
+                        return await st.transact(async tx => {
+                            const [board] = await whenAll([
+                                tx.boards.getById(boardId),
+                                st.ensureBoardReadAccess(tx, boardId),
+                            ]);
+                            if (board === undefined) {
+                                throw new BusinessError(
+                                    `board with key ${key} not found`,
+                                    'board_not_found'
+                                );
+                            }
+
+                            const [columns, tasks] = await whenAll([
+                                tx.columns.getByBoardId(boardId).toArray(),
+                                tx.tasks.getByBoardId(boardId).toArray(),
+                            ]);
+
+                            return {board, columns, tasks};
                         });
                     },
                     update$: st.esReader

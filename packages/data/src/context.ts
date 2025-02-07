@@ -1,11 +1,8 @@
 import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
+import {CancelledError} from './errors.js';
 import {Brand, Nothing, Unsubscribe} from './utils.js';
-
-export class CancelledError extends Error {
-    public readonly traceId = context().traceId;
-}
 
 export type Cancel = () => Nothing;
 

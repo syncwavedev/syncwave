@@ -1,6 +1,14 @@
 import {browser} from '$app/environment';
 import {onDestroy} from 'svelte';
-import {CancelledError, log, wait, type Observable, type ParticipantRpc} from 'syncwave-data';
+import {
+	BusinessError,
+	CancelledError,
+	log,
+	toError,
+	wait,
+	type Observable,
+	type ParticipantRpc,
+} from 'syncwave-data';
 import {getSdk} from './utils';
 
 export interface State<T> {
@@ -31,7 +39,8 @@ export function getState<TValue, TUpdate>(
 					}
 				} catch (e) {
 					if (e instanceof CancelledError) return;
-					log.error('observable failed:', e);
+					log.error(toError(e), 'observable failed');
+					if (e instanceof BusinessError) return;
 				}
 
 				await wait({ms: 1000, onCancel: 'resolve'});

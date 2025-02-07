@@ -4,8 +4,8 @@ import {z} from 'zod';
 import {IndexKey} from '../kv/data-index.js';
 import {Condition} from '../kv/kv-store.js';
 import {MemKVStore} from '../kv/mem-kv-store.js';
-import {getNow} from '../timestamp.js';
-import {Uuid, createUuid, zUuid} from '../uuid.js';
+import {getNow, Timestamp} from '../timestamp.js';
+import {createUuid, Uuid, zUuid} from '../uuid.js';
 import {Doc, DocRepo, IndexSpec, OnDocChange, zDoc} from './doc-repo.js';
 
 interface MyDoc extends Doc<readonly [Uuid]> {
@@ -43,6 +43,7 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Alice',
             age: 30,
+            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -80,8 +81,8 @@ describe('DocStore with MemKVStore', () => {
 
         expect(retrieved).toEqual({
             ...doc,
-            createdAt: expect.any(Number),
-            updatedAt: expect.any(Number),
+            createdAt: expect.any(Number) as Timestamp,
+            updatedAt: expect.any(Number) as Timestamp,
         });
         expect(retrieved?.updatedAt).toBeGreaterThan(doc.updatedAt);
         expect(retrieved?.updatedAt).toEqual(retrieved?.createdAt);
@@ -95,6 +96,7 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Bob',
             age: 22,
+            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -135,6 +137,7 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Charlie',
             age: 40,
+            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -196,6 +199,7 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Charlie',
             age: 40,
+            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -232,8 +236,8 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Charlie',
             age: 40,
-            createdAt: expect.any(Number),
-            updatedAt: expect.any(Number),
+            createdAt: expect.any(Number) as Timestamp,
+            updatedAt: expect.any(Number) as Timestamp,
             unknownProp: 'val',
         });
 
@@ -287,6 +291,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Dana',
                 age: 20,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -294,6 +299,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Dana',
                 age: 25,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             }); // same name
@@ -301,6 +307,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Eli',
                 age: 25,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -366,6 +373,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Fiona',
                 age: 10,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -373,6 +381,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Gabe',
                 age: 15,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -380,6 +389,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Hank',
                 age: 20,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -387,6 +397,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Iris',
                 age: 25,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -394,6 +405,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Jake',
                 age: 30,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -458,6 +470,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Zed',
                 age: 55,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -465,6 +478,7 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Zed',
                 age: 60,
+                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -558,6 +572,7 @@ describe('DocStore with MemKVStore', () => {
             pk: [createUuid()],
             name: 'Alpha',
             age: 1,
+            deleted: false,
             createdAt: now,
             updatedAt: now,
         };

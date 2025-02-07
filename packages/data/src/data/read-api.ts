@@ -108,9 +108,13 @@ export function createReadApi() {
                             const members = tx.members.getByUserId(userId);
                             return await toStream(members)
                                 .mapParallel(member =>
-                                    tx.boards.getById(member.boardId)
+                                    tx.boards.getById(member.boardId, true)
                                 )
-                                .assert(x => x !== undefined)
+                                .assert(
+                                    x => x !== undefined,
+                                    'getMyBoards: board not found'
+                                )
+                                .filter(x => !x.deleted)
                                 .toArray();
                         });
                     },
@@ -196,7 +200,7 @@ export function createReadApi() {
                     async get() {
                         return await st.transact(async tx => {
                             const [board] = await whenAll([
-                                tx.boards.getById(boardId),
+                                tx.boards.getById(boardId, true),
                                 st.ensureBoardReadAccess(tx, boardId),
                             ]);
                             if (board === undefined) {
@@ -244,7 +248,7 @@ export function createReadApi() {
                     async get() {
                         return await st.transact(async tx => {
                             const [board] = await whenAll([
-                                tx.boards.getById(boardId),
+                                tx.boards.getById(boardId, true),
                                 st.ensureBoardReadAccess(tx, boardId),
                             ]);
                             if (board === undefined) {

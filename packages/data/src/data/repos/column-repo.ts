@@ -30,7 +30,6 @@ export function zColumn() {
         authorId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
         title: z.string(),
-        deleted: z.boolean(),
     });
 }
 
@@ -76,7 +75,6 @@ export class ColumnRepo {
             readonly: {
                 boardId: true,
                 id: true,
-                deleted: false,
                 title: false,
                 authorId: true,
             },

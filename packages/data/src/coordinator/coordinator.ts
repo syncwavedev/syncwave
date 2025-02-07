@@ -47,7 +47,7 @@ export class CoordinatorServer {
         );
 
         hubServer.launch().catch(error => {
-            log.error('HubServer failed to launch', error);
+            log.error(error, 'HubServer failed to launch');
         });
 
         const hubClient = new HubClient(

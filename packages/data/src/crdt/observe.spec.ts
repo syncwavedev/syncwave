@@ -77,7 +77,7 @@ describe('observe', () => {
                 x.set('k', {});
                 x.get('k').v = 'great';
 
-                assert(x.get('k').v === 'great');
+                assert(x.get('k').v === 'great', 'should be true');
             },
             x => [
                 {type: 'map_set', subject: x, args: ['k', {}]},
@@ -121,10 +121,10 @@ describe('observe function', () => {
         expect(result.age).toBe(30);
 
         expect(log.length).toBe(2);
-        assert(log[0].type === 'object_set');
+        assert(log[0].type === 'object_set', 'log[0] is not object_set');
         expect(log[0].prop).toBe('name');
         expect(log[0].value).toBe('Bob');
-        assert(log[1].type === 'object_set');
+        assert(log[1].type === 'object_set', 'log[1] is not object_set');
         expect(log[1].prop).toBe('age');
         expect(log[1].value).toBe(30);
     });
@@ -141,7 +141,7 @@ describe('observe function', () => {
 
         // log should contain one object_delete entry
         expect(log.length).toBe(1);
-        assert(log[0].type === 'object_delete');
+        assert(log[0].type === 'object_delete', 'log[0] is not object_delete');
         expect(log[0].prop).toBe('age');
     });
 
@@ -158,10 +158,10 @@ describe('observe function', () => {
 
         expect(log.length).toBe(2);
 
-        assert(log[0].type === 'array_push');
+        assert(log[0].type === 'array_push', 'log[0] is not array_push');
         expect(log[0].args).toEqual([4]);
 
-        assert(log[1].type === 'array_set');
+        assert(log[1].type === 'array_set', 'log[1] is not array_set');
         expect(log[1].index).toBe(1);
         expect(log[1].value).toBe(20);
     });
@@ -176,7 +176,7 @@ describe('observe function', () => {
         expect([...result]).toEqual(['a', 'b', 'c']);
 
         expect(log.length).toBe(1);
-        assert(log[0].type === 'array_unshift');
+        assert(log[0].type === 'array_unshift', 'log[0] is not array_unshift');
         expect(log[0].args).toEqual(['a']);
     });
 
@@ -207,11 +207,11 @@ describe('observe function', () => {
         expect(result.size).toBe(0);
 
         expect(log.length).toBe(3);
-        assert(log[0].type === 'map_set');
+        assert(log[0].type === 'map_set', 'log[0] is not map_set');
         expect(log[0].args).toEqual(['c', 3]);
-        assert(log[1].type === 'map_delete');
+        assert(log[1].type === 'map_delete', 'log[1] is not map_delete');
         expect(log[1].args).toEqual(['b']);
-        assert(log[2].type === 'map_clear');
+        assert(log[2].type === 'map_clear', 'log[2] is not map_clear');
         expect(log[2].args).toEqual([]);
     });
 
@@ -223,7 +223,7 @@ describe('observe function', () => {
 
         expect(result).toBe('some-result');
         expect(log.length).toBe(1);
-        assert(log[0].type === 'object_set');
+        assert(log[0].type === 'object_set', 'log[0] is not object_set');
         expect(log[0].prop).toBe('test');
         expect(log[0].value).toBe(false);
     });

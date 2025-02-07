@@ -1,5 +1,6 @@
-import {pino as createPino} from 'pino';
+import {pino as createPino, Level} from 'pino';
 import {context} from './context.js';
+import {AppError} from './errors.js';
 
 export type LogLevel =
     | 'trace'
@@ -17,34 +18,64 @@ export class Logger {
         this.pino.level = level;
     }
 
-    trace(message: string, ...args: unknown[]): void {
-        this.pino.debug({pid: this.tid()}, message, ...args);
+    trace(
+        ...args: [error: AppError, message: string] | [message: string]
+    ): void {
+        this.log('debug', ...args);
     }
-    debug(message: string, ...args: unknown[]): void {
-        this.pino.debug({pid: this.tid()}, message, ...args);
+    debug(
+        ...args: [error: AppError, message: string] | [message: string]
+    ): void {
+        this.log('debug', ...args);
     }
-    info(message: string, ...args: unknown[]): void {
-        this.pino.info({pid: this.tid()}, message, ...args);
+    info(
+        ...args: [error: AppError, message: string] | [message: string]
+    ): void {
+        this.log('info', ...args);
     }
-    warn(message: string, ...args: unknown[]): void {
-        this.pino.warn({pid: this.tid()}, message, ...args);
+    warn(
+        ...args: [error: AppError, message: string] | [message: string]
+    ): void {
+        this.log('warn', ...args);
     }
-    error(message: string, ...args: unknown[]): void {
-        this.pino.error({pid: this.tid()}, message, ...args);
+    error(
+        ...args: [error: AppError, message: string] | [message: string]
+    ): void {
+        this.log('error', ...args);
     }
-    fatal(message: string, ...args: unknown[]): void {
-        this.pino.fatal({pid: this.tid()}, message, ...args);
+    fatal(
+        ...args: [error: AppError, message: string] | [message: string]
+    ): void {
+        this.log('fatal', ...args);
     }
 
-    private tid() {
-        return context().traceId.slice(0, 4);
+    log(
+        level: Level,
+        ...args: [error: AppError, message: string] | [message: string]
+    ) {
+        const context = this.context();
+        let message: string;
+        if (args.length === 2) {
+            context['error'] = args[0];
+            message = args[1];
+        } else {
+            message = args[0];
+        }
+        this.pino[level](context, message);
+    }
+
+    private context(): Record<string, unknown> {
+        return {
+            traceId: context().traceId,
+            shortTraceId: context().traceId.slice(0, 4),
+        };
     }
 
     async time<T>(name: string, fn: () => Promise<T>): Promise<T> {
         const start = performance.now();
         const result = await fn();
         const end = performance.now();
-        this.info(`${name} took ${(end - start).toFixed(0)}ms`);
+        this.debug(`${name} took ${(end - start).toFixed(0)}ms`);
         return result;
     }
 }

@@ -117,7 +117,7 @@ export function createCoordinatorApi() {
         combinedApi,
         async (next, state, headers, processor, processorName, arg) => {
             return await log.time(
-                `rpc ${processorName}(${JSON.stringify(arg)})`,
+                `${processorName}(${JSON.stringify(arg)})`,
                 () => next(state)
             );
         }

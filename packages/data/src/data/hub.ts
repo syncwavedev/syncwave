@@ -1,5 +1,6 @@
 import {z, ZodType} from 'zod';
 import {Cursor} from '../cursor.js';
+import {AppError} from '../errors.js';
 import {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {
@@ -78,7 +79,7 @@ class SubjectManager<T> {
         await this.subjects.get(topic)?.next(value);
     }
 
-    async throw(topic: string, error: Error) {
+    async throw(topic: string, error: AppError) {
         await this.subjects.get(topic)?.throw(error);
     }
 
@@ -139,7 +140,7 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 handle: async (state, {topic, error}) => {
                     await state.subjects.throw(
                         topic,
-                        new Error('EventHubServerApi.throw', {cause: error})
+                        new AppError('EventHubServerApi.throw', {cause: error})
                     );
                 },
             }),
@@ -158,7 +159,7 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 api,
                 async (next, state: HubServerRpcState<T>, headers) => {
                     if (headers.auth !== state.authSecret) {
-                        throw new Error(
+                        throw new AppError(
                             `HubServer: authentication failed: ${state.authSecret} !== ${headers.auth}`
                         );
                     }

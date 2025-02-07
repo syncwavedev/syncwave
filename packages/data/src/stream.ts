@@ -1,15 +1,15 @@
 import {Channel as AsyncChannel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
-import {Cancel, CancelledError} from './context.js';
+import {Cancel} from './context.js';
 import {Cursor} from './cursor.js';
-import {toError} from './errors.js';
+import {AppError, CancelledError, toError} from './errors.js';
 import {log} from './logger.js';
-import {assert, Nothing} from './utils.js';
+import {assert, Nothing, stringify} from './utils.js';
 
 export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;
-    throw: (error: Error) => Promise<void>;
+    throw: (error: AppError) => Promise<void>;
     end: () => void;
 }
 
@@ -18,7 +18,7 @@ export class Channel<T> implements AsyncIterable<T>, ChannelWriter<T> {
 
     async next(value: T) {
         if (this.chan.closed) {
-            log.debug('Channel closed, next', value);
+            log.debug('Channel closed, next, ' + stringify(value));
             return;
         }
         await this.chan.push(value);
@@ -96,7 +96,7 @@ export function toStream<T>(
                     .throw(new CancelledError())
                     .finally(() => channel.end())
                     .catch(error => {
-                        log.error('stream unsubscribe', error);
+                        log.error(error, 'stream unsubscribe');
                     });
             };
         });
@@ -171,13 +171,19 @@ export class Stream<T> implements AsyncIterable<T> {
         }
     }
 
-    assert<S extends T>(validator: (value: T) => value is S): Stream<S> {
-        return toStream(this._assert(validator)) as Stream<S>;
+    assert<S extends T>(
+        validator: (value: T) => value is S,
+        message: string
+    ): Stream<S> {
+        return toStream(this._assert(validator, message)) as Stream<S>;
     }
 
-    private async *_assert(validator: (value: T) => boolean): AsyncIterable<T> {
+    private async *_assert(
+        validator: (value: T) => boolean,
+        message: string
+    ): AsyncIterable<T> {
         for await (const item of this) {
-            assert(validator(item));
+            assert(validator(item), message);
 
             yield item;
         }
@@ -354,7 +360,10 @@ export class Stream<T> implements AsyncIterable<T> {
 
         for await (const item of this) {
             if (pending.size >= MAX_LOOKAHEAD_COUNT) {
-                assert(pending.has(left));
+                assert(
+                    pending.has(left),
+                    'mapParallel: left promise not found'
+                );
                 const pendingPromise = pending.get(left)!;
                 yield await pendingPromise;
 
@@ -367,7 +376,7 @@ export class Stream<T> implements AsyncIterable<T> {
         }
 
         for (; left < right; left += 1) {
-            assert(pending.has(left));
+            assert(pending.has(left), 'mapParallel: left promise not found');
             const pendingPromise = pending.get(left)!;
 
             yield await pendingPromise;

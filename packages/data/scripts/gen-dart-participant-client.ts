@@ -8,7 +8,7 @@ import {
 } from 'quicktype-core';
 import {zodToJsonSchema} from 'zod-to-json-schema';
 import {createParticipantApi} from '../src/index.js';
-import {logger} from '../src/logger.js';
+import {log} from '../src/logger.js';
 import {Api, Processor} from '../src/transport/rpc.js';
 
 interface Type {
@@ -16,7 +16,7 @@ interface Type {
     schema: object;
 }
 
-async function quicktypeJSONSchema(targetLanguage, types: Type[]) {
+async function quicktypeJSONSchema(types: Type[]) {
     const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore());
 
     for (const {name, schema} of types) {
@@ -28,7 +28,7 @@ async function quicktypeJSONSchema(targetLanguage, types: Type[]) {
 
     return await quicktype({
         inputData,
-        lang: targetLanguage,
+        lang: 'dart',
     });
 }
 
@@ -42,7 +42,6 @@ function firstUpperCase(str: string) {
 
 async function genDto(api: Api<unknown>) {
     const result = await quicktypeJSONSchema(
-        'dart',
         Object.entries(api).flatMap(([name, processor]) => {
             if (processor.type === 'handler') {
                 return [
@@ -87,7 +86,7 @@ async function genDto(api: Api<unknown>) {
         })
     );
 
-    logger.info('writing dto to ../data_dart/lib/participant/dto.dart');
+    log.info('writing dto to ../data_dart/lib/participant/dto.dart');
 
     await writeFile(
         '../data_dart/lib/participant/dto.dart',
@@ -231,7 +230,7 @@ async function genClient(api: Api<unknown>) {
             .join('\n\n')
     );
 
-    logger.info('writing client to ../data_dart/lib/participant/client.dart');
+    log.info('writing client to ../data_dart/lib/participant/client.dart');
 
     await writeFile(
         '../data_dart/lib/participant/client.dart',
@@ -246,5 +245,5 @@ async function main() {
 }
 
 main().catch(error => {
-    logger.error('failed to generate dart classes', error);
+    log.error(error, 'failed to generate dart classes');
 });

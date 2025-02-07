@@ -6,6 +6,7 @@ import {createServer} from 'http';
 import jwt from 'jsonwebtoken';
 import Koa from 'koa';
 import {
+    AppError,
     assertDefined,
     CancelledError,
     context,
@@ -22,6 +23,7 @@ import {
     log,
     MsgpackCodec,
     PrefixedKVStore,
+    toError,
     toStream,
     Uint8KVStore,
 } from 'syncwave-data';
@@ -60,7 +62,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
         };
     } else {
-        throw new Error(`unknown STAGE: ${STAGE}`);
+        throw new AppError(`unknown STAGE: ${STAGE}`);
     }
 })();
 
@@ -149,7 +151,7 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
                 .toArray();
 
             if (keys.length > 1000) {
-                throw new Error('too many keys to truncate the database');
+                throw new AppError('too many keys to truncate the database');
             }
 
             for (const key of keys) {
@@ -196,8 +198,8 @@ async function launch() {
             .filter(x => x !== 'TTYWrap');
         if (activeResources.length > 0) {
             log.error(
-                'failed to gracefully shutdown, active resources:',
-                activeResources
+                'failed to gracefully shutdown, active resources: ' +
+                    activeResources.join(', ')
             );
         } else {
             log.info('finishing...');
@@ -209,7 +211,7 @@ async function launch() {
 
     context().onCancel(() => {
         shutdown().catch(error => {
-            log.error('failed to shutdown', error);
+            log.error(toError(error), 'failed to shutdown');
         });
     });
 
@@ -268,7 +270,7 @@ process.on('unhandledRejection', reason => {
         return;
     }
 
-    log.error('unhandled rejection', reason);
+    log.error(toError(reason), 'unhandled rejection');
 });
 
 serverCtx
@@ -277,9 +279,9 @@ serverCtx
             await launch();
             log.info(`coordinator is running on port ${PORT}`);
         } catch (err) {
-            log.error('', err);
+            log.error(toError(err), 'failed to launch coordinator');
         }
     })
     .catch(error => {
-        log.error('error during launch', error);
+        log.error(error, 'error during launch');
     });

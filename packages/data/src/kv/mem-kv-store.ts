@@ -1,7 +1,8 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
 import {context} from '../context.js';
+import {AppError} from '../errors.js';
 import {log} from '../logger.js';
-import {compareUint8Array} from '../utils.js';
+import {compareUint8Array, unreachable} from '../utils.js';
 import {
     Condition,
     Entry,
@@ -10,7 +11,7 @@ import {
     Transaction,
 } from './kv-store.js';
 
-export class CursorClosedError extends Error {
+export class CursorClosedError extends AppError {
     constructor() {
         super('cursor is closed');
     }
@@ -97,7 +98,7 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
                 }
             }
 
-            throw new Error('unreachable');
+            unreachable();
         });
     }
 
@@ -131,8 +132,8 @@ export class MemLocker<TKey> {
                 this.fnQueueMap.set(key, []);
                 execute().catch(err => {
                     log.error(
-                        'unexpected error during execute inside mem-locker: ',
-                        err
+                        err,
+                        'unexpected error during execute inside mem-locker: '
                     );
                 });
             } else {
@@ -156,8 +157,8 @@ export class MemLocker<TKey> {
         if (nextFn) {
             nextFn().catch(err => {
                 log.error(
-                    'unexpected error during nextFn in mem-locker: ',
-                    err
+                    err,
+                    'unexpected error during nextFn in mem-locker: '
                 );
             });
         }

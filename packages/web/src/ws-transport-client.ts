@@ -1,8 +1,10 @@
 import WebSocket from 'isomorphic-ws';
 import {
+	AppError,
 	assert,
 	log,
 	Subject,
+	toError,
 	TransportServerUnreachableError,
 	type Codec,
 	type Connection,
@@ -33,7 +35,7 @@ export class WsTransportClient<T> implements TransportClient<T> {
 			});
 
 			ws.addEventListener('error', err => {
-				log.trace('ws connect: error', err.message);
+				log.trace('ws connect: error: ' + err.message);
 				const codes = ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EPIPE'];
 				if (codes.some(code => err.message.includes(code))) {
 					reject(new TransportServerUnreachableError(err.message));
@@ -56,10 +58,10 @@ export class WsClientConnection<T> implements Connection<T> {
 
 		this.subscribe({
 			next: async msg => {
-				log.debug('ws got', msg);
+				log.debug('ws got: ' + JSON.stringify(msg));
 			},
 			throw: async err => {
-				log.error('ws err', err);
+				log.error(err, 'ws err');
 			},
 			close: () => {
 				log.debug('ws closed');
@@ -68,7 +70,7 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	send(message: T): Promise<void> {
-		log.trace('ws client: send', message);
+		log.trace('ws client: send: ' + JSON.stringify(message));
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 
@@ -88,20 +90,20 @@ export class WsClientConnection<T> implements Connection<T> {
 	private setupListeners(): void {
 		this.ws.addEventListener('message', async event => {
 			try {
-				assert(event.data instanceof ArrayBuffer);
+				assert(event.data instanceof ArrayBuffer, 'ws message not an ArrayBuffer');
 				const message = this.codec.decode(new Uint8Array(event.data));
 				await this.subject.next(message);
 			} catch (error) {
-				log.error('error during ws message', {error, open: this.subject.open});
+				log.error(toError(error), 'error during ws message');
 			}
 		});
 
 		this.ws.addEventListener('error', async error => {
-			log.error('ws client: error event', error);
+			log.error(toError(error), 'ws client: error event: ' + error.message);
 			try {
-				await this.subject.throw(new Error('ws.error: ' + error.toString()));
+				await this.subject.throw(new AppError('ws.error: ' + error.toString()));
 			} catch (error) {
-				log.error('error during ws error', error);
+				log.error(toError(error), 'error during ws error');
 			}
 		});
 

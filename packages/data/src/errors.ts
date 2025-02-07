@@ -1,4 +1,19 @@
-import {CancelledError} from './context.js';
+import {context} from './context.js';
+
+// eslint-disable-next-line no-restricted-globals
+export class AppError extends Error {
+    toJSON() {
+        return {
+            message: this.message,
+            stack: this.stack,
+            name: this.name,
+        };
+    }
+}
+
+export class CancelledError extends AppError {
+    public readonly traceId = context().traceId;
+}
 
 export type ErrorCode =
     | 'board_key_taken'
@@ -14,10 +29,11 @@ export type ErrorCode =
     | 'cancelled'
     | 'unknown';
 
-export class BusinessError extends Error {
+export class BusinessError extends AppError {
     constructor(
         message: string,
-        public readonly code: ErrorCode
+        public readonly code: ErrorCode,
+        public readonly meta?: Record<string, unknown>
     ) {
         super(message);
     }
@@ -42,7 +58,7 @@ export class AggregateBusinessError extends BusinessError {
     }
 }
 
-export class AggregateError extends Error {
+export class AggregateError extends AppError {
     constructor(public readonly errors: any[]) {
         super(
             `${errors.length} errors occurred:\n - ` +
@@ -51,30 +67,47 @@ export class AggregateError extends Error {
     }
 }
 
-export function getReadableError(error: any) {
+export function getReadableError(error: unknown): string {
     if (typeof error === 'string') {
         return error;
     }
 
+    // eslint-disable-next-line no-restricted-globals
     if (error instanceof Error) {
         return error.message;
     }
 
-    if (typeof error === 'object' && error !== null) {
-        return error.message || JSON.stringify(error);
+    if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof error.message === 'string'
+    ) {
+        return error.message;
     }
 
-    return 'An unknown error occurred.';
+    return 'An unknown error occurred: ' + JSON.stringify(error);
 }
 
-export function toError(reason: unknown): Error {
-    if (reason instanceof Error) {
+export function toError(reason: unknown): AppError {
+    if (reason instanceof AppError) {
         return reason;
     }
 
-    return new Error('Unknown error: ' + JSON.stringify(reason), {
-        cause: reason,
-    });
+    // eslint-disable-next-line no-restricted-globals
+    if (reason instanceof Error) {
+        const result = new AppError();
+        result.stack = reason.stack;
+        result.message = reason.message;
+        return result;
+    }
+
+    return new AppError(
+        `Unknown error: ${getReadableError(reason)}` + JSON.stringify(reason),
+        {
+            cause: reason,
+        }
+    );
 }
 
 export function getErrorCode(error: unknown): ErrorCode {

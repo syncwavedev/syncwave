@@ -1,0 +1,5 @@
+{
+    "messageFormat": "[{shortTraceId}] {msg}",
+    "timestampKey": "_time",
+    "ignore": "pid,hostname,traceId,shortTraceId"
+}

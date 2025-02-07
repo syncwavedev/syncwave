@@ -1,11 +1,14 @@
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
-import {CancelledError, context, createTraceId} from '../context.js';
+import {context, createTraceId} from '../context.js';
 import {Deferred} from '../deferred.js';
 import {
+    AppError,
     BusinessError,
+    CancelledError,
     ErrorCode,
     getErrorCode,
     getReadableError,
+    toError,
 } from '../errors.js';
 import {JobManager} from '../job-manager.js';
 import {log} from '../logger.js';
@@ -55,7 +58,7 @@ export function launchRpcHandlerServer<T>(
                             msg.payload.name
                         );
 
-                        const result = await handler.handle(
+                        const result: any = await handler.handle(
                             state,
                             msg.payload.arg,
                             msg.headers
@@ -71,7 +74,7 @@ export function launchRpcHandlerServer<T>(
                             })
                         );
                     } catch (error) {
-                        reportRpcError(error);
+                        reportRpcError(error, 'rpc handler');
                         await catchConnectionClosed(
                             conn.send({
                                 id: createMessageId(),
@@ -114,7 +117,7 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
     function get(_target: unknown, nameOrSymbol: string | symbol) {
         if (typeof nameOrSymbol !== 'string') {
             return () => {
-                throw new Error('rpc client supports only string methods');
+                throw new AppError('rpc client supports only string methods');
             };
         }
         const name = nameOrSymbol;
@@ -122,7 +125,7 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
         const handler = api[name];
         if (!handler) {
             return () => {
-                throw new Error(`unknown rpc endpoint: ${name}`);
+                throw new AppError(`unknown rpc endpoint: ${name}`);
             };
         }
 
@@ -132,7 +135,13 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
     return new Proxy<any>({}, {get});
 }
 
-export class RpcError extends Error {}
+export class RpcError extends AppError {
+    constructor(message: string) {
+        super(message);
+    }
+}
+
+export class RpcTimeoutError extends RpcError {}
 
 async function proxyRequest(
     conn: Connection<Message>,
@@ -165,7 +174,12 @@ async function proxyRequest(
                     result.resolve(msg.payload.result);
                 } else if (msg.payload.type === 'error') {
                     result.reject(
-                        reconstructError(msg.payload.message, msg.payload.code)
+                        reconstructError({
+                            message: msg.payload.message,
+                            code: msg.payload.code,
+                            method: name,
+                            arg,
+                        })
                     );
                 } else {
                     assertNever(msg.payload);
@@ -189,15 +203,15 @@ async function proxyRequest(
             .then(() => {
                 if (result.state === 'pending') {
                     result.reject(
-                        new RpcError(
+                        new RpcTimeoutError(
                             `rpc call ${name}(${JSON.stringify(arg)}) failed: timeout`
                         )
                     );
                     cleanup();
                 }
             })
-            .catch(err => {
-                log.error('unexpected error after rpc timed out', err);
+            .catch((err: unknown) => {
+                log.error(toError(err), 'unexpected error after rpc timed out');
             });
 
         await conn.send({
@@ -224,7 +238,7 @@ function createHandlerProxy(
         try {
             arg = processor.req.parse(arg);
         } catch (error) {
-            return new Error(
+            return new AppError(
                 `rpc ${name}(${JSON.stringify(arg)}) validation failed`,
                 {cause: error}
             );
@@ -248,22 +262,34 @@ function createHandlerProxy(
     };
 }
 
-export function reportRpcError(error: unknown) {
+export function reportRpcError(error: unknown, context: string) {
     if (error instanceof BusinessError) {
-        log.warn('business error', error);
+        log.warn(error, `[${context}] rpc business error`);
     } else if (error instanceof CancelledError) {
-        log.debug('cancelled error', error);
+        log.debug(error, `[${context}] rpc cancelled`);
     } else {
-        log.error('unexpected error', error);
+        log.error(
+            toError(error),
+            `[${context}] rpc unexpected error: ` + JSON.stringify(error)
+        );
     }
 }
 
-export function reconstructError(message: string, code: string) {
-    if (code === 'unknown') {
-        return new RpcError(message);
-    } else if (code === 'cancelled') {
-        return new CancelledError(message);
+export function reconstructError(params: {
+    message: string;
+    code: string;
+    method: string;
+    arg: unknown;
+}): AppError {
+    if (params.code === 'unknown') {
+        return new RpcError(params.message);
+    } else if (params.code === 'cancelled') {
+        return new CancelledError(params.message);
     } else {
-        return new BusinessError(message, code as ErrorCode);
+        return new BusinessError(
+            params.message,
+            params.code as ErrorCode,
+            params
+        );
     }
 }

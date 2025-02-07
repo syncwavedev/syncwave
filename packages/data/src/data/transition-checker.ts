@@ -1,3 +1,4 @@
+import {AppError} from '../errors.js';
 import {whenAll} from '../utils.js';
 
 export type TransitionChecker<T> = (
@@ -32,7 +33,7 @@ export function createReadonlyTransitionChecker<T extends object>(
         const errors: string[] = [];
         for (const key of keys) {
             if (typeof key !== 'string') {
-                throw new Error(
+                throw new AppError(
                     'property (with non-string name) modification is not allowed: ' +
                         String(key)
                 );

@@ -1,6 +1,7 @@
 import bytewise from 'bytewise';
 import {z} from 'zod';
 import {Codec} from '../codec.js';
+import {AppError} from '../errors.js';
 import {assert, compareUint8Array, zip} from '../utils.js';
 import {Uuid, UuidCodec, zUuid} from '../uuid.js';
 import {
@@ -35,7 +36,7 @@ export interface IndexOptions<TValue> {
     readonly filter?: (value: TValue) => boolean;
 }
 
-export class UniqueError extends Error {
+export class UniqueError extends AppError {
     constructor(public readonly indexName: string) {
         super('Unique index constraint violation. Index name: ' + indexName);
     }
@@ -120,13 +121,13 @@ export function createIndex<TValue>({
             const id = prevId ?? nextId;
 
             if (!id) {
-                throw new Error(
+                throw new AppError(
                     'invalid index sync: at least prev or next must be present'
                 );
             }
 
             if (prev && next && compareIndexKey(prevId!, nextId!) !== 0) {
-                throw new Error(
+                throw new AppError(
                     'invalid index sync: changing id is not allowed'
                 );
             }
@@ -151,7 +152,7 @@ export function createIndex<TValue>({
 
             // clean up
             if (prevIncluded) {
-                assert(prevKey !== undefined);
+                assert(prevKey !== undefined, 'prevKey is undefined');
                 if (unique) {
                     await tx.delete(encodeIndexKey(prevKey));
                 } else {
@@ -161,7 +162,7 @@ export function createIndex<TValue>({
 
             // add
             if (nextIncluded) {
-                assert(nextKey !== undefined);
+                assert(nextKey !== undefined, 'nextKey is undefined');
                 if (unique) {
                     const existing = await tx.get(encodeIndexKey(nextKey));
                     if (existing) {

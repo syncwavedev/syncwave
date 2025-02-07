@@ -2,6 +2,7 @@ import {z} from 'zod';
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
 import {context} from '../context.js';
 import {toCursor} from '../cursor.js';
+import {toError} from '../errors.js';
 import {log} from '../logger.js';
 import {Observable, Stream, toStream} from '../stream.js';
 import {Message, MessageHeaders} from '../transport/message.js';
@@ -92,8 +93,8 @@ function createRpcObserverServerApi<TState>(api: ObserverApi<TState>) {
                     })
                     .catch(error => {
                         log.error(
-                            'unexpected error during rpc observer cancellation',
-                            error
+                            error,
+                            'unexpected error during rpc observer cancellation'
                         );
                     });
 
@@ -223,7 +224,7 @@ export async function toObservable<TValue, TUpdate>(
                 try {
                     await iterator.return();
                 } catch (error) {
-                    log.error('transformAsyncIterable finally', error);
+                    log.error(toError(error), 'transformAsyncIterable finally');
                 }
             }
         }

@@ -20,6 +20,7 @@ export const SUPERADMIN_IDS = [
     '0194c663-80e4-72ce-a847-5c41e7f261ba',
     '0194c67a-cb81-705b-affc-030d7f8aa3ae',
     '0194defa-4772-72e7-b367-10accfda2364',
+    '0194e0a1-a7a4-7102-906b-97a12ace801f',
 ];
 export const EVENT_STORE_PULL_INTERVAL_MS = 1_000;
 export const EVENT_STORE_MAX_PULL_COUNT = 128;

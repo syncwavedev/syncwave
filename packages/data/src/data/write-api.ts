@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {zBigFloat} from '../big-float.js';
 import {AuthContext} from '../data/auth-context.js';
 import {DataTx} from '../data/data-layer.js';
-import {BoardId, zBoard} from '../data/repos/board-repo.js';
+import {Board, BoardId, zBoard} from '../data/repos/board-repo.js';
 import {createMemberId, Member} from '../data/repos/member-repo.js';
 import {TaskId, zTask} from '../data/repos/task-repo.js';
 import {UserId} from '../data/repos/user-repo.js';
@@ -33,6 +33,29 @@ export class WriteApiState {
 
     async ensureBoardReadAccess(boardId: BoardId): Promise<Member> {
         return await this.ensureBoardWriteAccess(boardId);
+    }
+
+    async getBoardRequired(boardId: BoardId): Promise<Board> {
+        const board = await this.tx.boards.getById(boardId);
+        if (board === undefined) {
+            throw new BusinessError(
+                `board not found: ${boardId}`,
+                'board_not_found'
+            );
+        }
+
+        return board;
+    }
+
+    async ensureBoardOwner(boardId: BoardId): Promise<void> {
+        const userId = this.ensureAuthenticated();
+        const board = await this.getBoardRequired(boardId);
+        if (board.ownerId !== userId) {
+            throw new BusinessError(
+                `user ${this.auth.userId} is not the owner of board ${boardId}`,
+                'forbidden'
+            );
+        }
     }
 
     async ensureBoardWriteAccess(boardId: BoardId): Promise<Member> {
@@ -167,10 +190,21 @@ export function createWriteApi() {
                     createdAt: now,
                     updatedAt: now,
                     userId: userId,
-                    active: true,
+                    deleted: false,
                 });
 
                 return board;
+            },
+        }),
+        deleteBoard: handler({
+            req: z.object({boardId: zUuid<BoardId>()}),
+            res: z.object({}),
+            handle: async (st, {boardId}) => {
+                await st.ensureBoardOwner(boardId);
+                await st.tx.boards.update(boardId, x => {
+                    x.deleted = true;
+                });
+                return {};
             },
         }),
         updateBoardName: handler({

@@ -1,4 +1,5 @@
 import {Cancel, context, TraceId} from './context.js';
+import {AppError} from './errors.js';
 import {log} from './logger.js';
 
 interface Job {
@@ -17,9 +18,9 @@ export class JobManager<T extends string> {
         fn: () => Promise<void>
     ): Promise<void> {
         if (this.runningJobs.has(id)) {
-            throw new Error(`job ${id} is already running`);
+            throw new AppError(`job ${id} is already running`);
         } else if (this.cancelledJobs.has(id)) {
-            throw new Error(`job ${id} is already finished`);
+            throw new AppError(`job ${id} is already finished`);
         } else {
             const [ctx, cancel] = context().createBackground({traceId});
             this.runningJobs.set(id, {cancel});

@@ -60,7 +60,9 @@
 <Dialog.Root bind:open={devToolsOpen}>
 	<Dialog.Content class="max-w-[1000px]">
 		<Dialog.Header>
-			<Dialog.Description>DevTools</Dialog.Description>
+			<Dialog.Description
+				>DevTools (userId = {authManager.getIdentityInfo()?.userId})</Dialog.Description
+			>
 		</Dialog.Header>
 		<ScrollArea class="max-h-[80vh]">
 			<DevTools />

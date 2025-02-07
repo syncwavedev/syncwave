@@ -12,13 +12,13 @@ import {
     VerificationCode,
 } from '../data/repos/identity-repo.js';
 import {createUserId, UserId, UserRepo} from '../data/repos/user-repo.js';
+import {AppError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_HOURS,
 } from './../constants.js';
 import {addHours, getNow} from './../timestamp.js';
-import {whenAll} from './../utils.js';
 import {VerifySignInCodeResponse} from './coordinator.js';
 
 export interface AuthApiState {
@@ -117,7 +117,7 @@ export function createAuthApi() {
             ): Promise<VerifySignInCodeResponse> => {
                 const identity = await identities.getByEmail(email);
                 if (!identity) {
-                    throw new Error('invalid email, no identity found');
+                    throw new AppError('invalid email, no identity found');
                 }
 
                 if (await needsCooldown(identity)) {
@@ -125,7 +125,7 @@ export function createAuthApi() {
                 }
 
                 if (identity.verificationCode === undefined) {
-                    throw new Error('verification code was not requested');
+                    throw new AppError('verification code was not requested');
                 }
 
                 if (getNow() > identity.verificationCode.expires) {
@@ -220,22 +220,23 @@ export async function getIdentity(
     const now = getNow();
     const userId = createUserId();
 
-    const [identity] = await whenAll([
-        identities.create({
-            id: createIdentityId(),
-            createdAt: now,
-            updatedAt: now,
-            email,
-            userId,
-            verificationCode: await createVerificationCode(crypto),
-            authActivityLog: [],
-        }),
-        users.create({
-            id: userId,
-            createdAt: now,
-            updatedAt: now,
-        }),
-    ]);
+    await users.create({
+        id: userId,
+        createdAt: now,
+        updatedAt: now,
+        deleted: false,
+    });
+
+    const identity = await identities.create({
+        id: createIdentityId(),
+        createdAt: now,
+        updatedAt: now,
+        email,
+        userId,
+        verificationCode: await createVerificationCode(crypto),
+        authActivityLog: [],
+        deleted: false,
+    });
 
     return identity;
 }

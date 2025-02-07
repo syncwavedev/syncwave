@@ -22,7 +22,6 @@ export interface Task extends Doc<[TaskId]> {
     readonly boardId: BoardId;
     readonly counter: number;
     title: string;
-    deleted: boolean;
     columnPosition: BigFloat;
     columnId: ColumnId | null;
 }
@@ -38,7 +37,6 @@ export function zTask(): ZodType<Task> {
         boardId: zUuid<BoardId>(),
         counter: z.number(),
         title: z.string(),
-        deleted: z.boolean(),
         columnPosition: zBigFloat(),
         columnId: zUuid<ColumnId>().nullable(),
     });
@@ -89,7 +87,6 @@ export class TaskRepo {
                 boardId: true,
                 counter: true,
                 id: true,
-                deleted: false,
                 title: false,
                 authorId: true,
                 columnPosition: false,

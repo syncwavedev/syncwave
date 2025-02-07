@@ -121,6 +121,11 @@ class ParticipantClient {
     );
   }
 
+  Future<DeleteBoardRes> deleteBoard(DeleteBoardReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteBoard', request.toJson(), headers);
+    return DeleteBoardRes.fromJson(json as Map<String, dynamic>);
+  }
+
   void close() {
     _rpc.close();
   }

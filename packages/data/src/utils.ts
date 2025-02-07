@@ -1,11 +1,13 @@
 import {z} from 'zod';
-import {CancelBehavior, CancelledError, Context, context} from './context.js';
+import {CancelBehavior, Context, context} from './context.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
     AggregateCancelledError,
     AggregateError,
+    AppError,
     BusinessError,
+    CancelledError,
 } from './errors.js';
 import {log} from './logger.js';
 import {Stream, toStream} from './stream.js';
@@ -18,7 +20,7 @@ export type Unsubscribe = () => void;
 
 export interface Observer<T> {
     next: (value: T) => Promise<void>;
-    throw: (error: Error) => Promise<void>;
+    throw: (error: AppError) => Promise<void>;
     close: () => Nothing;
 }
 
@@ -64,7 +66,7 @@ export class Subject<T> {
                     .throw(new CancelledError())
                     .finally(() => channel.end())
                     .catch(error => {
-                        log.error('Subject.value$ unsubscribe', error);
+                        log.error(error, 'Subject.value$ unsubscribe');
                     });
             };
         });
@@ -82,7 +84,7 @@ export class Subject<T> {
         );
     }
 
-    async throw(error: Error): Promise<void> {
+    async throw(error: AppError): Promise<void> {
         this.ensureOpen();
         // copy in case if new subscribers are added/removed during notification
         await whenAll(
@@ -105,27 +107,27 @@ export class Subject<T> {
 
     private ensureOpen() {
         if (!this._open) {
-            throw new Error('subject is closed');
+            throw new AppError('subject is closed');
         }
     }
 }
 
 export function assertNever(value: never): never {
-    throw new Error('assertNever failed: ' + value);
+    throw new AppError('assertNever failed: ' + value);
 }
 
 export function assert(
     expression: boolean,
-    message?: string
+    message: string
 ): asserts expression {
     if (!expression) {
-        throw new Error('assertion failed: ' + message);
+        throw new AppError('assertion failed: ' + message);
     }
 }
 
 export function assertDefined<T>(value: T | undefined | null): T {
     if (value === null || value === undefined) {
-        throw new Error('assertion failed: value is not defined');
+        throw new AppError('assertion failed: value is not defined');
     }
 
     return value;
@@ -165,7 +167,7 @@ export function wait({
 export function isCancelledError(error: unknown): boolean {
     return (
         error instanceof CancelledError ||
-        (error instanceof Error && isCancelledError(error.cause))
+        (error instanceof AppError && isCancelledError(error.cause))
     );
 }
 
@@ -283,7 +285,7 @@ export function distinct<T>(items: T[]): T[] {
 }
 
 export function zip<T1, T2>(a: readonly T1[], b: readonly T2[]): [T1, T2][] {
-    assert(a.length === b.length);
+    assert(a.length === b.length, 'zip: lengths are different');
 
     const result: [T1, T2][] = [];
     for (let i = 0; i < a.length; i += 1) {
@@ -313,11 +315,11 @@ export function bufStartsWith(buf: Uint8Array, prefix: Uint8Array): boolean {
 }
 
 export function unreachable(): never {
-    throw new Error('unreachable');
+    throw new AppError('unreachable');
 }
 
 export function unimplemented(): never {
-    throw new Error('unimplemented');
+    throw new AppError('unimplemented');
 }
 
 export function arrayEqual<T>(a: T[], b: T[]) {
@@ -361,7 +363,9 @@ export async function whenAll<const T extends Promise<any>[]>(
 }
 
 export async function whenAny<T>(promises: Promise<T>[]) {
-    assert(promises.length > 0);
+    if (promises.length === 0) {
+        return [];
+    }
 
     const withId = promises.map((promise, idx) =>
         promise.then(result => ({result, idx}))
@@ -387,11 +391,21 @@ export function run<R>(fn: () => R) {
 export function getRequiredKey<T, K extends keyof T>(
     obj: T,
     key: K,
-    error: Error
+    error: AppError
 ): T[K] {
     const value = obj[key];
     if (value === undefined) {
         throw error;
     }
     return value;
+}
+
+export function stringify(x: unknown) {
+    if (x === undefined) {
+        return 'undefined';
+    } else if (x === null) {
+        return 'null';
+    } else {
+        return x.toString();
+    }
 }

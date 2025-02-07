@@ -1,4 +1,5 @@
 import {decodeString, encodeString} from '../codec.js';
+import {AppError} from '../errors.js';
 import {decodeHex} from '../hex.js';
 import {decodeIndexKey, encodeIndexKey, IndexKey} from '../kv/data-index.js';
 import {bufStartsWith} from '../utils.js';
@@ -68,7 +69,7 @@ export class RepoDataNode<T extends Doc<any>> extends DataNode {
     override async *queryChildren(
         prefix: Uint8Array
     ): AsyncIterable<DataNodeChild> {
-        yield* this.repo.getAll(prefix).map(doc => ({
+        yield* this.repo.unsafe_getAll(prefix).map(doc => ({
             key: encodeIndexKey(doc.pk),
             node: new DocDataNode(doc.pk, this.repo),
         }));
@@ -101,7 +102,7 @@ export class DocDataNode<T extends Doc<IndexKey>> extends DataNode {
     }
 
     override child(key: Uint8Array): DataNode {
-        throw new Error(
+        throw new AppError(
             `DocDataNode does not have any children, part: ${decodeHex(key)}`
         );
     }
@@ -111,7 +112,7 @@ export class DocDataNode<T extends Doc<IndexKey>> extends DataNode {
     }
 
     async snapshot(): Promise<T | undefined> {
-        return await this.repo.getById(this.pk);
+        return await this.repo.getById(this.pk, true);
     }
 
     override async delete(): Promise<void> {

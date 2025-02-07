@@ -3,7 +3,7 @@
 	import * as Collapsible from '$lib/components/ui/collapsible';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
-	import {getSdk} from '$lib/utils';
+	import {getAuthManager, getSdk} from '$lib/utils';
 	import {type DataNodeDto} from 'syncwave-data';
 	import {ChevronDown, Dot, Trash} from 'lucide-svelte';
 

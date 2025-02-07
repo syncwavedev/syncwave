@@ -107,6 +107,7 @@ export function createParticipantApi() {
         createColumn: proxy('createColumn'),
         createTask: proxy('createTask'),
         getBoardView: proxy('getBoardView'),
+        deleteBoard: proxy('deleteBoard'),
     });
 }
 

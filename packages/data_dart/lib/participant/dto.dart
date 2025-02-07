@@ -41,6 +41,8 @@
 //     final getBoardViewReq = getBoardViewReqFromJson(jsonString);
 //     final getBoardViewValue = getBoardViewValueFromJson(jsonString);
 //     final getBoardViewUpdate = getBoardViewUpdateFromJson(jsonString);
+//     final deleteBoardReq = deleteBoardReqFromJson(jsonString);
+//     final deleteBoardRes = deleteBoardResFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -208,6 +210,14 @@ GetBoardViewUpdate getBoardViewUpdateFromJson(String str) => GetBoardViewUpdate.
 
 String getBoardViewUpdateToJson(GetBoardViewUpdate data) => json.encode(data.toJson());
 
+DeleteBoardReq deleteBoardReqFromJson(String str) => DeleteBoardReq.fromJson(json.decode(str));
+
+String deleteBoardReqToJson(DeleteBoardReq data) => json.encode(data.toJson());
+
+DeleteBoardRes deleteBoardResFromJson(String str) => DeleteBoardRes.fromJson(json.decode(str));
+
+String deleteBoardResToJson(DeleteBoardRes data) => json.encode(data.toJson());
+
 class StreamPutReq {
     String topic;
     String value;
@@ -327,6 +337,7 @@ class GetMeValue {
 class GetMeValueIdentity {
     List<double> authActivityLog;
     double createdAt;
+    bool deleted;
     String email;
     String id;
     List<String> pk;
@@ -339,6 +350,7 @@ class GetMeValueIdentity {
     GetMeValueIdentity({
         required this.authActivityLog,
         required this.createdAt,
+        required this.deleted,
         required this.email,
         required this.id,
         required this.pk,
@@ -350,6 +362,7 @@ class GetMeValueIdentity {
     factory GetMeValueIdentity.fromJson(Map<String, dynamic> json) => GetMeValueIdentity(
         authActivityLog: List<double>.from(json["authActivityLog"].map((x) => x?.toDouble())),
         createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
         email: json["email"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
@@ -361,6 +374,7 @@ class GetMeValueIdentity {
     Map<String, dynamic> toJson() => {
         "authActivityLog": List<dynamic>.from(authActivityLog.map((x) => x)),
         "createdAt": createdAt,
+        "deleted": deleted,
         "email": email,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
@@ -394,12 +408,14 @@ class PurpleVerificationCode {
 
 class GetMeValueUser {
     double createdAt;
+    bool deleted;
     String id;
     List<String> pk;
     double updatedAt;
 
     GetMeValueUser({
         required this.createdAt,
+        required this.deleted,
         required this.id,
         required this.pk,
         required this.updatedAt,
@@ -407,6 +423,7 @@ class GetMeValueUser {
 
     factory GetMeValueUser.fromJson(Map<String, dynamic> json) => GetMeValueUser(
         createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
@@ -414,6 +431,7 @@ class GetMeValueUser {
 
     Map<String, dynamic> toJson() => {
         "createdAt": createdAt,
+        "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
@@ -443,6 +461,7 @@ class GetMeUpdate {
 class GetMeUpdateIdentity {
     List<double> authActivityLog;
     double createdAt;
+    bool deleted;
     String email;
     String id;
     List<String> pk;
@@ -455,6 +474,7 @@ class GetMeUpdateIdentity {
     GetMeUpdateIdentity({
         required this.authActivityLog,
         required this.createdAt,
+        required this.deleted,
         required this.email,
         required this.id,
         required this.pk,
@@ -466,6 +486,7 @@ class GetMeUpdateIdentity {
     factory GetMeUpdateIdentity.fromJson(Map<String, dynamic> json) => GetMeUpdateIdentity(
         authActivityLog: List<double>.from(json["authActivityLog"].map((x) => x?.toDouble())),
         createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
         email: json["email"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
@@ -477,6 +498,7 @@ class GetMeUpdateIdentity {
     Map<String, dynamic> toJson() => {
         "authActivityLog": List<dynamic>.from(authActivityLog.map((x) => x)),
         "createdAt": createdAt,
+        "deleted": deleted,
         "email": email,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
@@ -510,12 +532,14 @@ class FluffyVerificationCode {
 
 class GetMeUpdateUser {
     double createdAt;
+    bool deleted;
     String id;
     List<String> pk;
     double updatedAt;
 
     GetMeUpdateUser({
         required this.createdAt,
+        required this.deleted,
         required this.id,
         required this.pk,
         required this.updatedAt,
@@ -523,6 +547,7 @@ class GetMeUpdateUser {
 
     factory GetMeUpdateUser.fromJson(Map<String, dynamic> json) => GetMeUpdateUser(
         createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
@@ -530,6 +555,7 @@ class GetMeUpdateUser {
 
     Map<String, dynamic> toJson() => {
         "createdAt": createdAt,
+        "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
@@ -1817,6 +1843,32 @@ class FluffyColumnPosition {
     Map<String, dynamic> toJson() => {
         "denominator": denominator,
         "numerator": numerator,
+    };
+}
+
+class DeleteBoardReq {
+    String boardId;
+
+    DeleteBoardReq({
+        required this.boardId,
+    });
+
+    factory DeleteBoardReq.fromJson(Map<String, dynamic> json) => DeleteBoardReq(
+        boardId: json["boardId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "boardId": boardId,
+    };
+}
+
+class DeleteBoardRes {
+    DeleteBoardRes();
+
+    factory DeleteBoardRes.fromJson(Map<String, dynamic> json) => DeleteBoardRes(
+    );
+
+    Map<String, dynamic> toJson() => {
     };
 }
 

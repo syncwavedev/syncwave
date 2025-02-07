@@ -22,7 +22,6 @@ export interface Board extends Doc<[BoardId]> {
     readonly id: BoardId;
     name: string;
     ownerId: UserId;
-    deleted: boolean;
 }
 
 const BOARD_KEY_INDEX = 'key';
@@ -73,7 +72,6 @@ export class BoardRepo {
                 },
             ],
             readonly: {
-                deleted: false,
                 name: false,
                 ownerId: false,
                 id: true,
@@ -86,8 +84,12 @@ export class BoardRepo {
         );
     }
 
-    async getById(id: BoardId): Promise<Board | undefined> {
-        return await this.rawRepo.getById([id]);
+    async getById(
+        id: BoardId,
+        includeDeleted = false
+    ): Promise<Board | undefined> {
+        const board = await this.rawRepo.getById([id], includeDeleted);
+        return board;
     }
 
     async getByKey(key: string): Promise<Board | undefined> {

@@ -1,5 +1,6 @@
 import {Server} from 'http';
 import {
+    AppError,
     Codec,
     Connection,
     ConnectionClosedError,
@@ -70,13 +71,13 @@ export class WsConnection<T> implements Connection<T> {
 
     async send(message: T): Promise<void> {
         this.ensureOpen();
-        log.trace('ws.send', message);
+        log.trace('ws.send: ' + JSON.stringify(message));
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: unknown) => {
                 try {
                     if (error) {
-                        const err = new Error();
+                        const err = new AppError();
                         err.cause = error;
                         err.message = 'got message: ' + JSON.stringify(message);
                         resolve(this.subject.throw(err));
@@ -114,7 +115,7 @@ export class WsConnection<T> implements Connection<T> {
                     const message = this.codec.decode(rawData);
                     await this.subject.next(message);
                 } catch (error) {
-                    log.error('ws.message', error);
+                    log.error(toError(error), 'ws.message');
                 }
             });
         });
@@ -122,10 +123,10 @@ export class WsConnection<T> implements Connection<T> {
         this.ws.on('error', async error => {
             await capturedCtx.run(async () => {
                 try {
-                    log.debug('WsConnection error', error);
+                    log.debug(toError(error), 'WsConnection error');
                     await this.subject.throw(toError(error));
                 } catch (error) {
-                    log.error('ws.error', error);
+                    log.error(toError(error), 'ws.error');
                 }
             });
         });
@@ -135,10 +136,13 @@ export class WsConnection<T> implements Connection<T> {
                 try {
                     log.debug('WsConnection unexpected-response');
                     await this.subject.throw(
-                        new Error('ws.unexpected response')
+                        new AppError('ws.unexpected response')
                     );
                 } catch (error) {
-                    log.error('error during ws.unexpected-response', error);
+                    log.error(
+                        toError(error),
+                        'error during ws.unexpected-response'
+                    );
                 }
             });
         });

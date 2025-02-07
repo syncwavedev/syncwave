@@ -6,13 +6,14 @@
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import {getSdk} from '$lib/utils';
 	import {getState} from '$lib/utils.svelte';
-	import {createTaskId} from 'syncwave-data';
+	import {createTaskId, log} from 'syncwave-data';
 	import * as Select from '$lib/components/ui/select/index.js';
 
 	import {
 		createColumnId,
 		type ColumnId,
 	} from '../../../../../../data/dist/esm/src/data/repos/column-repo';
+	import {goto} from '$app/navigation';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
@@ -45,6 +46,17 @@
 			})
 		);
 	}
+
+	$effect(() => {
+		log.info('board: ' + board.value.board.deleted);
+		if (board.value.board.deleted) {
+			goto('/app');
+		}
+	});
+
+	async function deleteBoard() {
+		await sdk(rpc => rpc.deleteBoard({boardId: board.value.board.id}));
+	}
 </script>
 
 <header
@@ -67,6 +79,8 @@
 <div class="flex flex-col gap-4 p-4">
 	<div>
 		Board {board.value.board.id} - {board.value.board.createdAt}
+
+		<Button variant="destructive" onclick={deleteBoard}>Delete board</Button>
 	</div>
 
 	<div>

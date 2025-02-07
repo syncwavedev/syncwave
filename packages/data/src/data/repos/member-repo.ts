@@ -18,7 +18,6 @@ export interface Member extends Doc<[MemberId]> {
     readonly id: MemberId;
     readonly userId: UserId;
     readonly boardId: BoardId;
-    active: boolean;
 }
 
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
@@ -29,7 +28,6 @@ export function zMember() {
         id: zUuid<MemberId>(),
         userId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
-        active: z.boolean(),
     });
 }
 
@@ -76,7 +74,6 @@ export class MemberRepo {
                 },
             ],
             readonly: {
-                active: false,
                 boardId: true,
                 id: true,
                 userId: true,
@@ -88,22 +85,17 @@ export class MemberRepo {
         return this.rawRepo.getById([id]);
     }
 
-    getByUserId(userId: UserId, activeOnly = true): Stream<Member> {
-        return this.rawRepo
-            .get(USER_ID_BOARD_ID_INDEX, [userId])
-            .filter(x => x.active || !activeOnly);
+    getByUserId(userId: UserId): Stream<Member> {
+        return this.rawRepo.get(USER_ID_BOARD_ID_INDEX, [userId]);
     }
 
-    getByBoardId(boardId: BoardId, activeOnly = true): Stream<Member> {
-        return this.rawRepo
-            .get(BOARD_ID_INDEX, [boardId])
-            .filter(x => x.active || !activeOnly);
+    getByBoardId(boardId: BoardId): Stream<Member> {
+        return this.rawRepo.get(BOARD_ID_INDEX, [boardId]);
     }
 
     async getByUserIdAndBoardId(
         userId: UserId,
-        boardId: BoardId,
-        activeOnly = true
+        boardId: BoardId
     ): Promise<Member | undefined> {
         const result = await this.rawRepo.getUnique(USER_ID_BOARD_ID_INDEX, [
             userId,
@@ -111,10 +103,6 @@ export class MemberRepo {
         ]);
 
         if (!result) {
-            return undefined;
-        }
-
-        if (!result.active && activeOnly) {
             return undefined;
         }
 

@@ -1,4 +1,5 @@
 import {RECONNECT_WAIT_MS} from '../constants.js';
+import {AppError, toError} from '../errors.js';
 import {log} from '../logger.js';
 import {Observer, Subject, Unsubscribe, wait} from '../utils.js';
 import {
@@ -17,7 +18,7 @@ export class PersistentConnection<T> implements Connection<T> {
     constructor(private readonly transport: TransportClient<T>) {}
 
     async send(message: T): Promise<void> {
-        log.trace('persistent connection: send', message);
+        log.trace('persistent connection: send: ' + JSON.stringify(message));
         const connection = await this.getConnection();
         log.trace('persistent connection: got connection');
         if (connection === 'closed_during_connect') {
@@ -32,7 +33,7 @@ export class PersistentConnection<T> implements Connection<T> {
 
         // connect if not already
         this.getConnection().catch(err => {
-            log.error('error while connection to the server: ', err);
+            log.error(err, 'error while connection to the server: ');
         });
 
         return this.subject.subscribe(cb);
@@ -66,8 +67,8 @@ export class PersistentConnection<T> implements Connection<T> {
                             );
                         } else {
                             log.error(
-                                'persistent connection: error while connecting to the server: ',
-                                error
+                                toError(error),
+                                'persistent connection: error while connecting to the server: '
                             );
                         }
                         await wait({ms: RECONNECT_WAIT_MS, onCancel: 'reject'});
@@ -79,17 +80,22 @@ export class PersistentConnection<T> implements Connection<T> {
                         this.connection = undefined;
                         try {
                             await this.subject.throw(
-                                new Error('connection is lost, reconnection...')
+                                new AppError(
+                                    'connection is lost, reconnection...'
+                                )
                             );
                         } catch (error) {
-                            log.error('reconnect observers error', error);
+                            log.error(
+                                toError(error),
+                                'reconnect observers error'
+                            );
                         }
 
                         // reconnect
                         this.getConnection().catch(err => {
                             log.error(
-                                'error while reconnection to the server: ',
-                                err
+                                err,
+                                'error while reconnection to the server: '
                             );
                         });
                     }
@@ -99,13 +105,13 @@ export class PersistentConnection<T> implements Connection<T> {
                     next: message => this.subject.next(message),
                     throw: async error => {
                         unsub();
-                        log.error('error in underlying connection', error);
+                        log.error(error, 'error in underlying connection');
                         await reconnect();
                     },
                     close: () => {
                         unsub();
                         reconnect().catch(error => {
-                            log.error('close => reconnect', error);
+                            log.error(error, 'close => reconnect');
                         });
                     },
                 });
@@ -126,7 +132,7 @@ export class PersistentConnection<T> implements Connection<T> {
 
     private assertOpen() {
         if (this.closed) {
-            throw new Error('connection is closed');
+            throw new AppError('connection is closed');
         }
     }
 }

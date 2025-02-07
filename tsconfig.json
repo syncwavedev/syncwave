@@ -9,7 +9,7 @@
         "noErrorTruncation": true,
         "declaration": true,
         "declarationMap": true,
-        "noImplicitAny": false,
+        "noImplicitAny": true,
         "noEmitOnError": false,
         "skipLibCheck": true,
         "allowUnreachableCode": false,

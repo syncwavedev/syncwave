@@ -314,7 +314,7 @@ export function applyMiddleware<
                     req
                 ).catch(error => {
                     if (signal.state !== 'pending') {
-                        log.error('middleware failed after next()', error);
+                        log.error(error, 'middleware failed after next()');
                     } else {
                         signal.reject(error);
                     }

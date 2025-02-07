@@ -1,4 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
+import {Timestamp} from '../timestamp.js';
 import {assert} from '../utils.js';
 import {Crdt} from './crdt.js';
 
@@ -148,7 +149,7 @@ describe('Doc', () => {
             const replica = createReplica(doc);
             doc.update(x => {
                 x.clear();
-                assert(x.size === 0);
+                assert(x.size === 0, 'should be empty');
             });
 
             expect([...doc.snapshot().entries()]).toEqual([]);
@@ -188,8 +189,8 @@ describe('Doc', () => {
 
             doc.update(x => {
                 x.delete('a');
-                assert(!x.has('a'));
-                assert(x.has('b'));
+                assert(!x.has('a'), 'should be deleted');
+                assert(x.has('b'), 'should be present');
             });
 
             expect([...doc.snapshot().entries()]).toEqual([['b', 'v1']]);
@@ -202,7 +203,7 @@ describe('Doc', () => {
             const replica = createReplica(doc);
             doc.update(x => {
                 x.val = undefined;
-                assert(x.val === undefined);
+                assert(x.val === undefined, 'should be undefined');
             });
             expect(doc.snapshot()).toEqual({val: undefined});
             expect(doc.snapshot()).toEqual(replica.snapshot());
@@ -210,7 +211,7 @@ describe('Doc', () => {
 
             doc.update(x => {
                 x.val = 3;
-                assert(x.val === 3);
+                assert(x.val === 3, 'should be 3');
             });
             expect(doc.snapshot()).toEqual({val: 3});
             expect(doc.snapshot()).toEqual(replica.snapshot());
@@ -223,7 +224,7 @@ describe('Doc', () => {
             const replica = createReplica(doc);
             doc.update(x => {
                 x.val = null;
-                assert(x.val === null);
+                assert(x.val === null, 'should be null');
             });
             expect(doc.snapshot()).toEqual({val: null});
             expect(doc.snapshot()).toEqual(replica.snapshot());
@@ -231,7 +232,7 @@ describe('Doc', () => {
 
             doc.update(x => {
                 x.val = 3;
-                assert(x.val === 3);
+                assert(x.val === 3, 'should be 3');
             });
             expect(doc.snapshot()).toEqual({val: 3});
             expect(doc.snapshot()).toEqual(replica.snapshot());
@@ -312,8 +313,8 @@ describe('Doc', () => {
 
         expect(callback).toHaveBeenCalledWith(
             {
-                timestamp: expect.any(Number),
-                payload: expect.any(Uint8Array),
+                timestamp: expect.any(Number) as Timestamp,
+                payload: expect.any(Uint8Array) as Uint8Array,
             },
             {
                 tag: undefined,

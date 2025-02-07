@@ -7,6 +7,7 @@ import {
     Text as YText,
 } from 'yjs';
 import {Codec, MsgpackCodec} from '../codec.js';
+import {AppError} from '../errors.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {
     assert,
@@ -177,7 +178,7 @@ function mapFromYValue(yValue: YValue): any {
             );
         }
     } else {
-        throw new Error('cannot map unsupported YValue: ' + yValue);
+        throw new AppError('cannot map unsupported YValue: ' + yValue);
     }
 }
 
@@ -217,7 +218,7 @@ function mapToYValue(value: any): YValue {
         result.set('value', value.toString());
         return result;
     } else {
-        throw new Error('cannot map unsupported value to YValue: ' + value);
+        throw new AppError('cannot map unsupported value to YValue: ' + value);
     }
 }
 
@@ -230,7 +231,7 @@ class Locator {
         const result = this.map.get(subject);
 
         if (!result) {
-            throw new Error('could not locate subject ' + subject);
+            throw new AppError('could not locate subject ' + subject);
         }
 
         return result;
@@ -270,7 +271,7 @@ class Locator {
                 this.addDeep(subjectValue, yValueValue);
             }
         } else {
-            throw new Error(
+            throw new AppError(
                 'cannot add unsupported subject to Locator: ' + subject
             );
         }
@@ -282,7 +283,7 @@ function replayLog(log: OpLog, locator: Locator): void {
         const yValue = locator.locate(entry.subject);
 
         if (entry.type === 'array_push') {
-            assert(yValue instanceof YArray);
+            assert(yValue instanceof YArray, 'array_push: expected YArray');
 
             const yArgs = entry.args.map(
                 x => new YMap<YValue>([['value', mapToYValue(x)]])
@@ -293,7 +294,7 @@ function replayLog(log: OpLog, locator: Locator): void {
                 locator.addDeep(arg, yArg)
             );
         } else if (entry.type === 'array_unshift') {
-            assert(yValue instanceof YArray);
+            assert(yValue instanceof YArray, 'array_unshift: expected YArray');
 
             const yArgs = entry.args.map(
                 x => new YMap<YValue>([['value', mapToYValue(x)]])
@@ -304,7 +305,7 @@ function replayLog(log: OpLog, locator: Locator): void {
                 locator.addDeep(arg, yArg)
             );
         } else if (entry.type === 'array_set') {
-            assert(yValue instanceof YArray);
+            assert(yValue instanceof YArray, 'array_set: expected YArray');
 
             (yValue.get(entry.index) as YMap<YValue>).set(
                 'value',
@@ -312,21 +313,21 @@ function replayLog(log: OpLog, locator: Locator): void {
             );
             locator.addDeep(entry.value, yValue.get(entry.index));
         } else if (entry.type === 'map_clear') {
-            assert(yValue instanceof YMap);
+            assert(yValue instanceof YMap, 'map_clear: expected YMap');
             yValue.clear();
         } else if (entry.type === 'map_delete') {
-            assert(yValue instanceof YMap);
+            assert(yValue instanceof YMap, 'map_delete: expected YMap');
             yValue.delete(entry.args[0]);
         } else if (entry.type === 'map_set') {
-            assert(yValue instanceof YMap);
+            assert(yValue instanceof YMap, 'map_set: expected YMap');
             const yMapValue = mapToYValue(entry.args[1]);
             yValue.set(entry.args[0], yMapValue);
             locator.addDeep(entry.args[1], yMapValue);
         } else if (entry.type === 'object_delete') {
-            assert(yValue instanceof YMap);
+            assert(yValue instanceof YMap, 'object_delete: expected YMap');
             yValue.delete(entry.prop);
         } else if (entry.type === 'object_set') {
-            assert(yValue instanceof YMap);
+            assert(yValue instanceof YMap, 'object_set: expected YMap');
             const yMapValue = mapToYValue(entry.value);
             yValue.set(entry.prop, yMapValue);
             locator.addDeep(entry.value, yMapValue);

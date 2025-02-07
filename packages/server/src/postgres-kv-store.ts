@@ -10,6 +10,8 @@ import {
     context,
     log,
     mapCondition,
+    toError,
+    unreachable,
 } from 'syncwave-data';
 
 function buildConditionSql(condition: Condition<Uint8Array>): {
@@ -118,7 +120,10 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                     this.pool
                         .query('SELECT pg_cancel_backend($1)', [pid])
                         .catch(error => {
-                            log.error('Failed to cancel transaction', error);
+                            log.error(
+                                toError(error),
+                                'Failed to cancel transaction'
+                            );
                         });
                 });
 
@@ -140,14 +145,14 @@ export class PostgresUint8KVStore implements Uint8KVStore {
             }
         }
 
-        throw new Error('unreachable');
+        unreachable();
     }
 
     async close(): Promise<void> {
         try {
             await this.pool.end();
         } catch (error) {
-            log.error('Failed to close Postgres pool', error);
+            log.error(toError(error), 'Failed to close Postgres pool');
         }
     }
 }

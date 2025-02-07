@@ -80,6 +80,7 @@ export function createTestApi() {
                         diff: Crdt.from<User>({
                             pk: [userId],
                             id: userId,
+                            deleted: false,
                             createdAt: getNow(),
                             updatedAt: getNow(),
                         }).state(),

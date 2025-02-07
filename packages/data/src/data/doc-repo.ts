@@ -1,5 +1,6 @@
 import {z, ZodType} from 'zod';
 import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
+import {AppError} from '../errors.js';
 import {
     compareIndexKey,
     createIndex,
@@ -26,7 +27,7 @@ import {
     TransitionChecker,
 } from './transition-checker.js';
 
-export class ConstraintError extends Error {
+export class ConstraintError extends AppError {
     constructor(
         public readonly constraintName: string,
         message: string
@@ -40,6 +41,7 @@ export interface Doc<TKey extends IndexKey> {
     readonly pk: TKey;
     readonly createdAt: Timestamp;
     updatedAt: Timestamp;
+    deleted: boolean;
 }
 
 export function zDoc<T extends IndexKey>(pk: ZodType<T>) {
@@ -47,6 +49,7 @@ export function zDoc<T extends IndexKey>(pk: ZodType<T>) {
         pk: pk,
         createdAt: zTimestamp(),
         updatedAt: zTimestamp(),
+        deleted: z.boolean(),
     });
 }
 
@@ -76,7 +79,9 @@ export interface DocStoreOptions<T extends Doc<IndexKey>> {
     schema: ZodType<T>;
     onChange: OnDocChange<T>;
     constraints: readonly Constraint<T>[];
-    readonly: ReadonlyDescriptor<Omit<T, 'updatedAt' | 'createdAt' | 'pk'>>;
+    readonly: ReadonlyDescriptor<
+        Omit<T, 'updatedAt' | 'createdAt' | 'pk' | 'deleted'>
+    >;
 }
 
 export type Recipe<T> = (doc: T) => T | void;
@@ -96,7 +101,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         this.indexes = new Map(
             Object.entries(options.indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
-                    throw new Error(
+                    throw new AppError(
                         'index name cannot contain /: ' + indexName
                     );
                 }
@@ -131,43 +136,60 @@ export class DocRepo<T extends Doc<IndexKey>> {
                 createdAt: true,
                 pk: true,
                 updatedAt: false,
+                deleted: false,
                 ...options.readonly,
             }
         );
     }
 
-    async getById(id: IndexKey): Promise<T | undefined> {
+    async getById(
+        id: IndexKey,
+        includeDeleted?: boolean
+    ): Promise<T | undefined> {
         const doc = await this.primary.get(id);
-        return doc?.snapshot();
+        const snapshot = doc?.snapshot();
+        if (!includeDeleted && snapshot?.deleted) {
+            return undefined;
+        }
+
+        return snapshot;
     }
 
-    get(indexName: string, key: IndexKey): Stream<T> {
+    get(indexName: string, key: IndexKey, includeDeleted?: boolean): Stream<T> {
         const index = this._index(indexName);
-        return this._mapToDocs(index.get(key));
+        return this._mapToDocs(
+            index.get(key),
+            'repo.get: index lookup',
+            includeDeleted
+        );
     }
 
-    async getUnique(indexName: string, key: IndexKey): Promise<T | undefined> {
+    async getUnique(
+        indexName: string,
+        key: IndexKey,
+        includeDeleted?: boolean
+    ): Promise<T | undefined> {
         const index = this._index(indexName);
         const ids = await toStream(index.get(key)).take(2).toArray();
         if (ids.length > 1) {
-            throw new Error(
+            throw new AppError(
                 `index ${indexName} contains multiple docs for the key: ${key}`
             );
         } else if (ids.length === 1) {
-            return await this.getById(ids[0]);
+            return await this.getById(ids[0], includeDeleted);
         } else {
             return undefined;
         }
     }
 
-    getAll(prefix?: Uint8Array): Stream<T> {
+    unsafe_getAll(prefix?: Uint8Array): Stream<T> {
         return toStream(
             queryStartsWith(this.primaryKeyRaw, prefix ?? new Uint8Array())
         ).map(x => x.value.snapshot());
     }
 
     async unsafe_deleteAll() {
-        for await (const {pk} of this.getAll()) {
+        for await (const {pk} of this.unsafe_getAll(undefined)) {
             await this.unsafe_delete(pk);
         }
     }
@@ -175,7 +197,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
     async unsafe_delete(pk: IndexKey) {
         const doc = await this.primary.get(pk);
         if (!doc) {
-            throw new Error('doc not found: ' + pk);
+            throw new AppError('doc not found: ' + pk);
         }
         const prev = doc.snapshot();
         const next = undefined;
@@ -186,16 +208,28 @@ export class DocRepo<T extends Doc<IndexKey>> {
         ]);
     }
 
-    query(indexName: string, condition: Condition<IndexKey>): Stream<T> {
+    query(
+        indexName: string,
+        condition: Condition<IndexKey>,
+        includeDeleted?: boolean
+    ): Stream<T> {
         const index = this._index(indexName);
 
-        return this._mapToDocs(index.query(condition));
+        return this._mapToDocs(
+            index.query(condition),
+            'repo.query: index lookup',
+            includeDeleted
+        );
     }
 
-    async update(id: IndexKey, recipe: Recipe<T>): Promise<T> {
+    async update(
+        id: IndexKey,
+        recipe: Recipe<T>,
+        includeDeleted?: boolean
+    ): Promise<T> {
         const doc = await this.primary.get(id);
-        if (!doc) {
-            throw new Error('doc not found: ' + id);
+        if (!doc || (!includeDeleted && doc.snapshot().deleted)) {
+            throw new AppError('doc not found: ' + id);
         }
 
         const diff = doc.update(draft => {
@@ -210,17 +244,22 @@ export class DocRepo<T extends Doc<IndexKey>> {
             return doc.snapshot();
         }
 
-        await this.apply(id, diff);
+        await this.apply(id, diff, includeDeleted);
 
         return doc.snapshot();
     }
 
     // todo: add tests
-    async apply(pk: IndexKey, diff: CrdtDiff<T>): Promise<void> {
+    async apply(
+        pk: IndexKey,
+        diff: CrdtDiff<T>,
+        includeDeleted?: boolean
+    ): Promise<void> {
         let doc: Crdt<T> | undefined = await this.primary.get(pk);
         let prev: T | undefined;
-        if (doc) {
-            prev = doc.snapshot();
+        const docSnapshot = doc?.snapshot();
+        if (doc && docSnapshot && (includeDeleted || !docSnapshot.deleted)) {
+            prev = docSnapshot;
             doc.apply(diff);
         } else {
             prev = undefined;
@@ -228,7 +267,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         }
 
         if (compareIndexKey(doc.snapshot().pk, pk) !== 0) {
-            throw new Error('invalid diff: diff updates id ' + pk);
+            throw new AppError('invalid diff: diff updates id ' + pk);
         }
 
         await this._put(prev, doc, diff);
@@ -237,7 +276,9 @@ export class DocRepo<T extends Doc<IndexKey>> {
     async create(doc: T): Promise<T> {
         const existing = await this.primary.get(doc.pk);
         if (existing) {
-            throw new Error(`doc ${indexKeyToString(doc.pk)} already exists`);
+            throw new AppError(
+                `doc ${indexKeyToString(doc.pk)} already exists`
+            );
         }
 
         return await this.put(doc);
@@ -256,7 +297,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
     private _index(indexName: string): Index<T> {
         const index = this.indexes.get(indexName);
         if (!index) {
-            throw new Error('index not found: ' + indexName);
+            throw new AppError('index not found: ' + indexName);
         }
         return index;
     }
@@ -282,10 +323,15 @@ export class DocRepo<T extends Doc<IndexKey>> {
         ]);
     }
 
-    private _mapToDocs(ids: AsyncIterable<IndexKey>): Stream<T> {
+    private _mapToDocs(
+        ids: AsyncIterable<IndexKey>,
+        message: string,
+        includeDeleted?: boolean
+    ): Stream<T> {
         return toStream(ids)
             .mapParallel(id => this.primary.get(id))
-            .assert(x => x !== undefined)
-            .map(doc => doc.snapshot());
+            .assert(x => x !== undefined, message)
+            .map(doc => doc.snapshot())
+            .filter(x => includeDeleted || !x.deleted);
     }
 }

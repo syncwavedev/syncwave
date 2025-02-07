@@ -3,6 +3,7 @@ import {
     EVENT_STORE_PULL_INTERVAL_MS,
 } from '../constants.js';
 import {Cursor} from '../cursor.js';
+import {toError} from '../errors.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {ReadonlyCell} from '../kv/readonly-cell.js';
 import {log} from '../logger.js';
@@ -91,8 +92,8 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                             // we don't wanna block on this call to avoid a deadlock
                             selfTrigger.next().catch((error: unknown) => {
                                 log.error(
-                                    'failed to trigger event store iteration',
-                                    error
+                                    toError(error),
+                                    'failed to trigger event store iteration'
                                 );
                             });
                         }
@@ -103,7 +104,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                     return events;
                 } catch (error) {
-                    log.error('EventStoreReader.subscribe', error);
+                    log.error(toError(error), 'EventStoreReader.subscribe');
                     return [];
                 }
             })

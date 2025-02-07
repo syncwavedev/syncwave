@@ -64,7 +64,11 @@ export class BoardRepo {
                         const user = await dataTx().users.getById(
                             board.ownerId
                         );
-                        return user !== undefined;
+                        if (user === undefined) {
+                            return `user with id ${board.ownerId} does not exist`;
+                        }
+
+                        return;
                     },
                 },
             ],

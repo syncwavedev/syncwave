@@ -36,9 +36,9 @@ export class ConsoleLogger implements Logger {
         if (!this.shouldLog('trace')) return;
 
         const cx = context();
-        console.trace(
+        console.debug(
             `[${cx.traceId}] [${this.ts()}] [TRC] ${message}`,
-            ...args
+            ...args.map(x => JSON.stringify(x, null, 4))
         );
     }
     debug(message: string, ...args: unknown[]): void {

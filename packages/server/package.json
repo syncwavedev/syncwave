@@ -36,6 +36,7 @@
         "@types/koa": "^2.15.0",
         "@types/koa__router": "^12.0.4",
         "@types/node": "^22.10.2",
+        "@types/pg": "^8.11.11",
         "@types/ws": "^8.5.13",
         "rimraf": "^6.0.1",
         "tsx": "^4.17.0",
@@ -48,10 +49,11 @@
         "better-sqlite3": "^11.8.0",
         "bufferutil": "^4.0.9",
         "dotenv": "^16.4.7",
-        "foundationdb": "1",
-        "syncwave-data": "*",
         "jsonwebtoken": "^9.0.2",
+        "foundationdb": "1",
         "koa": "^2.15.3",
+        "pg": "^8.13.1",
+        "syncwave-data": "*",
         "ws": "^8.18.0"
     }
 }

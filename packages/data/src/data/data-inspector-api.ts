@@ -1,10 +1,10 @@
 import {z, ZodType} from 'zod';
 import {decodeString, encodeString} from '../codec.js';
+import {decodeIndexKey} from '../kv/data-index.js';
 import {Uint8Transaction} from '../kv/kv-store.js';
 import {toStream} from '../stream.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {zUint8Array} from '../utils.js';
-import {decodeUuid} from '../uuid.js';
 import {AggregateDataNode, DataNode, DataNodeVisitor} from './data-node.js';
 
 export interface DataNodeDto {
@@ -58,7 +58,9 @@ function createTreeVisitor(
                 repo.queryChildren(new Uint8Array())
             )
                 .mapParallel(async ({key, node}) =>
-                    node.visit(createTreeVisitor(key, decodeUuid(key)))
+                    node.visit(
+                        createTreeVisitor(key, decodeIndexKey(key).join(','))
+                    )
                 )
                 .take(100)
                 .toArray(),

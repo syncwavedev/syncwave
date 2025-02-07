@@ -32,6 +32,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', async (ws: WebSocket) => {
+            logger.trace('ws server connection');
             await launchCtx.run(async () => {
                 const conn = new WsConnection<T>(ws, this.opt.codec);
                 cb(conn);
@@ -41,6 +42,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         const listening = new Deferred<void>();
 
         this.wss.on('listening', async () => {
+            logger.trace('ws server running');
             await launchCtx.run(async () => {
                 listening.resolve();
             });
@@ -68,6 +70,7 @@ export class WsConnection<T> implements Connection<T> {
 
     async send(message: T): Promise<void> {
         this.ensureOpen();
+        logger.trace('ws.send', message);
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: unknown) => {
@@ -87,6 +90,7 @@ export class WsConnection<T> implements Connection<T> {
     }
 
     subscribe(observer: Observer<T>) {
+        logger.trace('ws.subscribe');
         this.ensureOpen();
         return this.subject.subscribe(observer);
     }

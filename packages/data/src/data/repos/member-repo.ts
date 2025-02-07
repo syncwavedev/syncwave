@@ -58,14 +58,20 @@ export class MemberRepo {
                     name: 'member.userId fk',
                     verify: async member => {
                         const user = await userRepo.getById(member.userId);
-                        return user !== undefined;
+                        if (user === undefined) {
+                            return `user not found: ${member.userId}`;
+                        }
+                        return;
                     },
                 },
                 {
                     name: 'member.boardId fk',
                     verify: async member => {
                         const board = await boardRepo.getById(member.boardId);
-                        return board !== undefined;
+                        if (board === undefined) {
+                            return `board not found: ${member.boardId}`;
+                        }
+                        return;
                     },
                 },
             ],

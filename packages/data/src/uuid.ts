@@ -1,6 +1,7 @@
 import {parse, stringify, v7, validate} from 'uuid';
 import {z} from 'zod';
-import {Codec} from './codec.js';
+import {Codec, decodeString} from './codec.js';
+import {logger} from './logger.js';
 import {Brand} from './utils.js';
 
 export type Uuid = Brand<string, 'uuid'>;
@@ -24,12 +25,20 @@ export class UuidCodec implements Codec<Uuid> {
         return parse(data);
     }
     decode(buf: Uint8Array): Uuid {
-        const uuid = stringify(buf) as Uuid;
-        if (!validate(uuid)) {
-            throw new Error(`decode error: ${uuid} is not a UUID`);
-        }
+        try {
+            const uuid = stringify(buf) as Uuid;
+            if (!validate(uuid)) {
+                throw new Error(`decode error: ${uuid} is not a UUID`);
+            }
 
-        return uuid;
+            return uuid;
+        } catch (error) {
+            logger.error(
+                `error during uuid (${decodeString(buf)}) decode`,
+                error
+            );
+            throw error;
+        }
     }
 }
 

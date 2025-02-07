@@ -68,14 +68,20 @@ export class TaskRepo {
                     name: 'task.authorId fk',
                     verify: async task => {
                         const user = await userRepo.getById(task.authorId);
-                        return user !== undefined;
+                        if (user === undefined) {
+                            return `user not found: ${task.authorId}`;
+                        }
+                        return;
                     },
                 },
                 {
                     name: 'task.boardId fk',
                     verify: async task => {
                         const board = await boardRepo.getById(task.boardId);
-                        return board !== undefined;
+                        if (board === undefined) {
+                            return `board not found: ${task.boardId}`;
+                        }
+                        return;
                     },
                 },
             ],

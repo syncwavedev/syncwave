@@ -27,8 +27,11 @@ import {
 } from './transition-checker.js';
 
 export class ConstraintError extends Error {
-    constructor(public readonly constraintName: string) {
-        super('constraint failed: ' + constraintName);
+    constructor(
+        public readonly constraintName: string,
+        message: string
+    ) {
+        super('constraint failed: ' + constraintName + ', ' + message);
         this.name = 'ConstraintError';
     }
 }
@@ -64,7 +67,7 @@ export type OnDocChange<T extends Doc<IndexKey>> = (
 
 export interface Constraint<T extends Doc<IndexKey>> {
     readonly name: string;
-    readonly verify: (doc: T) => Promise<boolean>;
+    readonly verify: (doc: T) => Promise<void | string>;
 }
 
 export interface DocStoreOptions<T extends Doc<IndexKey>> {
@@ -271,8 +274,8 @@ export class DocRepo<T extends Doc<IndexKey>> {
             ...[...this.indexes.values()].map(x => x.sync(prev, nextSnapshot)),
             ...this.constraints.map(async c => {
                 const result = await c.verify(nextSnapshot);
-                if (!result) {
-                    throw new ConstraintError(c.name);
+                if (result) {
+                    throw new ConstraintError(c.name, result);
                 }
             }),
             this.onChange(nextSnapshot.pk, diff),

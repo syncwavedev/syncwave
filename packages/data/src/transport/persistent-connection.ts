@@ -13,7 +13,9 @@ export class PersistentConnection<T> implements Connection<T> {
     constructor(private readonly transport: TransportClient<T>) {}
 
     async send(message: T): Promise<void> {
+        logger.trace('persistent connection: send', message);
         const connection = await this.getConnection();
+        logger.trace('persistent connection: got connection');
         if (connection === 'closed_during_connect') {
             return;
         }
@@ -53,7 +55,11 @@ export class PersistentConnection<T> implements Connection<T> {
                 while (true) {
                     try {
                         return await this.transport.connect();
-                    } catch {
+                    } catch (error) {
+                        logger.error(
+                            'persistent connection: error while connecting to the server: ',
+                            error
+                        );
                         await wait({ms: RECONNECT_WAIT_MS, onCancel: 'reject'});
                     }
                 }

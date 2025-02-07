@@ -99,6 +99,7 @@ export function createReadApi() {
             value: z.array(zBoard()),
             update: z.array(zBoard()),
             observe: async st => {
+                console.log('hello');
                 const userId = st.ensureAuthenticated();
 
                 return observable({

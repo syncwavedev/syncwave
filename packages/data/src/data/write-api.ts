@@ -28,6 +28,8 @@ export class WriteApiState {
             );
         }
 
+        console.log('userId', this.auth.userId);
+
         return this.auth.userId;
     }
 

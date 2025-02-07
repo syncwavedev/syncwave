@@ -1205,31 +1205,138 @@ class CreateCategoryRes {
 
 class CreateTaskReq {
     String boardId;
+    Placement placement;
     String taskId;
     String title;
 
     CreateTaskReq({
         required this.boardId,
+        required this.placement,
         required this.taskId,
         required this.title,
     });
 
     factory CreateTaskReq.fromJson(Map<String, dynamic> json) => CreateTaskReq(
         boardId: json["boardId"],
+        placement: Placement.fromJson(json["placement"]),
         taskId: json["taskId"],
         title: json["title"],
     );
 
     Map<String, dynamic> toJson() => {
         "boardId": boardId,
+        "placement": placement.toJson(),
         "taskId": taskId,
         "title": title,
     };
 }
 
+class Placement {
+    Position? position;
+    PlacementType type;
+    PositionA? positionA;
+    PositionB? positionB;
+
+    Placement({
+        this.position,
+        required this.type,
+        this.positionA,
+        this.positionB,
+    });
+
+    factory Placement.fromJson(Map<String, dynamic> json) => Placement(
+        position: json["position"] == null ? null : Position.fromJson(json["position"]),
+        type: placementTypeValues.map[json["type"]]!,
+        positionA: json["positionA"] == null ? null : PositionA.fromJson(json["positionA"]),
+        positionB: json["positionB"] == null ? null : PositionB.fromJson(json["positionB"]),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "position": position?.toJson(),
+        "type": placementTypeValues.reverse[type],
+        "positionA": positionA?.toJson(),
+        "positionB": positionB?.toJson(),
+    };
+}
+
+class Position {
+    String denominator;
+    String numerator;
+
+    Position({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory Position.fromJson(Map<String, dynamic> json) => Position(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class PositionA {
+    String denominator;
+    String numerator;
+
+    PositionA({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory PositionA.fromJson(Map<String, dynamic> json) => PositionA(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class PositionB {
+    String denominator;
+    String numerator;
+
+    PositionB({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory PositionB.fromJson(Map<String, dynamic> json) => PositionB(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+enum PlacementType {
+    AFTER,
+    BEFORE,
+    BETWEEN,
+    RANDOM
+}
+
+final placementTypeValues = EnumValues({
+    "after": PlacementType.AFTER,
+    "before": PlacementType.BEFORE,
+    "between": PlacementType.BETWEEN,
+    "random": PlacementType.RANDOM
+});
+
 class CreateTaskRes {
     String authorId;
     String boardId;
+    String? categoryId;
     CategoryPosition categoryPosition;
     double counter;
     double createdAt;
@@ -1242,6 +1349,7 @@ class CreateTaskRes {
     CreateTaskRes({
         required this.authorId,
         required this.boardId,
+        required this.categoryId,
         required this.categoryPosition,
         required this.counter,
         required this.createdAt,
@@ -1255,6 +1363,7 @@ class CreateTaskRes {
     factory CreateTaskRes.fromJson(Map<String, dynamic> json) => CreateTaskRes(
         authorId: json["authorId"],
         boardId: json["boardId"],
+        categoryId: json["categoryId"],
         categoryPosition: CategoryPosition.fromJson(json["categoryPosition"]),
         counter: json["counter"]?.toDouble(),
         createdAt: json["createdAt"]?.toDouble(),
@@ -1268,6 +1377,7 @@ class CreateTaskRes {
     Map<String, dynamic> toJson() => {
         "authorId": authorId,
         "boardId": boardId,
+        "categoryId": categoryId,
         "categoryPosition": categoryPosition.toJson(),
         "counter": counter,
         "createdAt": createdAt,

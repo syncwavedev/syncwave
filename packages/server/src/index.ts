@@ -102,10 +102,22 @@ const jwtService: JwtService = {
 };
 
 async function getKVStore(): Promise<Uint8KVStore> {
-    if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
+    if (STAGE === 'sqlite') {
         logger.info('using SQLite as primary store');
         return await import('./sqlite-kv-store.js').then(
             x => new x.SqliteUint8KVStore('./dev.sqlite')
+        );
+    } else if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
+        logger.info('using PostgreSQL as primary store');
+        return await import('./postgres-kv-store.js').then(
+            x =>
+                new x.PostgresUint8KVStore({
+                    connectionString:
+                        'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_dev',
+                    max: 20,
+                    idleTimeoutMillis: 30000,
+                    connectionTimeoutMillis: 2000,
+                })
         );
     } else {
         logger.info('using FoundationDB as a primary store');

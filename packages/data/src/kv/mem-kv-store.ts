@@ -100,6 +100,10 @@ export class MemKVStore implements KVStore<Uint8Array, Uint8Array> {
             throw new Error('unreachable');
         });
     }
+
+    close(): void {
+        // no resources to close
+    }
 }
 
 export class MemLocker<TKey> {

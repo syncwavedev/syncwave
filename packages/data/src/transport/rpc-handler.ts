@@ -184,7 +184,11 @@ async function proxyRequest(
         wait({ms: RPC_CALL_TIMEOUT_MS, onCancel: 'resolve'})
             .then(() => {
                 if (result.state === 'pending') {
-                    result.reject(new Error('rpc call failed: timeout'));
+                    result.reject(
+                        new RpcError(
+                            `rpc call ${name}(${JSON.stringify(arg)}) failed: timeout`
+                        )
+                    );
                     cleanup();
                 }
             })

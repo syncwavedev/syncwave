@@ -1,3 +1,4 @@
+import WebSocket from 'isomorphic-ws';
 import {
 	assert,
 	logger,
@@ -18,16 +19,20 @@ export class WsTransportClient<T> implements TransportClient<T> {
 	constructor(private readonly opt: WsTransportClientOptions<T>) {}
 
 	connect(): Promise<Connection<T>> {
+		logger.trace('ws connect');
+
 		return new Promise((resolve, reject) => {
 			const ws = new WebSocket(this.opt.url);
 			ws.binaryType = 'arraybuffer';
 
 			ws.addEventListener('open', () => {
+				logger.trace('ws connect: open');
 				const connection = new WsClientConnection<T>(ws, this.opt.codec);
 				resolve(connection);
 			});
 
 			ws.addEventListener('error', err => {
+				logger.error('ws connect: error', err);
 				reject(err);
 			});
 		});
@@ -57,7 +62,7 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	send(message: T): Promise<void> {
-		logger.debug('ws send message', message);
+		logger.trace('ws send message', message);
 		const data = this.codec.encode(message);
 		this.ws.send(data);
 
@@ -65,6 +70,7 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	subscribe(cb: Observer<T>): Unsubscribe {
+		logger.trace('ws subscribe');
 		return this.subject.subscribe(cb);
 	}
 

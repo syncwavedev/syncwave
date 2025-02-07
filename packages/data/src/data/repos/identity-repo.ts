@@ -83,7 +83,11 @@ export class IdentityRepo {
                     name: 'identity.userId fk',
                     verify: async identity => {
                         const user = await userRepo.getById(identity.userId);
-                        return user !== undefined;
+                        if (user === undefined) {
+                            return `user with userId ${identity.userId} does not exist`;
+                        }
+
+                        return;
                     },
                 },
             ],

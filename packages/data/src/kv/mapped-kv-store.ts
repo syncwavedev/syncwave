@@ -75,6 +75,10 @@ export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
             fn(new MappedTransaction(tx, this.keyMapper, this.valueMapper))
         );
     }
+
+    close(): void {
+        this.store.close();
+    }
 }
 
 function projectCondition<TKeySource, TKeyTarget>(

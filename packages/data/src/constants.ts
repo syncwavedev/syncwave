@@ -1,8 +1,8 @@
-export const RPC_CALL_TIMEOUT_MS = 1_000;
+export const RPC_CALL_TIMEOUT_MS = 5_000;
 export const MAX_LOOKAHEAD_COUNT = 32;
 export const PULL_WAIT_MS = 1000;
 export const TXN_RETRIES_COUNT = 1;
-export const RECONNECT_WAIT_MS = 1000;
+export const RECONNECT_WAIT_MS = 1_000;
 export const ENVIRONMENT: 'prod' | 'dev' | 'test' =
     process.env.NODE_ENV === 'production'
         ? 'prod'
@@ -19,6 +19,7 @@ export const SUPERADMIN_IDS = [
     '0194c662-8843-733c-80f3-942b5784425d',
     '0194c663-80e4-72ce-a847-5c41e7f261ba',
     '0194c67a-cb81-705b-affc-030d7f8aa3ae',
+    '0194defa-4772-72e7-b367-10accfda2364',
 ];
 export const EVENT_STORE_PULL_INTERVAL_MS = 1_000;
 export const EVENT_STORE_MAX_PULL_COUNT = 128;

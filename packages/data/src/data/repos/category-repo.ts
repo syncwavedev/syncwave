@@ -55,14 +55,21 @@ export class CategoryRepo {
                     name: 'category.authorId fk',
                     verify: async category => {
                         const user = await userRepo.getById(category.authorId);
-                        return user !== undefined;
+                        if (user === undefined) {
+                            return `user not found: ${category.authorId}`;
+                        }
+
+                        return;
                     },
                 },
                 {
                     name: 'category.boardId fk',
                     verify: async category => {
                         const board = await boardRepo.getById(category.boardId);
-                        return board !== undefined;
+                        if (board === undefined) {
+                            return `board not found: ${category.boardId}`;
+                        }
+                        return;
                     },
                 },
             ],

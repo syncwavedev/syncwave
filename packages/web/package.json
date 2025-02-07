@@ -51,7 +51,9 @@
 	},
 	"dependencies": {
 		"@lucide/lab": "^0.1.2",
+		"idb": "^8.0.1",
+		"isomorphic-ws": "^5.0.0",
 		"syncwave-data": "*",
-		"idb": "^8.0.1"
+		"ws": "^8.18.0"
 	}
 }

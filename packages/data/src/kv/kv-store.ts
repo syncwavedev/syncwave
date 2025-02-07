@@ -78,6 +78,7 @@ export interface KVStore<TKey, TValue> {
     transact<TResult>(
         fn: (tx: Transaction<TKey, TValue>) => Promise<TResult>
     ): Promise<TResult>;
+    close(): void;
 }
 
 export type Uint8KVStore = KVStore<Uint8Array, Uint8Array>;

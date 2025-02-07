@@ -86,4 +86,8 @@ export class PrefixedKVStore<TValue> implements KVStore<Uint8Array, TValue> {
             fn(new PrefixedTransaction(tx, this.prefix))
         );
     }
+
+    close(): void {
+        this.target.close();
+    }
 }

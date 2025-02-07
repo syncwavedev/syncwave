@@ -119,28 +119,28 @@ describe('ConnectionPool', () => {
         const connection = await pool.connect();
         expect(serverConn).toBeDefined();
 
-        let closed = false;
-        let throwed = false;
-        let nexted = false;
+        let closeCalled = false;
+        let throwCalled = false;
+        let nextCalled = false;
         connection.subscribe({
             next: async () => {
-                nexted = true;
+                nextCalled = true;
             },
             throw: async () => {
-                throwed = true;
+                throwCalled = true;
             },
             close() {
-                closed = true;
+                closeCalled = true;
             },
         });
 
         connection.close();
 
-        expect(closed).toBe(true);
+        expect(closeCalled).toBe(true);
 
         await (serverConn as unknown as Connection<string>).send('message');
 
-        expect(nexted).toBe(false);
-        expect(throwed).toBe(false);
+        expect(nextCalled).toBe(false);
+        expect(throwCalled).toBe(false);
     });
 });

@@ -37,22 +37,25 @@ const GOOGLE_CLIENT_SECRET = assertDefined(process.env.GOOGLE_CLIENT_SECRET);
 
 const PORT = ENVIRONMENT === 'prod' ? 80 : 4567;
 
-const {APP_URL, GOOGLE_REDIRECT_URL} = (() => {
+const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
     const GOOGLE_CALLBACK_PATH = '/callbacks/google';
     if (STAGE === 'dev') {
         return {
+            LOG_LEVEL: 'trace' as const,
             APP_URL: 'https://www-syncwave-dev.edme.io',
             GOOGLE_REDIRECT_URL:
                 'https://api-syncwave-dev.edme.io' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'prod') {
         return {
+            LOG_LEVEL: 'info' as const,
             APP_URL: 'https://www-syncwave.edme.io',
             GOOGLE_REDIRECT_URL:
                 'https://api-syncwave.edme.io' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'local') {
         return {
+            LOG_LEVEL: 'info' as const,
             APP_URL: 'http://localhost:5173',
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
         };
@@ -254,6 +257,8 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
         );
     });
 }
+
+logger.setLogLevel(LOG_LEVEL);
 
 const [serverCtx, cancelServerCtx] = context().createChild();
 

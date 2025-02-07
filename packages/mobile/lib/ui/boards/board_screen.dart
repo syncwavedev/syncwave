@@ -4,6 +4,7 @@ import 'package:syncwave/models/column.dart';
 import 'package:syncwave/models/message.dart';
 import 'package:syncwave/models/task.dart';
 import 'package:syncwave/ui/core/navigator/navigator.dart';
+import 'package:syncwave/ui/core/themes/theme_extensions.dart';
 import 'package:syncwave/ui/tasks/task_screen.dart';
 import 'package:syncwave/ui/widgets/bottom_bar.dart';
 import 'package:syncwave/ui/widgets/icons.dart';
@@ -52,7 +53,9 @@ class BoardScreen extends StatelessWidget {
                 builder: (context) => SizedBox(
                     width: 200,
                     height: 400,
-                    child: Center(child: Text("Hello world!"))),
+                    child: Center(
+                        child: Text("Hello world!", style: context.text.body))),
+                isDismissible: false,
                 context: context,
               );
               debugPrint('Add task');

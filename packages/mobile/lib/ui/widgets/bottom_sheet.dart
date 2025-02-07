@@ -78,6 +78,7 @@ class _BottomSheetState extends State<BottomSheet> {
     setState(() {
       dragHandleStates.add(WidgetState.dragged);
     });
+    widget.onDragStart?.call(details);
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
@@ -124,6 +125,8 @@ class _BottomSheetState extends State<BottomSheet> {
     } else {
       widget.animationController!.forward();
     }
+
+    widget.onDragEnd?.call(details, isClosing: isClosing);
 
     if (isClosing) {
       widget.onClosing();
@@ -236,7 +239,7 @@ class _DragHandle extends StatelessWidget {
         onTap: onSemanticsTap,
         child: SizedBox(
           width: math.max(handleSize.width, kMinInteractiveDimension),
-          height: math.max(handleSize.height, kMinInteractiveDimension),
+          height: math.max(handleSize.height, kMinInteractiveDimension / 2),
           child: Center(
             child: Container(
               height: handleSize.height,
@@ -709,7 +712,6 @@ Future<T?> showModalBottomSheet<T>({
   ShapeBorder? shape,
   Clip? clipBehavior,
   BoxConstraints? constraints,
-  Color? barrierColor,
   bool isScrollControlled = false,
   double scrollControlDisabledMaxHeightRatio =
       _defaultScrollControlDisabledMaxHeightRatio,
@@ -742,7 +744,6 @@ Future<T?> showModalBottomSheet<T>({
       clipBehavior: clipBehavior,
       constraints: constraints,
       isDismissible: isDismissible,
-      modalBarrierColor: barrierColor,
       enableDrag: enableDrag,
       showDragHandle: showDragHandle,
       settings: routeSettings,

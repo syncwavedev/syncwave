@@ -1,4 +1,5 @@
 import {browser} from '$app/environment';
+import {goto} from '$app/navigation';
 import {onDestroy} from 'svelte';
 import {
 	BusinessError,
@@ -74,9 +75,17 @@ export function getState<TValue, TUpdate>(
 						state.value = next;
 					}
 				} catch (e) {
+					if (!cancelled) {
+						log.error(toError(e), 'observable failed');
+					}
 					if (e instanceof CancelledError) return;
-					log.error(toError(e), 'observable failed');
-					if (e instanceof BusinessError) return;
+					if (e instanceof BusinessError) {
+						if (e.code === 'forbidden') {
+							log.error('Access denied');
+							goto('/app');
+						}
+						return;
+					}
 				}
 
 				await wait({ms: 1000, onCancel: 'resolve'});

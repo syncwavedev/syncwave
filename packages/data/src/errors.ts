@@ -7,6 +7,7 @@ export class AppError extends Error {
             name: `${this.constructor.name} (${this.name})`,
             stack: this.stack,
             cause: this.cause,
+            code: (this as any).code,
         };
     }
 }

@@ -81,12 +81,19 @@ export class MemberRepo {
         });
     }
 
-    getById(id: MemberId): Promise<Member | undefined> {
-        return this.rawRepo.getById([id]);
+    getById(
+        id: MemberId,
+        includeDeleted: boolean
+    ): Promise<Member | undefined> {
+        return this.rawRepo.getById([id], includeDeleted);
     }
 
-    getByUserId(userId: UserId): Stream<Member> {
-        return this.rawRepo.get(USER_ID_BOARD_ID_INDEX, [userId]);
+    getByUserId(userId: UserId, includeDeleted: boolean): Stream<Member> {
+        return this.rawRepo.get(
+            USER_ID_BOARD_ID_INDEX,
+            [userId],
+            includeDeleted
+        );
     }
 
     getByBoardId(boardId: BoardId): Stream<Member> {

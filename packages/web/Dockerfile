@@ -29,8 +29,8 @@ WORKDIR /app/packages/web
 
 ARG STAGE
 RUN if [ -z "$STAGE" ]; then \
-      echo "Error: STAGE argument is required."; \
-      exit 1; \
+    echo "Error: STAGE argument is required."; \
+    exit 1; \
     fi
 ENV PUBLIC_STAGE=$STAGE
 
@@ -44,6 +44,7 @@ USER node:node
 
 EXPOSE 3000
 
+ENV NODE_ENV=production
 ENV NODE_OPTIONS='--enable-source-maps'
 
 # This is the command that will be run inside the image when you tell Docker to start the container

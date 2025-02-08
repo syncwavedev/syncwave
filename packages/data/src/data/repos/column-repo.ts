@@ -81,8 +81,11 @@ export class ColumnRepo {
         });
     }
 
-    getById(id: ColumnId): Promise<Column | undefined> {
-        return this.rawRepo.getById([id]);
+    getById(
+        id: ColumnId,
+        includeDeleted: boolean
+    ): Promise<Column | undefined> {
+        return this.rawRepo.getById([id], includeDeleted);
     }
 
     getByBoardId(boardId: BoardId): Stream<Column> {

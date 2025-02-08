@@ -95,8 +95,8 @@ export class TaskRepo {
         });
     }
 
-    getById(id: TaskId): Promise<Task | undefined> {
-        return this.rawRepo.getById([id]);
+    getById(id: TaskId, includeDeleted: boolean): Promise<Task | undefined> {
+        return this.rawRepo.getById([id], includeDeleted);
     }
 
     getByBoardId(boardId: BoardId): Stream<Task> {

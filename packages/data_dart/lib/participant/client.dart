@@ -126,6 +126,16 @@ class ParticipantClient {
     return DeleteBoardRes.fromJson(json as Map<String, dynamic>);
   }
 
+  Future<DeleteColumnRes> deleteColumn(DeleteColumnReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteColumn', request.toJson(), headers);
+    return DeleteColumnRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<DeleteTaskRes> deleteTask(DeleteTaskReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteTask', request.toJson(), headers);
+    return DeleteTaskRes.fromJson(json as Map<String, dynamic>);
+  }
+
   void close() {
     _rpc.close();
   }

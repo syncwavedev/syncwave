@@ -219,7 +219,9 @@ async function logIdentityChange(
         identity !== undefined,
         `logIdentityChange: identity ${id} not found`
     );
-    const members = await tx.members.getByUserId(identity.userId).toArray();
+    const members = await tx.members
+        .getByUserId(identity.userId, true)
+        .toArray();
     const ts = getNow();
     const event: IdentityChangeEvent = {type: 'identity', id, diff, ts};
     await whenAll([
@@ -231,7 +233,7 @@ async function logIdentityChange(
 }
 
 async function logUserChange(tx: DataTx, [id]: [UserId], diff: CrdtDiff<User>) {
-    const members = await tx.members.getByUserId(id).toArray();
+    const members = await tx.members.getByUserId(id, true).toArray();
     const ts = getNow();
     const event: UserChangeEvent = {type: 'user', id, diff, ts};
     await whenAll([
@@ -263,7 +265,7 @@ async function logMemberChange(
     [id]: [MemberId],
     diff: CrdtDiff<Member>
 ) {
-    const member = await tx.members.getById(id);
+    const member = await tx.members.getById(id, true);
     assert(member !== undefined, `logMemberChange: member ${id} not found`);
     const ts = getNow();
     const event: MemberChangeEvent = {type: 'member', id, diff, ts};
@@ -274,7 +276,7 @@ async function logMemberChange(
 }
 
 async function logTaskChange(tx: DataTx, [id]: [TaskId], diff: CrdtDiff<Task>) {
-    const task = await tx.tasks.getById(id);
+    const task = await tx.tasks.getById(id, true);
     assert(task !== undefined, `logTaskChange: task ${id} not found`);
     const ts = getNow();
     const event: TaskChangeEvent = {type: 'task', id, diff, ts};
@@ -286,7 +288,7 @@ async function logColumnChange(
     [id]: [ColumnId],
     diff: CrdtDiff<Column>
 ) {
-    const column = await tx.columns.getById(id);
+    const column = await tx.columns.getById(id, true);
     assert(column !== undefined, `logColumnChange: column ${id} not found`);
     const ts = getNow();
     const event: ColumnChangeEvent = {type: 'column', id, diff, ts};

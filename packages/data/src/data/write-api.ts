@@ -75,7 +75,7 @@ export class WriteApiState {
     }
 
     async ensureColumnWriteAccess(columnId: ColumnId): Promise<Member> {
-        const column = await this.tx.columns.getById(columnId);
+        const column = await this.tx.columns.getById(columnId, true);
 
         if (!column) {
             throw new BusinessError(
@@ -161,6 +161,46 @@ export function createWriteApi() {
                     deleted: false,
                     title: title,
                 });
+            },
+        }),
+        deleteColumn: handler({
+            req: z.object({columnId: zUuid<ColumnId>()}),
+            res: z.object({}),
+            handle: async (st, {columnId}) => {
+                const column = await st.tx.columns.getById(columnId, true);
+                if (!column) {
+                    throw new BusinessError(
+                        `column ${columnId} not found`,
+                        'column_not_found'
+                    );
+                }
+
+                await st.ensureBoardWriteAccess(column.boardId);
+                await st.tx.columns.update(columnId, x => {
+                    x.deleted = true;
+                });
+
+                return {};
+            },
+        }),
+        deleteTask: handler({
+            req: z.object({taskId: zUuid<TaskId>()}),
+            res: z.object({}),
+            handle: async (st, {taskId}) => {
+                const task = await st.tx.tasks.getById(taskId, true);
+                if (!task) {
+                    throw new BusinessError(
+                        `task ${taskId} not found`,
+                        'task_not_found'
+                    );
+                }
+
+                await st.ensureBoardWriteAccess(task.boardId);
+                await st.tx.tasks.update(taskId, x => {
+                    x.deleted = true;
+                });
+
+                return {};
             },
         }),
         createBoard: handler({

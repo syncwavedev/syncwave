@@ -43,6 +43,10 @@
 //     final getBoardViewUpdate = getBoardViewUpdateFromJson(jsonString);
 //     final deleteBoardReq = deleteBoardReqFromJson(jsonString);
 //     final deleteBoardRes = deleteBoardResFromJson(jsonString);
+//     final deleteColumnReq = deleteColumnReqFromJson(jsonString);
+//     final deleteColumnRes = deleteColumnResFromJson(jsonString);
+//     final deleteTaskReq = deleteTaskReqFromJson(jsonString);
+//     final deleteTaskRes = deleteTaskResFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -217,6 +221,22 @@ String deleteBoardReqToJson(DeleteBoardReq data) => json.encode(data.toJson());
 DeleteBoardRes deleteBoardResFromJson(String str) => DeleteBoardRes.fromJson(json.decode(str));
 
 String deleteBoardResToJson(DeleteBoardRes data) => json.encode(data.toJson());
+
+DeleteColumnReq deleteColumnReqFromJson(String str) => DeleteColumnReq.fromJson(json.decode(str));
+
+String deleteColumnReqToJson(DeleteColumnReq data) => json.encode(data.toJson());
+
+DeleteColumnRes deleteColumnResFromJson(String str) => DeleteColumnRes.fromJson(json.decode(str));
+
+String deleteColumnResToJson(DeleteColumnRes data) => json.encode(data.toJson());
+
+DeleteTaskReq deleteTaskReqFromJson(String str) => DeleteTaskReq.fromJson(json.decode(str));
+
+String deleteTaskReqToJson(DeleteTaskReq data) => json.encode(data.toJson());
+
+DeleteTaskRes deleteTaskResFromJson(String str) => DeleteTaskRes.fromJson(json.decode(str));
+
+String deleteTaskResToJson(DeleteTaskRes data) => json.encode(data.toJson());
 
 class StreamPutReq {
     String topic;
@@ -1866,6 +1886,58 @@ class DeleteBoardRes {
     DeleteBoardRes();
 
     factory DeleteBoardRes.fromJson(Map<String, dynamic> json) => DeleteBoardRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class DeleteColumnReq {
+    String columnId;
+
+    DeleteColumnReq({
+        required this.columnId,
+    });
+
+    factory DeleteColumnReq.fromJson(Map<String, dynamic> json) => DeleteColumnReq(
+        columnId: json["columnId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "columnId": columnId,
+    };
+}
+
+class DeleteColumnRes {
+    DeleteColumnRes();
+
+    factory DeleteColumnRes.fromJson(Map<String, dynamic> json) => DeleteColumnRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class DeleteTaskReq {
+    String taskId;
+
+    DeleteTaskReq({
+        required this.taskId,
+    });
+
+    factory DeleteTaskReq.fromJson(Map<String, dynamic> json) => DeleteTaskReq(
+        taskId: json["taskId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "taskId": taskId,
+    };
+}
+
+class DeleteTaskRes {
+    DeleteTaskRes();
+
+    factory DeleteTaskRes.fromJson(Map<String, dynamic> json) => DeleteTaskRes(
     );
 
     Map<String, dynamic> toJson() => {

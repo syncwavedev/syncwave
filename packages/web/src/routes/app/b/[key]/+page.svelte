@@ -6,7 +6,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import {getSdk} from '$lib/utils';
 	import {getState} from '$lib/utils.svelte';
-	import {createTaskId, log} from 'syncwave-data';
+	import {createTaskId, log, type TaskId} from 'syncwave-data';
 	import * as Select from '$lib/components/ui/select/index.js';
 
 	import {
@@ -14,6 +14,7 @@
 		type ColumnId,
 	} from '../../../../../../data/dist/esm/src/data/repos/column-repo';
 	import {goto} from '$app/navigation';
+	import {Trash} from 'lucide-svelte';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
@@ -57,6 +58,14 @@
 	async function deleteBoard() {
 		await sdk(rpc => rpc.deleteBoard({boardId: board.value.board.id}));
 	}
+
+	async function deleteColumn(columnId: ColumnId) {
+		await sdk(rpc => rpc.deleteColumn({columnId}));
+	}
+
+	async function deleteTask(taskId: TaskId) {
+		await sdk(rpc => rpc.deleteTask({taskId}));
+	}
 </script>
 
 <header
@@ -92,6 +101,10 @@
 		{#each board.value.columns as column}
 			<div>
 				{column.id} - {column.title}
+				>
+				<Button onclick={() => deleteColumn(column.id)} variant="ghost" size="icon">
+					<Trash />
+				</Button>
 			</div>
 		{/each}
 	</div>
@@ -115,6 +128,9 @@
 		{#each board.value.tasks as task}
 			<div>
 				{task.id} - {task.title} - {task.columnId}
+				<Button onclick={() => deleteTask(task.id)} variant="ghost" size="icon">
+					<Trash />
+				</Button>
 			</div>
 		{/each}
 	</div>

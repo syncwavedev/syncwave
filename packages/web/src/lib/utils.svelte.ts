@@ -26,22 +26,38 @@ export async function fetchState<TValue, TUpdate>(
 
 	if (browser) {
 		let cancelled = false;
-		(async () => {
-			const [initialValue, update$] = await sdk(fn);
-			const state: State<TValue | TUpdate> = $state({
-				value: initialValue,
-			});
+		(async function retry() {
+			while (!cancelled) {
+				try {
+					const [initialValue, update$] = await sdk(fn);
+					const state: State<TValue | TUpdate> = $state({
+						value: initialValue,
+					});
 
-			result.resolve(state);
+					result.resolve(state);
 
-			(async () => {
-				for await (const next of update$) {
-					if (cancelled) {
-						break;
+					for await (const next of update$) {
+						if (cancelled) {
+							break;
+						}
+						state.value = next;
 					}
-					state.value = next;
+				} catch (e) {
+					if (!cancelled) {
+						log.error(toError(e), 'observable failed');
+					}
+					if (e instanceof CancelledError) return;
+					if (e instanceof BusinessError) {
+						if (e.code === 'forbidden') {
+							log.error('Access denied');
+							goto('/app');
+						}
+						return;
+					}
 				}
-			})();
+
+				await wait({ms: 1000, onCancel: 'resolve'});
+			}
 		})();
 
 		onDestroy(() => {

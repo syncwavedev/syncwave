@@ -233,9 +233,9 @@ export class DocRepo<T extends Doc<IndexKey>> {
         }
 
         const diff = doc.update(draft => {
-            const result = recipe(draft) ?? draft;
+            const result = recipe(draft);
 
-            result.updatedAt = getNow();
+            (result ?? draft).updatedAt = getNow();
 
             return result;
         });

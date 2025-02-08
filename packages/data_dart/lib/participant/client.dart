@@ -26,6 +26,174 @@ class ParticipantClient {
     return DebugRes.fromJson(json as Map<String, dynamic>);
   }
 
+  Future<(GetMeValue, Stream<GetMeUpdate>)> getMe(GetMeReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getMe', request.toJson(), headers);
+  
+    return (
+      GetMeValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetMeUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
+  Future<SendSignInEmailRes> sendSignInEmail(SendSignInEmailReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('sendSignInEmail', request.toJson(), headers);
+    return SendSignInEmailRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<CreateBoardRes> createBoard(CreateBoardReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createBoard', request.toJson(), headers);
+    return CreateBoardRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<VerifySignInCodeRes> verifySignInCode(VerifySignInCodeReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('verifySignInCode', request.toJson(), headers);
+    return VerifySignInCodeRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<GetDbTreeRes> getDbTree(GetDbTreeReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('getDbTree', request.toJson(), headers);
+    return GetDbTreeRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<GetDbItemRes> getDbItem(GetDbItemReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('getDbItem', request.toJson(), headers);
+    return GetDbItemRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<TruncateDbRes> truncateDb(TruncateDbReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('truncateDb', request.toJson(), headers);
+    return TruncateDbRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<DeleteDbItemRes> deleteDbItem(DeleteDbItemReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteDbItem', request.toJson(), headers);
+    return DeleteDbItemRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<(GetMyBoardsValue, Stream<GetMyBoardsUpdate>)> getMyBoards(GetMyBoardsReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getMyBoards', request.toJson(), headers);
+  
+    return (
+      GetMyBoardsValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetMyBoardsUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
+  Future<(GetObserveValue, Stream<GetObserveUpdate>)> getObserve(GetObserveReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getObserve', request.toJson(), headers);
+  
+    return (
+      GetObserveValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetObserveUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
+  Future<EchoRes> echo(EchoReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('echo', request.toJson(), headers);
+    return EchoRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<(GetBoardValue, Stream<GetBoardUpdate>)> getBoard(GetBoardReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getBoard', request.toJson(), headers);
+  
+    return (
+      GetBoardValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetBoardUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
+  Future<CreateColumnRes> createColumn(CreateColumnReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createColumn', request.toJson(), headers);
+    return CreateColumnRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<CreateTaskRes> createTask(CreateTaskReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createTask', request.toJson(), headers);
+    return CreateTaskRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<(GetBoardViewValue, Stream<GetBoardViewUpdate>)> getBoardView(GetBoardViewReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getBoardView', request.toJson(), headers);
+  
+    return (
+      GetBoardViewValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetBoardViewUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
+  Future<DeleteBoardRes> deleteBoard(DeleteBoardReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteBoard', request.toJson(), headers);
+    return DeleteBoardRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<DeleteColumnRes> deleteColumn(DeleteColumnReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteColumn', request.toJson(), headers);
+    return DeleteColumnRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<DeleteTaskRes> deleteTask(DeleteTaskReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteTask', request.toJson(), headers);
+    return DeleteTaskRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<SetTaskTitleRes> setTaskTitle(SetTaskTitleReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setTaskTitle', request.toJson(), headers);
+    return SetTaskTitleRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<SetTaskColumnIdRes> setTaskColumnId(SetTaskColumnIdReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setTaskColumnId', request.toJson(), headers);
+    return SetTaskColumnIdRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<SetColumnTitleRes> setColumnTitle(SetColumnTitleReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setColumnTitle', request.toJson(), headers);
+    return SetColumnTitleRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<SetBoardNameRes> setBoardName(SetBoardNameReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setBoardName', request.toJson(), headers);
+    return SetBoardNameRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<CreateCommentRes> createComment(CreateCommentReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createComment', request.toJson(), headers);
+    return CreateCommentRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<DeleteCommentRes> deleteComment(DeleteCommentReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteComment', request.toJson(), headers);
+    return DeleteCommentRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<(GetTaskCommentsValue, Stream<GetTaskCommentsUpdate>)> getTaskComments(GetTaskCommentsReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getTaskComments', request.toJson(), headers);
+  
+    return (
+      GetTaskCommentsValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetTaskCommentsUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
+  Future<CreateMemberRes> createMember(CreateMemberReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createMember', request.toJson(), headers);
+    return CreateMemberRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<DeleteMemberRes> deleteMember(DeleteMemberReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteMember', request.toJson(), headers);
+    return DeleteMemberRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<(GetBoardMembersValue, Stream<GetBoardMembersUpdate>)> getBoardMembers(GetBoardMembersReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getBoardMembers', request.toJson(), headers);
+  
+    return (
+      GetBoardMembersValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetBoardMembersUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
   void close() {
     _rpc.close();
   }

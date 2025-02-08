@@ -84,7 +84,7 @@ export function createTestApi() {
                             createdAt: getNow(),
                             updatedAt: getNow(),
                             fullName: 'Test User',
-                            version: 3,
+                            version: '4',
                         }).state(),
                     });
                 });

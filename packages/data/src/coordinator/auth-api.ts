@@ -228,7 +228,7 @@ export async function getIdentity(params: {
         updatedAt: now,
         deleted: false,
         fullName: params.fullName,
-        version: 3,
+        version: '4',
     });
 
     const identity = await params.identities.create({

@@ -27,15 +27,21 @@ interface UserV3 extends Doc<[UserId]> {
     fullName: string;
 }
 
-export type User = UserV3;
+interface UserV4 extends Doc<[UserId]> {
+    readonly id: UserId;
+    readonly version: '4';
+    fullName: string;
+}
 
-type StoredUser = UserV1 | UserV2 | UserV3;
+export type User = UserV4;
+
+type StoredUser = UserV1 | UserV2 | UserV3 | UserV4;
 
 export function zUser() {
     return zDoc(z.tuple([zUuid<UserId>()])).extend({
         id: zUuid<UserId>(),
         fullName: z.string(),
-        version: z.literal(3),
+        version: z.literal('4'),
     });
 }
 
@@ -63,6 +69,10 @@ export class UserRepo {
 
                         upgradeUser(user);
                     } else if (user.version === 3) {
+                        (user as any).version = '4';
+
+                        upgradeUser(user);
+                    } else if (user.version === '4') {
                         // latest version
                     } else {
                         assertNever(user);

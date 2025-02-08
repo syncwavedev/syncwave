@@ -114,6 +114,9 @@ export function createParticipantApi() {
         setTaskColumnId: proxy('setTaskColumnId'),
         setColumnTitle: proxy('setColumnTitle'),
         setBoardName: proxy('setBoardName'),
+        createComment: proxy('createComment'),
+        deleteComment: proxy('deleteComment'),
+        getTaskComments: proxy('getTaskComments'),
     });
 }
 

@@ -12,6 +12,7 @@ import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import {HubClient} from './hub.js';
 import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
 import {Column, ColumnId, ColumnRepo} from './repos/column-repo.js';
+import {Comment, CommentId, CommentRepo} from './repos/comment-repo.js';
 import {Identity, IdentityId, IdentityRepo} from './repos/identity-repo.js';
 import {Member, MemberId, MemberRepo} from './repos/member-repo.js';
 import {Task, TaskId, TaskRepo} from './repos/task-repo.js';
@@ -27,6 +28,7 @@ export interface DataTx {
     readonly boards: BoardRepo;
     readonly tasks: TaskRepo;
     readonly columns: ColumnRepo;
+    readonly comments: CommentRepo;
     readonly identities: IdentityRepo;
     readonly config: Config;
     readonly tx: Uint8Transaction;
@@ -70,13 +72,17 @@ export interface IdentityChangeEvent
 export interface ColumnChangeEvent
     extends BaseChangeEvent<'column', ColumnId, Column> {}
 
+export interface CommentChangeEvent
+    extends BaseChangeEvent<'comment', CommentId, Comment> {}
+
 export type ChangeEvent =
     | UserChangeEvent
     | MemberChangeEvent
     | BoardChangeEvent
     | TaskChangeEvent
     | IdentityChangeEvent
-    | ColumnChangeEvent;
+    | ColumnChangeEvent
+    | CommentChangeEvent;
 
 export type DataEffect = () => Promise<void>;
 export type DataEffectScheduler = (effect: DataEffect) => void;
@@ -134,6 +140,12 @@ export class DataLayer {
                 users,
                 (pk, diff) => logColumnChange(dataTx, pk, diff)
             );
+            const comments = new CommentRepo(
+                withPrefix('comments/')(tx),
+                tasks,
+                users,
+                (pk, diff) => logCommentChange(dataTx, pk, diff)
+            );
 
             const dataNode = new AggregateDataNode({
                 identities: new RepoDataNode(identities.rawRepo),
@@ -167,6 +179,7 @@ export class DataLayer {
                 boards,
                 tasks,
                 columns,
+                comments,
                 events,
                 identities,
                 eventStoreId,
@@ -293,4 +306,21 @@ async function logColumnChange(
     const ts = getNow();
     const event: ColumnChangeEvent = {type: 'column', id, diff, ts};
     await tx.esWriter.append(boardEvents(column.boardId), event);
+}
+
+async function logCommentChange(
+    tx: DataTx,
+    [id]: [CommentId],
+    diff: CrdtDiff<Comment>
+) {
+    const comment = await tx.comments.getById(id, true);
+    assert(comment !== undefined, `logCommentChange: comment ${id} not found`);
+    const task = await tx.tasks.getById(comment.taskId, true);
+    assert(
+        task !== undefined,
+        `logCommentChange: task ${comment.taskId} not found`
+    );
+    const ts = getNow();
+    const event: CommentChangeEvent = {type: 'comment', id, diff, ts};
+    await tx.esWriter.append(boardEvents(task.boardId), event);
 }

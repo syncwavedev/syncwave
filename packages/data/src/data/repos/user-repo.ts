@@ -37,8 +37,8 @@ export class UserRepo {
         });
     }
 
-    getById(id: UserId): Promise<User | undefined> {
-        return this.rawRepo.getById([id]);
+    getById(id: UserId, includeDeleted: boolean): Promise<User | undefined> {
+        return this.rawRepo.getById([id], includeDeleted);
     }
 
     async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {

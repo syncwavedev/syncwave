@@ -3,6 +3,7 @@ import {assert} from '../utils.js';
 import {DataTx} from './data-layer.js';
 import {BoardId, zBoard} from './repos/board-repo.js';
 import {ColumnId, zColumn} from './repos/column-repo.js';
+import {CommentId, zComment} from './repos/comment-repo.js';
 import {IdentityId, zIdentity} from './repos/identity-repo.js';
 import {MemberId, zMember} from './repos/member-repo.js';
 import {TaskId, zTask} from './repos/task-repo.js';
@@ -92,7 +93,7 @@ export function zUserDto() {
 export type UserDto = z.infer<ReturnType<typeof zUserDto>>;
 
 export async function toUserDto(tx: DataTx, userId: UserId): Promise<UserDto> {
-    const user = await tx.users.getById(userId);
+    const user = await tx.users.getById(userId, true);
     assert(user !== undefined, `toUserDto: user not found: ${userId}`);
 
     return user;
@@ -118,4 +119,28 @@ export async function toIdentityDto(
     const zUser = await toUserDto(tx, identity.userId);
 
     return {...identity, zUser};
+}
+
+export function zCommentDto() {
+    return zComment().extend({
+        author: zUserDto(),
+        task: zTaskDto(),
+    });
+}
+
+export type CommentDto = z.infer<ReturnType<typeof zCommentDto>>;
+
+export async function toCommentDto(
+    tx: DataTx,
+    commentId: CommentId
+): Promise<CommentDto> {
+    const comment = await tx.comments.getById(commentId, true);
+    assert(
+        comment !== undefined,
+        `toCommentDto: comment not found: ${commentId}`
+    );
+    const author = await toUserDto(tx, comment.authorId);
+    const task = await toTaskDto(tx, comment.taskId);
+
+    return {...comment, author, task};
 }

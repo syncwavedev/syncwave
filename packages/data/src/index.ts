@@ -9,6 +9,7 @@ export * from './data/dto.js';
 export * from './data/infrastructure.js';
 export * from './data/repos/board-repo.js';
 export * from './data/repos/column-repo.js';
+export * from './data/repos/comment-repo.js';
 export * from './data/repos/identity-repo.js';
 export * from './data/repos/member-repo.js';
 export * from './data/repos/task-repo.js';

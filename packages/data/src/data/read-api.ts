@@ -16,16 +16,18 @@ import {
 import {
     toBoardDto,
     toColumnDto,
+    toCommentDto,
     toTaskDto,
     zBoardDto,
     zColumnDto,
+    zCommentDto,
     zTaskDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {BoardId, zBoard} from './repos/board-repo.js';
 import {zIdentity} from './repos/identity-repo.js';
 import {Member} from './repos/member-repo.js';
-import {TaskId, zTask} from './repos/task-repo.js';
+import {Task, TaskId, zTask} from './repos/task-repo.js';
 import {UserId, zUser} from './repos/user-repo.js';
 
 export class ReadApiState {
@@ -48,6 +50,18 @@ export class ReadApiState {
 
     async ensureBoardReadAccess(tx: DataTx, boardId: BoardId): Promise<Member> {
         return await this.ensureBoardWriteAccess(tx, boardId);
+    }
+
+    async ensureTaskReadAccess(tx: DataTx, taskId: TaskId): Promise<Task> {
+        const task = await tx.tasks.getById(taskId, true);
+        if (!task) {
+            throw new BusinessError(
+                `task with id ${taskId} not found`,
+                'task_not_found'
+            );
+        }
+
+        return task;
     }
 
     async ensureBoardWriteAccess(
@@ -85,7 +99,7 @@ export function createReadApi() {
                 return observable({
                     async get() {
                         return await st.transact(async tx => {
-                            const user = await tx.users.getById(userId);
+                            const user = await tx.users.getById(userId, true);
                             assert(user !== undefined, 'getMe: user not found');
                             const identity =
                                 await tx.identities.getByUserId(userId);
@@ -181,6 +195,30 @@ export function createReadApi() {
                             await st.ensureBoardReadAccess(tx, task.boardId);
 
                             return task;
+                        });
+                    },
+                    update$: st.esReader
+                        .subscribe(boardEvents(task.boardId))
+                        .then(x => x.map(() => undefined)),
+                });
+            },
+        }),
+        getTaskComments: observer({
+            req: z.object({taskId: zUuid<TaskId>()}),
+            value: z.array(zCommentDto()),
+            update: z.array(zCommentDto()),
+            observe: async (st, {taskId}) => {
+                const task = await st.transact(tx =>
+                    st.ensureTaskReadAccess(tx, taskId)
+                );
+                return observable({
+                    get() {
+                        return st.transact(async tx => {
+                            await st.ensureTaskReadAccess(tx, taskId);
+                            return tx.comments
+                                .getByTaskId(taskId)
+                                .mapParallel(x => toCommentDto(tx, x.id))
+                                .toArray();
                         });
                     },
                     update$: st.esReader

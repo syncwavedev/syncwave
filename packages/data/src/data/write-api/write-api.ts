@@ -6,9 +6,11 @@ import {createApi, handler, InferRpcClient} from '../../transport/rpc.js';
 import {zUuid} from '../../uuid.js';
 import {AuthContext} from '../auth-context.js';
 import {DataTx} from '../data-layer.js';
+import {toCommentDto, zCommentDto} from '../dto.js';
 import {toPosition} from '../placement.js';
 import {Board, BoardId, zBoard} from '../repos/board-repo.js';
 import {ColumnId, zColumn} from '../repos/column-repo.js';
+import {CommentId} from '../repos/comment-repo.js';
 import {createMemberId, Member} from '../repos/member-repo.js';
 import {TaskId, zTask} from '../repos/task-repo.js';
 import {UserId} from '../repos/user-repo.js';
@@ -95,6 +97,18 @@ export class WriteApiState {
             );
         }
         return await this.ensureBoardWriteAccess(task.boardId);
+    }
+
+    async ensureCommentWriteAccess(commentId: CommentId): Promise<Member> {
+        const comment = await this.tx.comments.getById(commentId, true);
+
+        if (!comment) {
+            throw new BusinessError(
+                `comment ${commentId} doesn't exist`,
+                'comment_not_found'
+            );
+        }
+        return await this.ensureTaskWriteAccess(comment.taskId);
     }
 }
 
@@ -327,6 +341,45 @@ export function createWriteApi() {
                     boardId,
                     draft => {
                         draft.name = name;
+                    },
+                    true
+                );
+
+                return {};
+            },
+        }),
+        createComment: handler({
+            req: z.object({
+                taskId: zUuid<TaskId>(),
+                text: z.string(),
+                commentId: zUuid<CommentId>(),
+            }),
+            res: zCommentDto(),
+            handle: async (st, {taskId, text, commentId}) => {
+                const now = getNow();
+                await st.ensureTaskWriteAccess(taskId);
+                await st.tx.comments.create({
+                    taskId,
+                    text,
+                    authorId: st.ensureAuthenticated(),
+                    deleted: false,
+                    id: commentId,
+                    createdAt: now,
+                    updatedAt: now,
+                });
+
+                return await toCommentDto(st.tx, commentId);
+            },
+        }),
+        deleteComment: handler({
+            req: z.object({commentId: zUuid<CommentId>()}),
+            res: z.object({}),
+            handle: async (st, {commentId}) => {
+                await st.ensureCommentWriteAccess(commentId);
+                await st.tx.comments.update(
+                    commentId,
+                    x => {
+                        x.deleted = true;
                     },
                     true
                 );

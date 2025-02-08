@@ -55,7 +55,10 @@ export class MemberRepo {
                 {
                     name: 'member.userId fk',
                     verify: async member => {
-                        const user = await userRepo.getById(member.userId);
+                        const user = await userRepo.getById(
+                            member.userId,
+                            true
+                        );
                         if (user === undefined) {
                             return `user not found: ${member.userId}`;
                         }

@@ -53,7 +53,10 @@ export class ColumnRepo {
                 {
                     name: 'column.authorId fk',
                     verify: async column => {
-                        const user = await userRepo.getById(column.authorId);
+                        const user = await userRepo.getById(
+                            column.authorId,
+                            true
+                        );
                         if (user === undefined) {
                             return `user not found: ${column.authorId}`;
                         }

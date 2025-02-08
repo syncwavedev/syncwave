@@ -156,6 +156,25 @@ class ParticipantClient {
     return SetBoardNameRes.fromJson(json as Map<String, dynamic>);
   }
 
+  Future<CreateCommentRes> createComment(CreateCommentReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createComment', request.toJson(), headers);
+    return CreateCommentRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<DeleteCommentRes> deleteComment(DeleteCommentReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteComment', request.toJson(), headers);
+    return DeleteCommentRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<(GetTaskCommentsValue, Stream<GetTaskCommentsUpdate>)> getTaskComments(GetTaskCommentsReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getTaskComments', request.toJson(), headers);
+  
+    return (
+      GetTaskCommentsValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetTaskCommentsUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
   void close() {
     _rpc.close();
   }

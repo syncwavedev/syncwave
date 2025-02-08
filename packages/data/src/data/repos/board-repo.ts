@@ -61,7 +61,8 @@ export class BoardRepo {
                     name: 'board.ownerId fk',
                     verify: async board => {
                         const user = await dataTx().users.getById(
-                            board.ownerId
+                            board.ownerId,
+                            true
                         );
                         if (user === undefined) {
                             return `user with id ${board.ownerId} does not exist`;

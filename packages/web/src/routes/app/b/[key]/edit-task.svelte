@@ -3,6 +3,7 @@
 	import {getSdk} from '$lib/utils';
 	import type {Column, ColumnDto, Task, TaskDto} from 'syncwave-data';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import TaskCommentList from './task-comment-list.svelte';
 
 	let {task, columns}: {task: TaskDto; columns: ColumnDto[]} = $props();
 
@@ -53,3 +54,5 @@ Task editor: {task.title}
 		{/each}
 	</Select.Content>
 </Select.Root>
+
+<TaskCommentList taskId={task.id} />

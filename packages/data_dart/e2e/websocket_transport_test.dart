@@ -2,7 +2,7 @@ import 'package:syncwave_data/message.dart';
 import 'package:syncwave_data/websocket_transport_client.dart';
 import 'package:test/test.dart';
 
-// const e2eApiUrl = "wss://api-syncwave-dev.edme.io:443";
+// const e2eApiUrl = "wss://api-dev.syncwave.dev:443";
 const e2eApiUrl = "ws://127.0.0.1:4567";
 
 void main() {

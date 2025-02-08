@@ -44,16 +44,16 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
     if (STAGE === 'dev') {
         return {
             LOG_LEVEL: 'trace' as const,
-            APP_URL: 'https://www-syncwave-dev.edme.io',
+            APP_URL: 'https://dev.syncwave.dev',
             GOOGLE_REDIRECT_URL:
-                'https://api-syncwave-dev.edme.io' + GOOGLE_CALLBACK_PATH,
+                'https://api-dev.syncwave.dev' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'prod') {
         return {
             LOG_LEVEL: 'info' as const,
-            APP_URL: 'https://www-syncwave.edme.io',
+            APP_URL: 'https://syncwave.dev',
             GOOGLE_REDIRECT_URL:
-                'https://api-syncwave.edme.io' + GOOGLE_CALLBACK_PATH,
+                'https://api.syncwave.dev' + GOOGLE_CALLBACK_PATH,
         };
     } else if (STAGE === 'local') {
         return {

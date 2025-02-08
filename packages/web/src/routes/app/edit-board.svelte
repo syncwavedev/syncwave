@@ -1,8 +1,7 @@
 <script lang="ts">
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
-	import type {Column, ColumnDto, Board, BoardDto} from 'syncwave-data';
-	import * as Select from '$lib/components/ui/select/index.js';
+	import type {BoardDto} from 'syncwave-data';
 
 	let {board}: {board: BoardDto} = $props();
 

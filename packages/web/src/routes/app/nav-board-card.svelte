@@ -2,7 +2,7 @@
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
-	import type {BoardDto, BoardId} from 'syncwave-data';
+	import type {BoardDto} from 'syncwave-data';
 	import {formatTime, getSdk} from '$lib/utils';
 	import EditBoardDialog from './edit-board-dialog.svelte';
 	import {toggle} from '$lib/utils.svelte';

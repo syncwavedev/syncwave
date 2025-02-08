@@ -9,7 +9,7 @@
 </script>
 
 <Dialog.Root bind:open>
-	<Dialog.Content class="max-w-[1000px]">
+	<Dialog.Content>
 		<Dialog.Header>
 			<Dialog.Description>Edit board: {board.name}</Dialog.Description>
 		</Dialog.Header>

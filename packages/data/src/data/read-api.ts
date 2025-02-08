@@ -13,9 +13,16 @@ import {
     Transact,
     userEvents,
 } from './data-layer.js';
+import {
+    toBoardDto,
+    toColumnDto,
+    toTaskDto,
+    zBoardDto,
+    zColumnDto,
+    zTaskDto,
+} from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {BoardId, zBoard} from './repos/board-repo.js';
-import {zColumn} from './repos/column-repo.js';
 import {zIdentity} from './repos/identity-repo.js';
 import {Member} from './repos/member-repo.js';
 import {TaskId, zTask} from './repos/task-repo.js';
@@ -105,7 +112,10 @@ export function createReadApi() {
                 return observable({
                     async get() {
                         return st.transact(async tx => {
-                            const members = tx.members.getByUserId(userId);
+                            const members = tx.members.getByUserId(
+                                userId,
+                                false
+                            );
                             return await toStream(members)
                                 .mapParallel(member =>
                                     tx.boards.getById(member.boardId, true)
@@ -156,7 +166,9 @@ export function createReadApi() {
             value: zTask().optional(),
             update: zTask().optional(),
             observe: async (st, {taskId}) => {
-                const task = await st.transact(tx => tx.tasks.getById(taskId));
+                const task = await st.transact(tx =>
+                    tx.tasks.getById(taskId, false)
+                );
                 if (!task) {
                     throw new BusinessError(
                         `task with id ${taskId} not found`,
@@ -166,7 +178,7 @@ export function createReadApi() {
                 return observable({
                     async get() {
                         return await st.transact(async tx => {
-                            const task = await tx.tasks.getById(taskId);
+                            const task = await tx.tasks.getById(taskId, true);
                             if (!task) {
                                 return undefined;
                             }
@@ -224,14 +236,14 @@ export function createReadApi() {
                 key: z.string(),
             }),
             value: z.object({
-                board: zBoard(),
-                columns: z.array(zColumn()),
-                tasks: z.array(zTask()),
+                board: zBoardDto(),
+                columns: z.array(zColumnDto()),
+                tasks: z.array(zTaskDto()),
             }),
             update: z.object({
-                board: zBoard(),
-                columns: z.array(zColumn()),
-                tasks: z.array(zTask()),
+                board: zBoardDto(),
+                columns: z.array(zColumnDto()),
+                tasks: z.array(zTaskDto()),
             }),
             observe: async (st, {key}) => {
                 const board = await log.time('getBoardView get board', () =>
@@ -259,11 +271,21 @@ export function createReadApi() {
                             }
 
                             const [columns, tasks] = await whenAll([
-                                tx.columns.getByBoardId(boardId).toArray(),
-                                tx.tasks.getByBoardId(boardId).toArray(),
+                                tx.columns
+                                    .getByBoardId(boardId)
+                                    .mapParallel(x => toColumnDto(tx, x.id))
+                                    .toArray(),
+                                tx.tasks
+                                    .getByBoardId(boardId)
+                                    .mapParallel(x => toTaskDto(tx, x.id))
+                                    .toArray(),
                             ]);
 
-                            return {board, columns, tasks};
+                            return {
+                                board: await toBoardDto(tx, board.id),
+                                columns: columns,
+                                tasks,
+                            };
                         });
                     },
                     update$: st.esReader

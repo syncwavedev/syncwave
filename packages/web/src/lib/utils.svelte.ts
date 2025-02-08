@@ -54,3 +54,13 @@ export function getState<TValue, TUpdate>(
 
 	return state;
 }
+
+export function toggle(initial = false) {
+	const result = $state({
+		value: initial,
+		toggle: () => {
+			result.value = !result.value;
+		},
+	});
+	return result;
+}

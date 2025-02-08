@@ -1,4 +1,4 @@
-import {z, ZodType} from 'zod';
+import {z} from 'zod';
 import {BigFloat, zBigFloat} from '../../big-float.js';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
@@ -30,7 +30,7 @@ const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
 
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
-export function zTask(): ZodType<Task> {
+export function zTask() {
     return zDoc(z.tuple([zUuid<TaskId>()])).extend({
         id: zUuid<TaskId>(),
         authorId: zUuid<UserId>(),

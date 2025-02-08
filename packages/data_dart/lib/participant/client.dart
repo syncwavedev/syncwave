@@ -136,6 +136,16 @@ class ParticipantClient {
     return DeleteTaskRes.fromJson(json as Map<String, dynamic>);
   }
 
+  Future<SetTaskTitleRes> setTaskTitle(SetTaskTitleReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setTaskTitle', request.toJson(), headers);
+    return SetTaskTitleRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<SetTaskColumnIdRes> setTaskColumnId(SetTaskColumnIdReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setTaskColumnId', request.toJson(), headers);
+    return SetTaskColumnIdRes.fromJson(json as Map<String, dynamic>);
+  }
+
   void close() {
     _rpc.close();
   }

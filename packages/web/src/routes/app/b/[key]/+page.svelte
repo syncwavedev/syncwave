@@ -15,6 +15,7 @@
 	} from '../../../../../../data/dist/esm/src/data/repos/column-repo';
 	import {goto} from '$app/navigation';
 	import {Trash} from 'lucide-svelte';
+	import TaskCard from './task-card.svelte';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
@@ -62,10 +63,6 @@
 	async function deleteColumn(columnId: ColumnId) {
 		await sdk(rpc => rpc.deleteColumn({columnId}));
 	}
-
-	async function deleteTask(taskId: TaskId) {
-		await sdk(rpc => rpc.deleteTask({taskId}));
-	}
 </script>
 
 <header
@@ -73,16 +70,14 @@
 >
 	<div class="flex items-center gap-2 px-4">
 		<Sidebar.Trigger class="-ml-1" />
-		{#await board then board}
-			<Separator orientation="vertical" class="mr-2 h-4" />
-			<Breadcrumb.Root>
-				<Breadcrumb.List>
-					<Breadcrumb.Item class="hidden md:block">
-						<Breadcrumb.Link href="#">{board.value.board.key}</Breadcrumb.Link>
-					</Breadcrumb.Item>
-				</Breadcrumb.List>
-			</Breadcrumb.Root>
-		{/await}
+		<Separator orientation="vertical" class="mr-2 h-4" />
+		<Breadcrumb.Root>
+			<Breadcrumb.List>
+				<Breadcrumb.Item class="hidden md:block">
+					<Breadcrumb.Link href="#">{board.value.board.key}</Breadcrumb.Link>
+				</Breadcrumb.Item>
+			</Breadcrumb.List>
+		</Breadcrumb.Root>
 	</div>
 </header>
 <div class="flex flex-col gap-4 p-4">
@@ -92,8 +87,8 @@
 		<Button variant="destructive" onclick={deleteBoard}>Delete board</Button>
 	</div>
 
-	<div>
-		Columns:
+	<div class="flex flex-col gap-2">
+		<div>Columns:</div>
 		<div class="flex gap-4">
 			<Input bind:value={columnTitle} />
 			<Button onclick={addColumn}>Add column</Button>
@@ -101,7 +96,6 @@
 		{#each board.value.columns as column}
 			<div>
 				{column.id} - {column.title}
-				>
 				<Button onclick={() => deleteColumn(column.id)} variant="ghost" size="icon">
 					<Trash />
 				</Button>
@@ -109,29 +103,28 @@
 		{/each}
 	</div>
 
+	<Separator />
+
 	<div>
-		Tasks:
-
-		<div class="flex gap-4">
-			<Input bind:value={taskTitle} placeholder="title" />
-			<Select.Root bind:value={taskColumnId} type="single">
-				<Select.Trigger class="w-[180px]"></Select.Trigger>
-				<Select.Content>
-					{#each board.value.columns as column}
-						<Select.Item value={column.id}>{column.title}</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
-			<Button onclick={addTask}>Add task</Button>
-		</div>
-
-		{#each board.value.tasks as task}
-			<div>
-				{task.id} - {task.title} - {task.columnId}
-				<Button onclick={() => deleteTask(task.id)} variant="ghost" size="icon">
-					<Trash />
-				</Button>
+		<div class="flex flex-col gap-2">
+			<div>Tasks:</div>
+			<div class="flex gap-4">
+				<Input bind:value={taskTitle} placeholder="title" />
+				<Select.Root bind:value={taskColumnId} type="single">
+					<Select.Trigger class="w-[180px]">
+						{board.value.columns.find(x => x.id === taskColumnId)?.title}
+					</Select.Trigger>
+					<Select.Content>
+						{#each board.value.columns as column}
+							<Select.Item value={column.id}>{column.title}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+				<Button onclick={addTask}>Add task</Button>
 			</div>
-		{/each}
+			{#each board.value.tasks as task}
+				<TaskCard {task} columns={board.value.columns} />
+			{/each}
+		</div>
 	</div>
 </div>

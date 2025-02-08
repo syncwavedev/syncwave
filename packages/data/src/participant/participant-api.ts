@@ -110,6 +110,8 @@ export function createParticipantApi() {
         deleteBoard: proxy('deleteBoard'),
         deleteColumn: proxy('deleteColumn'),
         deleteTask: proxy('deleteTask'),
+        setTaskTitle: proxy('setTaskTitle'),
+        setTaskColumnId: proxy('setTaskColumnId'),
     });
 }
 

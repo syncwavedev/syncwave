@@ -203,6 +203,54 @@ export function createWriteApi() {
                 return {};
             },
         }),
+        setTaskTitle: handler({
+            req: z.object({
+                taskId: zUuid<TaskId>(),
+                title: z.string(),
+            }),
+            res: z.object({}),
+            handle: async (st, {taskId, title}) => {
+                const task = await st.tx.tasks.getById(taskId, true);
+                if (!task) {
+                    throw new BusinessError(
+                        `task ${taskId} not found`,
+                        'task_not_found'
+                    );
+                }
+
+                await st.ensureBoardWriteAccess(task.boardId);
+                await st.tx.tasks.update(taskId, x => {
+                    x.title = title;
+                });
+
+                return {};
+            },
+        }),
+        setTaskColumnId: handler({
+            req: z.object({
+                taskId: zUuid<TaskId>(),
+                columnId: zUuid<ColumnId>().nullable(),
+            }),
+            res: z.object({}),
+            handle: async (st, {taskId, columnId}) => {
+                const task = await st.tx.tasks.getById(taskId, true);
+                if (!task) {
+                    throw new BusinessError(
+                        `task ${taskId} not found`,
+                        'task_not_found'
+                    );
+                }
+
+                if (columnId) {
+                    await st.ensureColumnWriteAccess(columnId);
+                }
+                await st.tx.tasks.update(taskId, x => {
+                    x.columnId = columnId;
+                });
+
+                return {};
+            },
+        }),
         createBoard: handler({
             req: z.object({
                 boardId: zUuid<BoardId>(),
@@ -222,7 +270,7 @@ export function createWriteApi() {
                     deleted: false,
                     name: req.name,
                     ownerId: userId,
-                    key: req.key,
+                    key: req.key.toUpperCase(),
                 });
                 await st.tx.members.create({
                     id: createMemberId(),

@@ -75,6 +75,10 @@ export class Crdt<T> {
         };
     }
 
+    clone(): Crdt<T> {
+        return Crdt.load(this.state());
+    }
+
     map<TResult>(mapper: (snapshot: T) => TResult): TResult {
         // for simplicity sake we make full copy of the Doc to create a snapshot,
         // even though not all fields might be needed by the mapper

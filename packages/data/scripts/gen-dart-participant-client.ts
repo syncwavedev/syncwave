@@ -7,7 +7,7 @@ import {
     quicktype,
 } from 'quicktype-core';
 import {zodToJsonSchema} from 'zod-to-json-schema';
-import {createParticipantApi} from '../src/index.js';
+import {createParticipantApi, toError} from '../src/index.js';
 import {log} from '../src/logger.js';
 import {Api, Processor} from '../src/transport/rpc.js';
 
@@ -245,5 +245,5 @@ async function main() {
 }
 
 main().catch(error => {
-    log.error(error, 'failed to generate dart classes');
+    log.error(toError(error), 'failed to generate dart classes');
 });

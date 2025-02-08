@@ -78,16 +78,20 @@ export class CoordinatorServer {
         this.rpcServer.close();
     }
 
-    async issueJwtByUserEmail(email: string): Promise<string> {
+    async issueJwtByUserEmail(params: {
+        email: string;
+        fullName: string;
+    }): Promise<string> {
         return await this.dataLayer.transact(
             {identityId: undefined, superadmin: false, userId: undefined},
             async dataCx => {
-                const identity = await getIdentity(
-                    dataCx.identities,
-                    dataCx.users,
-                    email,
-                    this.crypto
-                );
+                const identity = await getIdentity({
+                    identities: dataCx.identities,
+                    users: dataCx.users,
+                    email: params.email,
+                    crypto: this.crypto,
+                    fullName: params.fullName,
+                });
 
                 return signJwtToken(this.jwt, identity, this.jwtSecret);
             }

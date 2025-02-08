@@ -52,12 +52,13 @@ export function createAuthApi() {
             ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
                 const verificationCode = await createVerificationCode(crypto);
 
-                const identity = await getIdentity(
+                const identity = await getIdentity({
                     identities,
                     users,
                     email,
-                    crypto
-                );
+                    crypto,
+                    fullName: 'Anonymous',
+                });
 
                 if (await needsCooldown(identity)) {
                     return {type: 'cooldown'};
@@ -206,13 +207,14 @@ export async function signJwtToken(
     );
 }
 
-export async function getIdentity(
-    identities: IdentityRepo,
-    users: UserRepo,
-    email: string,
-    crypto: CryptoService
-): Promise<Identity> {
-    const existingIdentity = await identities.getByEmail(email);
+export async function getIdentity(params: {
+    identities: IdentityRepo;
+    users: UserRepo;
+    email: string;
+    crypto: CryptoService;
+    fullName: string;
+}): Promise<Identity> {
+    const existingIdentity = await params.identities.getByEmail(params.email);
     if (existingIdentity) {
         return existingIdentity;
     }
@@ -220,20 +222,22 @@ export async function getIdentity(
     const now = getNow();
     const userId = createUserId();
 
-    await users.create({
+    await params.users.create({
         id: userId,
         createdAt: now,
         updatedAt: now,
         deleted: false,
+        fullName: params.fullName,
+        version: 3,
     });
 
-    const identity = await identities.create({
+    const identity = await params.identities.create({
         id: createIdentityId(),
         createdAt: now,
         updatedAt: now,
-        email,
+        email: params.email,
         userId,
-        verificationCode: await createVerificationCode(crypto),
+        verificationCode: await createVerificationCode(params.crypto),
         authActivityLog: [],
         deleted: false,
     });

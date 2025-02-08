@@ -1,6 +1,6 @@
 import {pino as createPino, Level} from 'pino';
 import {context} from './context.js';
-import {AppError} from './errors.js';
+import {AppError, toError} from './errors.js';
 
 export type LogLevel =
     | 'trace'
@@ -65,7 +65,7 @@ export class Logger {
         const context = this.context();
         let message: string;
         if (args.length === 2) {
-            context['error'] = args[0];
+            context['error'] = toError(args[0]);
             message = args[1];
         } else {
             message = args[0];

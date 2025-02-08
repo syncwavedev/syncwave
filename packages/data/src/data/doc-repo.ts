@@ -20,7 +20,7 @@ import {
 } from '../kv/kv-store.js';
 import {Stream, toStream} from '../stream.js';
 import {getNow, Timestamp, zTimestamp} from '../timestamp.js';
-import {pipe, whenAll} from '../utils.js';
+import {Nothing, pipe, whenAll} from '../utils.js';
 import {
     createReadonlyTransitionChecker,
     ReadonlyDescriptor,
@@ -82,13 +82,18 @@ export interface DocStoreOptions<T extends Doc<IndexKey>> {
     readonly: ReadonlyDescriptor<
         Omit<T, 'updatedAt' | 'createdAt' | 'pk' | 'deleted'>
     >;
+    upgrade?: Recipe<any>;
 }
 
-export type Recipe<T> = (doc: T) => T | void;
+export type Recipe<T> = (doc: T) => Nothing;
 
 export class DocRepo<T extends Doc<IndexKey>> {
     private readonly indexes: Map<string, Index<T>>;
-    private readonly primary: Transaction<IndexKey, Crdt<T>>;
+    // we use Omit to prevent direct access to the value that might need an upgrade
+    private readonly primary: Omit<
+        Transaction<IndexKey, Crdt<T>>,
+        'get' | 'query'
+    >;
     private readonly primaryKeyRaw: Transaction<Uint8Array, Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
@@ -96,8 +101,10 @@ export class DocRepo<T extends Doc<IndexKey>> {
     private readonly constraints: readonly Constraint<T>[];
     // todo: add tests
     private readonly transitionChecker: TransitionChecker<T>;
+    private readonly upgrade: Recipe<any>;
 
     constructor(options: DocStoreOptions<T>) {
+        this.upgrade = options.upgrade ?? (() => {});
         this.indexes = new Map(
             Object.entries(options.indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
@@ -146,7 +153,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         id: IndexKey,
         includeDeleted?: boolean
     ): Promise<T | undefined> {
-        const doc = await this.primary.get(id);
+        const doc = await this._get(id);
         const snapshot = doc?.snapshot();
         if (!includeDeleted && snapshot?.deleted) {
             return undefined;
@@ -195,7 +202,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
     }
 
     async unsafe_delete(pk: IndexKey) {
-        const doc = await this.primary.get(pk);
+        const doc = await this._get(pk);
         if (!doc) {
             throw new AppError('doc not found: ' + pk);
         }
@@ -227,7 +234,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         recipe: Recipe<T>,
         includeDeleted?: boolean
     ): Promise<T> {
-        const doc = await this.primary.get(id);
+        const doc = await this._get(id);
         if (!doc || (!includeDeleted && doc.snapshot().deleted)) {
             throw new AppError('doc not found: ' + id);
         }
@@ -244,37 +251,49 @@ export class DocRepo<T extends Doc<IndexKey>> {
             return doc.snapshot();
         }
 
-        await this.apply(id, diff, includeDeleted);
+        await this.apply(id, diff);
 
         return doc.snapshot();
     }
 
     // todo: add tests
-    async apply(
-        pk: IndexKey,
-        diff: CrdtDiff<T>,
-        includeDeleted?: boolean
-    ): Promise<void> {
-        let doc: Crdt<T> | undefined = await this.primary.get(pk);
+    async apply(pk: IndexKey, diff: CrdtDiff<T>): Promise<void> {
+        const existingDoc: Crdt<T> | undefined = await this._get(pk);
+        await this._apply({pk, existingDoc, diff, skipTransitionCheck: false});
+    }
+
+    // todo: add tests
+    private async _apply(params: {
+        pk: IndexKey;
+        existingDoc: Crdt<T> | undefined;
+        diff: CrdtDiff<T>;
+        skipTransitionCheck: boolean;
+    }): Promise<void> {
         let prev: T | undefined;
-        const docSnapshot = doc?.snapshot();
-        if (doc && docSnapshot && (includeDeleted || !docSnapshot.deleted)) {
-            prev = docSnapshot;
-            doc.apply(diff);
+        let next: Crdt<T>;
+        if (params.existingDoc) {
+            prev = params.existingDoc.snapshot();
+            next = params.existingDoc;
+            next.apply(params.diff);
         } else {
             prev = undefined;
-            doc = Crdt.load(diff);
+            next = Crdt.load(params.diff);
         }
 
-        if (compareIndexKey(doc.snapshot().pk, pk) !== 0) {
-            throw new AppError('invalid diff: diff updates id ' + pk);
+        if (compareIndexKey(next.snapshot().pk, params.pk) !== 0) {
+            throw new AppError('invalid diff: diff updates id ' + params.pk);
         }
 
-        await this._put(prev, doc, diff);
+        await this._put({
+            prev,
+            next,
+            diff: params.diff,
+            skipTransitionCheck: params.skipTransitionCheck,
+        });
     }
 
     async create(doc: T): Promise<T> {
-        const existing = await this.primary.get(doc.pk);
+        const existing = await this._get(doc.pk);
         if (existing) {
             throw new AppError(
                 `doc ${indexKeyToString(doc.pk)} already exists`
@@ -285,11 +304,16 @@ export class DocRepo<T extends Doc<IndexKey>> {
     }
 
     async put(doc: T): Promise<T> {
-        const existing = await this.primary.get(doc.pk);
+        const existing = await this._get(doc.pk);
 
         const now = getNow();
         const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
-        await this._put(existing?.snapshot(), crdt, crdt.state());
+        await this._put({
+            prev: existing?.snapshot(),
+            next: crdt,
+            diff: crdt.state(),
+            skipTransitionCheck: false,
+        });
 
         return crdt.snapshot();
     }
@@ -302,24 +326,56 @@ export class DocRepo<T extends Doc<IndexKey>> {
         return index;
     }
 
-    async _put(
-        prev: T | undefined,
-        next: Crdt<T>,
-        diff: CrdtDiff<T>
-    ): Promise<void> {
-        const nextSnapshot = next.snapshot();
+    // _get must be used everywhere to ensure upgrade
+    private async _get(pk: IndexKey): Promise<Crdt<T> | undefined> {
+        const doc = await (this.primary as Transaction<IndexKey, Crdt<T>>).get(
+            pk
+        );
+
+        if (!doc) {
+            return doc;
+        }
+
+        const original = doc.clone();
+
+        const diff = doc.update(this.upgrade);
+        if (!diff) {
+            return doc;
+        }
+
+        await this._apply({
+            pk,
+            existingDoc: original,
+            diff,
+            skipTransitionCheck: true,
+        });
+
+        return doc;
+    }
+
+    private async _put(params: {
+        prev: T | undefined;
+        next: Crdt<T>;
+        diff: CrdtDiff<T>;
+        skipTransitionCheck: boolean;
+    }): Promise<void> {
+        const nextSnapshot = params.next.snapshot();
         this.schema.parse(nextSnapshot);
         await whenAll([
-            this.transitionChecker(prev, nextSnapshot),
-            this.primary.put(nextSnapshot.pk, next),
-            ...[...this.indexes.values()].map(x => x.sync(prev, nextSnapshot)),
+            params.skipTransitionCheck
+                ? Promise.resolve()
+                : this.transitionChecker(params.prev, nextSnapshot),
+            this.primary.put(nextSnapshot.pk, params.next),
+            ...[...this.indexes.values()].map(x =>
+                x.sync(params.prev, nextSnapshot)
+            ),
             ...this.constraints.map(async c => {
                 const result = await c.verify(nextSnapshot);
                 if (result) {
                     throw new ConstraintError(c.name, result);
                 }
             }),
-            this.onChange(nextSnapshot.pk, diff),
+            this.onChange(nextSnapshot.pk, params.diff),
         ]);
     }
 
@@ -329,7 +385,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         includeDeleted?: boolean
     ): Stream<T> {
         return toStream(ids)
-            .mapParallel(id => this.primary.get(id))
+            .mapParallel(id => this._get(id))
             .assert(x => x !== undefined, message)
             .map(doc => doc.snapshot())
             .filter(x => includeDeleted || !x.deleted);

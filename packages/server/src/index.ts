@@ -224,37 +224,46 @@ async function launch() {
 
 function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
     router.get('/callbacks/google', async request => {
-        const {code, state} = request.query;
+        try {
+            const {code, state} = request.query;
 
-        if (typeof code !== 'string') {
+            if (typeof code !== 'string') {
+                return request.redirect(`${APP_URL}/auth/log-in/failed`);
+            }
+
+            const result = await getGoogleUser(code, {
+                clientId: GOOGLE_CLIENT_ID,
+                clientSecret: GOOGLE_CLIENT_SECRET,
+                redirectUri: GOOGLE_REDIRECT_URL,
+            });
+            if (result.type === 'error') {
+                return request.redirect(`${APP_URL}/auth/log-in/failed`);
+            }
+
+            if (!result.user.verified_email || !result.user.email) {
+                log.warn(
+                    `Google user has unverified email: ${result.user.email}`
+                );
+                return request.redirect(`${APP_URL}/auth/log-in/failed`);
+            }
+
+            const jwtToken = await coordinator().issueJwtByUserEmail({
+                email: result.user.email,
+                fullName: (result.user.displayName as string) ?? 'Anonymous',
+            });
+            const jwtTokenComponent = encodeURIComponent(jwtToken);
+            const redirectUrlComponent = encodeURIComponent(
+                JSON.parse(decodeURIComponent(state as string)).redirectUrl ??
+                    ''
+            );
+
+            return request.redirect(
+                `${APP_URL}/auth/log-in/callback/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
+            );
+        } catch (error) {
+            log.error(toError(error), 'failed to handle google callback');
             return request.redirect(`${APP_URL}/auth/log-in/failed`);
         }
-
-        const result = await getGoogleUser(code, {
-            clientId: GOOGLE_CLIENT_ID,
-            clientSecret: GOOGLE_CLIENT_SECRET,
-            redirectUri: GOOGLE_REDIRECT_URL,
-        });
-        if (result.type === 'error') {
-            return request.redirect(`${APP_URL}/auth/log-in/failed`);
-        }
-
-        if (!result.user.verified_email || !result.user.email) {
-            log.warn(`Google user has unverified email: ${result.user.email}`);
-            return request.redirect(`${APP_URL}/auth/log-in/failed`);
-        }
-
-        const jwtToken = await coordinator().issueJwtByUserEmail(
-            result.user.email
-        );
-        const jwtTokenComponent = encodeURIComponent(jwtToken);
-        const redirectUrlComponent = encodeURIComponent(
-            JSON.parse(decodeURIComponent(state as string)).redirectUrl ?? ''
-        );
-
-        return request.redirect(
-            `${APP_URL}/auth/log-in/callback/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
-        );
     });
 }
 

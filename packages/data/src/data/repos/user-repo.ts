@@ -1,8 +1,8 @@
 import {z} from 'zod';
 import {CrdtDiff} from '../../crdt/crdt.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {Brand} from '../../utils.js';
-import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {assertNever, Brand} from '../../utils.js';
+import {createUuid, Uuid, zUuid} from '../../uuid.js';
 import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
@@ -11,13 +11,31 @@ export function createUserId(): UserId {
     return createUuid() as UserId;
 }
 
-export interface User extends Doc<[UserId]> {
+interface UserV1 extends Doc<[UserId]> {
     readonly id: UserId;
 }
+
+interface UserV2 extends Doc<[UserId]> {
+    readonly id: UserId;
+    readonly version: 2;
+    name: string;
+}
+
+interface UserV3 extends Doc<[UserId]> {
+    readonly id: UserId;
+    readonly version: 3;
+    fullName: string;
+}
+
+export type User = UserV3;
+
+type StoredUser = UserV1 | UserV2 | UserV3;
 
 export function zUser() {
     return zDoc(z.tuple([zUuid<UserId>()])).extend({
         id: zUuid<UserId>(),
+        fullName: z.string(),
+        version: z.literal(3),
     });
 }
 
@@ -33,6 +51,28 @@ export class UserRepo {
             constraints: [],
             readonly: {
                 id: true,
+                fullName: false,
+                version: true,
+            },
+            upgrade: function upgradeUser(user: StoredUser) {
+                if ('version' in user) {
+                    if (user.version === 2) {
+                        (user as any).version = 3;
+                        (user as any).fullName = user.name;
+                        delete (user as any).name;
+
+                        upgradeUser(user);
+                    } else if (user.version === 3) {
+                        // latest version
+                    } else {
+                        assertNever(user);
+                    }
+                } else {
+                    (user as any).version = 2;
+                    (user as any).name = 'Anon';
+
+                    upgradeUser(user);
+                }
             },
         });
     }

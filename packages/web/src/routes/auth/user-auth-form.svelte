@@ -34,7 +34,8 @@
 	}
 
 	const {variant, redirectUrl}: Props = $props();
-	const titleText = variant === 'log-in' ? 'Welcome back!' : 'Create an account';
+	const titleText =
+		variant === 'log-in' ? 'Welcome back!' : 'Create an account';
 	const descText =
 		variant === 'log-in'
 			? 'Please enter your email to log in'
@@ -104,7 +105,8 @@
 		<Alert.Root variant="destructive">
 			<CircleAlert class="size-4" />
 			<Alert.Description
-				>Oops! Too many attempts. Please wait a few hours before trying again.</Alert.Description
+				>Oops! Too many attempts. Please wait a few hours before trying
+				again.</Alert.Description
 			>
 		</Alert.Root>
 	{/if}
@@ -117,7 +119,12 @@
 			<span class="bg-background text-muted-foreground px-2"> Or </span>
 		</div>
 	</div>
-	<Button href={googleSignInUrl} variant="outline" type="button" disabled={isLoading}>
+	<Button
+		href={googleSignInUrl}
+		variant="outline"
+		type="button"
+		disabled={isLoading}
+	>
 		{#if isLoading}
 			<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
 		{:else}

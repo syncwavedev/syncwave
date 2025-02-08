@@ -6,7 +6,7 @@ import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Timestamp, zTimestamp} from '../../timestamp.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, zDoc} from '../doc-repo.js';
+import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {UserId, UserRepo} from './user-repo.js';
 
 export type IdentityId = Brand<Uuid, 'identity_id'>;
@@ -135,10 +135,7 @@ export class IdentityRepo {
         }
     }
 
-    update(
-        id: IdentityId,
-        recipe: (user: Identity) => Identity | void
-    ): Promise<Identity> {
+    update(id: IdentityId, recipe: Recipe<Identity>): Promise<Identity> {
         return this.rawRepo.update([id], recipe);
     }
 }

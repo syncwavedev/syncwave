@@ -83,6 +83,8 @@ export function createTestApi() {
                             deleted: false,
                             createdAt: getNow(),
                             updatedAt: getNow(),
+                            fullName: 'Test User',
+                            version: 3,
                         }).state(),
                     });
                 });

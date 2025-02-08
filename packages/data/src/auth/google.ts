@@ -12,6 +12,7 @@ export interface GoogleUser {
     readonly email?: string;
     readonly verified_email?: boolean;
     readonly picture?: unknown;
+    readonly displayName?: string;
 }
 
 export type GetGoogleUserResult =

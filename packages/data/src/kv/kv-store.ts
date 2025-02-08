@@ -1,4 +1,5 @@
 import {Codec} from '../codec.js';
+import {AppError} from '../errors.js';
 import {Stream, toStream} from '../stream.js';
 import {bufStartsWith, unreachable} from '../utils.js';
 import {MappedTransaction, Mapper} from './mapped-kv-store.js';
@@ -60,7 +61,7 @@ export type Condition<TKey> =
     | LtCondition<TKey>
     | LteCondition<TKey>;
 
-export class InvalidQueryCondition extends Error {
+export class InvalidQueryCondition extends AppError {
     constructor(public readonly condition: Condition<unknown>) {
         super('invalid query condition');
     }

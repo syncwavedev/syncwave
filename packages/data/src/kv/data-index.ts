@@ -74,7 +74,7 @@ export function createIndex<TValue>({
                 gt: cond => ({
                     gt: encodeIndexKey([
                         ...cond.gt,
-                        ...Array(16).fill(undefined),
+                        ...Array<undefined>(16).fill(undefined),
                     ]),
                 }),
                 gte: cond => ({gte: encodeIndexKey(cond.gte)}),
@@ -82,7 +82,7 @@ export function createIndex<TValue>({
                 lte: cond => ({
                     lte: encodeIndexKey([
                         ...cond.lte,
-                        ...Array(16).fill(undefined),
+                        ...Array<undefined>(16).fill(undefined),
                     ]),
                 }),
             }
@@ -323,9 +323,9 @@ export class IndexKeyCodec implements Codec<IndexKey> {
     }
 
     decode(buf: Uint8Array): IndexKey {
-        const key = bytewise.decode(Buffer.from(buf));
+        const key = bytewise.decode(Buffer.from(buf)) as IndexKey;
 
-        return key.map((part: unknown) => {
+        return key.map(part => {
             if (part instanceof Buffer) {
                 return new Uint8Array(part);
             } else {

@@ -239,6 +239,7 @@ describe('DocStore with MemKVStore', () => {
             createdAt: expect.any(Number) as Timestamp,
             updatedAt: expect.any(Number) as Timestamp,
             unknownProp: 'val',
+            deleted: false,
         });
 
         await expect(

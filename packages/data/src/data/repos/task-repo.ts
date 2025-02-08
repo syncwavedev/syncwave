@@ -111,7 +111,11 @@ export class TaskRepo {
         return this.rawRepo.create({pk: [user.id], ...user});
     }
 
-    update(id: TaskId, recipe: Recipe<Task>): Promise<Task> {
-        return this.rawRepo.update([id], recipe);
+    update(
+        id: TaskId,
+        recipe: Recipe<Task>,
+        includeDeleted = false
+    ): Promise<Task> {
+        return this.rawRepo.update([id], recipe, includeDeleted);
     }
 }

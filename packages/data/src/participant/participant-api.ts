@@ -3,7 +3,7 @@ import {
     createCoordinatorApi,
 } from '../coordinator/coordinator-api.js';
 import {createReadApi} from '../data/read-api.js';
-import {createWriteApi} from '../data/write-api.js';
+import {createWriteApi} from '../data/write-api/write-api.js';
 import {Message, MessageHeaders} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {
@@ -112,6 +112,7 @@ export function createParticipantApi() {
         deleteTask: proxy('deleteTask'),
         setTaskTitle: proxy('setTaskTitle'),
         setTaskColumnId: proxy('setTaskColumnId'),
+        setColumnTitle: proxy('setColumnTitle'),
     });
 }
 

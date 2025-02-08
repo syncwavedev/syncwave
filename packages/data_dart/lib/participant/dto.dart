@@ -51,6 +51,8 @@
 //     final setTaskTitleRes = setTaskTitleResFromJson(jsonString);
 //     final setTaskColumnIdReq = setTaskColumnIdReqFromJson(jsonString);
 //     final setTaskColumnIdRes = setTaskColumnIdResFromJson(jsonString);
+//     final setColumnTitleReq = setColumnTitleReqFromJson(jsonString);
+//     final setColumnTitleRes = setColumnTitleResFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -257,6 +259,14 @@ String setTaskColumnIdReqToJson(SetTaskColumnIdReq data) => json.encode(data.toJ
 SetTaskColumnIdRes setTaskColumnIdResFromJson(String str) => SetTaskColumnIdRes.fromJson(json.decode(str));
 
 String setTaskColumnIdResToJson(SetTaskColumnIdRes data) => json.encode(data.toJson());
+
+SetColumnTitleReq setColumnTitleReqFromJson(String str) => SetColumnTitleReq.fromJson(json.decode(str));
+
+String setColumnTitleReqToJson(SetColumnTitleReq data) => json.encode(data.toJson());
+
+SetColumnTitleRes setColumnTitleResFromJson(String str) => SetColumnTitleRes.fromJson(json.decode(str));
+
+String setColumnTitleResToJson(SetColumnTitleRes data) => json.encode(data.toJson());
 
 class StreamPutReq {
     String topic;
@@ -2690,6 +2700,36 @@ class SetTaskColumnIdRes {
     SetTaskColumnIdRes();
 
     factory SetTaskColumnIdRes.fromJson(Map<String, dynamic> json) => SetTaskColumnIdRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class SetColumnTitleReq {
+    String columnId;
+    String title;
+
+    SetColumnTitleReq({
+        required this.columnId,
+        required this.title,
+    });
+
+    factory SetColumnTitleReq.fromJson(Map<String, dynamic> json) => SetColumnTitleReq(
+        columnId: json["columnId"],
+        title: json["title"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "columnId": columnId,
+        "title": title,
+    };
+}
+
+class SetColumnTitleRes {
+    SetColumnTitleRes();
+
+    factory SetColumnTitleRes.fromJson(Map<String, dynamic> json) => SetColumnTitleRes(
     );
 
     Map<String, dynamic> toJson() => {

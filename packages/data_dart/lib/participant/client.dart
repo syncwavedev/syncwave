@@ -146,6 +146,11 @@ class ParticipantClient {
     return SetTaskColumnIdRes.fromJson(json as Map<String, dynamic>);
   }
 
+  Future<SetColumnTitleRes> setColumnTitle(SetColumnTitleReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setColumnTitle', request.toJson(), headers);
+    return SetColumnTitleRes.fromJson(json as Map<String, dynamic>);
+  }
+
   void close() {
     _rpc.close();
   }

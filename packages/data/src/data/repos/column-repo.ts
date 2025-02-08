@@ -100,7 +100,11 @@ export class ColumnRepo {
         return this.rawRepo.create({pk: [user.id], ...user});
     }
 
-    update(id: ColumnId, recipe: Recipe<Column>): Promise<Column> {
-        return this.rawRepo.update([id], recipe);
+    update(
+        id: ColumnId,
+        recipe: Recipe<Column>,
+        includeDeleted = false
+    ): Promise<Column> {
+        return this.rawRepo.update([id], recipe, includeDeleted);
     }
 }

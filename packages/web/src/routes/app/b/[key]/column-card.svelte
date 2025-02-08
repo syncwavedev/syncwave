@@ -6,33 +6,31 @@
 		assert,
 		type Column,
 		type ColumnDto,
-		type Task,
-		type TaskDto,
-		type TaskId,
+		type ColumnId,
 	} from 'syncwave-data';
-	import EditTaskDialog from './edit-task-dialog.svelte';
+	import EditColumnDialog from './edit-column-dialog.svelte';
 	import {toggle} from '$lib/utils.svelte';
 
-	let {task, columns}: {task: TaskDto; columns: ColumnDto[]} = $props();
+	let {column}: {column: ColumnDto} = $props();
 
 	const sdk = getSdk();
 
-	async function deleteTask(taskId: TaskId) {
-		await sdk(rpc => rpc.deleteTask({taskId}));
+	async function deleteColumn(columnId: ColumnId) {
+		await sdk(rpc => rpc.deleteColumn({columnId}));
 	}
 
 	let editOpen = toggle();
 </script>
 
 <div class="flex items-center gap-2">
-	<Button onclick={() => deleteTask(task.id)} variant="ghost" size="icon">
+	<Button onclick={() => deleteColumn(column.id)} variant="ghost" size="icon">
 		<Trash />
 	</Button>
 	<Button onclick={editOpen.toggle} variant="ghost" size="icon">
 		<Edit />
 	</Button>
 	<div>
-		[{task.board.key.toUpperCase()}-{task.counter}] [{task.column?.title}] {task.title}
+		{column.title}
 	</div>
-	<EditTaskDialog bind:open={editOpen.value} {task} {columns} />
+	<EditColumnDialog bind:open={editOpen.value} {column} />
 </div>

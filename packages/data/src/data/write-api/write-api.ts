@@ -1,18 +1,18 @@
 import {z} from 'zod';
-import {zBigFloat} from '../big-float.js';
-import {AuthContext} from '../data/auth-context.js';
-import {DataTx} from '../data/data-layer.js';
-import {Board, BoardId, zBoard} from '../data/repos/board-repo.js';
-import {createMemberId, Member} from '../data/repos/member-repo.js';
-import {TaskId, zTask} from '../data/repos/task-repo.js';
-import {UserId} from '../data/repos/user-repo.js';
-import {BusinessError} from '../errors.js';
-import {getNow} from '../timestamp.js';
-import {createApi, handler, InferRpcClient} from '../transport/rpc.js';
-import {whenAll} from '../utils.js';
-import {zUuid} from '../uuid.js';
-import {toPosition} from './placement.js';
-import {ColumnId, zColumn} from './repos/column-repo.js';
+import {zBigFloat} from '../../big-float.js';
+import {BusinessError} from '../../errors.js';
+import {getNow} from '../../timestamp.js';
+import {createApi, handler, InferRpcClient} from '../../transport/rpc.js';
+import {whenAll} from '../../utils.js';
+import {zUuid} from '../../uuid.js';
+import {AuthContext} from '../auth-context.js';
+import {DataTx} from '../data-layer.js';
+import {toPosition} from '../placement.js';
+import {Board, BoardId, zBoard} from '../repos/board-repo.js';
+import {ColumnId, zColumn} from '../repos/column-repo.js';
+import {createMemberId, Member} from '../repos/member-repo.js';
+import {TaskId, zTask} from '../repos/task-repo.js';
+import {UserId} from '../repos/user-repo.js';
 
 export class WriteApiState {
     constructor(
@@ -85,6 +85,18 @@ export class WriteApiState {
         }
         return await this.ensureBoardWriteAccess(column.boardId);
     }
+
+    async ensureTaskWriteAccess(taskId: TaskId): Promise<Member> {
+        const task = await this.tx.tasks.getById(taskId, true);
+
+        if (!task) {
+            throw new BusinessError(
+                `task ${taskId} doesn't exist`,
+                'task_not_found'
+            );
+        }
+        return await this.ensureBoardWriteAccess(task.boardId);
+    }
 }
 
 export function createWriteApi() {
@@ -122,6 +134,10 @@ export function createWriteApi() {
                 const meId = st.ensureAuthenticated();
                 await st.ensureBoardWriteAccess(boardId);
                 const now = getNow();
+
+                if (columnId) {
+                    await st.ensureColumnWriteAccess(columnId);
+                }
 
                 const counter =
                     await st.tx.boards.incrementBoardCounter(boardId);
@@ -167,18 +183,14 @@ export function createWriteApi() {
             req: z.object({columnId: zUuid<ColumnId>()}),
             res: z.object({}),
             handle: async (st, {columnId}) => {
-                const column = await st.tx.columns.getById(columnId, true);
-                if (!column) {
-                    throw new BusinessError(
-                        `column ${columnId} not found`,
-                        'column_not_found'
-                    );
-                }
-
-                await st.ensureBoardWriteAccess(column.boardId);
-                await st.tx.columns.update(columnId, x => {
-                    x.deleted = true;
-                });
+                await st.ensureColumnWriteAccess(columnId);
+                await st.tx.columns.update(
+                    columnId,
+                    x => {
+                        x.deleted = true;
+                    },
+                    true
+                );
 
                 return {};
             },
@@ -187,18 +199,14 @@ export function createWriteApi() {
             req: z.object({taskId: zUuid<TaskId>()}),
             res: z.object({}),
             handle: async (st, {taskId}) => {
-                const task = await st.tx.tasks.getById(taskId, true);
-                if (!task) {
-                    throw new BusinessError(
-                        `task ${taskId} not found`,
-                        'task_not_found'
-                    );
-                }
-
-                await st.ensureBoardWriteAccess(task.boardId);
-                await st.tx.tasks.update(taskId, x => {
-                    x.deleted = true;
-                });
+                await st.ensureTaskWriteAccess(taskId);
+                await st.tx.tasks.update(
+                    taskId,
+                    x => {
+                        x.deleted = true;
+                    },
+                    true
+                );
 
                 return {};
             },
@@ -210,18 +218,14 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {taskId, title}) => {
-                const task = await st.tx.tasks.getById(taskId, true);
-                if (!task) {
-                    throw new BusinessError(
-                        `task ${taskId} not found`,
-                        'task_not_found'
-                    );
-                }
-
-                await st.ensureBoardWriteAccess(task.boardId);
-                await st.tx.tasks.update(taskId, x => {
-                    x.title = title;
-                });
+                await st.ensureTaskWriteAccess(taskId);
+                await st.tx.tasks.update(
+                    taskId,
+                    x => {
+                        x.title = title;
+                    },
+                    true
+                );
 
                 return {};
             },
@@ -233,20 +237,37 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {taskId, columnId}) => {
-                const task = await st.tx.tasks.getById(taskId, true);
-                if (!task) {
-                    throw new BusinessError(
-                        `task ${taskId} not found`,
-                        'task_not_found'
-                    );
-                }
+                await st.ensureTaskWriteAccess(taskId);
 
                 if (columnId) {
                     await st.ensureColumnWriteAccess(columnId);
                 }
-                await st.tx.tasks.update(taskId, x => {
-                    x.columnId = columnId;
-                });
+                await st.tx.tasks.update(
+                    taskId,
+                    x => {
+                        x.columnId = columnId;
+                    },
+                    true
+                );
+
+                return {};
+            },
+        }),
+        setColumnTitle: handler({
+            req: z.object({
+                columnId: zUuid<ColumnId>(),
+                title: z.string(),
+            }),
+            res: z.object({}),
+            handle: async (st, {columnId, title}) => {
+                await st.ensureColumnWriteAccess(columnId);
+                await st.tx.columns.update(
+                    columnId,
+                    x => {
+                        x.title = title;
+                    },
+                    true
+                );
 
                 return {};
             },
@@ -310,21 +331,6 @@ export function createWriteApi() {
                 ]);
 
                 return board;
-            },
-        }),
-        updateTaskTitle: handler({
-            req: z.object({
-                taskId: zUuid<TaskId>(),
-                title: z.string(),
-            }),
-            res: zTask(),
-            handle: async (st, {taskId, title}) => {
-                const task = await st.tx.tasks.update(taskId, draft => {
-                    draft.title = title;
-                });
-                await st.ensureBoardWriteAccess(task.boardId);
-
-                return task;
             },
         }),
     });

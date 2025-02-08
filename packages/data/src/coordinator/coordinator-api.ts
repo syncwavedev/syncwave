@@ -8,7 +8,7 @@ import {
     JwtService,
 } from '../data/infrastructure.js';
 import {createReadApi, ReadApiState} from '../data/read-api.js';
-import {createWriteApi, WriteApiState} from '../data/write-api.js';
+import {createWriteApi, WriteApiState} from '../data/write-api/write-api.js';
 import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {

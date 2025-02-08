@@ -16,6 +16,7 @@
 	import {goto} from '$app/navigation';
 	import {Trash} from 'lucide-svelte';
 	import TaskCard from './task-card.svelte';
+	import ColumnCard from './column-card.svelte';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
@@ -74,7 +75,9 @@
 		<Breadcrumb.Root>
 			<Breadcrumb.List>
 				<Breadcrumb.Item class="hidden md:block">
-					<Breadcrumb.Link href="#">{board.value.board.key}</Breadcrumb.Link>
+					<Breadcrumb.Link href="#"
+						>{board.value.board.key}</Breadcrumb.Link
+					>
 				</Breadcrumb.Item>
 			</Breadcrumb.List>
 		</Breadcrumb.Root>
@@ -84,7 +87,8 @@
 	<div>
 		Board {board.value.board.id} - {board.value.board.createdAt}
 
-		<Button variant="destructive" onclick={deleteBoard}>Delete board</Button>
+		<Button variant="destructive" onclick={deleteBoard}>Delete board</Button
+		>
 	</div>
 
 	<div class="flex flex-col gap-2">
@@ -94,12 +98,7 @@
 			<Button onclick={addColumn}>Add column</Button>
 		</div>
 		{#each board.value.columns as column}
-			<div>
-				{column.id} - {column.title}
-				<Button onclick={() => deleteColumn(column.id)} variant="ghost" size="icon">
-					<Trash />
-				</Button>
-			</div>
+			<ColumnCard {column} />
 		{/each}
 	</div>
 
@@ -112,11 +111,14 @@
 				<Input bind:value={taskTitle} placeholder="title" />
 				<Select.Root bind:value={taskColumnId} type="single">
 					<Select.Trigger class="w-[180px]">
-						{board.value.columns.find(x => x.id === taskColumnId)?.title}
+						{board.value.columns.find(x => x.id === taskColumnId)
+							?.title}
 					</Select.Trigger>
 					<Select.Content>
 						{#each board.value.columns as column}
-							<Select.Item value={column.id}>{column.title}</Select.Item>
+							<Select.Item value={column.id}
+								>{column.title}</Select.Item
+							>
 						{/each}
 					</Select.Content>
 				</Select.Root>

@@ -104,8 +104,8 @@ export function createReadApi() {
         }),
         getMyBoards: observer({
             req: z.object({}),
-            value: z.array(zBoard()),
-            update: z.array(zBoard()),
+            value: z.array(zBoardDto()),
+            update: z.array(zBoardDto()),
             observe: async st => {
                 const userId = st.ensureAuthenticated();
 
@@ -118,11 +118,7 @@ export function createReadApi() {
                             );
                             return await toStream(members)
                                 .mapParallel(member =>
-                                    tx.boards.getById(member.boardId, true)
-                                )
-                                .assert(
-                                    x => x !== undefined,
-                                    'getMyBoards: board not found'
+                                    toBoardDto(tx, member.boardId)
                                 )
                                 .filter(x => !x.deleted)
                                 .toArray();

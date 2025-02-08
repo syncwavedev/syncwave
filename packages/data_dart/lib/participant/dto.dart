@@ -53,6 +53,8 @@
 //     final setTaskColumnIdRes = setTaskColumnIdResFromJson(jsonString);
 //     final setColumnTitleReq = setColumnTitleReqFromJson(jsonString);
 //     final setColumnTitleRes = setColumnTitleResFromJson(jsonString);
+//     final setBoardNameReq = setBoardNameReqFromJson(jsonString);
+//     final setBoardNameRes = setBoardNameResFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -267,6 +269,14 @@ String setColumnTitleReqToJson(SetColumnTitleReq data) => json.encode(data.toJso
 SetColumnTitleRes setColumnTitleResFromJson(String str) => SetColumnTitleRes.fromJson(json.decode(str));
 
 String setColumnTitleResToJson(SetColumnTitleRes data) => json.encode(data.toJson());
+
+SetBoardNameReq setBoardNameReqFromJson(String str) => SetBoardNameReq.fromJson(json.decode(str));
+
+String setBoardNameReqToJson(SetBoardNameReq data) => json.encode(data.toJson());
+
+SetBoardNameRes setBoardNameResFromJson(String str) => SetBoardNameRes.fromJson(json.decode(str));
+
+String setBoardNameResToJson(SetBoardNameRes data) => json.encode(data.toJson());
 
 class StreamPutReq {
     String topic;
@@ -952,6 +962,7 @@ class GetMyBoardsValue {
     String id;
     String key;
     String name;
+    GetMyBoardsValueOwner owner;
     String ownerId;
     List<String> pk;
     double updatedAt;
@@ -962,6 +973,7 @@ class GetMyBoardsValue {
         required this.id,
         required this.key,
         required this.name,
+        required this.owner,
         required this.ownerId,
         required this.pk,
         required this.updatedAt,
@@ -973,6 +985,7 @@ class GetMyBoardsValue {
         id: json["id"],
         key: json["key"],
         name: json["name"],
+        owner: GetMyBoardsValueOwner.fromJson(json["owner"]),
         ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
@@ -984,7 +997,40 @@ class GetMyBoardsValue {
         "id": id,
         "key": key,
         "name": name,
+        "owner": owner.toJson(),
         "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetMyBoardsValueOwner {
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    double updatedAt;
+
+    GetMyBoardsValueOwner({
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory GetMyBoardsValueOwner.fromJson(Map<String, dynamic> json) => GetMyBoardsValueOwner(
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -996,6 +1042,7 @@ class GetMyBoardsUpdate {
     String id;
     String key;
     String name;
+    GetMyBoardsUpdateOwner owner;
     String ownerId;
     List<String> pk;
     double updatedAt;
@@ -1006,6 +1053,7 @@ class GetMyBoardsUpdate {
         required this.id,
         required this.key,
         required this.name,
+        required this.owner,
         required this.ownerId,
         required this.pk,
         required this.updatedAt,
@@ -1017,6 +1065,7 @@ class GetMyBoardsUpdate {
         id: json["id"],
         key: json["key"],
         name: json["name"],
+        owner: GetMyBoardsUpdateOwner.fromJson(json["owner"]),
         ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
@@ -1028,7 +1077,40 @@ class GetMyBoardsUpdate {
         "id": id,
         "key": key,
         "name": name,
+        "owner": owner.toJson(),
         "ownerId": ownerId,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetMyBoardsUpdateOwner {
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    double updatedAt;
+
+    GetMyBoardsUpdateOwner({
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory GetMyBoardsUpdateOwner.fromJson(Map<String, dynamic> json) => GetMyBoardsUpdateOwner(
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -2730,6 +2812,36 @@ class SetColumnTitleRes {
     SetColumnTitleRes();
 
     factory SetColumnTitleRes.fromJson(Map<String, dynamic> json) => SetColumnTitleRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class SetBoardNameReq {
+    String boardId;
+    String name;
+
+    SetBoardNameReq({
+        required this.boardId,
+        required this.name,
+    });
+
+    factory SetBoardNameReq.fromJson(Map<String, dynamic> json) => SetBoardNameReq(
+        boardId: json["boardId"],
+        name: json["name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "boardId": boardId,
+        "name": name,
+    };
+}
+
+class SetBoardNameRes {
+    SetBoardNameRes();
+
+    factory SetBoardNameRes.fromJson(Map<String, dynamic> json) => SetBoardNameRes(
     );
 
     Map<String, dynamic> toJson() => {

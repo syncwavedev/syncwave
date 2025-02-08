@@ -131,9 +131,13 @@ export class BoardRepo {
         }
     }
 
-    async update(id: BoardId, recipe: Recipe<Board>): Promise<Board> {
+    async update(
+        id: BoardId,
+        recipe: Recipe<Board>,
+        includeDeleted = false
+    ): Promise<Board> {
         try {
-            return await this.rawRepo.update([id], recipe);
+            return await this.rawRepo.update([id], recipe, includeDeleted);
         } catch (err) {
             if (
                 err instanceof UniqueError &&

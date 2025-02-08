@@ -151,6 +151,11 @@ class ParticipantClient {
     return SetColumnTitleRes.fromJson(json as Map<String, dynamic>);
   }
 
+  Future<SetBoardNameRes> setBoardName(SetBoardNameReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setBoardName', request.toJson(), headers);
+    return SetBoardNameRes.fromJson(json as Map<String, dynamic>);
+  }
+
   void close() {
     _rpc.close();
   }

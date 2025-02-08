@@ -3,7 +3,6 @@ import {zBigFloat} from '../../big-float.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
 import {createApi, handler, InferRpcClient} from '../../transport/rpc.js';
-import {whenAll} from '../../utils.js';
 import {zUuid} from '../../uuid.js';
 import {AuthContext} from '../auth-context.js';
 import {DataTx} from '../data-layer.js';
@@ -316,21 +315,23 @@ export function createWriteApi() {
                 return {};
             },
         }),
-        updateBoardName: handler({
+        setBoardName: handler({
             req: z.object({
                 boardId: zUuid<BoardId>(),
                 name: z.string(),
             }),
-            res: zBoard(),
+            res: z.object({}),
             handle: async (st, {boardId, name}) => {
-                const [board] = await whenAll([
-                    st.tx.boards.update(boardId, draft => {
+                await st.ensureBoardWriteAccess(boardId);
+                await st.tx.boards.update(
+                    boardId,
+                    draft => {
                         draft.name = name;
-                    }),
-                    st.ensureBoardWriteAccess(boardId),
-                ]);
+                    },
+                    true
+                );
 
-                return board;
+                return {};
             },
         }),
     });

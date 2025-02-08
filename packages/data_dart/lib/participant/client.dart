@@ -175,6 +175,25 @@ class ParticipantClient {
     );
   }
 
+  Future<CreateMemberRes> createMember(CreateMemberReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('createMember', request.toJson(), headers);
+    return CreateMemberRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<DeleteMemberRes> deleteMember(DeleteMemberReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('deleteMember', request.toJson(), headers);
+    return DeleteMemberRes.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<(GetBoardMembersValue, Stream<GetBoardMembersUpdate>)> getBoardMembers(GetBoardMembersReq request, [MessageHeaders? headers]) async {
+    final (dynamic, Stream<dynamic>) result = await _rpc.observe('getBoardMembers', request.toJson(), headers);
+  
+    return (
+      GetBoardMembersValue.fromJson(result.$1 as Map<String, dynamic>),
+      result.$2.map((json) => GetBoardMembersUpdate.fromJson(json as Map<String, dynamic>))
+    );
+  }
+
   void close() {
     _rpc.close();
   }

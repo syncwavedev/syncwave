@@ -47,9 +47,7 @@ export async function toColumnDto(
 }
 
 export function zBoardDto() {
-    return zBoard().extend({
-        owner: zUserDto(),
-    });
+    return zBoard().extend({});
 }
 
 export type BoardDto = z.infer<ReturnType<typeof zBoardDto>>;
@@ -60,9 +58,8 @@ export async function toBoardDto(
 ): Promise<BoardDto> {
     const board = await tx.boards.getById(boardId, true);
     assert(board !== undefined, `toBoardDto: board not found: ${boardId}`);
-    const owner = await toUserDto(tx, board.ownerId);
 
-    return {...board, owner};
+    return {...board};
 }
 
 export function zMemberDto() {
@@ -84,6 +81,34 @@ export async function toMemberDto(
     const board = await toBoardDto(tx, member.boardId);
 
     return {...member, user, board};
+}
+
+export function zMemberAdminDto() {
+    return zMember().extend({
+        user: zUserDto(),
+        board: zBoardDto(),
+        identity: z.union([zIdentityDto(), z.undefined()]),
+    });
+}
+
+export type MemberAdminDto = z.infer<ReturnType<typeof zMemberAdminDto>>;
+
+export async function toMemberAdminDto(
+    tx: DataTx,
+    memberId: MemberId
+): Promise<MemberAdminDto> {
+    const member = await tx.members.getById(memberId, true);
+    assert(member !== undefined, `toMemberDto: member not found: ${memberId}`);
+    const user = await toUserDto(tx, member.userId);
+    const board = await toBoardDto(tx, member.boardId);
+    const identity = await tx.identities.getByUserId(member.userId);
+
+    return {
+        ...member,
+        user,
+        board,
+        identity: identity ? await toIdentityDto(tx, identity.id) : undefined,
+    };
 }
 
 export function zUserDto() {

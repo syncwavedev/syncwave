@@ -27,8 +27,11 @@ export type ErrorCode =
     | 'column_not_found'
     | 'comment_not_found'
     | 'unknown_processor'
+    | 'member_not_found'
     | 'cancelled'
-    | 'unknown';
+    | 'user_not_found'
+    | 'unknown'
+    | 'member_exists';
 
 export class BusinessError extends AppError {
     constructor(

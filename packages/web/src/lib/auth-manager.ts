@@ -46,7 +46,7 @@ export class AuthManager {
 		}
 
 		return {
-			userId: payload.sub as UserId,
+			userId: payload.uid as UserId,
 		};
 	}
 

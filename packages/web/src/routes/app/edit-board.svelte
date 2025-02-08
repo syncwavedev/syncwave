@@ -1,7 +1,10 @@
 <script lang="ts">
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
-	import type {BoardDto} from 'syncwave-data';
+	import {BusinessError, type BoardDto} from 'syncwave-data';
+	import MemberListLoader from './member-list-loader.svelte';
+	import FormField from '$lib/components/ui/form/form-field.svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
 
 	let {board}: {board: BoardDto} = $props();
 
@@ -20,6 +23,17 @@
 	}
 </script>
 
-Board editor: {board.name}
+<div class="flex flex-col gap-4">
+	<div>
+		<Input
+			bind:value={boardName}
+			onchange={setBoardName}
+			placeholder="Board name"
+		/>
+	</div>
 
-<Input bind:value={boardName} onchange={setBoardName} />
+	<div>
+		Members
+		<MemberListLoader boardId={board.id} />
+	</div>
+</div>

@@ -7,9 +7,11 @@ import {log} from '../logger.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {assert, whenAll} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
+import {AuthContext} from './auth-context.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import {HubClient} from './hub.js';
+import {PermissionService} from './permission-service.js';
 import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
 import {Column, ColumnId, ColumnRepo} from './repos/column-repo.js';
 import {Comment, CommentId, CommentRepo} from './repos/comment-repo.js';
@@ -34,6 +36,7 @@ export interface DataTx {
     readonly tx: Uint8Transaction;
     readonly dataNode: DataNode;
     readonly events: CollectionManager<ChangeEvent>;
+    readonly ps: PermissionService;
     readonly eventStoreId: ReadonlyCell<Uuid>;
     readonly esWriter: EventStoreWriter<ChangeEvent>;
     // effects are not guaranteed to run because process might die after transaction is commited
@@ -98,12 +101,23 @@ export class DataLayer {
         private readonly jwtSecret: string
     ) {
         this.esReader = new EventStoreReader(
-            fn => this.transact(data => fn(data.events, data.eventStoreId)),
+            fn =>
+                this.transact(
+                    {
+                        identityId: undefined,
+                        superadmin: false,
+                        userId: undefined,
+                    },
+                    data => fn(data.events, data.eventStoreId)
+                ),
             hub
         );
     }
 
-    async transact<T>(fn: (tx: DataTx) => Promise<T>): Promise<T> {
+    async transact<T>(
+        auth: AuthContext,
+        fn: (tx: DataTx) => Promise<T>
+    ): Promise<T> {
         let effects: DataEffect[] = [];
         const result = await this.kv.transact(async tx => {
             // clear effect because of transaction retries
@@ -186,6 +200,7 @@ export class DataLayer {
                 esWriter,
                 users,
                 members,
+                ps: new PermissionService(auth, () => dataTx),
                 config: {
                     jwtSecret: this.jwtSecret,
                 },
@@ -282,6 +297,7 @@ async function logMemberChange(
     assert(member !== undefined, `logMemberChange: member ${id} not found`);
     const ts = getNow();
     const event: MemberChangeEvent = {type: 'member', id, diff, ts};
+    log.info(`write to ${userEvents(member.userId)}`);
     await whenAll([
         tx.esWriter.append(boardEvents(member.boardId), event),
         tx.esWriter.append(userEvents(member.userId), event),

@@ -117,6 +117,9 @@ export function createParticipantApi() {
         createComment: proxy('createComment'),
         deleteComment: proxy('deleteComment'),
         getTaskComments: proxy('getTaskComments'),
+        createMember: proxy('createMember'),
+        deleteMember: proxy('deleteMember'),
+        getBoardMembers: proxy('getBoardMembers'),
     });
 }
 

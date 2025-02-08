@@ -13,7 +13,6 @@
 
 	async function createComment(e: SubmitEvent) {
 		e.preventDefault();
-		console.log('hello');
 		text = text.trim();
 		if (text.length === 0) return;
 		await sdk(rpc =>

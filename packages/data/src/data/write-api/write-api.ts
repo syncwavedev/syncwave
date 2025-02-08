@@ -4,37 +4,33 @@ import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
 import {createApi, handler, InferRpcClient} from '../../transport/rpc.js';
 import {zUuid} from '../../uuid.js';
-import {AuthContext} from '../auth-context.js';
 import {DataTx} from '../data-layer.js';
-import {toCommentDto, zCommentDto} from '../dto.js';
+import {
+    toColumnDto,
+    toCommentDto,
+    toMemberDto,
+    zColumnDto,
+    zCommentDto,
+    zMemberDto,
+} from '../dto.js';
+import {PermissionService} from '../permission-service.js';
 import {toPosition} from '../placement.js';
 import {Board, BoardId, zBoard} from '../repos/board-repo.js';
-import {ColumnId, zColumn} from '../repos/column-repo.js';
+import {ColumnId} from '../repos/column-repo.js';
 import {CommentId} from '../repos/comment-repo.js';
-import {createMemberId, Member} from '../repos/member-repo.js';
+import {
+    createMemberId,
+    Member,
+    MemberId,
+    zMemberRole,
+} from '../repos/member-repo.js';
 import {TaskId, zTask} from '../repos/task-repo.js';
-import {UserId} from '../repos/user-repo.js';
 
 export class WriteApiState {
     constructor(
         public tx: DataTx,
-        public readonly auth: AuthContext
+        public readonly ps: PermissionService
     ) {}
-
-    ensureAuthenticated(): UserId {
-        if (this.auth.userId === undefined) {
-            throw new BusinessError(
-                'user is not authenticated',
-                'not_authenticated'
-            );
-        }
-
-        return this.auth.userId;
-    }
-
-    async ensureBoardReadAccess(boardId: BoardId): Promise<Member> {
-        return await this.ensureBoardWriteAccess(boardId);
-    }
 
     async getBoardRequired(boardId: BoardId): Promise<Board> {
         const board = await this.tx.boards.getById(boardId);
@@ -46,69 +42,6 @@ export class WriteApiState {
         }
 
         return board;
-    }
-
-    async ensureBoardOwner(boardId: BoardId): Promise<void> {
-        const userId = this.ensureAuthenticated();
-        const board = await this.getBoardRequired(boardId);
-        if (board.ownerId !== userId) {
-            throw new BusinessError(
-                `user ${this.auth.userId} is not the owner of board ${boardId}`,
-                'forbidden'
-            );
-        }
-    }
-
-    async ensureBoardWriteAccess(boardId: BoardId): Promise<Member> {
-        const meId = this.ensureAuthenticated();
-        const member = await this.tx.members.getByUserIdAndBoardId(
-            meId,
-            boardId
-        );
-        if (!member) {
-            throw new BusinessError(
-                `user ${meId} does not have access to board ${boardId}`,
-                'forbidden'
-            );
-        }
-
-        return member;
-    }
-
-    async ensureColumnWriteAccess(columnId: ColumnId): Promise<Member> {
-        const column = await this.tx.columns.getById(columnId, true);
-
-        if (!column) {
-            throw new BusinessError(
-                `column ${columnId} doesn't exist`,
-                'column_not_found'
-            );
-        }
-        return await this.ensureBoardWriteAccess(column.boardId);
-    }
-
-    async ensureTaskWriteAccess(taskId: TaskId): Promise<Member> {
-        const task = await this.tx.tasks.getById(taskId, true);
-
-        if (!task) {
-            throw new BusinessError(
-                `task ${taskId} doesn't exist`,
-                'task_not_found'
-            );
-        }
-        return await this.ensureBoardWriteAccess(task.boardId);
-    }
-
-    async ensureCommentWriteAccess(commentId: CommentId): Promise<Member> {
-        const comment = await this.tx.comments.getById(commentId, true);
-
-        if (!comment) {
-            throw new BusinessError(
-                `comment ${commentId} doesn't exist`,
-                'comment_not_found'
-            );
-        }
-        return await this.ensureTaskWriteAccess(comment.taskId);
     }
 }
 
@@ -144,12 +77,12 @@ export function createWriteApi() {
                 st,
                 {boardId, taskId, title, placement, columnId}
             ) => {
-                const meId = st.ensureAuthenticated();
-                await st.ensureBoardWriteAccess(boardId);
+                const meId = st.ps.ensureAuthenticated();
+                await st.ps.ensureBoardMember(boardId, 'writer');
                 const now = getNow();
 
                 if (columnId) {
-                    await st.ensureColumnWriteAccess(columnId);
+                    await st.ps.ensureColumnMember(columnId, 'writer');
                 }
 
                 const counter =
@@ -169,19 +102,101 @@ export function createWriteApi() {
                 });
             },
         }),
+        createMember: handler({
+            req: z.object({
+                boardId: zUuid<BoardId>(),
+                email: z.string(),
+                role: zMemberRole(),
+            }),
+            res: zMemberDto(),
+            handle: async (st, {boardId, email, role}) => {
+                await st.ps.ensureCanManage(boardId, role);
+
+                const identity = await st.tx.identities.getByEmail(email);
+
+                if (!identity) {
+                    throw new BusinessError(
+                        `user with email ${email} not found`,
+                        'user_not_found'
+                    );
+                }
+
+                const now = getNow();
+
+                const existingMember =
+                    await st.tx.members.getByUserIdAndBoardId(
+                        identity.userId,
+                        boardId,
+                        true
+                    );
+
+                let member: Member;
+                if (existingMember?.deleted) {
+                    await st.ps.ensureCanManage(
+                        existingMember.boardId,
+                        existingMember.role
+                    );
+                    member = await st.tx.members.update(
+                        existingMember.id,
+                        x => {
+                            x.deleted = false;
+                            x.role = role;
+                        },
+                        true
+                    );
+                } else {
+                    member = await st.tx.members.create({
+                        id: createMemberId(),
+                        boardId,
+                        userId: identity.userId,
+                        createdAt: now,
+                        updatedAt: now,
+                        deleted: false,
+                        role,
+                    });
+                }
+
+                return await toMemberDto(st.tx, member.id);
+            },
+        }),
+        deleteMember: handler({
+            req: z.object({memberId: zUuid<MemberId>()}),
+            res: z.object({}),
+            handle: async (st, {memberId}) => {
+                const member = await st.tx.members.getById(memberId, true);
+
+                if (!member) {
+                    throw new BusinessError(
+                        `member ${memberId} not found`,
+                        'member_not_found'
+                    );
+                }
+
+                await st.ps.ensureCanManage(member.boardId, member.role);
+                await st.tx.members.update(
+                    memberId,
+                    x => {
+                        x.deleted = true;
+                    },
+                    true
+                );
+
+                return {};
+            },
+        }),
         createColumn: handler({
             req: z.object({
                 columnId: zUuid<ColumnId>(),
                 boardId: zUuid<BoardId>(),
                 title: z.string(),
             }),
-            res: zColumn(),
+            res: zColumnDto(),
             handle: async (st, {boardId, columnId, title}) => {
-                const meId = st.ensureAuthenticated();
-                await st.ensureBoardWriteAccess(boardId);
+                const meId = st.ps.ensureAuthenticated();
+                await st.ps.ensureBoardMember(boardId, 'writer');
                 const now = getNow();
 
-                return await st.tx.columns.create({
+                const column = await st.tx.columns.create({
                     id: columnId,
                     authorId: meId,
                     boardId: boardId,
@@ -190,13 +205,15 @@ export function createWriteApi() {
                     deleted: false,
                     title: title,
                 });
+
+                return await toColumnDto(st.tx, column.id);
             },
         }),
         deleteColumn: handler({
             req: z.object({columnId: zUuid<ColumnId>()}),
             res: z.object({}),
             handle: async (st, {columnId}) => {
-                await st.ensureColumnWriteAccess(columnId);
+                await st.ps.ensureColumnMember(columnId, 'writer');
                 await st.tx.columns.update(
                     columnId,
                     x => {
@@ -212,7 +229,7 @@ export function createWriteApi() {
             req: z.object({taskId: zUuid<TaskId>()}),
             res: z.object({}),
             handle: async (st, {taskId}) => {
-                await st.ensureTaskWriteAccess(taskId);
+                await st.ps.ensureTaskMember(taskId, 'writer');
                 await st.tx.tasks.update(
                     taskId,
                     x => {
@@ -231,7 +248,7 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {taskId, title}) => {
-                await st.ensureTaskWriteAccess(taskId);
+                await st.ps.ensureTaskMember(taskId, 'writer');
                 await st.tx.tasks.update(
                     taskId,
                     x => {
@@ -250,10 +267,10 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {taskId, columnId}) => {
-                await st.ensureTaskWriteAccess(taskId);
+                await st.ps.ensureTaskMember(taskId, 'writer');
 
                 if (columnId) {
-                    await st.ensureColumnWriteAccess(columnId);
+                    await st.ps.ensureColumnMember(columnId, 'writer');
                 }
                 await st.tx.tasks.update(
                     taskId,
@@ -273,7 +290,7 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {columnId, title}) => {
-                await st.ensureColumnWriteAccess(columnId);
+                await st.ps.ensureColumnMember(columnId, 'writer');
                 await st.tx.columns.update(
                     columnId,
                     x => {
@@ -295,7 +312,7 @@ export function createWriteApi() {
             handle: async (st, req) => {
                 const now = getNow();
 
-                const userId = st.ensureAuthenticated();
+                const userId = st.ps.ensureAuthenticated();
 
                 const board = await st.tx.boards.create({
                     id: req.boardId,
@@ -303,7 +320,7 @@ export function createWriteApi() {
                     updatedAt: now,
                     deleted: false,
                     name: req.name,
-                    ownerId: userId,
+                    authorId: userId,
                     key: req.key.toUpperCase(),
                 });
                 await st.tx.members.create({
@@ -313,6 +330,7 @@ export function createWriteApi() {
                     updatedAt: now,
                     userId: userId,
                     deleted: false,
+                    role: 'owner',
                 });
 
                 return board;
@@ -322,7 +340,7 @@ export function createWriteApi() {
             req: z.object({boardId: zUuid<BoardId>()}),
             res: z.object({}),
             handle: async (st, {boardId}) => {
-                await st.ensureBoardOwner(boardId);
+                await st.ps.ensureBoardMember(boardId, 'owner');
                 await st.tx.boards.update(boardId, x => {
                     x.deleted = true;
                 });
@@ -336,7 +354,7 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {boardId, name}) => {
-                await st.ensureBoardWriteAccess(boardId);
+                await st.ps.ensureBoardMember(boardId, 'admin');
                 await st.tx.boards.update(
                     boardId,
                     draft => {
@@ -357,11 +375,11 @@ export function createWriteApi() {
             res: zCommentDto(),
             handle: async (st, {taskId, text, commentId}) => {
                 const now = getNow();
-                await st.ensureTaskWriteAccess(taskId);
+                await st.ps.ensureTaskMember(taskId, 'writer');
                 await st.tx.comments.create({
                     taskId,
                     text,
-                    authorId: st.ensureAuthenticated(),
+                    authorId: st.ps.ensureAuthenticated(),
                     deleted: false,
                     id: commentId,
                     createdAt: now,
@@ -375,7 +393,7 @@ export function createWriteApi() {
             req: z.object({commentId: zUuid<CommentId>()}),
             res: z.object({}),
             handle: async (st, {commentId}) => {
-                await st.ensureCommentWriteAccess(commentId);
+                await st.ps.ensureCommentMember(commentId, 'writer');
                 await st.tx.comments.update(
                     commentId,
                     x => {

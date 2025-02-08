@@ -20,8 +20,8 @@ export function createBoardId(): BoardId {
 export interface Board extends Doc<[BoardId]> {
     readonly key: string;
     readonly id: BoardId;
+    readonly authorId: UserId;
     name: string;
-    ownerId: UserId;
 }
 
 const BOARD_KEY_INDEX = 'key';
@@ -31,7 +31,7 @@ export function zBoard() {
         id: zUuid<BoardId>(),
         key: z.string(),
         name: z.string(),
-        ownerId: zUuid<UserId>(),
+        authorId: zUuid<UserId>(),
         deleted: z.boolean(),
     });
 }
@@ -61,11 +61,11 @@ export class BoardRepo {
                     name: 'board.ownerId fk',
                     verify: async board => {
                         const user = await dataTx().users.getById(
-                            board.ownerId,
+                            board.authorId,
                             true
                         );
                         if (user === undefined) {
-                            return `user with id ${board.ownerId} does not exist`;
+                            return `user with id ${board.authorId} does not exist`;
                         }
 
                         return;
@@ -74,7 +74,7 @@ export class BoardRepo {
             ],
             readonly: {
                 name: false,
-                ownerId: false,
+                authorId: true,
                 id: true,
                 key: true,
             },

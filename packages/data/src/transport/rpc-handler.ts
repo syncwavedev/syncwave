@@ -74,7 +74,10 @@ export function launchRpcHandlerServer<T>(
                             })
                         );
                     } catch (error) {
-                        reportRpcError(error, 'rpc handler');
+                        reportRpcError(
+                            error,
+                            `${msg.payload.name}(${JSON.stringify(msg.payload.arg)})`
+                        );
                         await catchConnectionClosed(
                             conn.send({
                                 id: createMessageId(),

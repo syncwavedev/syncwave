@@ -1,5 +1,7 @@
 import {z} from 'zod';
 import {CrdtDiff} from '../../crdt/crdt.js';
+import {BusinessError} from '../../errors.js';
+import {UniqueError} from '../../kv/data-index.js';
 import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {Brand} from '../../utils.js';
@@ -14,10 +16,31 @@ export function createMemberId(): MemberId {
     return createUuid() as MemberId;
 }
 
+export type MemberRole = 'owner' | 'admin' | 'writer' | 'reader';
+
+export function zMemberRole() {
+    return z.union([
+        z.literal('owner'),
+        z.literal('admin'),
+        z.literal('writer'),
+        z.literal('reader'),
+    ]);
+}
+
+export const ROLE_ORDER: Record<MemberRole, number> = {
+    owner: 40,
+    admin: 30,
+    writer: 20,
+    reader: 10,
+};
+
+export const MEMBER_ROLES = Object.keys(ROLE_ORDER) as MemberRole[];
+
 export interface Member extends Doc<[MemberId]> {
     readonly id: MemberId;
     readonly userId: UserId;
     readonly boardId: BoardId;
+    role: MemberRole;
 }
 
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
@@ -28,6 +51,7 @@ export function zMember() {
         id: zUuid<MemberId>(),
         userId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
+        role: zMemberRole(),
     });
 }
 
@@ -80,15 +104,16 @@ export class MemberRepo {
                 boardId: true,
                 id: true,
                 userId: true,
+                role: false,
             },
         });
     }
 
-    getById(
+    async getById(
         id: MemberId,
         includeDeleted: boolean
     ): Promise<Member | undefined> {
-        return this.rawRepo.getById([id], includeDeleted);
+        return await this.rawRepo.getById([id], includeDeleted);
     }
 
     getByUserId(userId: UserId, includeDeleted: boolean): Stream<Member> {
@@ -105,12 +130,14 @@ export class MemberRepo {
 
     async getByUserIdAndBoardId(
         userId: UserId,
-        boardId: BoardId
+        boardId: BoardId,
+        includeDeleted = false
     ): Promise<Member | undefined> {
-        const result = await this.rawRepo.getUnique(USER_ID_BOARD_ID_INDEX, [
-            userId,
-            boardId,
-        ]);
+        const result = await this.rawRepo.getUnique(
+            USER_ID_BOARD_ID_INDEX,
+            [userId, boardId],
+            includeDeleted
+        );
 
         if (!result) {
             return undefined;
@@ -123,11 +150,29 @@ export class MemberRepo {
         return await this.rawRepo.apply([id], diff);
     }
 
-    create(member: Omit<Member, 'pk'>): Promise<Member> {
-        return this.rawRepo.create({pk: [member.id], ...member});
+    async create(member: Omit<Member, 'pk'>): Promise<Member> {
+        try {
+            return await this.rawRepo.create({pk: [member.id], ...member});
+        } catch (error) {
+            if (
+                error instanceof UniqueError &&
+                error.indexName === USER_ID_BOARD_ID_INDEX
+            ) {
+                throw new BusinessError(
+                    `member with userId ${member.userId} and boardId ${member.boardId} already exists`,
+                    'member_exists'
+                );
+            }
+
+            throw error;
+        }
     }
 
-    update(id: MemberId, recipe: Recipe<Member>): Promise<Member> {
-        return this.rawRepo.update([id], recipe);
+    async update(
+        id: MemberId,
+        recipe: Recipe<Member>,
+        includeDeleted = false
+    ): Promise<Member> {
+        return await this.rawRepo.update([id], recipe, includeDeleted);
     }
 }

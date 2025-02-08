@@ -44,7 +44,7 @@ export function createCoordinatorApi() {
         createWriteApi(),
         async (next, state: CoordinatorApiState) => {
             await state.transact(async tx => {
-                await next(new WriteApiState(tx, state.auth));
+                await next(new WriteApiState(tx, tx.ps));
             });
         }
     );
@@ -139,7 +139,7 @@ export function createCoordinatorApi() {
                 headers.auth
             );
             const state: CoordinatorApiState = {
-                transact: dataLayer.transact.bind(dataLayer),
+                transact: fn => dataLayer.transact(auth, fn),
                 auth,
                 jwt,
                 crypto,

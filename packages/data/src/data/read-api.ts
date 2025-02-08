@@ -6,28 +6,23 @@ import {createApi, InferRpcClient, observer} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
 import {zUuid} from '../uuid.js';
 import {AuthContext} from './auth-context.js';
-import {
-    boardEvents,
-    ChangeEvent,
-    DataTx,
-    Transact,
-    userEvents,
-} from './data-layer.js';
+import {boardEvents, ChangeEvent, Transact, userEvents} from './data-layer.js';
 import {
     toBoardDto,
     toColumnDto,
     toCommentDto,
+    toMemberAdminDto,
     toTaskDto,
     zBoardDto,
     zColumnDto,
     zCommentDto,
+    zMemberAdminDto,
     zTaskDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {BoardId, zBoard} from './repos/board-repo.js';
 import {zIdentity} from './repos/identity-repo.js';
-import {Member} from './repos/member-repo.js';
-import {Task, TaskId, zTask} from './repos/task-repo.js';
+import {TaskId, zTask} from './repos/task-repo.js';
 import {UserId, zUser} from './repos/user-repo.js';
 
 export class ReadApiState {
@@ -46,38 +41,6 @@ export class ReadApiState {
         }
 
         return this.auth.userId;
-    }
-
-    async ensureBoardReadAccess(tx: DataTx, boardId: BoardId): Promise<Member> {
-        return await this.ensureBoardWriteAccess(tx, boardId);
-    }
-
-    async ensureTaskReadAccess(tx: DataTx, taskId: TaskId): Promise<Task> {
-        const task = await tx.tasks.getById(taskId, true);
-        if (!task) {
-            throw new BusinessError(
-                `task with id ${taskId} not found`,
-                'task_not_found'
-            );
-        }
-
-        return task;
-    }
-
-    async ensureBoardWriteAccess(
-        tx: DataTx,
-        boardId: BoardId
-    ): Promise<Member> {
-        const meId = this.ensureAuthenticated();
-        const member = await tx.members.getByUserIdAndBoardId(meId, boardId);
-        if (!member) {
-            throw new BusinessError(
-                `user ${meId} does not have access to board ${boardId}`,
-                'forbidden'
-            );
-        }
-
-        return member;
     }
 }
 
@@ -123,6 +86,8 @@ export function createReadApi() {
             observe: async st => {
                 const userId = st.ensureAuthenticated();
 
+                log.info(`read from ${userEvents(userId)}`);
+
                 return observable({
                     async get() {
                         return st.transact(async tx => {
@@ -159,7 +124,7 @@ export function createReadApi() {
                         return await st.transact(async tx => {
                             const [tasks] = await whenAll([
                                 tx.tasks.getByBoardId(boardId).toArray(),
-                                st.ensureBoardReadAccess(tx, boardId),
+                                tx.ps.ensureBoardMember(boardId, 'reader'),
                             ]);
 
                             return tasks;
@@ -192,7 +157,10 @@ export function createReadApi() {
                             if (!task) {
                                 return undefined;
                             }
-                            await st.ensureBoardReadAccess(tx, task.boardId);
+                            await tx.ps.ensureBoardMember(
+                                task.boardId,
+                                'reader'
+                            );
 
                             return task;
                         });
@@ -209,12 +177,12 @@ export function createReadApi() {
             update: z.array(zCommentDto()),
             observe: async (st, {taskId}) => {
                 const task = await st.transact(tx =>
-                    st.ensureTaskReadAccess(tx, taskId)
+                    tx.ps.ensureTaskMember(taskId, 'reader')
                 );
                 return observable({
                     get() {
                         return st.transact(async tx => {
-                            await st.ensureTaskReadAccess(tx, taskId);
+                            await tx.ps.ensureTaskMember(taskId, 'reader');
                             return tx.comments
                                 .getByTaskId(taskId)
                                 .mapParallel(x => toCommentDto(tx, x.id))
@@ -223,6 +191,27 @@ export function createReadApi() {
                     },
                     update$: st.esReader
                         .subscribe(boardEvents(task.boardId))
+                        .then(x => x.map(() => undefined)),
+                });
+            },
+        }),
+        getBoardMembers: observer({
+            req: z.object({boardId: zUuid<BoardId>()}),
+            value: z.array(zMemberAdminDto()),
+            update: z.array(zMemberAdminDto()),
+            observe: async (st, {boardId}) => {
+                return observable({
+                    get() {
+                        return st.transact(async tx => {
+                            await tx.ps.ensureBoardMember(boardId, 'admin');
+                            return tx.members
+                                .getByBoardId(boardId)
+                                .mapParallel(x => toMemberAdminDto(tx, x.id))
+                                .toArray();
+                        });
+                    },
+                    update$: st.esReader
+                        .subscribe(boardEvents(boardId))
                         .then(x => x.map(() => undefined)),
                 });
             },
@@ -247,7 +236,7 @@ export function createReadApi() {
                         return await st.transact(async tx => {
                             const [board] = await whenAll([
                                 tx.boards.getById(boardId, true),
-                                st.ensureBoardReadAccess(tx, boardId),
+                                tx.ps.ensureBoardMember(boardId, 'reader'),
                             ]);
                             if (board === undefined) {
                                 throw new BusinessError(
@@ -295,7 +284,7 @@ export function createReadApi() {
                         return await st.transact(async tx => {
                             const [board] = await whenAll([
                                 tx.boards.getById(boardId, true),
-                                st.ensureBoardReadAccess(tx, boardId),
+                                tx.ps.ensureBoardMember(boardId, 'reader'),
                             ]);
                             if (board === undefined) {
                                 throw new BusinessError(

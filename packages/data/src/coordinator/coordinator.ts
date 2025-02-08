@@ -79,16 +79,19 @@ export class CoordinatorServer {
     }
 
     async issueJwtByUserEmail(email: string): Promise<string> {
-        return await this.dataLayer.transact(async dataCx => {
-            const identity = await getIdentity(
-                dataCx.identities,
-                dataCx.users,
-                email,
-                this.crypto
-            );
+        return await this.dataLayer.transact(
+            {identityId: undefined, superadmin: false, userId: undefined},
+            async dataCx => {
+                const identity = await getIdentity(
+                    dataCx.identities,
+                    dataCx.users,
+                    email,
+                    this.crypto
+                );
 
-            return signJwtToken(this.jwt, identity, this.jwtSecret);
-        });
+                return signJwtToken(this.jwt, identity, this.jwtSecret);
+            }
+        );
     }
 }
 

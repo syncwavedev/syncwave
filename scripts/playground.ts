@@ -38,7 +38,6 @@ function _catch<T, R>(
                             return res;
                         })
                         .catch(async error => {
-                            log.info('hello');
                             return {
                                 done: false,
                                 value: await map(error),

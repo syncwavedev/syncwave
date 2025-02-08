@@ -62,6 +62,13 @@
 //     final getTaskCommentsReq = getTaskCommentsReqFromJson(jsonString);
 //     final getTaskCommentsValue = getTaskCommentsValueFromJson(jsonString);
 //     final getTaskCommentsUpdate = getTaskCommentsUpdateFromJson(jsonString);
+//     final createMemberReq = createMemberReqFromJson(jsonString);
+//     final createMemberRes = createMemberResFromJson(jsonString);
+//     final deleteMemberReq = deleteMemberReqFromJson(jsonString);
+//     final deleteMemberRes = deleteMemberResFromJson(jsonString);
+//     final getBoardMembersReq = getBoardMembersReqFromJson(jsonString);
+//     final getBoardMembersValue = getBoardMembersValueFromJson(jsonString);
+//     final getBoardMembersUpdate = getBoardMembersUpdateFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -312,6 +319,34 @@ String getTaskCommentsValueToJson(List<GetTaskCommentsValue> data) => json.encod
 List<GetTaskCommentsUpdate> getTaskCommentsUpdateFromJson(String str) => List<GetTaskCommentsUpdate>.from(json.decode(str).map((x) => GetTaskCommentsUpdate.fromJson(x)));
 
 String getTaskCommentsUpdateToJson(List<GetTaskCommentsUpdate> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+
+CreateMemberReq createMemberReqFromJson(String str) => CreateMemberReq.fromJson(json.decode(str));
+
+String createMemberReqToJson(CreateMemberReq data) => json.encode(data.toJson());
+
+CreateMemberRes createMemberResFromJson(String str) => CreateMemberRes.fromJson(json.decode(str));
+
+String createMemberResToJson(CreateMemberRes data) => json.encode(data.toJson());
+
+DeleteMemberReq deleteMemberReqFromJson(String str) => DeleteMemberReq.fromJson(json.decode(str));
+
+String deleteMemberReqToJson(DeleteMemberReq data) => json.encode(data.toJson());
+
+DeleteMemberRes deleteMemberResFromJson(String str) => DeleteMemberRes.fromJson(json.decode(str));
+
+String deleteMemberResToJson(DeleteMemberRes data) => json.encode(data.toJson());
+
+GetBoardMembersReq getBoardMembersReqFromJson(String str) => GetBoardMembersReq.fromJson(json.decode(str));
+
+String getBoardMembersReqToJson(GetBoardMembersReq data) => json.encode(data.toJson());
+
+List<GetBoardMembersValue> getBoardMembersValueFromJson(String str) => List<GetBoardMembersValue>.from(json.decode(str).map((x) => GetBoardMembersValue.fromJson(x)));
+
+String getBoardMembersValueToJson(List<GetBoardMembersValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+
+List<GetBoardMembersUpdate> getBoardMembersUpdateFromJson(String str) => List<GetBoardMembersUpdate>.from(json.decode(str).map((x) => GetBoardMembersUpdate.fromJson(x)));
+
+String getBoardMembersUpdateToJson(List<GetBoardMembersUpdate> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class StreamPutReq {
     String topic;
@@ -724,44 +759,44 @@ class CreateBoardReq {
 }
 
 class CreateBoardRes {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     CreateBoardRes({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory CreateBoardRes.fromJson(Map<String, dynamic> json) => CreateBoardRes(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "ownerId": ownerId,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -992,160 +1027,88 @@ class GetMyBoardsReq {
 }
 
 class GetMyBoardsValue {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    GetMyBoardsValueOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     GetMyBoardsValue({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory GetMyBoardsValue.fromJson(Map<String, dynamic> json) => GetMyBoardsValue(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: GetMyBoardsValueOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class GetMyBoardsValueOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    GetMyBoardsValueOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory GetMyBoardsValueOwner.fromJson(Map<String, dynamic> json) => GetMyBoardsValueOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
 
 class GetMyBoardsUpdate {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    GetMyBoardsUpdateOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     GetMyBoardsUpdate({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory GetMyBoardsUpdate.fromJson(Map<String, dynamic> json) => GetMyBoardsUpdate(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: GetMyBoardsUpdateOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class GetMyBoardsUpdateOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    GetMyBoardsUpdateOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory GetMyBoardsUpdateOwner.fromJson(Map<String, dynamic> json) => GetMyBoardsUpdateOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -1256,88 +1219,88 @@ class GetBoardReq {
 }
 
 class GetBoardValue {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     GetBoardValue({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory GetBoardValue.fromJson(Map<String, dynamic> json) => GetBoardValue(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "ownerId": ownerId,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
 
 class GetBoardUpdate {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     GetBoardUpdate({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory GetBoardUpdate.fromJson(Map<String, dynamic> json) => GetBoardUpdate(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "ownerId": ownerId,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -1369,6 +1332,7 @@ class CreateColumnReq {
 
 class CreateColumnRes {
     String authorId;
+    CreateColumnResBoard board;
     String boardId;
     double createdAt;
     bool deleted;
@@ -1379,6 +1343,7 @@ class CreateColumnRes {
 
     CreateColumnRes({
         required this.authorId,
+        required this.board,
         required this.boardId,
         required this.createdAt,
         required this.deleted,
@@ -1390,6 +1355,7 @@ class CreateColumnRes {
 
     factory CreateColumnRes.fromJson(Map<String, dynamic> json) => CreateColumnRes(
         authorId: json["authorId"],
+        board: CreateColumnResBoard.fromJson(json["board"]),
         boardId: json["boardId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1401,12 +1367,57 @@ class CreateColumnRes {
 
     Map<String, dynamic> toJson() => {
         "authorId": authorId,
+        "board": board.toJson(),
         "boardId": boardId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class CreateColumnResBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    double updatedAt;
+
+    CreateColumnResBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory CreateColumnResBoard.fromJson(Map<String, dynamic> json) => CreateColumnResBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
 }
@@ -1662,80 +1673,44 @@ class GetBoardViewValue {
 }
 
 class GetBoardViewValueBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    PurpleOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     GetBoardViewValueBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory GetBoardViewValueBoard.fromJson(Map<String, dynamic> json) => GetBoardViewValueBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: PurpleOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class PurpleOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    PurpleOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory PurpleOwner.fromJson(Map<String, dynamic> json) => PurpleOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -1790,80 +1765,44 @@ class GetBoardViewValueColumn {
 }
 
 class PurpleBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    FluffyOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     PurpleBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory PurpleBoard.fromJson(Map<String, dynamic> json) => PurpleBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: FluffyOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class FluffyOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    FluffyOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory FluffyOwner.fromJson(Map<String, dynamic> json) => FluffyOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -1934,80 +1873,44 @@ class GetBoardViewValueTask {
 }
 
 class FluffyBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    TentacledOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     FluffyBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory FluffyBoard.fromJson(Map<String, dynamic> json) => FluffyBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: TentacledOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class TentacledOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    TentacledOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory TentacledOwner.fromJson(Map<String, dynamic> json) => TentacledOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -2062,80 +1965,44 @@ class PurpleColumn {
 }
 
 class TentacledBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    StickyOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     TentacledBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory TentacledBoard.fromJson(Map<String, dynamic> json) => TentacledBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: StickyOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class StickyOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    StickyOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory StickyOwner.fromJson(Map<String, dynamic> json) => StickyOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -2186,80 +2053,44 @@ class GetBoardViewUpdate {
 }
 
 class GetBoardViewUpdateBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    IndigoOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     GetBoardViewUpdateBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory GetBoardViewUpdateBoard.fromJson(Map<String, dynamic> json) => GetBoardViewUpdateBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: IndigoOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class IndigoOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    IndigoOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory IndigoOwner.fromJson(Map<String, dynamic> json) => IndigoOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -2314,80 +2145,44 @@ class GetBoardViewUpdateColumn {
 }
 
 class StickyBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    IndecentOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     StickyBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory StickyBoard.fromJson(Map<String, dynamic> json) => StickyBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: IndecentOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class IndecentOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    IndecentOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory IndecentOwner.fromJson(Map<String, dynamic> json) => IndecentOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -2458,80 +2253,44 @@ class GetBoardViewUpdateTask {
 }
 
 class IndigoBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    HilariousOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     IndigoBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory IndigoBoard.fromJson(Map<String, dynamic> json) => IndigoBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: HilariousOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class HilariousOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    HilariousOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory HilariousOwner.fromJson(Map<String, dynamic> json) => HilariousOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -2586,80 +2345,44 @@ class FluffyColumn {
 }
 
 class IndecentBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    AmbitiousOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     IndecentBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory IndecentBoard.fromJson(Map<String, dynamic> json) => IndecentBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: AmbitiousOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class AmbitiousOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    AmbitiousOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory AmbitiousOwner.fromJson(Map<String, dynamic> json) => AmbitiousOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -3056,80 +2779,44 @@ class CreateCommentResTask {
 }
 
 class HilariousBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    CunningOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     HilariousBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory HilariousBoard.fromJson(Map<String, dynamic> json) => HilariousBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: CunningOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class CunningOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    CunningOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory CunningOwner.fromJson(Map<String, dynamic> json) => CunningOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -3184,80 +2871,44 @@ class TentacledColumn {
 }
 
 class AmbitiousBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    MagentaOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     AmbitiousBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory AmbitiousBoard.fromJson(Map<String, dynamic> json) => AmbitiousBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: MagentaOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class MagentaOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    MagentaOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory MagentaOwner.fromJson(Map<String, dynamic> json) => MagentaOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -3474,80 +3125,44 @@ class GetTaskCommentsValueTask {
 }
 
 class CunningBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    FriskyOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     CunningBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory CunningBoard.fromJson(Map<String, dynamic> json) => CunningBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: FriskyOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class FriskyOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    FriskyOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory FriskyOwner.fromJson(Map<String, dynamic> json) => FriskyOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -3602,80 +3217,44 @@ class StickyColumn {
 }
 
 class MagentaBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    MischievousOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     MagentaBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory MagentaBoard.fromJson(Map<String, dynamic> json) => MagentaBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: MischievousOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class MischievousOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    MischievousOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory MischievousOwner.fromJson(Map<String, dynamic> json) => MischievousOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -3850,80 +3429,44 @@ class GetTaskCommentsUpdateTask {
 }
 
 class FriskyBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    BraggadociousOwner owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     FriskyBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory FriskyBoard.fromJson(Map<String, dynamic> json) => FriskyBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: BraggadociousOwner.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class BraggadociousOwner {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    BraggadociousOwner({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory BraggadociousOwner.fromJson(Map<String, dynamic> json) => BraggadociousOwner(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -3978,80 +3521,44 @@ class IndigoColumn {
 }
 
 class MischievousBoard {
+    String authorId;
     double createdAt;
     bool deleted;
     String id;
     String key;
     String name;
-    Owner1 owner;
-    String ownerId;
     List<String> pk;
     double updatedAt;
 
     MischievousBoard({
+        required this.authorId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.key,
         required this.name,
-        required this.owner,
-        required this.ownerId,
         required this.pk,
         required this.updatedAt,
     });
 
     factory MischievousBoard.fromJson(Map<String, dynamic> json) => MischievousBoard(
+        authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         key: json["key"],
         name: json["name"],
-        owner: Owner1.fromJson(json["owner"]),
-        ownerId: json["ownerId"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
+        "authorId": authorId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "key": key,
         "name": name,
-        "owner": owner.toJson(),
-        "ownerId": ownerId,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class Owner1 {
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    double updatedAt;
-
-    Owner1({
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory Owner1.fromJson(Map<String, dynamic> json) => Owner1(
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
     };
@@ -4074,6 +3581,478 @@ class IndigoColumnPosition {
     Map<String, dynamic> toJson() => {
         "denominator": denominator,
         "numerator": numerator,
+    };
+}
+
+class CreateMemberReq {
+    String boardId;
+    String email;
+    Role role;
+
+    CreateMemberReq({
+        required this.boardId,
+        required this.email,
+        required this.role,
+    });
+
+    factory CreateMemberReq.fromJson(Map<String, dynamic> json) => CreateMemberReq(
+        boardId: json["boardId"],
+        email: json["email"],
+        role: roleValues.map[json["role"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "boardId": boardId,
+        "email": email,
+        "role": roleValues.reverse[role],
+    };
+}
+
+enum Role {
+    ADMIN,
+    OWNER,
+    READER,
+    WRITER
+}
+
+final roleValues = EnumValues({
+    "admin": Role.ADMIN,
+    "owner": Role.OWNER,
+    "reader": Role.READER,
+    "writer": Role.WRITER
+});
+
+class CreateMemberRes {
+    CreateMemberResBoard board;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    Role role;
+    double updatedAt;
+    CreateMemberResUser user;
+    String userId;
+
+    CreateMemberRes({
+        required this.board,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.role,
+        required this.updatedAt,
+        required this.user,
+        required this.userId,
+    });
+
+    factory CreateMemberRes.fromJson(Map<String, dynamic> json) => CreateMemberRes(
+        board: CreateMemberResBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        role: roleValues.map[json["role"]]!,
+        updatedAt: json["updatedAt"]?.toDouble(),
+        user: CreateMemberResUser.fromJson(json["user"]),
+        userId: json["userId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "board": board.toJson(),
+        "boardId": boardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "role": roleValues.reverse[role],
+        "updatedAt": updatedAt,
+        "user": user.toJson(),
+        "userId": userId,
+    };
+}
+
+class CreateMemberResBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    double updatedAt;
+
+    CreateMemberResBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory CreateMemberResBoard.fromJson(Map<String, dynamic> json) => CreateMemberResBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class CreateMemberResUser {
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    double updatedAt;
+
+    CreateMemberResUser({
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory CreateMemberResUser.fromJson(Map<String, dynamic> json) => CreateMemberResUser(
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class DeleteMemberReq {
+    String memberId;
+
+    DeleteMemberReq({
+        required this.memberId,
+    });
+
+    factory DeleteMemberReq.fromJson(Map<String, dynamic> json) => DeleteMemberReq(
+        memberId: json["memberId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "memberId": memberId,
+    };
+}
+
+class DeleteMemberRes {
+    DeleteMemberRes();
+
+    factory DeleteMemberRes.fromJson(Map<String, dynamic> json) => DeleteMemberRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class GetBoardMembersReq {
+    String boardId;
+
+    GetBoardMembersReq({
+        required this.boardId,
+    });
+
+    factory GetBoardMembersReq.fromJson(Map<String, dynamic> json) => GetBoardMembersReq(
+        boardId: json["boardId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "boardId": boardId,
+    };
+}
+
+class GetBoardMembersValue {
+    GetBoardMembersValueBoard board;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    dynamic identity;
+    List<String> pk;
+    Role role;
+    double updatedAt;
+    GetBoardMembersValueUser user;
+    String userId;
+
+    GetBoardMembersValue({
+        required this.board,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        this.identity,
+        required this.pk,
+        required this.role,
+        required this.updatedAt,
+        required this.user,
+        required this.userId,
+    });
+
+    factory GetBoardMembersValue.fromJson(Map<String, dynamic> json) => GetBoardMembersValue(
+        board: GetBoardMembersValueBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        identity: json["identity"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        role: roleValues.map[json["role"]]!,
+        updatedAt: json["updatedAt"]?.toDouble(),
+        user: GetBoardMembersValueUser.fromJson(json["user"]),
+        userId: json["userId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "board": board.toJson(),
+        "boardId": boardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "identity": identity,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "role": roleValues.reverse[role],
+        "updatedAt": updatedAt,
+        "user": user.toJson(),
+        "userId": userId,
+    };
+}
+
+class GetBoardMembersValueBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    double updatedAt;
+
+    GetBoardMembersValueBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory GetBoardMembersValueBoard.fromJson(Map<String, dynamic> json) => GetBoardMembersValueBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardMembersValueUser {
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    double updatedAt;
+
+    GetBoardMembersValueUser({
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory GetBoardMembersValueUser.fromJson(Map<String, dynamic> json) => GetBoardMembersValueUser(
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardMembersUpdate {
+    GetBoardMembersUpdateBoard board;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    dynamic identity;
+    List<String> pk;
+    Role role;
+    double updatedAt;
+    GetBoardMembersUpdateUser user;
+    String userId;
+
+    GetBoardMembersUpdate({
+        required this.board,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        this.identity,
+        required this.pk,
+        required this.role,
+        required this.updatedAt,
+        required this.user,
+        required this.userId,
+    });
+
+    factory GetBoardMembersUpdate.fromJson(Map<String, dynamic> json) => GetBoardMembersUpdate(
+        board: GetBoardMembersUpdateBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        identity: json["identity"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        role: roleValues.map[json["role"]]!,
+        updatedAt: json["updatedAt"]?.toDouble(),
+        user: GetBoardMembersUpdateUser.fromJson(json["user"]),
+        userId: json["userId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "board": board.toJson(),
+        "boardId": boardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "identity": identity,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "role": roleValues.reverse[role],
+        "updatedAt": updatedAt,
+        "user": user.toJson(),
+        "userId": userId,
+    };
+}
+
+class GetBoardMembersUpdateBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    double updatedAt;
+
+    GetBoardMembersUpdateBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory GetBoardMembersUpdateBoard.fromJson(Map<String, dynamic> json) => GetBoardMembersUpdateBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardMembersUpdateUser {
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    double updatedAt;
+
+    GetBoardMembersUpdateUser({
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory GetBoardMembersUpdateUser.fromJson(Map<String, dynamic> json) => GetBoardMembersUpdateUser(
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
     };
 }
 

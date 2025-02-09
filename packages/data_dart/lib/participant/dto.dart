@@ -62,6 +62,8 @@
 //     final getBoardMembersItem = getBoardMembersItemFromJson(jsonString);
 //     final setUserFullNameReq = setUserFullNameReqFromJson(jsonString);
 //     final setUserFullNameRes = setUserFullNameResFromJson(jsonString);
+//     final applyBoardDiffReq = applyBoardDiffReqFromJson(jsonString);
+//     final applyBoardDiffRes = applyBoardDiffResFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -312,6 +314,14 @@ String setUserFullNameReqToJson(SetUserFullNameReq data) => json.encode(data.toJ
 SetUserFullNameRes setUserFullNameResFromJson(String str) => SetUserFullNameRes.fromJson(json.decode(str));
 
 String setUserFullNameResToJson(SetUserFullNameRes data) => json.encode(data.toJson());
+
+ApplyBoardDiffReq applyBoardDiffReqFromJson(String str) => ApplyBoardDiffReq.fromJson(json.decode(str));
+
+String applyBoardDiffReqToJson(ApplyBoardDiffReq data) => json.encode(data.toJson());
+
+ApplyBoardDiffRes applyBoardDiffResFromJson(String str) => ApplyBoardDiffRes.fromJson(json.decode(str));
+
+String applyBoardDiffResToJson(ApplyBoardDiffRes data) => json.encode(data.toJson());
 
 class StreamPutReq {
     String topic;
@@ -891,6 +901,7 @@ class GetMyBoardsItem {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     GetMyBoardsItem({
@@ -901,6 +912,7 @@ class GetMyBoardsItem {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -912,6 +924,7 @@ class GetMyBoardsItem {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -923,6 +936,7 @@ class GetMyBoardsItem {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -1099,6 +1113,7 @@ class CreateColumnResBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     CreateColumnResBoard({
@@ -1109,6 +1124,7 @@ class CreateColumnResBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -1120,6 +1136,7 @@ class CreateColumnResBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1131,6 +1148,7 @@ class CreateColumnResBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -1529,6 +1547,7 @@ class PurpleBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     PurpleBoard({
@@ -1539,6 +1558,7 @@ class PurpleBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -1550,6 +1570,7 @@ class PurpleBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1561,6 +1582,7 @@ class PurpleBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -1621,6 +1643,7 @@ class FluffyBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     FluffyBoard({
@@ -1631,6 +1654,7 @@ class FluffyBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -1642,6 +1666,7 @@ class FluffyBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1653,6 +1678,7 @@ class FluffyBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -2063,6 +2089,7 @@ class TentacledBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     TentacledBoard({
@@ -2073,6 +2100,7 @@ class TentacledBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -2084,6 +2112,7 @@ class TentacledBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2095,6 +2124,7 @@ class TentacledBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -2155,6 +2185,7 @@ class StickyBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     StickyBoard({
@@ -2165,6 +2196,7 @@ class StickyBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -2176,6 +2208,7 @@ class StickyBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2187,6 +2220,7 @@ class StickyBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -2417,6 +2451,7 @@ class IndigoBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     IndigoBoard({
@@ -2427,6 +2462,7 @@ class IndigoBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -2438,6 +2474,7 @@ class IndigoBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2449,6 +2486,7 @@ class IndigoBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -2509,6 +2547,7 @@ class IndecentBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     IndecentBoard({
@@ -2519,6 +2558,7 @@ class IndecentBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -2530,6 +2570,7 @@ class IndecentBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2541,6 +2582,7 @@ class IndecentBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -2663,6 +2705,7 @@ class CreateMemberResBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     CreateMemberResBoard({
@@ -2673,6 +2716,7 @@ class CreateMemberResBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -2684,6 +2728,7 @@ class CreateMemberResBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2695,6 +2740,7 @@ class CreateMemberResBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -2845,6 +2891,7 @@ class GetBoardMembersItemBoard {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     GetBoardMembersItemBoard({
@@ -2855,6 +2902,7 @@ class GetBoardMembersItemBoard {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -2866,6 +2914,7 @@ class GetBoardMembersItemBoard {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2877,6 +2926,7 @@ class GetBoardMembersItemBoard {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -2945,6 +2995,36 @@ class SetUserFullNameRes {
     SetUserFullNameRes();
 
     factory SetUserFullNameRes.fromJson(Map<String, dynamic> json) => SetUserFullNameRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class ApplyBoardDiffReq {
+    String boardId;
+    String diff;
+
+    ApplyBoardDiffReq({
+        required this.boardId,
+        required this.diff,
+    });
+
+    factory ApplyBoardDiffReq.fromJson(Map<String, dynamic> json) => ApplyBoardDiffReq(
+        boardId: json["boardId"],
+        diff: json["diff"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "boardId": boardId,
+        "diff": diff,
+    };
+}
+
+class ApplyBoardDiffRes {
+    ApplyBoardDiffRes();
+
+    factory ApplyBoardDiffRes.fromJson(Map<String, dynamic> json) => ApplyBoardDiffRes(
     );
 
     Map<String, dynamic> toJson() => {

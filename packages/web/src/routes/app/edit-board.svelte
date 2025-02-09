@@ -1,23 +1,40 @@
 <script lang="ts">
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
-	import {type BoardDto} from 'syncwave-data';
+	import {
+		Crdt,
+		parseCrdtDiff,
+		stringifyCrdtDiff,
+		type BoardDto,
+	} from 'syncwave-data';
 	import MemberListLoader from './member-list-loader.svelte';
 
 	let {board}: {board: BoardDto} = $props();
 
+	let boardCrdt = Crdt.load(board.state);
+
 	let boardName = $state(board.name);
 
 	$effect(() => {
-		boardName = board.name;
+		boardCrdt.apply(board.state);
+
+		boardName = boardCrdt.snapshot().name;
 	});
 
 	const sdk = getSdk();
 
 	async function setBoardName() {
-		await sdk(rpc =>
-			rpc.setBoardName({boardId: board.id, name: boardName})
-		);
+		const diff = boardCrdt.update(x => {
+			x.name = boardName;
+		});
+		if (diff) {
+			await sdk(rpc =>
+				rpc.applyBoardDiff({
+					boardId: board.id,
+					diff: stringifyCrdtDiff(diff),
+				})
+			);
+		}
 	}
 </script>
 
@@ -25,7 +42,7 @@
 	<div>
 		<Input
 			bind:value={boardName}
-			onchange={setBoardName}
+			onkeyup={setBoardName}
 			placeholder="Board name"
 		/>
 	</div>

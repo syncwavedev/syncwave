@@ -109,6 +109,7 @@ export function createParticipantApi() {
         deleteMember: proxy('deleteMember'),
         getBoardMembers: proxy('getBoardMembers'),
         setUserFullName: proxy('setUserFullName'),
+        applyBoardDiff: proxy('applyBoardDiff'),
     });
 }
 

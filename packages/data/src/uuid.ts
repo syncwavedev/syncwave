@@ -1,6 +1,7 @@
 import {parse, stringify, v7, validate} from 'uuid';
 import {z} from 'zod';
 import {Codec} from './codec.js';
+import {AppError} from './errors.js';
 import {Brand} from './utils.js';
 
 export type Uuid = Brand<string, 'uuid'>;
@@ -15,6 +16,7 @@ export function zUuid<TBrand extends Uuid>() {
         message: 'Invalid UUID format',
     }) as unknown as z.ZodType<TBrand>;
 }
+
 export function createUuid(): Uuid {
     return v7() as Uuid;
 }
@@ -26,7 +28,7 @@ export class UuidCodec implements Codec<Uuid> {
     decode(buf: Uint8Array): Uuid {
         const uuid = stringify(buf) as Uuid;
         if (!validate(uuid)) {
-            throw new Error(`decode error: ${uuid} is not a UUID`);
+            throw new AppError(`decode error: ${uuid} is not a UUID`);
         }
 
         return uuid;

@@ -15,6 +15,11 @@ export class MsgpackCodec implements Codec<any> {
     }
 }
 
+const msgpackCodec = new MsgpackCodec();
+export const encodeMsgpack = (data: unknown) => msgpackCodec.encode(data);
+export const decodeMsgpack = (buf: Uint8Array) =>
+    msgpackCodec.decode(buf) as unknown;
+
 export class StringCodec implements Codec<string> {
     private encoder = new TextEncoder();
     private decoder = new TextDecoder();

@@ -1,7 +1,8 @@
 import {z} from 'zod';
+import {zCrdtDiffString} from '../crdt/crdt.js';
 import {assert} from '../utils.js';
 import {DataTx} from './data-layer.js';
-import {BoardId, zBoard} from './repos/board-repo.js';
+import {Board, BoardId, zBoard} from './repos/board-repo.js';
 import {ColumnId, zColumn} from './repos/column-repo.js';
 import {CommentId, zComment} from './repos/comment-repo.js';
 import {IdentityId, zIdentity} from './repos/identity-repo.js';
@@ -95,7 +96,9 @@ export async function toBoardViewColumnDto(
 }
 
 export function zBoardDto() {
-    return zBoard().extend({});
+    return zBoard().extend({
+        state: zCrdtDiffString<Board>(),
+    });
 }
 
 export type BoardDto = z.infer<ReturnType<typeof zBoardDto>>;

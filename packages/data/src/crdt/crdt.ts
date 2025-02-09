@@ -6,8 +6,10 @@ import {
     Map as YMap,
     Text as YText,
 } from 'yjs';
-import {Codec, MsgpackCodec} from '../codec.js';
+import {z} from 'zod';
+import {Codec, decodeMsgpack, encodeMsgpack, MsgpackCodec} from '../codec.js';
 import {AppError} from '../errors.js';
+import {decodeHex, encodeHex} from '../hex.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {
     assert,
@@ -27,6 +29,30 @@ export interface CrdtDiff<T> {
 
 export type CrdtDiffPayload<T> = Brand<Uint8Array, [T, 'crdt_diff_buffer']>;
 
+export type CrdtDiffString<T> = Brand<string, [T, 'crdt_diff_string']>;
+
+export function zCrdtDiffString<T>() {
+    return z.string() as unknown as z.ZodType<CrdtDiffString<T>>;
+}
+
+export function stringifyCrdtDiff<T>(diff: CrdtDiff<T>): CrdtDiffString<T> {
+    return decodeHex(encodeMsgpack(diff)) as CrdtDiffString<T>;
+}
+
+export function parseCrdtDiff<T>(diff: CrdtDiffString<T>): CrdtDiff<T> {
+    return decodeMsgpack(encodeHex(diff)) as CrdtDiff<T>;
+}
+
+export function toCrdtDiff<T>(
+    diff: CrdtDiff<T> | CrdtDiffString<T>
+): CrdtDiff<T> {
+    if (typeof diff === 'string') {
+        return parseCrdtDiff(diff);
+    } else {
+        return diff;
+    }
+}
+
 const ROOT_KEY = 'root';
 const ROOT_VALUE = 'value';
 
@@ -43,9 +69,9 @@ export class Crdt<T> {
         return new Crdt(doc);
     }
 
-    static load<T>({payload: diff}: CrdtDiff<T>): Crdt<T> {
+    static load<T>(diff: CrdtDiff<T> | CrdtDiffString<T>): Crdt<T> {
         const doc = new YDoc();
-        applyUpdateV2(doc, diff);
+        applyUpdateV2(doc, toCrdtDiff(diff).payload);
 
         return new Crdt(doc);
     }
@@ -113,8 +139,8 @@ export class Crdt<T> {
         return diff;
     }
 
-    apply({payload}: CrdtDiff<T>, options?: DiffOptions): void {
-        applyUpdateV2(this.doc, payload, options?.origin);
+    apply(diff: CrdtDiff<T> | CrdtDiffString<T>, options?: DiffOptions): void {
+        applyUpdateV2(this.doc, toCrdtDiff(diff).payload, options?.origin);
     }
 
     subscribe(

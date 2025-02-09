@@ -1,5 +1,11 @@
 import {z, ZodType} from 'zod';
-import {Crdt, CrdtCodec, CrdtDiff} from '../crdt/crdt.js';
+import {
+    Crdt,
+    CrdtCodec,
+    CrdtDiff,
+    CrdtDiffString,
+    stringifyCrdtDiff,
+} from '../crdt/crdt.js';
 import {AppError} from '../errors.js';
 import {
     compareIndexKey,
@@ -87,6 +93,8 @@ export interface DocStoreOptions<T extends Doc<IndexKey>> {
 
 export type Recipe<T> = (doc: T) => Nothing;
 
+export type CrdtDoc<T> = T & {state: CrdtDiffString<T>};
+
 export class DocRepo<T extends Doc<IndexKey>> {
     private readonly indexes: Map<string, Index<T>>;
     // we use Omit to prevent direct access to the value that might need an upgrade
@@ -152,14 +160,18 @@ export class DocRepo<T extends Doc<IndexKey>> {
     async getById(
         id: IndexKey,
         includeDeleted?: boolean
-    ): Promise<T | undefined> {
+    ): Promise<CrdtDoc<T> | undefined> {
         const doc = await this._get(id);
-        const snapshot = doc?.snapshot();
+        if (!doc) {
+            return undefined;
+        }
+
+        const snapshot = doc.snapshot();
         if (!includeDeleted && snapshot?.deleted) {
             return undefined;
         }
 
-        return snapshot;
+        return Object.assign(snapshot, {state: stringifyCrdtDiff(doc.state())});
     }
 
     get(indexName: string, key: IndexKey, includeDeleted?: boolean): Stream<T> {

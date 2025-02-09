@@ -514,6 +514,21 @@ class ParticipantClient {
     }
   }
 
+  Future<ApplyBoardDiffRes> applyBoardDiff(ApplyBoardDiffReq request, [MessageHeaders? headers]) async {
+    try {
+      final json = await _rpc.handle('applyBoardDiff', request.toJson(), headers);
+      return ApplyBoardDiffRes.fromJson(json as Map<String, dynamic>);
+    } catch (error) {
+      if (error is TransportException) {
+        _transportErrors.add(error);    
+      } else {
+        _unknownErrors.add(error);
+      }
+  
+      rethrow;
+    }
+  }
+
   void close() {
     _rpc.close();
   }

@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {zBigFloat} from '../../big-float.js';
+import {parseCrdtDiff, zCrdtDiffString} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
 import {createApi, handler, InferRpcClient} from '../../transport/rpc.js';
@@ -362,6 +363,18 @@ export function createWriteApi() {
                     true
                 );
 
+                return {};
+            },
+        }),
+        applyBoardDiff: handler({
+            req: z.object({
+                boardId: zUuid<BoardId>(),
+                diff: zCrdtDiffString<Board>(),
+            }),
+            res: z.object({}),
+            handle: async (st, {boardId, diff}) => {
+                await st.ps.ensureBoardMember(boardId, 'admin');
+                await st.tx.boards.apply(boardId, parseCrdtDiff(diff));
                 return {};
             },
         }),

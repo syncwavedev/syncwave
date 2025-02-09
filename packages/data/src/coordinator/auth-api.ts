@@ -113,7 +113,7 @@ export function createAuthApi() {
                 z.object({type: z.literal('cooldown')}),
             ]),
             handle: async (
-                {cx: {identities, config}, jwt},
+                {cx: {identities, config}, crypto, jwt},
                 {email, code}
             ): Promise<VerifySignInCodeResponse> => {
                 const identity = await identities.getByEmail(email);
@@ -140,6 +140,11 @@ export function createAuthApi() {
                 if (code !== identity.verificationCode.code) {
                     return {type: 'invalid_code'};
                 }
+
+                const verificationCode = await createVerificationCode(crypto);
+                await identities.update(identity.id, x => {
+                    x.verificationCode = verificationCode;
+                });
 
                 return {
                     type: 'success',

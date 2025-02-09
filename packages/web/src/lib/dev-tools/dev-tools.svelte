@@ -38,8 +38,14 @@
 	let detailsPromise: Promise<string> | undefined = $state(undefined);
 </script>
 
-<Button variant="destructive" onclick={() => sdk(x => x.truncateDb({}))}>Reset store</Button>
-<Button variant="destructive" onclick={() => sdk(x => signOut())}>Sign out</Button>
+<Button
+	variant="destructive"
+	onclick={async () => {
+		if (!confirm('Are you sure? This will delete whole database')) return;
+		await sdk(x => x.truncateDb({}));
+	}}>Reset store</Button
+>
+<Button variant="outline" onclick={() => sdk(x => signOut())}>Sign out</Button>
 <div class="flex gap-8">
 	<div>
 		{#if itemsPromise}
@@ -56,21 +62,36 @@
 						<Collapsible.Root open>
 							<div class="flex items-center">
 								{#if item.childrenPreview.length > 0}
-									<Collapsible.Trigger><ChevronDown /></Collapsible.Trigger>
+									<Collapsible.Trigger
+										><ChevronDown /></Collapsible.Trigger
+									>
 								{:else}
 									<Dot />
 								{/if}
-								<Button onclick={() => remove(path)} variant="ghost" size="icon">
+								<Button
+									onclick={() => remove(path)}
+									variant="ghost"
+									size="icon"
+								>
 									<Trash />
 								</Button>
-								<Button variant="ghost" onclick={() => openDetails(path)}>
-									{item.name} <span class="text-gray-400">[{item.type}]</span>
+								<Button
+									variant="ghost"
+									onclick={() => openDetails(path)}
+								>
+									{item.name}
+									<span class="text-gray-400"
+										>[{item.type}]</span
+									>
 								</Button>
 							</div>
 							<Collapsible.Content>
 								<div class="border-l pl-4">
 									{#each item.childrenPreview as child}
-										{@render itemView(child, [...path, child.key])}
+										{@render itemView(child, [
+											...path,
+											child.key,
+										])}
 									{/each}
 								</div>
 							</Collapsible.Content>

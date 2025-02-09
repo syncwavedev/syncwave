@@ -161,8 +161,18 @@ function genClientMethod(
     } else if (processor.type === 'streamer') {
         result = `
             Stream<${getItemName(name)}> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async* {
-                await for (final json in _rpc.stream('${name}', request.toJson(), headers)) {
-                    yield ${getItemName(name)}.fromJson(json as Map<String, dynamic>);
+                while (true) {
+                    try {
+                        await for (final json in _rpc.stream('${name}', request.toJson(), headers)) {
+                            yield ${getItemName(name)}.fromJson(json as Map<String, dynamic>);
+                        }
+                    } catch (error) {
+                        if (error is! TransportException) {
+                            rethrow;
+                        }
+
+                        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+                    }
                 }
             }
         `;
@@ -179,6 +189,8 @@ async function genClient(api: Api<unknown>) {
         import 'package:syncwave_data/participant/dto.dart';
         import 'package:syncwave_data/rpc/streamer.dart';
         import 'package:syncwave_data/transport.dart';
+        import 'package:syncwave_data/errors.dart';
+        import 'package:syncwave_data/constants.dart';
 
         class ParticipantClient {
             final RpcStreamerClient _rpc;

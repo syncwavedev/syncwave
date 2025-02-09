@@ -2,6 +2,8 @@ import 'package:syncwave_data/message.dart';
 import 'package:syncwave_data/participant/dto.dart';
 import 'package:syncwave_data/rpc/streamer.dart';
 import 'package:syncwave_data/transport.dart';
+import 'package:syncwave_data/errors.dart';
+import 'package:syncwave_data/constants.dart';
 
 class ParticipantClient {
   final RpcStreamerClient _rpc;
@@ -16,8 +18,18 @@ class ParticipantClient {
   }
 
   Stream<GetStreamItem> getStream(GetStreamReq request, [MessageHeaders? headers]) async* {
-    await for (final json in _rpc.stream('getStream', request.toJson(), headers)) {
-      yield GetStreamItem.fromJson(json as Map<String, dynamic>);
+    while (true) {
+      try {
+        await for (final json in _rpc.stream('getStream', request.toJson(), headers)) {
+          yield GetStreamItem.fromJson(json as Map<String, dynamic>);
+        }
+      } catch (error) {
+        if (error is! TransportException) {
+          rethrow;
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
     }
   }
 
@@ -27,8 +39,18 @@ class ParticipantClient {
   }
 
   Stream<GetMeItem> getMe(GetMeReq request, [MessageHeaders? headers]) async* {
-    await for (final json in _rpc.stream('getMe', request.toJson(), headers)) {
-      yield GetMeItem.fromJson(json as Map<String, dynamic>);
+    while (true) {
+      try {
+        await for (final json in _rpc.stream('getMe', request.toJson(), headers)) {
+          yield GetMeItem.fromJson(json as Map<String, dynamic>);
+        }
+      } catch (error) {
+        if (error is! TransportException) {
+          rethrow;
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
     }
   }
 
@@ -68,8 +90,18 @@ class ParticipantClient {
   }
 
   Stream<GetMyBoardsItem> getMyBoards(GetMyBoardsReq request, [MessageHeaders? headers]) async* {
-    await for (final json in _rpc.stream('getMyBoards', request.toJson(), headers)) {
-      yield GetMyBoardsItem.fromJson(json as Map<String, dynamic>);
+    while (true) {
+      try {
+        await for (final json in _rpc.stream('getMyBoards', request.toJson(), headers)) {
+          yield GetMyBoardsItem.fromJson(json as Map<String, dynamic>);
+        }
+      } catch (error) {
+        if (error is! TransportException) {
+          rethrow;
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
     }
   }
 
@@ -79,8 +111,18 @@ class ParticipantClient {
   }
 
   Stream<GetBoardItem> getBoard(GetBoardReq request, [MessageHeaders? headers]) async* {
-    await for (final json in _rpc.stream('getBoard', request.toJson(), headers)) {
-      yield GetBoardItem.fromJson(json as Map<String, dynamic>);
+    while (true) {
+      try {
+        await for (final json in _rpc.stream('getBoard', request.toJson(), headers)) {
+          yield GetBoardItem.fromJson(json as Map<String, dynamic>);
+        }
+      } catch (error) {
+        if (error is! TransportException) {
+          rethrow;
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
     }
   }
 
@@ -95,8 +137,18 @@ class ParticipantClient {
   }
 
   Stream<GetBoardViewItem> getBoardView(GetBoardViewReq request, [MessageHeaders? headers]) async* {
-    await for (final json in _rpc.stream('getBoardView', request.toJson(), headers)) {
-      yield GetBoardViewItem.fromJson(json as Map<String, dynamic>);
+    while (true) {
+      try {
+        await for (final json in _rpc.stream('getBoardView', request.toJson(), headers)) {
+          yield GetBoardViewItem.fromJson(json as Map<String, dynamic>);
+        }
+      } catch (error) {
+        if (error is! TransportException) {
+          rethrow;
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
     }
   }
 
@@ -146,8 +198,18 @@ class ParticipantClient {
   }
 
   Stream<GetTaskCommentsItem> getTaskComments(GetTaskCommentsReq request, [MessageHeaders? headers]) async* {
-    await for (final json in _rpc.stream('getTaskComments', request.toJson(), headers)) {
-      yield GetTaskCommentsItem.fromJson(json as Map<String, dynamic>);
+    while (true) {
+      try {
+        await for (final json in _rpc.stream('getTaskComments', request.toJson(), headers)) {
+          yield GetTaskCommentsItem.fromJson(json as Map<String, dynamic>);
+        }
+      } catch (error) {
+        if (error is! TransportException) {
+          rethrow;
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
     }
   }
 
@@ -162,8 +224,18 @@ class ParticipantClient {
   }
 
   Stream<GetBoardMembersItem> getBoardMembers(GetBoardMembersReq request, [MessageHeaders? headers]) async* {
-    await for (final json in _rpc.stream('getBoardMembers', request.toJson(), headers)) {
-      yield GetBoardMembersItem.fromJson(json as Map<String, dynamic>);
+    while (true) {
+      try {
+        await for (final json in _rpc.stream('getBoardMembers', request.toJson(), headers)) {
+          yield GetBoardMembersItem.fromJson(json as Map<String, dynamic>);
+        }
+      } catch (error) {
+        if (error is! TransportException) {
+          rethrow;
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
     }
   }
 

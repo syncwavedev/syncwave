@@ -91,13 +91,14 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
   }, onDone: () {
     subscription.cancel();
     if (!completer.isCompleted) {
-      completer.completeError(Exception('Lost connection to RPC server'));
+      completer.completeError(
+          ConnectionErrorException('Lost connection to RPC server'));
     }
   });
 
   final timer = Timer(Duration(milliseconds: rpcCallTimeoutMs), () {
     if (!completer.isCompleted) {
-      completer.completeError(Exception('rpc call failed: timeout'));
+      completer.completeError(TimeoutException('rpc call failed: timeout'));
       subscription.cancel();
     }
   });

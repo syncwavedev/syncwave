@@ -16,20 +16,38 @@ String getErrorCode(dynamic error) =>
 
 String getReadableError(dynamic error) => error.toString();
 
-class RpcException implements Exception {
+class RemoteException implements Exception {
   final String message;
-  RpcException(
+  RemoteException(
     this.message,
   );
   @override
-  String toString() => 'RpcException: $message';
+  String toString() => 'RemoteException: $message';
 }
 
 Exception reconstructError(String message, String code) {
-  print('get error: $message, code: $code');
   return switch (code) {
     'cancelled' => CancelledError(),
-    'unknown' => RpcException(message),
+    'unknown' => RemoteException(message),
     _ => BusinessError(message, code),
   };
+}
+
+class TransportException implements Exception {
+  final String message;
+  TransportException(this.message);
+  @override
+  String toString() => 'TransportException: $message';
+}
+
+class ConnectionErrorException extends TransportException {
+  ConnectionErrorException(super.message);
+  @override
+  String toString() => 'ConnectionErrorException: $message';
+}
+
+class TimeoutException extends TransportException {
+  TimeoutException(super.message);
+  @override
+  String toString() => 'TimeoutException: $message';
 }

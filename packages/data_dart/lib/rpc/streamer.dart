@@ -123,8 +123,11 @@ class RpcStreamerClientApiState {
     subs.remove(streamId);
   }
 
-  void closeAll() {
-    subs.forEach((_, controller) => controller.close());
+  void abortAll(String message) {
+    subs.forEach((_, controller) {
+      controller.addError(ConnectionErrorException(message));
+      controller.close();
+    });
     subs.clear();
   }
 }
@@ -165,8 +168,8 @@ class RpcStreamerClient {
     launchRpcHandlerServer(createRpcStreamerClientApi(), apiState, conn);
     _rpcClient = RpcHandlerClient(conn: conn, getHeaders: getHeaders);
     conn.subscribe().listen(null,
-        onError: (error) => apiState.closeAll(),
-        onDone: () => apiState.closeAll());
+        onError: (Object error) => apiState.abortAll(error.toString()),
+        onDone: () => apiState.abortAll('Connection closed'));
   }
 
   Future<dynamic> handle(String name, dynamic arg,

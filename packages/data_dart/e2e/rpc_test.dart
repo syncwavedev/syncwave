@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:syncwave_data/errors.dart';
 import 'package:syncwave_data/rpc/streamer.dart';
 import 'package:test/test.dart';
 import 'package:syncwave_data/message.dart';

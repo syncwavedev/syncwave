@@ -16,8 +16,12 @@ export class Cursor<T> implements AsyncIterable<T> {
         return this.iter;
     }
 
-    async first(): Promise<T | undefined> {
-        return this.find(() => true);
+    async first(): Promise<T> {
+        for await (const item of this) {
+            return item;
+        }
+
+        throw new AppError('Cursor.first: stream ended');
     }
 
     async find(

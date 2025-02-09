@@ -1,11 +1,13 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog';
 	import {ScrollArea} from '$lib/components/ui/scroll-area';
-	import type {ColumnDto, Column} from 'syncwave-data';
+	import type {BoardViewColumnDto, Column} from 'syncwave-data';
 	import EditColumn from './edit-column.svelte';
 
-	let {column, open = $bindable()}: {column: ColumnDto; open: boolean} =
-		$props();
+	let {
+		column,
+		open = $bindable(),
+	}: {column: BoardViewColumnDto; open: boolean} = $props();
 </script>
 
 <Dialog.Root bind:open>

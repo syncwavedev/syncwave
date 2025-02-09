@@ -3,15 +3,22 @@
 	import {getSdk} from '$lib/utils';
 	import {Edit, Trash} from 'lucide-svelte';
 	import {
-		assert,
+		createTaskId,
+		type BoardViewColumnDto,
 		type Column,
 		type ColumnDto,
 		type ColumnId,
 	} from 'syncwave-data';
 	import EditColumnDialog from './edit-column-dialog.svelte';
 	import {toggle} from '$lib/utils.svelte';
+	import {Separator} from '$lib/components/ui/separator';
+	import {Input} from '$lib/components/ui/input';
+	import TaskCard from './task-card.svelte';
 
-	let {column}: {column: ColumnDto} = $props();
+	let {
+		column,
+		columns,
+	}: {column: BoardViewColumnDto; columns: BoardViewColumnDto[]} = $props();
 
 	const sdk = getSdk();
 
@@ -20,17 +27,50 @@
 	}
 
 	let editOpen = toggle();
+
+	let taskTitle = $state('');
+	async function addTask() {
+		await sdk(rpc =>
+			rpc.createTask({
+				boardId: column.boardId,
+				title: taskTitle,
+				columnId: column.id,
+				placement: {type: 'random'},
+				taskId: createTaskId(),
+			})
+		);
+	}
 </script>
 
-<div class="flex items-center gap-2">
-	<Button onclick={() => deleteColumn(column.id)} variant="ghost" size="icon">
-		<Trash />
-	</Button>
-	<Button onclick={editOpen.toggle} variant="ghost" size="icon">
-		<Edit />
-	</Button>
-	<div>
-		{column.title}
+<div>
+	<div class="flex items-center gap-2">
+		<Button
+			onclick={() => deleteColumn(column.id)}
+			variant="ghost"
+			size="icon"
+		>
+			<Trash />
+		</Button>
+		<Button onclick={editOpen.toggle} variant="ghost" size="icon">
+			<Edit />
+		</Button>
+		<div>
+			{column.title}
+		</div>
+		<EditColumnDialog bind:open={editOpen.value} {column} />
 	</div>
-	<EditColumnDialog bind:open={editOpen.value} {column} />
+
+	<div>
+		<div class="flex flex-col gap-2">
+			<div>Tasks:</div>
+			<div class="flex gap-4">
+				<Input bind:value={taskTitle} placeholder="title" />
+
+				<Button onclick={addTask}>Add task</Button>
+			</div>
+			{#each column.tasks as task}
+				<TaskCard {task} {columns} />
+			{/each}
+		</div>
+	</div>
 </div>

@@ -1,14 +1,14 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog';
 	import {ScrollArea} from '$lib/components/ui/scroll-area';
-	import type {ColumnDto, Task, TaskDto} from 'syncwave-data';
+	import type {BoardViewColumnDto, Task, TaskDto} from 'syncwave-data';
 	import EditTask from './edit-task.svelte';
 
 	let {
 		task,
 		columns,
 		open = $bindable(),
-	}: {task: TaskDto; columns: ColumnDto[]; open: boolean} = $props();
+	}: {task: TaskDto; columns: BoardViewColumnDto[]; open: boolean} = $props();
 </script>
 
 <Dialog.Root bind:open>

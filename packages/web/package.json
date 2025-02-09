@@ -55,6 +55,7 @@
 		"@lucide/lab": "^0.1.2",
 		"idb": "^8.0.1",
 		"isomorphic-ws": "^5.0.0",
+		"svelte-dnd-action": "^0.9.57",
 		"syncwave-data": "*",
 		"ws": "^8.18.0"
 	}

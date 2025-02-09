@@ -5,15 +5,19 @@
 	import {
 		assert,
 		type Column,
-		type ColumnDto,
+		type BoardViewColumnDto,
 		type Task,
 		type TaskDto,
 		type TaskId,
+		type BoardViewTaskDto,
 	} from 'syncwave-data';
 	import EditTaskDialog from './edit-task-dialog.svelte';
 	import {toggle} from '$lib/utils.svelte';
 
-	let {task, columns}: {task: TaskDto; columns: ColumnDto[]} = $props();
+	let {
+		task,
+		columns,
+	}: {task: BoardViewTaskDto; columns: BoardViewColumnDto[]} = $props();
 
 	const sdk = getSdk();
 

@@ -23,10 +23,11 @@ export interface Task extends Doc<[TaskId]> {
     readonly counter: number;
     title: string;
     columnPosition: BigFloat;
-    columnId: ColumnId | null;
+    columnId: ColumnId;
 }
 
 const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
+const COLUMN_ID_INDEX = 'column_id';
 
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
@@ -38,7 +39,7 @@ export function zTask() {
         counter: z.number(),
         title: z.string(),
         columnPosition: zBigFloat(),
-        columnId: zUuid<ColumnId>().nullable(),
+        columnId: zUuid<ColumnId>(),
     });
 }
 
@@ -58,6 +59,9 @@ export class TaskRepo {
                 [BOARD_ID_COUNTER_INDEX]: {
                     key: x => [x.boardId, x.counter],
                     unique: true,
+                },
+                [COLUMN_ID_INDEX]: {
+                    key: x => [x.columnId],
                 },
             },
             schema: zTask(),
@@ -104,6 +108,10 @@ export class TaskRepo {
 
     getByBoardId(boardId: BoardId): Stream<Task> {
         return this.rawRepo.get(BOARD_ID_COUNTER_INDEX, [boardId]);
+    }
+
+    getByColumnId(columnId: ColumnId | null): Stream<Task> {
+        return this.rawRepo.get(COLUMN_ID_INDEX, [columnId]);
     }
 
     async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {

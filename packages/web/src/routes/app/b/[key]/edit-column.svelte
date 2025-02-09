@@ -1,9 +1,9 @@
 <script lang="ts">
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
-	import type {Column, ColumnDto} from 'syncwave-data';
+	import type {Column, BoardViewColumnDto} from 'syncwave-data';
 
-	let {column}: {column: ColumnDto} = $props();
+	let {column}: {column: BoardViewColumnDto} = $props();
 
 	let columnTitle = $state(column.title);
 

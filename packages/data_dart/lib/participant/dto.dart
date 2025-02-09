@@ -1137,7 +1137,7 @@ class CreateColumnResBoard {
 
 class CreateTaskReq {
     String boardId;
-    String? columnId;
+    String columnId;
     Placement placement;
     String taskId;
     String title;
@@ -1272,7 +1272,7 @@ final placementTypeValues = EnumValues({
 class CreateTaskRes {
     String authorId;
     String boardId;
-    String? columnId;
+    String columnId;
     CreateTaskResColumnPosition columnPosition;
     double counter;
     double createdAt;
@@ -1362,31 +1362,8 @@ class GetBoardViewReq {
 }
 
 class GetBoardViewItem {
-    GetBoardViewItemBoard board;
-    List<ColumnElement> columns;
-    List<TaskElement> tasks;
-
-    GetBoardViewItem({
-        required this.board,
-        required this.columns,
-        required this.tasks,
-    });
-
-    factory GetBoardViewItem.fromJson(Map<String, dynamic> json) => GetBoardViewItem(
-        board: GetBoardViewItemBoard.fromJson(json["board"]),
-        columns: List<ColumnElement>.from(json["columns"].map((x) => ColumnElement.fromJson(x))),
-        tasks: List<TaskElement>.from(json["tasks"].map((x) => TaskElement.fromJson(x))),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "board": board.toJson(),
-        "columns": List<dynamic>.from(columns.map((x) => x.toJson())),
-        "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
-    };
-}
-
-class GetBoardViewItemBoard {
     String authorId;
+    List<ColumnElement> columns;
     double createdAt;
     bool deleted;
     String id;
@@ -1395,8 +1372,9 @@ class GetBoardViewItemBoard {
     List<String> pk;
     double updatedAt;
 
-    GetBoardViewItemBoard({
+    GetBoardViewItem({
         required this.authorId,
+        required this.columns,
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -1406,8 +1384,9 @@ class GetBoardViewItemBoard {
         required this.updatedAt,
     });
 
-    factory GetBoardViewItemBoard.fromJson(Map<String, dynamic> json) => GetBoardViewItemBoard(
+    factory GetBoardViewItem.fromJson(Map<String, dynamic> json) => GetBoardViewItem(
         authorId: json["authorId"],
+        columns: List<ColumnElement>.from(json["columns"].map((x) => ColumnElement.fromJson(x))),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -1419,6 +1398,7 @@ class GetBoardViewItemBoard {
 
     Map<String, dynamic> toJson() => {
         "authorId": authorId,
+        "columns": List<dynamic>.from(columns.map((x) => x.toJson())),
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -1431,8 +1411,60 @@ class GetBoardViewItemBoard {
 
 class ColumnElement {
     String authorId;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    List<TaskElement> tasks;
+    String title;
+    double updatedAt;
+
+    ColumnElement({
+        required this.authorId,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.tasks,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory ColumnElement.fromJson(Map<String, dynamic> json) => ColumnElement(
+        authorId: json["authorId"],
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        tasks: List<TaskElement>.from(json["tasks"].map((x) => TaskElement.fromJson(x))),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "boardId": boardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class TaskElement {
+    String authorId;
     PurpleBoard board;
     String boardId;
+    PurpleColumn? column;
+    String columnId;
+    PurpleColumnPosition columnPosition;
+    double counter;
     double createdAt;
     bool deleted;
     String id;
@@ -1440,10 +1472,14 @@ class ColumnElement {
     String title;
     double updatedAt;
 
-    ColumnElement({
+    TaskElement({
         required this.authorId,
         required this.board,
         required this.boardId,
+        required this.column,
+        required this.columnId,
+        required this.columnPosition,
+        required this.counter,
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -1452,10 +1488,14 @@ class ColumnElement {
         required this.updatedAt,
     });
 
-    factory ColumnElement.fromJson(Map<String, dynamic> json) => ColumnElement(
+    factory TaskElement.fromJson(Map<String, dynamic> json) => TaskElement(
         authorId: json["authorId"],
         board: PurpleBoard.fromJson(json["board"]),
         boardId: json["boardId"],
+        column: json["column"] == null ? null : PurpleColumn.fromJson(json["column"]),
+        columnId: json["columnId"],
+        columnPosition: PurpleColumnPosition.fromJson(json["columnPosition"]),
+        counter: json["counter"]?.toDouble(),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -1468,6 +1508,10 @@ class ColumnElement {
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
+        "column": column?.toJson(),
+        "columnId": columnId,
+        "columnPosition": columnPosition.toJson(),
+        "counter": counter,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -1521,14 +1565,10 @@ class PurpleBoard {
     };
 }
 
-class TaskElement {
+class PurpleColumn {
     String authorId;
     FluffyBoard board;
     String boardId;
-    PurpleColumn? column;
-    String? columnId;
-    PurpleColumnPosition columnPosition;
-    double counter;
     double createdAt;
     bool deleted;
     String id;
@@ -1536,14 +1576,10 @@ class TaskElement {
     String title;
     double updatedAt;
 
-    TaskElement({
+    PurpleColumn({
         required this.authorId,
         required this.board,
         required this.boardId,
-        required this.column,
-        required this.columnId,
-        required this.columnPosition,
-        required this.counter,
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -1552,14 +1588,10 @@ class TaskElement {
         required this.updatedAt,
     });
 
-    factory TaskElement.fromJson(Map<String, dynamic> json) => TaskElement(
+    factory PurpleColumn.fromJson(Map<String, dynamic> json) => PurpleColumn(
         authorId: json["authorId"],
         board: FluffyBoard.fromJson(json["board"]),
         boardId: json["boardId"],
-        column: json["column"] == null ? null : PurpleColumn.fromJson(json["column"]),
-        columnId: json["columnId"],
-        columnPosition: PurpleColumnPosition.fromJson(json["columnPosition"]),
-        counter: json["counter"]?.toDouble(),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -1572,10 +1604,6 @@ class TaskElement {
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
-        "column": column?.toJson(),
-        "columnId": columnId,
-        "columnPosition": columnPosition.toJson(),
-        "counter": counter,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -1607,98 +1635,6 @@ class FluffyBoard {
     });
 
     factory FluffyBoard.fromJson(Map<String, dynamic> json) => FluffyBoard(
-        authorId: json["authorId"],
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        key: json["key"],
-        name: json["name"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "authorId": authorId,
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
-        "key": key,
-        "name": name,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class PurpleColumn {
-    String authorId;
-    TentacledBoard board;
-    String boardId;
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    String title;
-    double updatedAt;
-
-    PurpleColumn({
-        required this.authorId,
-        required this.board,
-        required this.boardId,
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.title,
-        required this.updatedAt,
-    });
-
-    factory PurpleColumn.fromJson(Map<String, dynamic> json) => PurpleColumn(
-        authorId: json["authorId"],
-        board: TentacledBoard.fromJson(json["board"]),
-        boardId: json["boardId"],
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        title: json["title"],
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "authorId": authorId,
-        "board": board.toJson(),
-        "boardId": boardId,
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "title": title,
-        "updatedAt": updatedAt,
-    };
-}
-
-class TentacledBoard {
-    String authorId;
-    double createdAt;
-    bool deleted;
-    String id;
-    String key;
-    String name;
-    List<String> pk;
-    double updatedAt;
-
-    TentacledBoard({
-        required this.authorId,
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.key,
-        required this.name,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory TentacledBoard.fromJson(Map<String, dynamic> json) => TentacledBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1850,7 +1786,7 @@ class SetTaskTitleRes {
 }
 
 class SetTaskColumnIdReq {
-    String? columnId;
+    String columnId;
     String taskId;
 
     SetTaskColumnIdReq({
@@ -2057,10 +1993,10 @@ class CreateCommentResAuthor {
 
 class CreateCommentResTask {
     String authorId;
-    StickyBoard board;
+    TentacledBoard board;
     String boardId;
     FluffyColumn? column;
-    String? columnId;
+    String columnId;
     FluffyColumnPosition columnPosition;
     double counter;
     double createdAt;
@@ -2088,7 +2024,7 @@ class CreateCommentResTask {
 
     factory CreateCommentResTask.fromJson(Map<String, dynamic> json) => CreateCommentResTask(
         authorId: json["authorId"],
-        board: StickyBoard.fromJson(json["board"]),
+        board: TentacledBoard.fromJson(json["board"]),
         boardId: json["boardId"],
         column: json["column"] == null ? null : FluffyColumn.fromJson(json["column"]),
         columnId: json["columnId"],
@@ -2110,6 +2046,98 @@ class CreateCommentResTask {
         "columnId": columnId,
         "columnPosition": columnPosition.toJson(),
         "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class TentacledBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    double updatedAt;
+
+    TentacledBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory TentacledBoard.fromJson(Map<String, dynamic> json) => TentacledBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class FluffyColumn {
+    String authorId;
+    StickyBoard board;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String title;
+    double updatedAt;
+
+    FluffyColumn({
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory FluffyColumn.fromJson(Map<String, dynamic> json) => FluffyColumn(
+        authorId: json["authorId"],
+        board: StickyBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -2141,98 +2169,6 @@ class StickyBoard {
     });
 
     factory StickyBoard.fromJson(Map<String, dynamic> json) => StickyBoard(
-        authorId: json["authorId"],
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        key: json["key"],
-        name: json["name"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "authorId": authorId,
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
-        "key": key,
-        "name": name,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class FluffyColumn {
-    String authorId;
-    IndigoBoard board;
-    String boardId;
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    String title;
-    double updatedAt;
-
-    FluffyColumn({
-        required this.authorId,
-        required this.board,
-        required this.boardId,
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.title,
-        required this.updatedAt,
-    });
-
-    factory FluffyColumn.fromJson(Map<String, dynamic> json) => FluffyColumn(
-        authorId: json["authorId"],
-        board: IndigoBoard.fromJson(json["board"]),
-        boardId: json["boardId"],
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        title: json["title"],
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "authorId": authorId,
-        "board": board.toJson(),
-        "boardId": boardId,
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "title": title,
-        "updatedAt": updatedAt,
-    };
-}
-
-class IndigoBoard {
-    String authorId;
-    double createdAt;
-    bool deleted;
-    String id;
-    String key;
-    String name;
-    List<String> pk;
-    double updatedAt;
-
-    IndigoBoard({
-        required this.authorId,
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.key,
-        required this.name,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory IndigoBoard.fromJson(Map<String, dynamic> json) => IndigoBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2411,10 +2347,10 @@ class GetTaskCommentsItemAuthor {
 
 class GetTaskCommentsItemTask {
     String authorId;
-    IndecentBoard board;
+    IndigoBoard board;
     String boardId;
     TentacledColumn? column;
-    String? columnId;
+    String columnId;
     TentacledColumnPosition columnPosition;
     double counter;
     double createdAt;
@@ -2442,7 +2378,7 @@ class GetTaskCommentsItemTask {
 
     factory GetTaskCommentsItemTask.fromJson(Map<String, dynamic> json) => GetTaskCommentsItemTask(
         authorId: json["authorId"],
-        board: IndecentBoard.fromJson(json["board"]),
+        board: IndigoBoard.fromJson(json["board"]),
         boardId: json["boardId"],
         column: json["column"] == null ? null : TentacledColumn.fromJson(json["column"]),
         columnId: json["columnId"],
@@ -2464,6 +2400,98 @@ class GetTaskCommentsItemTask {
         "columnId": columnId,
         "columnPosition": columnPosition.toJson(),
         "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "title": title,
+        "updatedAt": updatedAt,
+    };
+}
+
+class IndigoBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    double updatedAt;
+
+    IndigoBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.updatedAt,
+    });
+
+    factory IndigoBoard.fromJson(Map<String, dynamic> json) => IndigoBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+    };
+}
+
+class TentacledColumn {
+    String authorId;
+    IndecentBoard board;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String title;
+    double updatedAt;
+
+    TentacledColumn({
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.title,
+        required this.updatedAt,
+    });
+
+    factory TentacledColumn.fromJson(Map<String, dynamic> json) => TentacledColumn(
+        authorId: json["authorId"],
+        board: IndecentBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -2495,98 +2523,6 @@ class IndecentBoard {
     });
 
     factory IndecentBoard.fromJson(Map<String, dynamic> json) => IndecentBoard(
-        authorId: json["authorId"],
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        key: json["key"],
-        name: json["name"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "authorId": authorId,
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
-        "key": key,
-        "name": name,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "updatedAt": updatedAt,
-    };
-}
-
-class TentacledColumn {
-    String authorId;
-    HilariousBoard board;
-    String boardId;
-    double createdAt;
-    bool deleted;
-    String id;
-    List<String> pk;
-    String title;
-    double updatedAt;
-
-    TentacledColumn({
-        required this.authorId,
-        required this.board,
-        required this.boardId,
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.pk,
-        required this.title,
-        required this.updatedAt,
-    });
-
-    factory TentacledColumn.fromJson(Map<String, dynamic> json) => TentacledColumn(
-        authorId: json["authorId"],
-        board: HilariousBoard.fromJson(json["board"]),
-        boardId: json["boardId"],
-        createdAt: json["createdAt"]?.toDouble(),
-        deleted: json["deleted"],
-        id: json["id"],
-        pk: List<String>.from(json["pk"].map((x) => x)),
-        title: json["title"],
-        updatedAt: json["updatedAt"]?.toDouble(),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "authorId": authorId,
-        "board": board.toJson(),
-        "boardId": boardId,
-        "createdAt": createdAt,
-        "deleted": deleted,
-        "id": id,
-        "pk": List<dynamic>.from(pk.map((x) => x)),
-        "title": title,
-        "updatedAt": updatedAt,
-    };
-}
-
-class HilariousBoard {
-    String authorId;
-    double createdAt;
-    bool deleted;
-    String id;
-    String key;
-    String name;
-    List<String> pk;
-    double updatedAt;
-
-    HilariousBoard({
-        required this.authorId,
-        required this.createdAt,
-        required this.deleted,
-        required this.id,
-        required this.key,
-        required this.name,
-        required this.pk,
-        required this.updatedAt,
-    });
-
-    factory HilariousBoard.fromJson(Map<String, dynamic> json) => HilariousBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],

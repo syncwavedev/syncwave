@@ -1,11 +1,17 @@
 <script lang="ts">
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
-	import type {Column, ColumnDto, Task, TaskDto} from 'syncwave-data';
+	import type {
+		Column,
+		BoardViewColumnDto,
+		Task,
+		TaskDto,
+	} from 'syncwave-data';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import CommentListLoader from './comment-list-loader.svelte';
 
-	let {task, columns}: {task: TaskDto; columns: ColumnDto[]} = $props();
+	let {task, columns}: {task: TaskDto; columns: BoardViewColumnDto[]} =
+		$props();
 
 	let taskTitle = $state(task.title);
 	let taskColumnId = $state(task.columnId ?? undefined);
@@ -44,9 +50,7 @@ Task editor: {task.title}
 	type="single"
 >
 	<Select.Trigger class="w-[180px]">
-		{columns
-			.concat(task.column ? [task.column] : [])
-			.find(column => column.id === taskColumnId)?.title}
+		{columns.find(column => column.id === taskColumnId)?.title}
 	</Select.Trigger>
 	<Select.Content>
 		{#each columns as column}

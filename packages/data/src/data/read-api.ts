@@ -9,15 +9,13 @@ import {AuthContext} from './auth-context.js';
 import {boardEvents, ChangeEvent, Transact, userEvents} from './data-layer.js';
 import {
     toBoardDto,
-    toColumnDto,
+    toBoardViewDto,
     toCommentDto,
     toMemberAdminDto,
-    toTaskDto,
     zBoardDto,
-    zColumnDto,
+    zBoardViewDto,
     zCommentDto,
     zMemberAdminDto,
-    zTaskDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {BoardId, zBoard} from './repos/board-repo.js';
@@ -246,11 +244,7 @@ export function createReadApi() {
             req: z.object({
                 key: z.string(),
             }),
-            item: z.object({
-                board: zBoardDto(),
-                columns: z.array(zColumnDto()),
-                tasks: z.array(zTaskDto()),
-            }),
+            item: zBoardViewDto(),
             async *stream(st, {key}) {
                 const board = await log.time('getBoardView get board', () =>
                     st.transact(tx => tx.boards.getByKey(key))
@@ -276,22 +270,7 @@ export function createReadApi() {
                                 );
                             }
 
-                            const [columns, tasks] = await whenAll([
-                                tx.columns
-                                    .getByBoardId(boardId)
-                                    .mapParallel(x => toColumnDto(tx, x.id))
-                                    .toArray(),
-                                tx.tasks
-                                    .getByBoardId(boardId)
-                                    .mapParallel(x => toTaskDto(tx, x.id))
-                                    .toArray(),
-                            ]);
-
-                            return {
-                                board: await toBoardDto(tx, board.id),
-                                columns: columns,
-                                tasks,
-                            };
+                            return toBoardViewDto(tx, board.id);
                         });
                     },
                     update$: st.esReader

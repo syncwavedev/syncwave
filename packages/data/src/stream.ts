@@ -201,8 +201,12 @@ export class Stream<T> implements AsyncIterable<T> {
         }
     }
 
-    async first(): Promise<T | undefined> {
-        return this.find(() => true);
+    async first(): Promise<T> {
+        for await (const item of this) {
+            return item;
+        }
+
+        throw new AppError('Stream.first: stream ended');
     }
 
     async find(

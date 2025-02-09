@@ -27,6 +27,27 @@ export async function toTaskDto(tx: DataTx, taskId: TaskId): Promise<TaskDto> {
     return {...task, column, board};
 }
 
+export function zBoardViewTaskDto() {
+    return zTask().extend({
+        column: zColumnDto().nullable(),
+        board: zBoardDto(),
+    });
+}
+
+export type BoardViewTaskDto = z.infer<ReturnType<typeof zBoardViewTaskDto>>;
+
+export async function toBoardViewTaskDto(
+    tx: DataTx,
+    taskId: TaskId
+): Promise<BoardViewTaskDto> {
+    const task = await tx.tasks.getById(taskId, true);
+    assert(task !== undefined, `toBoardViewTaskDto: task not found: ${taskId}`);
+    const column = task.columnId ? await toColumnDto(tx, task.columnId) : null;
+    const board = await toBoardDto(tx, task.boardId);
+
+    return {...task, column, board};
+}
+
 export function zColumnDto() {
     return zColumn().extend({
         board: zBoardDto(),
@@ -46,6 +67,33 @@ export async function toColumnDto(
     return {...column, board};
 }
 
+export function zBoardViewColumnDto() {
+    return zColumn().extend({
+        tasks: z.array(zBoardViewTaskDto()),
+    });
+}
+
+export type BoardViewColumnDto = z.infer<
+    ReturnType<typeof zBoardViewColumnDto>
+>;
+
+export async function toBoardViewColumnDto(
+    tx: DataTx,
+    columnId: ColumnId
+): Promise<BoardViewColumnDto> {
+    const column = await tx.columns.getById(columnId, true);
+    assert(
+        column !== undefined,
+        `toBoardViewColumnDto: column not found: ${columnId}`
+    );
+    const tasks = await tx.tasks
+        .getByColumnId(column.id)
+        .mapParallel(x => toBoardViewTaskDto(tx, x.id))
+        .toArray();
+
+    return {...column, tasks};
+}
+
 export function zBoardDto() {
     return zBoard().extend({});
 }
@@ -60,6 +108,28 @@ export async function toBoardDto(
     assert(board !== undefined, `toBoardDto: board not found: ${boardId}`);
 
     return {...board};
+}
+
+export function zBoardViewDto() {
+    return zBoard().extend({
+        columns: z.array(zBoardViewColumnDto()),
+    });
+}
+
+export type BoardViewDto = z.infer<ReturnType<typeof zBoardViewDto>>;
+
+export async function toBoardViewDto(
+    tx: DataTx,
+    boardId: BoardId
+): Promise<BoardViewDto> {
+    const board = await tx.boards.getById(boardId, true);
+    assert(board !== undefined, `toBoardViewDto: board not found: ${boardId}`);
+    const columns = await tx.columns
+        .getByBoardId(boardId)
+        .mapParallel(x => toBoardViewColumnDto(tx, x.id))
+        .toArray();
+
+    return {...board, columns};
 }
 
 export function zMemberDto() {

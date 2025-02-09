@@ -52,7 +52,7 @@ export function createWriteApi() {
             req: z.object({
                 taskId: zUuid<TaskId>(),
                 boardId: zUuid<BoardId>(),
-                columnId: zUuid<ColumnId>().nullable(),
+                columnId: zUuid<ColumnId>(),
                 title: z.string(),
                 placement: z.discriminatedUnion('type', [
                     z.object({
@@ -82,9 +82,7 @@ export function createWriteApi() {
                 await st.ps.ensureBoardMember(boardId, 'writer');
                 const now = getNow();
 
-                if (columnId) {
-                    await st.ps.ensureColumnMember(columnId, 'writer');
-                }
+                await st.ps.ensureColumnMember(columnId, 'writer');
 
                 const counter =
                     await st.tx.boards.incrementBoardCounter(boardId);
@@ -264,7 +262,7 @@ export function createWriteApi() {
         setTaskColumnId: handler({
             req: z.object({
                 taskId: zUuid<TaskId>(),
-                columnId: zUuid<ColumnId>().nullable(),
+                columnId: zUuid<ColumnId>(),
             }),
             res: z.object({}),
             handle: async (st, {taskId, columnId}) => {

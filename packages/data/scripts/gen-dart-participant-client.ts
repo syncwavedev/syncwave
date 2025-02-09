@@ -154,8 +154,18 @@ function genClientMethod(
     if (processor.type === 'handler') {
         result = `
             Future<${getResponseName(name)}> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async {
-                final json = await _rpc.handle('${name}', request.toJson(), headers);
-                return ${getResponseName(name)}.fromJson(json as Map<String, dynamic>);
+                try {
+                    final json = await _rpc.handle('${name}', request.toJson(), headers);
+                    return ${getResponseName(name)}.fromJson(json as Map<String, dynamic>);
+                } catch (error) {
+                    if (error is TransportException) {
+                        _transportErrors.add(error);    
+                    } else {
+                        _unknownErrors.add(error);
+                    }
+
+                    rethrow;
+                }
             }
         `;
     } else if (processor.type === 'streamer') {
@@ -167,11 +177,14 @@ function genClientMethod(
                             yield ${getItemName(name)}.fromJson(json as Map<String, dynamic>);
                         }
                     } catch (error) {
-                        if (error is! TransportException) {
+                        if (error is TransportException) {
+                            _transportErrors.add(error);
+                            await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+                        } else {
+                            _unknownErrors.add(error);
                             rethrow;
                         }
 
-                        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
                     }
                 }
             }
@@ -185,6 +198,8 @@ function genClientMethod(
 
 async function genClient(api: Api<unknown>) {
     const code = `
+        import 'dart:async';
+
         import 'package:syncwave_data/message.dart';
         import 'package:syncwave_data/participant/dto.dart';
         import 'package:syncwave_data/rpc/streamer.dart';
@@ -194,10 +209,17 @@ async function genClient(api: Api<unknown>) {
 
         class ParticipantClient {
             final RpcStreamerClient _rpc;
+            final StreamController<Object> _unknownErrors =
+                StreamController<Object>.broadcast();
+            final StreamController<Object> _transportErrors =
+                StreamController<Object>.broadcast();
 
             ParticipantClient({required Connection connection})
                 : _rpc = RpcStreamerClient(
                         conn: connection, getHeaders: () => MessageHeaders());
+
+            Stream<Object> get unknownErrors => _unknownErrors.stream;
+            Stream<Object> get transportErrors => _transportErrors.stream;
 
         $$1
 

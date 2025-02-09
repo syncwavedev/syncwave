@@ -1,18 +1,54 @@
+import 'dart:async';
+
 import 'package:syncwave_data/participant/client.dart';
 import 'package:syncwave_data/participant/dto.dart';
 
 import 'websocket_transport_client.dart';
 
 Future<void> main() async {
-  final wsClient = WebsocketTransportClient(Uri.parse("ws://localhost:4567"));
-  final conn = await wsClient.connect();
-  final client = ParticipantClient(connection: conn);
+  print("start");
 
-  try {
-    final result = await client.echo(EchoReq(msg: "hello from client!"));
+  final stream = StreamController<dynamic>.broadcast();
 
-    print("response: ${result.msg}");
-  } finally {
-    client.close();
-  }
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(1);
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(2);
+  await Future<void>.delayed(Duration(microseconds: 10));
+
+  final sub1 = stream.stream.listen((x) => print("one: $x"));
+
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(3);
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(4);
+  await Future<void>.delayed(Duration(microseconds: 10));
+
+  final sub2 = stream.stream.listen((x) => print("two: $x"));
+
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(5);
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(6);
+  await Future<void>.delayed(Duration(microseconds: 10));
+
+  sub1.cancel();
+
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(7);
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(8);
+  await Future<void>.delayed(Duration(microseconds: 10));
+
+  sub2.cancel();
+
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(9);
+  await Future<void>.delayed(Duration(microseconds: 10));
+  stream.add(10);
+  await Future<void>.delayed(Duration(microseconds: 10));
+
+  await Future<void>.delayed(Duration(microseconds: 10));
+
+  print("finish");
 }

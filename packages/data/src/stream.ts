@@ -2,10 +2,10 @@ import {Channel as AsyncChannel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cancel} from './context.js';
-import {Cursor} from './cursor.js';
+import {Cursor, toCursor} from './cursor.js';
 import {AppError, CancelledError, toError} from './errors.js';
 import {log} from './logger.js';
-import {assert, Nothing, stringify} from './utils.js';
+import {assert, Nothing, stringify, whenAll} from './utils.js';
 
 export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;
@@ -393,20 +393,61 @@ export class Stream<T> implements AsyncIterable<T> {
 
         return result;
     }
-}
+    partition<S extends T>(
+        predicate: (value: T) => value is S
+    ): [Cursor<S>, Cursor<Exclude<T, S>>];
+    partition(
+        predicate: (value: T) => Promise<boolean> | boolean
+    ): [Cursor<T>, Cursor<T>];
+    partition<S extends T>(
+        predicate:
+            | ((value: T) => value is S)
+            | ((value: T) => Promise<boolean> | boolean)
+    ): [Cursor<S>, Cursor<Exclude<T, S>>] | [Cursor<T>, Cursor<T>] {
+        const truthyChan = new Channel<T>();
+        const falsyChan = new Channel<T>();
 
-export type Observable<TValue, TUpdate> = Promise<[TValue, Cursor<TUpdate>]>;
+        (async () => {
+            try {
+                for await (const item of this) {
+                    if (await predicate(item)) {
+                        await truthyChan.next(item);
+                    } else {
+                        await falsyChan.next(item);
+                    }
+                }
+            } catch (error) {
+                await whenAll([
+                    truthyChan.throw(error),
+                    falsyChan.throw(error),
+                ]);
+            } finally {
+                truthyChan.end();
+                falsyChan.end();
+            }
+        })().catch(error => {
+            log.error(error, 'stream partition failed');
+        });
+
+        return [toCursor(truthyChan), toCursor(falsyChan)] as [
+            Cursor<S>,
+            Cursor<Exclude<T, S>>,
+        ];
+    }
+}
 
 export interface ObservableOptions<T> {
     get: () => Promise<T>;
     update$: Promise<Cursor<void>>;
 }
 
-export async function observable<T>(
+export async function* observable<T>(
     options: ObservableOptions<T>
-): Observable<T, T> {
+): AsyncIterable<T> {
     // we need to open updates cursor before getting the initial value
     // to ensure that we don't miss any updates in between initial value and updates cursor opening
     const updateCursor = await options.update$;
-    return [await options.get(), updateCursor.map(cx => options.get())];
+    yield await options.get();
+
+    yield* updateCursor.map(async () => await options.get());
 }

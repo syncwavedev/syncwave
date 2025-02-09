@@ -65,21 +65,6 @@ async function genDto(api: Api<unknown>) {
                         schema: zodToJsonSchema(processor.item),
                     },
                 ];
-            } else if (processor.type === 'observer') {
-                return [
-                    {
-                        name: getRequestName(name),
-                        schema: zodToJsonSchema(processor.req),
-                    },
-                    {
-                        name: getValueName(name),
-                        schema: zodToJsonSchema(processor.value),
-                    },
-                    {
-                        name: getUpdateName(name),
-                        schema: zodToJsonSchema(processor.update),
-                    },
-                ];
             }
 
             return [];
@@ -163,7 +148,7 @@ function addLinePrefix(code: string, prefix: string) {
 
 function genClientMethod(
     name: string,
-    processor: Processor<unknown, unknown, unknown, unknown>
+    processor: Processor<unknown, unknown, unknown>
 ) {
     let result: string;
     if (processor.type === 'handler') {
@@ -181,17 +166,6 @@ function genClientMethod(
                 }
             }
         `;
-    } else if (processor.type === 'observer') {
-        result = `
-            Future<(${getValueName(name)}, Stream<${getUpdateName(name)}>)> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async {
-                final (dynamic, Stream<dynamic>) result = await _rpc.observe('${name}', request.toJson(), headers);
-
-                return (
-                    ${getValueName(name)}.fromJson(result.$1 as Map<String, dynamic>),
-                    result.$2.map((json) => ${getUpdateName(name)}.fromJson(json as Map<String, dynamic>))
-                );
-            }
-        `;
     } else {
         assertNever(processor);
     }
@@ -203,14 +177,14 @@ async function genClient(api: Api<unknown>) {
     const code = `
         import 'package:syncwave_data/message.dart';
         import 'package:syncwave_data/participant/dto.dart';
-        import 'package:syncwave_data/rpc/observer.dart';
+        import 'package:syncwave_data/rpc/streamer.dart';
         import 'package:syncwave_data/transport.dart';
 
         class ParticipantClient {
-            final RpcObserverClient _rpc;
+            final RpcStreamerClient _rpc;
 
             ParticipantClient({required Connection connection})
-                : _rpc = RpcObserverClient(
+                : _rpc = RpcStreamerClient(
                         conn: connection, getHeaders: () => MessageHeaders());
 
         $$1

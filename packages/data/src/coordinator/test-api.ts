@@ -4,9 +4,8 @@ import {ChangeEvent, Transact} from '../data/data-layer.js';
 import {EventStoreReader} from '../data/event-store.js';
 import {createUserId, User} from '../data/repos/user-repo.js';
 import {log} from '../logger.js';
-import {observable} from '../stream.js';
 import {getNow} from '../timestamp.js';
-import {createApi, handler, observer, streamer} from '../transport/rpc.js';
+import {createApi, handler, streamer} from '../transport/rpc.js';
 import {wait} from '../utils.js';
 
 export interface TestApiState {
@@ -50,21 +49,6 @@ export function createTestApi() {
                     yield {index: index++, value: 'sdf'};
                     await wait({ms: 1000, onCancel: 'reject'});
                 }
-            },
-        }),
-        getObserve: observer({
-            req: z.object({topic: z.string()}),
-            value: z.object({index: z.number(), value: z.string()}),
-            update: z.object({index: z.number(), value: z.string()}),
-            async observe({esReader}, {topic}) {
-                return observable({
-                    async get() {
-                        return {index: 1, value: 'sdf'};
-                    },
-                    update$: esReader
-                        .subscribe(topic, 0)
-                        .then(x => x.map(() => undefined)),
-                });
             },
         }),
         streamPut: handler({

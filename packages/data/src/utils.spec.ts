@@ -2,6 +2,7 @@ import {assert, describe, expect, it} from 'vitest';
 import {
     AggregateBusinessError,
     AggregateError,
+    AppError,
     BusinessError,
 } from './errors.js';
 import {
@@ -250,7 +251,7 @@ describe('pipe', () => {
         const increment = (x: number) => x + 1;
         const pipeline = Array(100).fill(increment); // A pipeline of 100 increments
 
-        const result = (pipe as any)(0, ...pipeline);
+        const result = (pipe as any)(0, ...pipeline) as unknown;
         expect(result).toBe(100);
     });
 });
@@ -447,7 +448,7 @@ describe('whenAll', () => {
     it('should throw the single rejection reason if one promise rejects', async () => {
         const promises = [
             Promise.resolve(1),
-            Promise.reject(new Error('Test Error')),
+            Promise.reject(new AppError('Test Error')),
             Promise.resolve(3),
         ];
 
@@ -456,8 +457,8 @@ describe('whenAll', () => {
 
     it('should throw AggregateError if multiple promises reject', async () => {
         const promises = [
-            Promise.reject(new Error('Error 1')),
-            Promise.reject(new Error('Error 2')),
+            Promise.reject(new AppError('Error 1')),
+            Promise.reject(new AppError('Error 2')),
             Promise.resolve(3),
         ];
 

@@ -6,9 +6,9 @@ import {
 	CancelledError,
 	Deferred,
 	log,
+	Stream,
 	toError,
 	wait,
-	type Observable,
 	type ParticipantRpc,
 } from 'syncwave-data';
 import {getSdk} from './utils';
@@ -17,63 +17,39 @@ export interface State<T> {
 	value: T;
 }
 
-export async function fetchState<TValue, TUpdate>(
-	fn: (rpc: ParticipantRpc) => Observable<TValue, TUpdate>
-): Promise<State<TValue | TUpdate>> {
-	const result = new Deferred<State<TValue | TUpdate>>();
+export async function fetchState<T>(
+	fn: (rpc: ParticipantRpc) => AsyncIterable<T>
+): Promise<State<T>> {
+	const result = new Deferred<State<T>>();
+	const state: State<T | undefined> = $state({
+		value: undefined,
+	});
 
-	const sdk = getSdk();
-
-	if (browser) {
-		let cancelled = false;
-		(async function retry() {
-			while (!cancelled) {
-				try {
-					const [initialValue, update$] = await sdk(fn);
-					const state: State<TValue | TUpdate> = $state({
-						value: initialValue,
-					});
-
-					result.resolve(state);
-
-					for await (const next of update$) {
-						if (cancelled) {
-							break;
-						}
-						state.value = next;
-					}
-				} catch (e) {
-					if (!cancelled) {
-						log.error(toError(e), 'observable failed');
-					}
-					if (e instanceof CancelledError) return;
-					if (e instanceof BusinessError) {
-						if (e.code === 'forbidden') {
-							log.error('Access denied');
-							goto('/app');
-						}
-						return;
-					}
-				}
-
-				await wait({ms: 1000, onCancel: 'resolve'});
-			}
-		})();
-
-		onDestroy(() => {
-			cancelled = true;
-		});
-	}
+	useStream(fn, value => {
+		state.value = value;
+		result.resolve(state as State<T>);
+	});
 
 	return result.promise;
 }
 
-export function getState<TValue, TUpdate>(
-	initialValue: TValue | TUpdate,
-	fn: (rpc: ParticipantRpc) => Observable<TValue, TUpdate>
-): State<TValue | TUpdate> {
-	const state: State<TValue | TUpdate> = $state({value: initialValue});
+export function getState<T>(
+	initialValue: T,
+	fn: (rpc: ParticipantRpc) => Stream<T>
+): State<T> {
+	const state: State<T> = $state({value: initialValue});
 
+	useStream(fn, value => {
+		state.value = value;
+	});
+
+	return state;
+}
+
+function useStream<T>(
+	fn: (rpc: ParticipantRpc) => AsyncIterable<T>,
+	onNext: (value: T) => void
+) {
 	const sdk = getSdk();
 
 	if (browser) {
@@ -81,14 +57,13 @@ export function getState<TValue, TUpdate>(
 		(async function retry() {
 			while (!cancelled) {
 				try {
-					const [initialValue, update$] = await sdk(fn);
-					state.value = initialValue;
+					const value$ = sdk(fn);
 
-					for await (const next of update$) {
+					for await (const value of value$) {
 						if (cancelled) {
 							break;
 						}
-						state.value = next;
+						onNext(value);
 					}
 				} catch (e) {
 					if (!cancelled) {
@@ -112,8 +87,6 @@ export function getState<TValue, TUpdate>(
 			cancelled = true;
 		});
 	}
-
-	return state;
 }
 
 export function toggle(initial = false) {

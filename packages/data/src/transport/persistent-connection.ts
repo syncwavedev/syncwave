@@ -1,7 +1,8 @@
 import {RECONNECT_WAIT_MS} from '../constants.js';
 import {AppError, toError} from '../errors.js';
 import {log} from '../logger.js';
-import {Observer, Subject, Unsubscribe, wait} from '../utils.js';
+import {Observer, Subject} from '../subject.js';
+import {Unsubscribe, wait} from '../utils.js';
 import {
     Connection,
     TransportClient,

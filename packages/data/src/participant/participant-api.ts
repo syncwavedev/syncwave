@@ -26,8 +26,7 @@ export class ParticipantState {
         this.coordinator = createRpcClient(
             createCoordinatorApi(),
             this.connection,
-            () => ({}),
-            false
+            () => ({})
         );
     }
 
@@ -73,16 +72,6 @@ export function createParticipantApi() {
                     return state.coordinator[name](req, headers);
                 },
             } as any;
-        } else if (processor.type === 'observer') {
-            return {
-                type: 'observer',
-                req: processor.req,
-                value: processor.value,
-                update: processor.update,
-                stream: (state: any, req: any, headers: MessageHeaders) => {
-                    return state.coordinator[name](req, headers);
-                },
-            } as any;
         } else {
             assertNever(processor);
         }
@@ -101,7 +90,6 @@ export function createParticipantApi() {
         truncateDb: proxy('truncateDb'),
         deleteDbItem: proxy('deleteDbItem'),
         getMyBoards: proxy('getMyBoards'),
-        getObserve: proxy('getObserve'),
         echo: proxy('echo'),
         getBoard: proxy('getBoard'),
         createColumn: proxy('createColumn'),

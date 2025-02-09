@@ -10,7 +10,6 @@ import {
     createApi,
     decorateApi,
     handler,
-    observer,
     Processor,
     streamer,
 } from '../transport/rpc.js';
@@ -42,14 +41,12 @@ export function createE2eApi() {
                 }
             },
         }),
-        e2eObservable: observer({
+        e2eObservable: streamer({
             req: z.object({initialValue: z.number()}),
-            value: z.number(),
-            update: z.number(),
-            async observe(state, {initialValue}, headers) {
-                const processId = headers.traceId ?? 'unknown';
+            item: z.number(),
+            async *stream(state, {initialValue}, headers) {
                 let currentValue = initialValue;
-                return observable({
+                yield* observable({
                     async get() {
                         return currentValue;
                     },
@@ -84,23 +81,6 @@ export function createE2eApi() {
                 return {};
             },
         }),
-        e2eTimeoutObserver: observer({
-            req: z.object({}),
-            value: z.number(),
-            update: z.number(),
-            async observe() {
-                await wait({
-                    ms: RPC_CALL_TIMEOUT_MS + 1000,
-                    onCancel: 'reject',
-                });
-                return observable({
-                    async get() {
-                        return 1;
-                    },
-                    update$: Promise.resolve(toCursor(toStream([]))),
-                });
-            },
-        }),
         e2eSystemState: handler({
             req: z.object({}),
             res: z.object({
@@ -116,7 +96,7 @@ export function createE2eApi() {
 
     return decorateApi<E2eApiState, E2eApiState, typeof api>(
         api,
-        (processor): Processor<E2eApiState, unknown, unknown, unknown> => {
+        (processor): Processor<E2eApiState, unknown, unknown> => {
             if (processor.type === 'handler') {
                 return {
                     ...processor,
@@ -141,28 +121,6 @@ export function createE2eApi() {
                         ).finally(() => {
                             runningProcessIds.delete(traceId);
                         });
-                    },
-                };
-            } else if (processor.type === 'observer') {
-                return {
-                    ...processor,
-                    observe: async (state, arg, headers) => {
-                        const traceId = headers.traceId ?? createTraceId();
-                        runningProcessIds.add(traceId);
-                        try {
-                            const [initialValue, updates] =
-                                await processor.observe(state, arg, headers);
-
-                            return [
-                                initialValue,
-                                updates.finally(() => {
-                                    runningProcessIds.delete(traceId);
-                                }),
-                            ];
-                        } catch (e) {
-                            runningProcessIds.delete(traceId);
-                            throw e;
-                        }
                     },
                 };
             } else {

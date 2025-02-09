@@ -58,7 +58,7 @@ export function launchRpcHandlerServer<T>(
                             msg.payload.name
                         );
 
-                        const result: any = await handler.handle(
+                        const result: unknown = await handler.handle(
                             state,
                             msg.payload.arg,
                             msg.headers
@@ -233,7 +233,7 @@ async function proxyRequest(
 function createHandlerProxy(
     conn: Connection<Message>,
     getHeaders: () => MessageHeaders,
-    processor: Processor<unknown, unknown, unknown, unknown>,
+    processor: Processor<unknown, unknown, unknown>,
     name: string
 ) {
     return async (arg: unknown, partialHeaders?: MessageHeaders) => {
@@ -249,7 +249,7 @@ function createHandlerProxy(
 
         const [requestCtx, cancelRequestCtx] = context().createChild();
 
-        const result = await requestCtx.run(async () => {
+        const result: unknown = await requestCtx.run(async () => {
             const headers = Object.assign(
                 {traceId: createTraceId()},
                 getHeaders(),

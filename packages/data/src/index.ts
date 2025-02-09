@@ -25,6 +25,7 @@ export * from './participant/participant-api.js';
 export * from './participant/participant-client.js';
 export * from './participant/participant-server.js';
 export * from './stream.js';
+export * from './subject.js';
 export * from './transport/connection-pool.js';
 export * from './transport/message.js';
 export * from './transport/persistent-connection.js';

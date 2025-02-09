@@ -1,7 +1,8 @@
 import {Codec} from '../codec.js';
 import {AppError} from '../errors.js';
 import {log} from '../logger.js';
-import {Nothing, Observer, Subject, Unsubscribe} from '../utils.js';
+import {Observer, Subject} from '../subject.js';
+import {Nothing, Unsubscribe} from '../utils.js';
 import {Connection, TransportClient, TransportServer} from './transport.js';
 
 export class MemConnection<T> implements Connection<T> {

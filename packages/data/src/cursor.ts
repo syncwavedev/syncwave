@@ -16,6 +16,34 @@ export class Cursor<T> implements AsyncIterable<T> {
         return this.iter;
     }
 
+    async first(): Promise<T | undefined> {
+        return this.find(() => true);
+    }
+
+    async find(
+        predicate: (value: T) => Promise<boolean> | boolean
+    ): Promise<T | undefined> {
+        for await (const item of this) {
+            if (await predicate(item)) {
+                return item;
+            }
+        }
+
+        return undefined;
+    }
+
+    concat(...iterables: AsyncIterable<T>[]): Cursor<T> {
+        return toCursor(this._concat(...iterables));
+    }
+
+    private async *_concat(...iterables: AsyncIterable<T>[]) {
+        yield* this;
+
+        for (const stream of iterables) {
+            yield* stream;
+        }
+    }
+
     map<R>(mapper: (value: T) => R | Promise<R>): Cursor<R> {
         return toCursor(this._map(mapper));
     }

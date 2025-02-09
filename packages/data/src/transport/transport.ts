@@ -1,5 +1,6 @@
 import {AppError} from '../errors.js';
-import {Nothing, Observer, Unsubscribe} from '../utils.js';
+import {Observer} from '../subject.js';
+import {Nothing, Unsubscribe} from '../utils.js';
 
 export interface TransportServer<T> {
     launch(cb: (connection: Connection<T>) => Nothing): Promise<void>;

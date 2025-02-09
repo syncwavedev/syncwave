@@ -1,6 +1,7 @@
 import {z, ZodType} from 'zod';
 import {Cursor} from '../cursor.js';
 import {AppError} from '../errors.js';
+import {Observer, Subject} from '../subject.js';
 import {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {
@@ -9,11 +10,11 @@ import {
     createRpcClient,
     handler,
     InferRpcClient,
-    observer,
     RpcServer,
+    streamer,
 } from '../transport/rpc.js';
 import {TransportClient, TransportServer} from '../transport/transport.js';
-import {Observer, pipe, Subject} from '../utils.js';
+import {assert, pipe} from '../utils.js';
 
 export class HubClient<T> {
     private readonly server: HubServerRpc<T>;
@@ -24,14 +25,9 @@ export class HubClient<T> {
         authSecret: string
     ) {
         const conn = new PersistentConnection(transportClient);
-        this.server = createRpcClient(
-            createHubServerApi(schema),
-            conn,
-            () => ({
-                auth: authSecret,
-            }),
-            false
-        );
+        this.server = createRpcClient(createHubServerApi(schema), conn, () => ({
+            auth: authSecret,
+        }));
     }
 
     // next waits for all subscribers to do their work
@@ -44,8 +40,17 @@ export class HubClient<T> {
     }
 
     async subscribe(topic: string): Promise<Cursor<T>> {
-        const [, result] = await this.server.subscribe({topic});
-        return result;
+        const [init, updates] = this.server
+            .subscribe({topic})
+            .partition(x => x.type === 'init');
+        await init.first();
+        return updates.map(x => {
+            assert(
+                x.type === 'item' && 'item' in x,
+                'expected item after partition'
+            );
+            return x.item as T;
+        });
     }
 }
 
@@ -144,13 +149,19 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                     );
                 },
             }),
-            subscribe: observer({
+            subscribe: streamer({
                 req: z.object({topic: z.string()}),
-                value: z.undefined(),
-                update: zMessage,
-                async observe({subjects}, {topic}) {
+                item: z.discriminatedUnion('type', [
+                    z.object({type: z.literal('init')}),
+                    z.object({type: z.literal('item'), item: zMessage}),
+                ]),
+                async *stream({subjects}, {topic}) {
                     const message$ = subjects.value$(topic).toCursor();
-                    return [undefined, message$];
+                    yield {type: 'init' as const};
+                    yield* message$.map(item => ({
+                        type: 'item' as const,
+                        item,
+                    }));
                 },
             }),
         }),

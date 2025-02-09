@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {observable, toStream} from '../stream.js';
-import {createApi, InferRpcClient, observer} from '../transport/rpc.js';
+import {createApi, InferRpcClient, streamer} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
 import {zUuid} from '../uuid.js';
 import {AuthContext} from './auth-context.js';
@@ -46,20 +46,16 @@ export class ReadApiState {
 
 export function createReadApi() {
     return createApi<ReadApiState>()({
-        getMe: observer({
+        getMe: streamer({
             req: z.object({}),
-            value: z.object({
+            item: z.object({
                 user: zUser(),
                 identity: zIdentity(),
             }),
-            update: z.object({
-                user: zUser(),
-                identity: zIdentity(),
-            }),
-            observe: async st => {
+            async *stream(st) {
                 const userId = st.ensureAuthenticated();
 
-                return observable({
+                yield* observable({
                     async get() {
                         return await st.transact(async tx => {
                             const user = await tx.users.getById(userId, true);
@@ -79,14 +75,13 @@ export function createReadApi() {
                 });
             },
         }),
-        getMyBoards: observer({
+        getMyBoards: streamer({
             req: z.object({}),
-            value: z.array(zBoardDto()),
-            update: z.array(zBoardDto()),
-            observe: async st => {
+            item: z.array(zBoardDto()),
+            async *stream(st) {
                 const userId = st.ensureAuthenticated();
 
-                return observable({
+                yield* observable({
                     async get() {
                         return st.transact(async tx => {
                             const members = tx.members.getByUserId(
@@ -112,12 +107,11 @@ export function createReadApi() {
                 });
             },
         }),
-        getBoardTasks: observer({
+        getBoardTasks: streamer({
             req: z.object({boardId: zUuid<BoardId>()}),
-            value: z.array(zTask()),
-            update: z.array(zTask()),
-            observe: async (st, {boardId}) => {
-                return observable({
+            item: z.array(zTask()),
+            async *stream(st, {boardId}) {
+                yield* observable({
                     async get() {
                         return await st.transact(async tx => {
                             const [tasks] = await whenAll([
@@ -134,11 +128,10 @@ export function createReadApi() {
                 });
             },
         }),
-        getTask: observer({
+        getTask: streamer({
             req: z.object({taskId: zUuid<TaskId>()}),
-            value: zTask().optional(),
-            update: zTask().optional(),
-            observe: async (st, {taskId}) => {
+            item: zTask().optional(),
+            async *stream(st, {taskId}) {
                 const task = await st.transact(tx =>
                     tx.tasks.getById(taskId, false)
                 );
@@ -148,7 +141,7 @@ export function createReadApi() {
                         'task_not_found'
                     );
                 }
-                return observable({
+                yield* observable({
                     async get() {
                         return await st.transact(async tx => {
                             const task = await tx.tasks.getById(taskId, true);
@@ -169,15 +162,14 @@ export function createReadApi() {
                 });
             },
         }),
-        getTaskComments: observer({
+        getTaskComments: streamer({
             req: z.object({taskId: zUuid<TaskId>()}),
-            value: z.array(zCommentDto()),
-            update: z.array(zCommentDto()),
-            observe: async (st, {taskId}) => {
+            item: z.array(zCommentDto()),
+            async *stream(st, {taskId}) {
                 const task = await st.transact(tx =>
                     tx.ps.ensureTaskMember(taskId, 'reader')
                 );
-                return observable({
+                yield* observable({
                     get() {
                         return st.transact(async tx => {
                             await tx.ps.ensureTaskMember(taskId, 'reader');
@@ -193,12 +185,11 @@ export function createReadApi() {
                 });
             },
         }),
-        getBoardMembers: observer({
+        getBoardMembers: streamer({
             req: z.object({boardId: zUuid<BoardId>()}),
-            value: z.array(zMemberAdminDto()),
-            update: z.array(zMemberAdminDto()),
-            observe: async (st, {boardId}) => {
-                return observable({
+            item: z.array(zMemberAdminDto()),
+            async *stream(st, {boardId}) {
+                yield* observable({
                     get() {
                         return st.transact(async tx => {
                             await tx.ps.ensureBoardMember(boardId, 'admin');
@@ -214,13 +205,12 @@ export function createReadApi() {
                 });
             },
         }),
-        getBoard: observer({
+        getBoard: streamer({
             req: z.object({
                 key: z.string(),
             }),
-            value: zBoard(),
-            update: zBoard(),
-            observe: async (st, {key}) => {
+            item: zBoard(),
+            async *stream(st, {key}) {
                 const board = await st.transact(tx => tx.boards.getByKey(key));
                 if (board === undefined) {
                     throw new BusinessError(
@@ -229,7 +219,7 @@ export function createReadApi() {
                     );
                 }
                 const boardId = board.id;
-                return observable({
+                yield* observable({
                     async get() {
                         return await st.transact(async tx => {
                             const [board] = await whenAll([
@@ -252,21 +242,16 @@ export function createReadApi() {
                 });
             },
         }),
-        getBoardView: observer({
+        getBoardView: streamer({
             req: z.object({
                 key: z.string(),
             }),
-            value: z.object({
+            item: z.object({
                 board: zBoardDto(),
                 columns: z.array(zColumnDto()),
                 tasks: z.array(zTaskDto()),
             }),
-            update: z.object({
-                board: zBoardDto(),
-                columns: z.array(zColumnDto()),
-                tasks: z.array(zTaskDto()),
-            }),
-            observe: async (st, {key}) => {
+            async *stream(st, {key}) {
                 const board = await log.time('getBoardView get board', () =>
                     st.transact(tx => tx.boards.getByKey(key))
                 );
@@ -277,7 +262,7 @@ export function createReadApi() {
                     );
                 }
                 const boardId = board.id;
-                return observable({
+                yield* observable({
                     async get() {
                         return await st.transact(async tx => {
                             const [board] = await whenAll([

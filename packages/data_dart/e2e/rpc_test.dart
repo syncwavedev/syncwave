@@ -1,16 +1,16 @@
 import 'dart:async';
 
 import 'package:syncwave_data/errors.dart';
+import 'package:syncwave_data/rpc/streamer.dart';
 import 'package:test/test.dart';
 import 'package:syncwave_data/message.dart';
 import 'package:syncwave_data/websocket_transport_client.dart';
-import 'package:syncwave_data/rpc/observer.dart';
 
 const e2eApiUrl = "ws://127.0.0.1:4567";
 
 void main() {
   late WebsocketTransportClient client;
-  late RpcObserverClient rpc;
+  late RpcStreamerClient rpc;
 
   Future<void> expectNoRunningProcesses() async {
     final traceId = createTraceId();
@@ -28,7 +28,7 @@ void main() {
   setUp(() async {
     client = WebsocketTransportClient(Uri.parse(e2eApiUrl));
     final connection = await client.connect();
-    rpc = RpcObserverClient(
+    rpc = RpcStreamerClient(
       conn: connection,
       getHeaders: () => MessageHeaders(auth: null, traceId: createTraceId()),
     );
@@ -86,15 +86,12 @@ void main() {
     });
 
     test('observer - provides initial value and updates', () async {
-      final observer = await rpc.observe('e2eObservable', {'initialValue': 10});
+      final observer = rpc.stream('e2eObservable', {'initialValue': 10});
 
-      expect(observer.$1, equals(10));
-
-      // Listen for updates
-      final updates = observer.$2.take(3);
+      final updates = observer.take(4);
       final values = await updates.toList();
-      expect(values.length, equals(3));
-      expect(values, equals([11, 12, 13]));
+      expect(values.length, equals(4));
+      expect(values, equals([10, 11, 12, 13]));
     });
 
     test('handler - error is propagated correctly', () async {
@@ -134,26 +131,25 @@ void main() {
     });
 
     test('observer - can be cancelled after partial updates', () async {
-      final observer = await rpc.observe('e2eObservable', {'initialValue': 5});
-      expect(observer.$1, equals(5));
+      final observer = rpc.stream('e2eObservable', {'initialValue': 5});
 
       final receivedUpdates = <int>[];
       StreamSubscription<dynamic>? subscription;
-      subscription = observer.$2.listen(
+      subscription = observer.listen(
         (value) {
           receivedUpdates.add(value as int);
-          if (receivedUpdates.length == 2) {
+          if (receivedUpdates.length == 3) {
             subscription?.cancel();
           }
         },
       );
 
       await Future<void>.delayed(Duration(milliseconds: 500));
-      expect(receivedUpdates, equals([6, 7]));
+      expect(receivedUpdates, equals([5, 6, 7]));
 
       // Verify no more values are received
       await Future<void>.delayed(Duration(milliseconds: 500));
-      expect(receivedUpdates.length, equals(2));
+      expect(receivedUpdates.length, equals(3));
     });
 
     test('streamer - throws error on multiple partial reads', () async {
@@ -171,13 +167,6 @@ void main() {
           () => rpc.handle('e2eTimeout', <String, dynamic>{}),
           throwsA(predicate(
               (e) => e is Exception && e.toString().contains('timeout'))),
-        );
-      });
-
-      test('observer - times out on initial value', () async {
-        expect(
-          () => rpc.observe('e2eTimeoutObserver', <String, dynamic>{}),
-          throwsA(isA<CancelledError>()),
         );
       });
 

@@ -26,11 +26,8 @@ void main() {
       await connection.send(RequestMessage(
           id: requestId,
           payload: RequestMessagePayload(name: "handle", arg: {
-            'name': 'handle',
-            'arg': {
-              'name': 'echo',
-              'arg': {'msg': 'hello e2e'}
-            }
+            'name': 'echo',
+            'arg': {'msg': 'hello e2e'}
           }),
           headers: MessageHeaders(auth: null, traceId: null)));
       final message = await messageFut;

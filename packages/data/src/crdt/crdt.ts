@@ -65,7 +65,7 @@ export class Crdt<T> {
     }
 
     snapshot(): T {
-        return mapFromYValue(this.yValue);
+        return mapFromYValue(this.yValue) as T;
     }
 
     state(): CrdtDiff<T> {
@@ -149,7 +149,7 @@ type YValue =
 
 const INTERPRET_AS_KEY = '__interpret_as__';
 
-function mapFromYValue(yValue: YValue): any {
+function mapFromYValue(yValue: YValue): unknown {
     if (
         yValue === null ||
         yValue === undefined ||
@@ -255,15 +255,17 @@ class Locator {
             this.map.set(subject, yValue);
 
             for (const [key, subjectValue] of subject.entries()) {
-                const yValueValue = (yValue as YMap<any>).get(key);
+                const yValueValue = (yValue as YMap<YValue>).get(key);
 
                 this.addDeep(subjectValue, yValueValue);
             }
         } else if (subject.constructor === Array) {
             this.map.set(subject, yValue);
             for (let i = 0; i < subject.length; i += 1) {
-                const subjectItem = subject[i];
-                const yValueItem = (yValue as YArray<any>).get(i).get('value');
+                const subjectItem: unknown = subject[i];
+                const yValueItem = (yValue as YArray<YMap<YValue>>)
+                    .get(i)
+                    .get('value');
 
                 this.addDeep(subjectItem, yValueItem);
             }
@@ -271,7 +273,7 @@ class Locator {
             this.map.set(subject, yValue);
 
             for (const [key, subjectValue] of Object.entries(subject)) {
-                const yValueValue = (yValue as YMap<any>).get(key);
+                const yValueValue = (yValue as YMap<YValue>).get(key);
                 this.addDeep(subjectValue, yValueValue);
             }
         } else {

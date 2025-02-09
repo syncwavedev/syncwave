@@ -17,12 +17,23 @@ export function createTraceId(): TraceId {
 }
 
 export class Context {
-    private static _root = new Context();
+    private static _root = new Context({});
     static root() {
         return Context._root;
     }
 
-    private constructor(public readonly traceId = createTraceId()) {}
+    private constructor(
+        public readonly kwargs: Readonly<Record<string, string>>
+    ) {
+        this.kwargs = {
+            traceId: createTraceId(),
+            ...kwargs,
+        };
+    }
+
+    public get traceId(): TraceId {
+        return this.kwargs.traceId as TraceId;
+    }
 
     private cleaners: Array<() => Promise<void> | void> = [];
     private _cancelled = false;
@@ -80,8 +91,8 @@ export class Context {
         };
     }
 
-    createChild(options?: {traceId?: TraceId}): [Context, Cancel] {
-        const child = new Context(options?.traceId);
+    createChild(kwargs?: Record<string, string>): [Context, Cancel] {
+        const child = new Context(kwargs ?? {});
         this.children.push(child);
         return [
             child,

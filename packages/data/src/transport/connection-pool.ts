@@ -1,6 +1,7 @@
 import {context} from '../context.js';
 import {log} from '../logger.js';
-import {Observer, Subject, Unsubscribe} from '../utils.js';
+import {Observer, Subject} from '../subject.js';
+import {Unsubscribe} from '../utils.js';
 import {Connection, TransportClient} from './transport.js';
 
 export class ReleasableConnection<T> implements Connection<T> {

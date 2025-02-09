@@ -4,8 +4,8 @@ import type {LayoutLoad} from './$types.js';
 
 export const load: LayoutLoad = async ({data}) => {
 	const [initialBoards, initialMe] = await whenAll([
-		sdkOnce(data.serverCookies, x => x.getMyBoards.once({})),
-		sdkOnce(data.serverCookies, x => x.getMe.once({})),
+		sdkOnce(data.serverCookies, x => x.getMyBoards({}).first()),
+		sdkOnce(data.serverCookies, x => x.getMe({}).first()),
 	]);
 
 	return {

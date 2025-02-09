@@ -70,10 +70,6 @@ export function createReadApi() {
                                 identity !== undefined,
                                 'getMe: identity not found'
                             );
-                            log.warn(
-                                'return' +
-                                    JSON.stringify({user, identity}, null, 2)
-                            );
                             return {user, identity};
                         });
                     },

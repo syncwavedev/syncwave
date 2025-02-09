@@ -29,7 +29,9 @@
 	const authManager = createAuthManager(data.serverCookies);
 	setContext(AuthManager, authManager);
 
-	export const participantClient = createParticipantClient(data.serverCookies);
+	export const participantClient = createParticipantClient(
+		data.serverCookies
+	);
 	setContext(ParticipantClient, participantClient);
 
 	onDestroy(() => {
@@ -58,15 +60,8 @@
 <svelte:window on:keydown={on_key_down} />
 
 <Dialog.Root bind:open={devToolsOpen}>
-	<Dialog.Content class="max-w-[1000px]">
-		<Dialog.Header>
-			<Dialog.Description
-				>DevTools (userId = {authManager.getIdentityInfo()?.userId})</Dialog.Description
-			>
-		</Dialog.Header>
-		<ScrollArea class="max-h-[80vh]">
-			<DevTools />
-		</ScrollArea>
+	<Dialog.Content class="max-w-[90%]">
+		<DevTools />
 	</Dialog.Content>
 </Dialog.Root>
 

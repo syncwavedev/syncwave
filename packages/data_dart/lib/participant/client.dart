@@ -194,6 +194,11 @@ class ParticipantClient {
     );
   }
 
+  Future<SetUserFullNameRes> setUserFullName(SetUserFullNameReq request, [MessageHeaders? headers]) async {
+    final json = await _rpc.handle('setUserFullName', request.toJson(), headers);
+    return SetUserFullNameRes.fromJson(json as Map<String, dynamic>);
+  }
+
   void close() {
     _rpc.close();
   }

@@ -11,10 +11,14 @@
 	import CreditCard from 'lucide-svelte/icons/credit-card';
 	import LogOut from 'lucide-svelte/icons/log-out';
 	import Sparkles from 'lucide-svelte/icons/sparkles';
+	import EditUserDialog from './edit-user-dialog.svelte';
+	import {toggle} from '$lib/utils.svelte';
 
 	let {me}: {me: {user: User; identity: Identity}} = $props();
 	const sidebar = useSidebar();
 	const authManager = getAuthManager();
+
+	const editUserOpen = toggle();
 </script>
 
 <Sidebar.Menu>
@@ -28,12 +32,23 @@
 						{...props}
 					>
 						<Avatar.Root class="h-8 w-8 rounded-lg">
-							<Avatar.Image src="/avatar-example.jpeg" alt={me.user.id} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							<Avatar.Image
+								src="/avatar-example.jpeg"
+								alt={me.user.id}
+							/>
+							<Avatar.Fallback class="rounded-lg"
+								>CN</Avatar.Fallback
+							>
 						</Avatar.Root>
-						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-semibold">{me.user.id}</span>
-							<span class="truncate text-xs">{me.identity.email}</span>
+						<div
+							class="grid flex-1 text-left text-sm leading-tight"
+						>
+							<span class="truncate font-semibold"
+								>{me.user.fullName}</span
+							>
+							<span class="truncate text-xs"
+								>{me.identity.email}</span
+							>
 						</div>
 						<ChevronsUpDown class="ml-auto size-4" />
 					</Sidebar.MenuButton>
@@ -46,37 +61,35 @@
 				sideOffset={4}
 			>
 				<DropdownMenu.Label class="p-0 font-normal">
-					<div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+					<div
+						class="flex items-center gap-2 px-1 py-1.5 text-left text-sm"
+					>
 						<Avatar.Root class="h-8 w-8 rounded-lg">
-							<Avatar.Image src="/avatar-example.jpeg" alt={me.user.id} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							<Avatar.Image
+								src="/avatar-example.jpeg"
+								alt={me.user.id}
+							/>
+							<Avatar.Fallback class="rounded-lg"
+								>CN</Avatar.Fallback
+							>
 						</Avatar.Root>
-						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-semibold">{me.user.id}</span>
-							<span class="truncate text-xs">{me.identity.email}</span>
+						<div
+							class="grid flex-1 text-left text-sm leading-tight"
+						>
+							<span class="truncate font-semibold"
+								>{me.user.fullName}</span
+							>
+							<span class="truncate text-xs"
+								>{me.identity.email}</span
+							>
 						</div>
 					</div>
 				</DropdownMenu.Label>
 				<DropdownMenu.Separator />
 				<DropdownMenu.Group>
-					<DropdownMenu.Item>
-						<Sparkles />
-						Upgrade to Pro
-					</DropdownMenu.Item>
-				</DropdownMenu.Group>
-				<DropdownMenu.Separator />
-				<DropdownMenu.Group>
-					<DropdownMenu.Item>
+					<DropdownMenu.Item onclick={editUserOpen.toggle}>
 						<BadgeCheck />
-						Account
-					</DropdownMenu.Item>
-					<DropdownMenu.Item>
-						<CreditCard />
-						Billing
-					</DropdownMenu.Item>
-					<DropdownMenu.Item>
-						<Bell />
-						Notifications
+						Profile
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
@@ -88,3 +101,5 @@
 		</DropdownMenu.Root>
 	</Sidebar.MenuItem>
 </Sidebar.Menu>
+
+<EditUserDialog user={me.user} bind:open={editUserOpen.value} />

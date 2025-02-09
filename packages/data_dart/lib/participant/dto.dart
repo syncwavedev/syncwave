@@ -69,6 +69,8 @@
 //     final getBoardMembersReq = getBoardMembersReqFromJson(jsonString);
 //     final getBoardMembersValue = getBoardMembersValueFromJson(jsonString);
 //     final getBoardMembersUpdate = getBoardMembersUpdateFromJson(jsonString);
+//     final setUserFullNameReq = setUserFullNameReqFromJson(jsonString);
+//     final setUserFullNameRes = setUserFullNameResFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -348,6 +350,14 @@ List<GetBoardMembersUpdate> getBoardMembersUpdateFromJson(String str) => List<Ge
 
 String getBoardMembersUpdateToJson(List<GetBoardMembersUpdate> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
+SetUserFullNameReq setUserFullNameReqFromJson(String str) => SetUserFullNameReq.fromJson(json.decode(str));
+
+String setUserFullNameReqToJson(SetUserFullNameReq data) => json.encode(data.toJson());
+
+SetUserFullNameRes setUserFullNameResFromJson(String str) => SetUserFullNameRes.fromJson(json.decode(str));
+
+String setUserFullNameResToJson(SetUserFullNameRes data) => json.encode(data.toJson());
+
 class StreamPutReq {
     String topic;
     String value;
@@ -445,18 +455,94 @@ class GetMeReq {
 }
 
 class GetMeValue {
+    GetMeValueIdentity identity;
     GetMeValueUser user;
 
     GetMeValue({
+        required this.identity,
         required this.user,
     });
 
     factory GetMeValue.fromJson(Map<String, dynamic> json) => GetMeValue(
+        identity: GetMeValueIdentity.fromJson(json["identity"]),
         user: GetMeValueUser.fromJson(json["user"]),
     );
 
     Map<String, dynamic> toJson() => {
+        "identity": identity.toJson(),
         "user": user.toJson(),
+    };
+}
+
+class GetMeValueIdentity {
+    List<double> authActivityLog;
+    double createdAt;
+    bool deleted;
+    String email;
+    String id;
+    List<String> pk;
+    double updatedAt;
+    String userId;
+    
+    ///VerificationCode
+    PurpleVerificationCode verificationCode;
+
+    GetMeValueIdentity({
+        required this.authActivityLog,
+        required this.createdAt,
+        required this.deleted,
+        required this.email,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+        required this.userId,
+        required this.verificationCode,
+    });
+
+    factory GetMeValueIdentity.fromJson(Map<String, dynamic> json) => GetMeValueIdentity(
+        authActivityLog: List<double>.from(json["authActivityLog"].map((x) => x?.toDouble())),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        email: json["email"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+        userId: json["userId"],
+        verificationCode: PurpleVerificationCode.fromJson(json["verificationCode"]),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authActivityLog": List<dynamic>.from(authActivityLog.map((x) => x)),
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "email": email,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+        "userId": userId,
+        "verificationCode": verificationCode.toJson(),
+    };
+}
+
+
+///VerificationCode
+class PurpleVerificationCode {
+    String code;
+    double expires;
+
+    PurpleVerificationCode({
+        required this.code,
+        required this.expires,
+    });
+
+    factory PurpleVerificationCode.fromJson(Map<String, dynamic> json) => PurpleVerificationCode(
+        code: json["code"],
+        expires: json["expires"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "code": code,
+        "expires": expires,
     };
 }
 
@@ -509,12 +595,134 @@ final versionValues = EnumValues({
 });
 
 class GetMeUpdate {
-    GetMeUpdate();
+    GetMeUpdateIdentity identity;
+    GetMeUpdateUser user;
+
+    GetMeUpdate({
+        required this.identity,
+        required this.user,
+    });
 
     factory GetMeUpdate.fromJson(Map<String, dynamic> json) => GetMeUpdate(
+        identity: GetMeUpdateIdentity.fromJson(json["identity"]),
+        user: GetMeUpdateUser.fromJson(json["user"]),
     );
 
     Map<String, dynamic> toJson() => {
+        "identity": identity.toJson(),
+        "user": user.toJson(),
+    };
+}
+
+class GetMeUpdateIdentity {
+    List<double> authActivityLog;
+    double createdAt;
+    bool deleted;
+    String email;
+    String id;
+    List<String> pk;
+    double updatedAt;
+    String userId;
+    
+    ///VerificationCode
+    FluffyVerificationCode verificationCode;
+
+    GetMeUpdateIdentity({
+        required this.authActivityLog,
+        required this.createdAt,
+        required this.deleted,
+        required this.email,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+        required this.userId,
+        required this.verificationCode,
+    });
+
+    factory GetMeUpdateIdentity.fromJson(Map<String, dynamic> json) => GetMeUpdateIdentity(
+        authActivityLog: List<double>.from(json["authActivityLog"].map((x) => x?.toDouble())),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        email: json["email"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+        userId: json["userId"],
+        verificationCode: FluffyVerificationCode.fromJson(json["verificationCode"]),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authActivityLog": List<dynamic>.from(authActivityLog.map((x) => x)),
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "email": email,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+        "userId": userId,
+        "verificationCode": verificationCode.toJson(),
+    };
+}
+
+
+///VerificationCode
+class FluffyVerificationCode {
+    String code;
+    double expires;
+
+    FluffyVerificationCode({
+        required this.code,
+        required this.expires,
+    });
+
+    factory FluffyVerificationCode.fromJson(Map<String, dynamic> json) => FluffyVerificationCode(
+        code: json["code"],
+        expires: json["expires"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "code": code,
+        "expires": expires,
+    };
+}
+
+class GetMeUpdateUser {
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    double updatedAt;
+    Version version;
+
+    GetMeUpdateUser({
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory GetMeUpdateUser.fromJson(Map<String, dynamic> json) => GetMeUpdateUser(
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: versionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+        "version": versionValues.reverse[version],
     };
 }
 
@@ -3927,6 +4135,36 @@ class GetBoardMembersUpdateUser {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "updatedAt": updatedAt,
         "version": versionValues.reverse[version],
+    };
+}
+
+class SetUserFullNameReq {
+    String fullName;
+    String userId;
+
+    SetUserFullNameReq({
+        required this.fullName,
+        required this.userId,
+    });
+
+    factory SetUserFullNameReq.fromJson(Map<String, dynamic> json) => SetUserFullNameReq(
+        fullName: json["fullName"],
+        userId: json["userId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "fullName": fullName,
+        "userId": userId,
+    };
+}
+
+class SetUserFullNameRes {
+    SetUserFullNameRes();
+
+    factory SetUserFullNameRes.fromJson(Map<String, dynamic> json) => SetUserFullNameRes(
+    );
+
+    Map<String, dynamic> toJson() => {
     };
 }
 

@@ -99,7 +99,11 @@ export class UserRepo {
         return this.rawRepo.create({pk: [user.id], ...user});
     }
 
-    update(id: UserId, recipe: Recipe<User>): Promise<User> {
-        return this.rawRepo.update([id], recipe);
+    update(
+        id: UserId,
+        recipe: Recipe<User>,
+        includeDeleted = false
+    ): Promise<User> {
+        return this.rawRepo.update([id], recipe, includeDeleted);
     }
 }

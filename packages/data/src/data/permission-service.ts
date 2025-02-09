@@ -33,6 +33,15 @@ export class PermissionService {
         );
     }
 
+    async ensureUser(userId: UserId) {
+        if (this.ensureAuthenticated() !== userId) {
+            throw new BusinessError(
+                'user is not authorized to perform this action',
+                'forbidden'
+            );
+        }
+    }
+
     async ensureBoardMember(
         boardId: BoardId,
         minimum: MemberRole

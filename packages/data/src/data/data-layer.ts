@@ -297,7 +297,6 @@ async function logMemberChange(
     assert(member !== undefined, `logMemberChange: member ${id} not found`);
     const ts = getNow();
     const event: MemberChangeEvent = {type: 'member', id, diff, ts};
-    log.info(`write to ${userEvents(member.userId)}`);
     await whenAll([
         tx.esWriter.append(boardEvents(member.boardId), event),
         tx.esWriter.append(userEvents(member.userId), event),

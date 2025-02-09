@@ -25,6 +25,7 @@ import {
     zMemberRole,
 } from '../repos/member-repo.js';
 import {TaskId, zTask} from '../repos/task-repo.js';
+import {UserId} from '../repos/user-repo.js';
 
 export class WriteApiState {
     constructor(
@@ -398,6 +399,25 @@ export function createWriteApi() {
                     commentId,
                     x => {
                         x.deleted = true;
+                    },
+                    true
+                );
+
+                return {};
+            },
+        }),
+        setUserFullName: handler({
+            req: z.object({
+                userId: zUuid<UserId>(),
+                fullName: z.string(),
+            }),
+            res: z.object({}),
+            handle: async (st, {userId, fullName}) => {
+                await st.ps.ensureUser(userId);
+                await st.tx.users.update(
+                    userId,
+                    x => {
+                        x.fullName = fullName;
                     },
                     true
                 );

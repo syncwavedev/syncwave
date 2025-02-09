@@ -120,6 +120,7 @@ export function createParticipantApi() {
         createMember: proxy('createMember'),
         deleteMember: proxy('deleteMember'),
         getBoardMembers: proxy('getBoardMembers'),
+        setUserFullName: proxy('setUserFullName'),
     });
 }
 

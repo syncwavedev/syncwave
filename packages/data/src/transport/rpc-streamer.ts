@@ -101,11 +101,11 @@ class RpcStreamerServerApiState<T> {
 }
 
 function toResponseLog(arg: unknown) {
-    return JSON.stringify(arg).slice(0, 100);
+    return JSON.stringify(arg)?.slice(0, 100);
 }
 
 function toRequestLog(arg: unknown) {
-    return JSON.stringify(arg).slice(0, 100);
+    return JSON.stringify(arg)?.slice(0, 100);
 }
 
 function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {

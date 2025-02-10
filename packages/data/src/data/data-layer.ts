@@ -215,10 +215,14 @@ export class DataLayer {
         });
 
         while (effects.length > 0) {
+            log.info(`running ${effects.length} effects...`);
+
             const effectsSnapshot = effects;
             effects = [];
 
             await whenAll(effectsSnapshot.map(effect => effect()));
+
+            log.info('effects executed');
 
             if (effects.length > 0) {
                 log.info('effect recursion detected');

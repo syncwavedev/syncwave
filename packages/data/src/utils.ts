@@ -314,3 +314,5 @@ export function stringify(x: unknown) {
         return x.toString();
     }
 }
+
+export function drop<T>(_: T) {}

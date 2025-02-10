@@ -57,7 +57,9 @@ function useStream<T>(
 		(async function retry() {
 			while (!cancelled) {
 				try {
-					const value$ = sdk(fn);
+					const value$ = sdk(x => {
+						return fn(x);
+					});
 
 					for await (const value of value$) {
 						if (cancelled) {

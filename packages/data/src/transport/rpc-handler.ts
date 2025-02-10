@@ -61,7 +61,10 @@ export function launchRpcHandlerServer<T>(
                         const result: unknown = await handler.handle(
                             state,
                             msg.payload.arg,
-                            msg.headers
+                            {
+                                headers: msg.headers,
+                                requestId: msg.id,
+                            }
                         );
 
                         await catchConnectionClosed(

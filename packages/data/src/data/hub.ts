@@ -180,7 +180,7 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
         api =>
             applyMiddleware(
                 api,
-                async (next, state: HubServerRpcState<T>, headers) => {
+                async (next, state: HubServerRpcState<T>, {headers}) => {
                     if (headers.auth !== state.authSecret) {
                         throw new AppError(
                             `HubServer: authentication failed: ${state.authSecret} !== ${headers.auth}`

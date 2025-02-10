@@ -113,13 +113,13 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
         handle: handler({
             req: z.object({name: z.string(), arg: z.unknown()}),
             res: z.unknown(),
-            handle: async (state, req, headers) => {
+            handle: async (state, req, ctx) => {
                 const processor = getRequiredProcessor(api, req.name);
                 if (processor.type !== 'handler') {
                     throw new AppError('processor must be a handler');
                 }
 
-                const callInfo = `handle ${state.serverName}.${req.name}(${toRequestLog(req.arg)})`;
+                const callInfo = `handle ${state.serverName}.${req.name}(${toRequestLog(req.arg)}) [rid=${ctx.requestId}]`;
 
                 try {
                     log.info(`${callInfo}...`);
@@ -127,7 +127,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     const result = await processor.handle(
                         state.state,
                         req.arg,
-                        headers
+                        ctx
                     );
 
                     log.info(`${callInfo} => ${toResponseLog(result)}`);
@@ -152,7 +152,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a streamer');
                 }
 
-                const callInfo = `handle ${state.serverName}.${name}(${toRequestLog(arg)})`;
+                const callInfo = `handle ${state.serverName}.${name}(${toRequestLog(arg)}) [sid=${streamId}]`;
 
                 log.info(`${callInfo}...`);
 
@@ -257,31 +257,35 @@ class RpcStreamerClientApiState {
 
     async next(streamId: StreamId, value: unknown) {
         const sub = this.getSub(streamId);
-        log.info(`${sub?.callInfo} next ${toRequestLog(value)}`);
-        await sub?.context.run(() => sub.writer.next(value));
+        await sub?.context.run(async () => {
+            log.info(`${sub?.callInfo} next ${toRequestLog(value)}`);
+            await sub.writer.next(value);
+        });
     }
 
     async throw(params: {streamId: StreamId; code: string; message: string}) {
         const sub = this.getSub(params.streamId);
-        log.info(
-            `${sub?.callInfo} throw ${toRequestLog({code: params.code, message: params.message})}`
-        );
-        await sub?.context.run(() =>
-            sub.writer.throw(
+        await sub?.context.run(async () => {
+            log.info(
+                `${sub?.callInfo} throw ${toRequestLog({code: params.code, message: params.message})}`
+            );
+            await sub.writer.throw(
                 toError(
                     reconstructError({
                         message: params.message,
                         code: params.code,
                     })
                 )
-            )
-        );
+            );
+        });
     }
 
     end(streamId: StreamId) {
         const sub = this.getSub(streamId);
-        log.info(`${sub?.callInfo} end`);
-        sub?.context.run(() => sub.writer.end());
+        sub?.context.run(() => {
+            log.info(`${sub?.callInfo} end`);
+            sub.writer.end();
+        });
     }
 
     finish(streamId: StreamId) {
@@ -443,50 +447,57 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                     cleanup();
                 });
 
+                const requestCtx = context();
+
                 const factory = new AsyncIteratorFactory(writer => {
-                    const streamId = createStreamId();
-                    const streamInfo = `call ${clientTarget}.${name}(${toRequestLog(arg)}) [sid=${streamId}]`;
+                    return requestCtx.run(() => {
+                        const streamId = createStreamId();
+                        const streamInfo = `call ${clientTarget}.${name}(${toRequestLog(arg)}) [sid=${streamId}]`;
 
-                    run(async () => {
-                        const channel = new Channel();
-                        clientApiState.create({
-                            streamId,
-                            writer: channel,
-                            method: name,
-                            arg,
-                            callInfo: streamInfo,
-                        });
+                        run(async () => {
+                            const channel = new Channel();
+                            clientApiState.create({
+                                streamId,
+                                writer: channel,
+                                method: name,
+                                arg,
+                                callInfo: streamInfo,
+                            });
 
-                        log.info(`${streamInfo}...`);
-                        await server.stream({streamId, name, arg}, headers);
-                        await channel.pipe(writer);
-                    }).catch(error => {
-                        cleanup();
-                        log.error(
-                            error,
-                            `${streamInfo} failed to start streaming`
-                        );
-                    });
-
-                    return () => {
-                        // we need to run cancellation separately to avoid cancellation of the cancellation
-                        context().detach(() => {
-                            log.info(
-                                `${streamInfo} aborted, send cancel to the server...`
+                            log.info(`${streamInfo}...`);
+                            await server.stream(
+                                {streamId, name, arg},
+                                {...headers}
                             );
+                            await channel.pipe(writer);
+                        }).catch(error => {
                             cleanup();
-                            catchConnectionClosed(server.cancel({streamId}))
-                                .then(() => {
-                                    log.info(`${streamInfo} cancelled`);
-                                })
-                                .catch(error => {
-                                    log.error(
-                                        toError(error),
-                                        `${streamInfo} failed to cancel stream`
-                                    );
-                                });
+                            log.error(
+                                error,
+                                `${streamInfo} failed to start streaming`
+                            );
                         });
-                    };
+
+                        return () => {
+                            // we need to run cancellation separately to avoid cancellation of the cancellation
+                            context().detach(() => {
+                                log.info(
+                                    `${streamInfo} aborted, send cancel to the server...`
+                                );
+                                cleanup();
+                                catchConnectionClosed(server.cancel({streamId}))
+                                    .then(() => {
+                                        log.info(`${streamInfo} cancelled`);
+                                    })
+                                    .catch(error => {
+                                        log.error(
+                                            toError(error),
+                                            `${streamInfo} failed to cancel stream`
+                                        );
+                                    });
+                            });
+                        };
+                    });
                 });
 
                 return toStream(factory);

@@ -132,7 +132,7 @@ export function createCoordinatorApi() {
         async (
             next,
             {dataLayer, authContextParser, jwt, emailService, crypto, config},
-            headers
+            {headers}
         ) => {
             const auth = await authContextParser.parse(
                 config.jwtSecret,

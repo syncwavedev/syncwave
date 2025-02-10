@@ -1,4 +1,3 @@
-import {createTraceId} from '../context.js';
 import {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {createRpcClient} from '../transport/rpc.js';
@@ -19,7 +18,6 @@ export class ParticipantClient {
             this.connection,
             () => ({
                 auth: this.authToken,
-                traceId: createTraceId(),
             }),
             'part'
         );

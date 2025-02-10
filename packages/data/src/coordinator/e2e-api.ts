@@ -100,11 +100,11 @@ export function createE2eApi() {
             if (processor.type === 'handler') {
                 return {
                     ...processor,
-                    handle: async (state, arg, headers) => {
-                        const traceId = headers.traceId ?? createTraceId();
+                    handle: async (state, arg, ctx) => {
+                        const traceId = ctx.headers.traceId ?? createTraceId();
                         try {
                             runningProcessIds.add(traceId);
-                            return processor.handle(state, arg, headers);
+                            return processor.handle(state, arg, ctx);
                         } finally {
                             runningProcessIds.delete(traceId);
                         }
@@ -113,11 +113,11 @@ export function createE2eApi() {
             } else if (processor.type === 'streamer') {
                 return {
                     ...processor,
-                    stream: (state, arg, headers) => {
-                        const traceId = headers.traceId ?? createTraceId();
+                    stream: (state, arg, ctx) => {
+                        const traceId = ctx.headers.traceId ?? createTraceId();
                         runningProcessIds.add(traceId);
                         return toStream(
-                            processor.stream(state, arg, headers)
+                            processor.stream(state, arg, ctx)
                         ).finally(() => {
                             runningProcessIds.delete(traceId);
                         });

@@ -3,7 +3,7 @@ import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {Stream} from '../stream.js';
-import {Message, MessageHeaders} from '../transport/message.js';
+import {Message, MessageHeaders, MessageId} from '../transport/message.js';
 import {Connection, TransportServer} from '../transport/transport.js';
 import {assertNever} from '../utils.js';
 import {launchRpcStreamerServer} from './rpc-streamer.js';
@@ -12,11 +12,7 @@ export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
     req: ZodType<TRequest>;
     res: ZodType<TResponse>;
-    handle(
-        state: TState,
-        req: TRequest,
-        headers: MessageHeaders
-    ): Promise<TResponse>;
+    handle(state: TState, req: TRequest, ctx: RequestInfo): Promise<TResponse>;
 }
 
 export interface Streamer<TState, TRequest, TItem> {
@@ -26,7 +22,7 @@ export interface Streamer<TState, TRequest, TItem> {
     stream(
         state: TState,
         req: TRequest,
-        headers: MessageHeaders
+        ctx: RequestInfo
     ): AsyncIterable<TItem>;
 }
 
@@ -40,6 +36,11 @@ export type HandlerRequestSchema<T extends Handler<any, any, any>> =
 export type HandlerResponseSchema<T extends Handler<any, any, any>> =
     T extends Handler<any, any, infer R> ? R : never;
 
+export interface RequestInfo {
+    headers: MessageHeaders;
+    requestId: MessageId;
+}
+
 export interface HandlerOptions<
     TState,
     TRequestSchema extends ZodType<any, any, any>,
@@ -50,7 +51,7 @@ export interface HandlerOptions<
     handle: (
         state: TState,
         req: TypeOf<TRequestSchema>,
-        headers: MessageHeaders
+        ctx: RequestInfo
     ) => Promise<TypeOf<TResponseSchema>>;
 }
 
@@ -64,10 +65,10 @@ export function handler<
     async function wrapper(
         state: TState,
         req: TypeOf<TRequestSchema>,
-        headers: MessageHeaders
+        info: RequestInfo
     ) {
         req = options.req.parse(req);
-        const res = await options.handle(state, req, headers);
+        const res = await options.handle(state, req, info);
         return options.res.parse(res);
     }
 
@@ -95,7 +96,7 @@ export interface StreamerOptions<
     stream: (
         state: TState,
         req: TypeOf<TRequestSchema>,
-        headers: MessageHeaders
+        ctx: RequestInfo
     ) => AsyncIterable<TypeOf<TItemSchema>>;
 }
 
@@ -109,10 +110,10 @@ export function streamer<
     async function* wrapper(
         state: TState,
         req: TypeOf<TRequestSchema>,
-        headers: MessageHeaders
+        ctx: RequestInfo
     ): AsyncIterable<TypeOf<TItemSchema>> {
         req = options.req.parse(req);
-        for await (const item of options.stream(state, req, headers)) {
+        for await (const item of options.stream(state, req, ctx)) {
             yield options.item.parse(item);
         }
     }
@@ -183,7 +184,7 @@ export function applyMiddleware<
     middleware: (
         next: (state: TStatePrivate) => Promise<void>,
         state: TStatePublic,
-        headers: MessageHeaders,
+        headers: RequestInfo,
         processor: Processor<TStatePrivate, any, any>,
         processorName: string,
         arg: unknown
@@ -195,7 +196,7 @@ export function applyMiddleware<
             async function work(
                 state: TStatePublic,
                 req: unknown,
-                headers: MessageHeaders
+                headers: RequestInfo
             ) {
                 const signal = new Deferred<any>();
                 middleware(

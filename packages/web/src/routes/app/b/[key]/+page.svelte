@@ -6,7 +6,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import {getSdk} from '$lib/utils';
 	import {getState} from '$lib/utils.svelte';
-	import {createTaskId, log, type TaskId} from 'syncwave-data';
+	import {context, createTaskId, log, type TaskId} from 'syncwave-data';
 	import {flip} from 'svelte/animate';
 	import {dndzone} from 'svelte-dnd-action';
 
@@ -21,7 +21,11 @@
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
 
-	const board = getState(initialBoard, x => x.getBoardView({key: boardKey}));
+	console.log('trace id outside: ', context().traceId);
+	const board = getState(initialBoard, x => {
+		console.log('trace id inside: ', context().traceId);
+		return x.getBoardView({key: boardKey});
+	});
 
 	const sdk = getSdk();
 

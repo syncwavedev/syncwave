@@ -37,8 +37,8 @@
 	}
 
 	$effect(() => {
-		log.info('board: ' + board.value.deleted);
 		if (board.value.deleted) {
+			log.info(`board ${board.value.id} got deleted, redirect to app...`);
 			goto('/app');
 		}
 	});
@@ -57,8 +57,7 @@
 		<Breadcrumb.Root>
 			<Breadcrumb.List>
 				<Breadcrumb.Item class="hidden md:block">
-					<Breadcrumb.Link href="#">{board.value.key}</Breadcrumb.Link
-					>
+					<Breadcrumb.Link href="#">{board.value.key}</Breadcrumb.Link>
 				</Breadcrumb.Item>
 			</Breadcrumb.List>
 		</Breadcrumb.Root>
@@ -68,8 +67,7 @@
 	<div>
 		Board {board.value.id} - {board.value.createdAt}
 
-		<Button variant="destructive" onclick={deleteBoard}>Delete board</Button
-		>
+		<Button variant="destructive" onclick={deleteBoard}>Delete board</Button>
 	</div>
 
 	<div class="flex flex-col gap-8">

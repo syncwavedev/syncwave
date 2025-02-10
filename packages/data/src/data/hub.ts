@@ -22,12 +22,18 @@ export class HubClient<T> {
     constructor(
         transportClient: TransportClient<Message>,
         schema: ZodType<T>,
-        authSecret: string
+        authSecret: string,
+        hubUser: string
     ) {
         const conn = new PersistentConnection(transportClient);
-        this.server = createRpcClient(createHubServerApi(schema), conn, () => ({
-            auth: authSecret,
-        }));
+        this.server = createRpcClient(
+            createHubServerApi(schema),
+            conn,
+            () => ({
+                auth: authSecret,
+            }),
+            hubUser
+        );
     }
 
     // next waits for all subscribers to do their work
@@ -60,12 +66,18 @@ export class HubServer<T> {
     constructor(
         transport: TransportServer<Message>,
         schema: ZodType<T>,
-        authSecret: string
+        authSecret: string,
+        serverName: string
     ) {
-        this.rpcServer = new RpcServer(transport, createHubServerApi(schema), {
-            authSecret,
-            subjects: new SubjectManager(),
-        });
+        this.rpcServer = new RpcServer(
+            transport,
+            createHubServerApi(schema),
+            {
+                authSecret,
+                subjects: new SubjectManager(),
+            },
+            serverName
+        );
     }
 
     async launch(): Promise<void> {

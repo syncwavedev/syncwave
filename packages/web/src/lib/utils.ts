@@ -4,6 +4,7 @@ import {toast} from 'svelte-sonner';
 import {
 	ConnectionPool,
 	context,
+	createTraceId,
 	MsgpackCodec,
 	ParticipantClient,
 	type ParticipantRpc,
@@ -24,9 +25,14 @@ export function getSdk() {
 	if (!client) {
 		throw new Error('context ParticipantClient is not available');
 	}
-	const [ctx, cancelCtx] = context().createChild();
-	onDestroy(() => cancelCtx());
-	return <R>(fn: (rpc: ParticipantRpc) => R) => ctx.run(() => fn(client.rpc));
+	const [componentCtx, cancelComponentCtx] = context().createChild();
+	onDestroy(() => cancelComponentCtx());
+	return <R>(fn: (rpc: ParticipantRpc) => R) => {
+		const [requestCtx] = componentCtx.createChild({
+			traceId: createTraceId(),
+		});
+		return requestCtx.run(() => fn(client.rpc));
+	};
 }
 
 export function getAuthManager() {
@@ -35,7 +41,8 @@ export function getAuthManager() {
 
 export function showErrorToast() {
 	toast.error('Oops! Something went wrong', {
-		description: 'Refresh the page or contact me at tilyupo@gmail.com if the issue persists.',
+		description:
+			'Refresh the page or contact me at tilyupo@gmail.com if the issue persists.',
 		duration: 15 * 1000,
 	});
 }

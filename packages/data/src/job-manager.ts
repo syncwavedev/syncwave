@@ -3,12 +3,13 @@ import {AppError} from './errors.js';
 import {log} from './logger.js';
 
 interface Job {
+    readonly traceId: TraceId;
     readonly cancel: Cancel;
 }
 
 export class JobManager<T extends string> {
     private readonly runningJobs = new Map<T, Job>();
-    private readonly cancelledJobs = new Set<T>();
+    private readonly cancelledJobs = new Map<T, Job>();
 
     constructor() {}
 
@@ -23,7 +24,7 @@ export class JobManager<T extends string> {
             throw new AppError(`job ${id} is already finished`);
         } else {
             const [ctx, cancel] = context().createBackground({traceId});
-            this.runningJobs.set(id, {cancel});
+            this.runningJobs.set(id, {traceId, cancel});
             await ctx.run(fn);
         }
     }
@@ -34,11 +35,15 @@ export class JobManager<T extends string> {
 
     cancel(id: T) {
         if (this.runningJobs.has(id)) {
+            const job = this.runningJobs.get(id)!;
             this.runningJobs.get(id)!.cancel();
             this.runningJobs.delete(id);
-            this.cancelledJobs.add(id);
+            this.cancelledJobs.set(id, job);
         } else if (this.cancelledJobs.has(id)) {
-            log.warn(`job ${id} is already cancelled`);
+            const job = this.cancelledJobs.get(id)!;
+            log.warn(
+                `job ${id} is already cancelled, job.traceId = ${job.traceId}`
+            );
         } else {
             log.warn(`unknown job: ${id}`);
         }

@@ -92,7 +92,7 @@ export class Context {
     }
 
     createChild(kwargs?: Record<string, string>): [Context, Cancel] {
-        const child = new Context(kwargs ?? {});
+        const child = new Context({...this.kwargs, ...kwargs});
         this.children.push(child);
         return [
             child,

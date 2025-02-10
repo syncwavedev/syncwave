@@ -43,7 +43,8 @@ export class CoordinatorServer {
         const hubServer = new HubServer(
             hubMemTransportServer,
             hubMessageSchema,
-            hubAuthSecret
+            hubAuthSecret,
+            'hub'
         );
 
         hubServer.launch().catch(error => {
@@ -53,21 +54,27 @@ export class CoordinatorServer {
         const hubClient = new HubClient(
             new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
             hubMessageSchema,
-            hubAuthSecret
+            hubAuthSecret,
+            'hub'
         );
 
         this.dataLayer = new DataLayer(kv, hubClient, jwtSecret);
         const authContextParser = new AuthContextParser(4, jwt);
-        this.rpcServer = new RpcServer(transport, createCoordinatorApi(), {
-            authContextParser,
-            dataLayer: this.dataLayer,
-            jwt,
-            crypto,
-            emailService: email,
-            config: {
-                jwtSecret: this.jwtSecret,
+        this.rpcServer = new RpcServer(
+            transport,
+            createCoordinatorApi(),
+            {
+                authContextParser,
+                dataLayer: this.dataLayer,
+                jwt,
+                crypto,
+                emailService: email,
+                config: {
+                    jwtSecret: this.jwtSecret,
+                },
             },
-        });
+            'server'
+        );
     }
 
     async launch(): Promise<void> {

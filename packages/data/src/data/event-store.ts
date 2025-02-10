@@ -3,7 +3,7 @@ import {
     EVENT_STORE_PULL_INTERVAL_MS,
 } from '../constants.js';
 import {Cursor} from '../cursor.js';
-import {toError} from '../errors.js';
+import {CancelledError, toError} from '../errors.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {ReadonlyCell} from '../kv/readonly-cell.js';
 import {log} from '../logger.js';
@@ -13,14 +13,14 @@ import {Uuid} from '../uuid.js';
 import {DataEffectScheduler} from './data-layer.js';
 import {HubClient} from './hub.js';
 
-function getEventHubTopic(storeId: Uuid, collection: string) {
-    return `event-store/${storeId}/${collection}`;
+function getEventHubTopic(storeId: string, collection: string) {
+    return `es/${storeId}/${collection}`;
 }
 
 export class EventStoreWriter<T> implements EventStoreWriter<T> {
     constructor(
         private readonly events: CollectionManager<T>,
-        private readonly id: ReadonlyCell<Uuid>,
+        private readonly id: ReadonlyCell<string>,
         private readonly hub: HubClient<void>,
         private readonly scheduleEffect: DataEffectScheduler
     ) {}
@@ -104,7 +104,9 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                     return events;
                 } catch (error) {
-                    log.error(toError(error), 'EventStoreReader.subscribe');
+                    if (!(error instanceof CancelledError)) {
+                        log.error(toError(error), 'EventStoreReader.subscribe');
+                    }
                     return [];
                 }
             })

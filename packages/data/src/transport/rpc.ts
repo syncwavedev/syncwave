@@ -278,7 +278,8 @@ export class RpcServer<TState> {
     constructor(
         private readonly transport: TransportServer<Message>,
         private readonly api: Api<TState>,
-        private readonly state: TState
+        private readonly state: TState,
+        private readonly serverName: string
     ) {}
 
     async launch(): Promise<void> {
@@ -290,7 +291,7 @@ export class RpcServer<TState> {
     }
 
     private handleConnection(conn: Connection<Message>): void {
-        launchRpcStreamerServer(this.api, this.state, conn);
+        launchRpcStreamerServer(this.api, this.state, conn, this.serverName);
     }
 }
 

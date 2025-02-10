@@ -58,12 +58,32 @@ export class Channel<T> implements AsyncIterable<T>, ChannelWriter<T> {
     }
 }
 
-class AsyncIteratorFactory<T> implements AsyncIterable<T> {
+export class AsyncIteratorFactory<T> implements AsyncIterable<T> {
+    private readonly iterators: Array<AsyncIterator<T>> = [];
+
     constructor(
         private readonly execute: (channel: ChannelWriter<T>) => () => Nothing
     ) {}
 
-    async *[Symbol.asyncIterator](): AsyncIterator<T, any, any> {
+    [Symbol.asyncIterator](): AsyncIterator<T, any, any> {
+        const iterator = this._createIterator();
+        this.iterators.push(iterator);
+
+        return iterator;
+    }
+
+    returnAll() {
+        whenAll(
+            this.iterators.map(x => x.return?.()).filter(x => x !== undefined)
+        ).catch(error =>
+            log.error(
+                error,
+                'AsyncIteratorFactory.returnAll: failed to return all iterators'
+            )
+        );
+    }
+
+    private async *_createIterator(): AsyncIterator<T, any, any> {
         const channel = new Channel<T>();
 
         let cancel: (() => Nothing) | undefined = undefined;

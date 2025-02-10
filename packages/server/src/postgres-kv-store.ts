@@ -2,6 +2,7 @@ import pg from 'pg';
 import PgCursor from 'pg-cursor';
 import {
     Cancel,
+    CancelledError,
     Condition,
     Entry,
     TXN_RETRIES_COUNT,
@@ -123,6 +124,7 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                                 'Failed to cancel transaction'
                             );
                         });
+                    2;
                 });
 
                 const tx = new PostgresTransaction(client);
@@ -133,6 +135,14 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                 return result;
             } catch (error) {
                 await client.query('ROLLBACK');
+                if (
+                    // eslint-disable-next-line no-restricted-globals
+                    error instanceof Error &&
+                    'code' in error &&
+                    error.code === '57014'
+                ) {
+                    throw new CancelledError();
+                }
 
                 if (attempt === TXN_RETRIES_COUNT) {
                     throw error;

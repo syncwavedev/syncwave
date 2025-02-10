@@ -80,7 +80,6 @@ export class Logger {
     private context(): Record<string, unknown> {
         return {
             traceId: context().traceId,
-            shortTraceId: context().traceId.slice(0, 4),
         };
     }
 

@@ -79,10 +79,12 @@ describe('DocStore with MemKVStore', () => {
             return repo2.getById(id);
         });
 
+        // todo: add state tests
         expect(retrieved).toEqual({
             ...doc,
             createdAt: expect.any(Number) as Timestamp,
             updatedAt: expect.any(Number) as Timestamp,
+            state: expect.any(String) as string,
         });
         expect(retrieved?.updatedAt).toBeGreaterThan(doc.updatedAt);
         expect(retrieved?.updatedAt).toEqual(retrieved?.createdAt);

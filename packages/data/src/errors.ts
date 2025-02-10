@@ -2,6 +2,10 @@ import {context} from './context.js';
 
 // eslint-disable-next-line no-restricted-globals
 export class AppError extends Error {
+    constructor(message?: string, options?: {cause?: unknown}) {
+        super(message, options);
+    }
+
     toJSON() {
         return {
             name: `${this.constructor.name} (${this.name})`,

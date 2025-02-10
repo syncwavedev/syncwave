@@ -1,5 +1,5 @@
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
-import {context, createTraceId} from '../context.js';
+import {Cancel, context, createTraceId} from '../context.js';
 import {Deferred} from '../deferred.js';
 import {
     AppError,
@@ -36,7 +36,7 @@ export function launchRpcHandlerServer<T>(
     api: HandlerApi<T>,
     state: T,
     conn: Connection<Message>
-) {
+): Cancel {
     const jobManager = new JobManager();
 
     const cancelCleanup = context().onCancel(cleanup);
@@ -110,6 +110,8 @@ export function launchRpcHandlerServer<T>(
             cleanup();
         },
     });
+
+    return cleanup;
 }
 
 export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
@@ -163,6 +165,19 @@ async function proxyRequest(
 
     function cleanup() {
         cancelCleanup();
+        if (result.state === 'pending') {
+            result.reject(new CancelledError());
+            catchConnectionClosed(
+                conn.send({
+                    id: createMessageId(),
+                    headers: {},
+                    type: 'cancel',
+                    requestId,
+                })
+            ).catch(error =>
+                log.error(error, 'proxyRequest: failed to send cancellation')
+            );
+        }
         unsub?.();
     }
 
@@ -180,8 +195,6 @@ async function proxyRequest(
                         reconstructError({
                             message: msg.payload.message,
                             code: msg.payload.code,
-                            method: name,
-                            arg,
                         })
                     );
                 } else {
@@ -241,7 +254,7 @@ function createHandlerProxy(
         try {
             arg = processor.req.parse(arg);
         } catch (error) {
-            return new AppError(
+            throw new AppError(
                 `rpc ${name}(${JSON.stringify(arg)}) validation failed`,
                 {cause: error}
             );
@@ -251,7 +264,7 @@ function createHandlerProxy(
 
         const result: unknown = await requestCtx.run(async () => {
             const headers = Object.assign(
-                {traceId: createTraceId()},
+                {traceId: context().traceId},
                 getHeaders(),
                 partialHeaders ?? {}
             );
@@ -265,15 +278,15 @@ function createHandlerProxy(
     };
 }
 
-export function reportRpcError(error: unknown, context: string) {
+export function reportRpcError(error: unknown, callInfo: string) {
     if (error instanceof BusinessError) {
-        log.warn(error, `[${context}] rpc business error`);
+        log.warn(error, `[${callInfo}] business error`);
     } else if (error instanceof CancelledError) {
-        log.debug(`[${context}] rpc cancelled`);
+        log.debug(`[${callInfo}] cancelled`);
     } else {
         log.error(
             toError(error),
-            `[${context}] rpc unexpected error: ` + JSON.stringify(error)
+            `[${callInfo}] failed: ` + JSON.stringify(error)
         );
     }
 }
@@ -281,8 +294,6 @@ export function reportRpcError(error: unknown, context: string) {
 export function reconstructError(params: {
     message: string;
     code: string;
-    method: string;
-    arg: unknown;
 }): AppError {
     if (params.code === 'unknown') {
         return new RpcError(params.message);

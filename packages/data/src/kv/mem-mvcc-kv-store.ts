@@ -70,8 +70,6 @@ export class MemMvccKvTransaction implements Uint8Transaction {
             throw new InvalidQueryCondition(condition);
         }
 
-        let readRangeEnd: Uint8Array | undefined = undefined;
-
         function advance<T>(iter: Iterator<Uint8Array, T>) {
             if (forwardQuery) {
                 iter.next();
@@ -91,6 +89,10 @@ export class MemMvccKvTransaction implements Uint8Transaction {
             return undefined;
         }
 
+        let readRangeEnd: Uint8Array | undefined = maxKey(
+            snapIter.key,
+            localIter.key
+        );
         while (snapIter.valid || localIter.valid) {
             readRangeEnd = maxKey(snapIter.key, localIter.key);
 

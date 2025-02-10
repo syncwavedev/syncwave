@@ -108,9 +108,8 @@ export class PostgresUint8KVStore implements Uint8KVStore {
         await this.init;
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
             const client = await this.pool.connect();
-            const {
-                rows: [{pg_backend_pid: pid}],
-            } = await client.query('BEGIN; SELECT pg_backend_pid()');
+            const res = await client.query('BEGIN; SELECT pg_backend_pid()');
+            const pid = (res as any)[1].rows[0].pg_backend_pid as unknown;
 
             let cancelAbort: Cancel | undefined = undefined;
 

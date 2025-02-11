@@ -137,6 +137,7 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
     const versionKey = encodeString('version');
     log.info('Retrieving KV store version...');
     const version = await kvStore.transact(async tx => {
+        log.info('Running tx.get(versionKey)...');
         const ver = await tx.get(versionKey);
         if (ver) {
             return decodeNumber(ver);

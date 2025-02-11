@@ -293,6 +293,8 @@ process.on('unhandledRejection', reason => {
     log.error(toError(reason), 'unhandled rejection');
 });
 
+log.info('launching coordinator...');
+
 serverCtx
     .run(async () => {
         try {

@@ -125,7 +125,9 @@ async function getKVStore(): Promise<Uint8KVStore> {
                 })
         );
     } else {
-        log.info('using FoundationDB as a primary store');
+        log.info(
+            `using FoundationDB as a primary store (${`./fdb/fdb.${STAGE}.cluster`}`
+        );
         const fdbStore = await import('./fdb-kv-store.js').then(
             x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
         );

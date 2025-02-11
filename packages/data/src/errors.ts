@@ -71,7 +71,15 @@ export class AggregateError extends AppError {
     constructor(public readonly errors: any[]) {
         super(
             `${errors.length} errors occurred:\n - ` +
-                errors.map(getReadableError).join('\n - ')
+                errors
+                    .map(getReadableError)
+                    .map(x =>
+                        x
+                            .split('\n')
+                            .map((x, idx) => (idx === 0 ? x : `  ${x}`))
+                            .join('\n')
+                    )
+                    .join('\n- ')
         );
     }
 }

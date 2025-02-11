@@ -1,194 +1,1599 @@
-import createTree, {Tree} from 'functional-red-black-tree';
+import {Channel} from 'async-channel';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {encodeString} from '../codec.js';
-import {compareUint8Array, wait, whenAll} from '../utils.js';
-import {Entry, InvalidQueryCondition, Uint8KVStore} from './kv-store.js';
-import {MemKVStore, MemLocker, MemTransaction} from './mem-kv-store.js'; // Adjust the path as needed
+import {MsgpackCodec} from '../codec.js';
+import {Deferred} from '../deferred.js';
+import {AggregateError, AppError} from '../errors.js';
+import {toStream} from '../stream.js';
+import {assert, whenAll} from '../utils.js';
+import {decodeIndexKey, encodeIndexKey} from './data-index.js';
+import {Condition, KVStore, Transaction, Uint8KVStore} from './kv-store.js';
+import {MappedKVStore, MappedTransaction} from './mapped-kv-store.js';
+import {MemKVStore, MemTransaction, MvccConflictError} from './mem-kv-store.js';
 
-describe('MemTransaction', () => {
-    let tree: Tree<Uint8Array, Uint8Array>;
-    let transaction: MemTransaction;
+describe('mem-kv-store', () => {
+    let store: KVStore<number, string>;
+    let rawMvccStore: MemKVStore;
 
-    beforeEach(() => {
-        tree = createTree(compareUint8Array);
-        transaction = new MemTransaction(tree);
-    });
-
-    it('should retrieve an existing key', async () => {
-        const key = encodeString('key1');
-        const value = encodeString('value1');
-        tree = tree.insert(key, value);
-        transaction = new MemTransaction(tree);
-
-        const result = await transaction.get(key);
-        expect(result).toEqual(value);
-    });
-
-    it('should return undefined for a non-existent key', async () => {
-        const result = await transaction.get(encodeString('non-existent-key'));
-        expect(result).toBeUndefined();
-    });
-
-    it('should insert a key-value pair', async () => {
-        const key = encodeString('key1');
-        const value = encodeString('value1');
-        await transaction.put(key, value);
-
-        const result = await transaction.get(key);
-        expect(result).toEqual(value);
-    });
-
-    it('should overwrite an existing key-value pair', async () => {
-        const key = encodeString('key1');
-        const value1 = encodeString('value1');
-        const value2 = encodeString('value2');
-
-        await transaction.put(key, value1);
-        await transaction.put(key, value2);
-
-        const result = await transaction.get(key);
-        expect(result).toEqual(value2);
-    });
-
-    it('should query with greater-than condition', async () => {
-        const key1 = encodeString('a');
-        const key2 = encodeString('b');
-        const value = encodeString('value');
-
-        await transaction.put(key1, value);
-        await transaction.put(key2, value);
-
-        const condition = {gt: key1};
-        const results: Entry<Uint8Array, Uint8Array>[] = [];
-
-        const entry$ = transaction.query(condition);
-        for await (const entry of entry$) {
-            results.push(entry);
-        }
-
-        expect(results).toEqual([{key: key2, value}]);
-    });
-
-    it('should throw an error for an invalid condition', async () => {
-        const condition = {};
-        await expect(async () => {
-            for await (const _ of transaction.query(condition as any)) {
-                // do nothing
-            }
-        }).rejects.toThrow(InvalidQueryCondition);
-    });
-
-    it('should handle less-than condition in query', async () => {
-        const key1 = encodeString('a');
-        const key2 = encodeString('b');
-        const value = encodeString('value');
-
-        await transaction.put(key1, value);
-        await transaction.put(key2, value);
-
-        const condition = {lt: key2};
-        const results: Entry<Uint8Array, Uint8Array>[] = [];
-
-        const entry$ = transaction.query(condition);
-        for await (const entry of entry$) {
-            results.push(entry);
-        }
-
-        expect(results).toEqual([{key: key1, value}]);
-    });
-
-    it('should handle greater-than or equal condition in query', async () => {
-        const key1 = encodeString('a');
-        const key2 = encodeString('b');
-        const value = encodeString('value');
-
-        await transaction.put(key1, value);
-        await transaction.put(key2, value);
-
-        const condition = {gte: key1};
-        const results: Entry<Uint8Array, Uint8Array>[] = [];
-
-        const entry$ = transaction.query(condition);
-        for await (const entry of entry$) {
-            results.push(entry);
-        }
-
-        expect(results).toEqual([
-            {key: key1, value},
-            {key: key2, value},
-        ]);
-    });
-
-    it('should handle less-than or equal condition in query', async () => {
-        const key1 = encodeString('a');
-        const key2 = encodeString('b');
-        const value = encodeString('value');
-
-        await transaction.put(key1, value);
-        await transaction.put(key2, value);
-
-        const results: Entry<Uint8Array, Uint8Array>[] = [];
-
-        const entry$ = transaction.query({lte: encodeString('d')});
-        for await (const entry of entry$) {
-            results.push(entry);
-        }
-
-        expect(results).toEqual([
-            {key: key2, value},
-            {key: key1, value},
-        ]);
-    });
-});
-
-describe('MemKVStore', () => {
-    let kvStore: Uint8KVStore;
+    function mapStore<T>(rawStore: Uint8KVStore): KVStore<number, T> {
+        return new MappedKVStore(
+            rawStore,
+            {
+                decode: x => decodeIndexKey(x)[0] as number,
+                encode: x => encodeIndexKey([x]),
+            },
+            new MsgpackCodec()
+        );
+    }
 
     beforeEach(() => {
-        kvStore = new MemKVStore();
+        rawMvccStore = new MemKVStore({
+            transactionRetryCount: 0,
+        });
+        store = mapStore(rawMvccStore);
+    });
+
+    it('should store keys', async () => {
+        await store.transact(async tx => {
+            await tx.put(1, 'one');
+            await tx.put(2, 'two');
+        });
+
+        await store.transact(async tx => {
+            const value1 = await tx.get(1);
+            const value2 = await tx.get(2);
+
+            expect(value1).toBe('one');
+            expect(value2).toBe('two');
+        });
+    });
+
+    it('should delete in write set', async () => {
+        await store.transact(async tx => {
+            await tx.put(1, 'one');
+            await tx.put(2, 'two');
+            await tx.put(3, 'three');
+
+            await tx.delete(2);
+        });
+
+        await store.transact(async tx => {
+            const result = await toStream(tx.query({gte: 0})).toArray();
+
+            expect(result).toEqual([
+                {key: 1, value: 'one'},
+                {key: 3, value: 'three'},
+            ]);
+        });
+    });
+
+    it('should delete', async () => {
+        await store.transact(async tx => {
+            await tx.put(1, 'one');
+            await tx.put(2, 'two');
+            await tx.put(3, 'three');
+        });
+
+        await store.transact(async tx => {
+            await tx.delete(2);
+        });
+
+        await store.transact(async tx => {
+            const result = await toStream(tx.query({gte: 0})).toArray();
+
+            expect(result).toEqual([
+                {key: 1, value: 'one'},
+                {key: 3, value: 'three'},
+            ]);
+        });
+    });
+
+    it('should update existing keys', async () => {
+        await store.transact(async tx => {
+            await tx.put(1, 'one');
+            await tx.put(2, 'two');
+        });
+
+        await store.transact(async tx => {
+            await tx.put(2, 'four');
+            await tx.put(3, 'five');
+        });
+
+        await store.transact(async tx => {
+            const value1 = await tx.get(1);
+            const value2 = await tx.get(2);
+            const value3 = await tx.get(3);
+
+            expect(value1).toBe('one');
+            expect(value2).toBe('four');
+            expect(value3).toBe('five');
+        });
+    });
+
+    describe('should query without write set', () => {
+        // gt
+
+        it('should query keys (case: > 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gt: 0})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: > 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gt: 1})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: > 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gt: 2})).toArray();
+                expect(values).toEqual([{key: 3, value: 'three'}]);
+            });
+        });
+
+        it('should query keys (case: > 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gt: 3})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: > 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gt: 4})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        // gte
+
+        it('should query keys (case: >= 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gte: 0})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gte: 1})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gte: 2})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gte: 3})).toArray();
+                expect(values).toEqual([{key: 3, value: 'three'}]);
+            });
+        });
+
+        it('should query keys (case: >= 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({gte: 4})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        // lt
+
+        it('should query keys (case: < 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lt: 0})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: < 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lt: 1})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: < 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lt: 2})).toArray();
+                expect(values).toEqual([{key: 1, value: 'one'}]);
+            });
+        });
+
+        it('should query keys (case: < 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lt: 3})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: < 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lt: 4})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        // lte
+
+        it('should query keys (case: <= 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lte: 0})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: <= 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lte: 1})).toArray();
+                expect(values).toEqual([{key: 1, value: 'one'}]);
+            });
+        });
+
+        it('should query keys (case: <= 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lte: 2})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: <= 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lte: 3})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: <= 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lte: 4})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+    });
+
+    describe('should query without snapshot', () => {
+        // gt
+
+        it('should query keys (case: > 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gt: 0})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: > 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gt: 1})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: > 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gt: 2})).toArray();
+                expect(values).toEqual([{key: 3, value: 'three'}]);
+            });
+        });
+
+        it('should query keys (case: > 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gt: 3})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: > 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gt: 4})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        // gte
+
+        it('should query keys (case: >= 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gte: 0})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gte: 1})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gte: 2})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gte: 3})).toArray();
+                expect(values).toEqual([{key: 3, value: 'three'}]);
+            });
+        });
+
+        it('should query keys (case: >= 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({gte: 4})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        // lt
+
+        it('should query keys (case: < 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({lt: 0})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: < 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({lt: 1})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: < 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({lt: 2})).toArray();
+                expect(values).toEqual([{key: 1, value: 'one'}]);
+            });
+        });
+
+        it('should query keys (case: < 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lt: 3})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: < 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+            });
+
+            await store.transact(async tx => {
+                const values = await toStream(tx.query({lt: 4})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        // lte
+
+        it('should query keys (case: <= 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({lte: 0})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: <= 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({lte: 1})).toArray();
+                expect(values).toEqual([{key: 1, value: 'one'}]);
+            });
+        });
+
+        it('should query keys (case: <= 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({lte: 2})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: <= 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({lte: 3})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: <= 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(2, 'two');
+                await tx.put(3, 'three');
+                const values = await toStream(tx.query({lte: 4})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+    });
+
+    describe('should query both write set and snapshot', () => {
+        // gt
+
+        it('should query keys (case: > 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gt: 0})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: > 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gt: 1})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: > 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gt: 2})).toArray();
+                expect(values).toEqual([{key: 3, value: 'three'}]);
+            });
+        });
+
+        it('should query keys (case: > 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gt: 3})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: > 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gt: 4})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        // gte
+
+        it('should query keys (case: >= 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gte: 0})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gte: 1})).toArray();
+                expect(values).toEqual([
+                    {key: 1, value: 'one'},
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gte: 2})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 3, value: 'three'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: >= 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gte: 3})).toArray();
+                expect(values).toEqual([{key: 3, value: 'three'}]);
+            });
+        });
+
+        it('should query keys (case: >= 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({gte: 4})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        // lt
+
+        it('should query keys (case: < 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lt: 0})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: < 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lt: 1})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: < 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lt: 2})).toArray();
+                expect(values).toEqual([{key: 1, value: 'one'}]);
+            });
+        });
+
+        it('should query keys (case: < 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lt: 3})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: < 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lt: 4})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        // lte
+
+        it('should query keys (case: <= 0)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lte: 0})).toArray();
+                expect(values).toEqual([]);
+            });
+        });
+
+        it('should query keys (case: <= 1)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lte: 1})).toArray();
+                expect(values).toEqual([{key: 1, value: 'one'}]);
+            });
+        });
+
+        it('should query keys (case: <= 2)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lte: 2})).toArray();
+                expect(values).toEqual([
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: <= 3)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lte: 3})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+
+        it('should query keys (case: <= 4)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, 'place_me');
+                await tx.put(2, 'two');
+            });
+
+            await store.transact(async tx => {
+                await tx.put(1, 'one');
+                await tx.put(3, 'three');
+
+                const values = await toStream(tx.query({lte: 4})).toArray();
+                expect(values).toEqual([
+                    {key: 3, value: 'three'},
+                    {key: 2, value: 'two'},
+                    {key: 1, value: 'one'},
+                ]);
+            });
+        });
+    });
+
+    describe('conflicts', () => {
+        it('should add with conflicts', async () => {
+            let expected = 0;
+            const transactionRetryCount = 100;
+            const store2 = mapStore<number>(
+                new MemKVStore({transactionRetryCount})
+            );
+            await whenAll(
+                Array(transactionRetryCount)
+                    .fill(undefined)
+                    .map(async (_, i) => {
+                        expected += i;
+
+                        await store2.transact(async tx => {
+                            const value = await tx.get(1);
+                            await tx.put(1, (value ?? 0) + i);
+                        });
+                    })
+            );
+
+            await store2.transact(async tx => {
+                const result = await tx.get(1);
+                expect(result).toBe(expected);
+            });
+
+            expect(rawMvccStore['commited']).toEqual([]);
+        });
+
+        it('should throw conflict if not enough retries', async () => {
+            const transactionRetryCount = 10;
+            const store = mapStore<number>(
+                new MemKVStore({transactionRetryCount})
+            );
+            const promise = whenAll(
+                Array(transactionRetryCount * 10)
+                    .fill(undefined)
+                    .map(async (_, i) => {
+                        await store.transact(async tx => {
+                            const value = await tx.get(1);
+                            await tx.put(1, (value ?? 0) + i);
+                        });
+                    })
+            );
+
+            await expect(promise).rejects.toThrow(AggregateError);
+        });
+
+        interface ConflictTestcase {
+            name: string;
+            result: 'resolves' | 'rejects';
+            only?: true;
+            case: (
+                t1: TxController<number, string>,
+                t2: TxController<number, string>
+            ) => Promise<void>;
+        }
+
+        const conditions: Array<Condition<number>> = Array(6)
+            .fill(0)
+            .map((_, idx) => idx - 1)
+            .flatMap(x => [{gt: x}, {gte: x}, {lt: x}, {lte: x}]);
+
+        const testcases: ConflictTestcase[] = [
+            {
+                name: 'should conflict on concurrent write transactions (case: put + get,put)',
+                result: 'rejects',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(1, 'one');
+                    await t2.get(1);
+                    await t2.put(2, 'two');
+                    // write before read
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should not conflict on concurrent write transactions (case: put + get,put)',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(1, 'one');
+                    await t2.get(1);
+                    await t2.put(2, 'two');
+                    // write after read
+                    t2.commit();
+                    t1.commit();
+                },
+            },
+            {
+                name: 'should not conflict if readonly (case: get)',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(1, 'one');
+                    await t2.get(1);
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            ...conditions.map(
+                (condition): ConflictTestcase => ({
+                    name: `should not conflict if readonly (case: ${JSON.stringify(condition)})`,
+                    result: 'resolves',
+                    case: async (t1, t2) => {
+                        await t1.accept();
+                        await t2.accept();
+                        await t1.put(2, 'conflict');
+                        await t1.put(-10, 'conflict');
+                        await t1.put(10, 'conflict');
+                        await toStream(t2.query(condition)).toArray();
+                        t1.commit();
+                        t2.commit();
+                    },
+                })
+            ),
+            ...conditions
+                .filter(x => x.gt !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should not conflict (case: ${JSON.stringify(condition)})`,
+                        result: 'resolves',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.gt, 'conflict');
+                            await t2.put(123, 'new');
+                            await toStream(t2.query(condition)).first();
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            // gt
+            ...conditions
+                .filter(x => x.gt !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should conflict (case: query ${JSON.stringify(condition)} + put ${condition.gt + 1})`,
+                        result: 'rejects',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.gt + 1, 'conflict');
+                            await t2.put(-123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            ...conditions
+                .filter(x => x.gt !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should not conflict (case: query ${JSON.stringify(condition)} + put ${condition.gt})`,
+                        result: 'resolves',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.gt, 'conflict');
+                            await t2.put(-123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            // gte
+            ...conditions
+                .filter(x => x.gte !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should conflict (case: query ${JSON.stringify(condition)} + put 100)`,
+                        result: 'rejects',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(100, 'conflict');
+                            await t2.put(-123, 'new');
+                            await toStream(t2.query(condition)).toArray();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            ...conditions
+                .filter(x => x.gte !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should conflict (case: query ${JSON.stringify(condition)} + put ${condition.gte})`,
+                        result: 'rejects',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.gte, 'conflict');
+                            await t2.put(-123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            ...conditions
+                .filter(x => x.gte !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should not conflict (case: query ${JSON.stringify(condition)} + put ${condition.gte - 1})`,
+                        result: 'resolves',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.gte - 1, 'conflict');
+                            await t2.put(-123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            ...conditions
+                .filter(x => x.gte !== undefined && x.gte <= 3)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should not conflict (case: query ${JSON.stringify(condition)} + put 100)`,
+                        result: 'resolves',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(100, 'conflict');
+                            await t2.put(-123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            // lt
+            ...conditions
+                .filter(x => x.lt !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should conflict (case: query ${JSON.stringify(condition)} + put ${condition.lt - 1})`,
+                        result: 'rejects',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.lt - 1, 'conflict');
+                            await t2.put(123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            ...conditions
+                .filter(x => x.lt !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should not conflict (case: query ${JSON.stringify(condition)} + put ${condition.lt})`,
+                        result: 'resolves',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.lt, 'conflict');
+                            await t2.put(123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            // lte
+            ...conditions
+                .filter(x => x.lte !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should conflict (case: query all ${JSON.stringify(condition)} + put -100)`,
+                        result: 'rejects',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(-123, 'conflict');
+                            await t2.put(123, 'new');
+                            await toStream(t2.query(condition)).toArray();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            ...conditions
+                .filter(x => x.lte !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should conflict (case: query first ${JSON.stringify(condition)} + put ${condition.lte})`,
+                        result: 'rejects',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.lte, 'conflict');
+                            await t2.put(123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            ...conditions
+                .filter(x => x.lte !== undefined)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should not conflict (case: query first ${JSON.stringify(condition)} + put ${condition.lte + 1})`,
+                        result: 'resolves',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(condition.lte + 1, 'conflict');
+                            await t2.put(123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            ...conditions
+                .filter(x => x.lte !== undefined && x.lte >= 1)
+                .map(
+                    (condition): ConflictTestcase => ({
+                        name: `should not conflict (case: query first ${JSON.stringify(condition)} + put -100)`,
+                        result: 'resolves',
+                        case: async (t1, t2) => {
+                            await t1.accept();
+                            await t2.accept();
+                            await t1.put(-100, 'conflict');
+                            await t2.put(123, 'new');
+                            await toStream(
+                                t2.query(condition)
+                            ).firstOrDefault();
+
+                            t1.commit();
+                            t2.commit();
+                        },
+                    })
+                ),
+            {
+                name: `should conflict (case: query first ${JSON.stringify({lte: 0})} + put -100)`,
+                result: 'rejects',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(-100, 'conflict');
+                    await t2.put(123, 'new');
+                    await toStream(t2.query({lte: 0})).firstOrDefault();
+
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should not conflict for writeonly (case: put + put)',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(1, 'conflict');
+                    await t2.put(1, 'new');
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should not conflict for writeonly (case: put + delete)',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(1, 'conflict');
+                    await t2.delete(1);
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should not conflict for writeonly (case: delete + put)',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.delete(1);
+                    await t2.put(1, 'new');
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should not conflict for writeonly (case: delete + delete)',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.delete(1);
+                    await t2.delete(1);
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should resolve when get occurs on a key not written by concurrent transaction',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(20, 't1-update');
+                    await t2.get(30);
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should resolve on put then get on same key in the same transaction',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t2.put(40, 't2-new');
+                    await t2.get(40);
+                    await t1.put(40, 't1-update');
+                    t2.commit();
+                    t1.commit();
+                },
+            },
+            {
+                name: 'should resolve when both transactions write to different keys with no overlapping reads',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(80, 't1-update');
+                    await t2.put(81, 't2-update');
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should resolve when transaction writes then reads its own key even if concurrent transaction writes same key',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.put(90, 't1-value');
+                    await t1.get(90);
+                    await t2.put(90, 't2-value');
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+            {
+                name: 'should resolve when both transactions only perform reads',
+                result: 'resolves',
+                case: async (t1, t2) => {
+                    await t1.accept();
+                    await t2.accept();
+                    await t1.get(1);
+                    await t2.get(2);
+                    t1.commit();
+                    t2.commit();
+                },
+            },
+        ];
+
+        testcases.forEach(({name, only, result, case: actions}) => {
+            // eslint-disable-next-line no-restricted-properties
+            (only ? it.only : it)(name, async () => {
+                const t1 = new TxController<number, string>();
+                const t2 = new TxController<number, string>();
+
+                await store.transact(async tx => {
+                    await tx.put(1, 'one');
+                    await tx.put(2, 'two');
+                    await tx.put(3, 'three');
+                });
+
+                const promise = whenAll([
+                    store.transact(async tx => {
+                        await t1.use(tx);
+                        await t1.waitOnCommit();
+                    }),
+                    store.transact(async tx => {
+                        await t2.use(tx);
+                        await t2.waitOnCommit();
+                    }),
+                ]);
+
+                await actions(t1, t2);
+
+                if (result === 'resolves') {
+                    await promise;
+                } else {
+                    await expect(promise).rejects.toThrow(MvccConflictError);
+                }
+            });
+        });
     });
 
     it('should execute a transaction and persist changes', async () => {
-        const key = encodeString('key1');
-        const value = encodeString('value1');
+        const key = 321;
+        const value = 'value1';
 
-        await kvStore.transact(async tx => {
+        await store.transact(async tx => {
             await tx.put(key, value);
         });
 
-        await kvStore.transact(async tx => {
+        await store.transact(async tx => {
             const result = await tx.get(key);
             expect(result).toEqual(value);
         });
     });
 
     it('should handle concurrent transactions sequentially', async () => {
-        const key = encodeString('key1');
-        const value1 = encodeString('value1');
-        const value2 = encodeString('value2');
+        const key = 123;
+        const value1 = 'value1';
+        const value2 = 'value2';
 
-        const txn1 = kvStore.transact(async tx => {
+        const txn1 = store.transact(async tx => {
             await tx.put(key, value1);
         });
 
-        const txn2 = kvStore.transact(async tx => {
+        const txn2 = store.transact(async tx => {
             await tx.put(key, value2);
         });
 
         await whenAll([txn1, txn2]);
 
-        await kvStore.transact(async tx => {
+        await store.transact(async tx => {
             const result = await tx.get(key);
             expect(result).toEqual(value2); // Last transaction wins
         });
     });
 
     it('should retry on transaction failure', async () => {
+        const store = mapStore<number>(
+            new MemKVStore({transactionRetryCount: 2})
+        );
+
         let attempt = 0;
 
-        await kvStore.transact(async () => {
+        await store.transact(async () => {
             if (attempt++ < 1) {
-                throw new Error('Simulated failure');
+                throw new AppError('Simulated failure');
             }
         });
 
@@ -196,235 +1601,79 @@ describe('MemKVStore', () => {
     });
 
     it('should fail after exceeding retry attempts', async () => {
-        vi.spyOn(kvStore, 'transact').mockImplementationOnce(async () => {
-            throw new Error('Simulated permanent failure');
+        vi.spyOn(store, 'transact').mockImplementationOnce(async () => {
+            throw new AppError('Simulated permanent failure');
         });
 
-        await expect(kvStore.transact(async () => {})).rejects.toThrow(
+        await expect(store.transact(async () => {})).rejects.toThrow(
             'Simulated permanent failure'
         );
     });
 
     it('should handle transaction rollback on failure', async () => {
-        const key = encodeString('key1');
-        const value = encodeString('value1');
+        const key = 1;
+        const value = 'value1';
 
-        await kvStore
+        await store
             .transact(async tx => {
                 await tx.put(key, value);
-                throw new Error('Simulated rollback');
+                throw new AppError('Simulated rollback');
             })
             .catch(() => {});
 
-        await kvStore.transact(async tx => {
+        await store.transact(async tx => {
             const result = await tx.get(key);
             expect(result).toBeUndefined();
         });
     });
 });
 
-describe('MemLocker', () => {
-    let locker: MemLocker<string>;
+class TxController<K, V> {
+    private tx: Transaction<K, V> | undefined = undefined;
+    private commitSignal = new Deferred<void>();
+    private useQueue = new Channel<Transaction<K, V>>();
 
-    beforeEach(() => {
-        locker = new MemLocker<string>();
-    });
+    async use(tx: Transaction<K, V>) {
+        await this.useQueue.push(tx);
+    }
 
-    it('executes a single lock correctly', async () => {
-        const fn = vi.fn(async () => {
-            await wait({ms: 50, onCancel: 'reject'});
-            return 'result';
-        });
+    getReadRanges() {
+        const tx = (this.tx as MappedTransaction<any, any, any, any>)['target'];
 
-        const result = await locker.lock('key1', fn);
+        assert(
+            tx instanceof MemTransaction,
+            'must be instance of MappedTransaction'
+        );
 
-        expect(fn).toHaveBeenCalledTimes(1);
-        expect(result).toBe('result');
-    });
+        return tx.readRanges;
+    }
 
-    it('executes multiple locks for the same key sequentially', async () => {
-        const executionOrder: number[] = [];
+    async accept() {
+        this.tx = await this.useQueue.get();
+    }
 
-        const fn1 = vi.fn(async () => {
-            executionOrder.push(1);
-            await wait({ms: 100, onCancel: 'reject'});
-            executionOrder.push(2);
-            return 'first';
-        });
+    async get(key: K) {
+        return this.tx!.get(key);
+    }
 
-        const fn2 = vi.fn(async () => {
-            executionOrder.push(3);
-            await wait({ms: 50, onCancel: 'reject'});
-            executionOrder.push(4);
-            return 'second';
-        });
+    async put(key: K, value: V) {
+        return this.tx!.put(key, value);
+    }
 
-        const fn3 = vi.fn(async () => {
-            executionOrder.push(5);
-            await wait({ms: 10, onCancel: 'reject'});
-            executionOrder.push(6);
-            return 'third';
-        });
+    async delete(key: K) {
+        return this.tx!.delete(key);
+    }
 
-        const promise1 = locker.lock('key1', fn1);
-        const promise2 = locker.lock('key1', fn2);
-        const promise3 = locker.lock('key1', fn3);
+    query(condition: Condition<K>) {
+        return this.tx!.query(condition);
+    }
 
-        const results = await whenAll([promise1, promise2, promise3]);
+    commit() {
+        this.useQueue.close();
+        this.commitSignal.resolve();
+    }
 
-        expect(fn1).toHaveBeenCalledTimes(1);
-        expect(fn2).toHaveBeenCalledTimes(1);
-        expect(fn3).toHaveBeenCalledTimes(1);
-
-        expect(executionOrder).toEqual([1, 2, 3, 4, 5, 6]);
-        expect(results).toEqual(['first', 'second', 'third']);
-    });
-
-    it('executes locks for different keys concurrently', async () => {
-        const executionOrder: string[] = [];
-
-        const fn1 = vi.fn(async () => {
-            executionOrder.push('fn1_start');
-            await wait({ms: 100, onCancel: 'reject'});
-            executionOrder.push('fn1_end');
-            return 'result1';
-        });
-
-        const fn2 = vi.fn(async () => {
-            executionOrder.push('fn2_start');
-            await wait({ms: 50, onCancel: 'reject'});
-            executionOrder.push('fn2_end');
-            return 'result2';
-        });
-
-        const promise1 = locker.lock('key1', fn1);
-        const promise2 = locker.lock('key2', fn2);
-
-        const results = await whenAll([promise1, promise2]);
-
-        expect(fn1).toHaveBeenCalledTimes(1);
-        expect(fn2).toHaveBeenCalledTimes(1);
-
-        expect(executionOrder).toEqual([
-            'fn1_start',
-            'fn2_start',
-            'fn2_end',
-            'fn1_end',
-        ]);
-
-        expect(results).toEqual(['result1', 'result2']);
-    });
-
-    it('handles rejected functions and continues with the queue', async () => {
-        const executionOrder: number[] = [];
-
-        const fn1 = vi.fn(async () => {
-            executionOrder.push(1);
-            await wait({
-                ms: 50,
-                onCancel: 'reject',
-            });
-            executionOrder.push(2);
-            throw new Error('Error in fn1');
-        });
-
-        const fn2 = vi.fn(async () => {
-            executionOrder.push(3);
-            await wait({
-                ms: 30,
-                onCancel: 'reject',
-            });
-            executionOrder.push(4);
-            return 'fn2 result';
-        });
-
-        const promise1 = locker.lock('key1', fn1).catch(e => e.message);
-        const promise2 = locker.lock('key1', fn2);
-
-        const result1 = await promise1;
-        const result2 = await promise2;
-
-        expect(fn1).toHaveBeenCalledTimes(1);
-        expect(fn2).toHaveBeenCalledTimes(1);
-
-        expect(executionOrder).toEqual([1, 2, 3, 4]);
-        expect(result1).toBe('Error in fn1');
-        expect(result2).toBe('fn2 result');
-    });
-
-    it('does not interfere with locks of different keys', async () => {
-        const executionOrder: string[] = [];
-
-        const fn1 = vi.fn(async () => {
-            executionOrder.push('fn1_start');
-            await wait({ms: 50, onCancel: 'reject'});
-            executionOrder.push('fn1_end');
-            return 'result1';
-        });
-
-        const fn2 = vi.fn(async () => {
-            executionOrder.push('fn2_start');
-            await wait({ms: 20, onCancel: 'reject'});
-            executionOrder.push('fn2_end');
-            return 'result2';
-        });
-
-        const fn3 = vi.fn(async () => {
-            executionOrder.push('fn3_start');
-            await wait({ms: 10, onCancel: 'reject'});
-            executionOrder.push('fn3_end');
-            return 'result3';
-        });
-
-        const promise1 = locker.lock('key1', fn1);
-        const promise2 = locker.lock('key2', fn2);
-        const promise3 = locker.lock('key1', fn3);
-
-        const results = await whenAll([promise1, promise2, promise3]);
-
-        expect(fn1).toHaveBeenCalledTimes(1);
-        expect(fn2).toHaveBeenCalledTimes(1);
-        expect(fn3).toHaveBeenCalledTimes(1);
-
-        expect(executionOrder).toEqual([
-            'fn1_start',
-            'fn2_start',
-            'fn2_end',
-            'fn1_end',
-            'fn3_start',
-            'fn3_end',
-        ]);
-
-        expect(results).toEqual(['result1', 'result2', 'result3']);
-    });
-
-    it('handles rapid successive locks correctly', async () => {
-        const executionOrder: number[] = [];
-
-        const fn = vi.fn(async (id: number) => {
-            executionOrder.push(id);
-            await wait({ms: 10, onCancel: 'reject'});
-            executionOrder.push(id + 100);
-            return `result${id}`;
-        });
-
-        const promises: Promise<string>[] = [];
-        for (let i = 1; i <= 5; i++) {
-            promises.push(locker.lock('key1', () => fn(i)));
-        }
-
-        const results = await whenAll(promises);
-
-        expect(fn).toHaveBeenCalledTimes(5);
-        expect(executionOrder).toEqual([
-            1, 101, 2, 102, 3, 103, 4, 104, 5, 105,
-        ]);
-        expect(results).toEqual([
-            'result1',
-            'result2',
-            'result3',
-            'result4',
-            'result5',
-        ]);
-    });
-});
+    waitOnCommit() {
+        return this.commitSignal.promise;
+    }
+}

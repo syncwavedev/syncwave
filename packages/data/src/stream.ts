@@ -229,6 +229,14 @@ export class Stream<T> implements AsyncIterable<T> {
         throw new AppError('Stream.first: stream ended');
     }
 
+    async firstOrDefault(): Promise<T | undefined> {
+        for await (const item of this) {
+            return item;
+        }
+
+        return undefined;
+    }
+
     async find(
         predicate: (value: T) => Promise<boolean> | boolean
     ): Promise<T | undefined> {

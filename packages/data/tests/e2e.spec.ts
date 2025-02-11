@@ -6,6 +6,7 @@ import {
     EmailMessage,
     EmailService,
     JwtService,
+    log,
     MemKVStore,
     Message,
     MsgpackCodec,
@@ -22,6 +23,7 @@ describe('e2e', () => {
     let outbox: EmailMessage[];
 
     beforeEach(async () => {
+        log.setLogLevel('silent');
         const coordinatorTransportServer = new MemTransportServer<Message>(
             new MsgpackCodec()
         );

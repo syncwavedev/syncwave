@@ -135,6 +135,7 @@ async function getKVStore(): Promise<Uint8KVStore> {
 
 async function upgradeKVStore(kvStore: Uint8KVStore) {
     const versionKey = encodeString('version');
+    log.info('Retrieving KV store version...');
     const version = await kvStore.transact(async tx => {
         const ver = await tx.get(versionKey);
         if (ver) {
@@ -143,12 +144,16 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
             return 0;
         }
     });
+    log.info('KV store version: ' + version);
 
     if (!version) {
+        log.info("KV store doesn't have a version, upgrading...");
         await kvStore.transact(async tx => {
             const keys = await toStream(tx.query({gte: new Uint8Array()}))
                 .map(entry => entry.key)
                 .toArray();
+
+            log.info(`Store has ${keys.length} keys, removing them...`);
 
             if (keys.length > 1000) {
                 throw new AppError('too many keys to truncate the database');
@@ -158,6 +163,7 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
                 await tx.delete(key);
             }
 
+            log.info('Set KV store version to 1...');
             await tx.put(versionKey, encodeNumber(1));
         });
     }
@@ -165,7 +171,9 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
 
 async function launch() {
     const kvStore = await getKVStore();
+    log.info('Upgrading KV store...');
     await upgradeKVStore(kvStore);
+    log.info('Successfully upgraded KV store');
 
     const router = new Router();
     setupRouter(() => coordinator, router);

@@ -1,10 +1,11 @@
+import {context} from '../context.js';
 import {
     CoordinatorRpc,
     createCoordinatorApi,
 } from '../coordinator/coordinator-api.js';
 import {createReadApi} from '../data/read-api.js';
 import {createWriteApi} from '../data/write-api/write-api.js';
-import {Message, MessageHeaders} from '../transport/message.js';
+import {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {
     createApi,
@@ -12,6 +13,7 @@ import {
     InferRpcClient,
     InferRpcClientWithRequiredHeaders,
     MapProcessorState,
+    RequestInfo,
 } from '../transport/rpc.js';
 import {Connection, TransportClient} from '../transport/transport.js';
 import {assertNever} from '../utils.js';
@@ -26,7 +28,9 @@ export class ParticipantState {
         this.coordinator = createRpcClient(
             createCoordinatorApi(),
             this.connection,
-            () => ({}),
+            () => ({
+                ...context().extract(),
+            }),
             'server'
         );
     }
@@ -60,7 +64,7 @@ export function createParticipantApi() {
                 type: 'handler',
                 req: processor.req,
                 res: processor.res,
-                handle: (state: any, req: any, headers: MessageHeaders) => {
+                handle: (state: any, req: any, {headers}: RequestInfo) => {
                     return state.coordinator[name](req, headers);
                 },
             } as any;
@@ -69,7 +73,7 @@ export function createParticipantApi() {
                 type: 'streamer',
                 req: processor.req,
                 item: processor.item,
-                stream: (state: any, req: any, headers: MessageHeaders) => {
+                stream: (state: any, req: any, {headers}: RequestInfo) => {
                     return state.coordinator[name](req, headers);
                 },
             } as any;

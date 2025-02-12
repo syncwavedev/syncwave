@@ -1,6 +1,7 @@
 import pg from 'pg';
 import PgCursor from 'pg-cursor';
 import {
+    AppError,
     Cancel,
     CancelledError,
     Condition,
@@ -115,7 +116,7 @@ export class PostgresUint8KVStore implements Uint8KVStore {
             let cancelAbort: Cancel | undefined = undefined;
 
             try {
-                cancelAbort = context().onCancel(() => {
+                cancelAbort = context().onEnd(() => {
                     this.pool
                         .query('SELECT pg_cancel_backend($1)', [pid])
                         .catch(error => {
@@ -141,7 +142,10 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                     'code' in error &&
                     error.code === '57014'
                 ) {
-                    throw new CancelledError();
+                    throw new CancelledError(
+                        'transaction cancelled',
+                        new AppError('transaction failed')
+                    );
                 }
 
                 if (attempt === TXN_RETRIES_COUNT) {
@@ -149,7 +153,7 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                 }
             } finally {
                 client.release();
-                cancelAbort?.();
+                cancelAbort?.(new AppError('transaction finished'));
             }
         }
 

@@ -53,11 +53,11 @@ export function wait({
         cancelCleanup();
     }, ms);
 
-    const cancelCleanup = context().onCancel(() => {
+    const cancelCleanup = context().onEnd(reason => {
         clearTimeout(timeoutId);
 
         if (cancelBehavior === 'reject') {
-            result.reject(new CancelledError());
+            result.reject(new CancelledError('wait cancelled', reason));
         } else if (cancelBehavior === 'resolve') {
             result.resolve();
         } else if (cancelBehavior === 'suspend') {
@@ -102,7 +102,7 @@ async function* _interval({
 }: IntervalOptions): AsyncIterable<number> {
     let index = 0;
     let cancelled = false;
-    const cancelCleanup = context().onCancel(() => {
+    const cancelCleanup = context().onEnd(() => {
         cancelled = true;
     });
     try {
@@ -241,13 +241,9 @@ export function arrayEqual<T>(a: T[], b: T[]) {
     return true;
 }
 
-/**
- * In contrast to Promise.all, whenAll waits for all rejections and combines them into AggregateError
- */
-export async function whenAll<const T extends Promise<any>[]>(
-    promises: T
-): ReturnType<typeof Promise.all<T>> {
-    const result = await Promise.allSettled(promises);
+function aggregateSettled<const T extends PromiseSettledResult<unknown>[]>(
+    result: T
+): T[number] {
     const rejected = result.filter(x => x.status === 'rejected');
 
     if (rejected.length === 0) {
@@ -265,6 +261,35 @@ export async function whenAll<const T extends Promise<any>[]>(
             throw new AggregateError(rejected.map(x => x.reason));
         }
     }
+}
+
+/**
+ * runs each function in order and throws AggregateError if any function throws
+ * @param fns functions to run
+ */
+export function runAll<const T extends Array<() => unknown>>(fns: T): void {
+    aggregateSettled(
+        fns.map(fn => {
+            try {
+                fn();
+                return {status: 'fulfilled', value: undefined};
+            } catch (reason) {
+                return {status: 'rejected', reason};
+            }
+        })
+    );
+}
+
+/**
+ * In contrast to Promise.all, whenAll waits for all rejections and combines them into AggregateError
+ */
+export async function whenAll<const T extends Promise<any>[]>(
+    promises: T
+): ReturnType<typeof Promise.all<T>> {
+    const result = await Promise.allSettled(promises);
+    return aggregateSettled(result) as unknown as ReturnType<
+        typeof Promise.all<T>
+    >;
 }
 
 export async function whenAny<T>(promises: Promise<T>[]) {

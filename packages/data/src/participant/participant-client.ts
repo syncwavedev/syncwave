@@ -1,3 +1,4 @@
+import {context} from '../context.js';
 import {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {createRpcClient} from '../transport/rpc.js';
@@ -10,17 +11,22 @@ export class ParticipantClient {
 
     constructor(
         transport: TransportClient<Message>,
-        private readonly authToken: string | undefined
+        private authToken: string | undefined
     ) {
         this.connection = new PersistentConnection(transport);
         this.rpc = createRpcClient(
             createParticipantApi(),
             this.connection,
             () => ({
+                ...context().extract(),
                 auth: this.authToken,
             }),
             'part'
         );
+    }
+
+    setAuthToken(token: string | undefined) {
+        this.authToken = token;
     }
 
     close(): void {

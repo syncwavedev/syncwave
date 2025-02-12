@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {z} from 'zod';
 import {MsgpackCodec} from '../codec.js';
-import {context, createTraceId, TraceId} from '../context.js';
+import {context, TraceId} from '../context.js';
 import {Deferred} from '../deferred.js';
 import {CancelledError} from '../errors.js';
 import {log} from '../logger.js';
@@ -52,13 +52,12 @@ describe('RpcHandler', () => {
         launchRpcHandlerServer(api, {}, serverConn);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
-        const expectedTraceId = createTraceId();
-        const [ctx] = context().createChild({traceId: expectedTraceId});
+        const [ctx] = context().createChild({name: 'test child context'});
         await ctx.run(async () => await client.test({}));
 
         const serverTraceId = await serverTraceIdDeferred.promise;
 
-        expect(serverTraceId).toEqual(expectedTraceId);
+        expect(serverTraceId).toEqual(ctx.traceId);
     });
 
     it('should preserve traceId (case: trace id in request headers)', async () => {
@@ -77,15 +76,17 @@ describe('RpcHandler', () => {
 
         launchRpcHandlerServer(api, {}, serverConn);
         const client = createRpcHandlerClient(api, clientConn, () => ({
-            traceId: createTraceId(),
+            ...context().createBackground({name: 'invalid'})[0].extract(),
         }));
 
-        const expectedTraceId = createTraceId();
-        await client.test({}, {traceId: expectedTraceId});
+        const [expectedCtx] = context().createBackground({
+            name: 'test bg context',
+        });
+        await client.test({}, {...expectedCtx.extract()});
 
         const serverTraceId = await serverTraceIdDeferred.promise;
 
-        expect(serverTraceId).toEqual(expectedTraceId);
+        expect(serverTraceId).toEqual(expectedCtx.traceId);
     });
 
     it('should preserve traceId (case: trace id in client headers)', async () => {
@@ -103,16 +104,18 @@ describe('RpcHandler', () => {
         });
 
         launchRpcHandlerServer(api, {}, serverConn);
-        const expectedTraceId = createTraceId();
+        const [expectedCtx] = context().createBackground({
+            name: 'test bg context',
+        });
         const client = createRpcHandlerClient(api, clientConn, () => ({
-            traceId: expectedTraceId,
+            ...expectedCtx.extract(),
         }));
 
         await client.test({});
 
         const serverTraceId = await serverTraceIdDeferred.promise;
 
-        expect(serverTraceId).toEqual(expectedTraceId);
+        expect(serverTraceId).toEqual(expectedCtx.traceId);
     });
 
     it('should support request/response semantics', async () => {
@@ -183,7 +186,7 @@ describe('RpcHandler', () => {
                 req: z.object({}),
                 res: z.object({}),
                 handle: async () => {
-                    context().onCancel(() => {
+                    context().onEnd(() => {
                         cancelledDef.resolve(true);
                     });
                     await wait({ms: 1_000_000_000, onCancel: 'reject'});
@@ -195,11 +198,11 @@ describe('RpcHandler', () => {
         launchRpcHandlerServer(api, {}, serverConn);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
-        const [ctx, cancel] = context().createChild();
+        const [ctx, cancel] = context().createChild({name: 'test ctx'});
         const resultPromise = ctx.run(async () => await client.test({}));
         await wait({ms: 10, onCancel: 'reject'});
 
-        cancel();
+        cancel('test reason');
 
         await expect(cancelledDef.promise).resolves.toEqual(true);
         await expect(resultPromise).rejects.toThrowError(CancelledError);

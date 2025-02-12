@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
+    assert,
     CoordinatorServer,
     CryptoService,
     drop,
@@ -23,7 +24,7 @@ describe('e2e', () => {
     let outbox: EmailMessage[];
 
     beforeEach(async () => {
-        log.setLogLevel('silent');
+        log.setLogLevel('error');
         const coordinatorTransportServer = new MemTransportServer<Message>(
             new MsgpackCodec()
         );
@@ -94,6 +95,12 @@ describe('e2e', () => {
             code: code!,
         });
 
-        expect(token.type).toBe('success');
+        assert(token.type === 'success', 'token expected');
+
+        client.setAuthToken(token.token);
+
+        const result = await client.rpc.getMe({}).first();
+
+        expect(result.user.fullName).toEqual('Anonymous');
     });
 });

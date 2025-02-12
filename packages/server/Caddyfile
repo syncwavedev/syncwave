@@ -1,0 +1,20 @@
+http://127.0.0.1:4318 {
+    @cors_preflight {
+		method OPTIONS
+	}
+	respond @cors_preflight 204
+	
+    header {
+        Access-Control-Allow-Origin "http://localhost:5173"
+        Access-Control-Allow-Methods "*"
+        Access-Control-Allow-Headers "content-type"
+        Access-Control-Allow-Credentials true
+        # Access-Control-Max-Age 86400
+    }
+
+    reverse_proxy http://jaeger:4318
+}
+
+http://localhost:16686 {
+    reverse_proxy http://jaeger:16686
+}

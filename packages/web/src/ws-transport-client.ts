@@ -8,6 +8,7 @@ import {
 	TransportServerUnreachableError,
 	type Codec,
 	type Connection,
+	type Message,
 	type Observer,
 	type TransportClient,
 	type Unsubscribe,
@@ -30,13 +31,21 @@ export class WsTransportClient<T> implements TransportClient<T> {
 
 			ws.addEventListener('open', () => {
 				log.trace('ws connect: open');
-				const connection = new WsClientConnection<T>(ws, this.opt.codec);
+				const connection = new WsClientConnection<T>(
+					ws,
+					this.opt.codec
+				);
 				resolve(connection);
 			});
 
 			ws.addEventListener('error', err => {
 				log.trace('ws connect: error: ' + err.message);
-				const codes = ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EPIPE'];
+				const codes = [
+					'ECONNRESET',
+					'ECONNREFUSED',
+					'ETIMEDOUT',
+					'EPIPE',
+				];
 				// err.message might be undefined
 				if (codes.some(code => err.message?.includes(code))) {
 					reject(new TransportServerUnreachableError(err.message));
@@ -71,6 +80,8 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	send(message: T): Promise<void> {
+		console.log('send message', (message as Message).headers.traceparent);
+
 		log.trace('ws client: send: ' + JSON.stringify(message));
 		const data = this.codec.encode(message);
 		this.ws.send(data);
@@ -91,7 +102,10 @@ export class WsClientConnection<T> implements Connection<T> {
 	private setupListeners(): void {
 		this.ws.addEventListener('message', async event => {
 			try {
-				assert(event.data instanceof ArrayBuffer, 'ws message not an ArrayBuffer');
+				assert(
+					event.data instanceof ArrayBuffer,
+					'ws message not an ArrayBuffer'
+				);
 				const message = this.codec.decode(new Uint8Array(event.data));
 				await this.subject.next(message);
 			} catch (error) {
@@ -100,9 +114,14 @@ export class WsClientConnection<T> implements Connection<T> {
 		});
 
 		this.ws.addEventListener('error', async error => {
-			log.error(toError(error), 'ws client: error event: ' + error.message);
+			log.error(
+				toError(error),
+				'ws client: error event: ' + error.message
+			);
 			try {
-				await this.subject.throw(new AppError('ws.error: ' + error.toString()));
+				await this.subject.throw(
+					new AppError('ws.error: ' + error.toString())
+				);
 			} catch (error) {
 				log.error(toError(error), 'error during ws error');
 			}

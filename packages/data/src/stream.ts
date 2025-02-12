@@ -1,11 +1,10 @@
 import {Channel as AsyncChannel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
-import {Cancel} from './context.js';
 import {Cursor, toCursor} from './cursor.js';
 import {AppError, CancelledError, toError} from './errors.js';
 import {log} from './logger.js';
-import {assert, Nothing, stringify, whenAll} from './utils.js';
+import {assert, Nothing, stringify, Unsubscribe, whenAll} from './utils.js';
 
 export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;
@@ -102,7 +101,7 @@ export function toStream<T>(
         | AsyncIterable<T>
         | T[]
         | Promise<T>
-        | ((writer: ChannelWriter<T>) => Cancel)
+        | ((writer: ChannelWriter<T>) => Unsubscribe)
 ): Stream<T> {
     if (source instanceof Promise) {
         const factory = new AsyncIteratorFactory<T>(channel => {
@@ -113,7 +112,12 @@ export function toStream<T>(
 
             return () => {
                 channel
-                    .throw(new CancelledError())
+                    .throw(
+                        new CancelledError(
+                            'stream unsubscribe',
+                            'stream unsubscribe'
+                        )
+                    )
                     .finally(() => channel.end())
                     .catch(error => {
                         log.error(error, 'stream unsubscribe');
@@ -141,12 +145,12 @@ export class Stream<T> implements AsyncIterable<T> {
     }
 
     constructor(source: AsyncIterable<T>);
-    constructor(executor: (writer: ChannelWriter<T>) => Cancel);
+    constructor(executor: (writer: ChannelWriter<T>) => Unsubscribe);
     constructor(
-        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
+        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Unsubscribe)
     );
     constructor(
-        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Cancel)
+        source: AsyncIterable<T> | ((writer: ChannelWriter<T>) => Unsubscribe)
     ) {
         if (Symbol.asyncIterator in source) {
             this.source = source;

@@ -18,6 +18,10 @@ export class AppError extends Error {
 
 export class CancelledError extends AppError {
     public readonly traceId = context().traceId;
+
+    constructor(message: string, reason: unknown) {
+        super(message, {cause: reason});
+    }
 }
 
 export type ErrorCode =
@@ -52,7 +56,8 @@ export class AggregateCancelledError extends CancelledError {
     constructor(public readonly errors: CancelledError[]) {
         super(
             `${errors.length} errors occurred:\n - ` +
-                errors.map(getReadableError).join('\n - ')
+                errors.map(getReadableError).join('\n - '),
+            toError(errors[0]?.cause)
         );
     }
 }

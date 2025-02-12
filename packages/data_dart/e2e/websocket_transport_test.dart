@@ -29,7 +29,8 @@ void main() {
             'name': 'echo',
             'arg': {'msg': 'hello e2e'}
           }),
-          headers: MessageHeaders(auth: null, traceId: null)));
+          headers:
+              MessageHeaders(auth: null, traceparent: null, tracestate: null)));
       final message = await messageFut;
       expect(
           message.toJson(),
@@ -52,7 +53,8 @@ void main() {
           id: requestId,
           payload: RequestMessagePayload(
               name: "e2eUnknownHandler", arg: {"msg": "hello e2e"}),
-          headers: MessageHeaders(auth: null, traceId: null)));
+          headers:
+              MessageHeaders(auth: null, traceparent: null, tracestate: null)));
       final message = await messageFut;
       expect(
           message.toJson(),

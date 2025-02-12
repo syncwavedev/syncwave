@@ -1,4 +1,4 @@
-import {createTraceId, TraceId} from '../context.js';
+import {createTraceId} from '../context.js';
 import {ErrorCode} from '../errors.js';
 import {Brand} from '../utils.js';
 
@@ -9,8 +9,9 @@ export function createMessageId(): MessageId {
 }
 
 export interface MessageHeaders {
-    readonly auth?: string;
-    readonly traceId?: TraceId;
+    readonly auth?: string | undefined;
+    readonly traceparent: string;
+    readonly tracestate: string;
 }
 
 export interface BaseMessage<TType extends string> {
@@ -28,6 +29,7 @@ export interface RequestMessage extends BaseMessage<'request'> {
 
 export interface CancelMessage extends BaseMessage<'cancel'> {
     readonly requestId: MessageId;
+    readonly reason: string;
 }
 
 export interface BaseResponsePayload<TType extends string> {

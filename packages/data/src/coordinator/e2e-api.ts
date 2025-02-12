@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
-import {createTraceId} from '../context.js';
+import {context} from '../context.js';
 import {toCursor} from '../cursor.js';
 import {ChangeEvent, Transact} from '../data/data-layer.js';
 import {EventStoreReader} from '../data/event-store.js';
@@ -101,12 +101,11 @@ export function createE2eApi() {
                 return {
                     ...processor,
                     handle: async (state, arg, ctx) => {
-                        const traceId = ctx.headers.traceId ?? createTraceId();
                         try {
-                            runningProcessIds.add(traceId);
+                            runningProcessIds.add(context().traceId);
                             return processor.handle(state, arg, ctx);
                         } finally {
-                            runningProcessIds.delete(traceId);
+                            runningProcessIds.delete(context().traceId);
                         }
                     },
                 };
@@ -114,12 +113,11 @@ export function createE2eApi() {
                 return {
                     ...processor,
                     stream: (state, arg, ctx) => {
-                        const traceId = ctx.headers.traceId ?? createTraceId();
-                        runningProcessIds.add(traceId);
+                        runningProcessIds.add(context().traceId);
                         return toStream(
                             processor.stream(state, arg, ctx)
                         ).finally(() => {
-                            runningProcessIds.delete(traceId);
+                            runningProcessIds.delete(context().traceId);
                         });
                     },
                 };

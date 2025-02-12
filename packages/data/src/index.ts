@@ -27,6 +27,7 @@ export * from './participant/participant-server.js';
 export * from './stream.js';
 export * from './subject.js';
 export * from './transport/connection-pool.js';
+export * from './transport/mem-transport.js';
 export * from './transport/message.js';
 export * from './transport/persistent-connection.js';
 export * from './transport/transport.js';

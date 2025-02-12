@@ -31,7 +31,7 @@ void main() {
       final testMsg = RequestMessage(
         payload: RequestMessagePayload(name: 'test', arg: {'key': 'value'}),
         id: 'msg1',
-        headers: MessageHeaders(auth: 'token', traceId: 'trace1'),
+        headers: MessageHeaders(),
       );
 
       final receivedFuture = serverConn.subscribe().first;
@@ -52,7 +52,7 @@ void main() {
         payload: ResponsePayloadSuccess(result: 'success'),
         id: 'resp1',
         requestId: 'req1',
-        headers: MessageHeaders(auth: null, traceId: 'trace1'),
+        headers: MessageHeaders(),
       );
 
       final receivedFuture = clientConn.subscribe().first;
@@ -74,7 +74,7 @@ void main() {
         () => clientConn.send(RequestMessage(
           payload: RequestMessagePayload(name: 'test', arg: null),
           id: 'msg1',
-          headers: MessageHeaders(auth: null, traceId: null),
+          headers: MessageHeaders(),
         )),
         throwsStateError,
       );
@@ -98,7 +98,7 @@ void main() {
         final testMsg = RequestMessage(
           payload: RequestMessagePayload(name: 'test', arg: null),
           id: 'isolated',
-          headers: MessageHeaders(auth: null, traceId: null),
+          headers: MessageHeaders(),
         );
 
         await client1Conn.send(testMsg);
@@ -123,13 +123,13 @@ void main() {
       await clientConn.send(RequestMessage(
         payload: RequestMessagePayload(name: 'req', arg: null),
         id: 'req1',
-        headers: MessageHeaders(auth: null, traceId: null),
+        headers: MessageHeaders(),
       ));
 
       await clientConn.send(CancelMessage(
         id: 'cancel1',
         requestId: 'req1',
-        headers: MessageHeaders(auth: null, traceId: null),
+        headers: MessageHeaders(),
       ));
 
       await clientConn.send(ResponseMessage(
@@ -139,7 +139,7 @@ void main() {
         ),
         id: 'resp1',
         requestId: 'req1',
-        headers: MessageHeaders(auth: null, traceId: null),
+        headers: MessageHeaders(),
       ));
 
       await Future<void>.delayed(Duration(milliseconds: 50));
@@ -159,7 +159,7 @@ void main() {
         final msg = RequestMessage(
           payload: RequestMessagePayload(name: 'test', arg: null),
           id: 'null-test',
-          headers: MessageHeaders(auth: null, traceId: null),
+          headers: MessageHeaders(),
         );
 
         final received = serverConn.subscribe().first;
@@ -177,7 +177,7 @@ void main() {
         final msg = RequestMessage(
           payload: RequestMessagePayload(name: '', arg: ''),
           id: '',
-          headers: MessageHeaders(auth: '', traceId: ''),
+          headers: MessageHeaders(auth: '', traceparent: '', tracestate: ''),
         );
 
         final received = serverConn.subscribe().first;
@@ -188,7 +188,8 @@ void main() {
         expect((result as RequestMessage).payload.name, isEmpty);
         expect(result.payload.arg, isEmpty);
         expect(result.headers.auth, isEmpty);
-        expect(result.headers.traceId, isEmpty);
+        expect(result.headers.traceparent, isEmpty);
+        expect(result.headers.tracestate, isEmpty);
       });
     });
 
@@ -213,7 +214,7 @@ void main() {
         final msg = RequestMessage(
           payload: RequestMessagePayload(name: 'complex', arg: complexArg),
           id: 'complex1',
-          headers: MessageHeaders(auth: 'token', traceId: 'trace'),
+          headers: MessageHeaders(),
         );
 
         final received = serverConn.subscribe().first;
@@ -231,7 +232,7 @@ void main() {
         final msg = RequestMessage(
           payload: RequestMessagePayload(name: 'large', arg: largeString),
           id: 'large1',
-          headers: MessageHeaders(auth: 'token', traceId: 'trace'),
+          headers: MessageHeaders(),
         );
 
         final received = serverConn.subscribe().first;
@@ -259,7 +260,7 @@ void main() {
         final msg = RequestMessage(
           payload: RequestMessagePayload(name: 'test', arg: null),
           id: 'test1',
-          headers: MessageHeaders(auth: null, traceId: null),
+          headers: MessageHeaders(),
         );
 
         expect(

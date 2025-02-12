@@ -1,10 +1,10 @@
-import {Cancel, context, TraceId} from './context.js';
+import {Cancel, Context} from './context.js';
 import {AppError} from './errors.js';
 import {log} from './logger.js';
 
 interface Job {
-    readonly traceId: TraceId;
-    readonly cancel: Cancel;
+    readonly ctx: Context;
+    readonly end: Cancel;
 }
 
 export class JobManager<T extends string> {
@@ -15,7 +15,7 @@ export class JobManager<T extends string> {
 
     async start(
         id: T,
-        traceId: TraceId,
+        parentCtx: Context,
         fn: () => Promise<void>
     ): Promise<void> {
         if (this.runningJobs.has(id)) {
@@ -23,8 +23,8 @@ export class JobManager<T extends string> {
         } else if (this.cancelledJobs.has(id)) {
             throw new AppError(`job ${id} is already finished`);
         } else {
-            const [ctx, cancel] = context().createBackground({traceId});
-            this.runningJobs.set(id, {traceId, cancel});
+            const [ctx, end] = parentCtx.createChild({name: 'job ' + id});
+            this.runningJobs.set(id, {ctx, end});
             await ctx.run(fn);
         }
     }
@@ -33,27 +33,27 @@ export class JobManager<T extends string> {
         return this.cancelledJobs.has(id);
     }
 
-    cancel(id: T) {
+    cancel(id: T, reason: unknown) {
         if (this.runningJobs.has(id)) {
             const job = this.runningJobs.get(id)!;
-            this.runningJobs.get(id)!.cancel();
+            this.runningJobs.get(id)!.end(reason);
             this.runningJobs.delete(id);
             this.cancelledJobs.set(id, job);
         } else if (this.cancelledJobs.has(id)) {
             const job = this.cancelledJobs.get(id)!;
             log.warn(
-                `job ${id} is already cancelled, job.traceId = ${job.traceId}`
+                `job ${id} is already cancelled, job.traceId = ${job.ctx.traceId}`
             );
         } else {
             log.warn(`unknown job: ${id}`);
         }
     }
 
-    finish(job: T) {
+    finish(job: T, reason: unknown) {
         if (this.runningJobs.has(job) || this.cancelledJobs.has(job)) {
             const runningJob = this.runningJobs.get(job);
             if (runningJob) {
-                runningJob.cancel();
+                runningJob.end(reason);
             }
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
@@ -62,8 +62,8 @@ export class JobManager<T extends string> {
         }
     }
 
-    finishAll() {
+    finishAll(reason: unknown) {
         const runningSnapshot = [...this.runningJobs.keys()];
-        runningSnapshot.forEach(job => this.finish(job));
+        runningSnapshot.forEach(job => this.finish(job, reason));
     }
 }

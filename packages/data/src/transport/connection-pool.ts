@@ -44,7 +44,7 @@ export class ConnectionPool<T> {
         let connection = this.freeConnections.pop();
         if (!connection) {
             // we create background context to prevent connection from closing when parent context cancels
-            const [ctx] = context().createBackground();
+            const [ctx] = context().createBackground({name: 'connection pool'});
             connection = await ctx.run(async () => {
                 const connection = await this.client.connect();
                 connection.subscribe({

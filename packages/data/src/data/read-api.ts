@@ -50,7 +50,7 @@ export function createReadApi() {
                 user: zUser(),
                 identity: zIdentity(),
             }),
-            async *stream(st) {
+            async *stream(st, _, ctx) {
                 const userId = st.ensureAuthenticated();
 
                 yield* observable({

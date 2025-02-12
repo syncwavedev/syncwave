@@ -2,9 +2,9 @@ import {clsx, type ClassValue} from 'clsx';
 import {getContext, onDestroy} from 'svelte';
 import {toast} from 'svelte-sonner';
 import {
+	AppError,
 	ConnectionPool,
 	context,
-	createTraceId,
 	MsgpackCodec,
 	ParticipantClient,
 	type ParticipantRpc,
@@ -25,11 +25,13 @@ export function getSdk() {
 	if (!client) {
 		throw new Error('context ParticipantClient is not available');
 	}
-	const [componentCtx, cancelComponentCtx] = context().createChild();
-	onDestroy(() => cancelComponentCtx());
+	const [componentCtx, cancelComponentCtx] = context().createChild({
+		name: 'getSdk',
+	});
+	onDestroy(() => cancelComponentCtx(new AppError('component destroyed')));
 	return <R>(fn: (rpc: ParticipantRpc) => R) => {
 		const [requestCtx] = componentCtx.createChild({
-			traceId: createTraceId(),
+			name: 'getSdk request',
 		});
 		return requestCtx.run(() => fn(client.rpc));
 	};
@@ -89,7 +91,7 @@ export async function sdkOnce<T>(
 	cookies: CookieEntry[],
 	fn: (rpc: ParticipantRpc) => Promise<T>
 ): Promise<T> {
-	const [ctx, cancelCtx] = context().createChild();
+	const [ctx, cancelCtx] = context().createChild({name: 'sdkOnce'});
 	const result = await ctx.run(async () => {
 		const participant = createParticipantClient(cookies);
 		try {
@@ -98,6 +100,6 @@ export async function sdkOnce<T>(
 			participant.close();
 		}
 	});
-	cancelCtx();
+	cancelCtx(new AppError('end of sdkOnce'));
 	return result;
 }

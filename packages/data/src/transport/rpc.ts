@@ -261,9 +261,9 @@ export function applyMiddleware<
 
 export type InferRpcClient<T extends Api<any>> = {
     [K in keyof T]: T[K] extends Streamer<any, infer TReq, infer TItem>
-        ? (req: TReq, headers?: MessageHeaders) => Stream<TItem>
+        ? (req: TReq, headers?: Partial<MessageHeaders>) => Stream<TItem>
         : T[K] extends Handler<any, infer TReq, infer TRes>
-          ? (req: TReq, headers?: MessageHeaders) => Promise<TRes>
+          ? (req: TReq, headers?: Partial<MessageHeaders>) => Promise<TRes>
           : never;
 };
 

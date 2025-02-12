@@ -1,6 +1,7 @@
 # Init db:
 #
 # docker compose exec foundationdb bash -c "fdbcli --exec 'configure new single ssd'"
+# docker compose exec foundationdb bash -c "fdbcli --exec 'status'"
 
 # env:
 #
@@ -18,6 +19,29 @@ services:
             - '4500:4500'
         volumes:
             - fdb-data:/var/fdb/data
+
+
+    jaeger:
+        image: jaegertracing/all-in-one:latest
+        # ports:
+        # - "5775:5775"
+        # - "4317:4317"
+        # - "4318:4318"
+        # - "16686:16686"
+        environment:
+            - LOG_LEVEL=debug
+
+    caddy:
+        image: caddy:latest
+        ports:
+            - "4318:4318"
+            - "16686:16686"
+        volumes:
+            - ./Caddyfile:/etc/caddy/Caddyfile
+        environment:
+            - CADDY_PORT=4318
+        depends_on:
+            - jaeger
 
 volumes:
     fdb-data:

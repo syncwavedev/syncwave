@@ -1,4 +1,5 @@
 import {z, ZodType} from 'zod';
+import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
 import {AppError} from '../errors.js';
 import {Observer, Subject} from '../subject.js';
@@ -31,6 +32,7 @@ export class HubClient<T> {
             conn,
             () => ({
                 auth: authSecret,
+                ...context().extract(),
             }),
             hubUser
         );

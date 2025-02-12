@@ -1,5 +1,5 @@
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
-import {Cancel, context, createTraceId} from '../context.js';
+import {Cancel, Context, context} from '../context.js';
 import {Deferred} from '../deferred.js';
 import {
     AppError,
@@ -39,19 +39,22 @@ export function launchRpcHandlerServer<T>(
 ): Cancel {
     const jobManager = new JobManager();
 
-    const cancelCleanup = context().onCancel(cleanup);
+    const cancelCleanup = context().onEnd(cleanup);
 
-    function cleanup() {
+    function cleanup(reason: unknown) {
         unsub();
-        jobManager.finishAll();
+        jobManager.finishAll(reason);
         cancelCleanup();
     }
 
     const unsub = conn.subscribe({
         next: async msg => {
             if (msg.type === 'request') {
-                const traceId = msg.headers.traceId ?? createTraceId();
-                await jobManager.start(msg.id, traceId, async () => {
+                const actionCtx = Context.restore(
+                    {name: 'server request handler'},
+                    msg.headers
+                );
+                await jobManager.start(msg.id, actionCtx, async () => {
                     try {
                         const handler = getRequiredProcessor(
                             api,
@@ -70,7 +73,9 @@ export function launchRpcHandlerServer<T>(
                         await catchConnectionClosed(
                             conn.send({
                                 id: createMessageId(),
-                                headers: {traceId: context().traceId},
+                                headers: {
+                                    ...context().extract(),
+                                },
                                 type: 'response',
                                 requestId: msg.id,
                                 payload: {type: 'success', result},
@@ -84,7 +89,9 @@ export function launchRpcHandlerServer<T>(
                         await catchConnectionClosed(
                             conn.send({
                                 id: createMessageId(),
-                                headers: {traceId: context().traceId},
+                                headers: {
+                                    ...context().extract(),
+                                },
                                 type: 'response',
                                 requestId: msg.id,
                                 payload: {
@@ -95,22 +102,22 @@ export function launchRpcHandlerServer<T>(
                             })
                         );
                     } finally {
-                        jobManager.finish(msg.id);
+                        jobManager.finish(msg.id, new AppError('job finished'));
                     }
                 });
             } else if (msg.type === 'response') {
                 // ignore
             } else if (msg.type === 'cancel') {
-                jobManager.cancel(msg.requestId);
+                jobManager.cancel(msg.requestId, msg.reason);
             } else {
                 assertNever(msg);
             }
         },
         throw: async () => {
-            jobManager.finishAll();
+            jobManager.finishAll(new AppError('transport throw'));
         },
         close: () => {
-            cleanup();
+            cleanup(new AppError('transport closed'));
         },
     });
 
@@ -120,7 +127,7 @@ export function launchRpcHandlerServer<T>(
 export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
     api: TApi,
     conn: Connection<Message>,
-    getHeaders: () => MessageHeaders
+    getHeaders: () => Partial<MessageHeaders>
 ): InferRpcClient<TApi> {
     function get(_target: unknown, nameOrSymbol: string | symbol) {
         if (typeof nameOrSymbol !== 'string') {
@@ -159,23 +166,26 @@ async function proxyRequest(
 ) {
     const requestId = createMessageId();
     const result = new Deferred<any>();
-    const cancelCleanup = context().onCancel(() => {
-        cleanup();
-        result.reject(new CancelledError());
+    const cancelCleanup = context().onEnd(reason => {
+        cleanup(reason);
+        result.reject(new CancelledError('parent context cancelled', reason));
     });
 
     let unsub: Unsubscribe | undefined = undefined;
 
-    function cleanup() {
+    function cleanup(reason: unknown) {
         cancelCleanup();
         if (result.state === 'pending') {
-            result.reject(new CancelledError());
+            result.reject(new CancelledError('cleanup', reason));
             catchConnectionClosed(
                 conn.send({
                     id: createMessageId(),
-                    headers: {},
+                    headers: {
+                        ...context().extract(),
+                    },
                     type: 'cancel',
                     requestId,
+                    reason: getReadableError(reason),
                 })
             ).catch(error =>
                 log.error(error, 'proxyRequest: failed to send cancellation')
@@ -204,15 +214,15 @@ async function proxyRequest(
                     assertNever(msg.payload);
                 }
             } finally {
-                cleanup();
+                cleanup(new AppError('unsub'));
             }
         },
         throw: async error => {
-            cleanup();
+            cleanup(new AppError('throw'));
             result.reject(error);
         },
         close: () => {
-            cleanup();
+            cleanup(new AppError('close'));
             result.reject(new ConnectionClosedError());
         },
     });
@@ -226,7 +236,7 @@ async function proxyRequest(
                             `rpc call ${name}(${JSON.stringify(arg)}) failed: timeout`
                         )
                     );
-                    cleanup();
+                    cleanup(new AppError('timeout'));
                 }
             })
             .catch((err: unknown) => {
@@ -242,13 +252,13 @@ async function proxyRequest(
 
         return await result.promise;
     } finally {
-        cleanup();
+        cleanup(new AppError('end of rpc proxy request'));
     }
 }
 
 function createHandlerProxy(
     conn: Connection<Message>,
-    getHeaders: () => MessageHeaders,
+    getHeaders: () => Partial<MessageHeaders>,
     processor: Processor<unknown, unknown, unknown>,
     name: string
 ) {
@@ -263,11 +273,13 @@ function createHandlerProxy(
             );
         }
 
-        const [requestCtx, cancelRequestCtx] = context().createChild();
+        const [requestCtx, cancelRequestCtx] = context().createChild({
+            name: `call rpc ${name}`,
+        });
 
         const result: unknown = await requestCtx.run(async () => {
             const headers = Object.assign(
-                {traceId: context().traceId},
+                {...context().extract()},
                 getHeaders(),
                 partialHeaders ?? {}
             );
@@ -275,7 +287,7 @@ function createHandlerProxy(
             return await proxyRequest(conn, name, arg, headers);
         });
 
-        cancelRequestCtx();
+        cancelRequestCtx(new AppError('end of rpc handle'));
 
         return result;
     };
@@ -285,7 +297,7 @@ export function reportRpcError(error: unknown, callInfo: string) {
     if (error instanceof BusinessError) {
         log.warn(error, `[${callInfo}] business error`);
     } else if (error instanceof CancelledError) {
-        log.debug(`[${callInfo}] cancelled`);
+        log.warn(error, `[${callInfo}] cancelled`);
     } else {
         log.error(
             toError(error),
@@ -301,7 +313,7 @@ export function reconstructError(params: {
     if (params.code === 'unknown') {
         return new RpcError(params.message);
     } else if (params.code === 'cancelled') {
-        return new CancelledError(params.message);
+        return new CancelledError(params.message, 'remote rpc cancelled');
     } else {
         return new BusinessError(
             params.message,

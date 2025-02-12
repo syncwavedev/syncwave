@@ -5,18 +5,21 @@ String createTraceId() => createRandomUuid();
 
 class MessageHeaders {
   final String? auth;
-  final String? traceId;
+  final String? traceparent;
+  final String? tracestate;
 
-  MessageHeaders({this.auth, this.traceId});
+  MessageHeaders({this.auth, this.traceparent, this.tracestate});
 
   factory MessageHeaders.fromJson(Map<String, dynamic> json) => MessageHeaders(
         auth: json['auth'] as String?,
-        traceId: json['traceId'] as String?,
+        traceparent: json['traceparent'] as String?,
+        tracestate: json['tracestate'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
         'auth': auth,
-        'traceId': traceId,
+        'traceparent': traceparent,
+        'tracestate': tracestate,
       };
 }
 

@@ -22,7 +22,6 @@ import {
     JwtService,
     log,
     MsgpackCodec,
-    PrefixedKVStore,
     toError,
     toStream,
     Uint8KVStore,
@@ -128,10 +127,11 @@ async function getKVStore(): Promise<Uint8KVStore> {
         log.info(
             `using FoundationDB as a primary store (${`./fdb/fdb.${STAGE}.cluster`}`
         );
-        const fdbStore = await import('./fdb-kv-store.js').then(
-            x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
-        );
-        return new PrefixedKVStore(fdbStore, `/syncwave-${STAGE}/`);
+        // const fdbStore = await import('./fdb-kv-store.js').then(
+        //     x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
+        // );
+        return 1 as any;
+        // return new PrefixedKVStore(fdbStore, `/syncwave-${STAGE}/`);
     }
 }
 
@@ -220,7 +220,7 @@ async function launch() {
         process.exit(0);
     }
 
-    context().onCancel(() => {
+    context().onEnd(() => {
         shutdown().catch(error => {
             log.error(toError(error), 'failed to shutdown');
         });
@@ -280,10 +280,12 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
 
 log.setLogLevel(LOG_LEVEL);
 
-const [serverCtx, cancelServerCtx] = context().createChild();
+const [serverCtx, cancelServerCtx] = context().createChild({
+    name: 'server main',
+});
 
-process.once('SIGINT', () => cancelServerCtx());
-process.once('SIGTERM', () => cancelServerCtx());
+process.once('SIGINT', () => cancelServerCtx(new AppError('server shutdown')));
+process.once('SIGTERM', () => cancelServerCtx(new AppError('server shutdown')));
 process.on('unhandledRejection', reason => {
     if (reason instanceof CancelledError) {
         log.info('unhandled cancellation');

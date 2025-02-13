@@ -8,7 +8,7 @@ describe('Context', () => {
     new BasicTracerProvider().register();
 
     it('should extract context', () => {
-        const [ctx] = context().createBackground({
+        const [ctx] = context().createDetached({
             span: 'test',
             attributes: {val: 'works'},
         });

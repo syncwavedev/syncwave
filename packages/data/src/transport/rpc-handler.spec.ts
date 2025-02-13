@@ -77,10 +77,10 @@ describe('RpcHandler', () => {
 
         launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
         const client = createRpcHandlerClient(api, clientConn, () => ({
-            ...context().createBackground({span: 'invalid'})[0].extract(),
+            ...context().createDetached({span: 'invalid'})[0].extract(),
         }));
 
-        const [expectedCtx] = context().createBackground({
+        const [expectedCtx] = context().createDetached({
             span: 'test bg context',
         });
         await client.test({}, {...expectedCtx.extract()});
@@ -105,7 +105,7 @@ describe('RpcHandler', () => {
         });
 
         launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
-        const [expectedCtx] = context().createBackground({
+        const [expectedCtx] = context().createDetached({
             span: 'test bg context',
         });
         const client = createRpcHandlerClient(api, clientConn, () => ({

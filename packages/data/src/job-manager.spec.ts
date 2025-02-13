@@ -12,7 +12,7 @@ describe('JobManager', () => {
     beforeEach(() => {
         log.setLogLevel('silent');
         manager = new JobManager();
-        [ctx, cancelCtx] = Context._root.createBackground({
+        [ctx, cancelCtx] = Context._root.createDetached({
             span: 'test context',
         });
     });

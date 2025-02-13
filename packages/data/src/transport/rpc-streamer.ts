@@ -162,15 +162,9 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                 name: z.string(),
                 arg: z.any(),
                 streamId: zStreamId(),
-                traceparent: z.string(),
-                tracestate: z.string(),
             }),
             res: z.object({}),
-            handle: async (
-                state,
-                {name, streamId, arg, traceparent, tracestate},
-                headers
-            ) => {
+            handle: async (state, {name, streamId, arg}, headers) => {
                 const processor = getRequiredProcessor(api, name);
                 if (processor.type !== 'streamer') {
                     throw new AppError('processor must be a streamer');
@@ -180,18 +174,14 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
 
                 log.info(`${callInfo}...`);
 
-                const [ctx, cancelCtx] = Context.restore(
-                    {
-                        span: `handle_stream ${name}(${toRequestLog(arg)})`,
-                        attributes: {
-                            'rpc.streamId': streamId,
-                            'rpc.method': name,
-                            'rpc.arg': toRequestLog(arg),
-                        },
+                const [ctx, cancelCtx] = context().createDetached({
+                    span: `handle_stream ${name}(${toRequestLog(arg)})`,
+                    attributes: {
+                        'rpc.streamId': streamId,
+                        'rpc.method': name,
+                        'rpc.arg': toRequestLog(arg),
                     },
-                    {traceparent, tracestate},
-                    state.tracer
-                );
+                });
 
                 catchCancel(
                     state.jobManager.start(
@@ -577,7 +567,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
 
                             log.info('start rpc stream...');
                             await server.stream(
-                                {streamId, name, arg, ...parentCtx.extract()},
+                                {streamId, name, arg},
                                 {...headers}
                             );
                             await channel.pipe(writer);

@@ -184,7 +184,7 @@ export class Context {
 
     onEnd(cb: (reason: unknown) => Nothing): Unsubscribe {
         if (this._endRequested) {
-            // log.warn('Context.onEnd: new onEnd was registered after end');
+            log.debug('Context.onEnd: new onEnd was registered after end');
         }
         // wrap to guarantee function uniqueness (needed for unsubscribe filtration)
         const wrapper = (reason: unknown) => cb(reason);
@@ -224,7 +224,7 @@ export class Context {
         startNewSpan = false
     ): [Context, Cancel] {
         if (this._endRequested) {
-            // log.warn('Context.createChild: new child was created after end');
+            log.warn('Context.createChild: new child was created after end');
         }
 
         const child = new Context({
@@ -234,7 +234,7 @@ export class Context {
             },
             parent: startNewSpan ? undefined : getOtSpanContext(this.span),
             tracer: this.tracer,
-            links: [this.span.spanContext()],
+            links: startNewSpan ? [this.span.spanContext()] : [],
         });
         this.children.push(child);
         return [
@@ -247,16 +247,16 @@ export class Context {
     }
 
     detach(options: ContextOptions, fn: () => Nothing): void {
-        const [ctx] = this.createBackground(options);
+        const [ctx] = this.createDetached(options);
         ctx.run(fn);
     }
 
-    createBackground(options: ContextOptions): [Context, Cancel] {
+    createDetached(options: ContextOptions): [Context, Cancel] {
         const ctx = new Context({
             options,
-            parent: undefined,
+            parent: getOtSpanContext(this.span),
             tracer: this.tracer,
-            links: [this.span.spanContext()],
+            links: [],
         });
         return [ctx, (reason: unknown) => ctx.end(reason)];
     }

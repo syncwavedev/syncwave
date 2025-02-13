@@ -9,22 +9,6 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 
-if (globalThis.navigator) {
-	const originalSendBeacon = globalThis.navigator.sendBeacon;
-	globalThis.navigator.sendBeacon = function (
-		url: string | URL,
-		data?: BodyInit | null
-	) {
-		if (!(data instanceof Blob)) throw new Error('unexcpected data type');
-
-		if (data.size / 1024 / 1024 > 1) {
-			console.error('sendBeacon: data is larger than 1MB');
-		}
-
-		return originalSendBeacon.call(this, url, data);
-	};
-}
-
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 const exporter = new SimpleSpanProcessor(
 	new OTLPTraceExporter({

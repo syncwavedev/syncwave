@@ -202,6 +202,23 @@ export class Context {
         };
     }
 
+    runChild<R>(options: ContextOptions, fn: () => R): R {
+        const [, endCtx] = this.createChild(options);
+        try {
+            const result = fn();
+
+            if (result instanceof Promise) {
+                return result.finally(() => endCtx('end of runChild')) as R;
+            } else {
+                endCtx('end of runChild');
+                return result;
+            }
+        } catch (error) {
+            endCtx('end of runChild');
+            throw error;
+        }
+    }
+
     createChild(
         options: ContextOptions,
         startNewSpan = false

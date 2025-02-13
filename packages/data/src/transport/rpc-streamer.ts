@@ -278,7 +278,6 @@ class RpcStreamerClientApiState {
             context: Context;
             method: string;
             writer: ChannelWriter<unknown>;
-            callInfo: string;
         }
     >();
 
@@ -287,7 +286,6 @@ class RpcStreamerClientApiState {
         writer: ChannelWriter<unknown>;
         method: string;
         arg: unknown;
-        callInfo: string;
     }) {
         if (this.subs.has(params.streamId)) {
             throw new AppError(`stream ${params.streamId} already exists`);
@@ -297,39 +295,48 @@ class RpcStreamerClientApiState {
             context: context(),
             writer: params.writer,
             method: params.method,
-            callInfo: params.callInfo,
         });
     }
 
     async next(streamId: StreamId, value: unknown) {
         const sub = this.getSub(streamId);
-        await sub?.context.run(async () => {
-            log.info(`${sub?.callInfo} next ${toRequestLog(value)}`);
-            await sub.writer.next(value);
-        });
+        await sub?.context.runChild(
+            {
+                span: 'next',
+                attributes: {'rpc.next.value': toResponseLog(value)},
+            },
+            async () => {
+                await sub.writer.next(value);
+            }
+        );
     }
 
     async throw(params: {streamId: StreamId; code: string; message: string}) {
         const sub = this.getSub(params.streamId);
-        await sub?.context.run(async () => {
-            log.info(
-                `${sub?.callInfo} throw ${toRequestLog({code: params.code, message: params.message})}`
-            );
-            await sub.writer.throw(
-                toError(
-                    reconstructError({
-                        message: params.message,
-                        code: params.code,
-                    })
-                )
-            );
-        });
+        await sub?.context.runChild(
+            {
+                span: 'throw',
+                attributes: {
+                    'rpc.throw.code': params.code,
+                    'rpc.throw.message': params.message,
+                },
+            },
+            async () => {
+                await sub.writer.throw(
+                    toError(
+                        reconstructError({
+                            message: params.message,
+                            code: params.code,
+                        })
+                    )
+                );
+            }
+        );
     }
 
     end(streamId: StreamId) {
         const sub = this.getSub(streamId);
-        sub?.context.run(() => {
-            log.info(`${sub?.callInfo} end`);
+        sub?.context.runChild({span: 'end'}, () => {
             sub.writer.end();
         });
     }
@@ -524,7 +531,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             } else if (handler.type === 'streamer') {
                 let cancelCleanup: Cancel | undefined = undefined;
                 const cleanup = (reason: unknown) => {
-                    factory.returnAll();
+                    factory.close();
                     cancelCleanup?.(reason);
                 };
 
@@ -545,9 +552,19 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                 'rpc.arg': toRequestLog(arg),
                             },
                         });
+                    const cancelRequestCtxCleanUp = requestCtx.onEnd(reason => {
+                        writer
+                            .throw(
+                                new CancelledError(
+                                    'factory cancel request',
+                                    reason
+                                )
+                            )
+                            .finally(() => {
+                                writer.end();
+                            });
+                    });
                     return requestCtx.run(() => {
-                        const streamInfo = `call ${clientTarget}.${name}(${toRequestLog(arg)}) [sid=${streamId}]`;
-
                         run(async () => {
                             const channel = new Channel();
                             clientApiState.create({
@@ -555,10 +572,9 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                 writer: channel,
                                 method: name,
                                 arg,
-                                callInfo: streamInfo,
                             });
 
-                            log.info(`${streamInfo}...`);
+                            log.info('start rpc stream...');
                             await server.stream(
                                 {streamId, name, arg, ...parentCtx.extract()},
                                 {...headers}
@@ -566,18 +582,16 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             await channel.pipe(writer);
                         }).catch(error => {
                             cleanup(new AppError('run failed', {cause: error}));
-                            log.error(
-                                error,
-                                `${streamInfo} failed to start streaming`
-                            );
+                            log.error(error, 'failed to start streaming');
                         });
 
                         return () => {
+                            cancelRequestCtxCleanUp();
                             cancelRequestCtx('stream has no consumers');
                             // we need to run cancellation separately to avoid cancellation of the cancellation
                             context().detach({span: 'cancel stream'}, () => {
                                 log.info(
-                                    `${streamInfo} stream consumer unsubscribed, send cancellation to the server...`
+                                    'stream consumer unsubscribed, send cancellation to the server...'
                                 );
                                 cleanup(new AppError('stream cancelled'));
                                 catchConnectionClosed(
@@ -587,12 +601,12 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                     })
                                 )
                                     .then(() => {
-                                        log.info(`${streamInfo} cancelled`);
+                                        log.info('cancelled');
                                     })
                                     .catch(error => {
                                         log.error(
                                             toError(error),
-                                            `${streamInfo} failed to cancel stream`
+                                            'failed to cancel stream'
                                         );
                                     });
                             });

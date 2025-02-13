@@ -10,10 +10,7 @@
 	import {flip} from 'svelte/animate';
 	import {dndzone} from 'svelte-dnd-action';
 
-	import {
-		createColumnId,
-		type ColumnId,
-	} from '../../../../../../data/dist/esm/src/data/repos/column-repo';
+	import {createColumnId} from 'syncwave-data';
 	import {goto} from '$app/navigation';
 	import ColumnCard from './column-card.svelte';
 	import Board from './board.svelte';

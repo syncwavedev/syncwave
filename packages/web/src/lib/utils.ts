@@ -3,6 +3,7 @@ import {getContext, onDestroy} from 'svelte';
 import {toast} from 'svelte-sonner';
 import {
 	AppError,
+	CancelledError,
 	ConnectionPool,
 	context,
 	drop,
@@ -11,6 +12,7 @@ import {
 	MsgpackCodec,
 	ParticipantClient,
 	ParticipantServer,
+	toStream,
 	tracerManager,
 	type ParticipantRpc,
 } from 'syncwave-data';
@@ -33,15 +35,32 @@ export function getSdk() {
 	const [componentCtx, cancelComponentCtx] = context().createChild({
 		span: 'getSdk',
 	});
-	onDestroy(() => cancelComponentCtx(new AppError('component destroyed')));
-	return <R>(fn: (rpc: ParticipantRpc) => R) => {
-		const [requestCtx] = componentCtx.createChild(
+	onDestroy(() => {
+		cancelComponentCtx(
+			new CancelledError('component destroyed', undefined)
+		);
+	});
+	return <R extends AsyncIterable<unknown> | Promise<unknown>>(
+		fn: (rpc: ParticipantRpc) => R
+	) => {
+		const [requestCtx, cancelRequestCtx] = componentCtx.createChild(
 			{
 				span: 'getSdk request',
 			},
 			true
 		);
-		return requestCtx.run(() => fn(client.rpc));
+
+		const result = requestCtx.run(() => fn(client.rpc));
+
+		if (result instanceof Promise) {
+			return result.finally(() => {
+				cancelRequestCtx('end of request');
+			}) as R;
+		}
+
+		return toStream(result).finally(() => {
+			cancelRequestCtx('end of request');
+		}) as unknown as R;
 	};
 }
 

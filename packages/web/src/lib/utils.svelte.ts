@@ -8,6 +8,7 @@ import {
 	log,
 	Stream,
 	toError,
+	toStream,
 	wait,
 	type ParticipantRpc,
 } from 'syncwave-data';
@@ -58,7 +59,7 @@ function useStream<T>(
 			while (!cancelled) {
 				try {
 					const value$ = sdk(x => {
-						return fn(x);
+						return toStream(fn(x));
 					});
 
 					for await (const value of value$) {

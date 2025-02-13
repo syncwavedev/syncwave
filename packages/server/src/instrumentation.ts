@@ -10,16 +10,28 @@ import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 
-const exporter = new OTLPTraceExporter({
-    url: 'http://127.0.0.1:4318/v1/traces',
-});
-const provider = new BasicTracerProvider({
-    resource: new Resource({
-        [ATTR_SERVICE_NAME]: 'server',
-    }),
-    // spanProcessors: [new BatchSpanProcessor(new ConsoleSpanExporter())],
-    spanProcessors: [new SimpleSpanProcessor(exporter)],
-    // spanProcessors: [new SimpleSpanProcessor(exporter)],
-    sampler: new AlwaysOnSampler(),
-});
-provider.register();
+const exporter = new SimpleSpanProcessor(
+    new OTLPTraceExporter({
+        url: 'http://127.0.0.1:4318/v1/traces',
+    })
+);
+
+function createTracer(name: string, register = false) {
+    const provider = new BasicTracerProvider({
+        resource: new Resource({
+            [ATTR_SERVICE_NAME]: name,
+        }),
+        spanProcessors: [exporter],
+        sampler: new AlwaysOnSampler(),
+    });
+    if (register) {
+        provider.register();
+    }
+
+    return provider.getTracer('syncwave');
+}
+
+(globalThis as any).tracers = {
+    coord: createTracer('coord', true),
+    hub: createTracer('hub'),
+};

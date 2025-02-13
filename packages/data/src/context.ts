@@ -1,8 +1,13 @@
-import opentelemetry, {propagation, Span, trace} from '@opentelemetry/api';
+import opentelemetry, {
+    propagation,
+    Span,
+    trace,
+    Tracer,
+} from '@opentelemetry/api';
 import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
-import {CancelledError} from './errors.js';
+import {AppError, CancelledError} from './errors.js';
 import {log, LogLevel} from './logger.js';
 import {Brand, Nothing, runAll, Unsubscribe} from './utils.js';
 
@@ -65,9 +70,21 @@ interface ContextCarrier {
     readonly tracestate: string;
 }
 
+interface ContextConstructorParams {
+    options: ContextOptions;
+    parent: opentelemetry.Context | undefined;
+    links: opentelemetry.SpanContext[];
+    tracer: Tracer;
+}
+
 export class Context {
     public static readonly _root = new Context({
-        span: 'root',
+        options: {
+            span: 'root',
+        },
+        links: [],
+        parent: undefined,
+        tracer: trace.getTracer('syncwave-data'),
     });
 
     private readonly span: Span;
@@ -76,26 +93,36 @@ export class Context {
 
     public static restore(
         options: ContextOptions,
-        carrier: ContextCarrier
+        carrier: ContextCarrier,
+        tracer: Tracer
     ): [Context, Cancel] {
         const otCtx = getOtSpanContext(context().span);
 
         const extractedCtx = propagation.extract(otCtx, carrier);
-        const ctx = new Context(options, extractedCtx);
+        const ctx = new Context({
+            options,
+            parent: extractedCtx,
+            tracer,
+            links: [],
+        });
         return [ctx, reason => ctx.end(reason)];
     }
+    private readonly tracer: Tracer;
 
-    private constructor(
-        options: ContextOptions,
-        parent?: opentelemetry.Context
-    ) {
-        this.span = opentelemetry.trace.getTracer('syncwave').startSpan(
-            options.span,
+    private constructor(params: ContextConstructorParams) {
+        if (JSON.stringify(params.options).length > 1000) {
+            throw new AppError('context options are too big');
+        }
+        this.tracer = params.tracer;
+
+        this.span = params.tracer.startSpan(
+            params.options.span,
             {
-                root: !parent,
-                attributes: options.attributes,
+                root: !params.parent,
+                attributes: params.options.attributes,
+                links: params.links.map(context => ({context})),
             },
-            parent
+            params.parent
         );
         const spanCtx = this.span.spanContext();
         this.traceId = spanCtx.traceId as TraceId;
@@ -183,13 +210,15 @@ export class Context {
             // log.warn('Context.createChild: new child was created after end');
         }
 
-        const child = new Context(
-            {
+        const child = new Context({
+            options: {
                 attributes: options.attributes,
                 span: options.span,
             },
-            startNewSpan ? undefined : getOtSpanContext(this.span)
-        );
+            parent: startNewSpan ? undefined : getOtSpanContext(this.span),
+            tracer: this.tracer,
+            links: [],
+        });
         this.children.push(child);
         return [
             child,
@@ -206,7 +235,12 @@ export class Context {
     }
 
     createBackground(options: ContextOptions): [Context, Cancel] {
-        const ctx = new Context(options, undefined);
+        const ctx = new Context({
+            options,
+            parent: undefined,
+            tracer: this.tracer,
+            links: [],
+        });
         return [ctx, (reason: unknown) => ctx.end(reason)];
     }
 
@@ -243,12 +277,12 @@ export class Context {
     }
 
     private ignoreAddEvent = 0;
-    addLog(level: LogLevel, name: string, attributes?: AttributeMap) {
+    addLog(level: LogLevel, message: string, attributes?: AttributeMap) {
         if (this.ignoreAddEvent > 0) return;
 
         if (this.isActive) {
             this.span.addEvent(
-                `[${level.toUpperCase()}] ${name}`,
+                `[${level.toUpperCase()}] ${message}`,
                 attributes,
                 performance.now()
             );
@@ -257,7 +291,7 @@ export class Context {
                 this.ignoreAddEvent += 1;
                 log.warn(
                     'context is not active, cannot add event: ' +
-                        JSON.stringify({name, attributes})
+                        JSON.stringify({name: message, attributes})
                 );
             } finally {
                 this.ignoreAddEvent -= 1;

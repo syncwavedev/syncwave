@@ -5,6 +5,7 @@ import {
 } from '../coordinator/coordinator-api.js';
 import {createReadApi} from '../data/read-api.js';
 import {createWriteApi} from '../data/write-api/write-api.js';
+import {tracerManager} from '../tracer-manager.js';
 import {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {
@@ -31,7 +32,8 @@ export class ParticipantState {
             () => ({
                 ...context().extract(),
             }),
-            'server'
+            'server',
+            tracerManager.get('part')
         );
     }
 

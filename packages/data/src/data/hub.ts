@@ -1,8 +1,10 @@
+import {Tracer} from '@opentelemetry/api';
 import {z, ZodType} from 'zod';
 import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
 import {AppError} from '../errors.js';
 import {Observer, Subject} from '../subject.js';
+import {tracerManager} from '../tracer-manager.js';
 import {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {
@@ -24,7 +26,8 @@ export class HubClient<T> {
         transportClient: TransportClient<Message>,
         schema: ZodType<T>,
         authSecret: string,
-        hubUser: string
+        hubUser: string,
+        tracer: Tracer
     ) {
         const conn = new PersistentConnection(transportClient);
         this.server = createRpcClient(
@@ -34,7 +37,8 @@ export class HubClient<T> {
                 auth: authSecret,
                 ...context().extract(),
             }),
-            hubUser
+            hubUser,
+            tracer
         );
     }
 
@@ -79,7 +83,8 @@ export class HubServer<T> {
             transport,
             createHubServerApi(schema),
             new HubServerRpcState<T>(authSecret, new SubjectManager()),
-            serverName
+            serverName,
+            tracerManager.get('hub')
         );
     }
 

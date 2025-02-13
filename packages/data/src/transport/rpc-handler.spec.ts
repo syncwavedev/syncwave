@@ -1,3 +1,4 @@
+import {trace} from '@opentelemetry/api';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {z} from 'zod';
 import {MsgpackCodec} from '../codec.js';
@@ -49,7 +50,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const [ctx] = context().createChild({span: 'test child context'});
@@ -74,7 +75,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
         const client = createRpcHandlerClient(api, clientConn, () => ({
             ...context().createBackground({span: 'invalid'})[0].extract(),
         }));
@@ -103,7 +104,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
         const [expectedCtx] = context().createBackground({
             span: 'test bg context',
         });
@@ -129,7 +130,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const result = await client.test({value: 'some value'});
@@ -148,7 +149,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const result = client.test({
@@ -169,7 +170,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const result = client.test({});
@@ -195,7 +196,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, trace.getTracer('test'));
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const [ctx, cancel] = context().createChild({span: 'test ctx'});

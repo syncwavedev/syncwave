@@ -1,3 +1,4 @@
+import {trace} from '@opentelemetry/api';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
     assert,
@@ -73,7 +74,11 @@ describe('e2e', () => {
             participantTransportServer,
             new MsgpackCodec()
         );
-        client = new ParticipantClient(clientTransportClient, undefined);
+        client = new ParticipantClient(
+            clientTransportClient,
+            undefined,
+            trace.getTracer('e2e')
+        );
     });
 
     it('should echo message back', async () => {

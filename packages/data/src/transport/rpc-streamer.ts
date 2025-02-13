@@ -1,3 +1,4 @@
+import {Tracer} from '@opentelemetry/api';
 import {z} from 'zod';
 import {Cancel, Context, context, createTraceId} from '../context.js';
 import {
@@ -50,7 +51,8 @@ export function launchRpcStreamerServer<T>(
     api: StreamerApi<T>,
     state: T,
     conn: Connection<Message>,
-    serverName: string
+    serverName: string,
+    tracer: Tracer
 ) {
     const client = createRpcHandlerClient(
         createRpcStreamerClientApi(),
@@ -82,12 +84,14 @@ export function launchRpcStreamerServer<T>(
         state,
         new JobManager(),
         client,
-        serverName
+        serverName,
+        tracer
     );
     launchRpcHandlerServer(
         createRpcStreamerServerApi(api),
         serverApiState,
-        conn
+        conn,
+        tracer
     );
 }
 
@@ -105,7 +109,8 @@ class RpcStreamerServerApiState<T> {
         public readonly state: T,
         public readonly jobManager: JobManager<StreamId>,
         public readonly client: RpcStreamerClientRpc,
-        public readonly serverName: string
+        public readonly serverName: string,
+        public readonly tracer: Tracer
     ) {}
 
     close(reason: unknown) {
@@ -183,7 +188,8 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                             'rpc.arg': toRequestLog(arg),
                         },
                     },
-                    {traceparent, tracestate}
+                    {traceparent, tracestate},
+                    state.tracer
                 );
 
                 catchCancel(
@@ -422,7 +428,8 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     api: TApi,
     conn: Connection<Message>,
     getHeaders: () => MessageHeaders,
-    clientTarget: string
+    clientTarget: string,
+    tracer: Tracer
 ): InferRpcClient<TApi> {
     const server = createRpcHandlerClient(
         createRpcStreamerServerApi(api),
@@ -431,7 +438,12 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     );
 
     const clientApiState = new RpcStreamerClientApiState(server);
-    launchRpcHandlerServer(createRpcStreamerClientApi(), clientApiState, conn);
+    launchRpcHandlerServer(
+        createRpcStreamerClientApi(),
+        clientApiState,
+        conn,
+        tracer
+    );
 
     let cancelCleanup: Unsubscribe | undefined = undefined;
     function cleanup(reason: unknown) {

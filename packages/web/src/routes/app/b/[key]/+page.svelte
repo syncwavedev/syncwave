@@ -21,9 +21,7 @@
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
 
-	console.log('trace id outside: ', context().traceId);
 	const board = getState(initialBoard, x => {
-		console.log('trace id inside: ', context().traceId);
 		return x.getBoardView({key: boardKey});
 	});
 
@@ -61,7 +59,8 @@
 		<Breadcrumb.Root>
 			<Breadcrumb.List>
 				<Breadcrumb.Item class="hidden md:block">
-					<Breadcrumb.Link href="#">{board.value.key}</Breadcrumb.Link>
+					<Breadcrumb.Link href="#">{board.value.key}</Breadcrumb.Link
+					>
 				</Breadcrumb.Item>
 			</Breadcrumb.List>
 		</Breadcrumb.Root>
@@ -71,7 +70,8 @@
 	<div>
 		Board {board.value.id} - {board.value.createdAt}
 
-		<Button variant="destructive" onclick={deleteBoard}>Delete board</Button>
+		<Button variant="destructive" onclick={deleteBoard}>Delete board</Button
+		>
 	</div>
 
 	<div class="flex flex-col gap-8">

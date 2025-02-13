@@ -10,6 +10,7 @@ import {
 } from '../data/infrastructure.js';
 import {Uint8KVStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
+import {tracerManager} from '../tracer-manager.js';
 import {
     MemTransportClient,
     MemTransportServer,
@@ -55,7 +56,8 @@ export class CoordinatorServer {
             new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
             hubMessageSchema,
             hubAuthSecret,
-            'hub'
+            'hub',
+            tracerManager.get('coord')
         );
 
         this.dataLayer = new DataLayer(kv, hubClient, jwtSecret);
@@ -78,7 +80,8 @@ export class CoordinatorServer {
                     this.dataLayer.close();
                 },
             },
-            'server'
+            'server',
+            tracerManager.get('coord')
         );
     }
 

@@ -29,9 +29,7 @@
 	const authManager = createAuthManager(data.serverCookies);
 	setContext(AuthManager, authManager);
 
-	export const participantClient = createParticipantClient(
-		data.serverCookies
-	);
+	export const participantClient = createParticipantClient();
 	setContext(ParticipantClient, participantClient);
 
 	onDestroy(() => {

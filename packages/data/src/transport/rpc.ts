@@ -1,3 +1,4 @@
+import {Tracer} from '@opentelemetry/api';
 import {TypeOf, ZodType} from 'zod';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
@@ -284,7 +285,8 @@ export class RpcServer<TState extends {close: () => void}> {
         private readonly transport: TransportServer<Message>,
         private readonly api: Api<TState>,
         private readonly state: TState,
-        private readonly serverName: string
+        private readonly serverName: string,
+        private readonly tracer: Tracer
     ) {}
 
     async launch(): Promise<void> {
@@ -297,7 +299,13 @@ export class RpcServer<TState extends {close: () => void}> {
     }
 
     private handleConnection(conn: Connection<Message>): void {
-        launchRpcStreamerServer(this.api, this.state, conn, this.serverName);
+        launchRpcStreamerServer(
+            this.api,
+            this.state,
+            conn,
+            this.serverName,
+            this.tracer
+        );
     }
 }
 

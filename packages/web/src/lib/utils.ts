@@ -5,8 +5,13 @@ import {
 	AppError,
 	ConnectionPool,
 	context,
+	drop,
+	MemTransportClient,
+	MemTransportServer,
 	MsgpackCodec,
 	ParticipantClient,
+	ParticipantServer,
+	tracerManager,
 	type ParticipantRpc,
 } from 'syncwave-data';
 import {twMerge} from 'tailwind-merge';
@@ -80,12 +85,36 @@ const transport = new WsTransportClient({
 	codec: new MsgpackCodec(),
 });
 const connectionPool = new ConnectionPool(transport);
-// const connectionPool = transport;
 
-export function createParticipantClient(serverCookies: CookieEntry[]) {
+export function createParticipantClient() {
+	const authManager = getAuthManager();
+	const jwt = authManager.getJwt();
+
+	const partTransportServer = new MemTransportServer(new MsgpackCodec());
+	const part = new ParticipantServer({
+		client: connectionPool,
+		server: partTransportServer,
+	});
+
+	drop(part.launch());
+
+	const participant = new ParticipantClient(
+		new MemTransportClient(partTransportServer, new MsgpackCodec()),
+		jwt,
+		tracerManager.get('view')
+	);
+
+	return participant;
+}
+
+export function createDirectParticipantClient(serverCookies: CookieEntry[]) {
 	const authManager = createAuthManager(serverCookies);
 	const jwt = authManager.getJwt();
-	const participant = new ParticipantClient(connectionPool, jwt);
+	const participant = new ParticipantClient(
+		connectionPool,
+		jwt,
+		tracerManager.get('view')
+	);
 
 	return participant;
 }
@@ -97,7 +126,7 @@ export async function sdkOnce<T>(
 	const [ctx, cancelCtx] = context().createChild({span: 'sdkOnce'}, true);
 	try {
 		const result = await ctx.run(async () => {
-			const participant = createParticipantClient(cookies);
+			const participant = createDirectParticipantClient(cookies);
 			try {
 				return await fn(participant.rpc);
 			} finally {

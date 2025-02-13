@@ -88,7 +88,9 @@ export class Logger {
             }
         }
         this.pino[level]({...log, msg: message});
-        ctx.addLog(level, message, flattenAttributeMap(log));
+        if (LogLevelValues[level] >= LogLevelValues['info']) {
+            ctx.addLog(level, message, flattenAttributeMap(log));
+        }
     }
 
     async time<T>(name: string, fn: () => Promise<T>): Promise<T> {

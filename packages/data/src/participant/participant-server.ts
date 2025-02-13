@@ -1,3 +1,4 @@
+import {tracerManager} from '../tracer-manager.js';
 import {Message} from '../transport/message.js';
 import {RpcServer} from '../transport/rpc.js';
 import {TransportClient, TransportServer} from '../transport/transport.js';
@@ -15,7 +16,8 @@ export class ParticipantServer {
             params.server,
             createParticipantApi(),
             state,
-            'part'
+            'part',
+            tracerManager.get('part')
         );
     }
 

@@ -1,3 +1,4 @@
+import {Tracer} from '@opentelemetry/api';
 import {context} from '../context.js';
 import {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
@@ -11,7 +12,8 @@ export class ParticipantClient {
 
     constructor(
         transport: TransportClient<Message>,
-        private authToken: string | undefined
+        private authToken: string | undefined,
+        tracer: Tracer
     ) {
         this.connection = new PersistentConnection(transport);
         this.rpc = createRpcClient(
@@ -21,7 +23,8 @@ export class ParticipantClient {
                 ...context().extract(),
                 auth: this.authToken,
             }),
-            'part'
+            'part',
+            tracer
         );
     }
 

@@ -84,13 +84,15 @@ export class WsConnection<T> implements Connection<T> {
                             error.message.includes('WebSocket is not open')
                         ) {
                             resolve(
-                                this.subject.throw(new ConnectionClosedError())
+                                this.subject.throw(
+                                    new ConnectionClosedError('ws closed')
+                                )
                             );
                         } else {
-                            const err = new AppError();
+                            const err = new AppError(
+                                'got message: ' + JSON.stringify(message)
+                            );
                             err.cause = toError(error);
-                            err.message =
-                                'got message: ' + JSON.stringify(message);
                             resolve(this.subject.throw(err));
                         }
                     }
@@ -114,7 +116,7 @@ export class WsConnection<T> implements Connection<T> {
 
     private ensureOpen() {
         if (!this.subject.open) {
-            throw new ConnectionClosedError();
+            throw new ConnectionClosedError('ws already closed');
         }
     }
 

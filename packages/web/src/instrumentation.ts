@@ -9,28 +9,21 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 
-// if (globalThis.navigator) {
-// 	const originalSendBeacon = globalThis.navigator.sendBeacon;
-// 	globalThis.navigator.sendBeacon = function (
-// 		url: string | URL,
-// 		data?: BodyInit | null
-// 	) {
-// 		if (!(data instanceof Blob)) throw new Error('data must be a Blob');
+if (globalThis.navigator) {
+	const originalSendBeacon = globalThis.navigator.sendBeacon;
+	globalThis.navigator.sendBeacon = function (
+		url: string | URL,
+		data?: BodyInit | null
+	) {
+		if (!(data instanceof Blob)) throw new Error('unexcpected data type');
 
-// 		(globalThis as any).beaconData = data;
+		if (data.size / 1024 / 1024 > 1) {
+			console.error('sendBeacon: data is larger than 1MB');
+		}
 
-// 		(async () => {
-// 			while (!originalSendBeacon.call(this, url, data)) {
-// 				console.warn(
-// 					`failed to send beacon ${url} size=${data.size}, retrying...`
-// 				);
-// 				await new Promise(r => setTimeout(r, 1000));
-// 			}
-// 		})();
-
-// 		return true;
-// 	};
-// }
+		return originalSendBeacon.call(this, url, data);
+	};
+}
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 const exporter = new SimpleSpanProcessor(

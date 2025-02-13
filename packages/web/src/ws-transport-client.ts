@@ -67,7 +67,7 @@ export class WsClientConnection<T> implements Connection<T> {
 
 		this.subscribe({
 			next: async msg => {
-				log.debug('ws got: ' + JSON.stringify(msg));
+				log.trace('ws got: ' + JSON.stringify(msg));
 			},
 			throw: async err => {
 				log.error(err, 'ws err');

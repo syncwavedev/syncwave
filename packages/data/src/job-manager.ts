@@ -15,7 +15,8 @@ export class JobManager<T extends string> {
 
     async start(
         id: T,
-        parentCtx: Context,
+        ctx: Context,
+        end: Cancel,
         fn: () => Promise<void>
     ): Promise<void> {
         if (this.runningJobs.has(id)) {
@@ -23,7 +24,6 @@ export class JobManager<T extends string> {
         } else if (this.cancelledJobs.has(id)) {
             throw new AppError(`job ${id} is already finished`);
         } else {
-            const [ctx, end] = parentCtx.createChild({name: 'job ' + id});
             this.runningJobs.set(id, {ctx, end});
             await ctx.run(fn);
         }
@@ -45,7 +45,7 @@ export class JobManager<T extends string> {
                 `job ${id} is already cancelled, job.traceId = ${job.ctx.traceId}`
             );
         } else {
-            log.warn(`unknown job: ${id}`);
+            log.warn(`JobManager.cancel: unknown job: ${id}`);
         }
     }
 
@@ -58,7 +58,7 @@ export class JobManager<T extends string> {
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
         } else {
-            log.warn(`unknown job: ${job}`);
+            log.warn(`JobManager.finish: unknown job: ${job}`);
         }
     }
 

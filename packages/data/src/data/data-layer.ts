@@ -114,6 +114,11 @@ export class DataLayer {
         );
     }
 
+    close() {
+        this.kv.close();
+        this.hub.close();
+    }
+
     async transact<T>(
         auth: AuthContext,
         fn: (tx: DataTx) => Promise<T>

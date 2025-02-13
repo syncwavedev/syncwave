@@ -72,6 +72,11 @@ export class CoordinatorServer {
                 config: {
                     jwtSecret: this.jwtSecret,
                 },
+                close: () => {
+                    hubServer.close();
+                    hubClient.close();
+                    this.dataLayer.close();
+                },
             },
             'server'
         );

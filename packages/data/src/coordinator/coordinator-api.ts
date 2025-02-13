@@ -37,6 +37,7 @@ export interface CoordinatorApiInputState {
     jwt: JwtService;
     emailService: EmailService;
     crypto: CryptoService;
+    close: () => void;
 }
 
 export function createCoordinatorApi() {

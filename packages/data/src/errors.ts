@@ -1,18 +1,13 @@
-import {context} from './context.js';
+import {context, NestedAttributeMap} from './context.js';
 
 // eslint-disable-next-line no-restricted-globals
 export class AppError extends Error {
-    constructor(message?: string, options?: {cause?: unknown}) {
+    constructor(message: string, options?: {cause?: unknown}) {
         super(message, options);
     }
 
-    toJSON() {
-        return {
-            name: `${this.constructor.name} (${this.name})`,
-            stack: this.stack,
-            cause: this.cause,
-            code: (this as any).code as unknown,
-        };
+    toJSON(): NestedAttributeMap {
+        return toErrorJson(this);
     }
 }
 
@@ -49,6 +44,13 @@ export class BusinessError extends AppError {
         public readonly meta?: Record<string, unknown>
     ) {
         super(message);
+    }
+
+    override toJSON(): NestedAttributeMap {
+        return {
+            ...super.toJSON(),
+            code: this.code,
+        };
     }
 }
 
@@ -111,6 +113,33 @@ export function getReadableError(error: unknown): string {
     return 'An unknown error occurred: ' + JSON.stringify(error);
 }
 
+export function toErrorJson(error: unknown): NestedAttributeMap {
+    // eslint-disable-next-line no-restricted-globals
+    if (error instanceof Error) {
+        let result: NestedAttributeMap = {
+            message: `${error.constructor.name} (${error.name}): ${error.message}`,
+        };
+        if (error.stack) {
+            result.stack = error.stack.trim().startsWith('at')
+                ? error.stack
+                : error.stack.split('\n').slice(1).join('\n');
+        }
+
+        if (error.cause) {
+            result = {
+                ...result,
+                cause: toErrorJson(error.cause),
+            };
+        }
+
+        return result;
+    }
+
+    return {
+        error: getReadableError(error),
+    };
+}
+
 export function toError(reason: unknown): AppError {
     if (reason instanceof AppError) {
         return reason;
@@ -118,9 +147,8 @@ export function toError(reason: unknown): AppError {
 
     // eslint-disable-next-line no-restricted-globals
     if (reason instanceof Error) {
-        const result = new AppError();
+        const result = new AppError(getReadableError(reason));
         result.stack = reason.stack;
-        result.message = reason.message;
         result.name = reason.name;
         result.cause = reason;
         return result;

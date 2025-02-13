@@ -52,7 +52,7 @@ describe('RpcHandler', () => {
         launchRpcHandlerServer(api, {}, serverConn);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
-        const [ctx] = context().createChild({name: 'test child context'});
+        const [ctx] = context().createChild({span: 'test child context'});
         await ctx.run(async () => await client.test({}));
 
         const serverTraceId = await serverTraceIdDeferred.promise;
@@ -76,11 +76,11 @@ describe('RpcHandler', () => {
 
         launchRpcHandlerServer(api, {}, serverConn);
         const client = createRpcHandlerClient(api, clientConn, () => ({
-            ...context().createBackground({name: 'invalid'})[0].extract(),
+            ...context().createBackground({span: 'invalid'})[0].extract(),
         }));
 
         const [expectedCtx] = context().createBackground({
-            name: 'test bg context',
+            span: 'test bg context',
         });
         await client.test({}, {...expectedCtx.extract()});
 
@@ -105,7 +105,7 @@ describe('RpcHandler', () => {
 
         launchRpcHandlerServer(api, {}, serverConn);
         const [expectedCtx] = context().createBackground({
-            name: 'test bg context',
+            span: 'test bg context',
         });
         const client = createRpcHandlerClient(api, clientConn, () => ({
             ...expectedCtx.extract(),
@@ -198,7 +198,7 @@ describe('RpcHandler', () => {
         launchRpcHandlerServer(api, {}, serverConn);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
-        const [ctx, cancel] = context().createChild({name: 'test ctx'});
+        const [ctx, cancel] = context().createChild({span: 'test ctx'});
         const resultPromise = ctx.run(async () => await client.test({}));
         await wait({ms: 10, onCancel: 'reject'});
 

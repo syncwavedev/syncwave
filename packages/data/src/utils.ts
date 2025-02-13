@@ -8,6 +8,7 @@ import {
     AppError,
     BusinessError,
     CancelledError,
+    toError,
 } from './errors.js';
 import {Stream, toStream} from './stream.js';
 
@@ -57,7 +58,7 @@ export function wait({
         clearTimeout(timeoutId);
 
         if (cancelBehavior === 'reject') {
-            result.reject(new CancelledError('wait cancelled', reason));
+            result.reject(toError(reason));
         } else if (cancelBehavior === 'resolve') {
             result.resolve();
         } else if (cancelBehavior === 'suspend') {
@@ -102,6 +103,7 @@ async function* _interval({
 }: IntervalOptions): AsyncIterable<number> {
     let index = 0;
     let cancelled = false;
+    const tid = context().traceId;
     const cancelCleanup = context().onEnd(() => {
         cancelled = true;
     });

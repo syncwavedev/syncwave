@@ -8,7 +8,6 @@ import {
 	TransportServerUnreachableError,
 	type Codec,
 	type Connection,
-	type Message,
 	type Observer,
 	type TransportClient,
 	type Unsubscribe,
@@ -80,8 +79,6 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	send(message: T): Promise<void> {
-		console.log('send message', (message as Message).headers.traceparent);
-
 		log.trace('ws client: send: ' + JSON.stringify(message));
 		const data = this.codec.encode(message);
 		this.ws.send(data);

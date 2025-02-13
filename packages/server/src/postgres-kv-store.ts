@@ -142,10 +142,7 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                     'code' in error &&
                     error.code === '57014'
                 ) {
-                    throw new CancelledError(
-                        'transaction cancelled',
-                        new AppError('transaction failed')
-                    );
+                    throw new CancelledError('transaction cancelled', error);
                 }
 
                 if (attempt === TXN_RETRIES_COUNT) {

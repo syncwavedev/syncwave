@@ -15,7 +15,7 @@ import {
     streamer,
 } from '../transport/rpc.js';
 import {TransportClient, TransportServer} from '../transport/transport.js';
-import {assert, pipe} from '../utils.js';
+import {assert, pipe, runAll} from '../utils.js';
 
 export class HubClient<T> {
     private readonly server: HubServerRpc<T>;
@@ -60,6 +60,10 @@ export class HubClient<T> {
             return x.item as T;
         });
     }
+
+    close() {
+        this.server.close();
+    }
 }
 
 export class HubServer<T> {
@@ -74,10 +78,7 @@ export class HubServer<T> {
         this.rpcServer = new RpcServer(
             transport,
             createHubServerApi(schema),
-            {
-                authSecret,
-                subjects: new SubjectManager(),
-            },
+            new HubServerRpcState<T>(authSecret, new SubjectManager()),
             serverName
         );
     }
@@ -133,11 +134,20 @@ class SubjectManager<T> {
             }
         });
     }
+
+    closeAll() {
+        runAll([...this.subjects.values()].map(x => () => x.close()));
+    }
 }
 
-interface HubServerRpcState<T> {
-    authSecret: string;
-    subjects: SubjectManager<T>;
+class HubServerRpcState<T> {
+    constructor(
+        readonly authSecret: string,
+        readonly subjects: SubjectManager<T>
+    ) {}
+    close(): void {
+        this.subjects.closeAll();
+    }
 }
 
 function createHubServerApi<T>(zMessage: ZodType<T>) {

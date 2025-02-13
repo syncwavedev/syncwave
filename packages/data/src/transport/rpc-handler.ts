@@ -21,8 +21,10 @@ import {
     catchConnectionClosed,
     Connection,
     ConnectionClosedError,
+    ConnectionThrowError,
 } from '../transport/transport.js';
 import {assertNever, Unsubscribe, wait} from '../utils.js';
+import {toRequestLog} from './rpc-streamer.js';
 import {
     getRequiredProcessor,
     Handler,
@@ -50,61 +52,75 @@ export function launchRpcHandlerServer<T>(
     const unsub = conn.subscribe({
         next: async msg => {
             if (msg.type === 'request') {
-                const actionCtx = Context.restore(
-                    {name: 'server request handler'},
+                const [actionCtx, cancelActionCtx] = Context.restore(
+                    {
+                        span: `raw_handle ${msg.payload.name}(${toRequestLog(msg.payload.arg)})`,
+                        attributes: {
+                            'rpc.method': msg.payload.name,
+                            'rpc.arg': toRequestLog(msg.payload.arg),
+                        },
+                    },
                     msg.headers
                 );
-                await jobManager.start(msg.id, actionCtx, async () => {
-                    try {
-                        const handler = getRequiredProcessor(
-                            api,
-                            msg.payload.name
-                        );
+                await jobManager.start(
+                    msg.id,
+                    actionCtx,
+                    cancelActionCtx,
+                    async () => {
+                        try {
+                            const handler = getRequiredProcessor(
+                                api,
+                                msg.payload.name
+                            );
 
-                        const result: unknown = await handler.handle(
-                            state,
-                            msg.payload.arg,
-                            {
-                                headers: msg.headers,
-                                requestId: msg.id,
-                            }
-                        );
+                            const result: unknown = await handler.handle(
+                                state,
+                                msg.payload.arg,
+                                {
+                                    headers: msg.headers,
+                                    requestId: msg.id,
+                                }
+                            );
 
-                        await catchConnectionClosed(
-                            conn.send({
-                                id: createMessageId(),
-                                headers: {
-                                    ...context().extract(),
-                                },
-                                type: 'response',
-                                requestId: msg.id,
-                                payload: {type: 'success', result},
-                            })
-                        );
-                    } catch (error) {
-                        reportRpcError(
-                            error,
-                            `${msg.payload.name}(${JSON.stringify(msg.payload.arg)})`
-                        );
-                        await catchConnectionClosed(
-                            conn.send({
-                                id: createMessageId(),
-                                headers: {
-                                    ...context().extract(),
-                                },
-                                type: 'response',
-                                requestId: msg.id,
-                                payload: {
-                                    type: 'error',
-                                    message: getReadableError(error),
-                                    code: getErrorCode(error),
-                                },
-                            })
-                        );
-                    } finally {
-                        jobManager.finish(msg.id, new AppError('job finished'));
+                            await catchConnectionClosed(
+                                conn.send({
+                                    id: createMessageId(),
+                                    headers: {
+                                        ...context().extract(),
+                                    },
+                                    type: 'response',
+                                    requestId: msg.id,
+                                    payload: {type: 'success', result},
+                                })
+                            );
+                        } catch (error) {
+                            reportRpcError(
+                                toError(error),
+                                `${msg.payload.name}(${JSON.stringify(msg.payload.arg)})`
+                            );
+                            await catchConnectionClosed(
+                                conn.send({
+                                    id: createMessageId(),
+                                    headers: {
+                                        ...context().extract(),
+                                    },
+                                    type: 'response',
+                                    requestId: msg.id,
+                                    payload: {
+                                        type: 'error',
+                                        message: getReadableError(error),
+                                        code: getErrorCode(error),
+                                    },
+                                })
+                            );
+                        } finally {
+                            jobManager.finish(
+                                msg.id,
+                                new AppError('job finished')
+                            );
+                        }
                     }
-                });
+                );
             } else if (msg.type === 'response') {
                 // ignore
             } else if (msg.type === 'cancel') {
@@ -137,6 +153,13 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
         }
         const name = nameOrSymbol;
 
+        // special case for client close
+        if (name === 'close') {
+            return () => {
+                conn.close();
+            };
+        }
+
         const handler = api[name];
         if (!handler) {
             return () => {
@@ -168,7 +191,9 @@ async function proxyRequest(
     const result = new Deferred<any>();
     const cancelCleanup = context().onEnd(reason => {
         cleanup(reason);
-        result.reject(new CancelledError('parent context cancelled', reason));
+        result.reject(
+            new CancelledError('proxyRequest: parent context cancelled', reason)
+        );
     });
 
     let unsub: Unsubscribe | undefined = undefined;
@@ -176,7 +201,7 @@ async function proxyRequest(
     function cleanup(reason: unknown) {
         cancelCleanup();
         if (result.state === 'pending') {
-            result.reject(new CancelledError('cleanup', reason));
+            result.reject(toError(reason));
             catchConnectionClosed(
                 conn.send({
                     id: createMessageId(),
@@ -218,12 +243,19 @@ async function proxyRequest(
             }
         },
         throw: async error => {
-            cleanup(new AppError('throw'));
+            cleanup(
+                new ConnectionThrowError('proxyRequest: connection throw', {
+                    cause: error,
+                })
+            );
             result.reject(error);
         },
         close: () => {
-            cleanup(new AppError('close'));
-            result.reject(new ConnectionClosedError());
+            const error = new ConnectionClosedError(
+                'proxyRequest: connection closed'
+            );
+            cleanup(error);
+            result.reject(error);
         },
     });
 
@@ -274,7 +306,11 @@ function createHandlerProxy(
         }
 
         const [requestCtx, cancelRequestCtx] = context().createChild({
-            name: `call rpc ${name}`,
+            span: `raw_call ${name}(${toRequestLog(arg)})`,
+            attributes: {
+                'rpc.method': name,
+                'rpc.arg': toRequestLog(arg),
+            },
         });
 
         const result: unknown = await requestCtx.run(async () => {
@@ -293,15 +329,22 @@ function createHandlerProxy(
     };
 }
 
-export function reportRpcError(error: unknown, callInfo: string) {
+export function reportRpcError(error: AppError, callInfo: string) {
     if (error instanceof BusinessError) {
         log.warn(error, `[${callInfo}] business error`);
     } else if (error instanceof CancelledError) {
-        log.warn(error, `[${callInfo}] cancelled`);
+        if (
+            error.cause === 'stream has no consumers' ||
+            error.cause === 'connection_closed'
+        ) {
+            log.info(`[${callInfo}] cancelled: stream has no consumers`);
+        } else {
+            log.warn(error, `[${callInfo}] cancelled`);
+        }
     } else {
         log.error(
-            toError(error),
-            `[${callInfo}] failed: ` + JSON.stringify(error)
+            error,
+            `${callInfo} failed: ` + JSON.stringify(error.toJSON())
         );
     }
 }

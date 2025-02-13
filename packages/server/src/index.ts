@@ -281,7 +281,7 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
 log.setLogLevel(LOG_LEVEL);
 
 const [serverCtx, cancelServerCtx] = context().createChild({
-    name: 'server main',
+    span: 'server main',
 });
 
 process.once('SIGINT', () => cancelServerCtx(new AppError('server shutdown')));

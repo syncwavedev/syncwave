@@ -265,6 +265,8 @@ export type InferRpcClient<T extends Api<any>> = {
         : T[K] extends Handler<any, infer TReq, infer TRes>
           ? (req: TReq, headers?: Partial<MessageHeaders>) => Promise<TRes>
           : never;
+} & {
+    close(): void;
 };
 
 export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
@@ -273,9 +275,11 @@ export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
         : T[K] extends Handler<any, infer TReq, infer TRes>
           ? (req: TReq, headers: MessageHeaders) => Promise<TRes>
           : never;
+} & {
+    close(): void;
 };
 
-export class RpcServer<TState> {
+export class RpcServer<TState extends {close: () => void}> {
     constructor(
         private readonly transport: TransportServer<Message>,
         private readonly api: Api<TState>,
@@ -288,6 +292,7 @@ export class RpcServer<TState> {
     }
 
     close() {
+        this.state.close();
         this.transport.close();
     }
 

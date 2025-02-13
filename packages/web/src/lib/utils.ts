@@ -26,13 +26,16 @@ export function getSdk() {
 		throw new Error('context ParticipantClient is not available');
 	}
 	const [componentCtx, cancelComponentCtx] = context().createChild({
-		name: 'getSdk',
+		span: 'getSdk',
 	});
 	onDestroy(() => cancelComponentCtx(new AppError('component destroyed')));
 	return <R>(fn: (rpc: ParticipantRpc) => R) => {
-		const [requestCtx] = componentCtx.createChild({
-			name: 'getSdk request',
-		});
+		const [requestCtx] = componentCtx.createChild(
+			{
+				span: 'getSdk request',
+			},
+			true
+		);
 		return requestCtx.run(() => fn(client.rpc));
 	};
 }
@@ -91,15 +94,18 @@ export async function sdkOnce<T>(
 	cookies: CookieEntry[],
 	fn: (rpc: ParticipantRpc) => Promise<T>
 ): Promise<T> {
-	const [ctx, cancelCtx] = context().createChild({name: 'sdkOnce'});
-	const result = await ctx.run(async () => {
-		const participant = createParticipantClient(cookies);
-		try {
-			return await fn(participant.rpc);
-		} finally {
-			participant.close();
-		}
-	});
-	cancelCtx(new AppError('end of sdkOnce'));
-	return result;
+	const [ctx, cancelCtx] = context().createChild({span: 'sdkOnce'}, true);
+	try {
+		const result = await ctx.run(async () => {
+			const participant = createParticipantClient(cookies);
+			try {
+				return await fn(participant.rpc);
+			} finally {
+				participant.close();
+			}
+		});
+		return result;
+	} finally {
+		cancelCtx(new AppError('end of sdkOnce'));
+	}
 }

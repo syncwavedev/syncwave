@@ -17,7 +17,14 @@ import {
 } from '../stream.js';
 import {Message, MessageHeaders} from '../transport/message.js';
 import {catchConnectionClosed, Connection} from '../transport/transport.js';
-import {assertNever, Brand, catchCancel, run} from '../utils.js';
+import {
+    assertNever,
+    Brand,
+    catchCancel,
+    run,
+    runAll,
+    Unsubscribe,
+} from '../utils.js';
 import {createUuid, Uuid, zUuid} from '../uuid.js';
 import {
     createRpcHandlerClient,
@@ -51,9 +58,9 @@ export function launchRpcStreamerServer<T>(
         () => ({...context().extract()})
     );
 
-    function cleanup() {
+    function cleanup(reason: unknown) {
         unsub();
-        serverApiState.close();
+        serverApiState.close(reason);
         cancelCleanup();
     }
 
@@ -62,7 +69,13 @@ export function launchRpcStreamerServer<T>(
     const unsub = conn.subscribe({
         next: () => Promise.resolve(),
         throw: () => Promise.resolve(),
-        close: () => cleanup(),
+        close: () =>
+            cleanup(
+                new CancelledError(
+                    `${serverName} launchRpcStreamerServer: connection closed`,
+                    'connection_closed'
+                )
+            ),
     });
 
     const serverApiState = new RpcStreamerServerApiState(
@@ -95,18 +108,16 @@ class RpcStreamerServerApiState<T> {
         public readonly serverName: string
     ) {}
 
-    close() {
-        this.jobManager.finishAll(
-            new AppError('RpcStreamerServerApiState.close')
-        );
+    close(reason: unknown) {
+        this.jobManager.finishAll(reason);
     }
 }
 
-function toResponseLog(arg: unknown) {
+export function toResponseLog(arg: unknown) {
     return JSON.stringify(arg)?.slice(0, 100);
 }
 
-function toRequestLog(arg: unknown) {
+export function toRequestLog(arg: unknown) {
     return JSON.stringify(arg)?.slice(0, 100);
 }
 
@@ -121,7 +132,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a handler');
                 }
 
-                const callInfo = `handle ${state.serverName}.${req.name}(${toRequestLog(req.arg)}) [rid=${ctx.requestId}]`;
+                const callInfo = `handle_call ${state.serverName}.${req.name}(${toRequestLog(req.arg)}) [rid=${ctx.requestId}]`;
 
                 try {
                     log.info(`${callInfo}...`);
@@ -146,9 +157,15 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                 name: z.string(),
                 arg: z.any(),
                 streamId: zStreamId(),
+                traceparent: z.string(),
+                tracestate: z.string(),
             }),
             res: z.object({}),
-            handle: async (state, {name, streamId, arg}, headers) => {
+            handle: async (
+                state,
+                {name, streamId, arg, traceparent, tracestate},
+                headers
+            ) => {
                 const processor = getRequiredProcessor(api, name);
                 if (processor.type !== 'streamer') {
                     throw new AppError('processor must be a streamer');
@@ -158,10 +175,22 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
 
                 log.info(`${callInfo}...`);
 
+                const [ctx, cancelCtx] = Context.restore(
+                    {
+                        span: `handle_stream ${name}(${toRequestLog(arg)})`,
+                        attributes: {
+                            'rpc.method': name,
+                            'rpc.arg': toRequestLog(arg),
+                        },
+                    },
+                    {traceparent, tracestate}
+                );
+
                 catchCancel(
                     state.jobManager.start(
                         streamId,
-                        context().createBackground({name: 'streamer'})[0],
+                        ctx,
+                        cancelCtx,
                         async () => {
                             try {
                                 for await (const value of processor.stream(
@@ -177,7 +206,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                     );
                                 }
                             } catch (error: unknown) {
-                                reportRpcError(error, callInfo);
+                                reportRpcError(toError(error), callInfo);
                                 // no point in sending throw if the stream was cancelled by client
                                 if (!state.jobManager.isCancelled(streamId)) {
                                     await catchConnectionClosed(
@@ -216,7 +245,13 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
             req: z.object({streamId: zStreamId(), reason: z.string()}),
             res: z.object({}),
             handle: async (state, {streamId, reason}) => {
-                state.jobManager.cancel(streamId, reason);
+                state.jobManager.cancel(
+                    streamId,
+                    new CancelledError(
+                        'stream cancellation requested by the client',
+                        reason
+                    )
+                );
 
                 return {};
             },
@@ -293,7 +328,7 @@ class RpcStreamerClientApiState {
         });
     }
 
-    finish(streamId: StreamId) {
+    finish(streamId: StreamId, reason: unknown) {
         const sub = this.subs.get(streamId);
         if (!sub) {
             return;
@@ -306,7 +341,7 @@ class RpcStreamerClientApiState {
                     .throw(
                         new CancelledError(
                             'RpcStreamerClientApiState.finish: context finished',
-                            new AppError()
+                            reason
                         )
                     )
                     .finally(() => writer.end())
@@ -316,17 +351,15 @@ class RpcStreamerClientApiState {
             });
     }
 
-    finishAll() {
-        for (const streamId of [...this.subs.keys()]) {
-            this.finish(streamId);
-        }
+    finishAll(reason: unknown) {
+        runAll([...this.subs.keys()].map(x => () => this.finish(x, reason)));
     }
 
     private getSub(streamId: StreamId) {
         const channel = this.subs.get(streamId);
         if (!channel) {
             log.warn(`unknown streamId: ${streamId}`);
-            context().detach({name: 'getSub: cancel stream'}, () => {
+            context().detach({span: 'getSub: cancel stream'}, () => {
                 this.server
                     .cancel({
                         streamId: streamId,
@@ -400,18 +433,19 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     const clientApiState = new RpcStreamerClientApiState(server);
     launchRpcHandlerServer(createRpcStreamerClientApi(), clientApiState, conn);
 
-    let cancelCleanup: Cancel | undefined = undefined;
+    let cancelCleanup: Unsubscribe | undefined = undefined;
     function cleanup(reason: unknown) {
         unsub();
-        clientApiState.finishAll();
-        cancelCleanup?.(reason);
+        clientApiState.finishAll(reason);
+        cancelCleanup?.();
+        conn.close();
     }
 
     cancelCleanup = context().onEnd(cleanup);
 
     const unsub = conn.subscribe({
         next: () => Promise.resolve(),
-        throw: async () => clientApiState.finishAll(),
+        throw: async error => clientApiState.finishAll(error),
         close: () => cleanup(new AppError('connection closed')),
     });
 
@@ -421,7 +455,15 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                 throw new AppError('rpc client supports only string methods');
             };
         }
+
         const name = nameOrSymbol;
+
+        // special case for client close
+        if (name === 'close') {
+            return () => {
+                cleanup('RpcStreamerClient.close');
+            };
+        }
 
         const handler = api[name];
         if (!handler) {
@@ -436,20 +478,36 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
 
             if (handler.type === 'handler') {
                 const requestId = createTraceId();
-                const callInfo = `call ${clientTarget}.${name}(${toRequestLog(arg)}) [rid=${requestId}]`;
-                log.info(`${callInfo}...`);
-                return server
-                    .handle({name, arg}, headers)
-                    .then(async result => {
-                        log.info(`${callInfo} => ${toResponseLog(result)}`);
-                        return result;
+                const [requestCtx, cancelRequestCtx] = context().createChild({
+                    span: `call ${name}(${toRequestLog(arg)})`,
+                    attributes: {
+                        'rpc.requestId': requestId,
+                        'rpc.method': name,
+                        'rpc.arg': toRequestLog(arg),
+                    },
+                });
+                return requestCtx
+                    .run(async () => {
+                        const callInfo = `call ${clientTarget}.${name}(${toRequestLog(arg)}) [rid=${requestId}]`;
+                        log.info(`${callInfo}...`);
+                        return server
+                            .handle({name, arg}, headers)
+                            .then(async result => {
+                                log.info(
+                                    `${callInfo} => ${toResponseLog(result)}`
+                                );
+                                return result;
+                            })
+                            .catch(async error => {
+                                log.error(
+                                    error,
+                                    `${callInfo} failed: ${getReadableError(error)}`
+                                );
+                                throw error;
+                            });
                     })
-                    .catch(async error => {
-                        log.error(
-                            error,
-                            `${callInfo} failed: ${getReadableError(error)}`
-                        );
-                        throw error;
+                    .finally(() => {
+                        cancelRequestCtx('rpc-streamer: request ended');
                     });
             } else if (handler.type === 'streamer') {
                 let cancelCleanup: Cancel | undefined = undefined;
@@ -462,11 +520,20 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                     cleanup(reason);
                 });
 
-                const requestCtx = context();
+                const parentCtx = context();
 
                 const factory = new AsyncIteratorFactory(writer => {
+                    const streamId = createStreamId();
+                    const [requestCtx, cancelRequestCtx] =
+                        parentCtx.createChild({
+                            span: `stream ${name}(${toRequestLog(arg)})`,
+                            attributes: {
+                                'rpc.streamId': streamId,
+                                'rpc.method': name,
+                                'rpc.arg': toRequestLog(arg),
+                            },
+                        });
                     return requestCtx.run(() => {
-                        const streamId = createStreamId();
                         const streamInfo = `call ${clientTarget}.${name}(${toRequestLog(arg)}) [sid=${streamId}]`;
 
                         run(async () => {
@@ -481,7 +548,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
 
                             log.info(`${streamInfo}...`);
                             await server.stream(
-                                {streamId, name, arg},
+                                {streamId, name, arg, ...parentCtx.extract()},
                                 {...headers}
                             );
                             await channel.pipe(writer);
@@ -494,10 +561,11 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                         });
 
                         return () => {
+                            cancelRequestCtx('stream has no consumers');
                             // we need to run cancellation separately to avoid cancellation of the cancellation
-                            context().detach({name: 'cancel stream'}, () => {
+                            context().detach({span: 'cancel stream'}, () => {
                                 log.info(
-                                    `${streamInfo} aborted, send cancel to the server...`
+                                    `${streamInfo} stream consumer unsubscribed, send cancellation to the server...`
                                 );
                                 cleanup(new AppError('stream cancelled'));
                                 catchConnectionClosed(

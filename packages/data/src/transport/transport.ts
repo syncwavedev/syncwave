@@ -30,11 +30,9 @@ export interface Connection<T> {
     close(): void;
 }
 
-export class ConnectionClosedError extends AppError {
-    constructor() {
-        super('Connection closed');
-    }
-}
+export class ConnectionThrowError extends AppError {}
+
+export class ConnectionClosedError extends AppError {}
 
 export async function catchConnectionClosed<T>(
     promise: Promise<T>

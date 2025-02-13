@@ -97,7 +97,7 @@ describe('ConnectionPool', () => {
     it('should catch connection closed error in async operations', async () => {
         const connection = await pool.connect();
         vi.spyOn(connection, 'send').mockRejectedValueOnce(
-            new ConnectionClosedError()
+            new ConnectionClosedError('test close')
         );
 
         const result = await catchConnectionClosed(connection.send('message'));

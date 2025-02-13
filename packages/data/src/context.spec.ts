@@ -9,7 +9,7 @@ describe('Context', () => {
 
     it('should extract context', () => {
         const [ctx] = context().createBackground({
-            name: 'test',
+            span: 'test',
             attributes: {val: 'works'},
         });
 

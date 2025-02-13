@@ -1,6 +1,6 @@
 import {pino as createPino, Level} from 'pino';
-import {context} from './context.js';
-import {AppError, toError} from './errors.js';
+import {context, flattenAttributeMap, NestedAttributeMap} from './context.js';
+import {AppError, toError, toErrorJson} from './errors.js';
 
 export type LogLevel =
     | 'trace'
@@ -62,25 +62,33 @@ export class Logger {
         level: Level,
         ...args: [error: AppError, message: string] | [message: string]
     ) {
-        const context = this.context();
+        const ctx = context();
+        let log: NestedAttributeMap = {
+            traceId: ctx.traceId,
+            spanId: ctx.spanId,
+            level,
+        };
         let message: string;
         if (args.length === 2) {
-            context['error'] = toError(args[0]);
+            const error = toError(args[0]);
+            log = {
+                ...log,
+                error: toErrorJson(error),
+            };
             message = args[1];
         } else {
             message = args[0];
         }
 
         if (LogLevelValues[level] >= LogLevelValues['error']) {
-            context['stack'] = new AppError('log stack').stack;
-        }
-        this.pino[level](context, message);
-    }
+            const stack = new AppError('log stack').stack;
 
-    private context(): Record<string, unknown> {
-        return {
-            traceId: context().traceId,
-        };
+            if (stack) {
+                log['stack'] = stack.split('\n').slice(1).join('\n');
+            }
+        }
+        this.pino[level]({...log, msg: message});
+        ctx.addLog(level, message, flattenAttributeMap(log));
     }
 
     async time<T>(name: string, fn: () => Promise<T>): Promise<T> {

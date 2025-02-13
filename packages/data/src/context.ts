@@ -3,13 +3,44 @@ import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
 import {CancelledError} from './errors.js';
-import {log} from './logger.js';
+import {log, LogLevel} from './logger.js';
 import {Brand, Nothing, runAll, Unsubscribe} from './utils.js';
 
-// end open tracing
+export interface NestedAttributeMap
+    extends Record<string, NestedAttributeMap | AttributeValue> {}
+
+export function flattenAttributeMap(obj: NestedAttributeMap): AttributeMap {
+    const result: AttributeMap = {};
+
+    function flatten(obj: NestedAttributeMap, prefix = '') {
+        for (const key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                flatten(obj[key] as NestedAttributeMap, prefix + key + '.');
+            } else {
+                result[prefix + key] = obj[key];
+            }
+        }
+    }
+
+    flatten(obj);
+
+    return result;
+}
+
+export type AttributeValue = number | string | boolean;
+
+export interface AttributeMap extends Record<string, AttributeValue> {}
+
+export function addPrefixToAttributes(attr: AttributeMap, prefix: string) {
+    const result: AttributeMap = {};
+    for (const key in attr) {
+        result[`${prefix}${key}`] = attr[key];
+    }
+    return result;
+}
 
 export interface ContextOptions {
-    readonly name: string;
+    readonly span: string;
     readonly attributes?: Record<string, string | undefined>;
 }
 
@@ -36,22 +67,22 @@ interface ContextCarrier {
 
 export class Context {
     public static readonly _root = new Context({
-        name: 'root',
+        span: 'root',
     });
 
-    private counter = 0;
-
     private readonly span: Span;
-    public readonly traceId: TraceId;
+    readonly traceId: TraceId;
+    readonly spanId: string;
 
     public static restore(
         options: ContextOptions,
         carrier: ContextCarrier
-    ): Context {
+    ): [Context, Cancel] {
         const otCtx = getOtSpanContext(context().span);
 
         const extractedCtx = propagation.extract(otCtx, carrier);
-        return new Context(options, extractedCtx);
+        const ctx = new Context(options, extractedCtx);
+        return [ctx, reason => ctx.end(reason)];
     }
 
     private constructor(
@@ -59,24 +90,26 @@ export class Context {
         parent?: opentelemetry.Context
     ) {
         this.span = opentelemetry.trace.getTracer('syncwave').startSpan(
-            options.name,
+            options.span,
             {
                 root: !parent,
                 attributes: options.attributes,
             },
             parent
         );
-        this.traceId = this.span.spanContext().traceId as TraceId;
+        const spanCtx = this.span.spanContext();
+        this.traceId = spanCtx.traceId as TraceId;
+        this.spanId = spanCtx.spanId;
     }
 
     private endCallbacks: Array<(reason: unknown) => Promise<void> | void> = [];
-    private _cancelled = false;
+    private _ended = false;
     private _endRequested = false;
     private children: Context[] = [];
     private _endReason: unknown | undefined = undefined;
 
-    get active() {
-        return !this._cancelled;
+    get isActive() {
+        return !this._ended;
     }
 
     extract(): ContextCarrier {
@@ -106,7 +139,7 @@ export class Context {
     }
 
     ensureActive(message?: string) {
-        if (!this.active) {
+        if (!this.isActive) {
             throw new CancelledError(
                 message ?? 'ensureActive: Context is cancelled',
                 this._endReason
@@ -125,14 +158,13 @@ export class Context {
     onEnd(cb: (reason: unknown) => Nothing): Unsubscribe {
         if (this._endRequested) {
             // log.warn('Context.onEnd: new onEnd was registered after end');
-            return () => {};
         }
         // wrap to guarantee function uniqueness (needed for unsubscribe filtration)
         const wrapper = (reason: unknown) => cb(reason);
 
-        if (this._cancelled) {
+        if (this._ended || this._endRequested) {
             wrapper(
-                new CancelledError('onEnd: Context is cancelled', undefined)
+                new CancelledError('onEnd: context already ended', undefined)
             );
         } else {
             this.endCallbacks.push(wrapper);
@@ -143,7 +175,10 @@ export class Context {
         };
     }
 
-    createChild(options: ContextOptions): [Context, Cancel] {
+    createChild(
+        options: ContextOptions,
+        startNewSpan = false
+    ): [Context, Cancel] {
         if (this._endRequested) {
             // log.warn('Context.createChild: new child was created after end');
         }
@@ -151,9 +186,9 @@ export class Context {
         const child = new Context(
             {
                 attributes: options.attributes,
-                name: options.name,
+                span: options.span,
             },
-            getOtSpanContext(this.span)
+            startNewSpan ? undefined : getOtSpanContext(this.span)
         );
         this.children.push(child);
         return [
@@ -180,7 +215,7 @@ export class Context {
             log.warn('Context.end: end was called twice');
             return;
         }
-        if (this._cancelled) {
+        if (this._ended) {
             log.warn('Context.end: end was called after cancelled');
             return;
         }
@@ -202,8 +237,31 @@ export class Context {
                 );
             });
         } finally {
-            this._cancelled = true;
+            this._ended = true;
             this.span.end();
+        }
+    }
+
+    private ignoreAddEvent = 0;
+    addLog(level: LogLevel, name: string, attributes?: AttributeMap) {
+        if (this.ignoreAddEvent > 0) return;
+
+        if (this.isActive) {
+            this.span.addEvent(
+                `[${level.toUpperCase()}] ${name}`,
+                attributes,
+                performance.now()
+            );
+        } else {
+            try {
+                this.ignoreAddEvent += 1;
+                log.warn(
+                    'context is not active, cannot add event: ' +
+                        JSON.stringify({name, attributes})
+                );
+            } finally {
+                this.ignoreAddEvent -= 1;
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ import {Observer, Subject} from '../subject.js';
 import {Unsubscribe, wait} from '../utils.js';
 import {
     Connection,
+    ConnectionClosedError,
     TransportClient,
     TransportServerUnreachableError,
 } from './transport.js';
@@ -133,7 +134,7 @@ export class PersistentConnection<T> implements Connection<T> {
 
     private assertOpen() {
         if (this.closed) {
-            throw new AppError('connection is closed');
+            throw new ConnectionClosedError('persistent connection closed');
         }
     }
 }

@@ -31,7 +31,6 @@ export class Channel<T> implements AsyncIterable<T>, ChannelWriter<T> {
     }
 
     end() {
-        log.debug('Channel close');
         if (this.chan.closed) {
             return;
         }

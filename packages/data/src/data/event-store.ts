@@ -2,6 +2,7 @@ import {
     EVENT_STORE_MAX_PULL_COUNT,
     EVENT_STORE_PULL_INTERVAL_MS,
 } from '../constants.js';
+import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
 import {CancelledError, toError} from '../errors.js';
 import {CollectionManager} from '../kv/collection-manager.js';
@@ -54,6 +55,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
     ): Promise<Cursor<T>> {
         // we wanna trigger event store iteration immediately if we didn't reach the end of the topic
         const selfTrigger = new Channel<void>();
+        context().onEnd(() => selfTrigger.end());
 
         let offset =
             offsetArg === undefined
@@ -77,6 +79,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                 onCancel: 'reject',
             }).map(() => undefined),
         ])
+            .while(() => context().isActive)
             .flatMap(async () => {
                 try {
                     log.debug('EventStoreReader.subscribe transact...');
@@ -109,7 +112,9 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
 
                     return events;
                 } catch (error) {
-                    if (!(error instanceof CancelledError)) {
+                    if (error instanceof CancelledError) {
+                        log.info('EventStoreReader.subscribe cancelled');
+                    } else {
                         log.error(toError(error), 'EventStoreReader.subscribe');
                     }
                     return [];

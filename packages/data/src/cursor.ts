@@ -3,17 +3,21 @@ import {log} from './logger.js';
 import {Nothing} from './utils.js';
 
 export class Cursor<T> implements AsyncIterable<T> {
-    private isConsumed = false;
+    private _isConsumed = false;
 
     constructor(private readonly iter: AsyncIterator<T>) {}
 
     [Symbol.asyncIterator](): AsyncIterator<T> {
-        if (this.isConsumed) {
+        if (this._isConsumed) {
             throw new AppError('Cursor already consumed');
         }
-        this.isConsumed = true;
+        this._isConsumed = true;
 
         return this.iter;
+    }
+
+    get isConsumed() {
+        return this._isConsumed;
     }
 
     async first(): Promise<T> {
@@ -73,7 +77,7 @@ export class Cursor<T> implements AsyncIterable<T> {
     }
 
     close() {
-        if (this.isConsumed) return;
+        if (this._isConsumed) return;
 
         this.iter.return?.().catch(error => {
             log.error(error, 'failed to close cursor');

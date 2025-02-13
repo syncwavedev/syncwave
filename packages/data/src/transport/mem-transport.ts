@@ -77,7 +77,7 @@ export class MemTransportServer<T> implements TransportServer<T> {
 
     constructor(private readonly codec: Codec<T>) {}
 
-    async close(): Promise<void> {
+    close(): void {
         this.listener = undefined;
     }
 
@@ -92,7 +92,7 @@ export class MemTransportServer<T> implements TransportServer<T> {
 
     accept(connection: MemConnection<T>): void {
         if (this.listener === undefined) {
-            throw new AppError('server is not active');
+            throw new AppError('MemTransportServer: server is not active');
         }
 
         this.listener(connection);

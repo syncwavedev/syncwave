@@ -54,6 +54,8 @@ export function launchRpcStreamerServer<T>(
     serverName: string,
     tracer: Tracer
 ) {
+    context().ensureActive();
+
     const client = createRpcHandlerClient(
         createRpcStreamerClientApi(),
         conn,
@@ -429,6 +431,8 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     clientTarget: string,
     tracer: Tracer
 ): InferRpcClient<TApi> {
+    context().ensureActive();
+
     const server = createRpcHandlerClient(
         createRpcStreamerServerApi(api),
         conn,
@@ -483,6 +487,8 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
         }
 
         return (arg: unknown, headers?: Partial<MessageHeaders>) => {
+            context().ensureActive();
+
             // validate argument
             arg = handler.req.parse(arg);
 

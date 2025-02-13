@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import './instrumentation.js';
 
 import Router from '@koa/router';
 import {createHash, randomBytes} from 'crypto';
@@ -18,10 +19,14 @@ import {
     encodeString,
     ENVIRONMENT,
     getGoogleUser,
+    InstrumentedEmailService,
+    InstrumentedKvStore,
+    InstrumentedTransportServer,
     JwtPayload,
     JwtService,
     log,
     MsgpackCodec,
+    PrefixedKVStore,
     toError,
     toStream,
     Uint8KVStore,
@@ -106,33 +111,37 @@ const jwtService: JwtService = {
 };
 
 async function getKVStore(): Promise<Uint8KVStore> {
-    if (STAGE === 'sqlite') {
-        log.info('using SQLite as primary store');
-        return await import('./sqlite-kv-store.js').then(
-            x => new x.SqliteUint8KVStore('./dev.sqlite')
-        );
-    } else if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
-        log.info('using PostgreSQL as primary store');
-        return await import('./postgres-kv-store.js').then(
-            x =>
-                new x.PostgresUint8KVStore({
-                    connectionString:
-                        'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_dev',
-                    max: 20,
-                    idleTimeoutMillis: 30000,
-                    connectionTimeoutMillis: 2000,
-                })
-        );
-    } else {
-        log.info(
-            `using FoundationDB as a primary store (${`./fdb/fdb.${STAGE}.cluster`}`
-        );
-        // const fdbStore = await import('./fdb-kv-store.js').then(
-        //     x => new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
-        // );
-        return 1 as any;
-        // return new PrefixedKVStore(fdbStore, `/syncwave-${STAGE}/`);
-    }
+    const store = await (async () => {
+        if (STAGE === 'sqlite') {
+            log.info('using SQLite as primary store');
+            return await import('./sqlite-kv-store.js').then(
+                x => new x.SqliteUint8KVStore('./dev.sqlite')
+            );
+        } else if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
+            log.info('using PostgreSQL as primary store');
+            return await import('./postgres-kv-store.js').then(
+                x =>
+                    new x.PostgresUint8KVStore({
+                        connectionString:
+                            'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_dev',
+                        max: 20,
+                        idleTimeoutMillis: 30000,
+                        connectionTimeoutMillis: 2000,
+                    })
+            );
+        } else {
+            log.info(
+                `using FoundationDB as a primary store (${`./fdb/fdb.${STAGE}.cluster`}`
+            );
+            const fdbStore = await import('./fdb-kv-store.js').then(
+                x =>
+                    new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
+            );
+            return new PrefixedKVStore(fdbStore, `/syncwave-${STAGE}/`);
+        }
+    })();
+
+    return new InstrumentedKvStore(store);
 }
 
 async function upgradeKVStore(kvStore: Uint8KVStore) {
@@ -179,6 +188,21 @@ async function launch() {
     log.info('Successfully upgraded KV store');
 
     const router = new Router();
+    router.use(async (ctx, next) => {
+        await context().runChild({
+            span: 'http request',
+            attributes: {
+                method: ctx.method,
+                path: ctx.path,
+                querystring: ctx.querystring,
+                ip: ctx.ip,
+                host: ctx.host,
+                protocol: ctx.protocol,
+            },
+        }, async () => {
+            await next();
+        });
+    });
     setupRouter(() => coordinator, router);
 
     const app = new Koa();
@@ -187,14 +211,14 @@ async function launch() {
     const httpServer = createServer(app.callback());
 
     const coordinator = new CoordinatorServer(
-        new WsTransportServer({
+        new InstrumentedTransportServer(new WsTransportServer({
             codec: new MsgpackCodec(),
             server: httpServer,
-        }),
+        })),
         kvStore,
         jwtService,
         crypto,
-        new SesEmailService(AWS_REGION),
+        new InstrumentedEmailService(new SesEmailService(AWS_REGION)),
         JWT_SECRET
     );
 
@@ -203,21 +227,6 @@ async function launch() {
         coordinator.close();
         log.info('coordinator is closed');
         httpServer.close();
-
-        const activeResources = process
-            .getActiveResourcesInfo()
-            .filter(x => x !== 'TTYWrap');
-        if (activeResources.length > 0) {
-            log.error(
-                'failed to gracefully shutdown, active resources: ' +
-                    activeResources.join(', ')
-            );
-        } else {
-            log.info('finishing...');
-        }
-
-        // eslint-disable-next-line n/no-process-exit
-        process.exit(0);
     }
 
     context().onEnd(() => {

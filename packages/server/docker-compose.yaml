@@ -23,6 +23,7 @@ services:
 
     jaeger:
         image: jaegertracing/all-in-one:latest
+        restart: always
         # ports:
         # - "5775:5775"
         # - "4317:4317"
@@ -32,6 +33,7 @@ services:
             - LOG_LEVEL=debug
 
     caddy:
+        restart: always
         image: caddy:latest
         ports:
             - "4318:4318"

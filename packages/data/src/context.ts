@@ -236,6 +236,11 @@ export class Context {
             tracer: this.tracer,
             links: startNewSpan ? [this.span.spanContext()] : [],
         });
+
+        if (this._endRequested || this._ended) {
+            child.end(this._endReason);
+        }
+
         this.children.push(child);
         return [
             child,

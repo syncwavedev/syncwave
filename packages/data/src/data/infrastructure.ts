@@ -1,3 +1,5 @@
+import {context} from '../context.js';
+
 export interface JwtPayload {
     sub: string | undefined;
     uid: string | undefined;
@@ -24,4 +26,14 @@ export interface EmailMessage {
 
 export interface EmailService {
     send(message: EmailMessage): Promise<void>;
+}
+
+export class InstrumentedEmailService implements EmailService {
+    constructor(private readonly emailService: EmailService) {}
+
+    async send(message: EmailMessage): Promise<void> {
+        return await context().runChild({span: 'email.send'}, async () => {
+            return await this.emailService.send(message);
+        });
+    }
 }

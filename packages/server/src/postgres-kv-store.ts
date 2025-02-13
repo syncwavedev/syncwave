@@ -116,6 +116,7 @@ export class PostgresUint8KVStore implements Uint8KVStore {
             let cancelAbort: Cancel | undefined = undefined;
 
             try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 cancelAbort = context().onEnd(() => {
                     this.pool
                         .query('SELECT pg_cancel_backend($1)', [pid])
@@ -125,7 +126,6 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                                 'Failed to cancel transaction'
                             );
                         });
-                    2;
                 });
 
                 const tx = new PostgresTransaction(client);

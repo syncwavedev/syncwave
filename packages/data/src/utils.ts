@@ -103,7 +103,6 @@ async function* _interval({
 }: IntervalOptions): AsyncIterable<number> {
     let index = 0;
     let cancelled = false;
-    const tid = context().traceId;
     const cancelCleanup = context().onEnd(() => {
         cancelled = true;
     });
@@ -115,6 +114,16 @@ async function* _interval({
         }
     } finally {
         cancelCleanup();
+    }
+
+    if (cancelBehavior === 'reject') {
+        throw new CancelledError('interval cancelled', undefined);
+    } else if (cancelBehavior === 'suspend') {
+        await new Promise(() => {});
+    } else if (cancelBehavior === 'resolve') {
+        // do nothing
+    } else {
+        assertNever(cancelBehavior);
     }
 }
 

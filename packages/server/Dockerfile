@@ -33,4 +33,4 @@ EXPOSE 4567
 ENV NODE_ENV=production
 ENV NODE_OPTIONS='--enable-source-maps'
 
-CMD ["node", "--require", "dist/esm/src/instrumentation.js", "dist/esm/src/index.js"]
+CMD ["node", "dist/esm/src/index.js"]

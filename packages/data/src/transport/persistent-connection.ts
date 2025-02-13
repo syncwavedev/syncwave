@@ -41,13 +41,22 @@ export class PersistentConnection<T> implements Connection<T> {
         return this.subject.subscribe(cb);
     }
 
-    async close(): Promise<void> {
+    close(): void {
+        if (this.closed) return;
+
         this.closed = true;
         if (this.connection) {
             const connection = this.connection;
             this.connection = undefined;
 
-            await connection.then(x => x.close());
+            connection
+                .then(x => x.close())
+                .catch(error => {
+                    log.error(
+                        error,
+                        'PersistentConnection: failed to close the connection'
+                    );
+                });
         }
         this.subject.close();
     }

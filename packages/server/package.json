@@ -25,7 +25,8 @@
     "type": "module",
     "scripts": {
         "clean": "rimraf dist",
-        "dev": "NODE_OPTIONS='--enable-source-maps' tsx watch --require ./src/instrumentation.ts ./src/index.ts | pino-pretty --config ../../.pino-prettyrc",
+        "dev": "NODE_OPTIONS='--enable-source-maps' tsx watch ./src/index.ts | pino-pretty --config ../../.pino-prettyrc",
+        "run": "NODE_OPTIONS='--enable-source-maps' tsx ./src/index.ts | pino-pretty --config ../../.pino-prettyrc",
         "build": "tsc",
         "build:watch": "tsc -w",
         "test": "vitest run"

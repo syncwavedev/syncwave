@@ -41,6 +41,8 @@ export function launchRpcHandlerServer<T>(
     conn: Connection<Message>,
     tracer: Tracer
 ): Cancel {
+    context().ensureActive();
+
     const jobManager = new JobManager();
 
     const cancelCleanup = context().onEnd(cleanup);
@@ -190,6 +192,8 @@ async function proxyRequest(
     arg: unknown,
     headers: MessageHeaders
 ) {
+    context().ensureActive();
+
     const requestId = createMessageId();
     const result = new Deferred<any>();
     const cancelCleanup = context().onEnd(reason => {

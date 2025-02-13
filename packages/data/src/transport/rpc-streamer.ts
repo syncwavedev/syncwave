@@ -184,6 +184,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     {
                         span: `handle_stream ${name}(${toRequestLog(arg)})`,
                         attributes: {
+                            'rpc.streamId': streamId,
                             'rpc.method': name,
                             'rpc.arg': toRequestLog(arg),
                         },

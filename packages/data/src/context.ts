@@ -103,7 +103,7 @@ export class Context {
             options,
             parent: extractedCtx,
             tracer,
-            links: [],
+            links: [context().span.spanContext()],
         });
         return [ctx, reason => ctx.end(reason)];
     }
@@ -234,7 +234,7 @@ export class Context {
             },
             parent: startNewSpan ? undefined : getOtSpanContext(this.span),
             tracer: this.tracer,
-            links: [],
+            links: [this.span.spanContext()],
         });
         this.children.push(child);
         return [
@@ -256,7 +256,7 @@ export class Context {
             options,
             parent: undefined,
             tracer: this.tracer,
-            links: [],
+            links: [this.span.spanContext()],
         });
         return [ctx, (reason: unknown) => ctx.end(reason)];
     }

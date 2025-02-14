@@ -8,7 +8,7 @@ export const ENVIRONMENT: 'prod' | 'dev' | 'test' =
         : process.env.NODE_ENV === 'test'
           ? 'test'
           : 'dev';
-export const TXN_RETRIES_COUNT = ENVIRONMENT === 'prod' ? 16 : 1;
+export const TXN_RETRIES_COUNT = ENVIRONMENT === 'prod' ? 128 : 128;
 export const AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT = 20;
 export const AUTH_ACTIVITY_WINDOW_HOURS = 1;
 export const SUPERADMIN_IDS = [

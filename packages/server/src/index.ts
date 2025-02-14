@@ -61,7 +61,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
         };
     } else if (STAGE === 'local') {
         return {
-            LOG_LEVEL: 'info' as const,
+            LOG_LEVEL: 'warn' as const,
             APP_URL: 'http://localhost:5173',
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
         };
@@ -189,19 +189,22 @@ async function launch() {
 
     const router = new Router();
     router.use(async (ctx, next) => {
-        await context().runChild({
-            span: 'http request',
-            attributes: {
-                method: ctx.method,
-                path: ctx.path,
-                querystring: ctx.querystring,
-                ip: ctx.ip,
-                host: ctx.host,
-                protocol: ctx.protocol,
+        await context().runChild(
+            {
+                span: 'http request',
+                attributes: {
+                    method: ctx.method,
+                    path: ctx.path,
+                    querystring: ctx.querystring,
+                    ip: ctx.ip,
+                    host: ctx.host,
+                    protocol: ctx.protocol,
+                },
             },
-        }, async () => {
-            await next();
-        });
+            async () => {
+                await next();
+            }
+        );
     });
     setupRouter(() => coordinator, router);
 
@@ -211,10 +214,12 @@ async function launch() {
     const httpServer = createServer(app.callback());
 
     const coordinator = new CoordinatorServer(
-        new InstrumentedTransportServer(new WsTransportServer({
-            codec: new MsgpackCodec(),
-            server: httpServer,
-        })),
+        new InstrumentedTransportServer(
+            new WsTransportServer({
+                codec: new MsgpackCodec(),
+                server: httpServer,
+            })
+        ),
         kvStore,
         jwtService,
         crypto,

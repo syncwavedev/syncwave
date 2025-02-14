@@ -24,9 +24,7 @@
 
 	async function remove(path: Uint8Array[]): Promise<void> {
 		if (!confirm('Are you sure?')) return;
-		console.log('yes!');
 		const res = await sdk(x => x.deleteDbItem({path}));
-		console.log('res', res);
 	}
 
 	const auth = getAuthManager();
@@ -47,9 +45,7 @@
 				await sdk(x => x.truncateDb({}));
 			}}>Reset store</Button
 		>
-		<Button variant="outline" onclick={() => sdk(x => signOut())}
-			>Sign out</Button
-		>
+		<Button variant="outline" onclick={signOut}>Sign out</Button>
 	</div>
 	<div class="flex min-h-0 flex-1 gap-8">
 		<ScrollArea>

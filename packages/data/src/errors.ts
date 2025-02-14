@@ -7,7 +7,30 @@ export class AppError extends Error {
     }
 
     toJSON(): NestedAttributeMap {
-        return toErrorJson(this);
+        let result: NestedAttributeMap = {
+            message: `${this.constructor.name} (${this.name}): ${this.message}`,
+        };
+        if (this.stack) {
+            result.stack = this.stack.trim().startsWith('at')
+                ? this.stack
+                : this.stack.split('\n').slice(1).join('\n');
+        }
+
+        if (this.cause) {
+            if (this.cause instanceof AppError) {
+                result = {
+                    ...result,
+                    cause: this.cause.toJSON(),
+                };
+            } else {
+                result = {
+                    ...result,
+                    cause: getReadableError(this.cause),
+                };
+            }
+        }
+
+        return result;
     }
 }
 
@@ -62,6 +85,13 @@ export class AggregateCancelledError extends CancelledError {
             toError(errors[0]?.cause)
         );
     }
+
+    override toJSON(): NestedAttributeMap {
+        return {
+            ...super.toJSON(),
+            errors: this.errors.map(x => x.toJSON()),
+        };
+    }
 }
 
 export class AggregateBusinessError extends BusinessError {
@@ -71,6 +101,13 @@ export class AggregateBusinessError extends BusinessError {
                 errors.map(getReadableError).join('\n - '),
             'aggregate'
         );
+    }
+
+    override toJSON(): NestedAttributeMap {
+        return {
+            ...super.toJSON(),
+            errors: this.errors.map(x => x.toJSON()),
+        };
     }
 }
 
@@ -88,6 +125,13 @@ export class AggregateError extends AppError {
                     )
                     .join('\n- ')
         );
+    }
+
+    override toJSON(): NestedAttributeMap {
+        return {
+            ...super.toJSON(),
+            errors: this.errors.map(x => toError(x).toJSON()),
+        };
     }
 }
 
@@ -111,33 +155,6 @@ export function getReadableError(error: unknown): string {
     }
 
     return 'An unknown error occurred: ' + JSON.stringify(error);
-}
-
-export function toErrorJson(error: unknown): NestedAttributeMap {
-    // eslint-disable-next-line no-restricted-globals
-    if (error instanceof Error) {
-        let result: NestedAttributeMap = {
-            message: `${error.constructor.name} (${error.name}): ${error.message}`,
-        };
-        if (error.stack) {
-            result.stack = error.stack.trim().startsWith('at')
-                ? error.stack
-                : error.stack.split('\n').slice(1).join('\n');
-        }
-
-        if (error.cause) {
-            result = {
-                ...result,
-                cause: toErrorJson(error.cause),
-            };
-        }
-
-        return result;
-    }
-
-    return {
-        error: getReadableError(error),
-    };
 }
 
 export function toError(reason: unknown): AppError {

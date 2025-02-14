@@ -2,7 +2,6 @@ import {Tracer} from '@opentelemetry/api';
 import {TypeOf, ZodType} from 'zod';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
-import {log} from '../logger.js';
 import {Stream} from '../stream.js';
 import {Message, MessageHeaders, MessageId} from '../transport/message.js';
 import {Connection, TransportServer} from '../transport/transport.js';
@@ -200,7 +199,7 @@ export function applyMiddleware<
                 headers: RequestInfo
             ) {
                 const signal = new Deferred<any>();
-                middleware(
+                await middleware(
                     async newState => {
                         if (processor.type === 'handler') {
                             const result = await processor.handle(
@@ -225,13 +224,7 @@ export function applyMiddleware<
                     processor,
                     processorName,
                     req
-                ).catch(error => {
-                    if (signal.state !== 'pending') {
-                        log.error(error, 'middleware failed after next()');
-                    } else {
-                        signal.reject(error);
-                    }
-                });
+                );
 
                 return await signal.promise;
             }

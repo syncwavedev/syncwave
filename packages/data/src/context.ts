@@ -12,7 +12,10 @@ import {log, LogLevel} from './logger.js';
 import {Brand, Nothing, runAll, Unsubscribe} from './utils.js';
 
 export interface NestedAttributeMap
-    extends Record<string, NestedAttributeMap | AttributeValue> {}
+    extends Record<
+        string,
+        NestedAttributeMap[] | NestedAttributeMap | AttributeValue
+    > {}
 
 export function flattenAttributeMap(obj: NestedAttributeMap): AttributeMap {
     const result: AttributeMap = {};

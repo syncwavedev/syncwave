@@ -34,4 +34,6 @@ function createTracer(name: string, register = false) {
 (globalThis as any).tracers = {
     coord: createTracer('coord', true),
     hub: createTracer('hub'),
+    part: createTracer('part'),
+    view: createTracer('view'),
 };

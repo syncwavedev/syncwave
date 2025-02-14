@@ -18,7 +18,7 @@ import {
     zMemberAdminDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
-import {BoardId, zBoard} from './repos/board-repo.js';
+import {BoardId} from './repos/board-repo.js';
 import {zIdentity} from './repos/identity-repo.js';
 import {TaskId, zTask} from './repos/task-repo.js';
 import {UserId, zUser} from './repos/user-repo.js';
@@ -207,7 +207,7 @@ export function createReadApi() {
             req: z.object({
                 key: z.string(),
             }),
-            item: zBoard(),
+            item: zBoardDto(),
             async *stream(st, {key}) {
                 const board = await st.transact(tx => tx.boards.getByKey(key));
                 if (board === undefined) {

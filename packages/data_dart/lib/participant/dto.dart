@@ -997,6 +997,7 @@ class GetBoardItem {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     GetBoardItem({
@@ -1007,6 +1008,7 @@ class GetBoardItem {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -1018,6 +1020,7 @@ class GetBoardItem {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1029,6 +1032,7 @@ class GetBoardItem {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }

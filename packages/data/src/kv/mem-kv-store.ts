@@ -1,7 +1,9 @@
 import createTree, {Iterator, Tree} from 'functional-red-black-tree';
+import {encodeMsgpack} from '../codec.js';
 import {TXN_RETRIES_COUNT} from '../constants.js';
 import {context} from '../context.js';
 import {AppError} from '../errors.js';
+import {toStream} from '../stream.js';
 import {compareUint8Array, unreachable, zip} from '../utils.js';
 import {
     Condition,
@@ -211,6 +213,16 @@ export class MemKVStore implements Uint8KVStore {
             } satisfies MemMvccKvStoreOptions,
             options
         );
+    }
+
+    async snapshot(): Promise<Uint8Array> {
+        return await this.transact(async tx => {
+            const entries = await toStream(
+                tx.query({gte: new Uint8Array()})
+            ).toArray();
+
+            return encodeMsgpack(entries);
+        });
     }
 
     async transact<TResult>(

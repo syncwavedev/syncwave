@@ -24,7 +24,7 @@
 
 	async function remove(path: Uint8Array[]): Promise<void> {
 		if (!confirm('Are you sure?')) return;
-		const res = await sdk(x => x.deleteDbItem({path}));
+		await sdk(x => x.deleteDbItem({path}));
 	}
 
 	const auth = getAuthManager();

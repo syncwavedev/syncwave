@@ -2,6 +2,7 @@ import pg from 'pg';
 import PgCursor from 'pg-cursor';
 import {
     AppError,
+    BusinessError,
     Cancel,
     CancelledError,
     Condition,
@@ -9,11 +10,13 @@ import {
     TXN_RETRIES_COUNT,
     Uint8KVStore,
     Uint8Transaction,
+    checkError,
     context,
     log,
     mapCondition,
     toError,
     unreachable,
+    wait,
 } from 'syncwave-data';
 
 function buildConditionSql(condition: Condition<Uint8Array>): {
@@ -109,6 +112,8 @@ export class PostgresUint8KVStore implements Uint8KVStore {
     ): Promise<TResult> {
         await this.init;
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
+            context().ensureActive();
+
             const client = await this.pool.connect();
             const res = await client.query(
                 'BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE; SELECT pg_backend_pid()'
@@ -147,13 +152,31 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                     throw new CancelledError('transaction cancelled', error);
                 }
 
-                if (attempt === TXN_RETRIES_COUNT) {
+                if (
+                    attempt === TXN_RETRIES_COUNT ||
+                    error instanceof BusinessError ||
+                    error instanceof CancelledError ||
+                    !checkError(
+                        error,
+                        error =>
+                            typeof error === 'object' &&
+                            error !== null &&
+                            'code' in error &&
+                            // SerializationFailure (SQLSTATE 40001)
+                            error.code === '40001'
+                    )
+                ) {
                     throw error;
                 }
             } finally {
                 client.release();
                 cancelAbort?.(new AppError('transaction finished'));
             }
+
+            await wait({
+                ms: (attempt + 1) * 10 * Math.random(),
+                onCancel: 'reject',
+            });
         }
 
         unreachable();

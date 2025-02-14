@@ -25,7 +25,7 @@ export class AppError extends Error {
             } else {
                 result = {
                     ...result,
-                    cause: getReadableError(this.cause),
+                    cause: JSON.stringify(this.cause),
                 };
             }
         }
@@ -80,7 +80,7 @@ export class BusinessError extends AppError {
 export class AggregateCancelledError extends CancelledError {
     constructor(public readonly errors: CancelledError[]) {
         super(
-            `${errors.length} errors occurred:\n - ` +
+            `${errors.length} cancellation errors occurred:\n - ` +
                 errors.map(getReadableError).join('\n - '),
             toError(errors[0]?.cause)
         );
@@ -97,7 +97,7 @@ export class AggregateCancelledError extends CancelledError {
 export class AggregateBusinessError extends BusinessError {
     constructor(public readonly errors: BusinessError[]) {
         super(
-            `${errors.length} errors occurred:\n - ` +
+            `${errors.length} business errors occurred:\n - ` +
                 errors.map(getReadableError).join('\n - '),
             'aggregate'
         );
@@ -112,7 +112,7 @@ export class AggregateBusinessError extends BusinessError {
 }
 
 export class AggregateError extends AppError {
-    constructor(public readonly errors: any[]) {
+    constructor(public readonly errors: unknown[]) {
         super(
             `${errors.length} errors occurred:\n - ` +
                 errors
@@ -189,4 +189,19 @@ export function getErrorCode(error: unknown): ErrorCode {
     }
 
     return 'unknown';
+}
+
+export function checkError(
+    error: unknown,
+    predicate: (error: unknown) => boolean
+): boolean {
+    if (
+        error instanceof AggregateBusinessError ||
+        error instanceof AggregateCancelledError ||
+        error instanceof AggregateError
+    ) {
+        return error.errors.some(x => checkError(x, predicate));
+    }
+
+    return predicate(error);
 }

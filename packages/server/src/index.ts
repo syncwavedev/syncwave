@@ -112,12 +112,7 @@ const jwtService: JwtService = {
 
 async function getKVStore(): Promise<Uint8KVStore> {
     const store = await (async () => {
-        if (STAGE === 'sqlite') {
-            log.info('using SQLite as primary store');
-            return await import('./sqlite-kv-store.js').then(
-                x => new x.SqliteUint8KVStore('./dev.sqlite')
-            );
-        } else if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
+        if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
             log.info('using PostgreSQL as primary store');
             return await import('./postgres-kv-store.js').then(
                 x =>

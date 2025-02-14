@@ -9,7 +9,6 @@ import '../logger.dart';
 
 Future<void> handleRequestMessage<TState>(Connection conn, TState state,
     HandlerApi<TState> api, RequestMessage msg) async {
-  final traceId = msg.headers.traceId ?? createTraceId();
   try {
     final handler = api[msg.payload.name];
     if (handler == null) {
@@ -18,7 +17,10 @@ Future<void> handleRequestMessage<TState>(Connection conn, TState state,
     final result = await handler.handle(state, msg.payload.arg, msg.headers);
     await conn.send(ResponseMessage(
       id: createMessageId(),
-      headers: MessageHeaders(traceId: traceId, auth: null),
+      headers: MessageHeaders(
+          traceparent: msg.headers.traceparent,
+          tracestate: msg.headers.tracestate,
+          auth: null),
       requestId: msg.id,
       payload: ResponsePayloadSuccess(result: result),
     ));
@@ -26,7 +28,10 @@ Future<void> handleRequestMessage<TState>(Connection conn, TState state,
     reportRpcError(error);
     await conn.send(ResponseMessage(
       id: createMessageId(),
-      headers: MessageHeaders(traceId: traceId, auth: null),
+      headers: MessageHeaders(
+          traceparent: msg.headers.traceparent,
+          tracestate: msg.headers.tracestate,
+          auth: null),
       requestId: msg.id,
       payload: ResponsePayloadError(
         message: getReadableError(error),
@@ -91,8 +96,8 @@ Future<dynamic> _proxyRequest(Connection conn, String name, dynamic arg,
   }, onDone: () {
     subscription.cancel();
     if (!completer.isCompleted) {
-      completer.completeError(
-          ConnectionErrorException('Lost connection to RPC server'));
+      completer
+          .completeError(ConnectionException('Lost connection to RPC server'));
     }
   });
 

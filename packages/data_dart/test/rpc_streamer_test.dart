@@ -28,8 +28,7 @@ void main() {
       await launchRpcStreamerServer(api, "test-state", serverConn);
 
       final rpcClient = RpcStreamerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       final result = await rpcClient.handle('echo', 'hello');
       expect(result, equals('test-state: hello'));
@@ -43,8 +42,7 @@ void main() {
       await launchRpcStreamerServer(api, "test-state", serverConn);
 
       final rpcClient = RpcStreamerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       final values = await rpcClient.stream('counter', 3).toList();
       expect(values, equals([0, 1, 2]));
@@ -58,8 +56,7 @@ void main() {
       await launchRpcStreamerServer(api, "test-state", serverConn);
 
       final rpcClient = RpcStreamerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       expect(
         () => rpcClient.stream('failing', null).toList(),
@@ -77,8 +74,7 @@ void main() {
       await launchRpcStreamerServer(api, serverState, serverConn);
 
       final rpcClient = RpcStreamerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       final stream = rpcClient.stream('infinite', null);
       final subscription = stream.listen(null);
@@ -105,8 +101,7 @@ void main() {
       await launchRpcStreamerServer(api, "test-state", serverConn);
 
       final rpcClient = RpcStreamerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       final streams = await Future.wait([
         rpcClient.stream('counter', 0).toList(),
@@ -137,14 +132,15 @@ void main() {
       await launchRpcStreamerServer(api, InfiniteStreamerState(), serverConn);
 
       final rpcClient = RpcStreamerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       final receivedValues = <int>[];
       final subscription = rpcClient.stream('infinite', null).listen(
-            (x) => receivedValues.add(x as int),
-            onError: (Object error) => fail('Should not get error: $error'),
-          );
+        (x) => receivedValues.add(x as int),
+        onError: (Object error) {
+          expect(error, isA<ConnectionException>());
+        },
+      );
 
       // Let it run for a bit
       await Future<void>.delayed(Duration(milliseconds: 100));

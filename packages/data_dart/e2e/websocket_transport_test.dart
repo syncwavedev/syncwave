@@ -38,7 +38,11 @@ void main() {
             'type': 'response',
             'id': message.id,
             'requestId': requestId,
-            'headers': {'auth': null, 'traceId': isA<String>()},
+            'headers': {
+              'auth': null,
+              'traceparent': isA<String>(),
+              'tracestate': isA<String>()
+            },
             'payload': {
               'type': 'success',
               'result': {'msg': 'hello e2e'}
@@ -62,7 +66,11 @@ void main() {
             'type': 'response',
             'id': message.id,
             'requestId': requestId,
-            'headers': {'auth': null, 'traceId': isA<String>()},
+            'headers': {
+              'auth': null,
+              'traceparent': isA<String>(),
+              'tracestate': isA<String>()
+            },
             'payload': {
               'type': 'error',
               'message': 'unknown processor e2eUnknownHandler',

@@ -30,8 +30,7 @@ void main() {
       launchRpcHandlerServer(api, "dummy state", serverConn);
 
       final rpcClient = RpcHandlerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
       final result = await rpcClient.handle('echo', 'hello');
 
       expect(result, equals('dummy state: hello'));
@@ -44,8 +43,7 @@ void main() {
 
       launchRpcHandlerServer(api, "dummy state", serverConn);
       final rpcClient = RpcHandlerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       expect(() async => await rpcClient.handle('nonexistent', 'data'),
           throwsException);
@@ -59,8 +57,7 @@ void main() {
 
       launchRpcHandlerServer(api, "dummy state", serverConn);
       final rpcClient = RpcHandlerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       expect(
           () async => await rpcClient.handle('fail', 'data'), throwsException);
@@ -76,8 +73,7 @@ void main() {
       };
       launchRpcHandlerServer(api, "dummy state", serverConn);
       final rpcClient = RpcHandlerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       expect(() async => await rpcClient.handle('delayed', 'data'),
           throwsException);
@@ -89,8 +85,7 @@ void main() {
       };
       launchRpcHandlerServer(api, "dummy state", serverConn);
       final rpcClient = RpcHandlerClient(
-          conn: clientConn,
-          getHeaders: () => MessageHeaders(auth: null, traceId: 'test'));
+          conn: clientConn, getHeaders: () => MessageHeaders(auth: null));
 
       final futures =
           List.generate(10, (i) => rpcClient.handle('echo', 'message $i'));

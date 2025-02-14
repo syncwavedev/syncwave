@@ -286,7 +286,9 @@ void main() {
         final msg = RequestMessage(
           payload: RequestMessagePayload(name: 'test', arg: null),
           id: 'special1',
-          headers: MessageHeaders(auth: specialChars, traceId: specialChars),
+          headers: MessageHeaders(
+            auth: specialChars,
+          ),
         );
 
         final received = serverConn.subscribe().first;
@@ -294,7 +296,6 @@ void main() {
         final result = await received;
 
         expect(result.headers.auth, equals(specialChars));
-        expect(result.headers.traceId, equals(specialChars));
       });
     });
 
@@ -310,7 +311,7 @@ void main() {
             (i) => RequestMessage(
                   payload: RequestMessagePayload(name: 'rapid', arg: i),
                   id: 'msg$i',
-                  headers: MessageHeaders(auth: 'token', traceId: 'trace$i'),
+                  headers: MessageHeaders(auth: 'token$i'),
                 ));
 
         await Future.wait(messages.map((msg) => clientConn.send(msg)));

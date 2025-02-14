@@ -584,7 +584,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
 
                         return () => {
                             cancelRequestCtxCleanUp();
-                            cancelRequestCtx('stream has no consumers');
+                            cancelRequestCtx('stream_has_no_consumers');
                             // we need to run cancellation separately to avoid cancellation of the cancellation
                             context().detach({span: 'cancel stream'}, () => {
                                 log.info(
@@ -594,7 +594,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                 catchConnectionClosed(
                                     server.cancel({
                                         streamId,
-                                        reason: 'stream has no consumers',
+                                        reason: 'stream_has_no_consumers',
                                     })
                                 )
                                     .then(() => {

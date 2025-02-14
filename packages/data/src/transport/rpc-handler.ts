@@ -341,7 +341,7 @@ export function reportRpcError(error: AppError, callInfo: string) {
         log.warn(error, `[${callInfo}] business error`);
     } else if (error instanceof CancelledError) {
         if (
-            error.cause === 'stream has no consumers' ||
+            error.cause === 'stream_has_no_consumers' ||
             error.cause === 'connection_closed'
         ) {
             log.info(`[${callInfo}] cancelled: stream has no consumers`);

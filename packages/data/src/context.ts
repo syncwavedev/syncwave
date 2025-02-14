@@ -206,8 +206,9 @@ export class Context {
     }
 
     runChild<R>(options: ContextOptions, fn: () => R): R {
-        const [, endCtx] = this.createChild(options);
+        const [ctx, endCtx] = this.createChild(options);
         try {
+            // const result = ctx.run(fn);
             const result = fn();
 
             if (result instanceof Promise) {

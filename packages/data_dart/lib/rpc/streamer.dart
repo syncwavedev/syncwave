@@ -125,7 +125,7 @@ class RpcStreamerClientApiState {
 
   void abortAll(String message) {
     subs.forEach((_, controller) {
-      controller.addError(ConnectionErrorException(message));
+      controller.addError(ConnectionException(message));
       controller.close();
     });
     subs.clear();
@@ -208,7 +208,8 @@ class RpcStreamerClient {
 
       if (!completed) {
         try {
-          await _rpcClient.handle('cancel', {'streamId': streamId});
+          await _rpcClient.handle('cancel',
+              {'streamId': streamId, "reason": "stream_has_no_consumers"});
         } catch (e) {
           logger.error('RpcStreamerClient: failed to cancel stream', e);
         }
@@ -224,7 +225,9 @@ class RpcStreamerClient {
 Future<void> launchRpcStreamerServer<T>(
     StreamerApi<T> api, T state, Connection conn) async {
   final client = RpcHandlerClient(
-      conn: conn, getHeaders: () => MessageHeaders(auth: null, traceId: ''));
+      conn: conn,
+      getHeaders: () =>
+          MessageHeaders(auth: null, traceparent: null, tracestate: null));
   final serverState =
       RpcStreamerServerApiState<T>(state: state, client: client);
 

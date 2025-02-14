@@ -3,11 +3,11 @@
 //     final streamPutReq = streamPutReqFromJson(jsonString);
 //     final streamPutRes = streamPutResFromJson(jsonString);
 //     final getStreamReq = getStreamReqFromJson(jsonString);
-//     final getStreamItem = getStreamItemFromJson(jsonString);
+//     final getStreamValue = getStreamValueFromJson(jsonString);
 //     final debugReq = debugReqFromJson(jsonString);
 //     final debugRes = debugResFromJson(jsonString);
 //     final getMeReq = getMeReqFromJson(jsonString);
-//     final getMeItem = getMeItemFromJson(jsonString);
+//     final getMeValue = getMeValueFromJson(jsonString);
 //     final sendSignInEmailReq = sendSignInEmailReqFromJson(jsonString);
 //     final sendSignInEmailRes = sendSignInEmailResFromJson(jsonString);
 //     final createBoardReq = createBoardReqFromJson(jsonString);
@@ -23,17 +23,17 @@
 //     final deleteDbItemReq = deleteDbItemReqFromJson(jsonString);
 //     final deleteDbItemRes = deleteDbItemResFromJson(jsonString);
 //     final getMyBoardsReq = getMyBoardsReqFromJson(jsonString);
-//     final getMyBoardsItem = getMyBoardsItemFromJson(jsonString);
+//     final getMyBoardsValue = getMyBoardsValueFromJson(jsonString);
 //     final echoReq = echoReqFromJson(jsonString);
 //     final echoRes = echoResFromJson(jsonString);
 //     final getBoardReq = getBoardReqFromJson(jsonString);
-//     final getBoardItem = getBoardItemFromJson(jsonString);
+//     final getBoardValue = getBoardValueFromJson(jsonString);
 //     final createColumnReq = createColumnReqFromJson(jsonString);
 //     final createColumnRes = createColumnResFromJson(jsonString);
 //     final createTaskReq = createTaskReqFromJson(jsonString);
 //     final createTaskRes = createTaskResFromJson(jsonString);
 //     final getBoardViewReq = getBoardViewReqFromJson(jsonString);
-//     final getBoardViewItem = getBoardViewItemFromJson(jsonString);
+//     final getBoardViewValue = getBoardViewValueFromJson(jsonString);
 //     final deleteBoardReq = deleteBoardReqFromJson(jsonString);
 //     final deleteBoardRes = deleteBoardResFromJson(jsonString);
 //     final deleteColumnReq = deleteColumnReqFromJson(jsonString);
@@ -53,13 +53,13 @@
 //     final deleteCommentReq = deleteCommentReqFromJson(jsonString);
 //     final deleteCommentRes = deleteCommentResFromJson(jsonString);
 //     final getTaskCommentsReq = getTaskCommentsReqFromJson(jsonString);
-//     final getTaskCommentsItem = getTaskCommentsItemFromJson(jsonString);
+//     final getTaskCommentsValue = getTaskCommentsValueFromJson(jsonString);
 //     final createMemberReq = createMemberReqFromJson(jsonString);
 //     final createMemberRes = createMemberResFromJson(jsonString);
 //     final deleteMemberReq = deleteMemberReqFromJson(jsonString);
 //     final deleteMemberRes = deleteMemberResFromJson(jsonString);
 //     final getBoardMembersReq = getBoardMembersReqFromJson(jsonString);
-//     final getBoardMembersItem = getBoardMembersItemFromJson(jsonString);
+//     final getBoardMembersValue = getBoardMembersValueFromJson(jsonString);
 //     final setUserFullNameReq = setUserFullNameReqFromJson(jsonString);
 //     final setUserFullNameRes = setUserFullNameResFromJson(jsonString);
 //     final applyBoardDiffReq = applyBoardDiffReqFromJson(jsonString);
@@ -79,9 +79,9 @@ GetStreamReq getStreamReqFromJson(String str) => GetStreamReq.fromJson(json.deco
 
 String getStreamReqToJson(GetStreamReq data) => json.encode(data.toJson());
 
-GetStreamItem getStreamItemFromJson(String str) => GetStreamItem.fromJson(json.decode(str));
+GetStreamValue getStreamValueFromJson(String str) => GetStreamValue.fromJson(json.decode(str));
 
-String getStreamItemToJson(GetStreamItem data) => json.encode(data.toJson());
+String getStreamValueToJson(GetStreamValue data) => json.encode(data.toJson());
 
 DebugReq debugReqFromJson(String str) => DebugReq.fromJson(json.decode(str));
 
@@ -95,9 +95,9 @@ GetMeReq getMeReqFromJson(String str) => GetMeReq.fromJson(json.decode(str));
 
 String getMeReqToJson(GetMeReq data) => json.encode(data.toJson());
 
-GetMeItem getMeItemFromJson(String str) => GetMeItem.fromJson(json.decode(str));
+GetMeValue getMeValueFromJson(String str) => GetMeValue.fromJson(json.decode(str));
 
-String getMeItemToJson(GetMeItem data) => json.encode(data.toJson());
+String getMeValueToJson(GetMeValue data) => json.encode(data.toJson());
 
 SendSignInEmailReq sendSignInEmailReqFromJson(String str) => SendSignInEmailReq.fromJson(json.decode(str));
 
@@ -159,9 +159,9 @@ GetMyBoardsReq getMyBoardsReqFromJson(String str) => GetMyBoardsReq.fromJson(jso
 
 String getMyBoardsReqToJson(GetMyBoardsReq data) => json.encode(data.toJson());
 
-List<GetMyBoardsItem> getMyBoardsItemFromJson(String str) => List<GetMyBoardsItem>.from(json.decode(str).map((x) => GetMyBoardsItem.fromJson(x)));
+List<GetMyBoardsValue> getMyBoardsValueFromJson(String str) => List<GetMyBoardsValue>.from(json.decode(str).map((x) => GetMyBoardsValue.fromJson(x)));
 
-String getMyBoardsItemToJson(List<GetMyBoardsItem> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+String getMyBoardsValueToJson(List<GetMyBoardsValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 EchoReq echoReqFromJson(String str) => EchoReq.fromJson(json.decode(str));
 
@@ -175,9 +175,9 @@ GetBoardReq getBoardReqFromJson(String str) => GetBoardReq.fromJson(json.decode(
 
 String getBoardReqToJson(GetBoardReq data) => json.encode(data.toJson());
 
-GetBoardItem getBoardItemFromJson(String str) => GetBoardItem.fromJson(json.decode(str));
+GetBoardValue getBoardValueFromJson(String str) => GetBoardValue.fromJson(json.decode(str));
 
-String getBoardItemToJson(GetBoardItem data) => json.encode(data.toJson());
+String getBoardValueToJson(GetBoardValue data) => json.encode(data.toJson());
 
 CreateColumnReq createColumnReqFromJson(String str) => CreateColumnReq.fromJson(json.decode(str));
 
@@ -199,9 +199,9 @@ GetBoardViewReq getBoardViewReqFromJson(String str) => GetBoardViewReq.fromJson(
 
 String getBoardViewReqToJson(GetBoardViewReq data) => json.encode(data.toJson());
 
-GetBoardViewItem getBoardViewItemFromJson(String str) => GetBoardViewItem.fromJson(json.decode(str));
+GetBoardViewValue getBoardViewValueFromJson(String str) => GetBoardViewValue.fromJson(json.decode(str));
 
-String getBoardViewItemToJson(GetBoardViewItem data) => json.encode(data.toJson());
+String getBoardViewValueToJson(GetBoardViewValue data) => json.encode(data.toJson());
 
 DeleteBoardReq deleteBoardReqFromJson(String str) => DeleteBoardReq.fromJson(json.decode(str));
 
@@ -279,9 +279,9 @@ GetTaskCommentsReq getTaskCommentsReqFromJson(String str) => GetTaskCommentsReq.
 
 String getTaskCommentsReqToJson(GetTaskCommentsReq data) => json.encode(data.toJson());
 
-List<GetTaskCommentsItem> getTaskCommentsItemFromJson(String str) => List<GetTaskCommentsItem>.from(json.decode(str).map((x) => GetTaskCommentsItem.fromJson(x)));
+List<GetTaskCommentsValue> getTaskCommentsValueFromJson(String str) => List<GetTaskCommentsValue>.from(json.decode(str).map((x) => GetTaskCommentsValue.fromJson(x)));
 
-String getTaskCommentsItemToJson(List<GetTaskCommentsItem> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+String getTaskCommentsValueToJson(List<GetTaskCommentsValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 CreateMemberReq createMemberReqFromJson(String str) => CreateMemberReq.fromJson(json.decode(str));
 
@@ -303,9 +303,9 @@ GetBoardMembersReq getBoardMembersReqFromJson(String str) => GetBoardMembersReq.
 
 String getBoardMembersReqToJson(GetBoardMembersReq data) => json.encode(data.toJson());
 
-List<GetBoardMembersItem> getBoardMembersItemFromJson(String str) => List<GetBoardMembersItem>.from(json.decode(str).map((x) => GetBoardMembersItem.fromJson(x)));
+List<GetBoardMembersValue> getBoardMembersValueFromJson(String str) => List<GetBoardMembersValue>.from(json.decode(str).map((x) => GetBoardMembersValue.fromJson(x)));
 
-String getBoardMembersItemToJson(List<GetBoardMembersItem> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+String getBoardMembersValueToJson(List<GetBoardMembersValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 SetUserFullNameReq setUserFullNameReqFromJson(String str) => SetUserFullNameReq.fromJson(json.decode(str));
 
@@ -369,16 +369,16 @@ class GetStreamReq {
     };
 }
 
-class GetStreamItem {
+class GetStreamValue {
     double index;
     String value;
 
-    GetStreamItem({
+    GetStreamValue({
         required this.index,
         required this.value,
     });
 
-    factory GetStreamItem.fromJson(Map<String, dynamic> json) => GetStreamItem(
+    factory GetStreamValue.fromJson(Map<String, dynamic> json) => GetStreamValue(
         index: json["index"]?.toDouble(),
         value: json["value"],
     );
@@ -419,18 +419,18 @@ class GetMeReq {
     };
 }
 
-class GetMeItem {
+class GetMeValue {
     Identity identity;
-    GetMeItemUser user;
+    GetMeValueUser user;
 
-    GetMeItem({
+    GetMeValue({
         required this.identity,
         required this.user,
     });
 
-    factory GetMeItem.fromJson(Map<String, dynamic> json) => GetMeItem(
+    factory GetMeValue.fromJson(Map<String, dynamic> json) => GetMeValue(
         identity: Identity.fromJson(json["identity"]),
-        user: GetMeItemUser.fromJson(json["user"]),
+        user: GetMeValueUser.fromJson(json["user"]),
     );
 
     Map<String, dynamic> toJson() => {
@@ -511,7 +511,7 @@ class VerificationCode {
     };
 }
 
-class GetMeItemUser {
+class GetMeValueUser {
     double createdAt;
     bool deleted;
     String fullName;
@@ -520,7 +520,7 @@ class GetMeItemUser {
     double updatedAt;
     Version version;
 
-    GetMeItemUser({
+    GetMeValueUser({
         required this.createdAt,
         required this.deleted,
         required this.fullName,
@@ -530,7 +530,7 @@ class GetMeItemUser {
         required this.version,
     });
 
-    factory GetMeItemUser.fromJson(Map<String, dynamic> json) => GetMeItemUser(
+    factory GetMeValueUser.fromJson(Map<String, dynamic> json) => GetMeValueUser(
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         fullName: json["fullName"],
@@ -893,7 +893,7 @@ class GetMyBoardsReq {
     };
 }
 
-class GetMyBoardsItem {
+class GetMyBoardsValue {
     String authorId;
     double createdAt;
     bool deleted;
@@ -904,7 +904,7 @@ class GetMyBoardsItem {
     String state;
     double updatedAt;
 
-    GetMyBoardsItem({
+    GetMyBoardsValue({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -916,7 +916,7 @@ class GetMyBoardsItem {
         required this.updatedAt,
     });
 
-    factory GetMyBoardsItem.fromJson(Map<String, dynamic> json) => GetMyBoardsItem(
+    factory GetMyBoardsValue.fromJson(Map<String, dynamic> json) => GetMyBoardsValue(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -989,7 +989,7 @@ class GetBoardReq {
     };
 }
 
-class GetBoardItem {
+class GetBoardValue {
     String authorId;
     double createdAt;
     bool deleted;
@@ -1000,7 +1000,7 @@ class GetBoardItem {
     String state;
     double updatedAt;
 
-    GetBoardItem({
+    GetBoardValue({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -1012,7 +1012,7 @@ class GetBoardItem {
         required this.updatedAt,
     });
 
-    factory GetBoardItem.fromJson(Map<String, dynamic> json) => GetBoardItem(
+    factory GetBoardValue.fromJson(Map<String, dynamic> json) => GetBoardValue(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1383,7 +1383,7 @@ class GetBoardViewReq {
     };
 }
 
-class GetBoardViewItem {
+class GetBoardViewValue {
     String authorId;
     List<ColumnElement> columns;
     double createdAt;
@@ -1394,7 +1394,7 @@ class GetBoardViewItem {
     List<String> pk;
     double updatedAt;
 
-    GetBoardViewItem({
+    GetBoardViewValue({
         required this.authorId,
         required this.columns,
         required this.createdAt,
@@ -1406,7 +1406,7 @@ class GetBoardViewItem {
         required this.updatedAt,
     });
 
-    factory GetBoardViewItem.fromJson(Map<String, dynamic> json) => GetBoardViewItem(
+    factory GetBoardViewValue.fromJson(Map<String, dynamic> json) => GetBoardViewValue(
         authorId: json["authorId"],
         columns: List<ColumnElement>.from(json["columns"].map((x) => ColumnElement.fromJson(x))),
         createdAt: json["createdAt"]?.toDouble(),
@@ -2291,19 +2291,19 @@ class GetTaskCommentsReq {
     };
 }
 
-class GetTaskCommentsItem {
-    GetTaskCommentsItemAuthor author;
+class GetTaskCommentsValue {
+    GetTaskCommentsValueAuthor author;
     String authorId;
     double createdAt;
     bool deleted;
     String id;
     List<String> pk;
-    GetTaskCommentsItemTask task;
+    GetTaskCommentsValueTask task;
     String taskId;
     String text;
     double updatedAt;
 
-    GetTaskCommentsItem({
+    GetTaskCommentsValue({
         required this.author,
         required this.authorId,
         required this.createdAt,
@@ -2316,14 +2316,14 @@ class GetTaskCommentsItem {
         required this.updatedAt,
     });
 
-    factory GetTaskCommentsItem.fromJson(Map<String, dynamic> json) => GetTaskCommentsItem(
-        author: GetTaskCommentsItemAuthor.fromJson(json["author"]),
+    factory GetTaskCommentsValue.fromJson(Map<String, dynamic> json) => GetTaskCommentsValue(
+        author: GetTaskCommentsValueAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
-        task: GetTaskCommentsItemTask.fromJson(json["task"]),
+        task: GetTaskCommentsValueTask.fromJson(json["task"]),
         taskId: json["taskId"],
         text: json["text"],
         updatedAt: json["updatedAt"]?.toDouble(),
@@ -2343,7 +2343,7 @@ class GetTaskCommentsItem {
     };
 }
 
-class GetTaskCommentsItemAuthor {
+class GetTaskCommentsValueAuthor {
     double createdAt;
     bool deleted;
     String fullName;
@@ -2352,7 +2352,7 @@ class GetTaskCommentsItemAuthor {
     double updatedAt;
     Version version;
 
-    GetTaskCommentsItemAuthor({
+    GetTaskCommentsValueAuthor({
         required this.createdAt,
         required this.deleted,
         required this.fullName,
@@ -2362,7 +2362,7 @@ class GetTaskCommentsItemAuthor {
         required this.version,
     });
 
-    factory GetTaskCommentsItemAuthor.fromJson(Map<String, dynamic> json) => GetTaskCommentsItemAuthor(
+    factory GetTaskCommentsValueAuthor.fromJson(Map<String, dynamic> json) => GetTaskCommentsValueAuthor(
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         fullName: json["fullName"],
@@ -2383,7 +2383,7 @@ class GetTaskCommentsItemAuthor {
     };
 }
 
-class GetTaskCommentsItemTask {
+class GetTaskCommentsValueTask {
     String authorId;
     IndigoBoard board;
     String boardId;
@@ -2398,7 +2398,7 @@ class GetTaskCommentsItemTask {
     String title;
     double updatedAt;
 
-    GetTaskCommentsItemTask({
+    GetTaskCommentsValueTask({
         required this.authorId,
         required this.board,
         required this.boardId,
@@ -2414,7 +2414,7 @@ class GetTaskCommentsItemTask {
         required this.updatedAt,
     });
 
-    factory GetTaskCommentsItemTask.fromJson(Map<String, dynamic> json) => GetTaskCommentsItemTask(
+    factory GetTaskCommentsValueTask.fromJson(Map<String, dynamic> json) => GetTaskCommentsValueTask(
         authorId: json["authorId"],
         board: IndigoBoard.fromJson(json["board"]),
         boardId: json["boardId"],
@@ -2831,8 +2831,8 @@ class GetBoardMembersReq {
     };
 }
 
-class GetBoardMembersItem {
-    GetBoardMembersItemBoard board;
+class GetBoardMembersValue {
+    GetBoardMembersValueBoard board;
     String boardId;
     double createdAt;
     bool deleted;
@@ -2841,10 +2841,10 @@ class GetBoardMembersItem {
     List<String> pk;
     Role role;
     double updatedAt;
-    GetBoardMembersItemUser user;
+    GetBoardMembersValueUser user;
     String userId;
 
-    GetBoardMembersItem({
+    GetBoardMembersValue({
         required this.board,
         required this.boardId,
         required this.createdAt,
@@ -2858,8 +2858,8 @@ class GetBoardMembersItem {
         required this.userId,
     });
 
-    factory GetBoardMembersItem.fromJson(Map<String, dynamic> json) => GetBoardMembersItem(
-        board: GetBoardMembersItemBoard.fromJson(json["board"]),
+    factory GetBoardMembersValue.fromJson(Map<String, dynamic> json) => GetBoardMembersValue(
+        board: GetBoardMembersValueBoard.fromJson(json["board"]),
         boardId: json["boardId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2868,7 +2868,7 @@ class GetBoardMembersItem {
         pk: List<String>.from(json["pk"].map((x) => x)),
         role: roleValues.map[json["role"]]!,
         updatedAt: json["updatedAt"]?.toDouble(),
-        user: GetBoardMembersItemUser.fromJson(json["user"]),
+        user: GetBoardMembersValueUser.fromJson(json["user"]),
         userId: json["userId"],
     );
 
@@ -2887,7 +2887,7 @@ class GetBoardMembersItem {
     };
 }
 
-class GetBoardMembersItemBoard {
+class GetBoardMembersValueBoard {
     String authorId;
     double createdAt;
     bool deleted;
@@ -2898,7 +2898,7 @@ class GetBoardMembersItemBoard {
     String state;
     double updatedAt;
 
-    GetBoardMembersItemBoard({
+    GetBoardMembersValueBoard({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -2910,7 +2910,7 @@ class GetBoardMembersItemBoard {
         required this.updatedAt,
     });
 
-    factory GetBoardMembersItemBoard.fromJson(Map<String, dynamic> json) => GetBoardMembersItemBoard(
+    factory GetBoardMembersValueBoard.fromJson(Map<String, dynamic> json) => GetBoardMembersValueBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2935,7 +2935,7 @@ class GetBoardMembersItemBoard {
     };
 }
 
-class GetBoardMembersItemUser {
+class GetBoardMembersValueUser {
     double createdAt;
     bool deleted;
     String fullName;
@@ -2944,7 +2944,7 @@ class GetBoardMembersItemUser {
     double updatedAt;
     Version version;
 
-    GetBoardMembersItemUser({
+    GetBoardMembersValueUser({
         required this.createdAt,
         required this.deleted,
         required this.fullName,
@@ -2954,7 +2954,7 @@ class GetBoardMembersItemUser {
         required this.version,
     });
 
-    factory GetBoardMembersItemUser.fromJson(Map<String, dynamic> json) => GetBoardMembersItemUser(
+    factory GetBoardMembersValueUser.fromJson(Map<String, dynamic> json) => GetBoardMembersValueUser(
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         fullName: json["fullName"],

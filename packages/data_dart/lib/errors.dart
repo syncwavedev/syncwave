@@ -40,8 +40,8 @@ class TransportException implements Exception {
   String toString() => 'TransportException: $message';
 }
 
-class ConnectionErrorException extends TransportException {
-  ConnectionErrorException(super.message);
+class ConnectionException extends TransportException {
+  ConnectionException(super.message);
   @override
   String toString() => 'ConnectionErrorException: $message';
 }

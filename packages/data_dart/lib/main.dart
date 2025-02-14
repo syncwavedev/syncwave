@@ -1,54 +1,36 @@
 import 'dart:async';
 
+import 'package:syncwave_data/message.dart';
 import 'package:syncwave_data/participant/client.dart';
 import 'package:syncwave_data/participant/dto.dart';
 
 import 'websocket_transport_client.dart';
 
+const e2eApiUrl = "ws://127.0.0.1:4567";
+
 Future<void> main() async {
   print("start");
 
-  final stream = StreamController<dynamic>.broadcast();
+  final client = WebsocketTransportClient(Uri.parse(e2eApiUrl));
 
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(1);
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(2);
-  await Future<void>.delayed(Duration(microseconds: 10));
+  final connection = await client.connect();
 
-  final sub1 = stream.stream.listen((x) => print("one: $x"));
+  print("connected");
 
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(3);
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(4);
-  await Future<void>.delayed(Duration(microseconds: 10));
+  final messageFut = connection.subscribe().first;
+  final requestId = createMessageId();
+  await connection.send(RequestMessage(
+      id: requestId,
+      payload: RequestMessagePayload(name: "handle", arg: {
+        'name': 'echo',
+        'arg': {'msg': 'hello e2e'}
+      }),
+      headers:
+          MessageHeaders(auth: null, traceparent: null, tracestate: null)));
+  print("sended");
+  final message = await messageFut;
 
-  final sub2 = stream.stream.listen((x) => print("two: $x"));
-
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(5);
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(6);
-  await Future<void>.delayed(Duration(microseconds: 10));
-
-  sub1.cancel();
-
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(7);
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(8);
-  await Future<void>.delayed(Duration(microseconds: 10));
-
-  sub2.cancel();
-
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(9);
-  await Future<void>.delayed(Duration(microseconds: 10));
-  stream.add(10);
-  await Future<void>.delayed(Duration(microseconds: 10));
-
-  await Future<void>.delayed(Duration(microseconds: 10));
+  print(message.toJson());
 
   print("finish");
 }

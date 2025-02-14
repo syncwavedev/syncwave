@@ -61,7 +61,7 @@ async function genDto(api: Api<unknown>) {
                         schema: zodToJsonSchema(processor.req),
                     },
                     {
-                        name: getItemName(name),
+                        name: getValueName(name),
                         schema: zodToJsonSchema(processor.item),
                     },
                 ];
@@ -87,16 +87,8 @@ function getResponseName(name: string) {
     return firstUpperCase(`${name}Res`);
 }
 
-function getItemName(name: string) {
-    return firstUpperCase(`${name}Item`);
-}
-
 function getValueName(name: string) {
     return firstUpperCase(`${name}Value`);
-}
-
-function getUpdateName(name: string) {
-    return firstUpperCase(`${name}Update`);
 }
 
 function changeTabSize(code: string) {
@@ -154,8 +146,9 @@ function genClientMethod(
     if (processor.type === 'handler') {
         result = `
             Future<${getResponseName(name)}> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async {
+                final span = tracer.startSpan('${name}');
                 try {
-                    final json = await _rpc.handle('${name}', request.toJson(), headers);
+                    final json = await _rpc.handle('${name}', request.toJson(), _createHeaders(span, headers));
                     return ${getResponseName(name)}.fromJson(json as Map<String, dynamic>);
                 } catch (error) {
                     if (error is TransportException) {
@@ -165,27 +158,38 @@ function genClientMethod(
                     }
 
                     rethrow;
+                } finally {
+                    span.end();
                 }
             }
         `;
     } else if (processor.type === 'streamer') {
         result = `
-            Stream<${getItemName(name)}> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async* {
-                while (true) {
-                    try {
-                        await for (final json in _rpc.stream('${name}', request.toJson(), headers)) {
-                            yield ${getItemName(name)}.fromJson(json as Map<String, dynamic>);
-                        }
-                    } catch (error) {
-                        if (error is TransportException) {
-                            _transportErrors.add(error);
-                            await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
-                        } else {
-                            _unknownErrors.add(error);
-                            rethrow;
+            Stream<${getValueName(name)}> ${name}(${getRequestName(name)} request, [MessageHeaders? headers]) async* {
+                final invocationSpan = tracer.startSpan('${name}');
+                try {
+                    while (true) {
+                        final attemptSpan = tracer.startSpan('${name}');
+                        try {
+                            await for (final json in _rpc.stream('${name}', request.toJson(), _createHeaders(attemptSpan, headers))) {
+                                attemptSpan.addEvent("next");
+                                yield ${getValueName(name)}.fromJson(json as Map<String, dynamic>);
+                            }
+                        } catch (error) {
+                            if (error is TransportException) {
+                                _transportErrors.add(error);
+                            } else {
+                                _unknownErrors.add(error);
+                                rethrow;
+                            }
+                        } finally {
+                            attemptSpan.end();
                         }
 
+                        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
                     }
+                } finally {
+                    invocationSpan.end();
                 }
             }
         `;
@@ -206,6 +210,7 @@ async function genClient(api: Api<unknown>) {
         import 'package:syncwave_data/transport.dart';
         import 'package:syncwave_data/errors.dart';
         import 'package:syncwave_data/constants.dart';
+        import 'package:opentelemetry/api.dart';
 
         class ParticipantClient {
             final RpcStreamerClient _rpc;
@@ -214,14 +219,32 @@ async function genClient(api: Api<unknown>) {
             final StreamController<Object> _transportErrors =
                 StreamController<Object>.broadcast();
 
+            final tracer = globalTracerProvider.getTracer('dart_sdk');
+
+            String authToken = '';
+
             ParticipantClient({required Connection connection})
                 : _rpc = RpcStreamerClient(
-                        conn: connection, getHeaders: () => MessageHeaders());
+                    conn: connection,
+                    getHeaders: () => MessageHeaders(
+                        auth: null, traceparent: null, tracestate: null));
 
             Stream<Object> get unknownErrors => _unknownErrors.stream;
             Stream<Object> get transportErrors => _transportErrors.stream;
 
+            void setAuthToken(String token) {
+                authToken = token;
+            }
+
         $$1
+            
+            MessageHeaders _createHeaders(Span span, MessageHeaders? headers) {
+                return MessageHeaders(
+                    traceparent: getTraceparent(span),
+                    tracestate: span.spanContext.traceState.toString(),
+                    auth: authToken,
+                );
+            }
 
             void close() {
                 _rpc.close();

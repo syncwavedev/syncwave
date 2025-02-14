@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:opentelemetry/api.dart';
+import 'package:opentelemetry/sdk.dart';
 import 'package:syncwave_data/rpc/streamer.dart';
 import 'package:test/test.dart';
 import 'package:syncwave_data/message.dart';
@@ -10,65 +12,108 @@ const e2eApiUrl = "ws://127.0.0.1:4567";
 void main() {
   late WebsocketTransportClient client;
   late RpcStreamerClient rpc;
+  late Tracer tracer;
+  late Span testSpan;
 
   Future<void> expectNoRunningProcesses() async {
-    final traceId = createTraceId();
-    final systemState = await rpc.handle('e2eSystemState', <String, dynamic>{},
-        MessageHeaders(traceId: traceId));
-    final runningProcessIds = systemState['runningProcessIds'] as List;
-    expect(
-      runningProcessIds,
-      equals(
-        [traceId],
-      ),
-    );
+    final span = tracer.startSpan("systemState");
+    try {
+      final systemState = await rpc.handle(
+          'e2eSystemState',
+          <String, dynamic>{},
+          MessageHeaders(traceparent: getTraceparent(span)));
+      final runningProcessIds = systemState['runningProcessIds'] as List;
+      expect(
+        runningProcessIds,
+        equals(
+          [span.spanContext.traceId.toString()],
+        ),
+      );
+    } finally {
+      span.end();
+    }
   }
 
+  late TracerProviderBase tracerProvider;
+
+  setUpAll(() {
+    tracerProvider = TracerProviderBase(
+        resource: Resource([Attribute.fromString("service.name", "mobile")]),
+        processors: [
+          BatchSpanProcessor(
+              CollectorExporter(Uri.parse('http://127.0.0.1:4318/v1/traces'))),
+          SimpleSpanProcessor(ConsoleExporter())
+        ]);
+    registerGlobalTracerProvider(tracerProvider);
+
+    tracerProvider.forceFlush();
+
+    tracer = globalTracerProvider.getTracer('flutter');
+  });
+
+  tearDownAll(() {
+    tracerProvider.forceFlush();
+  });
+
   setUp(() async {
+    testSpan = tracer.startSpan("test");
     client = WebsocketTransportClient(Uri.parse(e2eApiUrl));
     final connection = await client.connect();
     rpc = RpcStreamerClient(
       conn: connection,
-      getHeaders: () => MessageHeaders(auth: null, traceId: createTraceId()),
+      getHeaders: () =>
+          MessageHeaders(auth: null, traceparent: getTraceparent(testSpan)),
     );
   });
 
   tearDown(() async {
-    await expectNoRunningProcesses();
+    try {
+      await expectNoRunningProcesses();
+    } finally {
+      testSpan.end();
+    }
   });
 
   group('E2E RPC Tests', () {
     test('system state returns server info', () async {
-      final infoTraceId = createTraceId();
       final state = await rpc.handle('e2eSystemState', <String, dynamic>{},
-          MessageHeaders(traceId: infoTraceId));
+          MessageHeaders(traceparent: getTraceparent(testSpan)));
       final runningProcessIds =
           (state['runningProcessIds'] as List<dynamic>).toSet();
-      expect(runningProcessIds, equals({infoTraceId}));
+      expect(
+          runningProcessIds, equals({testSpan.spanContext.traceId.toString()}));
     });
 
     test('system state returns running stream trace id', () async {
-      final streamTraceId = createTraceId();
       final sub = rpc
           .stream(
               'e2eCounter',
               {'count': 30},
               MessageHeaders(
-                traceId: streamTraceId,
+                traceparent: getTraceparent(testSpan),
               ))
           .listen((_) {});
       // wait for counter to start running
       await Future<void>.delayed(Duration(milliseconds: 100));
-      final infoTraceId = createTraceId();
-      final state = await rpc.handle('e2eSystemState', <String, dynamic>{},
-          MessageHeaders(traceId: infoTraceId));
-      final runningProcessIds =
-          (state['runningProcessIds'] as List<dynamic>).toSet();
-      expect(runningProcessIds, equals({infoTraceId, streamTraceId}));
+      final infoSpan = tracer.startSpan("systemInfo");
+      try {
+        final state = await rpc.handle('e2eSystemState', <String, dynamic>{},
+            MessageHeaders(traceparent: getTraceparent(infoSpan)));
+        final runningProcessIds =
+            (state['runningProcessIds'] as List<dynamic>).toSet();
+        expect(
+            runningProcessIds,
+            equals({
+              infoSpan.spanContext.traceId.toString(),
+              testSpan.spanContext.traceId.toString()
+            }));
 
-      sub.cancel();
-      // wait for cancellation to propagate to api
-      await Future<void>.delayed(Duration(milliseconds: 100));
+        sub.cancel();
+        // wait for cancellation to propagate to api
+        await Future<void>.delayed(Duration(milliseconds: 100));
+      } finally {
+        infoSpan.end();
+      }
     });
 
     test('handler - echo returns correct message', () async {

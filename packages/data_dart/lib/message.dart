@@ -1,7 +1,16 @@
+import 'package:opentelemetry/api.dart';
+
 import 'utils.dart';
 
 String createMessageId() => createRandomUuid();
 String createTraceId() => createRandomUuid();
+
+String getTraceparent(Span span) {
+  final traceId = span.spanContext.traceId;
+  final spanId = span.spanContext.spanId;
+  final traceFlags = span.spanContext.traceFlags.toString().padLeft(2, "0");
+  return "00-$traceId-$spanId-$traceFlags";
+}
 
 class MessageHeaders {
   final String? auth;

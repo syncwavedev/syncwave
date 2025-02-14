@@ -7,5 +7,6 @@ dev_dependencies:
     lints: ^5.1.1
 dependencies:
     message_pack_dart: ^2.0.1
+    opentelemetry: ^0.18.8
     uuid: ^4.5.1
     web_socket_channel: ^3.0.2

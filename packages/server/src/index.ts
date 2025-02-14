@@ -61,7 +61,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
         };
     } else if (STAGE === 'local') {
         return {
-            LOG_LEVEL: 'warn' as const,
+            LOG_LEVEL: 'info' as const,
             APP_URL: 'http://localhost:5173',
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
         };

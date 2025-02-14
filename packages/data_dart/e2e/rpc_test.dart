@@ -46,8 +46,6 @@ void main() {
         ]);
     registerGlobalTracerProvider(tracerProvider);
 
-    tracerProvider.forceFlush();
-
     tracer = globalTracerProvider.getTracer('flutter');
   });
 

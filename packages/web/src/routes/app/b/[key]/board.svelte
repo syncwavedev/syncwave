@@ -1,41 +1,114 @@
 <script lang="ts">
-	import type {
-		BoardViewColumnDto,
-		BoardViewDto,
-		BoardViewTaskDto,
-		ColumnId,
+	import {
+		assert,
+		log,
+		stringifyCrdtDiff,
+		toPosition,
+		type BoardViewColumnDto,
+		type BoardViewDto,
+		type BoardViewTaskDto,
 	} from 'syncwave-data';
-	import type {DndEvent} from 'svelte-dnd-action';
+	import {
+		SHADOW_ITEM_MARKER_PROPERTY_NAME,
+		type DndEvent,
+	} from 'svelte-dnd-action';
 	import BoardInner from './board-inner.svelte';
+	import {BoardViewCrdt} from '$lib/crdt/board-view-crdt';
+	import {compareBigFloat} from '../../../../../../data/dist/esm/src/big-float';
+	import {getSdk} from '$lib/utils';
+	import {findMoved} from '$lib/move';
+	import {untrack} from 'svelte';
 
-	let {board}: {board: BoardViewDto} = $props();
+	let {board: remoteBoard}: {board: BoardViewDto} = $props();
 
-	function orderColumns(columns: BoardViewColumnDto[]) {
-		return [...columns].sort((a, b) => a.id.length - b.id.length);
+	const localBoard = new BoardViewCrdt(remoteBoard);
+	$effect(() => {
+		localBoard.apply(remoteBoard);
+		const latestColumns = applyOrder(localBoard.snapshot().columns);
+		untrack(() => {
+			const shadowItem = columns.find(
+				item => (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]
+			);
+			console.log(
+				$state.snapshot({
+					columns,
+					serverItems: latestColumns,
+					shadowItem,
+				})
+			);
+
+			columns = latestColumns.map(column =>
+				column.id === shadowItem?.id
+					? {
+							...shadowItem,
+							...column,
+						}
+					: column
+			);
+		});
+	});
+
+	function applyOrder(columns: BoardViewColumnDto[]) {
+		const result = [...columns].sort((a, b) =>
+			compareBigFloat(a.boardPosition, b.boardPosition)
+		);
+
+		for (const column of result) {
+			column.tasks = [...column.tasks].sort((a, b) =>
+				compareBigFloat(a.columnPosition, b.columnPosition)
+			);
+		}
+
+		return result;
 	}
 
 	let columns = $state(
-		orderColumns($state.snapshot(board.columns) as BoardViewColumnDto[])
+		applyOrder($state.snapshot(remoteBoard.columns) as BoardViewColumnDto[])
 	);
 
-	const flipDurationMs = 100;
-	function handleDndConsiderColumns(
-		e: CustomEvent<DndEvent<BoardViewColumnDto>>
-	) {
-		columns = e.detail.items;
+	function toIds<T extends {pk: [unknown]}>(items: T[]): T['pk'][0][] {
+		return (
+			items
+				// .filter(x => !(SHADOW_ITEM_MARKER_PROPERTY_NAME in x))
+				.map(item => item.pk[0])
+		);
 	}
-	function handleDndFinalizeColumns(
-		e: CustomEvent<DndEvent<BoardViewColumnDto>>
-	) {
-		columns = e.detail.items;
+
+	const sdk = getSdk();
+
+	function setColumns(e: CustomEvent<DndEvent<BoardViewColumnDto>>) {
+		const newColumns = e.detail.items;
+		const moved = findMoved(toIds(columns), toIds(newColumns));
+
+		if (moved) {
+			const {target, prev, next} = moved;
+			const prevColumn = columns.find(x => x.id === prev);
+			const nextColumn = columns.find(x => x.id === next);
+
+			const diff = localBoard.setColumnPosition(
+				target,
+				toPosition({
+					next: nextColumn?.boardPosition,
+					prev: prevColumn?.boardPosition,
+				})
+			);
+
+			if (diff) {
+				sdk(x =>
+					x.applyColumnDiff({
+						columnId: target,
+						diff: stringifyCrdtDiff(diff),
+					})
+				).catch(error => {
+					log.error(error, 'failed to send column diff');
+				});
+			}
+		}
+
+		columns = newColumns;
 	}
-	function handleDndConsiderCards(
-		column: BoardViewColumnDto,
-		e: CustomEvent<DndEvent<BoardViewTaskDto>>
-	) {
-		column.tasks = e.detail.items;
-	}
-	function handleDndFinalizeCards(
+
+	function setTasks(
 		column: BoardViewColumnDto,
 		e: CustomEvent<DndEvent<BoardViewTaskDto>>
 	) {
@@ -45,9 +118,9 @@
 
 <BoardInner
 	{columns}
-	{flipDurationMs}
-	{handleDndConsiderCards}
-	{handleDndConsiderColumns}
-	{handleDndFinalizeCards}
-	{handleDndFinalizeColumns}
+	flipDurationMs={100}
+	handleDndConsiderCards={setTasks}
+	handleDndFinalizeCards={setTasks}
+	handleDndConsiderColumns={setColumns}
+	handleDndFinalizeColumns={setColumns}
 />

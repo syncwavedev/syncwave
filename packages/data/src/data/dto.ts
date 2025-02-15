@@ -120,6 +120,7 @@ export async function toBoardDto(
 export function zBoardViewDto() {
     return zBoard().extend({
         columns: z.array(zBoardViewColumnDto()),
+        state: zCrdtDiffString<Board>(),
     });
 }
 

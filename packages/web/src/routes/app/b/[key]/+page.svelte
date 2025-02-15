@@ -12,6 +12,7 @@
 	import {goto} from '$app/navigation';
 	import ColumnCard from './column-card.svelte';
 	import Board from './board.svelte';
+	import {toBigFloat} from '../../../../../../data/dist/esm/src/big-float';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
@@ -29,6 +30,7 @@
 				boardId: board.value.id,
 				title: columnTitle,
 				columnId: createColumnId(),
+				boardPosition: toBigFloat(Math.random()),
 			})
 		);
 	}

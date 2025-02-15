@@ -137,3 +137,15 @@ export function bigintGcd(a: bigint, b: bigint): bigint {
     if (b === BigInt(0)) return a;
     return bigintGcd(b, a % b);
 }
+
+export function compareBigFloat(a: BigFloat, b: BigFloat): 1 | 0 | -1 {
+    const anum = bigintCodec.decode(a.numerator);
+    const aden = bigintCodec.decode(a.denominator);
+    const bnum = bigintCodec.decode(b.numerator);
+    const bden = bigintCodec.decode(b.denominator);
+
+    const result = anum * bden - bnum * aden;
+    if (result < 0) return -1;
+    if (result > 0) return 1;
+    return 0;
+}

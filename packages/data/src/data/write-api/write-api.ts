@@ -15,7 +15,7 @@ import {
     zMemberDto,
 } from '../dto.js';
 import {PermissionService} from '../permission-service.js';
-import {toPosition} from '../placement.js';
+import {toPosition, zPlacement} from '../placement.js';
 import {Board, BoardId, zBoard} from '../repos/board-repo.js';
 import {Column, ColumnId} from '../repos/column-repo.js';
 import {CommentId} from '../repos/comment-repo.js';
@@ -47,6 +47,8 @@ export class WriteApiState {
     }
 }
 
+export type Placement = z.infer<ReturnType<typeof zPlacement>>;
+
 export function createWriteApi() {
     return createApi<WriteApiState>()({
         createTask: handler({
@@ -55,24 +57,7 @@ export function createWriteApi() {
                 boardId: zUuid<BoardId>(),
                 columnId: zUuid<ColumnId>(),
                 title: z.string(),
-                placement: z.discriminatedUnion('type', [
-                    z.object({
-                        type: z.literal('before'),
-                        position: zBigFloat(),
-                    }),
-                    z.object({
-                        type: z.literal('after'),
-                        position: zBigFloat(),
-                    }),
-                    z.object({
-                        type: z.literal('between'),
-                        positionA: zBigFloat(),
-                        positionB: zBigFloat(),
-                    }),
-                    z.object({
-                        type: z.literal('random'),
-                    }),
-                ]),
+                placement: zPlacement(),
             }),
             res: zTask(),
             handle: async (
@@ -189,9 +174,10 @@ export function createWriteApi() {
                 columnId: zUuid<ColumnId>(),
                 boardId: zUuid<BoardId>(),
                 title: z.string(),
+                boardPosition: zBigFloat(),
             }),
             res: zColumnDto(),
-            handle: async (st, {boardId, columnId, title}) => {
+            handle: async (st, {boardId, columnId, title, boardPosition}) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureBoardMember(boardId, 'writer');
                 const now = getNow();
@@ -204,6 +190,8 @@ export function createWriteApi() {
                     updatedAt: now,
                     deleted: false,
                     title: title,
+                    boardPosition,
+                    version: 2,
                 });
 
                 return await toColumnDto(st.tx, column.id);

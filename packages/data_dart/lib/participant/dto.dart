@@ -963,6 +963,7 @@ class CreateColumnRes {
     String authorId;
     CreateColumnResBoard board;
     String boardId;
+    CreateColumnResBoardPosition boardPosition;
     double createdAt;
     bool deleted;
     String id;
@@ -975,6 +976,7 @@ class CreateColumnRes {
         required this.authorId,
         required this.board,
         required this.boardId,
+        required this.boardPosition,
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -988,6 +990,7 @@ class CreateColumnRes {
         authorId: json["authorId"],
         board: CreateColumnResBoard.fromJson(json["board"]),
         boardId: json["boardId"],
+        boardPosition: CreateColumnResBoardPosition.fromJson(json["boardPosition"]),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -1001,6 +1004,7 @@ class CreateColumnRes {
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -1056,6 +1060,26 @@ class CreateColumnResBoard {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
+    };
+}
+
+class CreateColumnResBoardPosition {
+    String denominator;
+    String numerator;
+
+    CreateColumnResBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory CreateColumnResBoardPosition.fromJson(Map<String, dynamic> json) => CreateColumnResBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 
@@ -1294,6 +1318,7 @@ class GetBoardViewValue {
     String key;
     String name;
     List<String> pk;
+    String state;
     double updatedAt;
 
     GetBoardViewValue({
@@ -1305,6 +1330,7 @@ class GetBoardViewValue {
         required this.key,
         required this.name,
         required this.pk,
+        required this.state,
         required this.updatedAt,
     });
 
@@ -1317,6 +1343,7 @@ class GetBoardViewValue {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1329,6 +1356,7 @@ class GetBoardViewValue {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
     };
 }
@@ -1336,6 +1364,7 @@ class GetBoardViewValue {
 class ColumnElement {
     String authorId;
     String boardId;
+    PurpleBoardPosition boardPosition;
     double createdAt;
     bool deleted;
     String id;
@@ -1348,6 +1377,7 @@ class ColumnElement {
     ColumnElement({
         required this.authorId,
         required this.boardId,
+        required this.boardPosition,
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -1361,6 +1391,7 @@ class ColumnElement {
     factory ColumnElement.fromJson(Map<String, dynamic> json) => ColumnElement(
         authorId: json["authorId"],
         boardId: json["boardId"],
+        boardPosition: PurpleBoardPosition.fromJson(json["boardPosition"]),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -1374,6 +1405,7 @@ class ColumnElement {
     Map<String, dynamic> toJson() => {
         "authorId": authorId,
         "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -1382,6 +1414,26 @@ class ColumnElement {
         "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
         "title": title,
         "updatedAt": updatedAt,
+    };
+}
+
+class PurpleBoardPosition {
+    String denominator;
+    String numerator;
+
+    PurpleBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory PurpleBoardPosition.fromJson(Map<String, dynamic> json) => PurpleBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 
@@ -1505,6 +1557,7 @@ class PurpleColumn {
     String authorId;
     FluffyBoard board;
     String boardId;
+    FluffyBoardPosition boardPosition;
     double createdAt;
     bool deleted;
     String id;
@@ -1517,6 +1570,7 @@ class PurpleColumn {
         required this.authorId,
         required this.board,
         required this.boardId,
+        required this.boardPosition,
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -1530,6 +1584,7 @@ class PurpleColumn {
         authorId: json["authorId"],
         board: FluffyBoard.fromJson(json["board"]),
         boardId: json["boardId"],
+        boardPosition: FluffyBoardPosition.fromJson(json["boardPosition"]),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -1543,6 +1598,7 @@ class PurpleColumn {
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -1598,6 +1654,26 @@ class FluffyBoard {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
+    };
+}
+
+class FluffyBoardPosition {
+    String denominator;
+    String numerator;
+
+    FluffyBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory FluffyBoardPosition.fromJson(Map<String, dynamic> json) => FluffyBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 
@@ -1939,6 +2015,7 @@ class FluffyColumn {
     String authorId;
     StickyBoard board;
     String boardId;
+    TentacledBoardPosition boardPosition;
     double createdAt;
     bool deleted;
     String id;
@@ -1951,6 +2028,7 @@ class FluffyColumn {
         required this.authorId,
         required this.board,
         required this.boardId,
+        required this.boardPosition,
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -1964,6 +2042,7 @@ class FluffyColumn {
         authorId: json["authorId"],
         board: StickyBoard.fromJson(json["board"]),
         boardId: json["boardId"],
+        boardPosition: TentacledBoardPosition.fromJson(json["boardPosition"]),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -1977,6 +2056,7 @@ class FluffyColumn {
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -2032,6 +2112,26 @@ class StickyBoard {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
+    };
+}
+
+class TentacledBoardPosition {
+    String denominator;
+    String numerator;
+
+    TentacledBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory TentacledBoardPosition.fromJson(Map<String, dynamic> json) => TentacledBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 
@@ -2313,6 +2413,7 @@ class TentacledColumn {
     String authorId;
     IndecentBoard board;
     String boardId;
+    StickyBoardPosition boardPosition;
     double createdAt;
     bool deleted;
     String id;
@@ -2325,6 +2426,7 @@ class TentacledColumn {
         required this.authorId,
         required this.board,
         required this.boardId,
+        required this.boardPosition,
         required this.createdAt,
         required this.deleted,
         required this.id,
@@ -2338,6 +2440,7 @@ class TentacledColumn {
         authorId: json["authorId"],
         board: IndecentBoard.fromJson(json["board"]),
         boardId: json["boardId"],
+        boardPosition: StickyBoardPosition.fromJson(json["boardPosition"]),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -2351,6 +2454,7 @@ class TentacledColumn {
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
@@ -2406,6 +2510,26 @@ class IndecentBoard {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
+    };
+}
+
+class StickyBoardPosition {
+    String denominator;
+    String numerator;
+
+    StickyBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory StickyBoardPosition.fromJson(Map<String, dynamic> json) => StickyBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 

@@ -311,7 +311,7 @@ class RpcStreamerClientApiState {
                 span: 'throw',
                 attributes: {
                     'rpc.throw.code': params.code,
-                    'rpc.throw.message': params.message,
+                    'rpc.throw.message': toResponseLog(params.message),
                 },
             },
             async () => {

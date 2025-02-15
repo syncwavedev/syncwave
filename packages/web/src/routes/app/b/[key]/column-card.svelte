@@ -5,13 +5,10 @@
 	import {
 		createTaskId,
 		type BoardViewColumnDto,
-		type Column,
-		type ColumnDto,
 		type ColumnId,
 	} from 'syncwave-data';
 	import EditColumnDialog from './edit-column-dialog.svelte';
 	import {toggle} from '$lib/utils.svelte';
-	import {Separator} from '$lib/components/ui/separator';
 	import {Input} from '$lib/components/ui/input';
 	import TaskCard from './task-card.svelte';
 
@@ -35,7 +32,7 @@
 				boardId: column.boardId,
 				title: taskTitle,
 				columnId: column.id,
-				placement: {type: 'random'},
+				placement: {},
 				taskId: createTaskId(),
 			})
 		);

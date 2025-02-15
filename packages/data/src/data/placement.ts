@@ -9,60 +9,43 @@ import {
     toBigFloat,
     zBigFloat,
 } from '../big-float.js';
-import {assertNever} from '../utils.js';
 
-function zPlacement() {
-    return z.discriminatedUnion('type', [
-        z.object({
-            type: z.literal('before'),
-            position: zBigFloat(),
-        }),
-        z.object({
-            type: z.literal('after'),
-            position: zBigFloat(),
-        }),
-        z.object({
-            type: z.literal('between'),
-            positionA: zBigFloat(),
-            positionB: zBigFloat(),
-        }),
-        z.object({
-            type: z.literal('random'),
-        }),
-    ]);
+export function zPlacement() {
+    return z.object({
+        prev: zBigFloat().optional(),
+        next: zBigFloat().optional(),
+    });
 }
 
 export type Placement = z.infer<ReturnType<typeof zPlacement>>;
 
 export function toPosition(placement: Placement): BigFloat {
     const rand = Math.random();
-    if (placement.type === 'before') {
-        return bigFloatSub(
-            bigFloatSub(
-                placement.position,
-                bigFloatDiv(bigFloatAbs(placement.position), 2)
-            ),
-            toBigFloat(rand)
-        );
-    } else if (placement.type === 'after') {
-        return bigFloatAdd(
-            bigFloatAdd(
-                placement.position,
-                bigFloatDiv(bigFloatAbs(placement.position), 2)
-            ),
-            toBigFloat(rand)
-        );
-    } else if (placement.type === 'between') {
-        const diff = bigFloatSub(placement.positionB, placement.positionA);
+    if (placement.prev && placement.next) {
+        const diff = bigFloatSub(placement.next, placement.prev);
         const jitter = bigFloatMul(bigFloatDiv(diff, 4), toBigFloat(rand));
         const middle = bigFloatDiv(
-            bigFloatAdd(placement.positionA, placement.positionB),
+            bigFloatAdd(placement.prev, placement.next),
             2
         );
         return bigFloatAdd(middle, jitter);
-    } else if (placement.type === 'random') {
-        return toBigFloat(rand * 1_000_000_000_000_000);
+    } else if (placement.next) {
+        return bigFloatSub(
+            bigFloatSub(
+                placement.next,
+                bigFloatDiv(bigFloatAbs(placement.next), 2)
+            ),
+            toBigFloat(rand)
+        );
+    } else if (placement.prev) {
+        return bigFloatAdd(
+            bigFloatAdd(
+                placement.prev,
+                bigFloatDiv(bigFloatAbs(placement.prev), 2)
+            ),
+            toBigFloat(rand)
+        );
     } else {
-        assertNever(placement);
+        return toBigFloat(rand * 1_000_000_000_000_000);
     }
 }

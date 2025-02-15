@@ -7,7 +7,7 @@ import opentelemetry, {
 import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
-import {AppError, CancelledError} from './errors.js';
+import {CancelledError} from './errors.js';
 import {log, LogLevel} from './logger.js';
 import {Brand, Nothing, runAll, Unsubscribe} from './utils.js';
 
@@ -113,8 +113,9 @@ export class Context {
     private readonly tracer: Tracer;
 
     private constructor(params: ContextConstructorParams) {
-        if (JSON.stringify(params.options).length > 1000) {
-            throw new AppError('context options are too big');
+        const contextOptionsJSON = JSON.stringify(params.options);
+        if (contextOptionsJSON.length > 1000) {
+            log.warn('context options are too big: ' + contextOptionsJSON);
         }
         this.tracer = params.tracer;
 

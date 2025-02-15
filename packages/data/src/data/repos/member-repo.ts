@@ -146,7 +146,7 @@ export class MemberRepo {
         return result;
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Member>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Member>) {
         return await this.rawRepo.apply([id], diff);
     }
 

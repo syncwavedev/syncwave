@@ -116,7 +116,7 @@ export class IdentityRepo {
         return this.rawRepo.getUnique(USER_ID_INDEX, [userId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Identity>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Identity>) {
         return await this.rawRepo.apply([id], diff);
     }
 

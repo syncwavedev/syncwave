@@ -100,7 +100,7 @@ export class CommentRepo {
         return this.rawRepo.get(TASK_ID_INDEX, [taskId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Comment>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Comment>) {
         return await this.rawRepo.apply([id], diff);
     }
 

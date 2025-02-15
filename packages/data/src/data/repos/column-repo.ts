@@ -84,18 +84,15 @@ export class ColumnRepo {
         });
     }
 
-    getById(
-        id: ColumnId,
-        includeDeleted: boolean
-    ): Promise<Column | undefined> {
-        return this.rawRepo.getById([id], includeDeleted);
+    async getById(id: ColumnId, includeDeleted: boolean) {
+        return await this.rawRepo.getById([id], includeDeleted);
     }
 
     getByBoardId(boardId: BoardId): Stream<Column> {
         return this.rawRepo.get(BOARD_ID, [boardId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Column>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Column>) {
         return await this.rawRepo.apply([id], diff);
     }
 

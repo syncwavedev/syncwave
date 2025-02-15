@@ -269,9 +269,14 @@ export class DocRepo<T extends Doc<IndexKey>> {
     }
 
     // todo: add tests
-    async apply(pk: IndexKey, diff: CrdtDiff<T>): Promise<void> {
+    async apply(pk: IndexKey, diff: CrdtDiff<T>) {
         const existingDoc: Crdt<T> | undefined = await this._get(pk);
-        await this._apply({pk, existingDoc, diff, skipTransitionCheck: false});
+        return await this._apply({
+            pk,
+            existingDoc,
+            diff,
+            skipTransitionCheck: false,
+        });
     }
 
     // todo: add tests
@@ -280,7 +285,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         existingDoc: Crdt<T> | undefined;
         diff: CrdtDiff<T>;
         skipTransitionCheck: boolean;
-    }): Promise<void> {
+    }): Promise<T> {
         let prev: T | undefined;
         let next: Crdt<T>;
         if (params.existingDoc) {
@@ -302,6 +307,8 @@ export class DocRepo<T extends Doc<IndexKey>> {
             diff: params.diff,
             skipTransitionCheck: params.skipTransitionCheck,
         });
+
+        return next.snapshot();
     }
 
     async create(doc: T): Promise<T> {

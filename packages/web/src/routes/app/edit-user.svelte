@@ -1,31 +1,46 @@
 <script lang="ts">
 	import {Input} from '$lib/components/ui/input';
 	import {getSdk} from '$lib/utils';
-	import type {UserDto} from 'syncwave-data';
+	import {
+		Crdt,
+		parseCrdtDiff,
+		stringifyCrdtDiff,
+		type UserDto,
+	} from 'syncwave-data';
 
-	let {user}: {user: UserDto} = $props();
-
-	let fullName = $state(user.fullName);
-
+	let {user: remoteUser}: {user: UserDto} = $props();
+	console.log('user state', $state.snapshot(remoteUser));
+	const localUser = Crdt.load(remoteUser.state);
 	$effect(() => {
-		fullName = user.fullName;
+		localUser.apply(parseCrdtDiff(remoteUser.state));
+		newFullName = localUser.snapshot().fullName;
 	});
+
+	let newFullName = $state(remoteUser.fullName);
 
 	const sdk = getSdk();
 
 	async function setUserFullName() {
-		await sdk(rpc =>
-			rpc.setUserFullName({userId: user.id, fullName: fullName})
-		);
+		const diff = localUser.update(x => {
+			x.fullName = newFullName;
+		});
+		if (diff) {
+			await sdk(rpc =>
+				rpc.applyUserDiff({
+					userId: remoteUser.id,
+					diff: stringifyCrdtDiff(diff),
+				})
+			);
+		}
 	}
 </script>
 
 <div>
-	Edit user: {user.id}
+	Edit user: {remoteUser.id}
 	<div>
 		<Input
-			bind:value={fullName}
-			onchange={setUserFullName}
+			bind:value={newFullName}
+			oninput={setUserFullName}
 			placeholder="Full name"
 		/>
 	</div>

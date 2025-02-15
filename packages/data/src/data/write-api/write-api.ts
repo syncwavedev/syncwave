@@ -17,7 +17,7 @@ import {
 import {PermissionService} from '../permission-service.js';
 import {toPosition} from '../placement.js';
 import {Board, BoardId, zBoard} from '../repos/board-repo.js';
-import {ColumnId} from '../repos/column-repo.js';
+import {Column, ColumnId} from '../repos/column-repo.js';
 import {CommentId} from '../repos/comment-repo.js';
 import {
     createMemberId,
@@ -25,8 +25,8 @@ import {
     MemberId,
     zMemberRole,
 } from '../repos/member-repo.js';
-import {TaskId, zTask} from '../repos/task-repo.js';
-import {UserId} from '../repos/user-repo.js';
+import {Task, TaskId, zTask} from '../repos/task-repo.js';
+import {User, UserId} from '../repos/user-repo.js';
 
 export class WriteApiState {
     constructor(
@@ -241,67 +241,6 @@ export function createWriteApi() {
                 return {};
             },
         }),
-        setTaskTitle: handler({
-            req: z.object({
-                taskId: zUuid<TaskId>(),
-                title: z.string(),
-            }),
-            res: z.object({}),
-            handle: async (st, {taskId, title}) => {
-                await st.ps.ensureTaskMember(taskId, 'writer');
-                await st.tx.tasks.update(
-                    taskId,
-                    x => {
-                        x.title = title;
-                    },
-                    true
-                );
-
-                return {};
-            },
-        }),
-        setTaskColumnId: handler({
-            req: z.object({
-                taskId: zUuid<TaskId>(),
-                columnId: zUuid<ColumnId>(),
-            }),
-            res: z.object({}),
-            handle: async (st, {taskId, columnId}) => {
-                await st.ps.ensureTaskMember(taskId, 'writer');
-
-                if (columnId) {
-                    await st.ps.ensureColumnMember(columnId, 'writer');
-                }
-                await st.tx.tasks.update(
-                    taskId,
-                    x => {
-                        x.columnId = columnId;
-                    },
-                    true
-                );
-
-                return {};
-            },
-        }),
-        setColumnTitle: handler({
-            req: z.object({
-                columnId: zUuid<ColumnId>(),
-                title: z.string(),
-            }),
-            res: z.object({}),
-            handle: async (st, {columnId, title}) => {
-                await st.ps.ensureColumnMember(columnId, 'writer');
-                await st.tx.columns.update(
-                    columnId,
-                    x => {
-                        x.title = title;
-                    },
-                    true
-                );
-
-                return {};
-            },
-        }),
         createBoard: handler({
             req: z.object({
                 boardId: zUuid<BoardId>(),
@@ -347,25 +286,6 @@ export function createWriteApi() {
                 return {};
             },
         }),
-        setBoardName: handler({
-            req: z.object({
-                boardId: zUuid<BoardId>(),
-                name: z.string(),
-            }),
-            res: z.object({}),
-            handle: async (st, {boardId, name}) => {
-                await st.ps.ensureBoardMember(boardId, 'admin');
-                await st.tx.boards.update(
-                    boardId,
-                    draft => {
-                        draft.name = name;
-                    },
-                    true
-                );
-
-                return {};
-            },
-        }),
         applyBoardDiff: handler({
             req: z.object({
                 boardId: zUuid<BoardId>(),
@@ -375,6 +295,34 @@ export function createWriteApi() {
             handle: async (st, {boardId, diff}) => {
                 await st.ps.ensureBoardMember(boardId, 'admin');
                 await st.tx.boards.apply(boardId, parseCrdtDiff(diff));
+                return {};
+            },
+        }),
+        applyTaskDiff: handler({
+            req: z.object({
+                taskId: zUuid<TaskId>(),
+                diff: zCrdtDiffString<Task>(),
+            }),
+            res: z.object({}),
+            handle: async (st, {taskId, diff}) => {
+                await st.ps.ensureTaskMember(taskId, 'writer');
+                const result = await st.tx.tasks.apply(
+                    taskId,
+                    parseCrdtDiff(diff)
+                );
+                await st.ps.ensureColumnMember(result.columnId, 'writer');
+                return {};
+            },
+        }),
+        applyColumnDiff: handler({
+            req: z.object({
+                columnId: zUuid<ColumnId>(),
+                diff: zCrdtDiffString<Column>(),
+            }),
+            res: z.object({}),
+            handle: async (st, {columnId, diff}) => {
+                await st.ps.ensureColumnMember(columnId, 'writer');
+                await st.tx.columns.apply(columnId, parseCrdtDiff(diff));
                 return {};
             },
         }),
@@ -417,22 +365,15 @@ export function createWriteApi() {
                 return {};
             },
         }),
-        setUserFullName: handler({
+        applyUserDiff: handler({
             req: z.object({
                 userId: zUuid<UserId>(),
-                fullName: z.string(),
+                diff: zCrdtDiffString<User>(),
             }),
             res: z.object({}),
-            handle: async (st, {userId, fullName}) => {
+            handle: async (st, {userId, diff}) => {
                 await st.ps.ensureUser(userId);
-                await st.tx.users.update(
-                    userId,
-                    x => {
-                        x.fullName = fullName;
-                    },
-                    true
-                );
-
+                await st.tx.users.apply(userId, parseCrdtDiff(diff));
                 return {};
             },
         }),

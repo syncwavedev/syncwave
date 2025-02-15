@@ -13,7 +13,10 @@
 		board: BoardDto;
 	} = $props();
 
-	function generateAvatar(name: string): {avatar: string; color: string} {
+	function generateAvatar(
+		id: string,
+		name: string
+	): {avatar: string; color: string} {
 		if (!name) return {avatar: '', color: '#000000'};
 
 		// Split the name by spaces and filter out empty strings
@@ -42,7 +45,7 @@
 		];
 
 		// Hash function to consistently select a color
-		const hash = Array.from(name).reduce(
+		const hash = Array.from(id).reduce(
 			(acc, char) => acc + char.charCodeAt(0),
 			0
 		);
@@ -73,7 +76,10 @@
 					class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
 					{#snippet child({props}: any)}
-						{@const {avatar, color} = generateAvatar(board.name)}
+						{@const {avatar, color} = generateAvatar(
+							board.id,
+							board.name
+						)}
 
 						<a href={`/app/b/${board.key}`} {...props}>
 							<Avatar.Root class="h-8 w-8 rounded-lg">

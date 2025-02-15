@@ -102,7 +102,7 @@ export class TaskRepo {
         });
     }
 
-    getById(id: TaskId, includeDeleted: boolean): Promise<Task | undefined> {
+    getById(id: TaskId, includeDeleted: boolean) {
         return this.rawRepo.getById([id], includeDeleted);
     }
 
@@ -114,7 +114,7 @@ export class TaskRepo {
         return this.rawRepo.get(COLUMN_ID_INDEX, [columnId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Task>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Task>) {
         return await this.rawRepo.apply([id], diff);
     }
 

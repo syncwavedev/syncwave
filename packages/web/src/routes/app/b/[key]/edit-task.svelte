@@ -1,56 +1,75 @@
 <script lang="ts">
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
-	import type {
-		Column,
-		BoardViewColumnDto,
-		Task,
-		TaskDto,
+	import {
+		type Column,
+		type BoardViewColumnDto,
+		type Task,
+		type TaskDto,
+		Crdt,
+		stringifyCrdtDiff,
+		parseCrdtDiff,
 	} from 'syncwave-data';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import CommentListLoader from './comment-list-loader.svelte';
 
-	let {task, columns}: {task: TaskDto; columns: BoardViewColumnDto[]} =
-		$props();
+	let {
+		task: remoteTask,
+		columns,
+	}: {task: TaskDto; columns: BoardViewColumnDto[]} = $props();
 
-	let taskTitle = $state(task.title);
-	let taskColumnId = $state(task.columnId ?? undefined);
-
+	const localTask = Crdt.load(remoteTask.state);
 	$effect(() => {
-		taskTitle = task.title;
+		localTask.apply(parseCrdtDiff(remoteTask.state));
+		newTaskTitle = localTask.snapshot().title;
+		newTaskColumnId = localTask.snapshot().columnId;
 	});
 
-	$effect(() => {
-		taskColumnId = task.columnId ?? undefined;
-	});
+	let newTaskTitle = $state(remoteTask.title);
+	let newTaskColumnId = $state(remoteTask.columnId);
 
 	const sdk = getSdk();
 
 	async function setTaskTitle() {
-		await sdk(rpc => rpc.setTaskTitle({taskId: task.id, title: taskTitle}));
+		const diff = localTask.update(x => {
+			x.title = newTaskTitle;
+		});
+		if (diff) {
+			await sdk(rpc =>
+				rpc.applyTaskDiff({
+					taskId: remoteTask.id,
+					diff: stringifyCrdtDiff(diff),
+				})
+			);
+		}
 	}
 
 	async function setTaskColumnId() {
-		await sdk(rpc =>
-			rpc.setTaskColumnId({
-				taskId: task.id,
-				columnId: taskColumnId ?? null,
-			})
-		);
+		const diff = localTask.update(x => {
+			x.columnId = newTaskColumnId;
+		});
+		if (diff) {
+			await sdk(rpc =>
+				rpc.applyTaskDiff({
+					taskId: remoteTask.id,
+					diff: stringifyCrdtDiff(diff),
+				})
+			);
+		}
 	}
 </script>
 
-Task editor: {task.title}
+Task editor: {remoteTask.title}
 
-<Input bind:value={taskTitle} onchange={setTaskTitle} />
+<Input bind:value={newTaskTitle} oninput={setTaskTitle} />
 
 <Select.Root
-	bind:value={taskColumnId}
+	bind:value={newTaskColumnId}
 	onValueChange={setTaskColumnId}
 	type="single"
 >
 	<Select.Trigger class="w-[180px]">
-		{columns.find(column => column.id === taskColumnId)?.title}
+		{columns.find(column => column.id === newTaskColumnId)?.title}
 	</Select.Trigger>
 	<Select.Content>
 		{#each columns as column}
@@ -59,4 +78,4 @@ Task editor: {task.title}
 	</Select.Content>
 </Select.Root>
 
-<CommentListLoader taskId={task.id} />
+<CommentListLoader taskId={remoteTask.id} />

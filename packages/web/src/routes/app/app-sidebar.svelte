@@ -4,8 +4,8 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import type {ComponentProps} from 'svelte';
 	import NewBoardMenu from './new-board-menu.svelte';
-	import {getState, type State} from '$lib/utils.svelte';
-	import type {Board, Identity, User} from 'syncwave-data';
+	import {observe, type Observable} from '$lib/utils.svelte';
+	import type {Board, BoardDto, Identity, User, UserDto} from 'syncwave-data';
 
 	let {
 		initialBoards,
@@ -14,12 +14,12 @@
 		collapsible = 'icon',
 		...restProps
 	}: ComponentProps<typeof Sidebar.Root> & {
-		initialBoards: Board[];
-		initialMe: {user: User; identity: Identity};
+		initialBoards: BoardDto[];
+		initialMe: {user: UserDto; identity: Identity};
 	} = $props();
 
-	const boards = getState(initialBoards, x => x.getMyBoards({}));
-	const me = getState(initialMe, x => x.getMe({}));
+	const boards = observe(initialBoards, x => x.getMyBoards({}));
+	const me = observe(initialMe, x => x.getMe({}));
 </script>
 
 <Sidebar.Root bind:ref {collapsible} {...restProps}>

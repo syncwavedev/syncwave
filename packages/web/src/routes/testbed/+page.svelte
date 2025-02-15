@@ -7,12 +7,12 @@
 		stringifyCrdtDiff,
 		type BoardDto,
 	} from 'syncwave-data';
-	import {fetchState, getState} from '$lib/utils.svelte';
+	import {observeAsync, observe} from '$lib/utils.svelte';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
 
-	const board = getState(initialBoard, x => x.getBoard({key: boardKey}));
+	const board = observe(initialBoard, x => x.getBoard({key: boardKey}));
 
 	let localBoardCrdt = Crdt.load(initialBoard.state);
 

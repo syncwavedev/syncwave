@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type {TaskId} from 'syncwave-data';
 	import CommentList from './comment-list.svelte';
-	import {fetchState, getState} from '$lib/utils.svelte';
+	import {observeAsync, observe} from '$lib/utils.svelte';
 	import Loading from '$lib/loading.svelte';
 
 	let {taskId}: {taskId: TaskId} = $props();
 
-	const commentsPromise = fetchState(rpc => rpc.getTaskComments({taskId}));
+	const commentsPromise = observeAsync(rpc => rpc.getTaskComments({taskId}));
 </script>
 
 {#await commentsPromise}

@@ -81,6 +81,13 @@ export function createE2eApi() {
                 return {};
             },
         }),
+        echo: handler({
+            req: z.object({msg: z.string()}),
+            res: z.object({msg: z.string()}),
+            handle: async (state, {msg}) => {
+                return {msg};
+            },
+        }),
         e2eSystemState: handler({
             req: z.object({}),
             res: z.object({

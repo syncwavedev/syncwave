@@ -12,16 +12,18 @@ import {
     toBoardViewDto,
     toCommentDto,
     toMemberAdminDto,
+    toUserDto,
     zBoardDto,
     zBoardViewDto,
     zCommentDto,
     zMemberAdminDto,
+    zUserDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {BoardId} from './repos/board-repo.js';
 import {zIdentity} from './repos/identity-repo.js';
 import {TaskId, zTask} from './repos/task-repo.js';
-import {UserId, zUser} from './repos/user-repo.js';
+import {UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
     constructor(
@@ -47,7 +49,7 @@ export function createReadApi() {
         getMe: streamer({
             req: z.object({}),
             item: z.object({
-                user: zUser(),
+                user: zUserDto(),
                 identity: zIdentity(),
             }),
             async *stream(st, _, ctx) {
@@ -56,7 +58,7 @@ export function createReadApi() {
                 yield* observable({
                     async get() {
                         return await st.transact(async tx => {
-                            const user = await tx.users.getById(userId, true);
+                            const user = await toUserDto(tx, userId);
                             assert(user !== undefined, 'getMe: user not found');
                             const identity =
                                 await tx.identities.getByUserId(userId);

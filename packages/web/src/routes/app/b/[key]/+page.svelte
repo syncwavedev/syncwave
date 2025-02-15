@@ -5,10 +5,8 @@
 	import {Separator} from '$lib/components/ui/separator';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import {getSdk} from '$lib/utils';
-	import {getState} from '$lib/utils.svelte';
-	import {context, createTaskId, log, type TaskId} from 'syncwave-data';
-	import {flip} from 'svelte/animate';
-	import {dndzone} from 'svelte-dnd-action';
+	import {observe} from '$lib/utils.svelte';
+	import {log} from 'syncwave-data';
 
 	import {createColumnId} from 'syncwave-data';
 	import {goto} from '$app/navigation';
@@ -18,7 +16,7 @@
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
 
-	const board = getState(initialBoard, x => {
+	const board = observe(initialBoard, x => {
 		return x.getBoardView({key: boardKey});
 	});
 

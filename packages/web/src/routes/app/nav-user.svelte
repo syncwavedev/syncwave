@@ -4,7 +4,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import {useSidebar} from '$lib/components/ui/sidebar/index.js';
 	import {getAuthManager} from '$lib/utils';
-	import type {Identity, User} from 'syncwave-data';
+	import type {Identity, User, UserDto} from 'syncwave-data';
 	import BadgeCheck from 'lucide-svelte/icons/badge-check';
 	import Bell from 'lucide-svelte/icons/bell';
 	import ChevronsUpDown from 'lucide-svelte/icons/chevrons-up-down';
@@ -14,7 +14,7 @@
 	import EditUserDialog from './edit-user-dialog.svelte';
 	import {toggle} from '$lib/utils.svelte';
 
-	let {me}: {me: {user: User; identity: Identity}} = $props();
+	let {me}: {me: {user: UserDto; identity: Identity}} = $props();
 	const sidebar = useSidebar();
 	const authManager = getAuthManager();
 

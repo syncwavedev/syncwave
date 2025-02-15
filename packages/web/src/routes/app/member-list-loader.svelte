@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type {BoardId} from 'syncwave-data';
 	import MemberList from './member-list.svelte';
-	import {fetchState, getState} from '$lib/utils.svelte';
+	import {observeAsync, observe} from '$lib/utils.svelte';
 	import Loading from '$lib/loading.svelte';
 
 	let {boardId}: {boardId: BoardId} = $props();
 
-	const membersPromise = fetchState(rpc => rpc.getBoardMembers({boardId}));
+	const membersPromise = observeAsync(rpc => rpc.getBoardMembers({boardId}));
 </script>
 
 {#await membersPromise}

@@ -1,25 +1,41 @@
 <script lang="ts">
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
-	import type {Column, BoardViewColumnDto} from 'syncwave-data';
+	import {
+		type Column,
+		type BoardViewColumnDto,
+		stringifyCrdtDiff,
+		parseCrdtDiff,
+		Crdt,
+	} from 'syncwave-data';
 
-	let {column}: {column: BoardViewColumnDto} = $props();
+	let {column: remoteColumn}: {column: BoardViewColumnDto} = $props();
 
-	let columnTitle = $state(column.title);
-
+	const localColumn = Crdt.load(remoteColumn.state);
 	$effect(() => {
-		columnTitle = column.title;
+		localColumn.apply(parseCrdtDiff(remoteColumn.state));
+		columnTitle = localColumn.snapshot().title;
 	});
+
+	let columnTitle = $state(remoteColumn.title);
 
 	const sdk = getSdk();
 
 	async function setColumnTitle() {
-		await sdk(rpc =>
-			rpc.setColumnTitle({columnId: column.id, title: columnTitle})
-		);
+		const diff = localColumn.update(x => {
+			x.title = columnTitle;
+		});
+		if (diff) {
+			await sdk(rpc =>
+				rpc.applyColumnDiff({
+					columnId: remoteColumn.id,
+					diff: stringifyCrdtDiff(diff),
+				})
+			);
+		}
 	}
 </script>
 
-Column editor: {column.title}
+Column editor: {remoteColumn.title}
 
-<Input bind:value={columnTitle} onchange={setColumnTitle} />
+<Input bind:value={columnTitle} oninput={setColumnTitle} />

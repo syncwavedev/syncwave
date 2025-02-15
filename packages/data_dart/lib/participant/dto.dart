@@ -1,11 +1,15 @@
 // To parse this JSON data, do
 //
-//     final streamPutReq = streamPutReqFromJson(jsonString);
-//     final streamPutRes = streamPutResFromJson(jsonString);
-//     final getStreamReq = getStreamReqFromJson(jsonString);
-//     final getStreamValue = getStreamValueFromJson(jsonString);
+//     final getDbTreeReq = getDbTreeReqFromJson(jsonString);
+//     final getDbTreeRes = getDbTreeResFromJson(jsonString);
+//     final getDbItemReq = getDbItemReqFromJson(jsonString);
+//     final getDbItemRes = getDbItemResFromJson(jsonString);
+//     final truncateDbReq = truncateDbReqFromJson(jsonString);
+//     final truncateDbRes = truncateDbResFromJson(jsonString);
 //     final debugReq = debugReqFromJson(jsonString);
 //     final debugRes = debugResFromJson(jsonString);
+//     final echoReq = echoReqFromJson(jsonString);
+//     final echoRes = echoResFromJson(jsonString);
 //     final getMeReq = getMeReqFromJson(jsonString);
 //     final getMeValue = getMeValueFromJson(jsonString);
 //     final sendSignInEmailReq = sendSignInEmailReqFromJson(jsonString);
@@ -14,18 +18,10 @@
 //     final createBoardRes = createBoardResFromJson(jsonString);
 //     final verifySignInCodeReq = verifySignInCodeReqFromJson(jsonString);
 //     final verifySignInCodeRes = verifySignInCodeResFromJson(jsonString);
-//     final getDbTreeReq = getDbTreeReqFromJson(jsonString);
-//     final getDbTreeRes = getDbTreeResFromJson(jsonString);
-//     final getDbItemReq = getDbItemReqFromJson(jsonString);
-//     final getDbItemRes = getDbItemResFromJson(jsonString);
-//     final truncateDbReq = truncateDbReqFromJson(jsonString);
-//     final truncateDbRes = truncateDbResFromJson(jsonString);
 //     final deleteDbItemReq = deleteDbItemReqFromJson(jsonString);
 //     final deleteDbItemRes = deleteDbItemResFromJson(jsonString);
 //     final getMyBoardsReq = getMyBoardsReqFromJson(jsonString);
 //     final getMyBoardsValue = getMyBoardsValueFromJson(jsonString);
-//     final echoReq = echoReqFromJson(jsonString);
-//     final echoRes = echoResFromJson(jsonString);
 //     final getBoardReq = getBoardReqFromJson(jsonString);
 //     final getBoardValue = getBoardValueFromJson(jsonString);
 //     final createColumnReq = createColumnReqFromJson(jsonString);
@@ -40,14 +36,6 @@
 //     final deleteColumnRes = deleteColumnResFromJson(jsonString);
 //     final deleteTaskReq = deleteTaskReqFromJson(jsonString);
 //     final deleteTaskRes = deleteTaskResFromJson(jsonString);
-//     final setTaskTitleReq = setTaskTitleReqFromJson(jsonString);
-//     final setTaskTitleRes = setTaskTitleResFromJson(jsonString);
-//     final setTaskColumnIdReq = setTaskColumnIdReqFromJson(jsonString);
-//     final setTaskColumnIdRes = setTaskColumnIdResFromJson(jsonString);
-//     final setColumnTitleReq = setColumnTitleReqFromJson(jsonString);
-//     final setColumnTitleRes = setColumnTitleResFromJson(jsonString);
-//     final setBoardNameReq = setBoardNameReqFromJson(jsonString);
-//     final setBoardNameRes = setBoardNameResFromJson(jsonString);
 //     final createCommentReq = createCommentReqFromJson(jsonString);
 //     final createCommentRes = createCommentResFromJson(jsonString);
 //     final deleteCommentReq = deleteCommentReqFromJson(jsonString);
@@ -60,28 +48,40 @@
 //     final deleteMemberRes = deleteMemberResFromJson(jsonString);
 //     final getBoardMembersReq = getBoardMembersReqFromJson(jsonString);
 //     final getBoardMembersValue = getBoardMembersValueFromJson(jsonString);
-//     final setUserFullNameReq = setUserFullNameReqFromJson(jsonString);
-//     final setUserFullNameRes = setUserFullNameResFromJson(jsonString);
+//     final applyUserDiffReq = applyUserDiffReqFromJson(jsonString);
+//     final applyUserDiffRes = applyUserDiffResFromJson(jsonString);
 //     final applyBoardDiffReq = applyBoardDiffReqFromJson(jsonString);
 //     final applyBoardDiffRes = applyBoardDiffResFromJson(jsonString);
+//     final applyColumnDiffReq = applyColumnDiffReqFromJson(jsonString);
+//     final applyColumnDiffRes = applyColumnDiffResFromJson(jsonString);
+//     final applyTaskDiffReq = applyTaskDiffReqFromJson(jsonString);
+//     final applyTaskDiffRes = applyTaskDiffResFromJson(jsonString);
 
 import 'dart:convert';
 
-StreamPutReq streamPutReqFromJson(String str) => StreamPutReq.fromJson(json.decode(str));
+GetDbTreeReq getDbTreeReqFromJson(String str) => GetDbTreeReq.fromJson(json.decode(str));
 
-String streamPutReqToJson(StreamPutReq data) => json.encode(data.toJson());
+String getDbTreeReqToJson(GetDbTreeReq data) => json.encode(data.toJson());
 
-StreamPutRes streamPutResFromJson(String str) => StreamPutRes.fromJson(json.decode(str));
+GetDbTreeRes getDbTreeResFromJson(String str) => GetDbTreeRes.fromJson(json.decode(str));
 
-String streamPutResToJson(StreamPutRes data) => json.encode(data.toJson());
+String getDbTreeResToJson(GetDbTreeRes data) => json.encode(data.toJson());
 
-GetStreamReq getStreamReqFromJson(String str) => GetStreamReq.fromJson(json.decode(str));
+GetDbItemReq getDbItemReqFromJson(String str) => GetDbItemReq.fromJson(json.decode(str));
 
-String getStreamReqToJson(GetStreamReq data) => json.encode(data.toJson());
+String getDbItemReqToJson(GetDbItemReq data) => json.encode(data.toJson());
 
-GetStreamValue getStreamValueFromJson(String str) => GetStreamValue.fromJson(json.decode(str));
+GetDbItemRes getDbItemResFromJson(String str) => GetDbItemRes.fromJson(json.decode(str));
 
-String getStreamValueToJson(GetStreamValue data) => json.encode(data.toJson());
+String getDbItemResToJson(GetDbItemRes data) => json.encode(data.toJson());
+
+TruncateDbReq truncateDbReqFromJson(String str) => TruncateDbReq.fromJson(json.decode(str));
+
+String truncateDbReqToJson(TruncateDbReq data) => json.encode(data.toJson());
+
+TruncateDbRes truncateDbResFromJson(String str) => TruncateDbRes.fromJson(json.decode(str));
+
+String truncateDbResToJson(TruncateDbRes data) => json.encode(data.toJson());
 
 DebugReq debugReqFromJson(String str) => DebugReq.fromJson(json.decode(str));
 
@@ -90,6 +90,14 @@ String debugReqToJson(DebugReq data) => json.encode(data.toJson());
 DebugRes debugResFromJson(String str) => DebugRes.fromJson(json.decode(str));
 
 String debugResToJson(DebugRes data) => json.encode(data.toJson());
+
+EchoReq echoReqFromJson(String str) => EchoReq.fromJson(json.decode(str));
+
+String echoReqToJson(EchoReq data) => json.encode(data.toJson());
+
+EchoRes echoResFromJson(String str) => EchoRes.fromJson(json.decode(str));
+
+String echoResToJson(EchoRes data) => json.encode(data.toJson());
 
 GetMeReq getMeReqFromJson(String str) => GetMeReq.fromJson(json.decode(str));
 
@@ -123,30 +131,6 @@ VerifySignInCodeRes verifySignInCodeResFromJson(String str) => VerifySignInCodeR
 
 String verifySignInCodeResToJson(VerifySignInCodeRes data) => json.encode(data.toJson());
 
-GetDbTreeReq getDbTreeReqFromJson(String str) => GetDbTreeReq.fromJson(json.decode(str));
-
-String getDbTreeReqToJson(GetDbTreeReq data) => json.encode(data.toJson());
-
-GetDbTreeRes getDbTreeResFromJson(String str) => GetDbTreeRes.fromJson(json.decode(str));
-
-String getDbTreeResToJson(GetDbTreeRes data) => json.encode(data.toJson());
-
-GetDbItemReq getDbItemReqFromJson(String str) => GetDbItemReq.fromJson(json.decode(str));
-
-String getDbItemReqToJson(GetDbItemReq data) => json.encode(data.toJson());
-
-GetDbItemRes getDbItemResFromJson(String str) => GetDbItemRes.fromJson(json.decode(str));
-
-String getDbItemResToJson(GetDbItemRes data) => json.encode(data.toJson());
-
-TruncateDbReq truncateDbReqFromJson(String str) => TruncateDbReq.fromJson(json.decode(str));
-
-String truncateDbReqToJson(TruncateDbReq data) => json.encode(data.toJson());
-
-TruncateDbRes truncateDbResFromJson(String str) => TruncateDbRes.fromJson(json.decode(str));
-
-String truncateDbResToJson(TruncateDbRes data) => json.encode(data.toJson());
-
 DeleteDbItemReq deleteDbItemReqFromJson(String str) => DeleteDbItemReq.fromJson(json.decode(str));
 
 String deleteDbItemReqToJson(DeleteDbItemReq data) => json.encode(data.toJson());
@@ -162,14 +146,6 @@ String getMyBoardsReqToJson(GetMyBoardsReq data) => json.encode(data.toJson());
 List<GetMyBoardsValue> getMyBoardsValueFromJson(String str) => List<GetMyBoardsValue>.from(json.decode(str).map((x) => GetMyBoardsValue.fromJson(x)));
 
 String getMyBoardsValueToJson(List<GetMyBoardsValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
-
-EchoReq echoReqFromJson(String str) => EchoReq.fromJson(json.decode(str));
-
-String echoReqToJson(EchoReq data) => json.encode(data.toJson());
-
-EchoRes echoResFromJson(String str) => EchoRes.fromJson(json.decode(str));
-
-String echoResToJson(EchoRes data) => json.encode(data.toJson());
 
 GetBoardReq getBoardReqFromJson(String str) => GetBoardReq.fromJson(json.decode(str));
 
@@ -227,38 +203,6 @@ DeleteTaskRes deleteTaskResFromJson(String str) => DeleteTaskRes.fromJson(json.d
 
 String deleteTaskResToJson(DeleteTaskRes data) => json.encode(data.toJson());
 
-SetTaskTitleReq setTaskTitleReqFromJson(String str) => SetTaskTitleReq.fromJson(json.decode(str));
-
-String setTaskTitleReqToJson(SetTaskTitleReq data) => json.encode(data.toJson());
-
-SetTaskTitleRes setTaskTitleResFromJson(String str) => SetTaskTitleRes.fromJson(json.decode(str));
-
-String setTaskTitleResToJson(SetTaskTitleRes data) => json.encode(data.toJson());
-
-SetTaskColumnIdReq setTaskColumnIdReqFromJson(String str) => SetTaskColumnIdReq.fromJson(json.decode(str));
-
-String setTaskColumnIdReqToJson(SetTaskColumnIdReq data) => json.encode(data.toJson());
-
-SetTaskColumnIdRes setTaskColumnIdResFromJson(String str) => SetTaskColumnIdRes.fromJson(json.decode(str));
-
-String setTaskColumnIdResToJson(SetTaskColumnIdRes data) => json.encode(data.toJson());
-
-SetColumnTitleReq setColumnTitleReqFromJson(String str) => SetColumnTitleReq.fromJson(json.decode(str));
-
-String setColumnTitleReqToJson(SetColumnTitleReq data) => json.encode(data.toJson());
-
-SetColumnTitleRes setColumnTitleResFromJson(String str) => SetColumnTitleRes.fromJson(json.decode(str));
-
-String setColumnTitleResToJson(SetColumnTitleRes data) => json.encode(data.toJson());
-
-SetBoardNameReq setBoardNameReqFromJson(String str) => SetBoardNameReq.fromJson(json.decode(str));
-
-String setBoardNameReqToJson(SetBoardNameReq data) => json.encode(data.toJson());
-
-SetBoardNameRes setBoardNameResFromJson(String str) => SetBoardNameRes.fromJson(json.decode(str));
-
-String setBoardNameResToJson(SetBoardNameRes data) => json.encode(data.toJson());
-
 CreateCommentReq createCommentReqFromJson(String str) => CreateCommentReq.fromJson(json.decode(str));
 
 String createCommentReqToJson(CreateCommentReq data) => json.encode(data.toJson());
@@ -307,13 +251,13 @@ List<GetBoardMembersValue> getBoardMembersValueFromJson(String str) => List<GetB
 
 String getBoardMembersValueToJson(List<GetBoardMembersValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
-SetUserFullNameReq setUserFullNameReqFromJson(String str) => SetUserFullNameReq.fromJson(json.decode(str));
+ApplyUserDiffReq applyUserDiffReqFromJson(String str) => ApplyUserDiffReq.fromJson(json.decode(str));
 
-String setUserFullNameReqToJson(SetUserFullNameReq data) => json.encode(data.toJson());
+String applyUserDiffReqToJson(ApplyUserDiffReq data) => json.encode(data.toJson());
 
-SetUserFullNameRes setUserFullNameResFromJson(String str) => SetUserFullNameRes.fromJson(json.decode(str));
+ApplyUserDiffRes applyUserDiffResFromJson(String str) => ApplyUserDiffRes.fromJson(json.decode(str));
 
-String setUserFullNameResToJson(SetUserFullNameRes data) => json.encode(data.toJson());
+String applyUserDiffResToJson(ApplyUserDiffRes data) => json.encode(data.toJson());
 
 ApplyBoardDiffReq applyBoardDiffReqFromJson(String str) => ApplyBoardDiffReq.fromJson(json.decode(str));
 
@@ -323,69 +267,153 @@ ApplyBoardDiffRes applyBoardDiffResFromJson(String str) => ApplyBoardDiffRes.fro
 
 String applyBoardDiffResToJson(ApplyBoardDiffRes data) => json.encode(data.toJson());
 
-class StreamPutReq {
-    String topic;
-    String value;
+ApplyColumnDiffReq applyColumnDiffReqFromJson(String str) => ApplyColumnDiffReq.fromJson(json.decode(str));
 
-    StreamPutReq({
-        required this.topic,
-        required this.value,
-    });
+String applyColumnDiffReqToJson(ApplyColumnDiffReq data) => json.encode(data.toJson());
 
-    factory StreamPutReq.fromJson(Map<String, dynamic> json) => StreamPutReq(
-        topic: json["topic"],
-        value: json["value"],
-    );
+ApplyColumnDiffRes applyColumnDiffResFromJson(String str) => ApplyColumnDiffRes.fromJson(json.decode(str));
 
-    Map<String, dynamic> toJson() => {
-        "topic": topic,
-        "value": value,
-    };
-}
+String applyColumnDiffResToJson(ApplyColumnDiffRes data) => json.encode(data.toJson());
 
-class StreamPutRes {
-    StreamPutRes();
+ApplyTaskDiffReq applyTaskDiffReqFromJson(String str) => ApplyTaskDiffReq.fromJson(json.decode(str));
 
-    factory StreamPutRes.fromJson(Map<String, dynamic> json) => StreamPutRes(
+String applyTaskDiffReqToJson(ApplyTaskDiffReq data) => json.encode(data.toJson());
+
+ApplyTaskDiffRes applyTaskDiffResFromJson(String str) => ApplyTaskDiffRes.fromJson(json.decode(str));
+
+String applyTaskDiffResToJson(ApplyTaskDiffRes data) => json.encode(data.toJson());
+
+class GetDbTreeReq {
+    GetDbTreeReq();
+
+    factory GetDbTreeReq.fromJson(Map<String, dynamic> json) => GetDbTreeReq(
     );
 
     Map<String, dynamic> toJson() => {
     };
 }
 
-class GetStreamReq {
-    String topic;
+class GetDbTreeRes {
+    List<GetDbTreeRe> childrenPreview;
+    dynamic key;
+    String name;
+    ChildrenPreviewType type;
 
-    GetStreamReq({
-        required this.topic,
+    GetDbTreeRes({
+        required this.childrenPreview,
+        required this.key,
+        required this.name,
+        required this.type,
     });
 
-    factory GetStreamReq.fromJson(Map<String, dynamic> json) => GetStreamReq(
-        topic: json["topic"],
+    factory GetDbTreeRes.fromJson(Map<String, dynamic> json) => GetDbTreeRes(
+        childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
+        key: json["key"],
+        name: json["name"],
+        type: childrenPreviewTypeValues.map[json["type"]]!,
     );
 
     Map<String, dynamic> toJson() => {
-        "topic": topic,
+        "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
+        "key": key,
+        "name": name,
+        "type": childrenPreviewTypeValues.reverse[type],
     };
 }
 
-class GetStreamValue {
-    double index;
-    String value;
+class GetDbTreeRe {
+    List<GetDbTreeRe> childrenPreview;
+    dynamic key;
+    String name;
+    ChildrenPreviewType type;
 
-    GetStreamValue({
-        required this.index,
-        required this.value,
+    GetDbTreeRe({
+        required this.childrenPreview,
+        required this.key,
+        required this.name,
+        required this.type,
     });
 
-    factory GetStreamValue.fromJson(Map<String, dynamic> json) => GetStreamValue(
-        index: json["index"]?.toDouble(),
-        value: json["value"],
+    factory GetDbTreeRe.fromJson(Map<String, dynamic> json) => GetDbTreeRe(
+        childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
+        key: json["key"],
+        name: json["name"],
+        type: childrenPreviewTypeValues.map[json["type"]]!,
     );
 
     Map<String, dynamic> toJson() => {
-        "index": index,
-        "value": value,
+        "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
+        "key": key,
+        "name": name,
+        "type": childrenPreviewTypeValues.reverse[type],
+    };
+}
+
+enum ChildrenPreviewType {
+    AGGREGATE,
+    DOC,
+    REPO
+}
+
+final childrenPreviewTypeValues = EnumValues({
+    "aggregate": ChildrenPreviewType.AGGREGATE,
+    "doc": ChildrenPreviewType.DOC,
+    "repo": ChildrenPreviewType.REPO
+});
+
+class GetDbItemReq {
+    List<dynamic> path;
+
+    GetDbItemReq({
+        required this.path,
+    });
+
+    factory GetDbItemReq.fromJson(Map<String, dynamic> json) => GetDbItemReq(
+        path: List<dynamic>.from(json["path"].map((x) => x)),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "path": List<dynamic>.from(path.map((x) => x)),
+    };
+}
+
+class GetDbItemRes {
+    ChildrenPreviewType type;
+    dynamic snapshot;
+
+    GetDbItemRes({
+        required this.type,
+        this.snapshot,
+    });
+
+    factory GetDbItemRes.fromJson(Map<String, dynamic> json) => GetDbItemRes(
+        type: childrenPreviewTypeValues.map[json["type"]]!,
+        snapshot: json["snapshot"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "type": childrenPreviewTypeValues.reverse[type],
+        "snapshot": snapshot,
+    };
+}
+
+class TruncateDbReq {
+    TruncateDbReq();
+
+    factory TruncateDbReq.fromJson(Map<String, dynamic> json) => TruncateDbReq(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class TruncateDbRes {
+    TruncateDbRes();
+
+    factory TruncateDbRes.fromJson(Map<String, dynamic> json) => TruncateDbRes(
+    );
+
+    Map<String, dynamic> toJson() => {
     };
 }
 
@@ -406,6 +434,38 @@ class DebugRes {
     );
 
     Map<String, dynamic> toJson() => {
+    };
+}
+
+class EchoReq {
+    String msg;
+
+    EchoReq({
+        required this.msg,
+    });
+
+    factory EchoReq.fromJson(Map<String, dynamic> json) => EchoReq(
+        msg: json["msg"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "msg": msg,
+    };
+}
+
+class EchoRes {
+    String msg;
+
+    EchoRes({
+        required this.msg,
+    });
+
+    factory EchoRes.fromJson(Map<String, dynamic> json) => EchoRes(
+        msg: json["msg"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "msg": msg,
     };
 }
 
@@ -517,6 +577,7 @@ class GetMeValueUser {
     String fullName;
     String id;
     List<String> pk;
+    String state;
     double updatedAt;
     Version version;
 
@@ -526,6 +587,7 @@ class GetMeValueUser {
         required this.fullName,
         required this.id,
         required this.pk,
+        required this.state,
         required this.updatedAt,
         required this.version,
     });
@@ -536,6 +598,7 @@ class GetMeValueUser {
         fullName: json["fullName"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
         version: versionValues.map[json["version"]]!,
     );
@@ -546,6 +609,7 @@ class GetMeValueUser {
         "fullName": fullName,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
         "version": versionValues.reverse[version],
     };
@@ -723,140 +787,6 @@ final verifySignInCodeResTypeValues = EnumValues({
     "success": VerifySignInCodeResType.SUCCESS
 });
 
-class GetDbTreeReq {
-    GetDbTreeReq();
-
-    factory GetDbTreeReq.fromJson(Map<String, dynamic> json) => GetDbTreeReq(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
-class GetDbTreeRes {
-    List<GetDbTreeRe> childrenPreview;
-    dynamic key;
-    String name;
-    ChildrenPreviewType type;
-
-    GetDbTreeRes({
-        required this.childrenPreview,
-        required this.key,
-        required this.name,
-        required this.type,
-    });
-
-    factory GetDbTreeRes.fromJson(Map<String, dynamic> json) => GetDbTreeRes(
-        childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
-        key: json["key"],
-        name: json["name"],
-        type: childrenPreviewTypeValues.map[json["type"]]!,
-    );
-
-    Map<String, dynamic> toJson() => {
-        "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
-        "key": key,
-        "name": name,
-        "type": childrenPreviewTypeValues.reverse[type],
-    };
-}
-
-class GetDbTreeRe {
-    List<GetDbTreeRe> childrenPreview;
-    dynamic key;
-    String name;
-    ChildrenPreviewType type;
-
-    GetDbTreeRe({
-        required this.childrenPreview,
-        required this.key,
-        required this.name,
-        required this.type,
-    });
-
-    factory GetDbTreeRe.fromJson(Map<String, dynamic> json) => GetDbTreeRe(
-        childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
-        key: json["key"],
-        name: json["name"],
-        type: childrenPreviewTypeValues.map[json["type"]]!,
-    );
-
-    Map<String, dynamic> toJson() => {
-        "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
-        "key": key,
-        "name": name,
-        "type": childrenPreviewTypeValues.reverse[type],
-    };
-}
-
-enum ChildrenPreviewType {
-    AGGREGATE,
-    DOC,
-    REPO
-}
-
-final childrenPreviewTypeValues = EnumValues({
-    "aggregate": ChildrenPreviewType.AGGREGATE,
-    "doc": ChildrenPreviewType.DOC,
-    "repo": ChildrenPreviewType.REPO
-});
-
-class GetDbItemReq {
-    List<dynamic> path;
-
-    GetDbItemReq({
-        required this.path,
-    });
-
-    factory GetDbItemReq.fromJson(Map<String, dynamic> json) => GetDbItemReq(
-        path: List<dynamic>.from(json["path"].map((x) => x)),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "path": List<dynamic>.from(path.map((x) => x)),
-    };
-}
-
-class GetDbItemRes {
-    ChildrenPreviewType type;
-    dynamic snapshot;
-
-    GetDbItemRes({
-        required this.type,
-        this.snapshot,
-    });
-
-    factory GetDbItemRes.fromJson(Map<String, dynamic> json) => GetDbItemRes(
-        type: childrenPreviewTypeValues.map[json["type"]]!,
-        snapshot: json["snapshot"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "type": childrenPreviewTypeValues.reverse[type],
-        "snapshot": snapshot,
-    };
-}
-
-class TruncateDbReq {
-    TruncateDbReq();
-
-    factory TruncateDbReq.fromJson(Map<String, dynamic> json) => TruncateDbReq(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
-class TruncateDbRes {
-    TruncateDbRes();
-
-    factory TruncateDbRes.fromJson(Map<String, dynamic> json) => TruncateDbRes(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
 class DeleteDbItemReq {
     List<dynamic> path;
 
@@ -938,38 +868,6 @@ class GetMyBoardsValue {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
-    };
-}
-
-class EchoReq {
-    String msg;
-
-    EchoReq({
-        required this.msg,
-    });
-
-    factory EchoReq.fromJson(Map<String, dynamic> json) => EchoReq(
-        msg: json["msg"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "msg": msg,
-    };
-}
-
-class EchoRes {
-    String msg;
-
-    EchoRes({
-        required this.msg,
-    });
-
-    factory EchoRes.fromJson(Map<String, dynamic> json) => EchoRes(
-        msg: json["msg"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "msg": msg,
     };
 }
 
@@ -1069,6 +967,7 @@ class CreateColumnRes {
     bool deleted;
     String id;
     List<String> pk;
+    String state;
     String title;
     double updatedAt;
 
@@ -1080,6 +979,7 @@ class CreateColumnRes {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.state,
         required this.title,
         required this.updatedAt,
     });
@@ -1092,6 +992,7 @@ class CreateColumnRes {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -1104,6 +1005,7 @@ class CreateColumnRes {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "title": title,
         "updatedAt": updatedAt,
     };
@@ -1438,6 +1340,7 @@ class ColumnElement {
     bool deleted;
     String id;
     List<String> pk;
+    String state;
     List<TaskElement> tasks;
     String title;
     double updatedAt;
@@ -1449,6 +1352,7 @@ class ColumnElement {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.state,
         required this.tasks,
         required this.title,
         required this.updatedAt,
@@ -1461,6 +1365,7 @@ class ColumnElement {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         tasks: List<TaskElement>.from(json["tasks"].map((x) => TaskElement.fromJson(x))),
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
@@ -1473,6 +1378,7 @@ class ColumnElement {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
         "title": title,
         "updatedAt": updatedAt,
@@ -1491,6 +1397,7 @@ class TaskElement {
     bool deleted;
     String id;
     List<String> pk;
+    String state;
     String title;
     double updatedAt;
 
@@ -1506,6 +1413,7 @@ class TaskElement {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.state,
         required this.title,
         required this.updatedAt,
     });
@@ -1522,6 +1430,7 @@ class TaskElement {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -1538,6 +1447,7 @@ class TaskElement {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "title": title,
         "updatedAt": updatedAt,
     };
@@ -1599,6 +1509,7 @@ class PurpleColumn {
     bool deleted;
     String id;
     List<String> pk;
+    String state;
     String title;
     double updatedAt;
 
@@ -1610,6 +1521,7 @@ class PurpleColumn {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.state,
         required this.title,
         required this.updatedAt,
     });
@@ -1622,6 +1534,7 @@ class PurpleColumn {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -1634,6 +1547,7 @@ class PurpleColumn {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "title": title,
         "updatedAt": updatedAt,
     };
@@ -1785,126 +1699,6 @@ class DeleteTaskRes {
     };
 }
 
-class SetTaskTitleReq {
-    String taskId;
-    String title;
-
-    SetTaskTitleReq({
-        required this.taskId,
-        required this.title,
-    });
-
-    factory SetTaskTitleReq.fromJson(Map<String, dynamic> json) => SetTaskTitleReq(
-        taskId: json["taskId"],
-        title: json["title"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "taskId": taskId,
-        "title": title,
-    };
-}
-
-class SetTaskTitleRes {
-    SetTaskTitleRes();
-
-    factory SetTaskTitleRes.fromJson(Map<String, dynamic> json) => SetTaskTitleRes(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
-class SetTaskColumnIdReq {
-    String columnId;
-    String taskId;
-
-    SetTaskColumnIdReq({
-        required this.columnId,
-        required this.taskId,
-    });
-
-    factory SetTaskColumnIdReq.fromJson(Map<String, dynamic> json) => SetTaskColumnIdReq(
-        columnId: json["columnId"],
-        taskId: json["taskId"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "columnId": columnId,
-        "taskId": taskId,
-    };
-}
-
-class SetTaskColumnIdRes {
-    SetTaskColumnIdRes();
-
-    factory SetTaskColumnIdRes.fromJson(Map<String, dynamic> json) => SetTaskColumnIdRes(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
-class SetColumnTitleReq {
-    String columnId;
-    String title;
-
-    SetColumnTitleReq({
-        required this.columnId,
-        required this.title,
-    });
-
-    factory SetColumnTitleReq.fromJson(Map<String, dynamic> json) => SetColumnTitleReq(
-        columnId: json["columnId"],
-        title: json["title"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "columnId": columnId,
-        "title": title,
-    };
-}
-
-class SetColumnTitleRes {
-    SetColumnTitleRes();
-
-    factory SetColumnTitleRes.fromJson(Map<String, dynamic> json) => SetColumnTitleRes(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
-class SetBoardNameReq {
-    String boardId;
-    String name;
-
-    SetBoardNameReq({
-        required this.boardId,
-        required this.name,
-    });
-
-    factory SetBoardNameReq.fromJson(Map<String, dynamic> json) => SetBoardNameReq(
-        boardId: json["boardId"],
-        name: json["name"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "boardId": boardId,
-        "name": name,
-    };
-}
-
-class SetBoardNameRes {
-    SetBoardNameRes();
-
-    factory SetBoardNameRes.fromJson(Map<String, dynamic> json) => SetBoardNameRes(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
 class CreateCommentReq {
     String commentId;
     String taskId;
@@ -1987,6 +1781,7 @@ class CreateCommentResAuthor {
     String fullName;
     String id;
     List<String> pk;
+    String state;
     double updatedAt;
     Version version;
 
@@ -1996,6 +1791,7 @@ class CreateCommentResAuthor {
         required this.fullName,
         required this.id,
         required this.pk,
+        required this.state,
         required this.updatedAt,
         required this.version,
     });
@@ -2006,6 +1802,7 @@ class CreateCommentResAuthor {
         fullName: json["fullName"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
         version: versionValues.map[json["version"]]!,
     );
@@ -2016,6 +1813,7 @@ class CreateCommentResAuthor {
         "fullName": fullName,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
         "version": versionValues.reverse[version],
     };
@@ -2033,6 +1831,7 @@ class CreateCommentResTask {
     bool deleted;
     String id;
     List<String> pk;
+    String state;
     String title;
     double updatedAt;
 
@@ -2048,6 +1847,7 @@ class CreateCommentResTask {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.state,
         required this.title,
         required this.updatedAt,
     });
@@ -2064,6 +1864,7 @@ class CreateCommentResTask {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -2080,6 +1881,7 @@ class CreateCommentResTask {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "title": title,
         "updatedAt": updatedAt,
     };
@@ -2141,6 +1943,7 @@ class FluffyColumn {
     bool deleted;
     String id;
     List<String> pk;
+    String state;
     String title;
     double updatedAt;
 
@@ -2152,6 +1955,7 @@ class FluffyColumn {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.state,
         required this.title,
         required this.updatedAt,
     });
@@ -2164,6 +1968,7 @@ class FluffyColumn {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -2176,6 +1981,7 @@ class FluffyColumn {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "title": title,
         "updatedAt": updatedAt,
     };
@@ -2349,6 +2155,7 @@ class GetTaskCommentsValueAuthor {
     String fullName;
     String id;
     List<String> pk;
+    String state;
     double updatedAt;
     Version version;
 
@@ -2358,6 +2165,7 @@ class GetTaskCommentsValueAuthor {
         required this.fullName,
         required this.id,
         required this.pk,
+        required this.state,
         required this.updatedAt,
         required this.version,
     });
@@ -2368,6 +2176,7 @@ class GetTaskCommentsValueAuthor {
         fullName: json["fullName"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
         version: versionValues.map[json["version"]]!,
     );
@@ -2378,6 +2187,7 @@ class GetTaskCommentsValueAuthor {
         "fullName": fullName,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
         "version": versionValues.reverse[version],
     };
@@ -2395,6 +2205,7 @@ class GetTaskCommentsValueTask {
     bool deleted;
     String id;
     List<String> pk;
+    String state;
     String title;
     double updatedAt;
 
@@ -2410,6 +2221,7 @@ class GetTaskCommentsValueTask {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.state,
         required this.title,
         required this.updatedAt,
     });
@@ -2426,6 +2238,7 @@ class GetTaskCommentsValueTask {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -2442,6 +2255,7 @@ class GetTaskCommentsValueTask {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "title": title,
         "updatedAt": updatedAt,
     };
@@ -2503,6 +2317,7 @@ class TentacledColumn {
     bool deleted;
     String id;
     List<String> pk;
+    String state;
     String title;
     double updatedAt;
 
@@ -2514,6 +2329,7 @@ class TentacledColumn {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.state,
         required this.title,
         required this.updatedAt,
     });
@@ -2526,6 +2342,7 @@ class TentacledColumn {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -2538,6 +2355,7 @@ class TentacledColumn {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "title": title,
         "updatedAt": updatedAt,
     };
@@ -2755,6 +2573,7 @@ class CreateMemberResUser {
     String fullName;
     String id;
     List<String> pk;
+    String state;
     double updatedAt;
     Version version;
 
@@ -2764,6 +2583,7 @@ class CreateMemberResUser {
         required this.fullName,
         required this.id,
         required this.pk,
+        required this.state,
         required this.updatedAt,
         required this.version,
     });
@@ -2774,6 +2594,7 @@ class CreateMemberResUser {
         fullName: json["fullName"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
         version: versionValues.map[json["version"]]!,
     );
@@ -2784,6 +2605,7 @@ class CreateMemberResUser {
         "fullName": fullName,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
         "version": versionValues.reverse[version],
     };
@@ -2941,6 +2763,7 @@ class GetBoardMembersValueUser {
     String fullName;
     String id;
     List<String> pk;
+    String state;
     double updatedAt;
     Version version;
 
@@ -2950,6 +2773,7 @@ class GetBoardMembersValueUser {
         required this.fullName,
         required this.id,
         required this.pk,
+        required this.state,
         required this.updatedAt,
         required this.version,
     });
@@ -2960,6 +2784,7 @@ class GetBoardMembersValueUser {
         fullName: json["fullName"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
         version: versionValues.map[json["version"]]!,
     );
@@ -2970,35 +2795,36 @@ class GetBoardMembersValueUser {
         "fullName": fullName,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
         "updatedAt": updatedAt,
         "version": versionValues.reverse[version],
     };
 }
 
-class SetUserFullNameReq {
-    String fullName;
+class ApplyUserDiffReq {
+    String diff;
     String userId;
 
-    SetUserFullNameReq({
-        required this.fullName,
+    ApplyUserDiffReq({
+        required this.diff,
         required this.userId,
     });
 
-    factory SetUserFullNameReq.fromJson(Map<String, dynamic> json) => SetUserFullNameReq(
-        fullName: json["fullName"],
+    factory ApplyUserDiffReq.fromJson(Map<String, dynamic> json) => ApplyUserDiffReq(
+        diff: json["diff"],
         userId: json["userId"],
     );
 
     Map<String, dynamic> toJson() => {
-        "fullName": fullName,
+        "diff": diff,
         "userId": userId,
     };
 }
 
-class SetUserFullNameRes {
-    SetUserFullNameRes();
+class ApplyUserDiffRes {
+    ApplyUserDiffRes();
 
-    factory SetUserFullNameRes.fromJson(Map<String, dynamic> json) => SetUserFullNameRes(
+    factory ApplyUserDiffRes.fromJson(Map<String, dynamic> json) => ApplyUserDiffRes(
     );
 
     Map<String, dynamic> toJson() => {
@@ -3029,6 +2855,66 @@ class ApplyBoardDiffRes {
     ApplyBoardDiffRes();
 
     factory ApplyBoardDiffRes.fromJson(Map<String, dynamic> json) => ApplyBoardDiffRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class ApplyColumnDiffReq {
+    String columnId;
+    String diff;
+
+    ApplyColumnDiffReq({
+        required this.columnId,
+        required this.diff,
+    });
+
+    factory ApplyColumnDiffReq.fromJson(Map<String, dynamic> json) => ApplyColumnDiffReq(
+        columnId: json["columnId"],
+        diff: json["diff"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "columnId": columnId,
+        "diff": diff,
+    };
+}
+
+class ApplyColumnDiffRes {
+    ApplyColumnDiffRes();
+
+    factory ApplyColumnDiffRes.fromJson(Map<String, dynamic> json) => ApplyColumnDiffRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class ApplyTaskDiffReq {
+    String diff;
+    String taskId;
+
+    ApplyTaskDiffReq({
+        required this.diff,
+        required this.taskId,
+    });
+
+    factory ApplyTaskDiffReq.fromJson(Map<String, dynamic> json) => ApplyTaskDiffReq(
+        diff: json["diff"],
+        taskId: json["taskId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "diff": diff,
+        "taskId": taskId,
+    };
+}
+
+class ApplyTaskDiffRes {
+    ApplyTaskDiffRes();
+
+    factory ApplyTaskDiffRes.fromJson(Map<String, dynamic> json) => ApplyTaskDiffRes(
     );
 
     Map<String, dynamic> toJson() => {

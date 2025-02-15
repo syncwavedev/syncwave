@@ -27,7 +27,7 @@ interface UserV3 extends Doc<[UserId]> {
     fullName: string;
 }
 
-interface UserV4 extends Doc<[UserId]> {
+export interface UserV4 extends Doc<[UserId]> {
     readonly id: UserId;
     readonly version: '4';
     fullName: string;
@@ -87,11 +87,11 @@ export class UserRepo {
         });
     }
 
-    getById(id: UserId, includeDeleted: boolean): Promise<User | undefined> {
+    getById(id: UserId, includeDeleted: boolean) {
         return this.rawRepo.getById([id], includeDeleted);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<User>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<User>) {
         return await this.rawRepo.apply([id], diff);
     }
 

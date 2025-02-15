@@ -3,17 +3,18 @@ import {zCrdtDiffString} from '../crdt/crdt.js';
 import {assert} from '../utils.js';
 import {DataTx} from './data-layer.js';
 import {Board, BoardId, zBoard} from './repos/board-repo.js';
-import {ColumnId, zColumn} from './repos/column-repo.js';
+import {Column, ColumnId, zColumn} from './repos/column-repo.js';
 import {CommentId, zComment} from './repos/comment-repo.js';
 import {IdentityId, zIdentity} from './repos/identity-repo.js';
 import {MemberId, zMember} from './repos/member-repo.js';
-import {TaskId, zTask} from './repos/task-repo.js';
-import {UserId, zUser} from './repos/user-repo.js';
+import {Task, TaskId, zTask} from './repos/task-repo.js';
+import {User, UserId, zUser} from './repos/user-repo.js';
 
 export function zTaskDto() {
     return zTask().extend({
         column: zColumnDto().nullable(),
         board: zBoardDto(),
+        state: zCrdtDiffString<Task>(),
     });
 }
 
@@ -32,6 +33,7 @@ export function zBoardViewTaskDto() {
     return zTask().extend({
         column: zColumnDto().nullable(),
         board: zBoardDto(),
+        state: zCrdtDiffString<Task>(),
     });
 }
 
@@ -52,6 +54,7 @@ export async function toBoardViewTaskDto(
 export function zColumnDto() {
     return zColumn().extend({
         board: zBoardDto(),
+        state: zCrdtDiffString<Column>(),
     });
 }
 
@@ -71,6 +74,7 @@ export async function toColumnDto(
 export function zBoardViewColumnDto() {
     return zColumn().extend({
         tasks: z.array(zBoardViewTaskDto()),
+        state: zCrdtDiffString<Column>(),
     });
 }
 
@@ -185,7 +189,9 @@ export async function toMemberAdminDto(
 }
 
 export function zUserDto() {
-    return zUser().extend({});
+    return zUser().extend({
+        state: zCrdtDiffString<User>(),
+    });
 }
 
 export type UserDto = z.infer<ReturnType<typeof zUserDto>>;

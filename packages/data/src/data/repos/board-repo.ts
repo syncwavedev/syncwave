@@ -8,7 +8,7 @@ import {Registry} from '../../kv/registry.js';
 import {Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {DataTx} from '../data-layer.js';
-import {CrdtDoc, Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
+import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
 import {UserId} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
@@ -85,12 +85,8 @@ export class BoardRepo {
         );
     }
 
-    async getById(
-        id: BoardId,
-        includeDeleted = false
-    ): Promise<CrdtDoc<Board> | undefined> {
-        const board = await this.rawRepo.getById([id], includeDeleted);
-        return board;
+    async getById(id: BoardId, includeDeleted = false) {
+        return await this.rawRepo.getById([id], includeDeleted);
     }
 
     async getByKey(key: string): Promise<Board | undefined> {
@@ -105,7 +101,7 @@ export class BoardRepo {
         return existingBoard === undefined;
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Board>): Promise<void> {
+    async apply(id: Uuid, diff: CrdtDiff<Board>) {
         return await this.rawRepo.apply([id], diff);
     }
 

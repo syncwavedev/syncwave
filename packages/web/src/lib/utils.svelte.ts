@@ -1,88 +1,164 @@
 import {browser} from '$app/environment';
 import {goto} from '$app/navigation';
 import {onDestroy} from 'svelte';
+import type {Readable, Subscriber} from 'svelte/store';
 import {
+	assert,
 	BusinessError,
 	CancelledError,
 	Deferred,
 	log,
-	Stream,
+	runAll,
 	toError,
 	toStream,
 	wait,
+	type Nothing,
 	type ParticipantRpc,
+	type Stream,
 } from 'syncwave-data';
 import {getSdk} from './utils';
 
-export interface State<T> {
+// observable is wrapped in $state, so it can be used in templates directly
+export interface Observable<T> extends Readable<T> {
 	value: T;
 }
 
-export async function fetchState<T>(
-	fn: (rpc: ParticipantRpc) => AsyncIterable<T>
-): Promise<State<T>> {
-	const result = new Deferred<State<T>>();
-	const state: State<T | undefined> = $state({
-		value: undefined,
+interface ObservableController<T> {
+	observable: Observable<T>;
+	next(this: void, value: T): void;
+	end(this: void): void;
+}
+
+export function mapObservable<T, R>(
+	observable: Observable<T>,
+	mapper: (value: T) => R
+): Observable<R> {
+	const result = createObservable(mapper(observable.value));
+
+	const unsub = observable.subscribe(
+		value => result.next(mapper(value)),
+		() => result.end()
+	);
+	onDestroy(unsub);
+
+	return result.observable;
+}
+
+function createObservable<T>(initialValue: T): ObservableController<T> {
+	let subs: Array<{
+		run: (value: T) => Nothing;
+		invalidate: (() => Nothing) | undefined;
+	}> = [];
+
+	const subscribe = (run: Subscriber<T>, invalidate?: () => Nothing) => {
+		run(observable.value);
+
+		const sub = {run, invalidate};
+		subs.push(sub);
+
+		return () => {
+			subs = subs.filter(x => x !== sub);
+		};
+	};
+
+	const observable: Observable<T> = $state({
+		value: initialValue,
+		subscribe,
 	});
 
-	useStream(fn, value => {
-		state.value = value;
-		result.resolve(state as State<T>);
-	});
+	let open = true;
+
+	const next = (value: T) => {
+		assert(open, 'observable is closed');
+		observable.value = value;
+		runAll(subs.map(x => () => x.run(value)));
+	};
+
+	const end = () => {
+		if (!open) return;
+		open = false;
+		runAll(subs.map(x => () => x.invalidate?.()));
+	};
+
+	return {observable, next, end};
+}
+
+export async function observeAsync<T>(
+	fn: (rpc: ParticipantRpc) => AsyncIterable<T>
+): Promise<Observable<T>> {
+	const result = new Deferred<Observable<T>>();
+	let controller: ObservableController<T> | undefined = undefined;
+
+	useStream(
+		fn,
+		value => {
+			if (controller) {
+				controller.next(value);
+			} else {
+				controller = createObservable(value);
+				result.resolve(controller.observable);
+			}
+		},
+		() => {
+			controller?.end();
+		}
+	);
 
 	return result.promise;
 }
 
-export function getState<T>(
+export function observe<T>(
 	initialValue: T,
 	fn: (rpc: ParticipantRpc) => Stream<T>
-): State<T> {
-	const state: State<T> = $state({value: initialValue});
+): Observable<T> {
+	const controller = createObservable(initialValue);
 
-	useStream(fn, value => {
-		state.value = value;
-	});
+	useStream(fn, controller.next, controller.end);
 
-	return state;
+	return controller.observable;
 }
 
 function useStream<T>(
 	fn: (rpc: ParticipantRpc) => AsyncIterable<T>,
-	onNext: (value: T) => void
+	onNext: (value: T) => void,
+	onDone: () => void
 ) {
 	const sdk = getSdk();
 
 	if (browser) {
 		let cancelled = false;
 		(async function retry() {
-			while (!cancelled) {
-				try {
-					const value$ = sdk(x => {
-						return toStream(fn(x));
-					});
+			try {
+				while (!cancelled) {
+					try {
+						const value$ = sdk(x => {
+							return toStream(fn(x));
+						});
 
-					for await (const value of value$) {
-						if (cancelled) {
-							break;
+						for await (const value of value$) {
+							if (cancelled) {
+								break;
+							}
+							onNext(value);
 						}
-						onNext(value);
-					}
-				} catch (e) {
-					if (!cancelled) {
-						log.error(toError(e), 'observable failed');
-					}
-					if (e instanceof CancelledError) return;
-					if (e instanceof BusinessError) {
-						if (e.code === 'forbidden') {
-							log.error('Access denied');
-							goto('/app');
+					} catch (e) {
+						if (!cancelled) {
+							log.error(toError(e), 'observable failed');
 						}
-						return;
+						if (e instanceof CancelledError) return;
+						if (e instanceof BusinessError) {
+							if (e.code === 'forbidden') {
+								log.error('Access denied');
+								goto('/app');
+							}
+							return;
+						}
 					}
+
+					await wait({ms: 1000, onCancel: 'resolve'});
 				}
-
-				await wait({ms: 1000, onCancel: 'resolve'});
+			} finally {
+				onDone();
 			}
 		})();
 

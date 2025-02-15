@@ -32,11 +32,11 @@ class ParticipantClient {
     authToken = token;
   }
 
-  Future<StreamPutRes> streamPut(StreamPutReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('streamPut');
+  Future<GetDbTreeRes> getDbTree(GetDbTreeReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('getDbTree');
     try {
-      final json = await _rpc.handle('streamPut', request.toJson(), _createHeaders(span, headers));
-      return StreamPutRes.fromJson(json as Map<String, dynamic>);
+      final json = await _rpc.handle('getDbTree', request.toJson(), _createHeaders(span, headers));
+      return GetDbTreeRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    
@@ -50,31 +50,39 @@ class ParticipantClient {
     }
   }
 
-  Stream<GetStreamValue> getStream(GetStreamReq request, [MessageHeaders? headers]) async* {
-    final invocationSpan = tracer.startSpan('getStream');
+  Future<GetDbItemRes> getDbItem(GetDbItemReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('getDbItem');
     try {
-      while (true) {
-        final attemptSpan = tracer.startSpan('getStream');
-        try {
-          await for (final json in _rpc.stream('getStream', request.toJson(), _createHeaders(attemptSpan, headers))) {
-            attemptSpan.addEvent("next");
-            yield GetStreamValue.fromJson(json as Map<String, dynamic>);
-          }
-        } catch (error) {
-          if (error is TransportException) {
-            _transportErrors.add(error);
-          } else {
-            _unknownErrors.add(error);
-            rethrow;
-          }
-        } finally {
-          attemptSpan.end();
-        }
-  
-        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      final json = await _rpc.handle('getDbItem', request.toJson(), _createHeaders(span, headers));
+      return GetDbItemRes.fromJson(json as Map<String, dynamic>);
+    } catch (error) {
+      if (error is TransportException) {
+        _transportErrors.add(error);    
+      } else {
+        _unknownErrors.add(error);
       }
+  
+      rethrow;
     } finally {
-      invocationSpan.end();
+      span.end();
+    }
+  }
+
+  Future<TruncateDbRes> truncateDb(TruncateDbReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('truncateDb');
+    try {
+      final json = await _rpc.handle('truncateDb', request.toJson(), _createHeaders(span, headers));
+      return TruncateDbRes.fromJson(json as Map<String, dynamic>);
+    } catch (error) {
+      if (error is TransportException) {
+        _transportErrors.add(error);    
+      } else {
+        _unknownErrors.add(error);
+      }
+  
+      rethrow;
+    } finally {
+      span.end();
     }
   }
 
@@ -83,6 +91,24 @@ class ParticipantClient {
     try {
       final json = await _rpc.handle('debug', request.toJson(), _createHeaders(span, headers));
       return DebugRes.fromJson(json as Map<String, dynamic>);
+    } catch (error) {
+      if (error is TransportException) {
+        _transportErrors.add(error);    
+      } else {
+        _unknownErrors.add(error);
+      }
+  
+      rethrow;
+    } finally {
+      span.end();
+    }
+  }
+
+  Future<EchoRes> echo(EchoReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('echo');
+    try {
+      final json = await _rpc.handle('echo', request.toJson(), _createHeaders(span, headers));
+      return EchoRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    
@@ -178,60 +204,6 @@ class ParticipantClient {
     }
   }
 
-  Future<GetDbTreeRes> getDbTree(GetDbTreeReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('getDbTree');
-    try {
-      final json = await _rpc.handle('getDbTree', request.toJson(), _createHeaders(span, headers));
-      return GetDbTreeRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
-  Future<GetDbItemRes> getDbItem(GetDbItemReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('getDbItem');
-    try {
-      final json = await _rpc.handle('getDbItem', request.toJson(), _createHeaders(span, headers));
-      return GetDbItemRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
-  Future<TruncateDbRes> truncateDb(TruncateDbReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('truncateDb');
-    try {
-      final json = await _rpc.handle('truncateDb', request.toJson(), _createHeaders(span, headers));
-      return TruncateDbRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
   Future<DeleteDbItemRes> deleteDbItem(DeleteDbItemReq request, [MessageHeaders? headers]) async {
     final span = tracer.startSpan('deleteDbItem');
     try {
@@ -275,24 +247,6 @@ class ParticipantClient {
       }
     } finally {
       invocationSpan.end();
-    }
-  }
-
-  Future<EchoRes> echo(EchoReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('echo');
-    try {
-      final json = await _rpc.handle('echo', request.toJson(), _createHeaders(span, headers));
-      return EchoRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
     }
   }
 
@@ -442,78 +396,6 @@ class ParticipantClient {
     }
   }
 
-  Future<SetTaskTitleRes> setTaskTitle(SetTaskTitleReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('setTaskTitle');
-    try {
-      final json = await _rpc.handle('setTaskTitle', request.toJson(), _createHeaders(span, headers));
-      return SetTaskTitleRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
-  Future<SetTaskColumnIdRes> setTaskColumnId(SetTaskColumnIdReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('setTaskColumnId');
-    try {
-      final json = await _rpc.handle('setTaskColumnId', request.toJson(), _createHeaders(span, headers));
-      return SetTaskColumnIdRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
-  Future<SetColumnTitleRes> setColumnTitle(SetColumnTitleReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('setColumnTitle');
-    try {
-      final json = await _rpc.handle('setColumnTitle', request.toJson(), _createHeaders(span, headers));
-      return SetColumnTitleRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
-  Future<SetBoardNameRes> setBoardName(SetBoardNameReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('setBoardName');
-    try {
-      final json = await _rpc.handle('setBoardName', request.toJson(), _createHeaders(span, headers));
-      return SetBoardNameRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
   Future<CreateCommentRes> createComment(CreateCommentReq request, [MessageHeaders? headers]) async {
     final span = tracer.startSpan('createComment');
     try {
@@ -642,11 +524,11 @@ class ParticipantClient {
     }
   }
 
-  Future<SetUserFullNameRes> setUserFullName(SetUserFullNameReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('setUserFullName');
+  Future<ApplyUserDiffRes> applyUserDiff(ApplyUserDiffReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('applyUserDiff');
     try {
-      final json = await _rpc.handle('setUserFullName', request.toJson(), _createHeaders(span, headers));
-      return SetUserFullNameRes.fromJson(json as Map<String, dynamic>);
+      final json = await _rpc.handle('applyUserDiff', request.toJson(), _createHeaders(span, headers));
+      return ApplyUserDiffRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    
@@ -665,6 +547,42 @@ class ParticipantClient {
     try {
       final json = await _rpc.handle('applyBoardDiff', request.toJson(), _createHeaders(span, headers));
       return ApplyBoardDiffRes.fromJson(json as Map<String, dynamic>);
+    } catch (error) {
+      if (error is TransportException) {
+        _transportErrors.add(error);    
+      } else {
+        _unknownErrors.add(error);
+      }
+  
+      rethrow;
+    } finally {
+      span.end();
+    }
+  }
+
+  Future<ApplyColumnDiffRes> applyColumnDiff(ApplyColumnDiffReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('applyColumnDiff');
+    try {
+      final json = await _rpc.handle('applyColumnDiff', request.toJson(), _createHeaders(span, headers));
+      return ApplyColumnDiffRes.fromJson(json as Map<String, dynamic>);
+    } catch (error) {
+      if (error is TransportException) {
+        _transportErrors.add(error);    
+      } else {
+        _unknownErrors.add(error);
+      }
+  
+      rethrow;
+    } finally {
+      span.end();
+    }
+  }
+
+  Future<ApplyTaskDiffRes> applyTaskDiff(ApplyTaskDiffReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('applyTaskDiff');
+    try {
+      final json = await _rpc.handle('applyTaskDiff', request.toJson(), _createHeaders(span, headers));
+      return ApplyTaskDiffRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    

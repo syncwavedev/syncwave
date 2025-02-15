@@ -85,19 +85,19 @@ export function createParticipantApi() {
     }
 
     return createApi<ParticipantState>()({
-        streamPut: proxy('streamPut'),
-        getStream: proxy('getStream'),
+        getDbTree: proxy('getDbTree'),
+        getDbItem: proxy('getDbItem'),
+        truncateDb: proxy('truncateDb'),
+
         debug: proxy('debug'),
+        echo: proxy('echo'),
+
         getMe: proxy('getMe'),
         sendSignInEmail: proxy('sendSignInEmail'),
         createBoard: proxy('createBoard'),
         verifySignInCode: proxy('verifySignInCode'),
-        getDbTree: proxy('getDbTree'),
-        getDbItem: proxy('getDbItem'),
-        truncateDb: proxy('truncateDb'),
         deleteDbItem: proxy('deleteDbItem'),
         getMyBoards: proxy('getMyBoards'),
-        echo: proxy('echo'),
         getBoard: proxy('getBoard'),
         createColumn: proxy('createColumn'),
         createTask: proxy('createTask'),
@@ -105,18 +105,17 @@ export function createParticipantApi() {
         deleteBoard: proxy('deleteBoard'),
         deleteColumn: proxy('deleteColumn'),
         deleteTask: proxy('deleteTask'),
-        setTaskTitle: proxy('setTaskTitle'),
-        setTaskColumnId: proxy('setTaskColumnId'),
-        setColumnTitle: proxy('setColumnTitle'),
-        setBoardName: proxy('setBoardName'),
         createComment: proxy('createComment'),
         deleteComment: proxy('deleteComment'),
         getTaskComments: proxy('getTaskComments'),
         createMember: proxy('createMember'),
         deleteMember: proxy('deleteMember'),
         getBoardMembers: proxy('getBoardMembers'),
-        setUserFullName: proxy('setUserFullName'),
+
+        applyUserDiff: proxy('applyUserDiff'),
         applyBoardDiff: proxy('applyBoardDiff'),
+        applyColumnDiff: proxy('applyColumnDiff'),
+        applyTaskDiff: proxy('applyTaskDiff'),
     });
 }
 

@@ -12,7 +12,10 @@ export function findMoved<TId>(
 	// case 2: Item is added (if the "after" array has more items than "before")
 	if (before.length < after.length) {
 		const addedId = after.find(id => !before.includes(id));
-		assert(addedId !== undefined, 'board item added but not found');
+		assert(
+			addedId !== undefined,
+			'board item added but not found: ' + JSON.stringify({before, after})
+		);
 		const indexAddedInAfter = after.indexOf(addedId);
 		const prev = after[indexAddedInAfter - 1];
 		const next = after[indexAddedInAfter + 1];

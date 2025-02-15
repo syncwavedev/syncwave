@@ -61,9 +61,10 @@ export class BoardViewCrdt {
 		});
 	}
 
-	setTaskPosition(taskId: TaskId, position: BigFloat) {
+	setTaskPosition(taskId: TaskId, position: BigFloat, columnId: ColumnId) {
 		return this.tasks.update(taskId, task => {
 			task.columnPosition = position;
+			task.columnId = columnId;
 		});
 	}
 

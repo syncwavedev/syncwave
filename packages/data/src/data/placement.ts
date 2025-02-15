@@ -22,7 +22,7 @@ export type Placement = z.infer<ReturnType<typeof zPlacement>>;
 export function toPosition(placement: Placement): BigFloat {
     const rand = Math.random();
     if (placement.prev && placement.next) {
-        const diff = bigFloatSub(placement.next, placement.prev);
+        const diff = bigFloatAbs(bigFloatSub(placement.next, placement.prev));
         const jitter = bigFloatMul(bigFloatDiv(diff, 4), toBigFloat(rand));
         const middle = bigFloatDiv(
             bigFloatAdd(placement.prev, placement.next),
@@ -31,19 +31,19 @@ export function toPosition(placement: Placement): BigFloat {
         return bigFloatAdd(middle, jitter);
     } else if (placement.next) {
         return bigFloatSub(
-            bigFloatSub(
-                placement.next,
-                bigFloatDiv(bigFloatAbs(placement.next), 2)
-            ),
-            toBigFloat(rand)
+            placement.next,
+            bigFloatAdd(
+                bigFloatDiv(bigFloatAbs(placement.next), 2),
+                toBigFloat(rand)
+            )
         );
     } else if (placement.prev) {
         return bigFloatAdd(
+            placement.prev,
             bigFloatAdd(
-                placement.prev,
-                bigFloatDiv(bigFloatAbs(placement.prev), 2)
-            ),
-            toBigFloat(rand)
+                bigFloatDiv(bigFloatAbs(placement.prev), 2),
+                toBigFloat(rand)
+            )
         );
     } else {
         return toBigFloat(rand * 1_000_000_000_000_000);

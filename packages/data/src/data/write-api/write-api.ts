@@ -47,8 +47,6 @@ export class WriteApiState {
     }
 }
 
-export type Placement = z.infer<ReturnType<typeof zPlacement>>;
-
 export function createWriteApi() {
     return createApi<WriteApiState>()({
         createTask: handler({

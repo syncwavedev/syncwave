@@ -67,11 +67,7 @@
 	);
 
 	function toIds<T extends {pk: [unknown]}>(items: T[]): T['pk'][0][] {
-		return (
-			items
-				// .filter(x => !(SHADOW_ITEM_MARKER_PROPERTY_NAME in x))
-				.map(item => item.pk[0])
-		);
+		return items.map(item => item.pk[0]);
 	}
 
 	const sdk = getSdk();
@@ -82,15 +78,18 @@
 
 		if (moved) {
 			const {target, prev, next} = moved;
-			const prevColumn = columns.find(x => x.id === prev);
-			const nextColumn = columns.find(x => x.id === next);
+			const localColumns = localBoard.snapshot().columns;
+			const prevColumn = localColumns.find(x => x.id === prev);
+			const nextColumn = localColumns.find(x => x.id === next);
+
+			const newTargetPosition = toPosition({
+				next: nextColumn?.boardPosition,
+				prev: prevColumn?.boardPosition,
+			});
 
 			const diff = localBoard.setColumnPosition(
 				target,
-				toPosition({
-					next: nextColumn?.boardPosition,
-					prev: prevColumn?.boardPosition,
-				})
+				newTargetPosition
 			);
 
 			if (diff) {

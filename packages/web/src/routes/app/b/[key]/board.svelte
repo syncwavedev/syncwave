@@ -29,11 +29,11 @@
 		localBoard.apply(remoteBoard);
 		const latestColumns = applyOrder(localBoard.snapshot().columns);
 		untrack(() => {
-			const shadowColumn = columns.find(
+			const shadowColumn = dndColumns.find(
 				item => (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]
 			);
 
-			const shadowTask = columns
+			const shadowTask = dndColumns
 				.flatMap(x => x.tasks)
 				.find(item => (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]);
 
@@ -51,7 +51,7 @@
 				};
 			};
 
-			columns = latestColumns.map(column =>
+			dndColumns = latestColumns.map(column =>
 				column.id === shadowColumn?.id
 					? {
 							...shadowColumn,
@@ -76,7 +76,7 @@
 		return result;
 	}
 
-	let columns = $state(
+	let dndColumns = $state(
 		applyOrder($state.snapshot(remoteBoard.columns) as BoardViewColumnDto[])
 	);
 
@@ -111,12 +111,12 @@
 	}
 
 	function setColumns(e: CustomEvent<DndEvent<BoardViewColumnDto>>) {
-		const newColumns = e.detail.items;
+		const newDndColumns = e.detail.items;
 
 		const update = calculateChange(
 			localBoard.snapshot().columns,
-			e.detail.items,
-			newColumns,
+			dndColumns,
+			newDndColumns,
 			column => column?.boardPosition
 		);
 
@@ -136,18 +136,17 @@
 			}
 		}
 
-		columns = newColumns;
+		dndColumns = newDndColumns;
 	}
 
 	function setTasks(
-		column: BoardViewColumnDto,
+		dndColumn: BoardViewColumnDto,
 		e: CustomEvent<DndEvent<BoardViewTaskDto>>
 	) {
-		const dndColumn = columns.find(x => x.id === column.id);
 		assert(dndColumn !== undefined, 'dnd column not found');
 		const localColumn = localBoard
 			.snapshot()
-			.columns.find(x => x.id === column.id);
+			.columns.find(x => x.id === dndColumn.id);
 		assert(localColumn !== undefined, 'local column not found');
 		const update = calculateChange(
 			localColumn.tasks,
@@ -161,7 +160,7 @@
 			const diff = localBoard.setTaskPosition(
 				target,
 				newPosition,
-				column.id
+				dndColumn.id
 			);
 
 			if (diff) {
@@ -176,12 +175,12 @@
 			}
 		}
 
-		column.tasks = e.detail.items;
+		dndColumn.tasks = e.detail.items;
 	}
 </script>
 
 <BoardInner
-	{columns}
+	columns={dndColumns}
 	flipDurationMs={100}
 	handleDndConsiderCards={setTasks}
 	handleDndFinalizeCards={setTasks}

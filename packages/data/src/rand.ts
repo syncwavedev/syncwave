@@ -1,4 +1,4 @@
-import seedrandom, {PRNG} from 'seedrandom';
+import seedrandom, {type PRNG} from 'seedrandom';
 
 export class Rand {
     private readonly rng: PRNG;

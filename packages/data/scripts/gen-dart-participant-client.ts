@@ -9,7 +9,7 @@ import {
 import {zodToJsonSchema} from 'zod-to-json-schema';
 import {createParticipantApi, toError} from '../src/index.js';
 import {log} from '../src/logger.js';
-import {Api, Processor} from '../src/transport/rpc.js';
+import type {Api, Processor} from '../src/transport/rpc.js';
 
 interface Type {
     name: string;

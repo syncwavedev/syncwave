@@ -1,15 +1,15 @@
 import opentelemetry, {
     propagation,
-    Span,
+    type Span,
     trace,
-    Tracer,
+    type Tracer,
 } from '@opentelemetry/api';
 import AsyncContext from '@webfill/async-context';
 import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
 import {CancelledError} from './errors.js';
-import {log, LogLevel} from './logger.js';
-import {Brand, Nothing, runAll, Unsubscribe} from './utils.js';
+import {log, type LogLevel} from './logger.js';
+import {type Brand, type Nothing, runAll, type Unsubscribe} from './utils.js';
 
 export interface NestedAttributeMap
     extends Record<

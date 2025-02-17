@@ -2,35 +2,35 @@ import {z, ZodType} from 'zod';
 import {
     Crdt,
     CrdtCodec,
-    CrdtDiff,
-    CrdtDiffString,
+    type CrdtDiff,
+    type CrdtDiffString,
     stringifyCrdtDiff,
 } from '../crdt/crdt.js';
 import {AppError} from '../errors.js';
 import {
     compareIndexKey,
     createIndex,
-    Index,
-    IndexKey,
+    type Index,
+    type IndexKey,
     IndexKeyCodec,
     indexKeyToString,
 } from '../kv/data-index.js';
 import {
-    Condition,
+    type Condition,
     queryStartsWith,
-    Transaction,
-    Uint8Transaction,
+    type Transaction,
+    type Uint8Transaction,
     withKeyCodec,
     withPrefix,
     withValueCodec,
 } from '../kv/kv-store.js';
 import {Stream, toStream} from '../stream.js';
-import {getNow, Timestamp, zTimestamp} from '../timestamp.js';
-import {Nothing, pipe, whenAll} from '../utils.js';
+import {getNow, type Timestamp, zTimestamp} from '../timestamp.js';
+import {type Nothing, pipe, whenAll} from '../utils.js';
 import {
     createReadonlyTransitionChecker,
-    ReadonlyDescriptor,
-    TransitionChecker,
+    type ReadonlyDescriptor,
+    type TransitionChecker,
 } from './transition-checker.js';
 
 export class ConstraintError extends AppError {

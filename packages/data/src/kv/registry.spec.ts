@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {encodeString} from '../codec.js';
-import {Uint8Transaction} from './kv-store.js';
+import type {Uint8Transaction} from './kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
 import {Registry} from './registry.js';
 

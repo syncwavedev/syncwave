@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {Codec, decodeString, encodeString} from '../codec.js';
-import {Collection, CollectionEntry} from './collection.js';
+import {type Codec, decodeString, encodeString} from '../codec.js';
+import {Collection, type CollectionEntry} from './collection.js';
 import {MemKVStore} from './mem-kv-store.js';
 
 const jsonCodec: Codec<any> = {

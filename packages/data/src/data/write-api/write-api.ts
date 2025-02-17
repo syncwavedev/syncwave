@@ -3,9 +3,9 @@ import {zBigFloat} from '../../big-float.js';
 import {parseCrdtDiff, zCrdtDiffString} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
-import {createApi, handler, InferRpcClient} from '../../transport/rpc.js';
+import {createApi, handler, type InferRpcClient} from '../../transport/rpc.js';
 import {zUuid} from '../../uuid.js';
-import {DataTx} from '../data-layer.js';
+import type {DataTx} from '../data-layer.js';
 import {
     toColumnDto,
     toCommentDto,
@@ -16,17 +16,17 @@ import {
 } from '../dto.js';
 import {PermissionService} from '../permission-service.js';
 import {toPosition, zPlacement} from '../placement.js';
-import {Board, BoardId, zBoard} from '../repos/board-repo.js';
-import {Column, ColumnId} from '../repos/column-repo.js';
-import {CommentId} from '../repos/comment-repo.js';
+import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
+import {type Column, type ColumnId} from '../repos/column-repo.js';
+import {type CommentId} from '../repos/comment-repo.js';
 import {
     createMemberId,
-    Member,
-    MemberId,
+    type Member,
+    type MemberId,
     zMemberRole,
 } from '../repos/member-repo.js';
-import {Task, TaskId, zTask} from '../repos/task-repo.js';
-import {User, UserId} from '../repos/user-repo.js';
+import {type Task, type TaskId, zTask} from '../repos/task-repo.js';
+import {type User, type UserId} from '../repos/user-repo.js';
 
 export class WriteApiState {
     constructor(

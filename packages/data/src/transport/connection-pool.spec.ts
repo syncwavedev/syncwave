@@ -4,7 +4,7 @@ import {ConnectionPool, ReleasableConnection} from './connection-pool.js';
 import {MemTransportClient, MemTransportServer} from './mem-transport.js';
 import {
     catchConnectionClosed,
-    Connection,
+    type Connection,
     ConnectionClosedError,
 } from './transport.js';
 

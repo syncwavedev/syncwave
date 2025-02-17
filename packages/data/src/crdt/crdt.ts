@@ -7,20 +7,25 @@ import {
     Text as YText,
 } from 'yjs';
 import {z} from 'zod';
-import {Codec, decodeMsgpack, encodeMsgpack, MsgpackCodec} from '../codec.js';
+import {
+    type Codec,
+    decodeMsgpack,
+    encodeMsgpack,
+    MsgpackCodec,
+} from '../codec.js';
 import {AppError} from '../errors.js';
 import {decodeHex, encodeHex} from '../hex.js';
-import {getNow, Timestamp} from '../timestamp.js';
+import {getNow, type Timestamp} from '../timestamp.js';
 import {
     assert,
     assertNever,
-    Brand,
-    Nothing,
-    Unsubscribe,
+    type Brand,
+    type Nothing,
+    type Unsubscribe,
     zip,
 } from '../utils.js';
 import {Uuid} from '../uuid.js';
-import {observe, OpLog} from './observe.js';
+import {observe, type OpLog} from './observe.js';
 
 export interface CrdtDiff<T> {
     readonly timestamp: Timestamp;

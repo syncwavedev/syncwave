@@ -1,22 +1,22 @@
 import {context} from '../context.js';
 import {
-    CoordinatorRpc,
+    type CoordinatorRpc,
     createCoordinatorApi,
 } from '../coordinator/coordinator-api.js';
 import {createReadApi} from '../data/read-api.js';
 import {createWriteApi} from '../data/write-api/write-api.js';
 import {tracerManager} from '../tracer-manager.js';
-import {Message} from '../transport/message.js';
+import type {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {
     createApi,
     createRpcClient,
-    InferRpcClient,
-    InferRpcClientWithRequiredHeaders,
-    MapProcessorState,
-    RequestInfo,
+    type InferRpcClient,
+    type InferRpcClientWithRequiredHeaders,
+    type MapProcessorState,
+    type RequestInfo,
 } from '../transport/rpc.js';
-import {Connection, TransportClient} from '../transport/transport.js';
+import type {Connection, TransportClient} from '../transport/transport.js';
 import {assertNever} from '../utils.js';
 
 export class ParticipantState {

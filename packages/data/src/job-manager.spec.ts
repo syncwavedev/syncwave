@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
-import {Cancel, Context, context, TraceId} from './context.js';
+import {type Cancel, Context, context, type TraceId} from './context.js';
 import {JobManager} from './job-manager.js';
 import {log} from './logger.js';
 import {whenAll} from './utils.js';

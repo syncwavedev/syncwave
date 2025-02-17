@@ -1,6 +1,6 @@
-import {Codec} from '../codec.js';
+import {type Codec} from '../codec.js';
 import {Collection} from './collection.js';
-import {Uint8Transaction} from './kv-store.js';
+import {type Uint8Transaction} from './kv-store.js';
 import {Registry} from './registry.js';
 
 export class CollectionManager<T> {

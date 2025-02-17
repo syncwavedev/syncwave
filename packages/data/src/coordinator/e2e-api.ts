@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
 import {context} from '../context.js';
 import {toCursor} from '../cursor.js';
-import {ChangeEvent, Transact} from '../data/data-layer.js';
+import type {ChangeEvent, Transact} from '../data/data-layer.js';
 import {EventStoreReader} from '../data/event-store.js';
 import {BusinessError} from '../errors.js';
 import {observable, toStream} from '../stream.js';
@@ -10,7 +10,7 @@ import {
     createApi,
     decorateApi,
     handler,
-    Processor,
+    type Processor,
     streamer,
 } from '../transport/rpc.js';
 import {assertNever, wait} from '../utils.js';

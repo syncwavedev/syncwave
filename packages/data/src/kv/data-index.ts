@@ -1,14 +1,14 @@
 import bytewise from 'bytewise';
 import {z} from 'zod';
-import {Codec} from '../codec.js';
+import {type Codec} from '../codec.js';
 import {AppError} from '../errors.js';
 import {assert, compareUint8Array, zip} from '../utils.js';
 import {Uuid, UuidCodec, zUuid} from '../uuid.js';
 import {
-    Condition,
+    type Condition,
     mapCondition,
-    Uint8Entry,
-    Uint8Transaction,
+    type Uint8Entry,
+    type Uint8Transaction,
 } from './kv-store.js';
 
 export interface IndexGetOptions {

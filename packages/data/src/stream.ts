@@ -4,7 +4,13 @@ import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cursor, toCursor} from './cursor.js';
 import {AppError, CancelledError, toError} from './errors.js';
 import {log} from './logger.js';
-import {assert, Nothing, stringify, Unsubscribe, whenAll} from './utils.js';
+import {
+    assert,
+    type Nothing,
+    stringify,
+    type Unsubscribe,
+    whenAll,
+} from './utils.js';
 
 export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;

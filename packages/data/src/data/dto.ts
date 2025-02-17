@@ -1,14 +1,14 @@
 import {z} from 'zod';
 import {zCrdtDiffString} from '../crdt/crdt.js';
 import {assert} from '../utils.js';
-import {DataTx} from './data-layer.js';
-import {Board, BoardId, zBoard} from './repos/board-repo.js';
-import {Column, ColumnId, zColumn} from './repos/column-repo.js';
-import {CommentId, zComment} from './repos/comment-repo.js';
-import {IdentityId, zIdentity} from './repos/identity-repo.js';
-import {MemberId, zMember} from './repos/member-repo.js';
-import {Task, TaskId, zTask} from './repos/task-repo.js';
-import {User, UserId, zUser} from './repos/user-repo.js';
+import {type DataTx} from './data-layer.js';
+import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
+import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
+import {type CommentId, zComment} from './repos/comment-repo.js';
+import {type IdentityId, zIdentity} from './repos/identity-repo.js';
+import {type MemberId, zMember} from './repos/member-repo.js';
+import {type Task, type TaskId, zTask} from './repos/task-repo.js';
+import {type User, type UserId, zUser} from './repos/user-repo.js';
 
 export function zTaskDto() {
     return zTask().extend({

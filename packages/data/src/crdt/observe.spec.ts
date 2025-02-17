@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {assert} from '../utils.js';
-import {OpLog, observe} from './observe.js';
+import {type OpLog, observe} from './observe.js';
 
 describe('observe', () => {
     interface Testcase<T> {

@@ -1,4 +1,4 @@
-import {context, NestedAttributeMap} from './context.js';
+import {context, type NestedAttributeMap} from './context.js';
 
 // eslint-disable-next-line no-restricted-globals
 export class AppError extends Error {

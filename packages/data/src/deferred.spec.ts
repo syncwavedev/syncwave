@@ -1,5 +1,6 @@
 import {assert, describe, expect, it, vi} from 'vitest';
 import {Deferred} from './deferred.js';
+import {AppError} from './errors.js';
 
 describe('Deferred', () => {
     it('should initialize with a pending state', () => {
@@ -19,7 +20,7 @@ describe('Deferred', () => {
 
     it('should reject with the given error', async () => {
         const deferred = new Deferred();
-        const error = new Error('testError');
+        const error = new AppError('testError');
 
         deferred.reject(error);
 
@@ -41,8 +42,8 @@ describe('Deferred', () => {
 
     it('should not reject again after being rejected', async () => {
         const deferred = new Deferred();
-        const firstError = new Error('firstError');
-        const secondError = new Error('secondError');
+        const firstError = new AppError('firstError');
+        const secondError = new AppError('secondError');
 
         deferred.reject(firstError);
         const result1 = await deferred.promise.catch(err => err);
@@ -55,7 +56,7 @@ describe('Deferred', () => {
 
     it('should not resolve after being rejected', async () => {
         const deferred = new Deferred();
-        const error = new Error('testError');
+        const error = new AppError('testError');
         const value = 'testValue';
 
         deferred.reject(error);
@@ -68,7 +69,7 @@ describe('Deferred', () => {
     it('should not reject after being fulfilled', async () => {
         const deferred = new Deferred();
         const value = 'testValue';
-        const error = new Error('testError');
+        const error = new AppError('testError');
 
         deferred.resolve(value);
         deferred.reject(error);
@@ -92,7 +93,7 @@ describe('Deferred', () => {
 
     it('should execute reject callback when rejected', async () => {
         const deferred = new Deferred();
-        const error = new Error('testError');
+        const error = new AppError('testError');
         const onRejected = vi.fn();
 
         deferred.promise.catch(onRejected);
@@ -104,7 +105,7 @@ describe('Deferred', () => {
             // swallow
         }
 
-        expect(onRejected.mock.calls[0][0]).toBeInstanceOf(Error);
+        expect(onRejected.mock.calls[0][0]).toBeInstanceOf(AppError);
     });
 
     it('should maintain the fulfilled value after resolution', async () => {
@@ -120,7 +121,7 @@ describe('Deferred', () => {
 
     it('should maintain the rejection error after rejection', async () => {
         const deferred = new Deferred();
-        const error = new Error('testError');
+        const error = new AppError('testError');
 
         deferred.reject(error);
 

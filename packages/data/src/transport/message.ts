@@ -1,6 +1,6 @@
 import {createTraceId} from '../context.js';
-import {ErrorCode} from '../errors.js';
-import {Brand} from '../utils.js';
+import type {ErrorCode} from '../errors.js';
+import type {Brand} from '../utils.js';
 
 export type MessageId = Brand<string, 'message_id'>;
 

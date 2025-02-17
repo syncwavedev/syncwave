@@ -1,8 +1,8 @@
-import {Codec} from '../codec.js';
+import type {Codec} from '../codec.js';
 import {AppError} from '../errors.js';
 import {Stream, toStream} from '../stream.js';
 import {bufStartsWith, unreachable} from '../utils.js';
-import {MappedTransaction, Mapper} from './mapped-kv-store.js';
+import {MappedTransaction, type Mapper} from './mapped-kv-store.js';
 import {PrefixedTransaction} from './prefixed-kv-store.js';
 
 export interface GtCondition<TKey> {

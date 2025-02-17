@@ -1,12 +1,12 @@
 import {RECONNECT_WAIT_MS} from '../constants.js';
 import {AppError, toError} from '../errors.js';
 import {log} from '../logger.js';
-import {Observer, Subject} from '../subject.js';
-import {Unsubscribe, wait} from '../utils.js';
+import {type Observer, Subject} from '../subject.js';
+import {type Unsubscribe, wait} from '../utils.js';
 import {
-    Connection,
+    type Connection,
     ConnectionClosedError,
-    TransportClient,
+    type TransportClient,
     TransportServerUnreachableError,
 } from './transport.js';
 

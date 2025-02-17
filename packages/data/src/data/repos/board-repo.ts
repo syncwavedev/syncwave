@@ -1,15 +1,21 @@
 import {z} from 'zod';
-import {CrdtDiff} from '../../crdt/crdt.js';
+import {type CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {Counter} from '../../kv/counter.js';
 import {UniqueError} from '../../kv/data-index.js';
-import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Registry} from '../../kv/registry.js';
-import {Brand} from '../../utils.js';
+import {type Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {DataTx} from '../data-layer.js';
-import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
-import {UserId} from './user-repo.js';
+import {type DataTx} from '../data-layer.js';
+import {
+    type Doc,
+    DocRepo,
+    type OnDocChange,
+    type Recipe,
+    zDoc,
+} from '../doc-repo.js';
+import type {UserId} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
 

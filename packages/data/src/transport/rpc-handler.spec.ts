@@ -2,16 +2,16 @@ import {trace} from '@opentelemetry/api';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {z} from 'zod';
 import {MsgpackCodec} from '../codec.js';
-import {context, TraceId} from '../context.js';
+import {context, type TraceId} from '../context.js';
 import {Deferred} from '../deferred.js';
 import {CancelledError} from '../errors.js';
 import {log} from '../logger.js';
 import {unreachable, wait} from '../utils.js';
 import {MemTransportClient, MemTransportServer} from './mem-transport.js';
-import {Message} from './message.js';
+import {type Message} from './message.js';
 import {createRpcHandlerClient, launchRpcHandlerServer} from './rpc-handler.js';
 import {createApi, handler} from './rpc.js';
-import {Connection} from './transport.js';
+import {type Connection} from './transport.js';
 
 describe('RpcHandler', () => {
     let clientConn: Connection<Message>;

@@ -1,13 +1,19 @@
 import {z} from 'zod';
-import {CrdtDiff} from '../../crdt/crdt.js';
+import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
-import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {Timestamp, zTimestamp} from '../../timestamp.js';
-import {Brand} from '../../utils.js';
+import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type Timestamp, zTimestamp} from '../../timestamp.js';
+import {type Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
-import {UserId, UserRepo} from './user-repo.js';
+import {
+    type Doc,
+    DocRepo,
+    type OnDocChange,
+    type Recipe,
+    zDoc,
+} from '../doc-repo.js';
+import {type UserId, UserRepo} from './user-repo.js';
 
 export type IdentityId = Brand<Uuid, 'identity_id'>;
 

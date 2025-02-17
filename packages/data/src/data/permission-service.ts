@@ -1,12 +1,12 @@
 import {BusinessError} from '../errors.js';
-import {AuthContext} from './auth-context.js';
-import {DataTx} from './data-layer.js';
-import {BoardId} from './repos/board-repo.js';
-import {ColumnId} from './repos/column-repo.js';
-import {CommentId} from './repos/comment-repo.js';
-import {Member, MemberRole, ROLE_ORDER} from './repos/member-repo.js';
-import {TaskId} from './repos/task-repo.js';
-import {UserId} from './repos/user-repo.js';
+import type {AuthContext} from './auth-context.js';
+import type {DataTx} from './data-layer.js';
+import type {BoardId} from './repos/board-repo.js';
+import type {ColumnId} from './repos/column-repo.js';
+import type {CommentId} from './repos/comment-repo.js';
+import {type Member, type MemberRole, ROLE_ORDER} from './repos/member-repo.js';
+import type {TaskId} from './repos/task-repo.js';
+import type {UserId} from './repos/user-repo.js';
 
 export class PermissionService {
     constructor(

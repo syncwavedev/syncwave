@@ -1,24 +1,36 @@
 import {MsgpackCodec} from '../codec.js';
-import {CrdtDiff} from '../crdt/crdt.js';
+import {type CrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
-import {Uint8KVStore, Uint8Transaction, withPrefix} from '../kv/kv-store.js';
+import {
+    type Uint8KVStore,
+    type Uint8Transaction,
+    withPrefix,
+} from '../kv/kv-store.js';
 import {ReadonlyCell} from '../kv/readonly-cell.js';
 import {log} from '../logger.js';
-import {getNow, Timestamp} from '../timestamp.js';
+import {getNow, type Timestamp} from '../timestamp.js';
 import {assert, whenAll} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
-import {AuthContext} from './auth-context.js';
+import {type AuthContext} from './auth-context.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import {HubClient} from './hub.js';
 import {PermissionService} from './permission-service.js';
-import {Board, BoardId, BoardRepo} from './repos/board-repo.js';
-import {Column, ColumnId, ColumnRepo} from './repos/column-repo.js';
-import {Comment, CommentId, CommentRepo} from './repos/comment-repo.js';
-import {Identity, IdentityId, IdentityRepo} from './repos/identity-repo.js';
-import {Member, MemberId, MemberRepo} from './repos/member-repo.js';
-import {Task, TaskId, TaskRepo} from './repos/task-repo.js';
-import {User, UserId, UserRepo} from './repos/user-repo.js';
+import {type Board, type BoardId, BoardRepo} from './repos/board-repo.js';
+import {type Column, type ColumnId, ColumnRepo} from './repos/column-repo.js';
+import {
+    type Comment,
+    type CommentId,
+    CommentRepo,
+} from './repos/comment-repo.js';
+import {
+    type Identity,
+    type IdentityId,
+    IdentityRepo,
+} from './repos/identity-repo.js';
+import {type Member, type MemberId, MemberRepo} from './repos/member-repo.js';
+import {type Task, type TaskId, TaskRepo} from './repos/task-repo.js';
+import {type User, type UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
     readonly jwtSecret: string;

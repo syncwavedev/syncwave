@@ -1,4 +1,4 @@
-import {Tracer} from '@opentelemetry/api';
+import type {Tracer} from '@opentelemetry/api';
 import {AppError} from './errors.js';
 
 export type TracerName = 'view' | 'part' | 'coord' | 'hub';

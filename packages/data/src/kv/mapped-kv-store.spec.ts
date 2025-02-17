@@ -1,6 +1,10 @@
 import {describe, expect, it} from 'vitest';
-import {Condition, Entry} from './kv-store.js';
-import {MappedKVStore, MappedTransaction, Mapper} from './mapped-kv-store.js';
+import type {Condition, Entry} from './kv-store.js';
+import {
+    MappedKVStore,
+    MappedTransaction,
+    type Mapper,
+} from './mapped-kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
 
 describe('MappedTransaction with MemKVStore', () => {

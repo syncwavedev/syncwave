@@ -1,10 +1,10 @@
-import {Codec, NumberCodec} from '../codec.js';
+import {type Codec, NumberCodec} from '../codec.js';
 import {Stream, toStream} from '../stream.js';
 import {pipe, whenAll} from '../utils.js';
 import {Counter} from './counter.js';
 import {
-    Transaction,
-    Uint8Transaction,
+    type Transaction,
+    type Uint8Transaction,
     withKeyCodec,
     withPrefix,
     withValueCodec,

@@ -1,17 +1,17 @@
 import {Server} from 'http';
 import {
     AppError,
-    Codec,
-    Connection,
+    type Codec,
+    type Connection,
     ConnectionClosedError,
     context,
     Deferred,
     log,
-    Nothing,
-    Observer,
+    type Nothing,
+    type Observer,
     Subject,
     toError,
-    TransportServer,
+    type TransportServer,
 } from 'syncwave-data';
 import {WebSocket, WebSocketServer} from 'ws';
 

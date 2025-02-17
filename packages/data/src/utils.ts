@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {CancelBehavior, context} from './context.js';
+import {type CancelBehavior, context} from './context.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,

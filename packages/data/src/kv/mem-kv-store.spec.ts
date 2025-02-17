@@ -6,7 +6,12 @@ import {AggregateError, AppError} from '../errors.js';
 import {toStream} from '../stream.js';
 import {assert, whenAll} from '../utils.js';
 import {decodeIndexKey, encodeIndexKey} from './data-index.js';
-import {Condition, KVStore, Transaction, Uint8KVStore} from './kv-store.js';
+import type {
+    Condition,
+    KVStore,
+    Transaction,
+    Uint8KVStore,
+} from './kv-store.js';
 import {MappedKVStore, MappedTransaction} from './mapped-kv-store.js';
 import {MemKVStore, MemTransaction, MvccConflictError} from './mem-kv-store.js';
 

@@ -1,11 +1,11 @@
 import {encodeString} from '../codec.js';
 import {compareUint8Array, concatBuffers} from '../utils.js';
 import {
-    Condition,
-    Entry,
-    KVStore,
+    type Condition,
+    type Entry,
+    type KVStore,
     mapCondition,
-    Transaction,
+    type Transaction,
 } from './kv-store.js';
 
 export class PrefixedTransaction<TValue>

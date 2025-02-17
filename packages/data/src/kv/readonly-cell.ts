@@ -1,5 +1,5 @@
 import {Cell} from './cell.js';
-import {Uint8Transaction} from './kv-store.js';
+import type {Uint8Transaction} from './kv-store.js';
 
 export class ReadonlyCell<T> {
     private readonly cell: Cell<T>;

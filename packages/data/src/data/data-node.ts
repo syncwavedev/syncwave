@@ -1,9 +1,13 @@
 import {decodeString, encodeString} from '../codec.js';
 import {AppError} from '../errors.js';
 import {decodeHex} from '../hex.js';
-import {decodeIndexKey, encodeIndexKey, IndexKey} from '../kv/data-index.js';
+import {
+    decodeIndexKey,
+    encodeIndexKey,
+    type IndexKey,
+} from '../kv/data-index.js';
 import {bufStartsWith} from '../utils.js';
-import {Doc, DocRepo} from './doc-repo.js';
+import {type Doc, DocRepo} from './doc-repo.js';
 
 export interface DataNodeVisitor<T> {
     repo(node: RepoDataNode<any>): T;

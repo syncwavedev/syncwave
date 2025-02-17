@@ -2,11 +2,16 @@ import {z} from 'zod';
 import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {observable, toStream} from '../stream.js';
-import {createApi, InferRpcClient, streamer} from '../transport/rpc.js';
+import {createApi, type InferRpcClient, streamer} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
 import {zUuid} from '../uuid.js';
-import {AuthContext} from './auth-context.js';
-import {boardEvents, ChangeEvent, Transact, userEvents} from './data-layer.js';
+import type {AuthContext} from './auth-context.js';
+import {
+    boardEvents,
+    type ChangeEvent,
+    type Transact,
+    userEvents,
+} from './data-layer.js';
 import {
     toBoardDto,
     toBoardViewDto,
@@ -20,10 +25,10 @@ import {
     zUserDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
-import {BoardId} from './repos/board-repo.js';
+import {type BoardId} from './repos/board-repo.js';
 import {zIdentity} from './repos/identity-repo.js';
-import {TaskId, zTask} from './repos/task-repo.js';
-import {UserId} from './repos/user-repo.js';
+import {type TaskId, zTask} from './repos/task-repo.js';
+import {type UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
     constructor(

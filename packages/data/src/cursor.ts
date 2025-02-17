@@ -1,6 +1,6 @@
 import {AppError} from './errors.js';
 import {log} from './logger.js';
-import {Nothing} from './utils.js';
+import type {Nothing} from './utils.js';
 
 export class Cursor<T> implements AsyncIterable<T> {
     private _isConsumed = false;

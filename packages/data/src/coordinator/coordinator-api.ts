@@ -1,8 +1,13 @@
-import {AuthContext, AuthContextParser} from '../data/auth-context.js';
+import {type AuthContext, AuthContextParser} from '../data/auth-context.js';
 import {dataInspectorApi} from '../data/data-inspector-api.js';
-import {ChangeEvent, Config, DataLayer, Transact} from '../data/data-layer.js';
-import {EventStoreReader} from '../data/event-store.js';
 import {
+    type ChangeEvent,
+    type Config,
+    DataLayer,
+    type Transact,
+} from '../data/data-layer.js';
+import {EventStoreReader} from '../data/event-store.js';
+import type {
     CryptoService,
     EmailService,
     JwtService,
@@ -12,12 +17,12 @@ import {createWriteApi, WriteApiState} from '../data/write-api/write-api.js';
 import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {
-    Api,
+    type Api,
     applyMiddleware,
-    InferRpcClient,
+    type InferRpcClient,
     mapApiState,
 } from '../transport/rpc.js';
-import {AuthApi, AuthApiState, createAuthApi} from './auth-api.js';
+import {type AuthApi, type AuthApiState, createAuthApi} from './auth-api.js';
 import {createE2eApi} from './e2e-api.js';
 
 export interface CoordinatorApiState {

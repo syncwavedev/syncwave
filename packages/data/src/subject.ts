@@ -2,7 +2,7 @@ import {Context, context} from './context.js';
 import {AppError} from './errors.js';
 import {log} from './logger.js';
 import {Stream} from './stream.js';
-import {Nothing, Unsubscribe, whenAll} from './utils.js';
+import {type Nothing, type Unsubscribe, whenAll} from './utils.js';
 
 export interface Observer<T> {
     next: (value: T) => Promise<void>;

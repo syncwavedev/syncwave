@@ -1,4 +1,4 @@
-import {Cancel, Context} from './context.js';
+import {type Cancel, Context} from './context.js';
 import {AppError} from './errors.js';
 import {log} from './logger.js';
 

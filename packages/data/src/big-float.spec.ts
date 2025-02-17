@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {
-    BigFloat,
+    type BigFloat,
     bigFloatAdd,
     bigFloatDiv,
     bigFloatMul,

@@ -1,7 +1,7 @@
 import {Rand} from '../rand.js';
-import {Observer} from '../subject.js';
-import {Unsubscribe, wait} from '../utils.js';
-import {Connection, TransportClient} from './transport.js';
+import type {Observer} from '../subject.js';
+import {type Unsubscribe, wait} from '../utils.js';
+import type {Connection, TransportClient} from './transport.js';
 
 export class ChaosConnection<T> implements Connection<T> {
     constructor(

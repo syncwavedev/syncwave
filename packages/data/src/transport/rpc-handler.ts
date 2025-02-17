@@ -1,12 +1,12 @@
-import {Tracer} from '@opentelemetry/api';
+import type {Tracer} from '@opentelemetry/api';
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
-import {Cancel, Context, context} from '../context.js';
+import {type Cancel, Context, context} from '../context.js';
 import {Deferred} from '../deferred.js';
 import {
     AppError,
     BusinessError,
     CancelledError,
-    ErrorCode,
+    type ErrorCode,
     getErrorCode,
     getReadableError,
     toError,
@@ -15,22 +15,22 @@ import {JobManager} from '../job-manager.js';
 import {log} from '../logger.js';
 import {
     createMessageId,
-    Message,
-    MessageHeaders,
+    type Message,
+    type MessageHeaders,
 } from '../transport/message.js';
 import {
     catchConnectionClosed,
-    Connection,
+    type Connection,
     ConnectionClosedError,
     ConnectionThrowError,
 } from '../transport/transport.js';
-import {assertNever, Unsubscribe, wait} from '../utils.js';
+import {assertNever, type Unsubscribe, wait} from '../utils.js';
 import {toRequestLog} from './rpc-streamer.js';
 import {
     getRequiredProcessor,
-    Handler,
-    InferRpcClient,
-    Processor,
+    type Handler,
+    type InferRpcClient,
+    type Processor,
 } from './rpc.js';
 
 export type HandlerApi<TState> = Record<string, Handler<TState, any, any>>;

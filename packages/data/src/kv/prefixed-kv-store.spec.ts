@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {encodeString} from '../codec.js';
 import {toStream} from '../stream.js';
-import {Entry} from './kv-store.js';
+import type {Entry} from './kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
 import {PrefixedKVStore, PrefixedTransaction} from './prefixed-kv-store.js';
 

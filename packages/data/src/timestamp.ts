@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {Brand} from './utils.js';
+import type {Brand} from './utils.js';
 
 export type Timestamp = Brand<number, 'timestamp'>;
 

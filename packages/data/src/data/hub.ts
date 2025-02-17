@@ -1,22 +1,22 @@
-import {Tracer} from '@opentelemetry/api';
+import type {Tracer} from '@opentelemetry/api';
 import {z, ZodType} from 'zod';
 import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
 import {AppError} from '../errors.js';
-import {Observer, Subject} from '../subject.js';
+import {type Observer, Subject} from '../subject.js';
 import {tracerManager} from '../tracer-manager.js';
-import {Message} from '../transport/message.js';
+import {type Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {
     applyMiddleware,
     createApi,
     createRpcClient,
     handler,
-    InferRpcClient,
+    type InferRpcClient,
     RpcServer,
     streamer,
 } from '../transport/rpc.js';
-import {TransportClient, TransportServer} from '../transport/transport.js';
+import type {TransportClient, TransportServer} from '../transport/transport.js';
 import {assert, pipe, runAll} from '../utils.js';
 
 export class HubClient<T> {

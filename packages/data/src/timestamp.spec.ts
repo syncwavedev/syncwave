@@ -3,7 +3,7 @@ import {
     addHours,
     addYears,
     getNow,
-    Timestamp,
+    type Timestamp,
     zTimestamp,
 } from './timestamp.js';
 

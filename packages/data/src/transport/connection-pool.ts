@@ -1,8 +1,8 @@
 import {context} from '../context.js';
 import {log} from '../logger.js';
-import {Observer, Subject} from '../subject.js';
-import {Unsubscribe} from '../utils.js';
-import {Connection, TransportClient} from './transport.js';
+import {type Observer, Subject} from '../subject.js';
+import type {Unsubscribe} from '../utils.js';
+import type {Connection, TransportClient} from './transport.js';
 
 export class ReleasableConnection<T> implements Connection<T> {
     private readonly subject = new Subject<T>();

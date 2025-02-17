@@ -11,7 +11,7 @@ import {log} from '../logger.js';
 import {Channel, Stream, toStream} from '../stream.js';
 import {interval, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
-import {DataEffectScheduler} from './data-layer.js';
+import {type DataEffectScheduler} from './data-layer.js';
 import {HubClient} from './hub.js';
 
 function getEventHubTopic(storeId: string, collection: string) {

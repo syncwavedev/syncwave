@@ -1,11 +1,12 @@
 import {
-    Condition,
-    GtCondition,
-    GteCondition,
-    LtCondition,
-    LteCondition,
+    AppError,
+    type Condition,
+    type GtCondition,
+    type GteCondition,
+    type LtCondition,
+    type LteCondition,
     toStream,
-    Uint8KVStore,
+    type Uint8KVStore,
 } from 'syncwave-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 
@@ -95,7 +96,7 @@ export function describeKVStore<T extends Uint8KVStore>(
                     await tx.put(keyRollback, valRollback);
 
                     // Force an error to simulate rollback
-                    throw new Error('Simulated error for rollback test');
+                    throw new AppError('Simulated error for rollback test');
                 });
             } catch (err) {
                 // ignore

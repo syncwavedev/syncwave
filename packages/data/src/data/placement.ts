@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {
-    BigFloat,
+    type BigFloat,
     bigFloatAbs,
     bigFloatAdd,
     bigFloatDiv,

@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {Timestamp} from '../timestamp.js';
+import type {Timestamp} from '../timestamp.js';
 import {assert} from '../utils.js';
 import {Crdt} from './crdt.js';
 

@@ -1,9 +1,15 @@
 import {z} from 'zod';
-import {CrdtDiff} from '../../crdt/crdt.js';
-import {Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
-import {assertNever, Brand} from '../../utils.js';
+import {type CrdtDiff} from '../../crdt/crdt.js';
+import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {assertNever, type Brand} from '../../utils.js';
 import {createUuid, Uuid, zUuid} from '../../uuid.js';
-import {Doc, DocRepo, OnDocChange, Recipe, zDoc} from '../doc-repo.js';
+import {
+    type Doc,
+    DocRepo,
+    type OnDocChange,
+    type Recipe,
+    zDoc,
+} from '../doc-repo.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 

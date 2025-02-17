@@ -1,5 +1,9 @@
-import {pino as createPino, Level} from 'pino';
-import {context, flattenAttributeMap, NestedAttributeMap} from './context.js';
+import {pino as createPino, type Level} from 'pino';
+import {
+    context,
+    flattenAttributeMap,
+    type NestedAttributeMap,
+} from './context.js';
 import {AppError, toError} from './errors.js';
 
 export type LogLevel =

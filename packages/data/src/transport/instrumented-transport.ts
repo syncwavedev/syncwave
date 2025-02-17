@@ -1,7 +1,11 @@
 import {context} from '../context.js';
-import {Observer} from '../subject.js';
-import {Nothing, Unsubscribe} from '../utils.js';
-import {Connection, TransportClient, TransportServer} from './transport.js';
+import type {Observer} from '../subject.js';
+import type {Nothing, Unsubscribe} from '../utils.js';
+import type {
+    Connection,
+    TransportClient,
+    TransportServer,
+} from './transport.js';
 
 export class InstrumentedConnection<T> implements Connection<T> {
     constructor(private readonly connection: Connection<T>) {}

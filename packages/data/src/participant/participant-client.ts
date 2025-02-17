@@ -1,10 +1,10 @@
-import {Tracer} from '@opentelemetry/api';
+import type {Tracer} from '@opentelemetry/api';
 import {context} from '../context.js';
-import {Message} from '../transport/message.js';
+import type {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
 import {createRpcClient} from '../transport/rpc.js';
-import {Connection, TransportClient} from '../transport/transport.js';
-import {createParticipantApi, ParticipantRpc} from './participant-api.js';
+import type {Connection, TransportClient} from '../transport/transport.js';
+import {createParticipantApi, type ParticipantRpc} from './participant-api.js';
 
 export class ParticipantClient {
     private readonly connection: Connection<Message>;

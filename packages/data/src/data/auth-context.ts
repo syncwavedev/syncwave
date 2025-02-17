@@ -1,8 +1,8 @@
 import {LRUCache} from 'lru-cache';
 import {SUPERADMIN_IDS} from '../constants.js';
-import {JwtService} from './infrastructure.js';
-import {IdentityId} from './repos/identity-repo.js';
-import {UserId} from './repos/user-repo.js';
+import {type JwtService} from './infrastructure.js';
+import {type IdentityId} from './repos/identity-repo.js';
+import {type UserId} from './repos/user-repo.js';
 
 export interface AuthContext {
     readonly userId: UserId | undefined;

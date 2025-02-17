@@ -1,10 +1,10 @@
-import {Tracer} from '@opentelemetry/api';
-import {TypeOf, ZodType} from 'zod';
+import type {Tracer} from '@opentelemetry/api';
+import type {TypeOf, ZodType} from 'zod';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
-import {Message, MessageHeaders, MessageId} from '../transport/message.js';
-import {Connection, TransportServer} from '../transport/transport.js';
+import type {Message, MessageHeaders, MessageId} from '../transport/message.js';
+import type {Connection, TransportServer} from '../transport/transport.js';
 import {assertNever} from '../utils.js';
 import {launchRpcStreamerServer} from './rpc-streamer.js';
 

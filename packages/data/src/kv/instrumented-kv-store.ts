@@ -1,5 +1,5 @@
 import {context} from '../context.js';
-import {Condition, Entry, KVStore, Transaction} from './kv-store.js';
+import type {Condition, Entry, KVStore, Transaction} from './kv-store.js';
 
 export class InstrumentedTransaction<K, V> implements Transaction<K, V> {
     constructor(private readonly tx: Transaction<K, V>) {}

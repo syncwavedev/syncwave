@@ -1,6 +1,10 @@
 import {MsgpackCodec} from '../codec.js';
 import {pipe} from '../utils.js';
-import {Transaction, Uint8Transaction, withValueCodec} from './kv-store.js';
+import {
+    type Transaction,
+    type Uint8Transaction,
+    withValueCodec,
+} from './kv-store.js';
 
 const key = new Uint8Array();
 

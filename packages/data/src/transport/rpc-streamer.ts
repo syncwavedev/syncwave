@@ -1,6 +1,6 @@
-import {Tracer} from '@opentelemetry/api';
+import type {Tracer} from '@opentelemetry/api';
 import {z} from 'zod';
-import {Cancel, Context, context, createTraceId} from '../context.js';
+import {type Cancel, Context, context, createTraceId} from '../context.js';
 import {
     AppError,
     CancelledError,
@@ -13,18 +13,21 @@ import {log} from '../logger.js';
 import {
     AsyncIteratorFactory,
     Channel,
-    ChannelWriter,
+    type ChannelWriter,
     toStream,
 } from '../stream.js';
-import {Message, MessageHeaders} from '../transport/message.js';
-import {catchConnectionClosed, Connection} from '../transport/transport.js';
+import type {Message, MessageHeaders} from '../transport/message.js';
+import {
+    catchConnectionClosed,
+    type Connection,
+} from '../transport/transport.js';
 import {
     assertNever,
-    Brand,
+    type Brand,
     catchCancel,
     run,
     runAll,
-    Unsubscribe,
+    type Unsubscribe,
 } from '../utils.js';
 import {createUuid, Uuid, zUuid} from '../uuid.js';
 import {
@@ -37,9 +40,9 @@ import {
     createApi,
     getRequiredProcessor,
     handler,
-    Handler,
-    InferRpcClient,
-    Streamer,
+    type Handler,
+    type InferRpcClient,
+    type Streamer,
 } from './rpc.js';
 
 export type StreamerApi<TState> = Record<

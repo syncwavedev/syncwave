@@ -1,17 +1,17 @@
 import {z} from 'zod';
-import {DataEffectScheduler, DataTx} from '../data/data-layer.js';
-import {
+import type {DataEffectScheduler, DataTx} from '../data/data-layer.js';
+import type {
     CryptoService,
     EmailService,
     JwtService,
 } from '../data/infrastructure.js';
 import {
     createIdentityId,
-    Identity,
-    IdentityRepo,
-    VerificationCode,
+    type Identity,
+    type IdentityRepo,
+    type VerificationCode,
 } from '../data/repos/identity-repo.js';
-import {createUserId, UserId, UserRepo} from '../data/repos/user-repo.js';
+import {createUserId, type UserId, UserRepo} from '../data/repos/user-repo.js';
 import {AppError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {
@@ -19,7 +19,7 @@ import {
     AUTH_ACTIVITY_WINDOW_HOURS,
 } from './../constants.js';
 import {addHours, getNow} from './../timestamp.js';
-import {VerifySignInCodeResponse} from './coordinator.js';
+import {type VerifySignInCodeResponse} from './coordinator.js';
 
 export interface AuthApiState {
     cx: DataTx;

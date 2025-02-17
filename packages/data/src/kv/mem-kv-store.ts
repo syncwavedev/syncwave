@@ -1,4 +1,4 @@
-import createTree, {Iterator, Tree} from 'functional-red-black-tree';
+import createTree, {type Iterator, type Tree} from 'functional-red-black-tree';
 import {encodeMsgpack} from '../codec.js';
 import {TXN_RETRIES_COUNT} from '../constants.js';
 import {context} from '../context.js';
@@ -6,12 +6,12 @@ import {AppError} from '../errors.js';
 import {toStream} from '../stream.js';
 import {compareUint8Array, unreachable, zip} from '../utils.js';
 import {
-    Condition,
-    Entry,
+    type Condition,
+    type Entry,
     InvalidQueryCondition,
-    Transaction,
-    Uint8KVStore,
-    Uint8Transaction,
+    type Transaction,
+    type Uint8KVStore,
+    type Uint8Transaction,
 } from './kv-store.js';
 
 interface Bound {

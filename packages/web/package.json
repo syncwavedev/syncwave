@@ -46,7 +46,6 @@
 		"tailwindcss-animate": "^1.0.7",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
-		"unplugin-swc": "^1.5.1",
 		"vite": "^5.4.11",
 		"vite-plugin-node-polyfills": "^0.23.0",
 		"vitest": "^2.1.8"

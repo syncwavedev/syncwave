@@ -90,9 +90,9 @@ export class WsConnection<T> implements Connection<T> {
                             );
                         } else {
                             const err = new AppError(
-                                'got message: ' + JSON.stringify(message)
+                                'got message: ' + JSON.stringify(message),
+                                {cause: toError(error)}
                             );
-                            err.cause = toError(error);
                             resolve(this.subject.throw(err));
                         }
                     }

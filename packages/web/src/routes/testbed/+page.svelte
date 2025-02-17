@@ -2,6 +2,7 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
 	import {
+		context,
 		Crdt,
 		parseCrdtDiff,
 		stringifyCrdtDiff,
@@ -37,6 +38,30 @@
 			);
 		}
 	}
+
+	$effect(() => {
+		const [ctx, cancel] = context().createChild({span: 'testbed'}, true);
+		ctx.run(() => {
+			const iter = (async function* () {
+				const before = context().traceId;
+				console.log('[testbed] before:', before);
+
+				await new Promise(r => setTimeout(r, 1000));
+
+				const after = context().traceId;
+				console.log('[testbed] after:', after);
+				console.log('[testbed] before === after:', before === after);
+			})();
+
+			(async () => {
+				for await (const x of iter) {
+					console.log('[testbed] value:', x);
+				}
+			})();
+		});
+
+		cancel('end of testbed effect');
+	});
 </script>
 
 <div class="flex flex-col gap-4">

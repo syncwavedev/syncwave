@@ -5,6 +5,7 @@
         "strictFunctionTypes": true,
         "esModuleInterop": true,
         "checkJs": true,
+        "allowJs": true,
         "noErrorTruncation": true,
         "declaration": true,
         "declarationMap": true,
@@ -25,7 +26,7 @@
         "module": "NodeNext",
         "moduleResolution": "nodenext",
         "lib": ["ES2020"],
-        "target": "ES2016" // we must use target before ES2017 because zone.js doesn't support native async / await
+        "target": "ES2020"
         // "noPropertyAccessFromIndexSignature": true,
         // "noUncheckedIndexedAccess": true
     },

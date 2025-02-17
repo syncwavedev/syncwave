@@ -47,7 +47,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
     const GOOGLE_CALLBACK_PATH = '/callbacks/google';
     if (STAGE === 'dev') {
         return {
-            LOG_LEVEL: 'trace' as const,
+            LOG_LEVEL: 'info' as const,
             APP_URL: 'https://dev.syncwave.dev',
             GOOGLE_REDIRECT_URL:
                 'https://api-dev.syncwave.dev' + GOOGLE_CALLBACK_PATH,

@@ -4,13 +4,13 @@ import {Resource} from '@opentelemetry/resources';
 import {
 	AlwaysOnSampler,
 	BasicTracerProvider,
-	SimpleSpanProcessor,
+	BatchSpanProcessor,
 	Tracer,
 } from '@opentelemetry/sdk-trace-base';
 import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
-const exporter = new SimpleSpanProcessor(
+const exporter = new BatchSpanProcessor(
 	new OTLPTraceExporter({
 		url: 'https://otlp.edme.io/v1/traces',
 	})

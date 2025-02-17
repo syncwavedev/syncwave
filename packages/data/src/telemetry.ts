@@ -4,7 +4,7 @@ import {Resource} from '@opentelemetry/resources';
 import {
     AlwaysOnSampler,
     BasicTracerProvider,
-    SimpleSpanProcessor,
+    BatchSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
@@ -16,11 +16,7 @@ const provider = new BasicTracerProvider({
         [ATTR_SERVICE_NAME]: 'syncwave-data',
     }),
     // spanProcessors: [new BatchSpanProcessor(new ConsoleSpanExporter())],
-    spanProcessors: [
-        new SimpleSpanProcessor(exporter),
-        // new SimpleSpanProcessor(new ConsoleSpanExporter()),
-    ],
-    // spanProcessors: [new SimpleSpanProcessor(exporter)],
+    spanProcessors: [new BatchSpanProcessor(exporter)],
     sampler: new AlwaysOnSampler(),
 });
 provider.register();

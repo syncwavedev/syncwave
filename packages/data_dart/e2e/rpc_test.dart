@@ -42,7 +42,7 @@ void main() {
         processors: [
           BatchSpanProcessor(
               CollectorExporter(Uri.parse('https://otlp.edme.io/v1/traces'))),
-          SimpleSpanProcessor(ConsoleExporter())
+          BatchSpanProcessor(ConsoleExporter())
         ]);
     registerGlobalTracerProvider(tracerProvider);
 

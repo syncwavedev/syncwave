@@ -12,7 +12,7 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 
 const exporter = new SimpleSpanProcessor(
     new OTLPTraceExporter({
-        url: 'http://127.0.0.1:4318/v1/traces',
+        url: 'https://otlp.edme.io:4318/v1/traces',
     })
 );
 

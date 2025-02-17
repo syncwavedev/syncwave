@@ -9,7 +9,7 @@ import {
 import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 const exporter = new OTLPTraceExporter({
-    url: 'http://127.0.0.1:4318/v1/traces',
+    url: 'https://otlp.edme.io:4318/v1/traces',
 });
 const provider = new BasicTracerProvider({
     resource: new Resource({

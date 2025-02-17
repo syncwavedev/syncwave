@@ -82,14 +82,20 @@ export class AsyncIteratorFactory<T> implements AsyncIterable<T> {
 
     close() {
         this.closed = true;
-        whenAll(
-            this.iterators.map(x => x.return?.()).filter(x => x !== undefined)
-        ).catch(error =>
-            log.error(
-                error,
-                'AsyncIteratorFactory.returnAll: failed to return all iterators'
+        Promise.resolve()
+            .then(() =>
+                whenAll(
+                    this.iterators
+                        .map(x => x.return?.())
+                        .filter(x => x !== undefined)
+                )
             )
-        );
+            .catch(error =>
+                log.error(
+                    error,
+                    'AsyncIteratorFactory.returnAll: failed to return all iterators'
+                )
+            );
     }
 
     private async *_createIterator(): AsyncIterator<T, any, any> {

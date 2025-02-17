@@ -42,11 +42,12 @@ export class HubClient<T> {
         );
     }
 
-    // next waits for all subscribers to do their work
+    // publish waits for all subscribers to do their work
     async publish(topic: string, message: T) {
         await this.server.publish({topic, message});
     }
 
+    // throw waits for all subscribers to do their work
     async throw(topic: string, error: string) {
         await this.server.throw({topic, error});
     }

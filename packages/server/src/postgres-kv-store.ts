@@ -63,7 +63,10 @@ class PostgresTransaction implements Uint8Transaction {
 
         try {
             while (true) {
-                const rows = await cursor.read(100);
+                const rows = (await cursor.read(100)) as Array<{
+                    key: Buffer;
+                    value: Buffer;
+                }>;
                 if (rows.length === 0) break;
 
                 for (const row of rows) {

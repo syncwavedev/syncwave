@@ -189,7 +189,7 @@ export function createWriteApi() {
                     deleted: false,
                     title: title,
                     boardPosition,
-                    version: 2,
+                    version: '3',
                 });
 
                 return await toColumnDto(st.tx, column.id);

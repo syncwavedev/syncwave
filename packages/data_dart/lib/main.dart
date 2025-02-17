@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:syncwave_data/message.dart';
-import 'package:syncwave_data/participant/client.dart';
-import 'package:syncwave_data/participant/dto.dart';
 
 import 'websocket_transport_client.dart';
 

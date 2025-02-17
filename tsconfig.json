@@ -2,10 +2,9 @@
     "compilerOptions": {
         "rootDir": ".",
         "outDir": "build",
-        "module": "NodeNext",
-        "moduleResolution": "nodenext",
         "strictFunctionTypes": true,
         "esModuleInterop": true,
+        "checkJs": true,
         "noErrorTruncation": true,
         "declaration": true,
         "declarationMap": true,
@@ -16,7 +15,6 @@
         "allowUnusedLabels": false,
         "forceConsistentCasingInFileNames": true,
         "allowSyntheticDefaultImports": true,
-        "lib": ["ES2022"],
         "noFallthroughCasesInSwitch": true,
         "noImplicitReturns": true,
         "pretty": true,
@@ -24,6 +22,9 @@
         "strict": true,
         "alwaysStrict": true,
         "strictNullChecks": true,
+        "module": "NodeNext",
+        "moduleResolution": "nodenext",
+        "lib": ["ES2020"],
         "target": "ES2016" // we must use target before ES2017 because zone.js doesn't support native async / await
         // "noPropertyAccessFromIndexSignature": true,
         // "noUncheckedIndexedAccess": true

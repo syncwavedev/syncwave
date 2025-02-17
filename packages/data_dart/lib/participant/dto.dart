@@ -579,7 +579,7 @@ class GetMeValueUser {
     List<String> pk;
     String state;
     double updatedAt;
-    Version version;
+    UserVersion version;
 
     GetMeValueUser({
         required this.createdAt,
@@ -600,7 +600,7 @@ class GetMeValueUser {
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: versionValues.map[json["version"]]!,
+        version: userVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -611,16 +611,16 @@ class GetMeValueUser {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
-        "version": versionValues.reverse[version],
+        "version": userVersionValues.reverse[version],
     };
 }
 
-enum Version {
+enum UserVersion {
     THE_4
 }
 
-final versionValues = EnumValues({
-    "4": Version.THE_4
+final userVersionValues = EnumValues({
+    "4": UserVersion.THE_4
 });
 
 class SendSignInEmailReq {
@@ -937,25 +937,49 @@ class GetBoardValue {
 
 class CreateColumnReq {
     String boardId;
+    CreateColumnReqBoardPosition boardPosition;
     String columnId;
     String title;
 
     CreateColumnReq({
         required this.boardId,
+        required this.boardPosition,
         required this.columnId,
         required this.title,
     });
 
     factory CreateColumnReq.fromJson(Map<String, dynamic> json) => CreateColumnReq(
         boardId: json["boardId"],
+        boardPosition: CreateColumnReqBoardPosition.fromJson(json["boardPosition"]),
         columnId: json["columnId"],
         title: json["title"],
     );
 
     Map<String, dynamic> toJson() => {
         "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
         "columnId": columnId,
         "title": title,
+    };
+}
+
+class CreateColumnReqBoardPosition {
+    String denominator;
+    String numerator;
+
+    CreateColumnReqBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory CreateColumnReqBoardPosition.fromJson(Map<String, dynamic> json) => CreateColumnReqBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 
@@ -971,6 +995,7 @@ class CreateColumnRes {
     String state;
     String title;
     double updatedAt;
+    CreateColumnResVersion version;
 
     CreateColumnRes({
         required this.authorId,
@@ -984,6 +1009,7 @@ class CreateColumnRes {
         required this.state,
         required this.title,
         required this.updatedAt,
+        required this.version,
     });
 
     factory CreateColumnRes.fromJson(Map<String, dynamic> json) => CreateColumnRes(
@@ -998,6 +1024,7 @@ class CreateColumnRes {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
+        version: createColumnResVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -1012,6 +1039,7 @@ class CreateColumnRes {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
+        "version": createColumnResVersionValues.reverse[version],
     };
 }
 
@@ -1083,6 +1111,14 @@ class CreateColumnResBoardPosition {
     };
 }
 
+enum CreateColumnResVersion {
+    THE_3
+}
+
+final createColumnResVersionValues = EnumValues({
+    "3": CreateColumnResVersion.THE_3
+});
+
 class CreateTaskReq {
     String boardId;
     String columnId;
@@ -1116,43 +1152,35 @@ class CreateTaskReq {
 }
 
 class Placement {
-    Position? position;
-    PlacementType type;
-    PositionA? positionA;
-    PositionB? positionB;
+    Next? next;
+    Prev? prev;
 
     Placement({
-        this.position,
-        required this.type,
-        this.positionA,
-        this.positionB,
+        this.next,
+        this.prev,
     });
 
     factory Placement.fromJson(Map<String, dynamic> json) => Placement(
-        position: json["position"] == null ? null : Position.fromJson(json["position"]),
-        type: placementTypeValues.map[json["type"]]!,
-        positionA: json["positionA"] == null ? null : PositionA.fromJson(json["positionA"]),
-        positionB: json["positionB"] == null ? null : PositionB.fromJson(json["positionB"]),
+        next: json["next"] == null ? null : Next.fromJson(json["next"]),
+        prev: json["prev"] == null ? null : Prev.fromJson(json["prev"]),
     );
 
     Map<String, dynamic> toJson() => {
-        "position": position?.toJson(),
-        "type": placementTypeValues.reverse[type],
-        "positionA": positionA?.toJson(),
-        "positionB": positionB?.toJson(),
+        "next": next?.toJson(),
+        "prev": prev?.toJson(),
     };
 }
 
-class Position {
+class Next {
     String denominator;
     String numerator;
 
-    Position({
+    Next({
         required this.denominator,
         required this.numerator,
     });
 
-    factory Position.fromJson(Map<String, dynamic> json) => Position(
+    factory Next.fromJson(Map<String, dynamic> json) => Next(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -1163,16 +1191,16 @@ class Position {
     };
 }
 
-class PositionA {
+class Prev {
     String denominator;
     String numerator;
 
-    PositionA({
+    Prev({
         required this.denominator,
         required this.numerator,
     });
 
-    factory PositionA.fromJson(Map<String, dynamic> json) => PositionA(
+    factory Prev.fromJson(Map<String, dynamic> json) => Prev(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -1182,40 +1210,6 @@ class PositionA {
         "numerator": numerator,
     };
 }
-
-class PositionB {
-    String denominator;
-    String numerator;
-
-    PositionB({
-        required this.denominator,
-        required this.numerator,
-    });
-
-    factory PositionB.fromJson(Map<String, dynamic> json) => PositionB(
-        denominator: json["denominator"],
-        numerator: json["numerator"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "denominator": denominator,
-        "numerator": numerator,
-    };
-}
-
-enum PlacementType {
-    AFTER,
-    BEFORE,
-    BETWEEN,
-    RANDOM
-}
-
-final placementTypeValues = EnumValues({
-    "after": PlacementType.AFTER,
-    "before": PlacementType.BEFORE,
-    "between": PlacementType.BETWEEN,
-    "random": PlacementType.RANDOM
-});
 
 class CreateTaskRes {
     String authorId;
@@ -1373,6 +1367,7 @@ class ColumnElement {
     List<TaskElement> tasks;
     String title;
     double updatedAt;
+    CreateColumnResVersion version;
 
     ColumnElement({
         required this.authorId,
@@ -1386,6 +1381,7 @@ class ColumnElement {
         required this.tasks,
         required this.title,
         required this.updatedAt,
+        required this.version,
     });
 
     factory ColumnElement.fromJson(Map<String, dynamic> json) => ColumnElement(
@@ -1400,6 +1396,7 @@ class ColumnElement {
         tasks: List<TaskElement>.from(json["tasks"].map((x) => TaskElement.fromJson(x))),
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
+        version: createColumnResVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -1414,6 +1411,7 @@ class ColumnElement {
         "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
         "title": title,
         "updatedAt": updatedAt,
+        "version": createColumnResVersionValues.reverse[version],
     };
 }
 
@@ -1565,6 +1563,7 @@ class PurpleColumn {
     String state;
     String title;
     double updatedAt;
+    CreateColumnResVersion version;
 
     PurpleColumn({
         required this.authorId,
@@ -1578,6 +1577,7 @@ class PurpleColumn {
         required this.state,
         required this.title,
         required this.updatedAt,
+        required this.version,
     });
 
     factory PurpleColumn.fromJson(Map<String, dynamic> json) => PurpleColumn(
@@ -1592,6 +1592,7 @@ class PurpleColumn {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
+        version: createColumnResVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -1606,6 +1607,7 @@ class PurpleColumn {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
+        "version": createColumnResVersionValues.reverse[version],
     };
 }
 
@@ -1859,7 +1861,7 @@ class CreateCommentResAuthor {
     List<String> pk;
     String state;
     double updatedAt;
-    Version version;
+    UserVersion version;
 
     CreateCommentResAuthor({
         required this.createdAt,
@@ -1880,7 +1882,7 @@ class CreateCommentResAuthor {
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: versionValues.map[json["version"]]!,
+        version: userVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -1891,7 +1893,7 @@ class CreateCommentResAuthor {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
-        "version": versionValues.reverse[version],
+        "version": userVersionValues.reverse[version],
     };
 }
 
@@ -2023,6 +2025,7 @@ class FluffyColumn {
     String state;
     String title;
     double updatedAt;
+    CreateColumnResVersion version;
 
     FluffyColumn({
         required this.authorId,
@@ -2036,6 +2039,7 @@ class FluffyColumn {
         required this.state,
         required this.title,
         required this.updatedAt,
+        required this.version,
     });
 
     factory FluffyColumn.fromJson(Map<String, dynamic> json) => FluffyColumn(
@@ -2050,6 +2054,7 @@ class FluffyColumn {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
+        version: createColumnResVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2064,6 +2069,7 @@ class FluffyColumn {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
+        "version": createColumnResVersionValues.reverse[version],
     };
 }
 
@@ -2257,7 +2263,7 @@ class GetTaskCommentsValueAuthor {
     List<String> pk;
     String state;
     double updatedAt;
-    Version version;
+    UserVersion version;
 
     GetTaskCommentsValueAuthor({
         required this.createdAt,
@@ -2278,7 +2284,7 @@ class GetTaskCommentsValueAuthor {
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: versionValues.map[json["version"]]!,
+        version: userVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2289,7 +2295,7 @@ class GetTaskCommentsValueAuthor {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
-        "version": versionValues.reverse[version],
+        "version": userVersionValues.reverse[version],
     };
 }
 
@@ -2421,6 +2427,7 @@ class TentacledColumn {
     String state;
     String title;
     double updatedAt;
+    CreateColumnResVersion version;
 
     TentacledColumn({
         required this.authorId,
@@ -2434,6 +2441,7 @@ class TentacledColumn {
         required this.state,
         required this.title,
         required this.updatedAt,
+        required this.version,
     });
 
     factory TentacledColumn.fromJson(Map<String, dynamic> json) => TentacledColumn(
@@ -2448,6 +2456,7 @@ class TentacledColumn {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
+        version: createColumnResVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2462,6 +2471,7 @@ class TentacledColumn {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
+        "version": createColumnResVersionValues.reverse[version],
     };
 }
 
@@ -2699,7 +2709,7 @@ class CreateMemberResUser {
     List<String> pk;
     String state;
     double updatedAt;
-    Version version;
+    UserVersion version;
 
     CreateMemberResUser({
         required this.createdAt,
@@ -2720,7 +2730,7 @@ class CreateMemberResUser {
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: versionValues.map[json["version"]]!,
+        version: userVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2731,7 +2741,7 @@ class CreateMemberResUser {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
-        "version": versionValues.reverse[version],
+        "version": userVersionValues.reverse[version],
     };
 }
 
@@ -2889,7 +2899,7 @@ class GetBoardMembersValueUser {
     List<String> pk;
     String state;
     double updatedAt;
-    Version version;
+    UserVersion version;
 
     GetBoardMembersValueUser({
         required this.createdAt,
@@ -2910,7 +2920,7 @@ class GetBoardMembersValueUser {
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: versionValues.map[json["version"]]!,
+        version: userVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2921,7 +2931,7 @@ class GetBoardMembersValueUser {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
-        "version": versionValues.reverse[version],
+        "version": userVersionValues.reverse[version],
     };
 }
 

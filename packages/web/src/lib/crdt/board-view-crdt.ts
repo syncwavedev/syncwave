@@ -28,15 +28,11 @@ export class BoardViewCrdt {
 	snapshot(): BoardViewDto {
 		return {
 			...this.board,
-			columns: this.columns
-				.snapshot()
-				.values()
-				.map((column): BoardViewColumnDto => {
+			columns: [...this.columns.snapshot().values()].map(
+				(column): BoardViewColumnDto => {
 					return {
 						...column,
-						tasks: this.tasks
-							.snapshot()
-							.values()
+						tasks: [...this.tasks.snapshot().values()]
 							.filter(task => task.columnId === column.id)
 							.map(
 								(task): BoardViewTaskDto => ({
@@ -47,11 +43,10 @@ export class BoardViewCrdt {
 										board: this.board,
 									},
 								})
-							)
-							.toArray(),
+							),
 					};
-				})
-				.toArray(),
+				}
+			),
 		};
 	}
 

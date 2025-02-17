@@ -34,8 +34,14 @@ export class Subject<T> {
         const sub: Subscriber<T> = {observer, context: context()};
 
         this.subs.push(sub);
-        return () => {
+        const cleanup = () => {
             this.subs = this.subs.filter(x => x !== sub);
+        };
+        const cancelCleanup = context().onEnd(() => cleanup());
+
+        return () => {
+            cancelCleanup();
+            cleanup();
         };
     }
 
@@ -56,9 +62,8 @@ export class Subject<T> {
     async next(value: T): Promise<void> {
         this.ensureOpen();
 
-        // copy in case if new subscribers are added/removed during notification
         await whenAll(
-            [...this.subs].map(sub =>
+            this.subs.map(sub =>
                 sub.context.run(() => sub.observer.next(value))
             )
         );
@@ -66,9 +71,8 @@ export class Subject<T> {
 
     async throw(error: AppError): Promise<void> {
         this.ensureOpen();
-        // copy in case if new subscribers are added/removed during notification
         await whenAll(
-            [...this.subs].map(sub =>
+            this.subs.map(sub =>
                 sub.context.run(() => sub.observer.throw(error))
             )
         );

@@ -34,7 +34,9 @@ export class SetCrdt<
 	apply(remote: Set<T>) {
 		// remove
 		this.items = this.items.filter(local =>
-			remote.values().some(remote => remote.id === local.snapshot().id)
+			[...remote.values()].some(
+				remote => remote.id === local.snapshot().id
+			)
 		);
 
 		for (const item of remote) {

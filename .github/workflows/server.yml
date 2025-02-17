@@ -5,6 +5,7 @@ on:
             - packages/server/**
             - packages/data/**
             - .github/workflows/server.yml
+            - tsconfig.json
     workflow_dispatch:
         inputs:
             STAGE:

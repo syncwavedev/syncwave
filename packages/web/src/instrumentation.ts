@@ -12,7 +12,7 @@ import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 const exporter = new SimpleSpanProcessor(
 	new OTLPTraceExporter({
-		url: 'https://otlp.edme.io:4318/v1/traces',
+		url: 'https://otlp.edme.io/v1/traces',
 	})
 );
 

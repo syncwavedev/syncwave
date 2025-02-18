@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {zBigFloat} from '../../big-float.js';
+import {toBigFloat, zBigFloat} from '../../big-float.js';
 import {parseCrdtDiff, zCrdtDiffString} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
@@ -27,6 +27,7 @@ import {
 } from '../repos/member-repo.js';
 import {type Task, type TaskId, zTask} from '../repos/task-repo.js';
 import {type User, type UserId} from '../repos/user-repo.js';
+import {createReadonlyTransitionChecker} from '../transition-checker.js';
 
 export class WriteApiState {
     constructor(
@@ -136,6 +137,9 @@ export function createWriteApi() {
                         updatedAt: now,
                         deleted: false,
                         role,
+                        version: '2',
+                        // todo: add to the beginning of the user list
+                        position: toBigFloat(Math.random()),
                     });
                 }
 
@@ -256,6 +260,9 @@ export function createWriteApi() {
                     userId: userId,
                     deleted: false,
                     role: 'owner',
+                    // todo: add to the beginning of the user list
+                    position: toBigFloat(Math.random()),
+                    version: '2',
                 });
 
                 return board;
@@ -297,6 +304,25 @@ export function createWriteApi() {
                     parseCrdtDiff(diff)
                 );
                 await st.ps.ensureColumnMember(result.columnId, 'writer');
+                return {};
+            },
+        }),
+        applyMemberDiff: handler({
+            req: z.object({
+                memberId: zUuid<MemberId>(),
+                diff: zCrdtDiffString<Member>(),
+            }),
+            res: z.object({}),
+            handle: async (st, {memberId, diff}) => {
+                await st.ps.ensureMember(memberId);
+                const result = await st.tx.members.apply(
+                    memberId,
+                    parseCrdtDiff(diff),
+                    createReadonlyTransitionChecker({
+                        // we allow only position updates
+                        position: false,
+                    })
+                );
                 return {};
             },
         }),

@@ -4,7 +4,12 @@ import type {DataTx} from './data-layer.js';
 import type {BoardId} from './repos/board-repo.js';
 import type {ColumnId} from './repos/column-repo.js';
 import type {CommentId} from './repos/comment-repo.js';
-import {type Member, type MemberRole, ROLE_ORDER} from './repos/member-repo.js';
+import {
+    type Member,
+    type MemberId,
+    type MemberRole,
+    ROLE_ORDER,
+} from './repos/member-repo.js';
 import type {TaskId} from './repos/task-repo.js';
 import type {UserId} from './repos/user-repo.js';
 
@@ -96,6 +101,21 @@ export class PermissionService {
             );
         }
         return await this.ensureBoardMember(task.boardId, minimum);
+    }
+
+    async ensureMember(memberId: MemberId): Promise<Member> {
+        const member = await this.tx().members.getById(memberId, true);
+
+        if (!member) {
+            throw new BusinessError(
+                `member ${memberId} doesn't exist`,
+                'member_not_found'
+            );
+        }
+
+        await this.ensureUser(member.userId);
+
+        return member;
     }
 
     async ensureCommentMember(

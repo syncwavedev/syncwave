@@ -269,13 +269,18 @@ export class DocRepo<T extends Doc<IndexKey>> {
     }
 
     // todo: add tests
-    async apply(pk: IndexKey, diff: CrdtDiff<T>) {
+    async apply(
+        pk: IndexKey,
+        diff: CrdtDiff<T>,
+        transitionChecker?: TransitionChecker<T>
+    ) {
         const existingDoc: Crdt<T> | undefined = await this._get(pk);
         return await this._apply({
             pk,
             existingDoc,
             diff,
             skipTransitionCheck: false,
+            transitionChecker,
         });
     }
 
@@ -285,6 +290,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         existingDoc: Crdt<T> | undefined;
         diff: CrdtDiff<T>;
         skipTransitionCheck: boolean;
+        transitionChecker?: TransitionChecker<T>;
     }): Promise<T> {
         let prev: T | undefined;
         let next: Crdt<T>;
@@ -306,6 +312,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
             next,
             diff: params.diff,
             skipTransitionCheck: params.skipTransitionCheck,
+            transitionChecker: params.transitionChecker,
         });
 
         return next.snapshot();
@@ -377,6 +384,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         next: Crdt<T>;
         diff: CrdtDiff<T>;
         skipTransitionCheck: boolean;
+        transitionChecker?: TransitionChecker<T>;
     }): Promise<void> {
         const nextSnapshot = params.next.snapshot();
         this.schema.parse(nextSnapshot);
@@ -384,6 +392,8 @@ export class DocRepo<T extends Doc<IndexKey>> {
             params.skipTransitionCheck
                 ? Promise.resolve()
                 : this.transitionChecker(params.prev, nextSnapshot),
+            params.transitionChecker?.(params.prev, nextSnapshot) ??
+                Promise.resolve(),
             this.primary.put(nextSnapshot.pk, params.next),
             ...[...this.indexes.values()].map(x =>
                 x.sync(params.prev, nextSnapshot)

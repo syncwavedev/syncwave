@@ -1,14 +1,10 @@
 <script lang="ts">
 	import {flip} from 'svelte/animate';
 	import {dndzone, type DndEvent} from 'svelte-dnd-action';
-	import type {
-		BoardViewColumnDto,
-		BoardViewDto,
-		BoardViewTaskDto,
-		ColumnId,
-	} from 'syncwave-data';
+	import type {BoardViewColumnDto, BoardViewTaskDto} from 'syncwave-data';
+	import {Button} from '$lib/components/ui/button';
 
-	export let flipDurationMs: number;
+	const flipDurationMs = 0;
 	export let handleDndConsiderColumns: (
 		e: CustomEvent<DndEvent<BoardViewColumnDto>>
 	) => void;
@@ -28,78 +24,68 @@
 </script>
 
 <section
-	class="board"
 	use:dndzone={{
 		items: columns,
 		flipDurationMs,
 		type: 'columns',
+		dropTargetStyle: {},
 	}}
 	on:consider={handleDndConsiderColumns}
 	on:finalize={handleDndFinalizeColumns}
+	class="flex gap-4"
 >
 	{#each columns as column (column.id)}
-		<div class="column" animate:flip={{duration: flipDurationMs}}>
-			<div class="column-title">{column.title}</div>
+		<div
+			class="flex w-[220px] flex-col bg-white text-xs"
+			animate:flip={{duration: flipDurationMs}}
+		>
 			<div
-				class="column-content"
+				class="text-ink-body sticky top-0 mb-2 mt-2 bg-white px-2 text-sm"
+			>
+				{column.title}
+			</div>
+			<div
+				class="flex h-full flex-col pb-20"
 				use:dndzone={{
 					items: column.tasks,
 					flipDurationMs,
 					type: 'cards',
+					dropTargetStyle: {},
 				}}
 				on:consider={e => handleDndConsiderCards(column, e)}
 				on:finalize={e => handleDndFinalizeCards(column, e)}
 			>
 				{#each column.tasks as task (task.id)}
-					<div class="card" animate:flip={{duration: flipDurationMs}}>
-						{task.title}
+					<div
+						animate:flip={{duration: flipDurationMs}}
+						class="group pb-2"
+					>
+						<div
+							class="bg-subtle-3 hover:bg-subtle-3 flex w-full flex-col gap-1 rounded-lg bg-gray-100 p-1.5 group-hover:bg-gray-200"
+						>
+							<span class="text-ink truncate">{task.title}</span>
+							<div
+								class="flex items-center justify-between gap-0.5"
+							>
+								<span class="text-3xs text-ink-detail">
+									{task.board.key}-{task.counter}
+								</span>
+								<span class="text-[1.25rem]">
+									<div
+										class="border-border bg-bg grid h-[1em] w-[1em] place-items-center rounded-full border"
+									>
+										<div
+											class="text-[0.45em] font-semibold"
+										>
+											D
+										</div>
+									</div>
+								</span>
+							</div>
+						</div>
 					</div>
 				{/each}
 			</div>
 		</div>
 	{/each}
 </section>
-
-<style>
-	.board {
-		height: 90vh;
-		width: 100%;
-		padding: 0.5em;
-		margin-bottom: 40px;
-	}
-	.column {
-		height: 100%;
-		width: 250px;
-		padding: 0.5em;
-		background-color: white;
-		margin: 1em;
-		float: left;
-		display: flex;
-		flex-direction: column;
-		border: 1px solid #333333;
-		/*Notice we make sure this container doesn't scroll so that the title stays on top and the dndzone inside is scrollable*/
-		overflow-y: hidden;
-	}
-	.column-content {
-		min-height: 0;
-		flex: 1;
-		/* Notice that the scroll container needs to be the dndzone if you want dragging near the edge to trigger scrolling */
-		overflow-y: scroll;
-	}
-	.column-title {
-		margin-bottom: 1em;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
-	.card {
-		height: 15%;
-		width: 100%;
-		margin: 0.4em 0;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		background-color: #dddddd;
-		border: 1px solid #333333;
-	}
-</style>

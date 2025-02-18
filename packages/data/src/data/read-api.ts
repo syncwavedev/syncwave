@@ -13,15 +13,16 @@ import {
     userEvents,
 } from './data-layer.js';
 import {
-    toBoardDto,
     toBoardViewDto,
     toCommentDto,
     toMemberAdminDto,
+    toMemberDto,
     toUserDto,
     zBoardDto,
     zBoardViewDto,
     zCommentDto,
     zMemberAdminDto,
+    zMemberDto,
     zUserDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
@@ -80,9 +81,9 @@ export function createReadApi() {
                 });
             },
         }),
-        getMyBoards: streamer({
+        getMyMembers: streamer({
             req: z.object({}),
-            item: z.array(zBoardDto()),
+            item: z.array(zMemberDto()),
             async *stream(st) {
                 const userId = st.ensureAuthenticated();
 
@@ -95,7 +96,7 @@ export function createReadApi() {
                             );
                             return await toStream(members)
                                 .mapParallel(member =>
-                                    toBoardDto(tx, member.boardId)
+                                    toMemberDto(tx, member.id)
                                 )
                                 .filter(x => !x.deleted)
                                 .toArray();

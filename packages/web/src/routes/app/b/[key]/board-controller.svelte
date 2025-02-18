@@ -14,13 +14,10 @@
 	} from 'svelte-dnd-action';
 	import BoardView from './board-view.svelte';
 	import {BoardViewCrdt} from '$lib/crdt/board-view-crdt';
-	import {
-		compareBigFloat,
-		type BigFloat,
-	} from '../../../../../../data/dist/esm/src/big-float';
+	import {compareBigFloat, type BigFloat} from 'syncwave-data';
 	import {getSdk} from '$lib/utils';
-	import {findMoved} from '$lib/move';
 	import {untrack} from 'svelte';
+	import {findMoved} from '$lib/dnd';
 
 	let {board: remoteBoard}: {board: BoardViewDto} = $props();
 
@@ -181,7 +178,6 @@
 
 <BoardView
 	columns={dndColumns}
-	flipDurationMs={100}
 	handleDndConsiderCards={setTasks}
 	handleDndFinalizeCards={setTasks}
 	handleDndConsiderColumns={setColumns}

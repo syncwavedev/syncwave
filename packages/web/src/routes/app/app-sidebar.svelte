@@ -1,24 +1,24 @@
 <script lang="ts">
-	import NavBoards from './nav-boards.svelte';
 	import NavUser from './nav-user.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import type {ComponentProps} from 'svelte';
 	import NewBoardMenu from './new-board-menu.svelte';
 	import {observe, type Observable} from '$lib/utils.svelte';
-	import type {Board, BoardDto, Identity, User, UserDto} from 'syncwave-data';
+	import type {Identity, MemberDto, UserDto} from 'syncwave-data';
+	import NavMemberListController from './nav-member-list-controller.svelte';
 
 	let {
-		initialBoards,
+		initialMyMembers,
 		initialMe,
 		ref = $bindable(null),
 		collapsible = 'icon',
 		...restProps
 	}: ComponentProps<typeof Sidebar.Root> & {
-		initialBoards: BoardDto[];
+		initialMyMembers: MemberDto[];
 		initialMe: {user: UserDto; identity: Identity};
 	} = $props();
 
-	const boards = observe(initialBoards, x => x.getMyBoards({}));
+	const members = observe(initialMyMembers, x => x.getMyMembers({}));
 	const me = observe(initialMe, x => x.getMe({}));
 </script>
 
@@ -28,8 +28,7 @@
 	</Sidebar.Header>
 	<Sidebar.Content>
 		<Sidebar.Group>
-			<Sidebar.GroupLabel>Boards</Sidebar.GroupLabel>
-			<NavBoards boards={boards.value} />
+			<NavMemberListController members={members.value} />
 		</Sidebar.Group>
 	</Sidebar.Content>
 	<Sidebar.Footer>

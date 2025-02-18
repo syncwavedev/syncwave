@@ -6,7 +6,7 @@ import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
 import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
 import {type CommentId, zComment} from './repos/comment-repo.js';
 import {type IdentityId, zIdentity} from './repos/identity-repo.js';
-import {type MemberId, zMember} from './repos/member-repo.js';
+import {type Member, type MemberId, zMember} from './repos/member-repo.js';
 import {type Task, type TaskId, zTask} from './repos/task-repo.js';
 import {type User, type UserId, zUser} from './repos/user-repo.js';
 
@@ -144,6 +144,7 @@ export function zMemberDto() {
     return zMember().extend({
         user: zUserDto(),
         board: zBoardDto(),
+        state: zCrdtDiffString<Member>(),
     });
 }
 

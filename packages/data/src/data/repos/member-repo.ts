@@ -1,10 +1,11 @@
 import {z} from 'zod';
+import {type BigFloat, toBigFloat, zBigFloat} from '../../big-float.js';
 import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
 import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
-import {type Brand} from '../../utils.js';
+import {type Brand, unreachable} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
 import {
     type Doc,
@@ -13,6 +14,7 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {type BoardId, BoardRepo} from './board-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
@@ -42,12 +44,24 @@ export const ROLE_ORDER: Record<MemberRole, number> = {
 
 export const MEMBER_ROLES = Object.keys(ROLE_ORDER) as MemberRole[];
 
-export interface Member extends Doc<[MemberId]> {
+interface MemberV1 extends Doc<[MemberId]> {
     readonly id: MemberId;
     readonly userId: UserId;
     readonly boardId: BoardId;
     role: MemberRole;
 }
+
+export interface MemberV2 extends Doc<[MemberId]> {
+    readonly id: MemberId;
+    readonly userId: UserId;
+    readonly boardId: BoardId;
+    readonly version: '2';
+    role: MemberRole;
+    position: BigFloat;
+}
+
+export type Member = MemberV2;
+type StoredMember = MemberV1 | MemberV2;
 
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
@@ -58,6 +72,8 @@ export function zMember() {
         userId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
         role: zMemberRole(),
+        version: z.literal('2'),
+        position: zBigFloat(),
     });
 }
 
@@ -81,6 +97,20 @@ export class MemberRepo {
                 [BOARD_ID_INDEX]: x => [x.boardId],
             },
             schema: zMember(),
+            upgrade: function upgrade(doc: StoredMember): void {
+                if ('version' in doc) {
+                    if (doc.version === '2') {
+                        // latest version
+                    } else {
+                        unreachable();
+                    }
+                } else {
+                    (doc as any).version = '2';
+                    (doc as any).position = toBigFloat(Math.random());
+
+                    upgrade(doc);
+                }
+            },
             constraints: [
                 {
                     name: 'member.userId fk',
@@ -111,14 +141,13 @@ export class MemberRepo {
                 id: true,
                 userId: true,
                 role: false,
+                version: true,
+                position: false,
             },
         });
     }
 
-    async getById(
-        id: MemberId,
-        includeDeleted: boolean
-    ): Promise<Member | undefined> {
+    async getById(id: MemberId, includeDeleted: boolean) {
         return await this.rawRepo.getById([id], includeDeleted);
     }
 
@@ -152,8 +181,12 @@ export class MemberRepo {
         return result;
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Member>) {
-        return await this.rawRepo.apply([id], diff);
+    async apply(
+        id: Uuid,
+        diff: CrdtDiff<Member>,
+        checker: TransitionChecker<Member>
+    ) {
+        return await this.rawRepo.apply([id], diff, checker);
     }
 
     async create(member: Omit<Member, 'pk'>): Promise<Member> {

@@ -97,7 +97,7 @@ export function createParticipantApi() {
         createBoard: proxy('createBoard'),
         verifySignInCode: proxy('verifySignInCode'),
         deleteDbItem: proxy('deleteDbItem'),
-        getMyBoards: proxy('getMyBoards'),
+        getMyMembers: proxy('getMyMembers'),
         getBoard: proxy('getBoard'),
         createColumn: proxy('createColumn'),
         createTask: proxy('createTask'),
@@ -116,6 +116,7 @@ export function createParticipantApi() {
         applyBoardDiff: proxy('applyBoardDiff'),
         applyColumnDiff: proxy('applyColumnDiff'),
         applyTaskDiff: proxy('applyTaskDiff'),
+        applyMemberDiff: proxy('applyMemberDiff'),
     });
 }
 

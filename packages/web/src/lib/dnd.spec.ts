@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
-import {findMoved} from './move';
+import {findMoved} from './dnd';
 
-describe('move', () => {
+describe('dnd', () => {
 	interface Testcase {
 		name: string;
 		before: number[];

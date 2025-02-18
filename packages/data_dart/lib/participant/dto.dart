@@ -831,6 +831,7 @@ class GetMyBoardsValue {
     String key;
     String name;
     List<String> pk;
+    GetMyBoardsValuePosition position;
     String state;
     double updatedAt;
 
@@ -842,6 +843,7 @@ class GetMyBoardsValue {
         required this.key,
         required this.name,
         required this.pk,
+        required this.position,
         required this.state,
         required this.updatedAt,
     });
@@ -854,6 +856,7 @@ class GetMyBoardsValue {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        position: GetMyBoardsValuePosition.fromJson(json["position"]),
         state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -866,8 +869,29 @@ class GetMyBoardsValue {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "position": position.toJson(),
         "state": state,
         "updatedAt": updatedAt,
+    };
+}
+
+class GetMyBoardsValuePosition {
+    String denominator;
+    String numerator;
+
+    GetMyBoardsValuePosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory GetMyBoardsValuePosition.fromJson(Map<String, dynamic> json) => GetMyBoardsValuePosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 
@@ -2608,10 +2632,12 @@ class CreateMemberRes {
     bool deleted;
     String id;
     List<String> pk;
+    CreateMemberResPosition position;
     Role role;
     double updatedAt;
     CreateMemberResUser user;
     String userId;
+    CreateMemberResVersion version;
 
     CreateMemberRes({
         required this.board,
@@ -2620,10 +2646,12 @@ class CreateMemberRes {
         required this.deleted,
         required this.id,
         required this.pk,
+        required this.position,
         required this.role,
         required this.updatedAt,
         required this.user,
         required this.userId,
+        required this.version,
     });
 
     factory CreateMemberRes.fromJson(Map<String, dynamic> json) => CreateMemberRes(
@@ -2633,10 +2661,12 @@ class CreateMemberRes {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        position: CreateMemberResPosition.fromJson(json["position"]),
         role: roleValues.map[json["role"]]!,
         updatedAt: json["updatedAt"]?.toDouble(),
         user: CreateMemberResUser.fromJson(json["user"]),
         userId: json["userId"],
+        version: createMemberResVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2646,10 +2676,12 @@ class CreateMemberRes {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "position": position.toJson(),
         "role": roleValues.reverse[role],
         "updatedAt": updatedAt,
         "user": user.toJson(),
         "userId": userId,
+        "version": createMemberResVersionValues.reverse[version],
     };
 }
 
@@ -2701,6 +2733,26 @@ class CreateMemberResBoard {
     };
 }
 
+class CreateMemberResPosition {
+    String denominator;
+    String numerator;
+
+    CreateMemberResPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory CreateMemberResPosition.fromJson(Map<String, dynamic> json) => CreateMemberResPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
 class CreateMemberResUser {
     double createdAt;
     bool deleted;
@@ -2744,6 +2796,14 @@ class CreateMemberResUser {
         "version": userVersionValues.reverse[version],
     };
 }
+
+enum CreateMemberResVersion {
+    THE_2
+}
+
+final createMemberResVersionValues = EnumValues({
+    "2": CreateMemberResVersion.THE_2
+});
 
 class DeleteMemberReq {
     String memberId;
@@ -2795,10 +2855,12 @@ class GetBoardMembersValue {
     String id;
     dynamic identity;
     List<String> pk;
+    GetBoardMembersValuePosition position;
     Role role;
     double updatedAt;
     GetBoardMembersValueUser user;
     String userId;
+    CreateMemberResVersion version;
 
     GetBoardMembersValue({
         required this.board,
@@ -2808,10 +2870,12 @@ class GetBoardMembersValue {
         required this.id,
         this.identity,
         required this.pk,
+        required this.position,
         required this.role,
         required this.updatedAt,
         required this.user,
         required this.userId,
+        required this.version,
     });
 
     factory GetBoardMembersValue.fromJson(Map<String, dynamic> json) => GetBoardMembersValue(
@@ -2822,10 +2886,12 @@ class GetBoardMembersValue {
         id: json["id"],
         identity: json["identity"],
         pk: List<String>.from(json["pk"].map((x) => x)),
+        position: GetBoardMembersValuePosition.fromJson(json["position"]),
         role: roleValues.map[json["role"]]!,
         updatedAt: json["updatedAt"]?.toDouble(),
         user: GetBoardMembersValueUser.fromJson(json["user"]),
         userId: json["userId"],
+        version: createMemberResVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2836,10 +2902,12 @@ class GetBoardMembersValue {
         "id": id,
         "identity": identity,
         "pk": List<dynamic>.from(pk.map((x) => x)),
+        "position": position.toJson(),
         "role": roleValues.reverse[role],
         "updatedAt": updatedAt,
         "user": user.toJson(),
         "userId": userId,
+        "version": createMemberResVersionValues.reverse[version],
     };
 }
 
@@ -2888,6 +2956,26 @@ class GetBoardMembersValueBoard {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardMembersValuePosition {
+    String denominator;
+    String numerator;
+
+    GetBoardMembersValuePosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory GetBoardMembersValuePosition.fromJson(Map<String, dynamic> json) => GetBoardMembersValuePosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
     };
 }
 

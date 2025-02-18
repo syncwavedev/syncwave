@@ -48,7 +48,6 @@
         "quicktype-core": "^23.0.171",
         "rimraf": "^6.0.1",
         "tsx": "^4.17.0",
-        "typedoc": "^0.26.5",
         "vitest": "^1.6.0",
         "zod-to-json-schema": "^3.24.1"
     },
@@ -70,7 +69,6 @@
         "pino": "^9.6.0",
         "seedrandom": "^3.0.5",
         "typescript": "^5.7.0",
-        "uninstall": "^0.0.0",
         "uuid": "^11.0.3",
         "yjs": "^13.6.20",
         "zod": "^3.24.1"

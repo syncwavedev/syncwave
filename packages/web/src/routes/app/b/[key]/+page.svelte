@@ -11,7 +11,7 @@
 	import {createColumnId} from 'syncwave-data';
 	import {goto} from '$app/navigation';
 	import ColumnCard from './column-card.svelte';
-	import Board from './board.svelte';
+	import BoardController from './board-controller.svelte';
 	import {toBigFloat} from '../../../../../../data/dist/esm/src/big-float';
 
 	const {data} = $props();
@@ -63,6 +63,9 @@
 		</Breadcrumb.Root>
 	</div>
 </header>
+
+<BoardController board={board.value} />
+
 <div class="flex flex-col gap-4 p-4">
 	<div>
 		Board {board.value.id} - {board.value.createdAt}
@@ -84,5 +87,3 @@
 		{/each}
 	</div>
 </div>
-
-<Board board={board.value} />

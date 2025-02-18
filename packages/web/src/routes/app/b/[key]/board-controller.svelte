@@ -12,7 +12,7 @@
 		SHADOW_ITEM_MARKER_PROPERTY_NAME,
 		type DndEvent,
 	} from 'svelte-dnd-action';
-	import BoardInner from './board-inner.svelte';
+	import BoardView from './board-view.svelte';
 	import {BoardViewCrdt} from '$lib/crdt/board-view-crdt';
 	import {
 		compareBigFloat,
@@ -179,7 +179,7 @@
 	}
 </script>
 
-<BoardInner
+<BoardView
 	columns={dndColumns}
 	flipDurationMs={100}
 	handleDndConsiderCards={setTasks}

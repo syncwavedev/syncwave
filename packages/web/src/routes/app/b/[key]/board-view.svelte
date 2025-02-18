@@ -4,7 +4,7 @@
 	import type {BoardViewColumnDto, BoardViewTaskDto} from 'syncwave-data';
 	import {Button} from '$lib/components/ui/button';
 
-	const flipDurationMs = 0;
+	const flipDurationMs = 100;
 	export let handleDndConsiderColumns: (
 		e: CustomEvent<DndEvent<BoardViewColumnDto>>
 	) => void;

@@ -3,7 +3,7 @@ import {
     Crdt,
     CrdtCodec,
     type CrdtDiff,
-    type CrdtDiffString,
+    type CrdtDiffBase64,
     stringifyCrdtDiff,
 } from '../crdt/crdt.js';
 import {AppError} from '../errors.js';
@@ -93,7 +93,7 @@ export interface DocStoreOptions<T extends Doc<IndexKey>> {
 
 export type Recipe<T> = (doc: T) => Nothing;
 
-export type CrdtDoc<T> = T & {state: CrdtDiffString<T>};
+export type CrdtDoc<T> = T & {state: CrdtDiffBase64<T>};
 
 export class DocRepo<T extends Doc<IndexKey>> {
     private readonly indexes: Map<string, Index<T>>;

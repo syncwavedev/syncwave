@@ -2,12 +2,12 @@ import {
 	assert,
 	Crdt,
 	stringifyCrdtDiff,
-	type CrdtDiffString,
+	type CrdtDiffBase64,
 	type Recipe,
 } from 'syncwave-data';
 
 export class SetCrdt<
-	T extends {id: string; state: CrdtDiffString<Omit<T, 'state'>>},
+	T extends {id: string; state: CrdtDiffBase64<Omit<T, 'state'>>},
 > {
 	private items: Array<Crdt<Omit<T, 'state'>>>;
 

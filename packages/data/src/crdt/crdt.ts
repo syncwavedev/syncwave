@@ -7,7 +7,7 @@ import {
     Text as YText,
 } from 'yjs';
 import {z} from 'zod';
-import {type Base64, decodeBase64, encodeBase64} from '../base64.js';
+import {type Base64, decodeBase64, encodeBase64, zBase64} from '../base64.js';
 import {
     type Codec,
     decodeMsgpack,
@@ -34,22 +34,22 @@ export interface CrdtDiff<T> {
 
 export type CrdtDiffPayload<T> = Brand<Uint8Array, [T, 'crdt_diff_buffer']>;
 
-export type CrdtDiffString<T> = Brand<Base64, [T, 'crdt_diff_string']>;
+export type CrdtDiffBase64<T> = Brand<Base64, [T, 'crdt_diff_base64']>;
 
-export function zCrdtDiffString<T>() {
-    return z.string() as unknown as z.ZodType<CrdtDiffString<T>>;
+export function zCrdtDiffBase64<T>() {
+    return zBase64() as unknown as z.ZodType<CrdtDiffBase64<T>>;
 }
 
-export function stringifyCrdtDiff<T>(diff: CrdtDiff<T>): CrdtDiffString<T> {
-    return decodeBase64(encodeMsgpack(diff)) as CrdtDiffString<T>;
+export function stringifyCrdtDiff<T>(diff: CrdtDiff<T>): CrdtDiffBase64<T> {
+    return decodeBase64(encodeMsgpack(diff)) as CrdtDiffBase64<T>;
 }
 
-export function parseCrdtDiff<T>(diff: CrdtDiffString<T>): CrdtDiff<T> {
+export function parseCrdtDiff<T>(diff: CrdtDiffBase64<T>): CrdtDiff<T> {
     return decodeMsgpack(encodeBase64(diff)) as CrdtDiff<T>;
 }
 
 export function toCrdtDiff<T>(
-    diff: CrdtDiff<T> | CrdtDiffString<T>
+    diff: CrdtDiff<T> | CrdtDiffBase64<T>
 ): CrdtDiff<T> {
     if (typeof diff === 'string') {
         return parseCrdtDiff(diff);
@@ -74,7 +74,7 @@ export class Crdt<T> {
         return new Crdt(doc);
     }
 
-    static load<T>(diff: CrdtDiff<T> | CrdtDiffString<T>): Crdt<T> {
+    static load<T>(diff: CrdtDiff<T> | CrdtDiffBase64<T>): Crdt<T> {
         const doc = new YDoc();
         applyUpdateV2(doc, toCrdtDiff(diff).payload);
 
@@ -144,7 +144,7 @@ export class Crdt<T> {
         return diff;
     }
 
-    apply(diff: CrdtDiff<T> | CrdtDiffString<T>, options?: DiffOptions): void {
+    apply(diff: CrdtDiff<T> | CrdtDiffBase64<T>, options?: DiffOptions): void {
         applyUpdateV2(this.doc, toCrdtDiff(diff).payload, options?.origin);
     }
 

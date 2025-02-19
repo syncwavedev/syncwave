@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {zCrdtDiffString} from '../crdt/crdt.js';
+import {zCrdtDiffBase64} from '../crdt/crdt.js';
 import {assert} from '../utils.js';
 import {type DataTx} from './data-layer.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
@@ -14,7 +14,7 @@ export function zTaskDto() {
     return zTask().extend({
         column: zColumnDto().nullable(),
         board: zBoardDto(),
-        state: zCrdtDiffString<Task>(),
+        state: zCrdtDiffBase64<Task>(),
     });
 }
 
@@ -33,7 +33,7 @@ export function zBoardViewTaskDto() {
     return zTask().extend({
         column: zColumnDto().nullable(),
         board: zBoardDto(),
-        state: zCrdtDiffString<Task>(),
+        state: zCrdtDiffBase64<Task>(),
     });
 }
 
@@ -54,7 +54,7 @@ export async function toBoardViewTaskDto(
 export function zColumnDto() {
     return zColumn().extend({
         board: zBoardDto(),
-        state: zCrdtDiffString<Column>(),
+        state: zCrdtDiffBase64<Column>(),
     });
 }
 
@@ -74,7 +74,7 @@ export async function toColumnDto(
 export function zBoardViewColumnDto() {
     return zColumn().extend({
         tasks: z.array(zBoardViewTaskDto()),
-        state: zCrdtDiffString<Column>(),
+        state: zCrdtDiffBase64<Column>(),
     });
 }
 
@@ -101,7 +101,7 @@ export async function toBoardViewColumnDto(
 
 export function zBoardDto() {
     return zBoard().extend({
-        state: zCrdtDiffString<Board>(),
+        state: zCrdtDiffBase64<Board>(),
     });
 }
 
@@ -120,7 +120,7 @@ export async function toBoardDto(
 export function zBoardViewDto() {
     return zBoard().extend({
         columns: z.array(zBoardViewColumnDto()),
-        state: zCrdtDiffString<Board>(),
+        state: zCrdtDiffBase64<Board>(),
     });
 }
 
@@ -144,7 +144,7 @@ export function zMemberDto() {
     return zMember().extend({
         user: zUserDto(),
         board: zBoardDto(),
-        state: zCrdtDiffString<Member>(),
+        state: zCrdtDiffBase64<Member>(),
     });
 }
 
@@ -192,7 +192,7 @@ export async function toMemberAdminDto(
 
 export function zUserDto() {
     return zUser().extend({
-        state: zCrdtDiffString<User>(),
+        state: zCrdtDiffBase64<User>(),
     });
 }
 

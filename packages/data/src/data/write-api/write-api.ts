@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {encodeBase64, zBase64} from '../../base64.js';
 import {toBigFloat, zBigFloat} from '../../big-float.js';
-import {parseCrdtDiff, zCrdtDiffString} from '../../crdt/crdt.js';
+import {parseCrdtDiff, zCrdtDiffBase64} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
 import {createApi, handler, type InferRpcClient} from '../../transport/rpc.js';
@@ -285,7 +285,7 @@ export function createWriteApi() {
         applyBoardDiff: handler({
             req: z.object({
                 boardId: zUuid<BoardId>(),
-                diff: zCrdtDiffString<Board>(),
+                diff: zCrdtDiffBase64<Board>(),
             }),
             res: z.object({}),
             handle: async (st, {boardId, diff}) => {
@@ -297,7 +297,7 @@ export function createWriteApi() {
         applyTaskDiff: handler({
             req: z.object({
                 taskId: zUuid<TaskId>(),
-                diff: zCrdtDiffString<Task>(),
+                diff: zCrdtDiffBase64<Task>(),
             }),
             res: z.object({}),
             handle: async (st, {taskId, diff}) => {
@@ -313,7 +313,7 @@ export function createWriteApi() {
         applyMemberDiff: handler({
             req: z.object({
                 memberId: zUuid<MemberId>(),
-                diff: zCrdtDiffString<Member>(),
+                diff: zCrdtDiffBase64<Member>(),
             }),
             res: z.object({}),
             handle: async (st, {memberId, diff}) => {
@@ -332,7 +332,7 @@ export function createWriteApi() {
         applyColumnDiff: handler({
             req: z.object({
                 columnId: zUuid<ColumnId>(),
-                diff: zCrdtDiffString<Column>(),
+                diff: zCrdtDiffBase64<Column>(),
             }),
             res: z.object({}),
             handle: async (st, {columnId, diff}) => {
@@ -383,7 +383,7 @@ export function createWriteApi() {
         applyUserDiff: handler({
             req: z.object({
                 userId: zUuid<UserId>(),
-                diff: zCrdtDiffString<User>(),
+                diff: zCrdtDiffBase64<User>(),
             }),
             res: z.object({}),
             handle: async (st, {userId, diff}) => {

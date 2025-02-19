@@ -5,7 +5,7 @@
 	import NavBoardCard from './nav-board-card.svelte';
 	import {cn} from '$lib/utils';
 
-	const flipDurationMs = 0;
+	const flipDurationMs = 100;
 	export let handleDndConsiderMembers: (
 		e: CustomEvent<DndEvent<MemberDto>>
 	) => void;

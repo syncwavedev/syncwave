@@ -17,11 +17,7 @@
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
 	import {ParticipantClient, CancelledError} from 'syncwave-data';
-	import {Toaster} from '$lib/components/ui/sonner/index.js';
 	import {AuthManager} from '$lib/auth-manager';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import DevTools from '$lib/dev-tools/dev-tools.svelte';
-	import {ScrollArea} from '$lib/components/ui/scroll-area';
 	import {createAuthManager, createParticipantClient} from '$lib/utils';
 
 	let {children, data}: LayoutProps = $props();
@@ -53,14 +49,6 @@
 	}
 </script>
 
-<Toaster />
-
 <svelte:window on:keydown={on_key_down} />
-
-<Dialog.Root bind:open={devToolsOpen}>
-	<Dialog.Content class="max-w-[90%]">
-		<DevTools />
-	</Dialog.Content>
-</Dialog.Root>
 
 {@render children()}

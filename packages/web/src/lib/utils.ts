@@ -1,6 +1,4 @@
-import {clsx, type ClassValue} from 'clsx';
 import {getContext, onDestroy} from 'svelte';
-import {toast} from 'svelte-sonner';
 import {
 	AppError,
 	CancelledError,
@@ -16,16 +14,11 @@ import {
 	tracerManager,
 	type ParticipantRpc,
 } from 'syncwave-data';
-import {twMerge} from 'tailwind-merge';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
 import {WsTransportClient} from '../ws-transport-client';
 import {AuthManager} from './auth-manager';
 import {appConfig} from './config';
 import {UniversalStore} from './universal-store';
-
-export function cn(...inputs: ClassValue[]) {
-	return twMerge(clsx(inputs));
-}
 
 export function getSdk() {
 	const client = getContext<ParticipantClient>(ParticipantClient);

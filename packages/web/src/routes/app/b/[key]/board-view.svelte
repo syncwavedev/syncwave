@@ -2,7 +2,6 @@
 	import {flip} from 'svelte/animate';
 	import {dndzone, type DndEvent} from 'svelte-dnd-action';
 	import type {BoardViewColumnDto, BoardViewTaskDto} from 'syncwave-data';
-	import {Button} from '$lib/components/ui/button';
 
 	const flipDurationMs = 100;
 	export let handleDndConsiderColumns: (

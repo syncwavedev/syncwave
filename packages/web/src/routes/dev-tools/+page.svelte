@@ -1,5 +1,5 @@
 <script>
-	import DevTools from '$lib/dev-tools/dev-tools.svelte';
+	import DevTools from '$lib/components/dev-tools.svelte';
 </script>
 
 <div>

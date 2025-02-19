@@ -1,14 +1,7 @@
 <script lang="ts">
-	import Input from '$lib/components/ui/input/input.svelte';
 	import {getSdk} from '$lib/utils';
-	import {
-		context,
-		Crdt,
-		parseCrdtDiff,
-		stringifyCrdtDiff,
-		type BoardDto,
-	} from 'syncwave-data';
-	import {observeAsync, observe} from '$lib/utils.svelte';
+	import {context, Crdt, stringifyCrdtDiff} from 'syncwave-data';
+	import {observe} from '$lib/utils.svelte';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
@@ -66,7 +59,7 @@
 
 <div class="flex flex-col gap-4">
 	<div>
-		<Input
+		<input
 			bind:value={boardName}
 			onkeyup={setBoardName}
 			placeholder="Board name"

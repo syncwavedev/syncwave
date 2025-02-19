@@ -7,6 +7,7 @@ import {
     Text as YText,
 } from 'yjs';
 import {z} from 'zod';
+import {type Base64, decodeBase64, encodeBase64} from '../base64.js';
 import {
     type Codec,
     decodeMsgpack,
@@ -14,7 +15,6 @@ import {
     MsgpackCodec,
 } from '../codec.js';
 import {AppError} from '../errors.js';
-import {decodeHex, encodeHex} from '../hex.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import {
     assert,
@@ -34,18 +34,18 @@ export interface CrdtDiff<T> {
 
 export type CrdtDiffPayload<T> = Brand<Uint8Array, [T, 'crdt_diff_buffer']>;
 
-export type CrdtDiffString<T> = Brand<string, [T, 'crdt_diff_string']>;
+export type CrdtDiffString<T> = Brand<Base64, [T, 'crdt_diff_string']>;
 
 export function zCrdtDiffString<T>() {
     return z.string() as unknown as z.ZodType<CrdtDiffString<T>>;
 }
 
 export function stringifyCrdtDiff<T>(diff: CrdtDiff<T>): CrdtDiffString<T> {
-    return decodeHex(encodeMsgpack(diff)) as CrdtDiffString<T>;
+    return decodeBase64(encodeMsgpack(diff)) as CrdtDiffString<T>;
 }
 
 export function parseCrdtDiff<T>(diff: CrdtDiffString<T>): CrdtDiff<T> {
-    return decodeMsgpack(encodeHex(diff)) as CrdtDiff<T>;
+    return decodeMsgpack(encodeBase64(diff)) as CrdtDiff<T>;
 }
 
 export function toCrdtDiff<T>(

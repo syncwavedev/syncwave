@@ -26,7 +26,7 @@
         ],
         "no-console": "error",
         "no-constant-condition": "off",
-        "@typescript-eslint/no-unsafe-assignment": "warn",
+        "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/no-explicit-any": "off",

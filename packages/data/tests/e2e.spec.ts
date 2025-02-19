@@ -10,6 +10,7 @@ import {
     type JwtService,
     log,
     MemKVStore,
+    MemObjectStore,
     type Message,
     MsgpackCodec,
     ParticipantClient,
@@ -45,14 +46,15 @@ describe('e2e', () => {
             },
         };
         const jwtSecret = 'secret';
-        const coordinator = new CoordinatorServer(
-            coordinatorTransportServer,
-            coordinatorKv,
+        const coordinator = new CoordinatorServer({
+            transport: coordinatorTransportServer,
+            kv: coordinatorKv,
             jwt,
             crypto,
             email,
-            jwtSecret
-        );
+            jwtSecret,
+            objectStore: new MemObjectStore(),
+        });
 
         drop(coordinator.launch());
 

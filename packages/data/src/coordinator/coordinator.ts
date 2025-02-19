@@ -7,6 +7,7 @@ import type {
     CryptoService,
     EmailService,
     JwtService,
+    ObjectStore,
 } from '../data/infrastructure.js';
 import type {Uint8KVStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
@@ -24,18 +25,21 @@ import {
     createCoordinatorApi,
 } from './coordinator-api.js';
 
+export interface CoordinatorServerOptions {
+    transport: TransportServer<Message>;
+    kv: Uint8KVStore;
+    jwt: JwtService;
+    crypto: CryptoService;
+    email: EmailService;
+    jwtSecret: string;
+    objectStore: ObjectStore;
+}
+
 export class CoordinatorServer {
     private readonly dataLayer: DataLayer;
     private readonly rpcServer: RpcServer<CoordinatorApiInputState>;
 
-    constructor(
-        transport: TransportServer<Message>,
-        kv: Uint8KVStore,
-        private readonly jwt: JwtService,
-        private readonly crypto: CryptoService,
-        email: EmailService,
-        private readonly jwtSecret: string
-    ) {
+    constructor(private readonly options: CoordinatorServerOptions) {
         const hubMemTransportServer = new MemTransportServer(
             new MsgpackCodec()
         );
@@ -60,20 +64,25 @@ export class CoordinatorServer {
             tracerManager.get('coord')
         );
 
-        this.dataLayer = new DataLayer(kv, hubClient, jwtSecret);
-        const authContextParser = new AuthContextParser(4, jwt);
+        this.dataLayer = new DataLayer(
+            this.options.kv,
+            hubClient,
+            this.options.jwtSecret
+        );
+        const authContextParser = new AuthContextParser(4, this.options.jwt);
         this.rpcServer = new RpcServer(
-            transport,
+            this.options.transport,
             createCoordinatorApi(),
             {
                 authContextParser,
                 dataLayer: this.dataLayer,
-                jwt,
-                crypto,
-                emailService: email,
+                jwt: this.options.jwt,
+                crypto: this.options.crypto,
+                emailService: this.options.email,
                 config: {
-                    jwtSecret: this.jwtSecret,
+                    jwtSecret: this.options.jwtSecret,
                 },
+                objectStore: this.options.objectStore,
                 close: () => {
                     hubServer.close();
                     hubClient.close();
@@ -104,11 +113,15 @@ export class CoordinatorServer {
                     identities: dataCx.identities,
                     users: dataCx.users,
                     email: params.email,
-                    crypto: this.crypto,
+                    crypto: this.options.crypto,
                     fullName: params.fullName,
                 });
 
-                return signJwtToken(this.jwt, identity, this.jwtSecret);
+                return signJwtToken(
+                    this.options.jwt,
+                    identity,
+                    this.options.jwtSecret
+                );
             }
         );
     }

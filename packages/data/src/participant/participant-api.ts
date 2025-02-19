@@ -117,6 +117,8 @@ export function createParticipantApi() {
         applyColumnDiff: proxy('applyColumnDiff'),
         applyTaskDiff: proxy('applyTaskDiff'),
         applyMemberDiff: proxy('applyMemberDiff'),
+
+        setUserAvatar: proxy('setUserAvatar'),
     });
 }
 

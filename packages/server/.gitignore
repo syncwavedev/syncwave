@@ -2,3 +2,4 @@ test.sqlite
 dev.sqlite
 /.env
 !/.env.example
+/dev-object-store

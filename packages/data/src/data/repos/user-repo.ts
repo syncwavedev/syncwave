@@ -10,6 +10,7 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
+import {type ObjectKey, zObjectKey} from '../infrastructure.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 
@@ -37,6 +38,7 @@ export interface UserV4 extends Doc<[UserId]> {
     readonly id: UserId;
     readonly version: '4';
     fullName: string;
+    avatarKey?: ObjectKey;
 }
 
 export type User = UserV4;
@@ -48,6 +50,7 @@ export function zUser() {
         id: zUuid<UserId>(),
         fullName: z.string(),
         version: z.literal('4'),
+        avatarKey: zObjectKey().optional(),
     });
 }
 
@@ -65,6 +68,7 @@ export class UserRepo {
                 id: true,
                 fullName: false,
                 version: true,
+                avatarKey: false,
             },
             upgrade: function upgradeUser(user: StoredUser) {
                 if ('version' in user) {

@@ -119,13 +119,9 @@
 			</Sidebar.MenuItem>
 		</ContextMenu.Trigger>
 		<ContextMenu.Content class="w-64">
-			<ContextMenu.Item inset onclick={editOpen.toggle}>
-				Edit
-				<ContextMenu.Shortcut>⌘[</ContextMenu.Shortcut>
-			</ContextMenu.Item>
-			<ContextMenu.Item inset onclick={deleteBoard}>
+			<ContextMenu.Item onclick={editOpen.toggle}>Edit</ContextMenu.Item>
+			<ContextMenu.Item class="text-red-500" onclick={deleteBoard}>
 				Delete
-				<ContextMenu.Shortcut>⌘[</ContextMenu.Shortcut>
 			</ContextMenu.Item>
 		</ContextMenu.Content>
 	</ContextMenu.Root>

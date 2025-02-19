@@ -11,6 +11,7 @@ import type {
     CryptoService,
     EmailService,
     JwtService,
+    ObjectStore,
 } from '../data/infrastructure.js';
 import {createReadApi, ReadApiState} from '../data/read-api.js';
 import {createWriteApi, WriteApiState} from '../data/write-api/write-api.js';
@@ -32,6 +33,7 @@ export interface CoordinatorApiState {
     emailService: EmailService;
     esReader: EventStoreReader<ChangeEvent>;
     transact: Transact;
+    objectStore: ObjectStore;
 }
 
 export interface CoordinatorApiInputState {
@@ -41,6 +43,7 @@ export interface CoordinatorApiInputState {
     jwt: JwtService;
     emailService: EmailService;
     crypto: CryptoService;
+    objectStore: ObjectStore;
     close: () => void;
 }
 
@@ -49,7 +52,7 @@ export function createCoordinatorApi() {
         createWriteApi(),
         async (next, state: CoordinatorApiState) => {
             await state.transact(async tx => {
-                await next(new WriteApiState(tx, tx.ps));
+                await next(new WriteApiState(tx, state.objectStore, tx.ps));
             });
         }
     );
@@ -134,7 +137,15 @@ export function createCoordinatorApi() {
         timeLoggerApi,
         async (
             next,
-            {dataLayer, authContextParser, jwt, emailService, crypto, config},
+            {
+                dataLayer,
+                authContextParser,
+                objectStore,
+                jwt,
+                emailService,
+                crypto,
+                config,
+            },
             {headers}
         ) => {
             const auth = await authContextParser.parse(
@@ -145,6 +156,7 @@ export function createCoordinatorApi() {
                 transact: fn => dataLayer.transact(auth, fn),
                 auth,
                 jwt,
+                objectStore,
                 crypto,
                 emailService,
                 esReader: dataLayer.esReader,

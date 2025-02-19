@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {encodeBase64, zBase64} from '../../base64.js';
 import {toBigFloat, zBigFloat} from '../../big-float.js';
 import {parseCrdtDiff, zCrdtDiffString} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
@@ -14,6 +15,7 @@ import {
     zCommentDto,
     zMemberDto,
 } from '../dto.js';
+import {createObjectKey, type ObjectStore} from '../infrastructure.js';
 import {PermissionService} from '../permission-service.js';
 import {toPosition, zPlacement} from '../placement.js';
 import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
@@ -31,7 +33,8 @@ import {createReadonlyTransitionChecker} from '../transition-checker.js';
 
 export class WriteApiState {
     constructor(
-        public tx: DataTx,
+        public readonly tx: DataTx,
+        public readonly objectStore: ObjectStore,
         public readonly ps: PermissionService
     ) {}
 
@@ -386,6 +389,28 @@ export function createWriteApi() {
             handle: async (st, {userId, diff}) => {
                 await st.ps.ensureUser(userId);
                 await st.tx.users.apply(userId, parseCrdtDiff(diff));
+                return {};
+            },
+        }),
+        setUserAvatar: handler({
+            req: z.object({
+                userId: zUuid<UserId>(),
+                avatar: zBase64(),
+                contentType: z.union([
+                    z.literal('image/png'),
+                    z.literal('image/jpeg'),
+                ]),
+            }),
+            res: z.object({}),
+            handle: async (st, {userId, avatar, contentType}) => {
+                await st.ps.ensureUser(userId);
+                const avatarKey = createObjectKey();
+                await st.objectStore.put(avatarKey, encodeBase64(avatar), {
+                    contentType,
+                });
+                await st.tx.users.update(userId, x => {
+                    x.avatarKey = avatarKey;
+                });
                 return {};
             },
         }),

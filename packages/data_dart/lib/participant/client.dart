@@ -222,15 +222,15 @@ class ParticipantClient {
     }
   }
 
-  Stream<GetMyBoardsValue> getMyBoards(GetMyBoardsReq request, [MessageHeaders? headers]) async* {
-    final invocationSpan = tracer.startSpan('getMyBoards');
+  Stream<GetMyMembersValue> getMyMembers(GetMyMembersReq request, [MessageHeaders? headers]) async* {
+    final invocationSpan = tracer.startSpan('getMyMembers');
     try {
       while (true) {
-        final attemptSpan = tracer.startSpan('getMyBoards');
+        final attemptSpan = tracer.startSpan('getMyMembers');
         try {
-          await for (final json in _rpc.stream('getMyBoards', request.toJson(), _createHeaders(attemptSpan, headers))) {
+          await for (final json in _rpc.stream('getMyMembers', request.toJson(), _createHeaders(attemptSpan, headers))) {
             attemptSpan.addEvent("next");
-            yield GetMyBoardsValue.fromJson(json as Map<String, dynamic>);
+            yield GetMyMembersValue.fromJson(json as Map<String, dynamic>);
           }
         } catch (error) {
           if (error is TransportException) {
@@ -583,6 +583,42 @@ class ParticipantClient {
     try {
       final json = await _rpc.handle('applyTaskDiff', request.toJson(), _createHeaders(span, headers));
       return ApplyTaskDiffRes.fromJson(json as Map<String, dynamic>);
+    } catch (error) {
+      if (error is TransportException) {
+        _transportErrors.add(error);    
+      } else {
+        _unknownErrors.add(error);
+      }
+  
+      rethrow;
+    } finally {
+      span.end();
+    }
+  }
+
+  Future<ApplyMemberDiffRes> applyMemberDiff(ApplyMemberDiffReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('applyMemberDiff');
+    try {
+      final json = await _rpc.handle('applyMemberDiff', request.toJson(), _createHeaders(span, headers));
+      return ApplyMemberDiffRes.fromJson(json as Map<String, dynamic>);
+    } catch (error) {
+      if (error is TransportException) {
+        _transportErrors.add(error);    
+      } else {
+        _unknownErrors.add(error);
+      }
+  
+      rethrow;
+    } finally {
+      span.end();
+    }
+  }
+
+  Future<SetUserAvatarRes> setUserAvatar(SetUserAvatarReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('setUserAvatar');
+    try {
+      final json = await _rpc.handle('setUserAvatar', request.toJson(), _createHeaders(span, headers));
+      return SetUserAvatarRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    

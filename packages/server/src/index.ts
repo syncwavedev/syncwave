@@ -31,6 +31,7 @@ import {
     toStream,
     type Uint8KVStore,
 } from 'syncwave-data';
+import {FsObjectStore} from './fs-object-store.js';
 import {SesEmailService} from './ses-email-service.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
@@ -208,19 +209,22 @@ async function launch() {
 
     const httpServer = createServer(app.callback());
 
-    const coordinator = new CoordinatorServer(
-        new InstrumentedTransportServer(
+    const coordinator = new CoordinatorServer({
+        transport: new InstrumentedTransportServer(
             new WsTransportServer({
                 codec: new MsgpackCodec(),
                 server: httpServer,
             })
         ),
-        kvStore,
-        jwtService,
+        kv: kvStore,
+        jwt: jwtService,
         crypto,
-        new InstrumentedEmailService(new SesEmailService(AWS_REGION)),
-        JWT_SECRET
-    );
+        email: new InstrumentedEmailService(new SesEmailService(AWS_REGION)),
+        jwtSecret: JWT_SECRET,
+        objectStore: await FsObjectStore.create({
+            basePath: './dev-object-store',
+        }),
+    });
 
     async function shutdown() {
         log.info('shutting down...');

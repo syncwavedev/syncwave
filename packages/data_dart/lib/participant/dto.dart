@@ -20,8 +20,8 @@
 //     final verifySignInCodeRes = verifySignInCodeResFromJson(jsonString);
 //     final deleteDbItemReq = deleteDbItemReqFromJson(jsonString);
 //     final deleteDbItemRes = deleteDbItemResFromJson(jsonString);
-//     final getMyBoardsReq = getMyBoardsReqFromJson(jsonString);
-//     final getMyBoardsValue = getMyBoardsValueFromJson(jsonString);
+//     final getMyMembersReq = getMyMembersReqFromJson(jsonString);
+//     final getMyMembersValue = getMyMembersValueFromJson(jsonString);
 //     final getBoardReq = getBoardReqFromJson(jsonString);
 //     final getBoardValue = getBoardValueFromJson(jsonString);
 //     final createColumnReq = createColumnReqFromJson(jsonString);
@@ -56,6 +56,10 @@
 //     final applyColumnDiffRes = applyColumnDiffResFromJson(jsonString);
 //     final applyTaskDiffReq = applyTaskDiffReqFromJson(jsonString);
 //     final applyTaskDiffRes = applyTaskDiffResFromJson(jsonString);
+//     final applyMemberDiffReq = applyMemberDiffReqFromJson(jsonString);
+//     final applyMemberDiffRes = applyMemberDiffResFromJson(jsonString);
+//     final setUserAvatarReq = setUserAvatarReqFromJson(jsonString);
+//     final setUserAvatarRes = setUserAvatarResFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -139,13 +143,13 @@ DeleteDbItemRes deleteDbItemResFromJson(String str) => DeleteDbItemRes.fromJson(
 
 String deleteDbItemResToJson(DeleteDbItemRes data) => json.encode(data.toJson());
 
-GetMyBoardsReq getMyBoardsReqFromJson(String str) => GetMyBoardsReq.fromJson(json.decode(str));
+GetMyMembersReq getMyMembersReqFromJson(String str) => GetMyMembersReq.fromJson(json.decode(str));
 
-String getMyBoardsReqToJson(GetMyBoardsReq data) => json.encode(data.toJson());
+String getMyMembersReqToJson(GetMyMembersReq data) => json.encode(data.toJson());
 
-List<GetMyBoardsValue> getMyBoardsValueFromJson(String str) => List<GetMyBoardsValue>.from(json.decode(str).map((x) => GetMyBoardsValue.fromJson(x)));
+List<GetMyMembersValue> getMyMembersValueFromJson(String str) => List<GetMyMembersValue>.from(json.decode(str).map((x) => GetMyMembersValue.fromJson(x)));
 
-String getMyBoardsValueToJson(List<GetMyBoardsValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+String getMyMembersValueToJson(List<GetMyMembersValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 GetBoardReq getBoardReqFromJson(String str) => GetBoardReq.fromJson(json.decode(str));
 
@@ -282,6 +286,22 @@ String applyTaskDiffReqToJson(ApplyTaskDiffReq data) => json.encode(data.toJson(
 ApplyTaskDiffRes applyTaskDiffResFromJson(String str) => ApplyTaskDiffRes.fromJson(json.decode(str));
 
 String applyTaskDiffResToJson(ApplyTaskDiffRes data) => json.encode(data.toJson());
+
+ApplyMemberDiffReq applyMemberDiffReqFromJson(String str) => ApplyMemberDiffReq.fromJson(json.decode(str));
+
+String applyMemberDiffReqToJson(ApplyMemberDiffReq data) => json.encode(data.toJson());
+
+ApplyMemberDiffRes applyMemberDiffResFromJson(String str) => ApplyMemberDiffRes.fromJson(json.decode(str));
+
+String applyMemberDiffResToJson(ApplyMemberDiffRes data) => json.encode(data.toJson());
+
+SetUserAvatarReq setUserAvatarReqFromJson(String str) => SetUserAvatarReq.fromJson(json.decode(str));
+
+String setUserAvatarReqToJson(SetUserAvatarReq data) => json.encode(data.toJson());
+
+SetUserAvatarRes setUserAvatarResFromJson(String str) => SetUserAvatarRes.fromJson(json.decode(str));
+
+String setUserAvatarResToJson(SetUserAvatarRes data) => json.encode(data.toJson());
 
 class GetDbTreeReq {
     GetDbTreeReq();
@@ -572,6 +592,7 @@ class VerificationCode {
 }
 
 class GetMeValueUser {
+    String? avatarKey;
     double createdAt;
     bool deleted;
     String fullName;
@@ -582,6 +603,7 @@ class GetMeValueUser {
     UserVersion version;
 
     GetMeValueUser({
+        this.avatarKey,
         required this.createdAt,
         required this.deleted,
         required this.fullName,
@@ -593,6 +615,7 @@ class GetMeValueUser {
     });
 
     factory GetMeValueUser.fromJson(Map<String, dynamic> json) => GetMeValueUser(
+        avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         fullName: json["fullName"],
@@ -604,6 +627,7 @@ class GetMeValueUser {
     );
 
     Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
         "createdAt": createdAt,
         "deleted": deleted,
         "fullName": fullName,
@@ -813,17 +837,81 @@ class DeleteDbItemRes {
     };
 }
 
-class GetMyBoardsReq {
-    GetMyBoardsReq();
+class GetMyMembersReq {
+    GetMyMembersReq();
 
-    factory GetMyBoardsReq.fromJson(Map<String, dynamic> json) => GetMyBoardsReq(
+    factory GetMyMembersReq.fromJson(Map<String, dynamic> json) => GetMyMembersReq(
     );
 
     Map<String, dynamic> toJson() => {
     };
 }
 
-class GetMyBoardsValue {
+class GetMyMembersValue {
+    GetMyMembersValueBoard board;
+    String boardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    GetMyMembersValuePosition position;
+    Role role;
+    String state;
+    double updatedAt;
+    GetMyMembersValueUser user;
+    String userId;
+    GetMyMembersValueVersion version;
+
+    GetMyMembersValue({
+        required this.board,
+        required this.boardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.position,
+        required this.role,
+        required this.state,
+        required this.updatedAt,
+        required this.user,
+        required this.userId,
+        required this.version,
+    });
+
+    factory GetMyMembersValue.fromJson(Map<String, dynamic> json) => GetMyMembersValue(
+        board: GetMyMembersValueBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        position: GetMyMembersValuePosition.fromJson(json["position"]),
+        role: roleValues.map[json["role"]]!,
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        user: GetMyMembersValueUser.fromJson(json["user"]),
+        userId: json["userId"],
+        version: getMyMembersValueVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "board": board.toJson(),
+        "boardId": boardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "position": position.toJson(),
+        "role": roleValues.reverse[role],
+        "state": state,
+        "updatedAt": updatedAt,
+        "user": user.toJson(),
+        "userId": userId,
+        "version": getMyMembersValueVersionValues.reverse[version],
+    };
+}
+
+class GetMyMembersValueBoard {
     String authorId;
     double createdAt;
     bool deleted;
@@ -831,11 +919,10 @@ class GetMyBoardsValue {
     String key;
     String name;
     List<String> pk;
-    GetMyBoardsValuePosition position;
     String state;
     double updatedAt;
 
-    GetMyBoardsValue({
+    GetMyMembersValueBoard({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -843,12 +930,11 @@ class GetMyBoardsValue {
         required this.key,
         required this.name,
         required this.pk,
-        required this.position,
         required this.state,
         required this.updatedAt,
     });
 
-    factory GetMyBoardsValue.fromJson(Map<String, dynamic> json) => GetMyBoardsValue(
+    factory GetMyMembersValueBoard.fromJson(Map<String, dynamic> json) => GetMyMembersValueBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -856,7 +942,6 @@ class GetMyBoardsValue {
         key: json["key"],
         name: json["name"],
         pk: List<String>.from(json["pk"].map((x) => x)),
-        position: GetMyBoardsValuePosition.fromJson(json["position"]),
         state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -869,22 +954,21 @@ class GetMyBoardsValue {
         "key": key,
         "name": name,
         "pk": List<dynamic>.from(pk.map((x) => x)),
-        "position": position.toJson(),
         "state": state,
         "updatedAt": updatedAt,
     };
 }
 
-class GetMyBoardsValuePosition {
+class GetMyMembersValuePosition {
     String denominator;
     String numerator;
 
-    GetMyBoardsValuePosition({
+    GetMyMembersValuePosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory GetMyBoardsValuePosition.fromJson(Map<String, dynamic> json) => GetMyBoardsValuePosition(
+    factory GetMyMembersValuePosition.fromJson(Map<String, dynamic> json) => GetMyMembersValuePosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -894,6 +978,76 @@ class GetMyBoardsValuePosition {
         "numerator": numerator,
     };
 }
+
+enum Role {
+    ADMIN,
+    OWNER,
+    READER,
+    WRITER
+}
+
+final roleValues = EnumValues({
+    "admin": Role.ADMIN,
+    "owner": Role.OWNER,
+    "reader": Role.READER,
+    "writer": Role.WRITER
+});
+
+class GetMyMembersValueUser {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    GetMyMembersValueUser({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory GetMyMembersValueUser.fromJson(Map<String, dynamic> json) => GetMyMembersValueUser(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
+    };
+}
+
+enum GetMyMembersValueVersion {
+    THE_2
+}
+
+final getMyMembersValueVersionValues = EnumValues({
+    "2": GetMyMembersValueVersion.THE_2
+});
 
 class GetBoardReq {
     String key;
@@ -1878,6 +2032,7 @@ class CreateCommentRes {
 }
 
 class CreateCommentResAuthor {
+    String? avatarKey;
     double createdAt;
     bool deleted;
     String fullName;
@@ -1888,6 +2043,7 @@ class CreateCommentResAuthor {
     UserVersion version;
 
     CreateCommentResAuthor({
+        this.avatarKey,
         required this.createdAt,
         required this.deleted,
         required this.fullName,
@@ -1899,6 +2055,7 @@ class CreateCommentResAuthor {
     });
 
     factory CreateCommentResAuthor.fromJson(Map<String, dynamic> json) => CreateCommentResAuthor(
+        avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         fullName: json["fullName"],
@@ -1910,6 +2067,7 @@ class CreateCommentResAuthor {
     );
 
     Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
         "createdAt": createdAt,
         "deleted": deleted,
         "fullName": fullName,
@@ -2280,6 +2438,7 @@ class GetTaskCommentsValue {
 }
 
 class GetTaskCommentsValueAuthor {
+    String? avatarKey;
     double createdAt;
     bool deleted;
     String fullName;
@@ -2290,6 +2449,7 @@ class GetTaskCommentsValueAuthor {
     UserVersion version;
 
     GetTaskCommentsValueAuthor({
+        this.avatarKey,
         required this.createdAt,
         required this.deleted,
         required this.fullName,
@@ -2301,6 +2461,7 @@ class GetTaskCommentsValueAuthor {
     });
 
     factory GetTaskCommentsValueAuthor.fromJson(Map<String, dynamic> json) => GetTaskCommentsValueAuthor(
+        avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         fullName: json["fullName"],
@@ -2312,6 +2473,7 @@ class GetTaskCommentsValueAuthor {
     );
 
     Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
         "createdAt": createdAt,
         "deleted": deleted,
         "fullName": fullName,
@@ -2611,20 +2773,6 @@ class CreateMemberReq {
     };
 }
 
-enum Role {
-    ADMIN,
-    OWNER,
-    READER,
-    WRITER
-}
-
-final roleValues = EnumValues({
-    "admin": Role.ADMIN,
-    "owner": Role.OWNER,
-    "reader": Role.READER,
-    "writer": Role.WRITER
-});
-
 class CreateMemberRes {
     CreateMemberResBoard board;
     String boardId;
@@ -2634,10 +2782,11 @@ class CreateMemberRes {
     List<String> pk;
     CreateMemberResPosition position;
     Role role;
+    String state;
     double updatedAt;
     CreateMemberResUser user;
     String userId;
-    CreateMemberResVersion version;
+    GetMyMembersValueVersion version;
 
     CreateMemberRes({
         required this.board,
@@ -2648,6 +2797,7 @@ class CreateMemberRes {
         required this.pk,
         required this.position,
         required this.role,
+        required this.state,
         required this.updatedAt,
         required this.user,
         required this.userId,
@@ -2663,10 +2813,11 @@ class CreateMemberRes {
         pk: List<String>.from(json["pk"].map((x) => x)),
         position: CreateMemberResPosition.fromJson(json["position"]),
         role: roleValues.map[json["role"]]!,
+        state: json["state"],
         updatedAt: json["updatedAt"]?.toDouble(),
         user: CreateMemberResUser.fromJson(json["user"]),
         userId: json["userId"],
-        version: createMemberResVersionValues.map[json["version"]]!,
+        version: getMyMembersValueVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2678,10 +2829,11 @@ class CreateMemberRes {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "position": position.toJson(),
         "role": roleValues.reverse[role],
+        "state": state,
         "updatedAt": updatedAt,
         "user": user.toJson(),
         "userId": userId,
-        "version": createMemberResVersionValues.reverse[version],
+        "version": getMyMembersValueVersionValues.reverse[version],
     };
 }
 
@@ -2754,6 +2906,7 @@ class CreateMemberResPosition {
 }
 
 class CreateMemberResUser {
+    String? avatarKey;
     double createdAt;
     bool deleted;
     String fullName;
@@ -2764,6 +2917,7 @@ class CreateMemberResUser {
     UserVersion version;
 
     CreateMemberResUser({
+        this.avatarKey,
         required this.createdAt,
         required this.deleted,
         required this.fullName,
@@ -2775,6 +2929,7 @@ class CreateMemberResUser {
     });
 
     factory CreateMemberResUser.fromJson(Map<String, dynamic> json) => CreateMemberResUser(
+        avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         fullName: json["fullName"],
@@ -2786,6 +2941,7 @@ class CreateMemberResUser {
     );
 
     Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
         "createdAt": createdAt,
         "deleted": deleted,
         "fullName": fullName,
@@ -2796,14 +2952,6 @@ class CreateMemberResUser {
         "version": userVersionValues.reverse[version],
     };
 }
-
-enum CreateMemberResVersion {
-    THE_2
-}
-
-final createMemberResVersionValues = EnumValues({
-    "2": CreateMemberResVersion.THE_2
-});
 
 class DeleteMemberReq {
     String memberId;
@@ -2860,7 +3008,7 @@ class GetBoardMembersValue {
     double updatedAt;
     GetBoardMembersValueUser user;
     String userId;
-    CreateMemberResVersion version;
+    GetMyMembersValueVersion version;
 
     GetBoardMembersValue({
         required this.board,
@@ -2891,7 +3039,7 @@ class GetBoardMembersValue {
         updatedAt: json["updatedAt"]?.toDouble(),
         user: GetBoardMembersValueUser.fromJson(json["user"]),
         userId: json["userId"],
-        version: createMemberResVersionValues.map[json["version"]]!,
+        version: getMyMembersValueVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2907,7 +3055,7 @@ class GetBoardMembersValue {
         "updatedAt": updatedAt,
         "user": user.toJson(),
         "userId": userId,
-        "version": createMemberResVersionValues.reverse[version],
+        "version": getMyMembersValueVersionValues.reverse[version],
     };
 }
 
@@ -2980,6 +3128,7 @@ class GetBoardMembersValuePosition {
 }
 
 class GetBoardMembersValueUser {
+    String? avatarKey;
     double createdAt;
     bool deleted;
     String fullName;
@@ -2990,6 +3139,7 @@ class GetBoardMembersValueUser {
     UserVersion version;
 
     GetBoardMembersValueUser({
+        this.avatarKey,
         required this.createdAt,
         required this.deleted,
         required this.fullName,
@@ -3001,6 +3151,7 @@ class GetBoardMembersValueUser {
     });
 
     factory GetBoardMembersValueUser.fromJson(Map<String, dynamic> json) => GetBoardMembersValueUser(
+        avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         fullName: json["fullName"],
@@ -3012,6 +3163,7 @@ class GetBoardMembersValueUser {
     );
 
     Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
         "createdAt": createdAt,
         "deleted": deleted,
         "fullName": fullName,
@@ -3137,6 +3289,80 @@ class ApplyTaskDiffRes {
     ApplyTaskDiffRes();
 
     factory ApplyTaskDiffRes.fromJson(Map<String, dynamic> json) => ApplyTaskDiffRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class ApplyMemberDiffReq {
+    String diff;
+    String memberId;
+
+    ApplyMemberDiffReq({
+        required this.diff,
+        required this.memberId,
+    });
+
+    factory ApplyMemberDiffReq.fromJson(Map<String, dynamic> json) => ApplyMemberDiffReq(
+        diff: json["diff"],
+        memberId: json["memberId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "diff": diff,
+        "memberId": memberId,
+    };
+}
+
+class ApplyMemberDiffRes {
+    ApplyMemberDiffRes();
+
+    factory ApplyMemberDiffRes.fromJson(Map<String, dynamic> json) => ApplyMemberDiffRes(
+    );
+
+    Map<String, dynamic> toJson() => {
+    };
+}
+
+class SetUserAvatarReq {
+    String avatar;
+    ContentType contentType;
+    String userId;
+
+    SetUserAvatarReq({
+        required this.avatar,
+        required this.contentType,
+        required this.userId,
+    });
+
+    factory SetUserAvatarReq.fromJson(Map<String, dynamic> json) => SetUserAvatarReq(
+        avatar: json["avatar"],
+        contentType: contentTypeValues.map[json["contentType"]]!,
+        userId: json["userId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatar": avatar,
+        "contentType": contentTypeValues.reverse[contentType],
+        "userId": userId,
+    };
+}
+
+enum ContentType {
+    IMAGE_JPEG,
+    IMAGE_PNG
+}
+
+final contentTypeValues = EnumValues({
+    "image/jpeg": ContentType.IMAGE_JPEG,
+    "image/png": ContentType.IMAGE_PNG
+});
+
+class SetUserAvatarRes {
+    SetUserAvatarRes();
+
+    factory SetUserAvatarRes.fromJson(Map<String, dynamic> json) => SetUserAvatarRes(
     );
 
     Map<String, dynamic> toJson() => {

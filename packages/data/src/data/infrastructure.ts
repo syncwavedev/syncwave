@@ -1,4 +1,6 @@
 import {context} from '../context.js';
+import type {Brand} from '../utils.js';
+import {createUuid, Uuid, zUuid} from '../uuid.js';
 
 export interface JwtPayload {
     sub: string | undefined;
@@ -35,5 +37,60 @@ export class InstrumentedEmailService implements EmailService {
         return await context().runChild({span: 'email.send'}, async () => {
             return await this.emailService.send(message);
         });
+    }
+}
+
+export interface ObjectMetadata {
+    contentType: string;
+}
+
+export type ObjectKey = Brand<Uuid, 'ObjectKey'>;
+
+export function zObjectKey() {
+    return zUuid<ObjectKey>();
+}
+
+export function createObjectKey() {
+    return createUuid() as ObjectKey;
+}
+
+export interface ObjectStore {
+    get(
+        key: ObjectKey
+    ): Promise<{data: Uint8Array; metadata: ObjectMetadata} | undefined>;
+    put(
+        key: ObjectKey,
+        data: Uint8Array,
+        metadata: ObjectMetadata
+    ): Promise<void>;
+    delete(key: ObjectKey): Promise<void>;
+}
+
+export class MemObjectStore implements ObjectStore {
+    private readonly store: Map<
+        string,
+        {data: Uint8Array; metadata: ObjectMetadata}
+    >;
+
+    constructor() {
+        this.store = new Map();
+    }
+
+    async get(
+        key: ObjectKey
+    ): Promise<{data: Uint8Array; metadata: ObjectMetadata} | undefined> {
+        return this.store.get(key);
+    }
+
+    async put(
+        key: ObjectKey,
+        data: Uint8Array,
+        options: ObjectMetadata
+    ): Promise<void> {
+        this.store.set(key, {data, metadata: options});
+    }
+
+    async delete(key: ObjectKey): Promise<void> {
+        this.store.delete(key);
     }
 }

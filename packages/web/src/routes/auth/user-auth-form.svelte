@@ -1,5 +1,4 @@
 <script lang="ts">
-	import {CircleAlert, LoaderCircle} from 'lucide-svelte';
 	import {getSdk} from '$lib/utils.js';
 	import {appConfig} from '../../lib/config';
 	import AuthFooter from './auth-footer.svelte';
@@ -85,9 +84,6 @@
 				/>
 			</div>
 			<button type="submit" disabled={isLoading}>
-				{#if isLoading}
-					<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-				{/if}
 				{#if variant === 'log-in'}
 					Log in
 				{:else}
@@ -99,7 +95,6 @@
 
 	{#if error === 'cooldown'}
 		<div>
-			<CircleAlert class="size-4" />
 			<div>
 				Oops! Too many attempts. Please wait a few hours before trying
 				again.
@@ -120,11 +115,7 @@
 		type="button"
 		disabled={isLoading}
 	>
-		{#if isLoading}
-			<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-		{:else}
-			<img src="/google.svg" alt="Google" class="mr-2 h-4 w-4" />
-		{/if}
+		<img src="/google.svg" alt="Google" class="mr-2 h-4 w-4" />
 		Continue with Google
 	</button>
 </div>

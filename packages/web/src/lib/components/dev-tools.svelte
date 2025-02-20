@@ -1,7 +1,6 @@
 <script lang="ts">
 	import {getAuthManager, getSdk} from '$lib/utils';
 	import {type DataNodeDto} from 'syncwave-data';
-	import {Dot, Trash} from 'lucide-svelte';
 
 	const sdk = getSdk();
 	let itemsPromise: Promise<DataNodeDto> | undefined = $state(undefined);
@@ -53,9 +52,8 @@
 							path: Uint8Array[]
 						)}
 							<div class="flex items-center">
-								<Dot />
 								<button onclick={() => remove(path)}>
-									<Trash />
+									Delete
 								</button>
 								<button onclick={() => openDetails(path)}>
 									{item.name}

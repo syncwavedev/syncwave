@@ -1,12 +1,9 @@
 <script lang="ts">
-	import {LoaderCircle} from 'lucide-svelte';
 	import {getSdk, getAuthManager, showErrorToast} from '$lib/utils.js';
 	import {appConfig} from '$lib/config';
 	import AuthHeader from '../../auth-header.svelte';
 	import AuthFooter from '../../auth-footer.svelte';
-	import CircleAlert from 'lucide-svelte/icons/circle-alert';
 	import {goto} from '$app/navigation';
-	import {wait} from 'syncwave-data';
 
 	const googleSignInUrl = (() => {
 		const authState = {redirectUrl: '/'};
@@ -84,7 +81,7 @@
 	}
 </script>
 
-<div class="container relative flex-col items-center justify-center lg:px-0">
+<div class="relative container flex-col items-center justify-center lg:px-0">
 	<AuthHeader />
 
 	<div
@@ -118,19 +115,13 @@
 							disabled={isLoading}
 						/>
 					</div>
-					<button type="submit" disabled={isLoading}>
-						{#if isLoading}
-							<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-						{/if}
-						Verify
-					</button>
+					<button type="submit" disabled={isLoading}> Verify </button>
 				</div>
 			</form>
 		</div>
 
 		{#if error === 'code_expired'}
 			<div>
-				<CircleAlert class="size-4" />
 				<div>
 					Oops! The code for '{email}' has expired. Please request a
 					new one.
@@ -140,14 +131,12 @@
 
 		{#if error === 'invalid_code'}
 			<div>
-				<CircleAlert class="size-4" />
 				<div>Oops! That code doesn't seem right. Please try again.</div>
 			</div>
 		{/if}
 
 		{#if error === 'cooldown'}
 			<div>
-				<CircleAlert class="size-4" />
 				<div>
 					Oops! Too many attempts. Please wait a few hours before
 					trying again.

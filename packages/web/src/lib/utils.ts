@@ -12,6 +12,7 @@ import {
 	ParticipantServer,
 	toStream,
 	tracerManager,
+	unimplemented,
 	type ParticipantRpc,
 } from 'syncwave-data';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
@@ -136,9 +137,14 @@ export async function sdkOnce<T>(
 				return await fn(participant.rpc);
 			});
 		} finally {
+			// eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
 			participant!?.close('end of sdkOnce');
 		}
 	} finally {
 		cancelCtx(new AppError('end of sdkOnce'));
 	}
+}
+
+export function showErrorToast() {
+	unimplemented();
 }

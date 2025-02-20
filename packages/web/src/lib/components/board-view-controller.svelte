@@ -178,8 +178,8 @@
 
 <BoardView
 	columns={dndColumns}
-	handleDndConsiderCards={setTasks}
-	handleDndFinalizeCards={setTasks}
+	handleDndConsiderTasks={setTasks}
+	handleDndFinalizeTasks={setTasks}
 	handleDndConsiderColumns={setColumns}
 	handleDndFinalizeColumns={setColumns}
 />

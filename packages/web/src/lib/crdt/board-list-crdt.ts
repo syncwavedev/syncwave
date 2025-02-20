@@ -9,7 +9,7 @@ import type {
 } from 'syncwave-data';
 import {SetCrdt} from './set-crdt';
 
-export class MyMemberListCrdt {
+export class BoardListCrdt {
 	private members: SetCrdt<CrdtDoc<Member>>;
 	private boards: BoardDto[];
 	private users: UserDto[];

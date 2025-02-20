@@ -12,17 +12,16 @@
 		SHADOW_ITEM_MARKER_PROPERTY_NAME,
 		type DndEvent,
 	} from 'svelte-dnd-action';
-	import {compareBigFloat, type BigFloat} from 'syncwave-data';
+	import {compareBigFloat} from 'syncwave-data';
 	import {getSdk} from '$lib/utils';
 	import {untrack} from 'svelte';
-	import NavMemberList from './nav-member-list.svelte';
-	import {SetCrdt} from '$lib/crdt/set-crdt';
-	import {MyMemberListCrdt} from '$lib/crdt/my-member-list-crdt';
+	import BoardListView from './board-list.svelte';
+	import {BoardListCrdt} from '$lib/crdt/board-list-crdt';
 	import {calculateChange} from '$lib/dnd';
 
 	let {members: remoteMembers}: {members: MemberDto[]} = $props();
 
-	const localMembers = new MyMemberListCrdt(remoteMembers);
+	const localMembers = new BoardListCrdt(remoteMembers);
 	$effect(() => {
 		localMembers.apply(remoteMembers);
 		const latestMembers = applyOrder([...localMembers.snapshot()]);
@@ -84,8 +83,8 @@
 	}
 </script>
 
-<NavMemberList
-	members={dndMembers}
+<BoardListView
+	myMembers={dndMembers}
 	handleDndConsiderMembers={setMembers}
 	handleDndFinalizeMembers={setMembers}
 />

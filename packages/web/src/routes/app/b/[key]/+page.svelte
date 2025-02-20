@@ -3,7 +3,9 @@
 	import {log} from 'syncwave-data';
 
 	import {goto} from '$app/navigation';
-	import BoardController from './board-controller.svelte';
+	import BoardViewController from '$lib/components/board-view-controller.svelte';
+	import SearchIcon from '$lib/components/icons/search-icon.svelte';
+	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
 
 	const {data} = $props();
 	const {boardKey, initialBoard} = data;
@@ -20,4 +22,14 @@
 	});
 </script>
 
-<BoardController board={board.value} />
+<div class="sticky top-0 z-10">
+	<div class="action-bar">
+		<div class="text-xs">Syncwave Core</div>
+		<button class="btn--icon ml-auto">
+			<SearchIcon />
+		</button>
+		<button class="btn--icon"><PlusIcon /></button>
+	</div>
+</div>
+
+<BoardViewController board={board.value} />

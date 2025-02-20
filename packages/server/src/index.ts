@@ -232,6 +232,7 @@ async function launch() {
         log.info('coordinator is closed');
         httpServer.close();
 
+        // eslint-disable-next-line n/no-process-exit
         process.exit(0);
     }
 

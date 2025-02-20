@@ -1,6 +1,7 @@
 import {sveltekit} from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import type {PluginOption} from 'vite';
+import checker from 'vite-plugin-checker';
 import {nodePolyfills} from 'vite-plugin-node-polyfills';
 import {defineConfig} from 'vitest/config';
 
@@ -19,6 +20,7 @@ export default defineConfig({
 			// required for bytewise package
 			include: ['buffer'],
 		}) as PluginOption,
+		checker({typescript: true}),
 	],
 
 	optimizeDeps: {

@@ -1,4 +1,9 @@
-import {openDB, type DBSchema, type IDBPDatabase, type IDBPTransaction} from 'idb';
+import {
+	openDB,
+	type DBSchema,
+	type IDBPDatabase,
+	type IDBPTransaction,
+} from 'idb';
 import type {Entry} from 'syncwave-data';
 import {
 	ENVIRONMENT,
@@ -45,11 +50,19 @@ export class IndexedDBTransaction implements Uint8Transaction {
 	// set to false when transaction is either commits or fails
 	private active = true;
 
-	constructor(private tx: IDBPTransaction<KVDBSchema, [typeof STORE_NAME], 'readwrite'>) {
+	constructor(
+		private tx: IDBPTransaction<
+			KVDBSchema,
+			[typeof STORE_NAME],
+			'readwrite'
+		>
+	) {
 		this.tx.oncomplete = () => {
 			this.active = false;
 			if (!this.done && ENVIRONMENT !== 'test') {
-				console.error('Transaction completed (auto-commit) before user function finished');
+				console.error(
+					'Transaction completed (auto-commit) before user function finished'
+				);
 			}
 		};
 		this.tx.onerror = () => {
@@ -69,10 +82,14 @@ export class IndexedDBTransaction implements Uint8Transaction {
 
 	private assertActive() {
 		if (!this.active) {
-			throw new Error('Transaction is no longer active (committed/aborted).');
+			throw new Error(
+				'Transaction is no longer active (committed/aborted).'
+			);
 		}
 		if (this.done) {
-			throw new Error('IDB request made after transaction function has resolved.');
+			throw new Error(
+				'IDB request made after transaction function has resolved.'
+			);
 		}
 	}
 
@@ -87,7 +104,9 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		this.assertActive();
 		const keyRange = createKeyRange(condition);
 
-		const entries = toStream(this.tx.objectStore(STORE_NAME).iterate(keyRange)).withContext(cx);
+		const entries = toStream(
+			this.tx.objectStore(STORE_NAME).iterate(keyRange)
+		);
 		for await (const {key, value} of entries) {
 			yield {key: new Uint8Array(key), value: new Uint8Array(value)};
 		}

@@ -1614,6 +1614,7 @@ class PurpleBoardPosition {
 }
 
 class TaskElement {
+    PurpleAuthor author;
     String authorId;
     PurpleBoard board;
     String boardId;
@@ -1630,6 +1631,7 @@ class TaskElement {
     double updatedAt;
 
     TaskElement({
+        required this.author,
         required this.authorId,
         required this.board,
         required this.boardId,
@@ -1647,6 +1649,7 @@ class TaskElement {
     });
 
     factory TaskElement.fromJson(Map<String, dynamic> json) => TaskElement(
+        author: PurpleAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
         board: PurpleBoard.fromJson(json["board"]),
         boardId: json["boardId"],
@@ -1664,6 +1667,7 @@ class TaskElement {
     );
 
     Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
@@ -1678,6 +1682,54 @@ class TaskElement {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
+    };
+}
+
+class PurpleAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    PurpleAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory PurpleAuthor.fromJson(Map<String, dynamic> json) => PurpleAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
     };
 }
 
@@ -2080,6 +2132,7 @@ class CreateCommentResAuthor {
 }
 
 class CreateCommentResTask {
+    FluffyAuthor author;
     String authorId;
     TentacledBoard board;
     String boardId;
@@ -2096,6 +2149,7 @@ class CreateCommentResTask {
     double updatedAt;
 
     CreateCommentResTask({
+        required this.author,
         required this.authorId,
         required this.board,
         required this.boardId,
@@ -2113,6 +2167,7 @@ class CreateCommentResTask {
     });
 
     factory CreateCommentResTask.fromJson(Map<String, dynamic> json) => CreateCommentResTask(
+        author: FluffyAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
         board: TentacledBoard.fromJson(json["board"]),
         boardId: json["boardId"],
@@ -2130,6 +2185,7 @@ class CreateCommentResTask {
     );
 
     Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
@@ -2144,6 +2200,54 @@ class CreateCommentResTask {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
+    };
+}
+
+class FluffyAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    FluffyAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory FluffyAuthor.fromJson(Map<String, dynamic> json) => FluffyAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
     };
 }
 
@@ -2486,6 +2590,7 @@ class GetTaskCommentsValueAuthor {
 }
 
 class GetTaskCommentsValueTask {
+    TentacledAuthor author;
     String authorId;
     IndigoBoard board;
     String boardId;
@@ -2502,6 +2607,7 @@ class GetTaskCommentsValueTask {
     double updatedAt;
 
     GetTaskCommentsValueTask({
+        required this.author,
         required this.authorId,
         required this.board,
         required this.boardId,
@@ -2519,6 +2625,7 @@ class GetTaskCommentsValueTask {
     });
 
     factory GetTaskCommentsValueTask.fromJson(Map<String, dynamic> json) => GetTaskCommentsValueTask(
+        author: TentacledAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
         board: IndigoBoard.fromJson(json["board"]),
         boardId: json["boardId"],
@@ -2536,6 +2643,7 @@ class GetTaskCommentsValueTask {
     );
 
     Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
         "authorId": authorId,
         "board": board.toJson(),
         "boardId": boardId,
@@ -2550,6 +2658,54 @@ class GetTaskCommentsValueTask {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
+    };
+}
+
+class TentacledAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    TentacledAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory TentacledAuthor.fromJson(Map<String, dynamic> json) => TentacledAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
     };
 }
 

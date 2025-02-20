@@ -46,7 +46,10 @@ export class BoardListCrdt {
 	}
 }
 
-function findRequired<T>(array: T[], predicate: (item: T) => boolean): T {
+export function findRequired<T>(
+	array: T[],
+	predicate: (item: T) => boolean
+): T {
 	const item = array.find(predicate);
 	if (!item) {
 		throw new Error('Item not found');

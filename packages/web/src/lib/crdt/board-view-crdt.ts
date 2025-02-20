@@ -8,21 +8,25 @@ import {
 	type CrdtDoc,
 	type Task,
 	type TaskId,
+	type User,
 } from 'syncwave-data';
 import type {BigFloat} from '../../../../data/dist/esm/src/big-float';
+import {findRequired} from './board-list-crdt';
 import {SetCrdt} from './set-crdt';
 
 export class BoardViewCrdt {
 	private board: CrdtDoc<Board>;
 	private columns: SetCrdt<CrdtDoc<Column>>;
 	private tasks: SetCrdt<CrdtDoc<Task>>;
+	private users: SetCrdt<CrdtDoc<User>>;
 
 	constructor(value: BoardViewDto) {
-		const {board, columns, tasks} = this._mapView(value);
+		const {board, columns, tasks, users} = this._mapView(value);
 
 		this.board = board;
 		this.columns = new SetCrdt(columns);
 		this.tasks = new SetCrdt(tasks);
+		this.users = new SetCrdt(users);
 	}
 
 	snapshot(): BoardViewDto {
@@ -42,6 +46,10 @@ export class BoardViewCrdt {
 										...column,
 										board: this.board,
 									},
+									author: findRequired(
+										[...this.users.snapshot().values()],
+										x => x.id === task.authorId
+									),
 								})
 							),
 					};
@@ -70,10 +78,11 @@ export class BoardViewCrdt {
 	}
 
 	apply(remote: BoardViewDto) {
-		const {board, columns, tasks} = this._mapView(remote);
+		const {board, columns, tasks, users} = this._mapView(remote);
 		this.board = board;
 		this.columns.apply(new Set(columns));
 		this.tasks.apply(new Set(tasks));
+		this.users.apply(new Set(users));
 	}
 
 	private _mapView(value: BoardViewDto) {
@@ -82,11 +91,15 @@ export class BoardViewCrdt {
 		const tasks: CrdtDoc<Task>[] = value.columns.flatMap(
 			column => column.tasks
 		);
+		const users: CrdtDoc<User>[] = value.columns.flatMap(column =>
+			column.tasks.map(task => task.author)
+		);
 
 		return {
 			tasks,
 			columns,
 			board,
+			users,
 		};
 	}
 }

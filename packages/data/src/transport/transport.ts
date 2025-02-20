@@ -1,8 +1,6 @@
-import { createTraceId } from '../context.js';
 import {AppError} from '../errors.js';
 import type {Observer} from '../subject.js';
 import type {Nothing, Unsubscribe} from '../utils.js';
-import { createUuid } from '../uuid.js';
 
 export interface TransportServer<T> {
     launch(cb: (connection: Connection<T>) => Nothing): Promise<void>;
@@ -38,16 +36,14 @@ export class ConnectionClosedError extends AppError {
     ignore = false;
 }
 
-export async function catchConnectionClosed<T>(
+export function catchConnectionClosed<T>(
     promise: Promise<T>
 ): Promise<T | void> {
-    try {
-        return await promise;
-    } catch (error) {
+    return promise.catch(error => {
         if (error instanceof ConnectionClosedError) {
             error.ignore = true;
-            return ;
+            return;
         }
         throw error;
-    } 
+    });
 }

@@ -1,6 +1,11 @@
 <script lang="ts">
 	import {flip} from 'svelte/animate';
-	import {dndzone, type DndEvent} from 'svelte-dnd-action';
+	import {
+		dragHandleZone,
+		dragHandle,
+		dndzone,
+		type DndEvent,
+	} from 'svelte-dnd-action';
 	import type {BoardViewColumnDto, BoardViewTaskDto} from 'syncwave-data';
 	import TaskTile from './task-tile.svelte';
 
@@ -23,10 +28,10 @@
 	export let columns: BoardViewColumnDto[];
 </script>
 
-<div class="mt-2 flex-1 overflow-y-auto">
+<div class="mt-2 flex-1">
 	<div
 		class="flex gap-6 text-sm"
-		use:dndzone={{
+		use:dragHandleZone={{
 			items: columns,
 			flipDurationMs,
 			type: 'columns',
@@ -40,7 +45,12 @@
 				class="flex w-64 flex-col"
 				animate:flip={{duration: flipDurationMs}}
 			>
-				<div class="text-ink-body text-2xs mb-2">{column.title}</div>
+				<div
+					use:dragHandle
+					class="text-ink-body text-2xs sticky top-0 mb-2 bg-white"
+				>
+					{column.title}
+				</div>
 				<div
 					class="flex flex-1 flex-col gap-2 pb-40"
 					use:dndzone={{

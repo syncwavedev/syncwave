@@ -11,9 +11,11 @@
 	let {
 		initialMe,
 		initialMyMembers,
+		ontoggle,
 	}: {
 		initialMe: {user: UserDto; identity: Identity};
 		initialMyMembers: MemberDto[];
+		ontoggle: () => void;
 	} = $props();
 
 	const me = observe(initialMe, x => x.getMe({}));
@@ -22,7 +24,7 @@
 
 <div class="action-bar sticky top-0">
 	<button class="btn--icon"><SearchIcon /></button>
-	<button class="btn--icon ml-auto">
+	<button class="btn--icon ml-auto" onclick={ontoggle}>
 		<PanelRightIcon />
 	</button>
 	<button class="btn--icon"><PlusIcon /></button>

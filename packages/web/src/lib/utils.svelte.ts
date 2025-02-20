@@ -1,6 +1,6 @@
 import {browser} from '$app/environment';
 import {goto} from '$app/navigation';
-import {onDestroy} from 'svelte';
+import {getContext, onDestroy, setContext} from 'svelte';
 import type {Readable, Subscriber} from 'svelte/store';
 import {
 	assert,
@@ -176,4 +176,22 @@ export function toggle(initial = false) {
 		},
 	});
 	return result;
+}
+
+const SIDEBAR_OPEN_CONTEXT = 'sidebarOpen';
+
+export function setSidebarOpen() {
+	const sidebarOpen = toggle(true);
+	setContext(SIDEBAR_OPEN_CONTEXT, sidebarOpen);
+
+	return sidebarOpen;
+}
+
+export function getSidebarOpen() {
+	const result = getContext(SIDEBAR_OPEN_CONTEXT);
+	if (!result) {
+		throw new Error('context sidebarOpen is not available');
+	}
+
+	return result as ReturnType<typeof toggle>;
 }

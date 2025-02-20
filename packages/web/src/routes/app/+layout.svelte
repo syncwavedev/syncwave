@@ -1,20 +1,24 @@
 <script lang="ts">
-	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
-	import SearchIcon from '$lib/components/icons/search-icon.svelte';
 	import Sidebar from '$lib/components/sidebar.svelte';
-	import TaskTile from '$lib/components/task-tile.svelte';
+	import {setSidebarOpen, toggle} from '$lib/utils.svelte.js';
+	import {setContext} from 'svelte';
 
 	let {children, data} = $props();
+
+	const sidebarOpen = setSidebarOpen();
 </script>
 
 <main class="flex h-screen w-full">
-	<div class="border-default flex w-64 flex-col border-r px-2">
-		<Sidebar
-			initialMe={data.initialMe}
-			initialMyMembers={data.initialMyMembers}
-		/>
-	</div>
-	<div class="flex flex-1 flex-col px-6">
+	{#if sidebarOpen.value}
+		<div class="border-default flex w-64 shrink-0 flex-col border-r px-2">
+			<Sidebar
+				ontoggle={sidebarOpen.toggle}
+				initialMe={data.initialMe}
+				initialMyMembers={data.initialMyMembers}
+			/>
+		</div>
+	{/if}
+	<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 		{@render children()}
 	</div>
 </main>

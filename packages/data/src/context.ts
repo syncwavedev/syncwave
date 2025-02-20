@@ -318,7 +318,7 @@ export class Context {
                 this.ignoreAddEvent += 1;
                 log.warn(
                     'context is not active, cannot add event: ' +
-                        JSON.stringify({name: message, attributes})
+                        JSON.stringify({name: message, attributes})?.slice(0, 100)
                 );
             } finally {
                 this.ignoreAddEvent -= 1;

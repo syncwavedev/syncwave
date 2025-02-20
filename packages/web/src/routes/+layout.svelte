@@ -16,7 +16,11 @@
 
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
-	import {ParticipantClient, CancelledError} from 'syncwave-data';
+	import {
+		ParticipantClient,
+		CancelledError,
+		ConnectionClosedError,
+	} from 'syncwave-data';
 	import {AuthManager} from '$lib/auth-manager';
 	import {createAuthManager, createParticipantClient} from '$lib/utils';
 
@@ -29,7 +33,7 @@
 	setContext(ParticipantClient, participantClient);
 
 	onDestroy(() => {
-		participantClient.close();
+		participantClient.close('layout destroyed');
 	});
 
 	let devToolsOpen = $state(false);

@@ -228,9 +228,11 @@ async function launch() {
 
     async function shutdown() {
         log.info('shutting down...');
-        coordinator.close();
+        coordinator.close('shutdown');
         log.info('coordinator is closed');
         httpServer.close();
+
+        process.exit(0);
     }
 
     context().onEnd(() => {

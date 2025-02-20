@@ -32,7 +32,7 @@ export class ParticipantClient {
         this.authToken = token;
     }
 
-    close(): void {
-        this.connection.close();
+    close(reason: unknown): void {
+        this.connection.close(reason);
     }
 }

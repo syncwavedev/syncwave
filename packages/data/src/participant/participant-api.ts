@@ -49,8 +49,8 @@ export class ParticipantState {
         return this.coordinator;
     }
 
-    close(): void {
-        this.connection.close();
+    close(reason: unknown): void {
+        this.connection.close(reason);
     }
 }
 

@@ -260,7 +260,7 @@ export type InferRpcClient<T extends Api<any>> = {
           ? (req: TReq, headers?: Partial<MessageHeaders>) => Promise<TRes>
           : never;
 } & {
-    close(): void;
+    close(reason: unknown): void;
 };
 
 export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
@@ -270,10 +270,10 @@ export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
           ? (req: TReq, headers: MessageHeaders) => Promise<TRes>
           : never;
 } & {
-    close(): void;
+    close(reason: unknown): void;
 };
 
-export class RpcServer<TState extends {close: () => void}> {
+export class RpcServer<TState extends {close: (reason: unknown) => void}> {
     constructor(
         private readonly transport: TransportServer<Message>,
         private readonly api: Api<TState>,
@@ -286,9 +286,9 @@ export class RpcServer<TState extends {close: () => void}> {
         await this.transport.launch(conn => this.handleConnection(conn));
     }
 
-    close() {
-        this.state.close();
-        this.transport.close();
+    close(reason: unknown) {
+        this.state.close(reason);
+        this.transport.close(reason);
     }
 
     private handleConnection(conn: Connection<Message>): void {

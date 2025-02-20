@@ -42,11 +42,11 @@ export class MemConnection<T> implements Connection<T> {
         return this.subject.subscribe(observer);
     }
 
-    async close(): Promise<void> {
+    async close(reason: unknown): Promise<void> {
         log.debug('mem connection close');
-        this.subject.close();
+        this.subject.close(reason);
         if (this.peer.subject.open) {
-            await this.peer.close();
+            await this.peer.close(reason);
         }
     }
 

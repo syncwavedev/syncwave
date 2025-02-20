@@ -61,14 +61,6 @@ export function getAuthManager() {
 	return getContext<AuthManager>(AuthManager);
 }
 
-export function showErrorToast() {
-	toast.error('Oops! Something went wrong', {
-		description:
-			'Refresh the page or contact me at tilyupo@gmail.com if the issue persists.',
-		duration: 15 * 1000,
-	});
-}
-
 export function formatTime(timestamp: Timestamp) {
 	const date = new Date(timestamp);
 
@@ -137,15 +129,15 @@ export async function sdkOnce<T>(
 ): Promise<T> {
 	const [ctx, cancelCtx] = context().createChild({span: 'sdkOnce'}, true);
 	try {
-		const result = await ctx.run(async () => {
-			const participant = createDirectParticipantClient(cookies);
-			try {
+		let participant: ParticipantClient | undefined = undefined;
+		try {
+			return await ctx.run(async () => {
+				participant = createDirectParticipantClient(cookies);
 				return await fn(participant.rpc);
-			} finally {
-				participant.close();
-			}
-		});
-		return result;
+			});
+		} finally {
+			participant!?.close('end of sdkOnce');
+		}
 	} finally {
 		cancelCtx(new AppError('end of sdkOnce'));
 	}

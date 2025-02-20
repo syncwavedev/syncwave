@@ -83,10 +83,10 @@ export class CoordinatorServer {
                     jwtSecret: this.options.jwtSecret,
                 },
                 objectStore: this.options.objectStore,
-                close: () => {
-                    hubServer.close();
-                    hubClient.close();
-                    this.dataLayer.close();
+                close: (reason) => {
+                    hubServer.close(reason);
+                    hubClient.close(reason);
+                    this.dataLayer.close(reason);
                 },
             },
             'server',
@@ -98,8 +98,8 @@ export class CoordinatorServer {
         await this.rpcServer.launch();
     }
 
-    close() {
-        this.rpcServer.close();
+    close(reason: unknown) {
+        this.rpcServer.close(reason);
     }
 
     async issueJwtByUserEmail(params: {

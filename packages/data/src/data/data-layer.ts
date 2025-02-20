@@ -126,9 +126,9 @@ export class DataLayer {
         );
     }
 
-    close() {
+    close(reason: unknown) {
         this.kv.close();
-        this.hub.close();
+        this.hub.close(reason);
     }
 
     async transact<T>(

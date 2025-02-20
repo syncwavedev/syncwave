@@ -25,7 +25,7 @@ export class ParticipantServer {
         await this.rpcServer.launch();
     }
 
-    close() {
-        this.rpcServer.close();
+    close(reason: unknown) {
+        this.rpcServer.close(reason);
     }
 }

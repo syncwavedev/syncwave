@@ -66,8 +66,8 @@ export class HubClient<T> {
         });
     }
 
-    close() {
-        this.server.close();
+    close(reason: unknown) {
+        this.server.close(reason);
     }
 }
 
@@ -93,8 +93,8 @@ export class HubServer<T> {
         await this.rpcServer.launch();
     }
 
-    close() {
-        this.rpcServer.close();
+    close(reason: unknown) {
+        this.rpcServer.close(reason);
     }
 }
 
@@ -118,8 +118,8 @@ class SubjectManager<T> {
         subject.subscribe({
             next: value => observer.next(value),
             throw: error => observer.throw(error),
-            close: () => {
-                observer.close();
+            close: (reason) => {
+                observer.close(new AppError('HubServer: subject closed', {cause: reason}));
                 if (!subject.anyObservers) {
                     this.subjects.delete(topic);
                 }
@@ -141,8 +141,8 @@ class SubjectManager<T> {
         });
     }
 
-    closeAll() {
-        runAll([...this.subjects.values()].map(x => () => x.close()));
+    closeAll(reason: unknown) {
+        runAll([...this.subjects.values()].map(x => () => x.close(reason)));
     }
 }
 
@@ -151,8 +151,8 @@ class HubServerRpcState<T> {
         readonly authSecret: string,
         readonly subjects: SubjectManager<T>
     ) {}
-    close(): void {
-        this.subjects.closeAll();
+    close(reason: unknown): void {
+        this.subjects.closeAll(reason);
     }
 }
 

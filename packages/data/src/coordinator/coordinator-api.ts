@@ -44,7 +44,7 @@ export interface CoordinatorApiInputState {
     emailService: EmailService;
     crypto: CryptoService;
     objectStore: ObjectStore;
-    close: () => void;
+    close: (reason: unknown) => void;
 }
 
 export function createCoordinatorApi() {

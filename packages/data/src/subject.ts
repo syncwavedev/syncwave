@@ -7,7 +7,7 @@ import {type Nothing, type Unsubscribe, whenAll} from './utils.js';
 export interface Observer<T> {
     next: (value: T) => Promise<void>;
     throw: (error: AppError) => Promise<void>;
-    close: () => Nothing;
+    close: (reason: unknown) => Nothing;
 }
 
 interface Subscriber<T> {
@@ -78,11 +78,11 @@ export class Subject<T> {
         );
     }
 
-    close(): void {
+    close(reason: unknown): void {
         if (this._open) {
             this._open = false;
             for (const sub of this.subs) {
-                sub.context.run(() => sub.observer.close());
+                sub.context.run(() => sub.observer.close(reason));
             }
         } else {
             log.warn('subject already closed');

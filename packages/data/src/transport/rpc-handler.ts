@@ -160,8 +160,8 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
 
         // special case for client close
         if (name === 'close') {
-            return () => {
-                conn.close();
+            return (reason: unknown) => {
+                conn.close(reason);
             };
         }
 
@@ -257,9 +257,16 @@ async function proxyRequest(
             );
             result.reject(error);
         },
-        close: () => {
+        close: reason => {
             const error = new ConnectionClosedError(
-                'proxyRequest: connection closed'
+                `proxyRequest: connection closed (${getReadableError(reason)}) ` +
+                    name +
+                    '(' +
+                    JSON.stringify(arg)?.slice(0, 100) +
+                    ')',
+                {
+                    cause: reason,
+                }
             );
             cleanup(error);
             result.reject(error);

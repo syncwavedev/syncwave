@@ -42,7 +42,7 @@ describe('ConnectionPool', () => {
         vi.spyOn(client, 'connect');
 
         const firstConnection = await pool.connect();
-        firstConnection.close();
+        firstConnection.close('test close');
         const secondConnection = await pool.connect();
 
         expect(client.connect).toHaveBeenCalledTimes(1);
@@ -67,7 +67,7 @@ describe('ConnectionPool', () => {
         const connection = await pool.connect();
         const closeSpy = vi.spyOn(connection['connection'], 'close');
 
-        await pool.close();
+        await pool.close('test close');
 
         expect(closeSpy).toHaveBeenCalledTimes(1);
     });
@@ -76,7 +76,7 @@ describe('ConnectionPool', () => {
         const connection1 = await pool.connect();
         const connection2 = await pool.connect();
 
-        connection1.close();
+        connection1.close('test close');
 
         const connection3 = await pool.connect();
         expect(connection3['connection']).toBe(connection1['connection']);
@@ -86,7 +86,7 @@ describe('ConnectionPool', () => {
         const connection = await pool.connect();
         const closeSpy = vi.spyOn(connection, 'close');
 
-        connection.close();
+        connection.close('test close');
 
         const newConnection = await pool.connect();
 
@@ -134,7 +134,7 @@ describe('ConnectionPool', () => {
             },
         });
 
-        connection.close();
+        connection.close('test close');
 
         expect(closeCalled).toBe(true);
 

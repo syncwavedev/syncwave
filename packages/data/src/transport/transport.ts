@@ -1,10 +1,12 @@
+import { createTraceId } from '../context.js';
 import {AppError} from '../errors.js';
 import type {Observer} from '../subject.js';
 import type {Nothing, Unsubscribe} from '../utils.js';
+import { createUuid } from '../uuid.js';
 
 export interface TransportServer<T> {
     launch(cb: (connection: Connection<T>) => Nothing): Promise<void>;
-    close(): void;
+    close(reason: unknown): void;
 }
 
 export class TransportServerUnreachableError extends AppError {}
@@ -27,12 +29,14 @@ export interface MessageConnectionEvent<T>
 export interface Connection<T> {
     send(message: T): Promise<void>;
     subscribe(observer: Observer<T>): Unsubscribe;
-    close(): void;
+    close(reason: unknown): void;
 }
 
 export class ConnectionThrowError extends AppError {}
 
-export class ConnectionClosedError extends AppError {}
+export class ConnectionClosedError extends AppError {
+    ignore = false;
+}
 
 export async function catchConnectionClosed<T>(
     promise: Promise<T>
@@ -41,8 +45,9 @@ export async function catchConnectionClosed<T>(
         return await promise;
     } catch (error) {
         if (error instanceof ConnectionClosedError) {
-            return;
+            error.ignore = true;
+            return ;
         }
         throw error;
-    }
+    } 
 }

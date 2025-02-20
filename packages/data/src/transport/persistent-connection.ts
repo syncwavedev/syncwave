@@ -41,7 +41,7 @@ export class PersistentConnection<T> implements Connection<T> {
         return this.subject.subscribe(cb);
     }
 
-    close(): void {
+    close(reason: unknown): void {
         if (this.closed) return;
 
         this.closed = true;
@@ -50,7 +50,7 @@ export class PersistentConnection<T> implements Connection<T> {
             this.connection = undefined;
 
             connection
-                .then(x => x.close())
+                .then(x => x.close(reason))
                 .catch(error => {
                     log.error(
                         error,
@@ -58,7 +58,7 @@ export class PersistentConnection<T> implements Connection<T> {
                     );
                 });
         }
-        this.subject.close();
+        this.subject.close(reason);
     }
 
     private async getConnection(): Promise<

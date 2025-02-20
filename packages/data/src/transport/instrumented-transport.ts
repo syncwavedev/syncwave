@@ -17,9 +17,9 @@ export class InstrumentedConnection<T> implements Connection<T> {
     subscribe(observer: Observer<T>): Unsubscribe {
         return this.connection.subscribe(observer);
     }
-    close(): void {
+    close(reason: unknown): void {
         context().runChild({span: 'connection.close'}, () => {
-            this.connection.close();
+            this.connection.close(reason);
         });
     }
 }
@@ -50,9 +50,9 @@ export class InstrumentedTransportServer<T> implements TransportServer<T> {
             }
         );
     }
-    close(): void {
+    close(reason: unknown): void {
         context().runChild({span: 'transport.close'}, () => {
-            this.server.close();
+            this.server.close(reason);
         });
     }
 }

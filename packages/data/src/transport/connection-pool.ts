@@ -15,7 +15,7 @@ export class ReleasableConnection<T> implements Connection<T> {
         this.subscription = this.connection.subscribe({
             next: value => this.subject.next(value),
             throw: error => this.subject.throw(error),
-            close: () => this.subject.close(),
+            close: (reason) => this.subject.close(reason),
         });
     }
 
@@ -27,9 +27,9 @@ export class ReleasableConnection<T> implements Connection<T> {
         return this.subject.subscribe(observer);
     }
 
-    close(): void {
+    close(reason: unknown): void {
         this.subscription();
-        this.subject.close();
+        this.subject.close(reason);
         this.onRelease();
     }
 }
@@ -78,8 +78,8 @@ export class ConnectionPool<T> {
         });
     }
 
-    async close(): Promise<void> {
-        this.freeConnections.forEach(conn => conn.close());
-        this.busyConnections.forEach(conn => conn.close());
+    async close(reason: unknown): Promise<void> {
+        this.freeConnections.forEach(conn => conn.close(reason));
+        this.busyConnections.forEach(conn => conn.close(reason));
     }
 }

@@ -18,8 +18,8 @@ export class ChaosConnection<T> implements Connection<T> {
         return this.conn.subscribe(observer);
     }
 
-    close(): void {
-        this.conn.close();
+    close(reason: unknown): void {
+        this.conn.close(reason);
     }
 }
 

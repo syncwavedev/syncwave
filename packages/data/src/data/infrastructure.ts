@@ -54,10 +54,13 @@ export function createObjectKey() {
     return createUuid() as ObjectKey;
 }
 
+export interface ObjectEnvelope {
+    readonly data: Uint8Array;
+    readonly metadata: ObjectMetadata;
+}
+
 export interface ObjectStore {
-    get(
-        key: ObjectKey
-    ): Promise<{data: Uint8Array; metadata: ObjectMetadata} | undefined>;
+    get(key: ObjectKey): Promise<ObjectEnvelope | undefined>;
     put(
         key: ObjectKey,
         data: Uint8Array,
@@ -67,18 +70,13 @@ export interface ObjectStore {
 }
 
 export class MemObjectStore implements ObjectStore {
-    private readonly store: Map<
-        string,
-        {data: Uint8Array; metadata: ObjectMetadata}
-    >;
+    private readonly store: Map<string, ObjectEnvelope>;
 
     constructor() {
         this.store = new Map();
     }
 
-    async get(
-        key: ObjectKey
-    ): Promise<{data: Uint8Array; metadata: ObjectMetadata} | undefined> {
+    async get(key: ObjectKey): Promise<ObjectEnvelope | undefined> {
         return this.store.get(key);
     }
 

@@ -1,13 +1,22 @@
 <script lang="ts">
-	import {getSdk} from '$lib/utils';
-	import {context, Crdt, stringifyCrdtDiff} from 'syncwave-data';
-	import {observe} from '$lib/utils.svelte';
+	import UploadButton from '$lib/components/upload-button.svelte';
+	import {getAuthManager, getSdk} from '$lib/utils';
+	import {decodeBase64} from '../../../../data/dist/esm/src/base64';
 
-	const {data} = $props();
-	const {boardKey, initialBoard} = data;
+	const sdk = getSdk();
+	const userId = getAuthManager().getIdentityInfo()?.userId!;
 </script>
 
 <div class="flex flex-col gap-4">testbed</div>
-<div>
-	{initialBoard.name}
-</div>
+
+<UploadButton
+	callback={(buf, type) => {
+		sdk(x =>
+			x.setUserAvatar({
+				userId: userId!,
+				avatar: decodeBase64(buf),
+				contentType: 'image/jpeg',
+			})
+		);
+	}}
+/>

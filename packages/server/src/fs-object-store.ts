@@ -1,6 +1,13 @@
 import {access, mkdir, readFile, unlink, writeFile} from 'fs/promises';
 import path from 'path';
-import type {ObjectKey, ObjectMetadata, ObjectStore} from 'syncwave-data';
+import {
+    decodeMsgpack,
+    encodeMsgpack,
+    type ObjectEnvelope,
+    type ObjectKey,
+    type ObjectMetadata,
+    type ObjectStore,
+} from 'syncwave-data';
 
 export class FsObjectStore implements ObjectStore {
     private basePath: string;
@@ -20,42 +27,32 @@ export class FsObjectStore implements ObjectStore {
         return path.join(this.basePath, key + '.object');
     }
 
-    // A helper to determine where the metadata is stored.
-    private getMetadataPath(key: ObjectKey): string {
-        return this.getFilePath(key) + '.metadata.json';
-    }
-
-    async get(
-        key: ObjectKey
-    ): Promise<{data: Uint8Array; metadata: ObjectMetadata} | undefined> {
+    async get(key: ObjectKey): Promise<ObjectEnvelope | undefined> {
         const filePath = this.getFilePath(key);
         try {
             await access(filePath);
         } catch {
             return undefined;
         }
-        const data = await readFile(filePath);
+        const encodedEnvelope = await readFile(filePath);
 
-        const metadataContent = await readFile(this.getMetadataPath(key), {
-            encoding: 'utf8',
-        });
-        const metadata = JSON.parse(metadataContent) as ObjectMetadata;
-
-        return {data, metadata};
+        return decodeMsgpack(encodedEnvelope) as ObjectEnvelope;
     }
 
     async put(
         key: ObjectKey,
         data: Uint8Array,
-        options: ObjectMetadata
+        metadata: ObjectMetadata
     ): Promise<void> {
-        await writeFile(this.getFilePath(key), data);
-        await writeFile(this.getMetadataPath(key), JSON.stringify(options));
+        const envelope: ObjectEnvelope = {
+            data,
+            metadata,
+        };
+        await writeFile(this.getFilePath(key), encodeMsgpack(data));
     }
 
     async delete(key: ObjectKey): Promise<void> {
         await unlink(this.getFilePath(key));
-        await unlink(this.getMetadataPath(key));
     }
 }
 

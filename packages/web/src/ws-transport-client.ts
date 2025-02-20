@@ -126,7 +126,7 @@ export class WsClientConnection<T> implements Connection<T> {
 
 		this.ws.addEventListener('close', () => {
 			log.trace('ws client: close event');
-			this.subject.close();
+			this.subject.close('ws client: close event');
 		});
 	}
 }

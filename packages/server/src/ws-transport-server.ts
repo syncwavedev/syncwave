@@ -164,7 +164,7 @@ export class WsConnection<T> implements Connection<T> {
         this.ws.on('close', async () => {
             await capturedCtx.run(async () => {
                 log.debug('WsConnection close');
-                this.subject.close();
+                this.subject.close('ws close event');
             });
         });
     }

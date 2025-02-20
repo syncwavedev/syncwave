@@ -54,7 +54,7 @@
 				>
 					{#each column.tasks as task (task.id)}
 						<div animate:flip={{duration: flipDurationMs}}>
-							<TaskTile />
+							<TaskTile {task} />
 						</div>
 					{/each}
 				</div>

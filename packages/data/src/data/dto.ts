@@ -13,6 +13,7 @@ import {type User, type UserId, zUser} from './repos/user-repo.js';
 export function zTaskDto() {
     return zTask().extend({
         column: zColumnDto().nullable(),
+        author: zUserDto(),
         board: zBoardDto(),
         state: zCrdtDiffBase64<Task>(),
     });
@@ -24,9 +25,10 @@ export async function toTaskDto(tx: DataTx, taskId: TaskId): Promise<TaskDto> {
     const task = await tx.tasks.getById(taskId, true);
     assert(task !== undefined, `toTaskDto: task not found: ${taskId}`);
     const column = task.columnId ? await toColumnDto(tx, task.columnId) : null;
+    const author = await toUserDto(tx, task.authorId);
     const board = await toBoardDto(tx, task.boardId);
 
-    return {...task, column, board};
+    return {...task, column, board, author};
 }
 
 export function zBoardViewTaskDto() {
@@ -34,6 +36,7 @@ export function zBoardViewTaskDto() {
         column: zColumnDto().nullable(),
         board: zBoardDto(),
         state: zCrdtDiffBase64<Task>(),
+        author: zUserDto(),
     });
 }
 
@@ -47,8 +50,9 @@ export async function toBoardViewTaskDto(
     assert(task !== undefined, `toBoardViewTaskDto: task not found: ${taskId}`);
     const column = task.columnId ? await toColumnDto(tx, task.columnId) : null;
     const board = await toBoardDto(tx, task.boardId);
+    const author = await toUserDto(tx, task.authorId);
 
-    return {...task, column, board};
+    return {...task, column, board, author};
 }
 
 export function zColumnDto() {

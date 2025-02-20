@@ -34,7 +34,7 @@
 <div class="action-bar mt-auto mb-2">
 	<div class="hover-subtle-1 flex h-full items-center rounded-full px-2">
 		<button class="btn text-[1.5em]">
-			<Avatar>A</Avatar>
+			<Avatar user={me.value.user} />
 		</button>
 		<span class="text-ink-body ml-2 text-xs">{me.value.user.fullName}</span>
 	</div>

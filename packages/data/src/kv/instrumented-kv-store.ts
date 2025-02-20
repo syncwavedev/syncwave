@@ -37,8 +37,14 @@ export class InstrumentedKvStore<K, V> implements KVStore<K, V> {
         fn: (tx: Transaction<K, V>) => Promise<TResult>
     ): Promise<TResult> {
         return await context().runChild({span: 'kv.transact'}, async () => {
+            let attempt = 1;
             return await this.store.transact(async tx => {
-                return await fn(new InstrumentedTransaction(tx));
+                return context().runChild(
+                    {span: 'kv.transact.attempt.' + attempt++},
+                    async () => {
+                        return await fn(new InstrumentedTransaction(tx));
+                    }
+                );
             });
         });
     }

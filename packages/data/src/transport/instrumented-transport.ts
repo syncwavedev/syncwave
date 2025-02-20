@@ -27,28 +27,16 @@ export class InstrumentedConnection<T> implements Connection<T> {
 export class InstrumentedTransportClient<T> implements TransportClient<T> {
     constructor(private readonly client: TransportClient<T>) {}
     async connect(): Promise<Connection<T>> {
-        return await context().runChild(
-            {span: 'transport.connect'},
-            async () => {
-                return new InstrumentedConnection(await this.client.connect());
-            }
-        );
+        return new InstrumentedConnection(await this.client.connect());
     }
 }
 
 export class InstrumentedTransportServer<T> implements TransportServer<T> {
     constructor(private readonly server: TransportServer<T>) {}
     async launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
-        return await context().runChild(
-            {span: 'transport.launch'},
-            async () => {
-                return await this.server.launch(connection => {
-                    return context().runChild({span: 'connection'}, () => {
-                        return cb(new InstrumentedConnection(connection));
-                    });
-                });
-            }
-        );
+        return await this.server.launch(connection => {
+            return cb(new InstrumentedConnection(connection));
+        });
     }
     close(reason: unknown): void {
         context().runChild({span: 'transport.close'}, () => {

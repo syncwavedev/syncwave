@@ -52,7 +52,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         return listening.promise;
     }
 
-    close(): void {
+    close(_reason: unknown): void {
         if (this.wss) {
             this.wss.close();
         }

@@ -11,6 +11,7 @@ import {
     zDoc,
 } from '../doc-repo.js';
 import {type ObjectKey, zObjectKey} from '../infrastructure.js';
+import type {TransitionChecker} from '../transition-checker.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 
@@ -101,8 +102,12 @@ export class UserRepo {
         return this.rawRepo.getById([id], includeDeleted);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<User>) {
-        return await this.rawRepo.apply([id], diff);
+    async apply(
+        id: Uuid,
+        diff: CrdtDiff<User>,
+        checker: TransitionChecker<User>
+    ) {
+        return await this.rawRepo.apply([id], diff, checker);
     }
 
     async create(user: Omit<User, 'pk'>): Promise<User> {

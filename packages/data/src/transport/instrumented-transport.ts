@@ -1,4 +1,5 @@
 import {context} from '../context.js';
+import {getReadableError} from '../errors.js';
 import type {Observer} from '../subject.js';
 import type {Nothing, Unsubscribe} from '../utils.js';
 import type {
@@ -18,9 +19,11 @@ export class InstrumentedConnection<T> implements Connection<T> {
         return this.connection.subscribe(observer);
     }
     close(reason: unknown): void {
-        context().runChild({span: 'connection.close'}, () => {
-            this.connection.close(reason);
-        });
+        context().addEvent(
+            'info',
+            'transport.close: ' + getReadableError(reason)
+        );
+        this.connection.close(reason);
     }
 }
 
@@ -39,8 +42,10 @@ export class InstrumentedTransportServer<T> implements TransportServer<T> {
         });
     }
     close(reason: unknown): void {
-        context().runChild({span: 'transport.close'}, () => {
-            this.server.close(reason);
-        });
+        context().addEvent(
+            'info',
+            'transport.close: ' + getReadableError(reason)
+        );
+        this.server.close(reason);
     }
 }

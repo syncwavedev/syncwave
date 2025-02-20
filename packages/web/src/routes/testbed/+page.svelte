@@ -3,15 +3,17 @@
 	import UploadButton from '$lib/components/upload-button.svelte';
 	import {getAuthManager, getSdk} from '$lib/utils';
 	import {observe} from '$lib/utils.svelte';
+	import {untrack} from 'svelte';
 	import {
 		Crdt,
+		log,
 		stringifyCrdtDiff,
 		toCrdtDiff,
 		type Board,
+		type CrdtDiff,
 	} from 'syncwave-data';
 
 	const sdk = getSdk();
-	const userId = getAuthManager().getIdentityInfo()?.userId!;
 
 	let {data} = $props();
 
@@ -25,17 +27,39 @@
 		localBoardName = localBoard.snapshot().name;
 	});
 
+	let diffQueue: CrdtDiff<Board>[] = [];
+
+	$effect(() => {
+		untrack(() => {
+			(async () => {
+				while (true) {
+					if (diffQueue.length === 0) {
+						await new Promise(resolve => setTimeout(resolve, 10));
+						continue;
+					}
+					const combinedDiff = stringifyCrdtDiff(
+						Crdt.merge(diffQueue)
+					);
+					diffQueue = [];
+					await sdk(x =>
+						x.applyBoardDiff({
+							boardId: remoteBoard.value.id,
+							diff: combinedDiff,
+						})
+					);
+				}
+			})().catch(error => {
+				log.error(error, 'Error in diff queue');
+			});
+		});
+	});
+
 	async function handleInput() {
 		const diff = localBoard.update(x => {
 			x.name = localBoardName;
 		});
 		if (diff) {
-			await sdk(x =>
-				x.applyBoardDiff({
-					boardId: remoteBoard.value.id,
-					diff: stringifyCrdtDiff(diff),
-				})
-			);
+			diffQueue.push(diff);
 		}
 	}
 </script>

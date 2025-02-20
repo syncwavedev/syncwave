@@ -114,22 +114,32 @@ export class PostgresUint8KVStore implements Uint8KVStore {
         fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         await this.init;
+        const transactStartTime = performance.now();
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
             context().ensureActive();
 
             const client = await this.pool.connect();
-            const res = await client.query(
-                'BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE; SELECT pg_backend_pid()'
-            );
-            const pid = (res as any)[1].rows[0].pg_backend_pid as unknown;
+            const pidPromise = client
+                .query(
+                    'BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE; SELECT pg_backend_pid()'
+                )
+                .then(res => {
+                    return (res as any)[1].rows[0].pg_backend_pid as unknown;
+                });
 
             let cancelAbort: Cancel | undefined = undefined;
+
+            const attemptStartTime = performance.now();
 
             try {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 cancelAbort = context().onEnd(() => {
-                    this.pool
-                        .query('SELECT pg_cancel_backend($1)', [pid])
+                    pidPromise
+                        .then(pid =>
+                            this.pool.query('SELECT pg_cancel_backend($1)', [
+                                pid,
+                            ])
+                        )
                         .catch(error => {
                             log.error(
                                 toError(error),
@@ -175,6 +185,13 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                 client.release();
                 cancelAbort?.(new AppError('transaction finished'));
             }
+            const totalTook = Math.round(performance.now() - transactStartTime);
+
+            console.log({
+                conflict: Math.round(performance.now() - attemptStartTime),
+                total: totalTook,
+                attempt,
+            });
 
             await wait({
                 ms: (attempt + 1) * 100 * Math.random(),

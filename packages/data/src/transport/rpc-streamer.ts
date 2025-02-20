@@ -332,9 +332,7 @@ class RpcStreamerClientApiState {
 
     end(streamId: StreamId) {
         const sub = this.getSub(streamId);
-        sub?.context.runChild({span: 'end'}, () => {
-            sub.writer.end();
-        });
+        sub?.writer.end();
     }
 
     finish(streamId: StreamId, reason: unknown) {

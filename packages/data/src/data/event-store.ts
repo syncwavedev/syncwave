@@ -6,11 +6,9 @@ import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
 import {CancelledError, toError} from '../errors.js';
 import {CollectionManager} from '../kv/collection-manager.js';
-import {ReadonlyCell} from '../kv/readonly-cell.js';
 import {log} from '../logger.js';
 import {Channel, Stream, toStream} from '../stream.js';
-import {interval, whenAll} from '../utils.js';
-import {Uuid} from '../uuid.js';
+import {interval} from '../utils.js';
 import {type DataEffectScheduler} from './data-layer.js';
 import {HubClient} from './hub.js';
 
@@ -21,31 +19,26 @@ function getEventHubTopic(storeId: string, collection: string) {
 export class EventStoreWriter<T> implements EventStoreWriter<T> {
     constructor(
         private readonly events: CollectionManager<T>,
-        private readonly id: ReadonlyCell<string>,
+        private readonly id: string,
         private readonly hub: HubClient<void>,
         private readonly scheduleEffect: DataEffectScheduler
     ) {}
 
     async append(collection: string, event: T): Promise<void> {
-        const [id] = await whenAll([
-            this.id.get(),
-            this.events.get(collection).append(event),
-        ]);
-        const topic = getEventHubTopic(id, collection);
+        await this.events.get(collection).append(event);
+        const topic = getEventHubTopic(this.id, collection);
         this.scheduleEffect(() => this.hub.publish(topic, undefined));
     }
 }
 
 type EventStoreReaderTransact<T> = <TResult>(
-    fn: (
-        events: CollectionManager<T>,
-        id: ReadonlyCell<Uuid>
-    ) => Promise<TResult>
+    fn: (events: CollectionManager<T>) => Promise<TResult>
 ) => Promise<TResult>;
 
 export class EventStoreReader<T> implements EventStoreReader<T> {
     constructor(
         private transact: EventStoreReaderTransact<T>,
+        private id: string,
         private readonly hub: HubClient<void>
     ) {}
 
@@ -64,9 +57,8 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                   )
                 : offsetArg;
 
-        const id = await this.transact((_, id) => id.get());
         const hubEvent$ = await this.hub.subscribe(
-            getEventHubTopic(id, collection)
+            getEventHubTopic(this.id, collection)
         );
 
         return Stream.merge<void>([

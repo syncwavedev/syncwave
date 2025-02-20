@@ -83,7 +83,7 @@ export class CoordinatorServer {
                     jwtSecret: this.options.jwtSecret,
                 },
                 objectStore: this.options.objectStore,
-                close: (reason) => {
+                close: reason => {
                     hubServer.close(reason);
                     hubClient.close(reason);
                     this.dataLayer.close(reason);

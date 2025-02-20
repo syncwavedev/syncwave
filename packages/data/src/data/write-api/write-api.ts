@@ -276,10 +276,12 @@ export function createWriteApi() {
             req: z.object({boardId: zUuid<BoardId>()}),
             res: z.object({}),
             handle: async (st, {boardId}) => {
-                await st.ps.ensureBoardMember(boardId, 'owner');
-                await st.tx.boards.update(boardId, x => {
-                    x.deleted = true;
-                });
+                await whenAll([
+                    st.ps.ensureBoardMember(boardId, 'owner'),
+                    st.tx.boards.update(boardId, x => {
+                        x.deleted = true;
+                    }),
+                ]);
                 return {};
             },
         }),
@@ -292,7 +294,13 @@ export function createWriteApi() {
             handle: async (st, {boardId, diff}) => {
                 await whenAll([
                     st.ps.ensureBoardMember(boardId, 'admin'),
-                    st.tx.boards.apply(boardId, parseCrdtDiff(diff)),
+                    st.tx.boards.apply(
+                        boardId,
+                        parseCrdtDiff(diff),
+                        createReadonlyTransitionChecker({
+                            name: false,
+                        })
+                    ),
                 ]);
                 return {};
             },
@@ -304,12 +312,25 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {taskId, diff}) => {
-                await st.ps.ensureTaskMember(taskId, 'writer');
-                const result = await st.tx.tasks.apply(
-                    taskId,
-                    parseCrdtDiff(diff)
-                );
-                await st.ps.ensureColumnMember(result.columnId, 'writer');
+                await whenAll([
+                    st.ps.ensureTaskMember(taskId, 'writer'),
+                    (async () => {
+                        const {before, after} = await st.tx.tasks.apply(
+                            taskId,
+                            parseCrdtDiff(diff),
+                            createReadonlyTransitionChecker({
+                                title: false,
+                                columnId: false,
+                            })
+                        );
+                        if (before?.columnId !== after.columnId) {
+                            await st.ps.ensureColumnMember(
+                                after.columnId,
+                                'writer'
+                            );
+                        }
+                    })(),
+                ]);
                 return {};
             },
         }),
@@ -320,15 +341,16 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {memberId, diff}) => {
-                await st.ps.ensureMember(memberId);
-                const result = await st.tx.members.apply(
-                    memberId,
-                    parseCrdtDiff(diff),
-                    createReadonlyTransitionChecker({
-                        // we allow only position updates
-                        position: false,
-                    })
-                );
+                await whenAll([
+                    st.ps.ensureMember(memberId),
+                    st.tx.members.apply(
+                        memberId,
+                        parseCrdtDiff(diff),
+                        createReadonlyTransitionChecker({
+                            position: false,
+                        })
+                    ),
+                ]);
                 return {};
             },
         }),
@@ -339,8 +361,17 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {columnId, diff}) => {
-                await st.ps.ensureColumnMember(columnId, 'writer');
-                await st.tx.columns.apply(columnId, parseCrdtDiff(diff));
+                await whenAll([
+                    st.ps.ensureColumnMember(columnId, 'writer'),
+                    st.tx.columns.apply(
+                        columnId,
+                        parseCrdtDiff(diff),
+                        createReadonlyTransitionChecker({
+                            boardPosition: false,
+                            title: false,
+                        })
+                    ),
+                ]);
                 return {};
             },
         }),
@@ -390,8 +421,16 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {userId, diff}) => {
-                await st.ps.ensureUser(userId);
-                await st.tx.users.apply(userId, parseCrdtDiff(diff));
+                await whenAll([
+                    st.ps.ensureUser(userId),
+                    st.tx.users.apply(
+                        userId,
+                        parseCrdtDiff(diff),
+                        createReadonlyTransitionChecker({
+                            fullName: false,
+                        })
+                    ),
+                ]);
                 return {};
             },
         }),

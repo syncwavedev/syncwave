@@ -12,6 +12,7 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {type BoardId, BoardRepo} from './board-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
@@ -145,8 +146,12 @@ export class ColumnRepo {
         return this.rawRepo.get(BOARD_ID, [boardId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Column>) {
-        return await this.rawRepo.apply([id], diff);
+    async apply(
+        id: Uuid,
+        diff: CrdtDiff<Column>,
+        checker: TransitionChecker<Column>
+    ) {
+        return await this.rawRepo.apply([id], diff, checker);
     }
 
     create(user: Omit<Column, 'pk'>): Promise<Column> {

@@ -15,6 +15,7 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import type {UserId} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
@@ -107,8 +108,12 @@ export class BoardRepo {
         return existingBoard === undefined;
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Board>) {
-        return await this.rawRepo.apply([id], diff);
+    async apply(
+        id: Uuid,
+        diff: CrdtDiff<Board>,
+        checker: TransitionChecker<Board>
+    ) {
+        return await this.rawRepo.apply([id], diff, checker);
     }
 
     async incrementBoardCounter(boardId: BoardId): Promise<number> {

@@ -3,6 +3,7 @@ import {z, ZodType} from 'zod';
 import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
 import {AppError} from '../errors.js';
+import {log} from '../logger.js';
 import {type Observer, Subject} from '../subject.js';
 import {tracerManager} from '../tracer-manager.js';
 import {type Message} from '../transport/message.js';
@@ -42,12 +43,10 @@ export class HubClient<T> {
         );
     }
 
-    // publish waits for all subscribers to do their work
     async publish(topic: string, message: T) {
         await this.server.publish({topic, message});
     }
 
-    // throw waits for all subscribers to do their work
     async throw(topic: string, error: string) {
         await this.server.throw({topic, error});
     }
@@ -118,8 +117,10 @@ class SubjectManager<T> {
         subject.subscribe({
             next: value => observer.next(value),
             throw: error => observer.throw(error),
-            close: (reason) => {
-                observer.close(new AppError('HubServer: subject closed', {cause: reason}));
+            close: reason => {
+                observer.close(
+                    new AppError('HubServer: subject closed', {cause: reason})
+                );
                 if (!subject.anyObservers) {
                     this.subjects.delete(topic);
                 }
@@ -166,7 +167,9 @@ function createHubServerApi<T>(zMessage: ZodType<T>) {
                 }),
                 res: z.void(),
                 handle: async (state, {topic, message}) => {
-                    await state.subjects.next(topic, message!);
+                    state.subjects.next(topic, message!).catch(error => {
+                        log.error(error, 'HubServer.publish');
+                    });
                 },
             }),
             throw: handler({

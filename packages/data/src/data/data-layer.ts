@@ -6,11 +6,10 @@ import {
     type Uint8Transaction,
     withPrefix,
 } from '../kv/kv-store.js';
-import {ReadonlyCell} from '../kv/readonly-cell.js';
 import {log} from '../logger.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import {assert, whenAll} from '../utils.js';
-import {createUuid, Uuid} from '../uuid.js';
+import {Uuid} from '../uuid.js';
 import {type AuthContext} from './auth-context.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
@@ -49,7 +48,6 @@ export interface DataTx {
     readonly dataNode: DataNode;
     readonly events: CollectionManager<ChangeEvent>;
     readonly ps: PermissionService;
-    readonly eventStoreId: ReadonlyCell<Uuid>;
     readonly esWriter: EventStoreWriter<ChangeEvent>;
     // effects are not guaranteed to run because process might die after transaction is commited
     //
@@ -104,6 +102,8 @@ export type DataEffectScheduler = (effect: DataEffect) => void;
 
 export type Transact = <T>(fn: (tx: DataTx) => Promise<T>) => Promise<T>;
 
+const mainEventStoreId = 'main';
+
 export class DataLayer {
     public readonly esReader: EventStoreReader<ChangeEvent>;
 
@@ -120,8 +120,9 @@ export class DataLayer {
                         superadmin: false,
                         userId: undefined,
                     },
-                    data => fn(data.events, data.eventStoreId)
+                    data => fn(data.events)
                 ),
+            mainEventStoreId,
             hub
         );
     }
@@ -192,16 +193,11 @@ export class DataLayer {
                 new MsgpackCodec()
             );
 
-            const eventStoreId = new ReadonlyCell(
-                withPrefix('events-id/')(tx),
-                createUuid()
-            );
-
             const scheduleEffect = (effect: DataEffect) => effects.push(effect);
 
             const esWriter = new EventStoreWriter(
                 events,
-                eventStoreId,
+                mainEventStoreId,
                 this.hub,
                 scheduleEffect
             );
@@ -213,7 +209,6 @@ export class DataLayer {
                 comments,
                 events,
                 identities,
-                eventStoreId,
                 esWriter,
                 users,
                 members,
@@ -298,14 +293,16 @@ async function logBoardChange(
     [id]: [BoardId],
     diff: CrdtDiff<Board>
 ) {
-    const members = await tx.members.getByBoardId(id).toArray();
     const ts = getNow();
     const event: BoardChangeEvent = {type: 'board', id, diff, ts};
     await whenAll([
         tx.esWriter.append(boardEvents(id), event),
-        ...members.map(member =>
-            tx.esWriter.append(userEvents(member.userId), event)
-        ),
+        tx.members
+            .getByBoardId(id)
+            .mapParallel(async member => {
+                await tx.esWriter.append(userEvents(member.userId), event);
+            })
+            .consume(),
     ]);
 }
 

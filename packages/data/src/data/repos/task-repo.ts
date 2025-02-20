@@ -12,6 +12,7 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {type BoardId, BoardRepo} from './board-repo.js';
 import {type ColumnId} from './column-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
@@ -120,8 +121,12 @@ export class TaskRepo {
         return this.rawRepo.get(COLUMN_ID_INDEX, [columnId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Task>) {
-        return await this.rawRepo.apply([id], diff);
+    async apply(
+        id: Uuid,
+        diff: CrdtDiff<Task>,
+        checker: TransitionChecker<Task>
+    ) {
+        return await this.rawRepo.apply([id], diff, checker);
     }
 
     create(user: Omit<Task, 'pk'>): Promise<Task> {

@@ -13,6 +13,7 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
 export type IdentityId = Brand<Uuid, 'identity_id'>;
@@ -122,8 +123,12 @@ export class IdentityRepo {
         return this.rawRepo.getUnique(USER_ID_INDEX, [userId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Identity>) {
-        return await this.rawRepo.apply([id], diff);
+    async apply(
+        id: Uuid,
+        diff: CrdtDiff<Identity>,
+        checker: TransitionChecker<Identity>
+    ) {
+        return await this.rawRepo.apply([id], diff, checker);
     }
 
     async create(identity: Omit<Identity, 'pk'>): Promise<Identity> {

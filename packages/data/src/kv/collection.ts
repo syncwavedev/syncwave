@@ -1,4 +1,5 @@
 import {type Codec, NumberCodec} from '../codec.js';
+import {context} from '../context.js';
 import {Stream, toStream} from '../stream.js';
 import {pipe, whenAll} from '../utils.js';
 import {Counter} from './counter.js';
@@ -30,17 +31,28 @@ export class Collection<T> {
     }
 
     async length() {
-        return await this.counter.get();
+        return await context().runChild(
+            {span: 'collection.length'},
+            async () => {
+                return await this.counter.get();
+            }
+        );
     }
 
     async append(...data: T[]): Promise<void> {
-        const offset =
-            (await this.counter.increment(data.length)) - data.length;
-        await whenAll(data.map((x, idx) => this.log.put(offset + idx, x)));
+        await context().runChild({span: 'collection.append'}, async () => {
+            const offset = await this.counter.get();
+            await whenAll([
+                this.counter.set(offset + data.length),
+                ...data.map((x, idx) => this.log.put(offset + idx, x)),
+            ]);
+        });
     }
 
     list(start: number, end?: number): Stream<CollectionEntry<T>> {
-        return toStream(this._list(start, end));
+        return context().runChild({span: 'collection.list'}, () => {
+            return toStream(this._list(start, end));
+        });
     }
 
     private async *_list(

@@ -1,4 +1,5 @@
 import {z, ZodType} from 'zod';
+import {context} from '../context.js';
 import {
     Crdt,
     CrdtCodec,
@@ -96,6 +97,105 @@ export type Recipe<T> = (doc: T) => Nothing;
 export type CrdtDoc<T> = T & {state: CrdtDiffBase64<T>};
 
 export class DocRepo<T extends Doc<IndexKey>> {
+    public readonly rawRepo: DocRepoImpl<T>;
+
+    constructor(options: DocStoreOptions<T>) {
+        this.rawRepo = new DocRepoImpl<T>(options);
+    }
+
+    async getById(
+        id: IndexKey,
+        includeDeleted?: boolean
+    ): Promise<CrdtDoc<T> | undefined> {
+        return await context().runChild({span: 'repo.getById'}, async () => {
+            return await this.rawRepo.getById(id, includeDeleted);
+        });
+    }
+
+    get(indexName: string, key: IndexKey, includeDeleted?: boolean): Stream<T> {
+        return context().runChild({span: 'repo.get'}, () => {
+            return this.rawRepo.get(indexName, key, includeDeleted);
+        });
+    }
+
+    async getUnique(
+        indexName: string,
+        key: IndexKey,
+        includeDeleted?: boolean
+    ): Promise<T | undefined> {
+        return await context().runChild({span: 'repo.get'}, async () => {
+            return await this.rawRepo.getUnique(indexName, key, includeDeleted);
+        });
+    }
+
+    unsafe_getAll(prefix?: Uint8Array): Stream<T> {
+        return context().runChild({span: 'repo.unsafe_getAll'}, () => {
+            return this.rawRepo.unsafe_getAll(prefix);
+        });
+    }
+
+    async unsafe_deleteAll() {
+        return await context().runChild(
+            {span: 'repo.unsafe_deleteAll'},
+            async () => {
+                return await this.rawRepo.unsafe_deleteAll();
+            }
+        );
+    }
+
+    async unsafe_delete(pk: IndexKey) {
+        return await context().runChild(
+            {span: 'repo.unsafe_delete'},
+            async () => {
+                return await this.rawRepo.unsafe_delete(pk);
+            }
+        );
+    }
+
+    query(
+        indexName: string,
+        condition: Condition<IndexKey>,
+        includeDeleted?: boolean
+    ): Stream<T> {
+        return context().runChild({span: 'repo.query'}, () => {
+            return this.rawRepo.query(indexName, condition, includeDeleted);
+        });
+    }
+
+    async update(
+        id: IndexKey,
+        recipe: Recipe<T>,
+        includeDeleted?: boolean
+    ): Promise<T> {
+        return await context().runChild({span: 'repo.update'}, async () => {
+            return await this.rawRepo.update(id, recipe, includeDeleted);
+        });
+    }
+
+    async apply(
+        pk: IndexKey,
+        diff: CrdtDiff<T>,
+        transitionChecker: TransitionChecker<T> | undefined
+    ) {
+        return await context().runChild({span: 'repo.apply'}, async () => {
+            return await this.rawRepo.apply(pk, diff, transitionChecker);
+        });
+    }
+
+    async create(doc: T): Promise<T> {
+        return await context().runChild({span: 'repo.create'}, async () => {
+            return await this.rawRepo.create(doc);
+        });
+    }
+
+    async put(doc: T): Promise<T> {
+        return await context().runChild({span: 'repo.put'}, async () => {
+            return await this.rawRepo.put(doc);
+        });
+    }
+}
+
+class DocRepoImpl<T extends Doc<IndexKey>> {
     private readonly indexes: Map<string, Index<T>>;
     // we use Omit to prevent direct access to the value that might need an upgrade
     private readonly primary: Omit<
@@ -263,16 +363,15 @@ export class DocRepo<T extends Doc<IndexKey>> {
             return doc.snapshot();
         }
 
-        await this.apply(id, diff);
+        await this.apply(id, diff, undefined);
 
         return doc.snapshot();
     }
 
-    // todo: add tests
     async apply(
         pk: IndexKey,
         diff: CrdtDiff<T>,
-        transitionChecker?: TransitionChecker<T>
+        transitionChecker: TransitionChecker<T> | undefined
     ) {
         const existingDoc: Crdt<T> | undefined = await this._get(pk);
         return await this._apply({
@@ -291,31 +390,47 @@ export class DocRepo<T extends Doc<IndexKey>> {
         diff: CrdtDiff<T>;
         skipTransitionCheck: boolean;
         transitionChecker?: TransitionChecker<T>;
-    }): Promise<T> {
-        let prev: T | undefined;
-        let next: Crdt<T>;
-        if (params.existingDoc) {
-            prev = params.existingDoc.snapshot();
-            next = params.existingDoc;
-            next.apply(params.diff);
-        } else {
-            prev = undefined;
-            next = Crdt.load(params.diff);
-        }
+    }): Promise<{before: T | undefined; after: T}> {
+        return await context().runChild({span: 'repo._apply'}, async () => {
+            let prev: T | undefined;
+            let next: Crdt<T>;
+            if (params.existingDoc) {
+                prev = context().runChildSync(
+                    {span: 'repo: crdt.snapshot'},
+                    () => {
+                        return params.existingDoc!.snapshot();
+                    }
+                );
+                next = params.existingDoc;
+                context().runChildSync({span: 'repo: crdt.apply'}, () => {
+                    next.apply(params.diff);
+                });
+            } else {
+                prev = undefined;
+                next = context().runChildSync({span: 'repo: crdt.load'}, () => {
+                    return Crdt.load(params.diff);
+                });
+            }
 
-        if (compareIndexKey(next.snapshot().pk, params.pk) !== 0) {
-            throw new AppError('invalid diff: diff updates id ' + params.pk);
-        }
+            if (compareIndexKey(next.snapshot().pk, params.pk) !== 0) {
+                throw new AppError(
+                    'invalid diff: diff updates id ' + params.pk
+                );
+            }
 
-        await this._put({
-            prev,
-            next,
-            diff: params.diff,
-            skipTransitionCheck: params.skipTransitionCheck,
-            transitionChecker: params.transitionChecker,
+            await this._put({
+                prev,
+                next,
+                diff: params.diff,
+                skipTransitionCheck: params.skipTransitionCheck,
+                transitionChecker: params.transitionChecker,
+            });
+
+            return {
+                before: prev,
+                after: next.snapshot(),
+            };
         });
-
-        return next.snapshot();
     }
 
     async create(doc: T): Promise<T> {
@@ -354,29 +469,31 @@ export class DocRepo<T extends Doc<IndexKey>> {
 
     // _get must be used everywhere to ensure upgrade
     private async _get(pk: IndexKey): Promise<Crdt<T> | undefined> {
-        const doc = await (this.primary as Transaction<IndexKey, Crdt<T>>).get(
-            pk
-        );
+        return await context().runChild({span: 'repo._get'}, async () => {
+            const doc = await (
+                this.primary as Transaction<IndexKey, Crdt<T>>
+            ).get(pk);
 
-        if (!doc) {
+            if (!doc) {
+                return doc;
+            }
+
+            const original = doc.clone();
+
+            const diff = doc.update(this.upgrade);
+            if (!diff) {
+                return doc;
+            }
+
+            await this._apply({
+                pk,
+                existingDoc: original,
+                diff,
+                skipTransitionCheck: true,
+            });
+
             return doc;
-        }
-
-        const original = doc.clone();
-
-        const diff = doc.update(this.upgrade);
-        if (!diff) {
-            return doc;
-        }
-
-        await this._apply({
-            pk,
-            existingDoc: original,
-            diff,
-            skipTransitionCheck: true,
         });
-
-        return doc;
     }
 
     private async _put(params: {

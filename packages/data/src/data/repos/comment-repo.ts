@@ -11,6 +11,7 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {type TaskId, TaskRepo} from './task-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
@@ -106,8 +107,12 @@ export class CommentRepo {
         return this.rawRepo.get(TASK_ID_INDEX, [taskId]);
     }
 
-    async apply(id: Uuid, diff: CrdtDiff<Comment>) {
-        return await this.rawRepo.apply([id], diff);
+    async apply(
+        id: Uuid,
+        diff: CrdtDiff<Comment>,
+        checker: TransitionChecker<Comment>
+    ) {
+        return await this.rawRepo.apply([id], diff, checker);
     }
 
     create(user: Omit<Comment, 'pk'>): Promise<Comment> {

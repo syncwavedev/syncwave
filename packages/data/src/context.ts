@@ -9,6 +9,7 @@ import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
 import {CancelledError} from './errors.js';
 import {log, type LogLevel} from './logger.js';
+import {Stream, toStream} from './stream.js';
 import {type Brand, type Nothing, runAll, type Unsubscribe} from './utils.js';
 
 export interface NestedAttributeMap
@@ -206,17 +207,33 @@ export class Context {
         };
     }
 
-    runChild<R>(options: ContextOptions, fn: () => R): R {
+    runChildSync<R>(options: ContextOptions, fn: () => R): R {
+        const [ctx, endCtx] = this.createChild(options);
+        try {
+            return ctx.run(fn);
+        } finally {
+            endCtx('end of runChild');
+        }
+    }
+
+    runChild<R extends Promise<unknown> | AsyncIterable<unknown>>(
+        options: ContextOptions,
+        fn: () => R
+    ): R extends Promise<infer T>
+        ? Promise<T>
+        : R extends AsyncIterable<infer T>
+          ? Stream<T>
+          : never {
         const [ctx, endCtx] = this.createChild(options);
         try {
             const result = ctx.run(fn);
-            // const result = fn();
 
             if (result instanceof Promise) {
-                return result.finally(() => endCtx('end of runChild')) as R;
+                return result.finally(() => endCtx('end of runChild')) as any;
             } else {
-                endCtx('end of runChild');
-                return result;
+                return toStream(result).finally(() => {
+                    endCtx('end of runChild');
+                }) as any;
             }
         } catch (error) {
             endCtx('end of runChild');

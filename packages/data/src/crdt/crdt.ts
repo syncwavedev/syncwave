@@ -1,6 +1,7 @@
 import {
     applyUpdateV2,
     encodeStateAsUpdateV2,
+    mergeUpdatesV2,
     Array as YArray,
     Doc as YDoc,
     Map as YMap,
@@ -79,6 +80,19 @@ export class Crdt<T> {
         applyUpdateV2(doc, toCrdtDiff(diff).payload);
 
         return new Crdt(doc);
+    }
+
+    static merge<T>(
+        diffs: Array<CrdtDiff<T> | CrdtDiffBase64<T>>
+    ): CrdtDiff<T> {
+        return {
+            timestamp: Math.max(
+                ...diffs.map(diff => toCrdtDiff(diff).timestamp)
+            ) as Timestamp,
+            payload: mergeUpdatesV2(
+                diffs.map(diff => toCrdtDiff(diff).payload)
+            ) as CrdtDiffPayload<T>,
+        };
     }
 
     private constructor(private doc: YDoc) {}

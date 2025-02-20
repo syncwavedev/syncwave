@@ -303,10 +303,7 @@ export class Context {
         }
     }
 
-    private ignoreAddEvent = 0;
-    addLog(level: LogLevel, message: string, attributes?: AttributeMap) {
-        if (this.ignoreAddEvent > 0) return;
-
+    addEvent(level: LogLevel, message: string, attributes?: AttributeMap) {
         if (this.isActive) {
             this.span.addEvent(
                 `[${level.toUpperCase()}] ${message}`,
@@ -314,15 +311,10 @@ export class Context {
                 performance.now()
             );
         } else {
-            try {
-                this.ignoreAddEvent += 1;
-                log.warn(
-                    'context is not active, cannot add event: ' +
-                        JSON.stringify({name: message, attributes})?.slice(0, 100)
-                );
-            } finally {
-                this.ignoreAddEvent -= 1;
-            }
+            log.warn(
+                'context is not active, cannot add event: ' +
+                    JSON.stringify({name: message, attributes})?.slice(0, 100)
+            );
         }
     }
 }

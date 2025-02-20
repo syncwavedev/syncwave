@@ -1,9 +1,5 @@
 import {pino as createPino, type Level} from 'pino';
-import {
-    context,
-    flattenAttributeMap,
-    type NestedAttributeMap,
-} from './context.js';
+import {context, type NestedAttributeMap} from './context.js';
 import {AppError, toError} from './errors.js';
 
 export type LogLevel =
@@ -92,9 +88,6 @@ export class Logger {
             }
         }
         this.pino[level]({...log, msg: message});
-        if (LogLevelValues[level] >= LogLevelValues['info']) {
-            ctx.addLog(level, message, flattenAttributeMap(log));
-        }
     }
 
     async time<T>(name: string, fn: () => Promise<T>): Promise<T> {

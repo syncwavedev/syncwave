@@ -435,6 +435,12 @@ export class Stream<T> implements AsyncIterable<T> {
         }
     }
 
+    async consume(): Promise<void> {
+        for await (const _ of this) {
+            // do nothing
+        }
+    }
+
     async toArray(): Promise<T[]> {
         const result: T[] = [];
         for await (const item of this) {
@@ -443,6 +449,7 @@ export class Stream<T> implements AsyncIterable<T> {
 
         return result;
     }
+
     partition<S extends T>(
         predicate: (value: T) => value is S
     ): [Cursor<S>, Cursor<Exclude<T, S>>];

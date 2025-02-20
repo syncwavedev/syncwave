@@ -5,6 +5,7 @@ import {parseCrdtDiff, zCrdtDiffBase64} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
 import {createApi, handler, type InferRpcClient} from '../../transport/rpc.js';
+import {whenAll} from '../../utils.js';
 import {zUuid} from '../../uuid.js';
 import type {DataTx} from '../data-layer.js';
 import {
@@ -289,8 +290,10 @@ export function createWriteApi() {
             }),
             res: z.object({}),
             handle: async (st, {boardId, diff}) => {
-                await st.ps.ensureBoardMember(boardId, 'admin');
-                await st.tx.boards.apply(boardId, parseCrdtDiff(diff));
+                await whenAll([
+                    st.ps.ensureBoardMember(boardId, 'admin'),
+                    st.tx.boards.apply(boardId, parseCrdtDiff(diff)),
+                ]);
                 return {};
             },
         }),

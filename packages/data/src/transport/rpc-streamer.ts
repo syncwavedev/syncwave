@@ -195,18 +195,18 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         cancelCtx,
                         async () => {
                             try {
-                                for await (const value of processor.stream(
-                                    state.state,
-                                    arg,
-                                    headers
-                                )) {
-                                    log.info(
-                                        `${callInfo} => ${toResponseLog(value)}`
-                                    );
-                                    await catchConnectionClosed(
-                                        state.client.next({streamId, value})
-                                    );
-                                }
+                                await toStream(
+                                    processor.stream(state.state, arg, headers)
+                                )
+                                    .mapParallel(async value => {
+                                        log.info(
+                                            `${callInfo} => ${toResponseLog(value)}`
+                                        );
+                                        await catchConnectionClosed(
+                                            state.client.next({streamId, value})
+                                        );
+                                    })
+                                    .consume();
                             } catch (error: unknown) {
                                 reportRpcError(toError(error), callInfo);
                                 // no point in sending throw if the stream was cancelled by client

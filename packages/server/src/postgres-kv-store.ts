@@ -177,7 +177,7 @@ export class PostgresUint8KVStore implements Uint8KVStore {
             }
 
             await wait({
-                ms: (attempt + 1) * 10 * Math.random(),
+                ms: (attempt + 1) * 100 * Math.random(),
                 onCancel: 'reject',
             });
         }

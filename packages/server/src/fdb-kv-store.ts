@@ -4,7 +4,6 @@ import {
     type Entry,
     type GtCondition,
     type GteCondition,
-    isolate,
     type LtCondition,
     type LteCondition,
     mapCondition,
@@ -94,12 +93,7 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
         fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         return this.db.doTransaction(async nativeTxn => {
-            const wrappedTxn = new FoundationDBUint8Transaction(nativeTxn);
-            // we use prefix to avoid reserved range starting with 0xff
-            const prefixedTxn = isolate(new Uint8Array([MAGIC_BYTE]))(
-                wrappedTxn
-            );
-            return fn(prefixedTxn);
+            return new FoundationDBUint8Transaction(nativeTxn);
         });
     }
 

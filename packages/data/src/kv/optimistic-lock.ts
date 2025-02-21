@@ -1,19 +1,14 @@
 import {StringCodec} from '../codec.js';
+import type {Tuple} from '../tuple.js';
 import {createUuid, encodeUuid} from '../uuid.js';
-import type {Uint8Transaction} from './kv-store.js';
+import type {AppTransaction} from './kv-store.js';
 
 export class OptimisticLock {
     private readonly stringCodec = new StringCodec();
 
-    constructor(private readonly tx: Uint8Transaction) {}
+    constructor(private readonly tx: AppTransaction) {}
 
-    async lock(key?: string | Uint8Array): Promise<void> {
-        const keyBuf =
-            key === undefined
-                ? new Uint8Array()
-                : typeof key === 'string'
-                  ? this.stringCodec.encode(key)
-                  : key;
-        await this.tx.put(keyBuf, encodeUuid(createUuid()));
+    async lock(key?: Tuple): Promise<void> {
+        await this.tx.put(key ?? [], encodeUuid(createUuid()));
     }
 }

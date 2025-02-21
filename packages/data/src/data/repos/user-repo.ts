@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {type CrdtDiff} from '../../crdt/crdt.js';
-import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {assertNever, type Brand} from '../../utils.js';
 import {createUuid, Uuid, zUuid} from '../../uuid.js';
 import {
@@ -58,9 +58,9 @@ export function zUser() {
 export class UserRepo {
     public readonly rawRepo: DocRepo<User>;
 
-    constructor(tx: Uint8Transaction, onChange: OnDocChange<User>) {
+    constructor(tx: AppTransaction, onChange: OnDocChange<User>) {
         this.rawRepo = new DocRepo<User>({
-            tx: withPrefix('d/')(tx),
+            tx: isolate(['d'])(tx),
             onChange,
             indexes: {},
             schema: zUser(),

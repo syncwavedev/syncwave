@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {type CrdtDiff} from '../../crdt/crdt.js';
-import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid, zUuid} from '../../uuid.js';
@@ -45,13 +45,13 @@ export class CommentRepo {
     public readonly rawRepo: DocRepo<Comment>;
 
     constructor(
-        tx: Uint8Transaction,
+        tx: AppTransaction,
         taskRepo: TaskRepo,
         userRepo: UserRepo,
         onChange: OnDocChange<Comment>
     ) {
         this.rawRepo = new DocRepo<Comment>({
-            tx: withPrefix('d/')(tx),
+            tx: isolate(['d'])(tx),
             onChange,
             indexes: {
                 [TASK_ID_INDEX]: {

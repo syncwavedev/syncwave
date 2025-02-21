@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {type BigFloat, toBigFloat, zBigFloat} from '../../big-float.js';
 import {type CrdtDiff} from '../../crdt/crdt.js';
-import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand, unreachable} from '../../utils.js';
 import {createUuid, Uuid, zUuid} from '../../uuid.js';
@@ -70,13 +70,13 @@ export class ColumnRepo {
     public readonly rawRepo: DocRepo<Column>;
 
     constructor(
-        tx: Uint8Transaction,
+        tx: AppTransaction,
         boardRepo: BoardRepo,
         userRepo: UserRepo,
         onChange: OnDocChange<Column>
     ) {
         this.rawRepo = new DocRepo<Column>({
-            tx: withPrefix('d/')(tx),
+            tx: isolate(['d'])(tx),
             onChange,
             indexes: {
                 [BOARD_ID]: x => [x.boardId],

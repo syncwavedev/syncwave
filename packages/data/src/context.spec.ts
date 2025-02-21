@@ -1,22 +1,10 @@
+import './test-instrumentation.js';
+
 import opentelemetry, {propagation, trace} from '@opentelemetry/api';
-import {Resource} from '@opentelemetry/resources';
-import {
-    AlwaysOnSampler,
-    BasicTracerProvider,
-} from '@opentelemetry/sdk-trace-base';
-import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 import {describe, expect, it} from 'vitest';
 import {context} from './context.js';
 
 describe('Context', () => {
-    // we need to register the provider for propagation to work
-    new BasicTracerProvider({
-        resource: new Resource({
-            [ATTR_SERVICE_NAME]: 'test',
-        }),
-        sampler: new AlwaysOnSampler(),
-    }).register();
-
     it('should extract context', () => {
         const [ctx] = context().createDetached({
             span: 'test',
@@ -41,7 +29,7 @@ describe('Context', () => {
         );
         const traceId = span.spanContext().traceId;
 
-        expect(traceId).not.toEqual('');
+        expect(traceId).not.toEqual('00000000000000000000000000000000');
 
         const carrier = {traceparent: '', tracestate: ''};
         const spanCtx = trace.setSpan(opentelemetry.context.active(), span);

@@ -1,7 +1,9 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {type Codec, decodeString, encodeString} from '../codec.js';
 import {Collection, type CollectionEntry} from './collection.js';
+import type {AppStore} from './kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
+import {TupleStore} from './tuple-store.js';
 
 const jsonCodec: Codec<any> = {
     encode: data => encodeString(JSON.stringify(data)),
@@ -9,10 +11,10 @@ const jsonCodec: Codec<any> = {
 };
 
 describe('Collection', () => {
-    let store: MemKVStore;
+    let store: AppStore;
 
     beforeEach(() => {
-        store = new MemKVStore();
+        store = new TupleStore(new MemKVStore());
     });
 
     it('should append data into the collection and retrieve it with the correct offsets', async () => {

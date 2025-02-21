@@ -203,7 +203,7 @@ describe('RpcHandler', () => {
         const resultPromise = ctx.run(async () => await client.test({}));
         await wait({ms: 10, onCancel: 'reject'});
 
-        cancel('test reason');
+        cancel(new CancelledError('test reason', undefined));
 
         await expect(cancelledDef.promise).resolves.toEqual(true);
         await expect(resultPromise).rejects.toThrowError(CancelledError);

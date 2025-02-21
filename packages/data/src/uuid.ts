@@ -38,3 +38,14 @@ export class UuidCodec implements Codec<Uuid> {
 const uuidCodec = new UuidCodec();
 export const encodeUuid = (data: Uuid) => uuidCodec.encode(data);
 export const decodeUuid = (buf: Uint8Array) => uuidCodec.decode(buf);
+
+export function stringifyUuid(uuid: Uuid): string {
+    return uuid;
+}
+
+export function parseUuid(uuid: string): Uuid {
+    if (!validate(uuid)) {
+        throw new AppError(`parse error: ${uuid} is not a UUID`);
+    }
+    return uuid as Uuid;
+}

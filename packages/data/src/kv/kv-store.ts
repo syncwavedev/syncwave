@@ -1,9 +1,10 @@
 import type {Codec} from '../codec.js';
 import {AppError} from '../errors.js';
 import {Stream, toStream} from '../stream.js';
-import {bufStartsWith, unreachable} from '../utils.js';
+import {tupleStartsWith, type Packer, type Tuple} from '../tuple.js';
+import {unreachable} from '../utils.js';
+import {IsolatedTransaction} from './isolated-kv-store.js';
 import {MappedTransaction, type Mapper} from './mapped-kv-store.js';
-import {PrefixedTransaction} from './prefixed-kv-store.js';
 
 export interface GtCondition<TKey> {
     readonly gt: TKey;
@@ -50,6 +51,7 @@ export interface Entry<TKey, TValue> {
 }
 
 export type Uint8Entry = Entry<Uint8Array, Uint8Array>;
+export type AppEntry<T = Uint8Array> = Entry<Tuple, T>;
 
 export type Mutation<TKey, TValue> =
     | PutMutation<TKey, TValue>
@@ -84,6 +86,8 @@ export interface KVStore<TKey, TValue> {
 
 export type Uint8KVStore = KVStore<Uint8Array, Uint8Array>;
 export type Uint8Transaction = Transaction<Uint8Array, Uint8Array>;
+export type AppStore<T = Uint8Array> = KVStore<Tuple, T>;
+export type AppTransaction<T = Uint8Array> = Transaction<Tuple, T>;
 
 export interface ConditionMapper<TKey, TResult> {
     gt: (cond: GtCondition<TKey>) => TResult;
@@ -118,7 +122,14 @@ function createIdMapper<T>(): Mapper<T, T> {
     };
 }
 
-function createEncodingMapper<TData>(
+function createPackerMapper<TData>(codec: Packer<TData>): Mapper<Tuple, TData> {
+    return {
+        encode: codec.pack.bind(codec),
+        decode: codec.unpack.bind(codec),
+    };
+}
+
+function createCodecMapper<TData>(
     codec: Codec<TData>
 ): Mapper<Uint8Array, TData> {
     return {
@@ -127,51 +138,47 @@ function createEncodingMapper<TData>(
     };
 }
 
-export function withPrefix(
-    prefix: Uint8Array | string
-): <TValue>(
-    store: Transaction<Uint8Array, TValue>
-) => Transaction<Uint8Array, TValue> {
-    return store => new PrefixedTransaction(store, prefix);
+export function isolate(
+    prefix: Tuple
+): <TValue>(store: Transaction<Tuple, TValue>) => Transaction<Tuple, TValue> {
+    return store => new IsolatedTransaction(store, prefix);
 }
 
-export function withValueCodec<TData>(
+export function withCodec<TData>(
     codec: Codec<TData>
 ): <TKey>(store: Transaction<TKey, Uint8Array>) => Transaction<TKey, TData> {
     return store =>
         new MappedTransaction(
             store,
             createIdMapper(),
-            createEncodingMapper(codec)
+            createCodecMapper(codec)
         );
 }
 
-export function withKeyCodec<TData>(
-    codec: Codec<TData>
-): <TValue>(
-    store: Transaction<Uint8Array, TValue>
-) => Transaction<TData, TValue> {
+export function withPacker<T>(
+    codec: Packer<T>
+): <TValue>(store: Transaction<Tuple, TValue>) => Transaction<T, TValue> {
     return store =>
         new MappedTransaction(
             store,
-            createEncodingMapper(codec),
+            createPackerMapper(codec),
             createIdMapper()
         );
 }
 
 export function queryStartsWith<T>(
-    tx: Transaction<Uint8Array, T>,
-    prefix: Uint8Array
-): Stream<Entry<Uint8Array, T>> {
+    tx: AppTransaction<T>,
+    prefix: Tuple
+): Stream<Entry<Tuple, T>> {
     return toStream(_queryStartsWith(tx, prefix));
 }
 
 async function* _queryStartsWith<T>(
-    tx: Transaction<Uint8Array, T>,
-    prefix: Uint8Array
-): AsyncIterable<Entry<Uint8Array, T>> {
+    tx: AppTransaction<T>,
+    prefix: Tuple
+): AsyncIterable<Entry<Tuple, T>> {
     for await (const entry of tx.query({gte: prefix})) {
-        if (!bufStartsWith(entry.key, prefix)) {
+        if (!tupleStartsWith(entry.key, prefix)) {
             return;
         }
 

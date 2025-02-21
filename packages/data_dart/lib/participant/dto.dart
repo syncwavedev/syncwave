@@ -315,27 +315,23 @@ class GetDbTreeReq {
 
 class GetDbTreeRes {
     List<GetDbTreeRe> childrenPreview;
-    dynamic key;
     String name;
     ChildrenPreviewType type;
 
     GetDbTreeRes({
         required this.childrenPreview,
-        required this.key,
         required this.name,
         required this.type,
     });
 
     factory GetDbTreeRes.fromJson(Map<String, dynamic> json) => GetDbTreeRes(
         childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
-        key: json["key"],
         name: json["name"],
         type: childrenPreviewTypeValues.map[json["type"]]!,
     );
 
     Map<String, dynamic> toJson() => {
         "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
-        "key": key,
         "name": name,
         "type": childrenPreviewTypeValues.reverse[type],
     };
@@ -343,27 +339,23 @@ class GetDbTreeRes {
 
 class GetDbTreeRe {
     List<GetDbTreeRe> childrenPreview;
-    dynamic key;
     String name;
     ChildrenPreviewType type;
 
     GetDbTreeRe({
         required this.childrenPreview,
-        required this.key,
         required this.name,
         required this.type,
     });
 
     factory GetDbTreeRe.fromJson(Map<String, dynamic> json) => GetDbTreeRe(
         childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
-        key: json["key"],
         name: json["name"],
         type: childrenPreviewTypeValues.map[json["type"]]!,
     );
 
     Map<String, dynamic> toJson() => {
         "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
-        "key": key,
         "name": name,
         "type": childrenPreviewTypeValues.reverse[type],
     };

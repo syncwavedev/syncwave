@@ -1,10 +1,11 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {z} from 'zod';
-import type {IndexKey} from '../kv/data-index.js';
-import type {Condition} from '../kv/kv-store.js';
+import type {AppStore, Condition} from '../kv/kv-store.js';
 import {MemKVStore} from '../kv/mem-kv-store.js';
+import {TupleStore} from '../kv/tuple-store.js';
 import {getNow, type Timestamp} from '../timestamp.js';
+import type {Tuple} from '../tuple.js';
 import {createUuid, Uuid, zUuid} from '../uuid.js';
 import {
     type Doc,
@@ -36,11 +37,11 @@ const indexes: Record<string, IndexSpec<MyDoc>> = {
 };
 
 describe('DocStore with MemKVStore', () => {
-    let store: MemKVStore;
+    let store: AppStore;
     const now = getNow();
 
     beforeEach(() => {
-        store = new MemKVStore();
+        store = new TupleStore(new MemKVStore());
     });
 
     it('should create and retrieve a document by ID', async () => {
@@ -424,7 +425,7 @@ describe('DocStore with MemKVStore', () => {
         // Condition in the store is typed for Condition<IndexKey>, which is basically Uint8Array-based,
         // but we have helpers that pass raw numbers (due to withValueCodec, etc).
         // So let's see how to do a range query:
-        const ageGte15: Condition<IndexKey> = {gte: [15]};
+        const ageGte15: Condition<Tuple> = {gte: [15]};
 
         const docsBetween15And25 = await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({
@@ -515,7 +516,7 @@ describe('DocStore with MemKVStore', () => {
         // with the same name.
         // For demonstration, let's remove one of the "Zed" docs, then getUnique will succeed.
 
-        let firstZedId: IndexKey | undefined;
+        let firstZedId: Tuple | undefined;
         await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({
                 tx,

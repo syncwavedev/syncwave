@@ -8,25 +8,18 @@ import {
     stringifyCrdtDiff,
 } from '../crdt/crdt.js';
 import {AppError} from '../errors.js';
+import {createIndex, type Index} from '../kv/data-index.js';
 import {
-    compareIndexKey,
-    createIndex,
-    type Index,
-    type IndexKey,
-    IndexKeyCodec,
-    indexKeyToString,
-} from '../kv/data-index.js';
-import {
+    type AppTransaction,
     type Condition,
+    isolate,
     queryStartsWith,
     type Transaction,
-    type Uint8Transaction,
-    withKeyCodec,
-    withPrefix,
-    withValueCodec,
+    withCodec,
 } from '../kv/kv-store.js';
 import {Stream, toStream} from '../stream.js';
 import {getNow, type Timestamp, zTimestamp} from '../timestamp.js';
+import {compareTuple, stringifyTuple, type Tuple} from '../tuple.js';
 import {type Nothing, pipe, whenAll} from '../utils.js';
 import {
     createReadonlyTransitionChecker,
@@ -44,14 +37,14 @@ export class ConstraintError extends AppError {
     }
 }
 
-export interface Doc<TKey extends IndexKey> {
+export interface Doc<TKey extends Tuple> {
     readonly pk: TKey;
     readonly createdAt: Timestamp;
     updatedAt: Timestamp;
     deleted: boolean;
 }
 
-export function zDoc<T extends IndexKey>(pk: ZodType<T>) {
+export function zDoc<T extends Tuple>(pk: ZodType<T>) {
     return z.object({
         pk: pk,
         createdAt: zTimestamp(),
@@ -63,25 +56,25 @@ export function zDoc<T extends IndexKey>(pk: ZodType<T>) {
 export type IndexSpec<T> =
     | {
           readonly unique?: boolean | undefined;
-          readonly key: (x: T) => IndexKey;
+          readonly key: (x: T) => Tuple;
           readonly include?: (x: T) => boolean;
       }
-    | ((x: T) => IndexKey);
+    | ((x: T) => Tuple);
 
 export type IndexMap<T> = Record<string, IndexSpec<T>>;
 
-export type OnDocChange<T extends Doc<IndexKey>> = (
+export type OnDocChange<T extends Doc<Tuple>> = (
     pk: T['pk'],
     diff: CrdtDiff<T>
 ) => Promise<void>;
 
-export interface Constraint<T extends Doc<IndexKey>> {
+export interface Constraint<T extends Doc<Tuple>> {
     readonly name: string;
     readonly verify: (doc: T) => Promise<void | string>;
 }
 
-export interface DocStoreOptions<T extends Doc<IndexKey>> {
-    tx: Uint8Transaction;
+export interface DocStoreOptions<T extends Doc<Tuple>> {
+    tx: AppTransaction;
     indexes: IndexMap<T>;
     schema: ZodType<T>;
     onChange: OnDocChange<T>;
@@ -96,7 +89,7 @@ export type Recipe<T> = (doc: T) => Nothing;
 
 export type CrdtDoc<T> = T & {state: CrdtDiffBase64<T>};
 
-export class DocRepo<T extends Doc<IndexKey>> {
+export class DocRepo<T extends Doc<Tuple>> {
     public readonly rawRepo: DocRepoImpl<T>;
 
     constructor(options: DocStoreOptions<T>) {
@@ -104,7 +97,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
     }
 
     async getById(
-        id: IndexKey,
+        id: Tuple,
         includeDeleted?: boolean
     ): Promise<CrdtDoc<T> | undefined> {
         return await context().runChild({span: 'repo.getById'}, async () => {
@@ -112,7 +105,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         });
     }
 
-    get(indexName: string, key: IndexKey, includeDeleted?: boolean): Stream<T> {
+    get(indexName: string, key: Tuple, includeDeleted?: boolean): Stream<T> {
         return context().runChild({span: 'repo.get'}, () => {
             return this.rawRepo.get(indexName, key, includeDeleted);
         });
@@ -120,7 +113,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
 
     async getUnique(
         indexName: string,
-        key: IndexKey,
+        key: Tuple,
         includeDeleted?: boolean
     ): Promise<T | undefined> {
         return await context().runChild({span: 'repo.get'}, async () => {
@@ -128,7 +121,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         });
     }
 
-    unsafe_getAll(prefix?: Uint8Array): Stream<T> {
+    unsafe_getAll(prefix: Tuple = []): Stream<T> {
         return context().runChild({span: 'repo.unsafe_getAll'}, () => {
             return this.rawRepo.unsafe_getAll(prefix);
         });
@@ -143,7 +136,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
         );
     }
 
-    async unsafe_delete(pk: IndexKey) {
+    async unsafe_delete(pk: Tuple) {
         return await context().runChild(
             {span: 'repo.unsafe_delete'},
             async () => {
@@ -154,7 +147,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
 
     query(
         indexName: string,
-        condition: Condition<IndexKey>,
+        condition: Condition<Tuple>,
         includeDeleted?: boolean
     ): Stream<T> {
         return context().runChild({span: 'repo.query'}, () => {
@@ -163,7 +156,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
     }
 
     async update(
-        id: IndexKey,
+        id: Tuple,
         recipe: Recipe<T>,
         includeDeleted?: boolean
     ): Promise<T> {
@@ -173,7 +166,7 @@ export class DocRepo<T extends Doc<IndexKey>> {
     }
 
     async apply(
-        pk: IndexKey,
+        pk: Tuple,
         diff: CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
@@ -195,14 +188,14 @@ export class DocRepo<T extends Doc<IndexKey>> {
     }
 }
 
-class DocRepoImpl<T extends Doc<IndexKey>> {
+class DocRepoImpl<T extends Doc<Tuple>> {
     private readonly indexes: Map<string, Index<T>>;
     // we use Omit to prevent direct access to the value that might need an upgrade
     private readonly primary: Omit<
-        Transaction<IndexKey, Crdt<T>>,
+        Transaction<Tuple, Crdt<T>>,
         'get' | 'query'
     >;
-    private readonly primaryKeyRaw: Transaction<Uint8Array, Crdt<T>>;
+    private readonly primaryKeyRaw: AppTransaction<Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
     // todo: add tests
@@ -224,7 +217,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
                 return [
                     indexName,
                     createIndex({
-                        tx: withPrefix(`i/${indexName}/`)(options.tx),
+                        tx: isolate(['i', `${indexName}`])(options.tx),
                         idSelector: x => x.pk,
                         keySelector:
                             typeof spec === 'function' ? spec : spec.key,
@@ -239,26 +232,24 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
         );
         this.primaryKeyRaw = pipe(
             options.tx,
-            withPrefix('d/'),
-            withValueCodec(new CrdtCodec())
+            isolate(['d']),
+            withCodec(new CrdtCodec())
         );
-        this.primary = withKeyCodec(new IndexKeyCodec())(this.primaryKeyRaw);
+        this.primary = this.primaryKeyRaw;
         this.onChange = options.onChange;
         this.schema = options.schema;
         this.constraints = options.constraints;
-        this.transitionChecker = createReadonlyTransitionChecker<Doc<IndexKey>>(
-            {
-                createdAt: true,
-                pk: true,
-                updatedAt: false,
-                deleted: false,
-                ...options.readonly,
-            }
-        );
+        this.transitionChecker = createReadonlyTransitionChecker<Doc<Tuple>>({
+            createdAt: true,
+            pk: true,
+            updatedAt: false,
+            deleted: false,
+            ...options.readonly,
+        });
     }
 
     async getById(
-        id: IndexKey,
+        id: Tuple,
         includeDeleted?: boolean
     ): Promise<CrdtDoc<T> | undefined> {
         const doc = await this._get(id);
@@ -274,7 +265,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
         return Object.assign(snapshot, {state: stringifyCrdtDiff(doc.state())});
     }
 
-    get(indexName: string, key: IndexKey, includeDeleted?: boolean): Stream<T> {
+    get(indexName: string, key: Tuple, includeDeleted?: boolean): Stream<T> {
         const index = this._index(indexName);
         return this._mapToDocs(
             index.get(key),
@@ -285,7 +276,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
 
     async getUnique(
         indexName: string,
-        key: IndexKey,
+        key: Tuple,
         includeDeleted?: boolean
     ): Promise<T | undefined> {
         const index = this._index(indexName);
@@ -301,10 +292,10 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
         }
     }
 
-    unsafe_getAll(prefix?: Uint8Array): Stream<T> {
-        return toStream(
-            queryStartsWith(this.primaryKeyRaw, prefix ?? new Uint8Array())
-        ).map(x => x.value.snapshot());
+    unsafe_getAll(prefix: Tuple = []): Stream<T> {
+        return toStream(queryStartsWith(this.primaryKeyRaw, prefix)).map(x =>
+            x.value.snapshot()
+        );
     }
 
     async unsafe_deleteAll() {
@@ -313,7 +304,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
         }
     }
 
-    async unsafe_delete(pk: IndexKey) {
+    async unsafe_delete(pk: Tuple) {
         const doc = await this._get(pk);
         if (!doc) {
             throw new AppError('doc not found: ' + pk);
@@ -329,7 +320,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
 
     query(
         indexName: string,
-        condition: Condition<IndexKey>,
+        condition: Condition<Tuple>,
         includeDeleted?: boolean
     ): Stream<T> {
         const index = this._index(indexName);
@@ -342,7 +333,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
     }
 
     async update(
-        id: IndexKey,
+        id: Tuple,
         recipe: Recipe<T>,
         includeDeleted?: boolean
     ): Promise<T> {
@@ -369,7 +360,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
     }
 
     async apply(
-        pk: IndexKey,
+        pk: Tuple,
         diff: CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
@@ -385,7 +376,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
 
     // todo: add tests
     private async _apply(params: {
-        pk: IndexKey;
+        pk: Tuple;
         existingDoc: Crdt<T> | undefined;
         diff: CrdtDiff<T>;
         skipTransitionCheck: boolean;
@@ -412,9 +403,10 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
                 });
             }
 
-            if (compareIndexKey(next.snapshot().pk, params.pk) !== 0) {
+            if (compareTuple(next.snapshot().pk, params.pk) !== 0) {
                 throw new AppError(
-                    'invalid diff: diff updates id ' + params.pk
+                    'invalid diff: diff updates primary key ' +
+                        stringifyTuple(params.pk)
                 );
             }
 
@@ -436,9 +428,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
     async create(doc: T): Promise<T> {
         const existing = await this._get(doc.pk);
         if (existing) {
-            throw new AppError(
-                `doc ${indexKeyToString(doc.pk)} already exists`
-            );
+            throw new AppError(`doc ${stringifyTuple(doc.pk)} already exists`);
         }
 
         return await this.put(doc);
@@ -468,11 +458,11 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
     }
 
     // _get must be used everywhere to ensure upgrade
-    private async _get(pk: IndexKey): Promise<Crdt<T> | undefined> {
+    private async _get(pk: Tuple): Promise<Crdt<T> | undefined> {
         return await context().runChild({span: 'repo._get'}, async () => {
-            const doc = await (
-                this.primary as Transaction<IndexKey, Crdt<T>>
-            ).get(pk);
+            const doc = await (this.primary as Transaction<Tuple, Crdt<T>>).get(
+                pk
+            );
 
             if (!doc) {
                 return doc;
@@ -526,7 +516,7 @@ class DocRepoImpl<T extends Doc<IndexKey>> {
     }
 
     private _mapToDocs(
-        ids: AsyncIterable<IndexKey>,
+        ids: AsyncIterable<Tuple>,
         message: string,
         includeDeleted?: boolean
     ): Stream<T> {

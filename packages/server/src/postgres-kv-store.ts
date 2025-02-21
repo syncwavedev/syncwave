@@ -114,7 +114,6 @@ export class PostgresUint8KVStore implements Uint8KVStore {
         fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         await this.init;
-        const transactStartTime = performance.now();
         for (let attempt = 0; attempt <= TXN_RETRIES_COUNT; attempt += 1) {
             context().ensureActive();
 
@@ -128,8 +127,6 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                 });
 
             let cancelAbort: Cancel | undefined = undefined;
-
-            const attemptStartTime = performance.now();
 
             try {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -185,14 +182,6 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                 client.release();
                 cancelAbort?.(new AppError('transaction finished'));
             }
-            const totalTook = Math.round(performance.now() - transactStartTime);
-
-            console.log({
-                conflict: Math.round(performance.now() - attemptStartTime),
-                total: totalTook,
-                attempt,
-            });
-
             await wait({
                 ms: (attempt + 1) * 100 * Math.random(),
                 onCancel: 'reject',

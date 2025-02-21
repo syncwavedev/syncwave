@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {type BigFloat, zBigFloat} from '../../big-float.js';
 import {type CrdtDiff} from '../../crdt/crdt.js';
-import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid, zUuid} from '../../uuid.js';
@@ -54,13 +54,13 @@ export class TaskRepo {
     public readonly rawRepo: DocRepo<Task>;
 
     constructor(
-        tx: Uint8Transaction,
+        tx: AppTransaction,
         boardRepo: BoardRepo,
         userRepo: UserRepo,
         onChange: OnDocChange<Task>
     ) {
         this.rawRepo = new DocRepo<Task>({
-            tx: withPrefix('d/')(tx),
+            tx: isolate(['d'])(tx),
             onChange,
             indexes: {
                 [BOARD_ID_COUNTER_INDEX]: {

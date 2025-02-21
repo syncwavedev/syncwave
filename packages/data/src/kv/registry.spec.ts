@@ -1,23 +1,24 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {encodeString} from '../codec.js';
-import type {Uint8Transaction} from './kv-store.js';
+import type {AppStore, AppTransaction} from './kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
 import {Registry} from './registry.js';
+import {TupleStore} from './tuple-store.js';
 
-const sampleFactory = (tx: Uint8Transaction) => ({
+const sampleFactory = (tx: AppTransaction) => ({
     async getKey(key: string): Promise<Uint8Array | undefined> {
-        return tx.get(encodeString(key));
+        return tx.get([key]);
     },
     async putKey(key: string, value: string): Promise<void> {
-        await tx.put(encodeString(key), encodeString(value));
+        await tx.put([key], encodeString(value));
     },
 });
 
 describe('Registry', () => {
-    let kvStore: MemKVStore;
+    let kvStore: AppStore;
 
     beforeEach(() => {
-        kvStore = new MemKVStore();
+        kvStore = new TupleStore(new MemKVStore());
     });
 
     it('should return a constructed object from the factory', async () => {

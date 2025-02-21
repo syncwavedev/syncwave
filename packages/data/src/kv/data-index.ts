@@ -1,14 +1,20 @@
-import bytewise from 'bytewise';
 import {z} from 'zod';
-import {type Codec} from '../codec.js';
 import {AppError} from '../errors.js';
-import {assert, compareUint8Array, zip} from '../utils.js';
-import {Uuid, UuidCodec, zUuid} from '../uuid.js';
 import {
+    compareTuple,
+    compareTupleItem,
+    decodeTuple,
+    encodeTuple,
+    getTupleLargestChild,
+    type Tuple,
+} from '../tuple.js';
+import {assert, zip} from '../utils.js';
+import {zUuid} from '../uuid.js';
+import {
+    type AppEntry,
+    type AppTransaction,
     type Condition,
     mapCondition,
-    type Uint8Entry,
-    type Uint8Transaction,
 } from './kv-store.js';
 
 export interface IndexGetOptions {
@@ -16,21 +22,18 @@ export interface IndexGetOptions {
 }
 
 export interface Index<TValue> {
-    _debug: {
-        keys(): Promise<IndexKey[]>;
-    };
     info: {
         unique: boolean;
     };
     sync(prev: TValue | undefined, next: TValue | undefined): Promise<void>;
-    get(key: IndexKey): AsyncIterable<IndexKey>;
-    query(condition: Condition<IndexKey>): AsyncIterable<IndexKey>;
+    get(key: Tuple): AsyncIterable<Tuple>;
+    query(condition: Condition<Tuple>): AsyncIterable<Tuple>;
 }
 
 export interface IndexOptions<TValue> {
-    readonly tx: Uint8Transaction;
-    readonly idSelector: (value: TValue) => IndexKey;
-    readonly keySelector: (value: TValue) => IndexKey;
+    readonly tx: AppTransaction;
+    readonly idSelector: (value: TValue) => Tuple;
+    readonly keySelector: (value: TValue) => Tuple;
     readonly unique: boolean;
     readonly indexName: string;
     readonly filter?: (value: TValue) => boolean;
@@ -53,8 +56,8 @@ export function createIndex<TValue>({
     const filter = originalFilter ?? (() => true);
 
     async function* queryInternal(
-        condition: Condition<IndexKey>
-    ): AsyncIterable<Uint8Entry> {
+        condition: Condition<Tuple>
+    ): AsyncIterable<AppEntry> {
         const conditionKey = mapCondition(condition, {
             gt: cond => cond.gt,
             gte: cond => cond.gte,
@@ -62,28 +65,22 @@ export function createIndex<TValue>({
             lte: cond => cond.lte,
         });
 
-        // we need to add undefined/null at the end for indexes, because it might me not the last component
+        // we need to add 0xff at the end for indexes, because it might me not the last component
         // of the index, for example:
         //   condition: {gt: [1]}
         //   index_key: [1, 2]
-        //   if we don't add undefined: {gt: [1, undefined]}, index_key would match the condition
-        // undefined has the largest type tag in bytewise serialization, null the lowest
-        const queryCondition = mapCondition<IndexKey, Condition<Uint8Array>>(
+        //   if we don't add 0xff: {gt: [1, 0xff]}, index_key would match the condition
+        // 0xff has the largest type tag in tuple serialization
+        const queryCondition = mapCondition<Tuple, Condition<Tuple>>(
             condition,
             {
                 gt: cond => ({
-                    gt: encodeIndexKey([
-                        ...cond.gt,
-                        ...Array<undefined>(16).fill(undefined),
-                    ]),
+                    gt: getTupleLargestChild(cond.gt),
                 }),
-                gte: cond => ({gte: encodeIndexKey(cond.gte)}),
-                lt: cond => ({lt: encodeIndexKey(cond.lt)}),
+                gte: cond => ({gte: cond.gte}),
+                lt: cond => ({lt: cond.lt}),
                 lte: cond => ({
-                    lte: encodeIndexKey([
-                        ...cond.lte,
-                        ...Array<undefined>(16).fill(undefined),
-                    ]),
+                    lte: getTupleLargestChild(cond.lte),
                 }),
             }
         );
@@ -91,9 +88,8 @@ export function createIndex<TValue>({
         const iterator = tx.query(queryCondition);
 
         for await (const entry of iterator) {
-            const entryKey = decodeIndexKey(entry.key);
             for (let i = 0; i < conditionKey.length - 1; i += 1) {
-                if (compareIndexKeyPart(entryKey[i], conditionKey[i]) !== 0) {
+                if (compareTupleItem(entry.key[i], conditionKey[i]) !== 0) {
                     return;
                 }
             }
@@ -104,16 +100,6 @@ export function createIndex<TValue>({
     return {
         info: {
             unique,
-        },
-        _debug: {
-            async keys() {
-                const result: IndexKey[] = [];
-                for await (const {key} of tx.query({gte: new Uint8Array()})) {
-                    result.push(decodeIndexKey(key));
-                }
-
-                return result;
-            },
         },
         async sync(prev, next) {
             const prevId = prev && idSelector(prev);
@@ -126,7 +112,7 @@ export function createIndex<TValue>({
                 );
             }
 
-            if (prev && next && compareIndexKey(prevId!, nextId!) !== 0) {
+            if (prev && next && compareTuple(prevId!, nextId!) !== 0) {
                 throw new AppError(
                     'invalid index sync: changing id is not allowed'
                 );
@@ -142,7 +128,7 @@ export function createIndex<TValue>({
                 prevKey !== undefined &&
                 nextKey !== undefined &&
                 zip(prevKey, nextKey).every(
-                    ([a, b]) => compareIndexKeyPart(a, b) === 0
+                    ([a, b]) => compareTupleItem(a, b) === 0
                 ) &&
                 prevIncluded === nextIncluded
             ) {
@@ -154,9 +140,9 @@ export function createIndex<TValue>({
             if (prevIncluded) {
                 assert(prevKey !== undefined, 'prevKey is undefined');
                 if (unique) {
-                    await tx.delete(encodeIndexKey(prevKey));
+                    await tx.delete(prevKey);
                 } else {
-                    await tx.delete(encodeIndexKey([...prevKey, ...id]));
+                    await tx.delete([...prevKey, ...id]);
                 }
             }
 
@@ -164,34 +150,30 @@ export function createIndex<TValue>({
             if (nextIncluded) {
                 assert(nextKey !== undefined, 'nextKey is undefined');
                 if (unique) {
-                    const existing = await tx.get(encodeIndexKey(nextKey));
+                    const existing = await tx.get(nextKey);
                     if (existing) {
                         throw new UniqueError(indexName);
                     }
 
-                    await tx.put(encodeIndexKey(nextKey), encodeIndexKey(id));
+                    await tx.put(nextKey, encodeTuple(id));
                 } else {
-                    await tx.put(
-                        encodeIndexKey([...nextKey, ...id]),
-                        encodeIndexKey(id)
-                    );
+                    await tx.put([...nextKey, ...id], encodeTuple(id));
                 }
             }
         },
-        async *query(condition): AsyncIterable<IndexKey> {
+        async *query(condition): AsyncIterable<Tuple> {
             for await (const entry of queryInternal(condition)) {
-                yield decodeIndexKey(entry.value);
+                yield decodeTuple(entry.value);
             }
         },
-        async *get(key): AsyncIterable<IndexKey> {
+        async *get(key): AsyncIterable<Tuple> {
             for await (const entry of queryInternal({gte: key})) {
-                const entryKey = decodeIndexKey(entry.key);
                 for (let i = 0; i < key.length; i += 1) {
                     if (key.length > 0) {
                         // all parts up to the last were checked in queryInternal
                         if (
-                            compareIndexKeyPart(
-                                entryKey[key.length - 1],
+                            compareTupleItem(
+                                entry.key[key.length - 1],
                                 key[key.length - 1]
                             ) !== 0
                         ) {
@@ -200,35 +182,11 @@ export function createIndex<TValue>({
                     }
                 }
 
-                yield decodeIndexKey(entry.value);
+                yield decodeTuple(entry.value);
             }
         },
     };
 }
-
-/**
- * bytewise order:
- * - null
- * - false
- * - true
- * - Number (numeric)
- * - Date (numeric, epoch offset)
- * - Buffer (bitwise)
- * - String (lexicographic)
- * - Array (componentwise)
- * - undefined
- */
-
-export type IndexKeyPart =
-    | null
-    | boolean
-    | number
-    | string
-    | Uuid
-    | Uint8Array
-    | undefined;
-
-export type IndexKey = readonly IndexKeyPart[];
 
 export function zIndexKey() {
     return z.array(
@@ -243,96 +201,3 @@ export function zIndexKey() {
         ])
     );
 }
-
-export function indexKeyToString(key: IndexKey): string {
-    return '[' + key.map(x => x?.toString()).join(',') + ']';
-}
-
-export function compareIndexKey(a: IndexKey, b: IndexKey) {
-    const minLength = Math.min(a.length, b.length);
-    for (let i = 0; i < minLength; i += 1) {
-        const result = compareIndexKeyPart(a[i], b[i]);
-        if (result !== 0) {
-            return result;
-        }
-    }
-
-    return a.length === b.length ? 0 : a.length > b.length ? 1 : -1;
-}
-
-export function compareIndexKeyPart(
-    a: IndexKeyPart,
-    b: IndexKeyPart
-): 1 | 0 | -1 {
-    if (a === b) return 0;
-
-    if (typeof a === 'boolean' && typeof b === 'boolean') {
-        return a === b ? 0 : a ? 1 : -1;
-    }
-
-    if (typeof a === 'number' && typeof b === 'number') {
-        return a === b ? 0 : a > b ? 1 : -1;
-    }
-
-    if (typeof a === 'string' && typeof b === 'string') {
-        return a === b ? 0 : a > b ? 1 : -1;
-    }
-
-    if (a instanceof Uint8Array && b instanceof Uint8Array) {
-        return compareUint8Array(a, b);
-    }
-
-    const typeOrder = [
-        'null',
-        'boolean',
-        'number',
-        'Uint8Array',
-        'string',
-        'undefined',
-    ];
-    const getTypeIndex = (val: IndexKeyPart): number =>
-        val === null
-            ? typeOrder.indexOf('null')
-            : val instanceof Uint8Array
-              ? typeOrder.indexOf('Uint8Array')
-              : typeOrder.indexOf(typeof val);
-
-    return getTypeIndex(a) > getTypeIndex(b) ? 1 : -1;
-}
-
-export function encodeIndexKey(key: IndexKey): Uint8Array {
-    return indexKeyCodec.encode(key);
-}
-
-export function decodeIndexKey(buf: Uint8Array): IndexKey {
-    return indexKeyCodec.decode(buf);
-}
-
-export class IndexKeyCodec implements Codec<IndexKey> {
-    uuidCodec = new UuidCodec();
-
-    encode(data: IndexKey): Uint8Array {
-        const key = data.map(part => {
-            if (part instanceof Uint8Array) {
-                return Buffer.from(part);
-            } else {
-                return part;
-            }
-        });
-        return new Uint8Array(bytewise.encode(key));
-    }
-
-    decode(buf: Uint8Array): IndexKey {
-        const key = bytewise.decode(Buffer.from(buf)) as IndexKey;
-
-        return key.map(part => {
-            if (part instanceof Buffer) {
-                return new Uint8Array(part);
-            } else {
-                return part;
-            }
-        });
-    }
-}
-
-export const indexKeyCodec = new IndexKeyCodec();

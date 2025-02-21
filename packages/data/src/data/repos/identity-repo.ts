@@ -2,7 +2,7 @@ import {z} from 'zod';
 import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
-import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {type Timestamp, zTimestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
@@ -66,12 +66,12 @@ export class IdentityRepo {
     public readonly rawRepo: DocRepo<Identity>;
 
     constructor(
-        tx: Uint8Transaction,
+        tx: AppTransaction,
         userRepo: UserRepo,
         onChange: OnDocChange<Identity>
     ) {
         this.rawRepo = new DocRepo<Identity>({
-            tx: withPrefix('d/')(tx),
+            tx: isolate(['d'])(tx),
             indexes: {
                 [EMAIL_INDEX]: {
                     key: x => [x.email],

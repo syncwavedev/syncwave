@@ -1,13 +1,12 @@
-import {decodeString, encodeString} from '../codec.js';
 import {AppError} from '../errors.js';
-import {decodeHex} from '../hex.js';
 import {
-    decodeIndexKey,
-    encodeIndexKey,
-    type IndexKey,
-} from '../kv/data-index.js';
-import {bufStartsWith} from '../utils.js';
-import {type Doc, DocRepo} from './doc-repo.js';
+    packString,
+    stringifyTuple,
+    tupleStartsWith,
+    unpackString,
+    type Tuple,
+} from '../tuple.js';
+import {DocRepo, type Doc} from './doc-repo.js';
 
 export interface DataNodeVisitor<T> {
     repo(node: RepoDataNode<any>): T;
@@ -16,13 +15,13 @@ export interface DataNodeVisitor<T> {
 }
 
 export interface DataNodeChild {
-    key: Uint8Array;
+    key: Tuple;
     node: DataNode;
 }
 
 export abstract class DataNode {
-    abstract queryChildren(prefix: Uint8Array): AsyncIterable<DataNodeChild>;
-    abstract child(part: Uint8Array): DataNode;
+    abstract queryChildren(prefix: Tuple): AsyncIterable<DataNodeChild>;
+    abstract child(part: Tuple): DataNode;
     abstract visit<T>(visitor: DataNodeVisitor<T>): T;
     abstract delete(): Promise<void>;
 }
@@ -34,21 +33,19 @@ export class AggregateDataNode<
         super();
     }
 
-    override async *queryChildren(
-        prefix: Uint8Array
-    ): AsyncIterable<DataNodeChild> {
+    override async *queryChildren(prefix: Tuple): AsyncIterable<DataNodeChild> {
         for (const [prop, node] of Object.entries(this.children)) {
-            const key = encodeString(prop);
-            if (bufStartsWith(key, prefix)) {
+            const key = packString(prop);
+            if (tupleStartsWith(key, prefix)) {
                 yield {key, node};
             }
         }
     }
 
-    override child(key: Uint8Array): DataNode {
-        const result = this.children[decodeString(key)];
+    override child(key: Tuple): DataNode {
+        const result = this.children[unpackString(key)];
         if (!result) {
-            `AggregateDataNode does not have any children with key = ${decodeHex(key)}`;
+            `AggregateDataNode does not have any children with key = ${stringifyTuple(key)}`;
         }
 
         return result;
@@ -59,7 +56,7 @@ export class AggregateDataNode<
     }
 
     override async delete(): Promise<void> {
-        for await (const child of this.queryChildren(new Uint8Array())) {
+        for await (const child of this.queryChildren([])) {
             await child.node.delete();
         }
     }
@@ -70,18 +67,15 @@ export class RepoDataNode<T extends Doc<any>> extends DataNode {
         super();
     }
 
-    override async *queryChildren(
-        prefix: Uint8Array
-    ): AsyncIterable<DataNodeChild> {
+    override async *queryChildren(prefix: Tuple): AsyncIterable<DataNodeChild> {
         yield* this.repo.unsafe_getAll(prefix).map(doc => ({
-            key: encodeIndexKey(doc.pk),
+            key: doc.pk,
             node: new DocDataNode(doc.pk, this.repo),
         }));
     }
 
-    override child(key: Uint8Array): DataNode {
-        const pk = decodeIndexKey(key);
-        return new DocDataNode(pk, this.repo);
+    override child(key: Tuple): DataNode {
+        return new DocDataNode(key, this.repo);
     }
 
     override visit<TResult>(visitor: DataNodeVisitor<TResult>): TResult {
@@ -93,9 +87,9 @@ export class RepoDataNode<T extends Doc<any>> extends DataNode {
     }
 }
 
-export class DocDataNode<T extends Doc<IndexKey>> extends DataNode {
+export class DocDataNode<T extends Doc<Tuple>> extends DataNode {
     constructor(
-        public readonly pk: IndexKey,
+        public readonly pk: Tuple,
         private readonly repo: DocRepo<T>
     ) {
         super();
@@ -105,9 +99,9 @@ export class DocDataNode<T extends Doc<IndexKey>> extends DataNode {
         // no children
     }
 
-    override child(key: Uint8Array): DataNode {
+    override child(key: Tuple): DataNode {
         throw new AppError(
-            `DocDataNode does not have any children, part: ${decodeHex(key)}`
+            `DocDataNode does not have any children, part: ${stringifyTuple(key)}`
         );
     }
 

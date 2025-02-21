@@ -16,21 +16,22 @@ import {
     decodeNumber,
     Deferred,
     encodeNumber,
-    encodeString,
     ENVIRONMENT,
     getGoogleUser,
     InstrumentedEmailService,
     InstrumentedKvStore,
     InstrumentedTransportServer,
+    IsolatedKVStore,
     type JwtPayload,
     type JwtService,
+    type KVStore,
     log,
     MsgpackCodec,
-    PrefixedKVStore,
     toError,
     toStream,
-    type Uint8KVStore,
+    TupleStore,
 } from 'syncwave-data';
+import type {Tuple} from '../../data/dist/esm/src/tuple.js';
 import {FsObjectStore} from './fs-object-store.js';
 import {SesEmailService} from './ses-email-service.js';
 import {WsTransportServer} from './ws-transport-server.js';
@@ -111,7 +112,7 @@ const jwtService: JwtService = {
         }),
 };
 
-async function getKVStore(): Promise<Uint8KVStore> {
+async function getKVStore(): Promise<KVStore<Tuple, Uint8Array>> {
     const store = await (async () => {
         if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
             log.info('using PostgreSQL as primary store');
@@ -133,21 +134,46 @@ async function getKVStore(): Promise<Uint8KVStore> {
                 x =>
                     new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
             );
-            return new PrefixedKVStore(fdbStore, `/syncwave-${STAGE}/`);
+            return fdbStore;
         }
     })();
 
-    return new InstrumentedKvStore(store);
+    if (new Date() < new Date('2025-02-21T08:57:46.420Z')) {
+        while (true) {
+            const more = await store.transact(async tx => {
+                const keys = await toStream(tx.query({gte: new Uint8Array()}))
+                    .map(entry => entry.key)
+                    .take(100)
+                    .toArray();
+
+                log.info(`Store has ${keys.length} keys, removing them...`);
+
+                for (const key of keys) {
+                    await tx.delete(key);
+                }
+
+                return keys.length > 0;
+            });
+
+            if (!more) {
+                break;
+            }
+        }
+    }
+
+    return new InstrumentedKvStore(
+        new IsolatedKVStore(new TupleStore(store), ['sw', STAGE])
+    );
 }
 
-async function upgradeKVStore(kvStore: Uint8KVStore) {
-    const versionKey = encodeString('version');
+async function upgradeKVStore(kvStore: KVStore<Tuple, Uint8Array>) {
+    const versionKey = ['version'];
     log.info('Retrieving KV store version...');
     const version = await kvStore.transact(async tx => {
         log.info('Running tx.get(versionKey)...');
-        const ver = await tx.get(versionKey);
-        if (ver) {
-            return decodeNumber(ver);
+        const version = await tx.get(versionKey);
+        if (version) {
+            return decodeNumber(version);
         } else {
             return 0;
         }
@@ -157,7 +183,7 @@ async function upgradeKVStore(kvStore: Uint8KVStore) {
     if (!version) {
         log.info("KV store doesn't have a version, upgrading...");
         await kvStore.transact(async tx => {
-            const keys = await toStream(tx.query({gte: new Uint8Array()}))
+            const keys = await toStream(tx.query({gte: []}))
                 .map(entry => entry.key)
                 .toArray();
 

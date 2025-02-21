@@ -1,14 +1,15 @@
-import {type Codec, NumberCodec} from '../codec.js';
+import {type Codec} from '../codec.js';
 import {context} from '../context.js';
 import {Stream, toStream} from '../stream.js';
+import {NumberPacker} from '../tuple.js';
 import {pipe, whenAll} from '../utils.js';
 import {Counter} from './counter.js';
 import {
+    type AppTransaction,
     type Transaction,
-    type Uint8Transaction,
-    withKeyCodec,
-    withPrefix,
-    withValueCodec,
+    isolate,
+    withCodec,
+    withPacker,
 } from './kv-store.js';
 
 export interface CollectionEntry<T> {
@@ -20,13 +21,13 @@ export class Collection<T> {
     private readonly counter: Counter;
     private readonly log: Transaction<number, T>;
 
-    constructor(tx: Uint8Transaction, codec: Codec<T>) {
-        this.counter = new Counter(pipe(tx, withPrefix('i/')), 0);
+    constructor(tx: AppTransaction, codec: Codec<T>) {
+        this.counter = new Counter(pipe(tx, isolate(['i'])), 0);
         this.log = pipe(
             tx,
-            withPrefix('l/'),
-            withKeyCodec(new NumberCodec()),
-            withValueCodec(codec)
+            isolate(['l']),
+            withPacker(new NumberPacker()),
+            withCodec(codec)
         );
     }
 

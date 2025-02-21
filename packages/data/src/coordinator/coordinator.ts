@@ -9,7 +9,7 @@ import type {
     JwtService,
     ObjectStore,
 } from '../data/infrastructure.js';
-import type {Uint8KVStore} from '../kv/kv-store.js';
+import type {KVStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
 import {tracerManager} from '../tracer-manager.js';
 import {
@@ -19,6 +19,7 @@ import {
 import type {Message} from '../transport/message.js';
 import {RpcServer} from '../transport/rpc.js';
 import type {TransportServer} from '../transport/transport.js';
+import type {Tuple} from '../tuple.js';
 import {getIdentity, signJwtToken} from './auth-api.js';
 import {
     type CoordinatorApiInputState,
@@ -27,7 +28,7 @@ import {
 
 export interface CoordinatorServerOptions {
     transport: TransportServer<Message>;
-    kv: Uint8KVStore;
+    kv: KVStore<Tuple, Uint8Array>;
     jwt: JwtService;
     crypto: CryptoService;
     email: EmailService;

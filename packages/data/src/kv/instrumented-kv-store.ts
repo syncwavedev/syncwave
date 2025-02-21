@@ -1,7 +1,10 @@
 import {context} from '../context.js';
+import type {Tuple} from '../tuple.js';
 import type {Condition, Entry, KVStore, Transaction} from './kv-store.js';
 
-export class InstrumentedTransaction<K, V> implements Transaction<K, V> {
+export class InstrumentedTransaction<K extends Tuple, V>
+    implements Transaction<K, V>
+{
     constructor(private readonly tx: Transaction<K, V>) {}
 
     async get(key: K): Promise<V | undefined> {
@@ -31,7 +34,7 @@ export class InstrumentedTransaction<K, V> implements Transaction<K, V> {
     }
 }
 
-export class InstrumentedKvStore<K, V> implements KVStore<K, V> {
+export class InstrumentedKvStore<K extends Tuple, V> implements KVStore<K, V> {
     constructor(private readonly store: KVStore<K, V>) {}
     async transact<TResult>(
         fn: (tx: Transaction<K, V>) => Promise<TResult>

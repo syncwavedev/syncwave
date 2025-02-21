@@ -1,11 +1,12 @@
 import {context} from '../context.js';
+import type {Tuple} from '../tuple.js';
 import {Cell} from './cell.js';
-import type {Uint8Transaction} from './kv-store.js';
+import type {Transaction} from './kv-store.js';
 
 export class Counter {
     private readonly cell: Cell<number>;
 
-    constructor(tx: Uint8Transaction, initial: number) {
+    constructor(tx: Transaction<Tuple, Uint8Array>, initial: number) {
         this.cell = new Cell(tx, initial);
     }
 

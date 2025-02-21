@@ -1,60 +1,39 @@
 /* eslint-disable */
-import {from} from 'ix/asynciterable';
-import {map} from 'ix/asynciterable/operators';
-import {log} from '../packages/data/src/logger.js';
 
-// Example async iterable that might throw an error
-const source = async function* () {
-    yield 1;
-    yield 2;
-    throw new Error('Something went wrong!'); // Simulate an error
-    yield 3; // This won't be reached
-};
+import {decodeTuple, encodeTuple} from '../packages/data/src/tuple.js';
 
-// Create the pipeline
-const result = from(_catch(source(), err => ({type: 'err', err}))).pipe(
-    map(val => ({type: 'val', val})) // Map values to objects
-);
+const res = encodeTuple([
+    null,
+    Buffer.from(new Uint8Array([1, 2, 3])),
+    'string',
+    123,
+    true,
+    false,
+]);
 
-// Consume the result
-const _ = (async () => {
-    for await (const value of result) {
-        log.info(JSON.stringify(value));
-    }
-})();
+console.log(res);
 
-function _catch<T, R>(
-    source: AsyncIterable<T>,
-    map: (error: unknown) => Promise<R> | R
-): AsyncIterable<T | R> {
-    return {
-        [Symbol.asyncIterator]: () => {
-            const target = source[Symbol.asyncIterator]();
-            const result: AsyncIterator<T | R> = {
-                next: value =>
-                    target
-                        .next(value)
-                        .then(res => {
-                            log.info('res: ' + res);
-                            return res;
-                        })
-                        .catch(async error => {
-                            return {
-                                done: false,
-                                value: await map(error),
-                            };
-                        }),
-            };
-            result.return = async value => {
-                await target.return?.(value);
+console.log(decodeTuple(new Uint8Array([0x01, 0x02])));
 
-                return {done: true, value: undefined};
-            };
-            if (target.throw) {
-                result.throw = e => target.throw!(e);
-            }
+// export function decodeTuple(buf: Uint8Array): any[] {
+//     const tuple = unpack(Buffer.from(buf));
+//     if (!Array.isArray(tuple)) {
+//         throw new Error('Invalid tuple: ' + JSON.stringify(tuple));
+//     }
 
-            return result;
-        },
-    };
-}
+//     return tuple.map(x => {
+//         if (x instanceof Uint8Array) {
+//             return x;
+//         } else if (typeof x === 'string') {
+//             return x;
+//         } else if (typeof x === 'number') {
+//             return x;
+//         } else if (typeof x === 'boolean') {
+//             return x;
+//         } else if (x === null) {
+//             return null;
+//         } else {
+//             throw new AppError('Invalid tuple item: ' + JSON.stringify(x));
+//         }
+//     });
+// }

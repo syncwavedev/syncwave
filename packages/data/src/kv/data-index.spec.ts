@@ -1,27 +1,37 @@
 import {describe, expect, it} from 'vitest';
 import {toStream} from '../stream.js';
-import {compareUint8Array} from '../utils.js';
 import {Uuid, createUuid} from '../uuid.js';
-import {createIndex, decodeIndexKey, encodeIndexKey} from './data-index.js';
+import {createIndex} from './data-index.js';
 import {MemKVStore} from './mem-kv-store.js';
+import {TupleStore} from './tuple-store.js';
 
 interface TestUser {
     id: Uuid;
-    houseId?: Uuid | null | undefined;
-    name?: string | null | undefined;
-    age?: number | null | undefined;
-    ssi?: string | null | undefined;
-    ready?: boolean | null | undefined;
-    pet?: string | null | undefined;
-    avatar?: Uint8Array | null | undefined;
+    houseId: Uuid | null;
+    name: string | null;
+    age: number | null;
+    ssi: string | null;
+    ready: boolean | null;
+    pet: string | null;
+    avatar: Uint8Array | null;
 }
+
+const emptyUser: Omit<TestUser, 'id'> = {
+    houseId: null,
+    name: null,
+    age: null,
+    ssi: null,
+    ready: null,
+    pet: null,
+    avatar: null,
+};
 
 const INDEX_NAME = 'some_index_name';
 
 const idSelector = (x: TestUser) => [x.id];
 
 async function getTxn() {
-    const store = new MemKVStore();
+    const store = new TupleStore(new MemKVStore());
     const tx = await store.transact(async tx => tx);
 
     return {store, tx};
@@ -40,27 +50,40 @@ describe('data-index', async () => {
         const id1 = createUuid();
         const id2 = createUuid();
         const id3 = createUuid();
-        await houseIndex.sync(undefined, {id: id1, houseId: null});
-        await houseIndex.sync(undefined, {id: id2, houseId: createUuid()});
-        await houseIndex.sync(undefined, {id: id3});
+        await houseIndex.sync(undefined, {...emptyUser, id: id1});
+        await houseIndex.sync(undefined, {
+            ...emptyUser,
+            id: id2,
+            houseId: createUuid(),
+        });
+        await houseIndex.sync(undefined, {...emptyUser, id: id3});
 
         expect(
             await toStream(houseIndex.query({gte: [null]})).toArray()
-        ).toEqual([[id1], [id2], [id3]]);
+        ).toEqual([[id1], [id3], [id2]]);
         expect(await toStream(houseIndex.get([null])).toArray()).toEqual([
             [id1],
+            [id3],
         ]);
 
-        await houseIndex.sync({id: id1, houseId: null}, {id: id1});
+        await houseIndex.sync(
+            {...emptyUser, id: id1, houseId: null},
+            {...emptyUser, id: id1}
+        );
 
-        // houseId is undefined, so id1 goes after id2
         expect(
             await toStream(houseIndex.query({gte: [null]})).toArray()
-        ).toEqual([[id2], [id1], [id3]]);
-        expect(await toStream(houseIndex.get([null])).toArray()).toEqual([]);
+        ).toEqual([[id1], [id3], [id2]]);
+        expect(await toStream(houseIndex.get([null])).toArray()).toEqual([
+            [id1],
+            [id3],
+        ]);
 
-        await houseIndex.sync({id: id1}, {id: id1, houseId: null});
-        await houseIndex.sync({id: id3}, undefined);
+        await houseIndex.sync(
+            {...emptyUser, id: id1},
+            {...emptyUser, id: id1, houseId: null}
+        );
+        await houseIndex.sync({...emptyUser, id: id3}, undefined);
 
         expect(
             await toStream(houseIndex.query({gte: [null]})).toArray()
@@ -83,15 +106,19 @@ describe('data-index', async () => {
         const id1 = createUuid();
         const houseId = createUuid();
 
-        await uniqueIndex.sync(undefined, {id: id1, houseId});
+        await uniqueIndex.sync(undefined, {...emptyUser, id: id1, houseId});
         await expect(
-            uniqueIndex.sync(undefined, {id: createUuid(), houseId})
+            uniqueIndex.sync(undefined, {
+                ...emptyUser,
+                id: createUuid(),
+                houseId,
+            })
         ).rejects.toThrow(
             'Unique index constraint violation. Index name: some_index_name'
         );
     });
 
-    it('should handle queries with undefined keys', async () => {
+    it('should handle queries with null keys', async () => {
         const {tx} = await getTxn();
         const index = createIndex<TestUser>({
             tx,
@@ -103,12 +130,16 @@ describe('data-index', async () => {
 
         const id1 = createUuid();
         const id2 = createUuid();
-        await index.sync(undefined, {id: id1, houseId: undefined});
-        await index.sync(undefined, {id: id2, houseId: null});
+        await index.sync(undefined, {
+            ...emptyUser,
+            id: id1,
+            houseId: null,
+        });
+        await index.sync(undefined, {...emptyUser, id: id2, houseId: null});
 
         expect(await toStream(index.query({gte: [null]})).toArray()).toEqual([
-            [id2],
             [id1],
+            [id2],
         ]);
     });
 
@@ -131,26 +162,31 @@ describe('data-index', async () => {
         const houseId2 = createUuid();
 
         await compoundIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId: houseId1,
             age: 25,
         });
         await compoundIndex.sync(undefined, {
+            ...emptyUser,
             id: id2,
             houseId: houseId1,
             age: 30,
         });
         await compoundIndex.sync(undefined, {
+            ...emptyUser,
             id: id3,
             houseId: houseId1,
             age: 30,
         });
         await compoundIndex.sync(undefined, {
+            ...emptyUser,
             id: id4,
             houseId: houseId1,
             age: 35,
         });
         await compoundIndex.sync(undefined, {
+            ...emptyUser,
             id: id5,
             houseId: houseId2,
             age: 35,
@@ -175,18 +211,18 @@ describe('data-index', async () => {
         ).toEqual([]);
         expect(
             await toStream(
-                compoundIndex.query({gte: [houseId1, undefined]})
+                compoundIndex.query({gte: [houseId1, true]})
             ).toArray()
         ).toEqual([]);
 
         expect(
             await toStream(
-                compoundIndex.query({lte: [houseId1, undefined]})
+                compoundIndex.query({lte: [houseId1, true]})
             ).toArray()
         ).toEqual([[id4], [id3], [id2], [id1]]);
         expect(
             await toStream(
-                compoundIndex.query({lt: [houseId1, undefined]})
+                compoundIndex.query({lt: [houseId1, true]})
             ).toArray()
         ).toEqual([[id4], [id3], [id2], [id1]]);
         expect(
@@ -229,17 +265,17 @@ describe('data-index', async () => {
             await toStream(compoundIndex.query({gt: [houseId2]})).toArray()
         ).toEqual([]);
         expect(
-            await toStream(compoundIndex.query({gte: [undefined]})).toArray()
+            await toStream(compoundIndex.query({gte: [true]})).toArray()
         ).toEqual([]);
         expect(
-            await toStream(compoundIndex.query({gt: [undefined]})).toArray()
+            await toStream(compoundIndex.query({gt: [true]})).toArray()
         ).toEqual([]);
 
         expect(
-            await toStream(compoundIndex.query({lte: [undefined]})).toArray()
+            await toStream(compoundIndex.query({lte: [true]})).toArray()
         ).toEqual([[id5], [id4], [id3], [id2], [id1]]);
         expect(
-            await toStream(compoundIndex.query({lt: [undefined]})).toArray()
+            await toStream(compoundIndex.query({lt: [true]})).toArray()
         ).toEqual([[id5], [id4], [id3], [id2], [id1]]);
         expect(
             await toStream(compoundIndex.query({lte: [houseId2]})).toArray()
@@ -274,14 +310,14 @@ describe('data-index', async () => {
         const id1 = createUuid();
         const houseId = createUuid();
 
-        await index.sync(undefined, {id: id1, houseId});
+        await index.sync(undefined, {...emptyUser, id: id1, houseId});
         expect(await toStream(index.get([houseId])).toArray()).toEqual([[id1]]);
 
-        await index.sync({id: id1, houseId}, undefined);
+        await index.sync({...emptyUser, id: id1, houseId}, undefined);
         expect(await toStream(index.get([houseId])).toArray()).toEqual([]);
     });
 
-    it('should handle null and undefined values in compound indexes', async () => {
+    it('should handle null values in compound indexes', async () => {
         const {tx} = await getTxn();
         const index = createIndex<TestUser>({
             tx,
@@ -295,22 +331,38 @@ describe('data-index', async () => {
         const id2 = createUuid();
 
         await index.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId: null,
-            name: undefined,
+            name: null,
         });
         await index.sync(undefined, {
+            ...emptyUser,
             id: id2,
-            houseId: undefined,
+            houseId: null,
             name: 'Alice',
         });
 
         expect(
             await toStream(index.query({gte: [null, null]})).toArray()
-        ).toEqual([[id1]]);
+        ).toEqual([[id1], [id2]]);
+        expect(await toStream(index.query({gte: [null]})).toArray()).toEqual([
+            [id1],
+            [id2],
+        ]);
+        expect(await toStream(index.query({gte: []})).toArray()).toEqual([
+            [id1],
+            [id2],
+        ]);
         expect(
-            await toStream(index.query({gte: [undefined, null]})).toArray()
+            await toStream(index.query({gte: [null, '']})).toArray()
         ).toEqual([[id2]]);
+        expect(
+            await toStream(index.query({gte: [null, 'Alice']})).toArray()
+        ).toEqual([[id2]]);
+        expect(
+            await toStream(index.query({gte: [null, 'B']})).toArray()
+        ).toEqual([]);
     });
 
     it('should handle Uint8Array values', async () => {
@@ -326,7 +378,7 @@ describe('data-index', async () => {
         const id1 = createUuid();
         const avatar = new Uint8Array([1, 2, 3]);
 
-        await index.sync(undefined, {id: id1, avatar});
+        await index.sync(undefined, {...emptyUser, id: id1, avatar});
         expect(await toStream(index.get([avatar])).toArray()).toEqual([[id1]]);
         expect(
             await toStream(index.get([new Uint8Array([3, 2, 1])])).toArray()
@@ -347,61 +399,11 @@ describe('data-index', async () => {
         const id2 = createUuid();
 
         await expect(
-            index.sync({id: id1, houseId: null}, {id: id2, houseId: null})
+            index.sync(
+                {...emptyUser, id: id1, houseId: null},
+                {...emptyUser, id: id2, houseId: null}
+            )
         ).rejects.toThrow('invalid index sync: changing id is not allowed');
-    });
-});
-
-describe('KeySerializer', () => {
-    interface Testcase {
-        name: string;
-        a: any;
-        b: any;
-        result: -1 | 0 | 1;
-    }
-
-    const testcases: Testcase[] = [
-        {name: '"a" < "b"', a: ['a'], b: ['b'], result: -1},
-        {name: '"ab" < "b"', a: ['ab'], b: ['b'], result: -1},
-        {name: '[1, 2] < [2, 0]', a: [1, 2], b: [2, 0], result: -1},
-        {name: '[1, 2] > [1, null]', a: [1, 2], b: [1, null], result: 1},
-        {
-            name: '[1, undefined] > [1, 2]',
-            a: [1, undefined],
-            b: [1, 2],
-            result: 1,
-        },
-        {
-            name: '[1, undefined] > [1, 2, 3]',
-            a: [1, undefined],
-            b: [1, 2, 3],
-            result: 1,
-        },
-        {name: '[1, 2] < [2]', a: [1, 2], b: [2], result: -1},
-        {name: '[1, 2, 3] > [1, 2]', a: [1, 2, 3], b: [1, 2], result: 1},
-        {name: '[1, 2, 3] < [2, 2]', a: [1, 2, 3], b: [2, 2], result: -1},
-        {
-            name: 'buf[1, 2, 3] < buf[2, 2]',
-            a: [new Uint8Array([1, 2, 3])],
-            b: [new Uint8Array([2, 2])],
-            result: -1,
-        },
-    ];
-
-    testcases.forEach(({a, b, name, result}) => {
-        it(name, () => {
-            expect(
-                compareUint8Array(encodeIndexKey(a), encodeIndexKey(b))
-            ).toEqual(result);
-        });
-    });
-
-    it('should ser/de uuid', () => {
-        const uuid = [createUuid()];
-        const buf = encodeIndexKey(uuid);
-        const result = decodeIndexKey(buf);
-
-        expect(uuid).toEqual(result);
     });
 });
 
@@ -423,21 +425,25 @@ describe('partial indexes', async () => {
         const id4 = createUuid();
 
         await partialIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId: null,
             age: 25,
         });
         await partialIndex.sync(undefined, {
+            ...emptyUser,
             id: id2,
             houseId: null,
             age: 20,
         });
         await partialIndex.sync(undefined, {
+            ...emptyUser,
             id: id3,
             houseId: null,
-            age: undefined,
+            age: null,
         });
         await partialIndex.sync(undefined, {
+            ...emptyUser,
             id: id4,
             houseId: null,
             age: null,
@@ -464,18 +470,20 @@ describe('partial indexes', async () => {
         const id2 = createUuid();
 
         await partialIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId: null,
             age: 25,
         });
         await partialIndex.sync(undefined, {
+            ...emptyUser,
             id: id2,
             houseId: null,
             age: 30,
         });
         await partialIndex.sync(
-            {id: id1, houseId: null, age: 25},
-            {id: id1, houseId: null, age: 18}
+            {...emptyUser, id: id1, houseId: null, age: 25},
+            {...emptyUser, id: id1, houseId: null, age: 18}
         );
 
         const result = await toStream(
@@ -499,11 +507,13 @@ describe('partial indexes', async () => {
         const id2 = createUuid();
 
         await dynamicPartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId: null,
             ready: true,
         });
         await dynamicPartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id2,
             houseId: null,
             ready: false,
@@ -516,8 +526,8 @@ describe('partial indexes', async () => {
 
         // Change ready status
         await dynamicPartialIndex.sync(
-            {id: id2, houseId: null, ready: false},
-            {id: id2, houseId: null, ready: true}
+            {...emptyUser, id: id2, houseId: null, ready: false},
+            {...emptyUser, id: id2, houseId: null, ready: true}
         );
 
         result = await toStream(
@@ -543,11 +553,13 @@ describe('partial indexes', async () => {
         const houseId = createUuid();
 
         await uniquePartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId,
             age: 25,
         });
         await uniquePartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id2,
             houseId,
             age: 15,
@@ -555,7 +567,12 @@ describe('partial indexes', async () => {
 
         // Attempt to add another item with the same key that satisfies the filter function
         await expect(
-            uniquePartialIndex.sync(undefined, {id: id3, houseId, age: 30})
+            uniquePartialIndex.sync(undefined, {
+                ...emptyUser,
+                id: id3,
+                houseId,
+                age: 30,
+            })
         ).rejects.toThrow(
             'Unique index constraint violation. Index name: some_index_name'
         );
@@ -577,11 +594,13 @@ describe('partial indexes', async () => {
         const houseId = createUuid();
 
         await uniquePartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId,
             age: 25,
         }); // Included
         await uniquePartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id2,
             houseId,
             age: 20,
@@ -609,6 +628,7 @@ describe('partial indexes', async () => {
         const houseId = createUuid();
 
         await uniquePartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId,
             ready: true,
@@ -617,6 +637,7 @@ describe('partial indexes', async () => {
         // Try adding another item with the same key
         await expect(
             uniquePartialIndex.sync(undefined, {
+                ...emptyUser,
                 id: id2,
                 houseId,
                 ready: true,
@@ -627,12 +648,13 @@ describe('partial indexes', async () => {
 
         // Update id1 to no longer be included
         await uniquePartialIndex.sync(
-            {id: id1, houseId, ready: true},
-            {id: id1, houseId, ready: false}
+            {...emptyUser, id: id1, houseId, ready: true},
+            {...emptyUser, id: id1, houseId, ready: false}
         );
 
         // Now id2 should be allowed
         await uniquePartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id2,
             houseId,
             ready: true,
@@ -659,6 +681,7 @@ describe('partial indexes', async () => {
         const houseId = createUuid();
 
         await uniquePartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId,
             age: 25,
@@ -666,8 +689,8 @@ describe('partial indexes', async () => {
 
         // Update id1 to be excluded
         await uniquePartialIndex.sync(
-            {id: id1, houseId, age: 25},
-            {id: id1, houseId, age: 18}
+            {...emptyUser, id: id1, houseId, age: 25},
+            {...emptyUser, id: id1, houseId, age: 18}
         ); // Excluded
 
         const result = await toStream(
@@ -691,17 +714,18 @@ describe('partial indexes', async () => {
         const houseId = createUuid();
 
         await uniquePartialIndex.sync(undefined, {
+            ...emptyUser,
             id: id1,
             houseId,
             age: 25,
         }); // Included
         await uniquePartialIndex.sync(
-            {id: id1, houseId, age: 25},
-            {id: id1, houseId, age: 18}
+            {...emptyUser, id: id1, houseId, age: 25},
+            {...emptyUser, id: id1, houseId, age: 18}
         ); // Excluded
         await uniquePartialIndex.sync(
-            {id: id1, houseId, age: 18},
-            {id: id1, houseId, age: 30}
+            {...emptyUser, id: id1, houseId, age: 18},
+            {...emptyUser, id: id1, houseId, age: 30}
         ); // Re-added
 
         const result = await toStream(

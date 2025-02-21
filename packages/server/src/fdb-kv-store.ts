@@ -4,13 +4,13 @@ import {
     type Entry,
     type GtCondition,
     type GteCondition,
+    isolate,
     type LtCondition,
     type LteCondition,
-    type Uint8KVStore,
-    type Uint8Transaction,
     mapCondition,
     toStream,
-    withPrefix,
+    type Uint8KVStore,
+    type Uint8Transaction,
 } from 'syncwave-data';
 
 fdb.setAPIVersion(620, 620);
@@ -96,7 +96,7 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
         return this.db.doTransaction(async nativeTxn => {
             const wrappedTxn = new FoundationDBUint8Transaction(nativeTxn);
             // we use prefix to avoid reserved range starting with 0xff
-            const prefixedTxn = withPrefix(new Uint8Array([MAGIC_BYTE]))(
+            const prefixedTxn = isolate(new Uint8Array([MAGIC_BYTE]))(
                 wrappedTxn
             );
             return fn(prefixedTxn);

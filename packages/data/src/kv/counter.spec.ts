@@ -1,13 +1,14 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {Counter} from './counter.js';
-import {type Uint8KVStore, withPrefix} from './kv-store.js';
+import {type AppStore, isolate} from './kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
+import {TupleStore} from './tuple-store.js';
 
 describe('Counter', () => {
-    let kvStore: Uint8KVStore;
+    let kvStore: AppStore;
 
     beforeEach(() => {
-        kvStore = new MemKVStore();
+        kvStore = new TupleStore(new MemKVStore());
     });
 
     it('should initialize with the provided initial value', async () => {
@@ -44,8 +45,8 @@ describe('Counter', () => {
 
     it('should handle concurrent transactions correctly', async () => {
         await kvStore.transact(async tx => {
-            const counter1 = new Counter(withPrefix('1/')(tx), 10);
-            const counter2 = new Counter(withPrefix('2/')(tx), 10);
+            const counter1 = new Counter(isolate(['1'])(tx), 10);
+            const counter2 = new Counter(isolate(['2'])(tx), 10);
 
             const value1 = await counter1.increment();
             const value2 = await counter2.increment();
@@ -83,8 +84,8 @@ describe('Counter', () => {
 
     it('should initialize multiple counters independently', async () => {
         await kvStore.transact(async tx => {
-            const counter1 = new Counter(withPrefix('1/')(tx), 3);
-            const counter2 = new Counter(withPrefix('2/')(tx), 10);
+            const counter1 = new Counter(isolate(['1'])(tx), 3);
+            const counter2 = new Counter(isolate(['2'])(tx), 10);
 
             const value1 = await counter1.get();
             const value2 = await counter2.get();

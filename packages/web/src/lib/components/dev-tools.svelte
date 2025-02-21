@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {getAuthManager, getSdk} from '$lib/utils';
-	import {type DataNodeDto} from 'syncwave-data';
+	import {stringifyTuple, type DataNodeDto, type Tuple} from 'syncwave-data';
 
 	const sdk = getSdk();
 	let itemsPromise: Promise<DataNodeDto> | undefined = $state(undefined);
@@ -9,14 +9,14 @@
 		itemsPromise = sdk(x => x.getDbTree({}));
 	});
 
-	function openDetails(path: Uint8Array[]) {
+	function openDetails(path: Tuple[]) {
 		detailsPromise = (async () => {
 			const info = await sdk(x => x.getDbItem({path}));
 			return JSON.stringify(info, null, 2);
 		})();
 	}
 
-	async function remove(path: Uint8Array[]): Promise<void> {
+	async function remove(path: Tuple[]): Promise<void> {
 		if (!confirm('Are you sure?')) return;
 		await sdk(x => x.deleteDbItem({path}));
 	}
@@ -47,16 +47,13 @@
 			{#if itemsPromise}
 				{#await itemsPromise then root}
 					<div class="font-mono">
-						{#snippet itemView(
-							item: DataNodeDto,
-							path: Uint8Array[]
-						)}
+						{#snippet itemView(item: DataNodeDto, path: Tuple[])}
 							<div class="flex items-center">
 								<button onclick={() => remove(path)}>
 									Delete
 								</button>
 								<button onclick={() => openDetails(path)}>
-									{item.name}
+									{stringifyTuple(item.key)}
 									<span class="text-gray-400"
 										>[{item.type}]</span
 									>

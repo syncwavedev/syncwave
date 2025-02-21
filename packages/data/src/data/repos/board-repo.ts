@@ -3,7 +3,7 @@ import {type CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {Counter} from '../../kv/counter.js';
 import {UniqueError} from '../../kv/data-index.js';
-import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Registry} from '../../kv/registry.js';
 import {type Brand} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
@@ -48,12 +48,12 @@ export class BoardRepo {
     protected readonly counters: Registry<Counter>;
 
     constructor(
-        tx: Uint8Transaction,
+        tx: AppTransaction,
         dataTx: () => DataTx,
         onChange: OnDocChange<Board>
     ) {
         this.rawRepo = new DocRepo<Board>({
-            tx: withPrefix('d/')(tx),
+            tx: isolate(['d'])(tx),
             onChange,
             indexes: {
                 [BOARD_KEY_INDEX]: {
@@ -87,7 +87,7 @@ export class BoardRepo {
             },
         });
         this.counters = new Registry(
-            withPrefix('c/')(tx),
+            isolate(['c'])(tx),
             counterTxn => new Counter(counterTxn, 0)
         );
     }

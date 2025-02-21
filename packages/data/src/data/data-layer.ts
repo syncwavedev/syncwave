@@ -1,13 +1,10 @@
 import {MsgpackCodec} from '../codec.js';
 import {type CrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
-import {
-    type Uint8KVStore,
-    type Uint8Transaction,
-    withPrefix,
-} from '../kv/kv-store.js';
+import {type AppTransaction, isolate, type KVStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
 import {getNow, type Timestamp} from '../timestamp.js';
+import type {Tuple} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type AuthContext} from './auth-context.js';
@@ -44,7 +41,7 @@ export interface DataTx {
     readonly comments: CommentRepo;
     readonly identities: IdentityRepo;
     readonly config: Config;
-    readonly tx: Uint8Transaction;
+    readonly tx: AppTransaction;
     readonly dataNode: DataNode;
     readonly events: CollectionManager<ChangeEvent>;
     readonly ps: PermissionService;
@@ -108,7 +105,7 @@ export class DataLayer {
     public readonly esReader: EventStoreReader<ChangeEvent>;
 
     constructor(
-        private readonly kv: Uint8KVStore,
+        private readonly kv: KVStore<Tuple, Uint8Array>,
         private readonly hub: HubClient<void>,
         private readonly jwtSecret: string
     ) {
@@ -141,39 +138,39 @@ export class DataLayer {
             // clear effect because of transaction retries
             effects = [];
 
-            const users = new UserRepo(withPrefix('users/')(tx), (id, diff) =>
+            const users = new UserRepo(isolate(['users'])(tx), (id, diff) =>
                 logUserChange(dataTx, id, diff)
             );
             const identities = new IdentityRepo(
-                withPrefix('identities/')(tx),
+                isolate(['identities'])(tx),
                 users,
                 (pk, diff) => logIdentityChange(dataTx, pk, diff)
             );
             const boards = new BoardRepo(
-                withPrefix('boards/')(tx),
+                isolate(['boards'])(tx),
                 () => dataTx,
                 (pk, diff) => logBoardChange(dataTx, pk, diff)
             );
             const members = new MemberRepo(
-                withPrefix('members/')(tx),
+                isolate(['members'])(tx),
                 users,
                 boards,
                 (pk, diff) => logMemberChange(dataTx, pk, diff)
             );
             const tasks = new TaskRepo(
-                withPrefix('tasks/')(tx),
+                isolate(['tasks'])(tx),
                 boards,
                 users,
                 (pk, diff) => logTaskChange(dataTx, pk, diff)
             );
             const columns = new ColumnRepo(
-                withPrefix('columns/')(tx),
+                isolate(['columns'])(tx),
                 boards,
                 users,
                 (pk, diff) => logColumnChange(dataTx, pk, diff)
             );
             const comments = new CommentRepo(
-                withPrefix('comments/')(tx),
+                isolate(['comments'])(tx),
                 tasks,
                 users,
                 (pk, diff) => logCommentChange(dataTx, pk, diff)
@@ -189,7 +186,7 @@ export class DataLayer {
             });
 
             const events = new CollectionManager<ChangeEvent>(
-                withPrefix('events/')(tx),
+                isolate(['events'])(tx),
                 new MsgpackCodec()
             );
 

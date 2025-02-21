@@ -4,8 +4,8 @@ import {MsgpackCodec} from '../codec.js';
 import {Deferred} from '../deferred.js';
 import {AggregateError, AppError} from '../errors.js';
 import {toStream} from '../stream.js';
+import {decodeTuple, encodeTuple} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
-import {decodeIndexKey, encodeIndexKey} from './data-index.js';
 import type {
     Condition,
     KVStore,
@@ -23,8 +23,8 @@ describe('mem-kv-store', () => {
         return new MappedKVStore(
             rawStore,
             {
-                decode: x => decodeIndexKey(x)[0] as number,
-                encode: x => encodeIndexKey([x]),
+                decode: x => decodeTuple(x)[0] as number,
+                encode: x => encodeTuple([x]),
             },
             new MsgpackCodec()
         );

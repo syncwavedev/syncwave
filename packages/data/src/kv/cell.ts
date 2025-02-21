@@ -1,22 +1,19 @@
 import {MsgpackCodec} from '../codec.js';
 import {context} from '../context.js';
+import type {Tuple} from '../tuple.js';
 import {pipe} from '../utils.js';
-import {
-    type Transaction,
-    type Uint8Transaction,
-    withValueCodec,
-} from './kv-store.js';
+import {type Transaction, withCodec} from './kv-store.js';
 
-const key = new Uint8Array();
+const key: Tuple = [];
 
 export class Cell<T> {
-    private readonly tx: Transaction<Uint8Array, {value: T}>;
+    private readonly tx: Transaction<Tuple, {value: T}>;
 
     constructor(
-        tx: Uint8Transaction,
+        tx: Transaction<Tuple, Uint8Array>,
         private readonly initialValue: T
     ) {
-        this.tx = pipe(tx, withValueCodec(new MsgpackCodec()));
+        this.tx = pipe(tx, withCodec(new MsgpackCodec()));
     }
 
     async get(): Promise<T> {

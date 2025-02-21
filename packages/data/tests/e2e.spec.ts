@@ -15,6 +15,7 @@ import {
     MsgpackCodec,
     ParticipantClient,
     ParticipantServer,
+    TupleStore,
 } from '../src/index.js';
 import {
     MemTransportClient,
@@ -48,7 +49,7 @@ describe('e2e', () => {
         const jwtSecret = 'secret';
         const coordinator = new CoordinatorServer({
             transport: coordinatorTransportServer,
-            kv: coordinatorKv,
+            kv: new TupleStore(coordinatorKv),
             jwt,
             crypto,
             email,

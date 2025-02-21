@@ -1,13 +1,14 @@
 import {describe, expect, it} from 'vitest';
 import {Cell} from './cell.js';
-import {withPrefix} from './kv-store.js';
+import {isolate} from './kv-store.js';
 import {MemKVStore} from './mem-kv-store.js';
+import {TupleStore} from './tuple-store.js';
 
 const initialValue = 42;
 
 describe('Cell', () => {
     it('should return the initial value if no value is set', async () => {
-        const store = new MemKVStore();
+        const store = new TupleStore(new MemKVStore());
 
         await store.transact(async tx => {
             const cell = new Cell(tx, initialValue);
@@ -17,7 +18,7 @@ describe('Cell', () => {
     });
 
     it('should store and retrieve a value', async () => {
-        const store = new MemKVStore();
+        const store = new TupleStore(new MemKVStore());
 
         await store.transact(async tx => {
             const cell = new Cell(tx, initialValue);
@@ -28,7 +29,7 @@ describe('Cell', () => {
     });
 
     it('should store and retrieve the same value without put', async () => {
-        const store = new MemKVStore();
+        const store = new TupleStore(new MemKVStore());
         const firstValue = Math.random();
 
         await store.transact(async tx => {
@@ -46,7 +47,7 @@ describe('Cell', () => {
     });
 
     it('should overwrite the value when put is called again', async () => {
-        const store = new MemKVStore();
+        const store = new TupleStore(new MemKVStore());
 
         await store.transact(async tx => {
             const cell = new Cell(tx, initialValue);
@@ -58,7 +59,7 @@ describe('Cell', () => {
     });
 
     it('should persist the value across transactions', async () => {
-        const store = new MemKVStore();
+        const store = new TupleStore(new MemKVStore());
 
         await store.transact(async tx => {
             const cell = new Cell(tx, initialValue);
@@ -73,11 +74,11 @@ describe('Cell', () => {
     });
 
     it('should handle multiple cells independently', async () => {
-        const store = new MemKVStore();
+        const store = new TupleStore(new MemKVStore());
 
         await store.transact(async tx => {
-            const cell1 = new Cell(withPrefix('1/')(tx), initialValue);
-            const cell2 = new Cell(withPrefix('2/')(tx), 100);
+            const cell1 = new Cell(isolate(['1/'])(tx), initialValue);
+            const cell2 = new Cell(isolate(['2/'])(tx), 100);
             await cell1.put(400);
             await cell2.put(500);
 
@@ -90,12 +91,12 @@ describe('Cell', () => {
     });
 
     it('should return undefined if a key is deleted', async () => {
-        const store = new MemKVStore();
+        const store = new TupleStore(new MemKVStore());
 
         await store.transact(async tx => {
             const cell = new Cell(tx, initialValue);
             await cell.put(600);
-            await tx.delete(new Uint8Array());
+            await tx.delete([]);
             const value = await cell.get();
             expect(value).toBe(initialValue);
         });

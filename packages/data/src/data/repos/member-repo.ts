@@ -3,7 +3,7 @@ import {type BigFloat, toBigFloat, zBigFloat} from '../../big-float.js';
 import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
-import {type Uint8Transaction, withPrefix} from '../../kv/kv-store.js';
+import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand, unreachable} from '../../utils.js';
 import {Uuid, createUuid, zUuid} from '../../uuid.js';
@@ -81,13 +81,13 @@ export class MemberRepo {
     public readonly rawRepo: DocRepo<Member>;
 
     constructor(
-        tx: Uint8Transaction,
+        tx: AppTransaction,
         userRepo: UserRepo,
         boardRepo: BoardRepo,
         onChange: OnDocChange<Member>
     ) {
         this.rawRepo = new DocRepo<Member>({
-            tx: withPrefix('d/')(tx),
+            tx: isolate(['d'])(tx),
             onChange,
             indexes: {
                 [USER_ID_BOARD_ID_INDEX]: {

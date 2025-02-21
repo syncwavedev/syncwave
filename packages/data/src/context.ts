@@ -151,21 +151,6 @@ export class Context {
         return carrier;
     }
 
-    async race<T>(cx: Context, promise: Promise<T>, message?: string) {
-        const result = await Promise.race([
-            this.endPromise().then(() => ({
-                type: 'cancel' as const,
-            })),
-            promise.then(value => ({type: 'value' as const, value})),
-        ]);
-
-        if (result.type === 'cancel') {
-            throw new CancelledError(message ?? 'Context.race', 'context.race');
-        }
-
-        return result.value;
-    }
-
     run<R>(fn: () => R): R {
         return _ctx.run(this, fn);
     }

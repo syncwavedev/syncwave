@@ -93,7 +93,7 @@ export class FoundationDBUint8KVStore implements Uint8KVStore {
         fn: (tx: Uint8Transaction) => Promise<TResult>
     ): Promise<TResult> {
         return this.db.doTransaction(async nativeTxn => {
-            return new FoundationDBUint8Transaction(nativeTxn);
+            return fn(new FoundationDBUint8Transaction(nativeTxn));
         });
     }
 

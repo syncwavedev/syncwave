@@ -138,7 +138,7 @@ async function getKVStore(): Promise<KVStore<Tuple, Uint8Array>> {
         }
     })();
 
-    if (new Date() < new Date('2025-02-21T08:57:46.420Z')) {
+    if (new Date() < new Date('2025-02-21T09:14:46.420Z')) {
         while (true) {
             const more = await store.transact(async tx => {
                 const keys = await toStream(tx.query({gte: new Uint8Array()}))

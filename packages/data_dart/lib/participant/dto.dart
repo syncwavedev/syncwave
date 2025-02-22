@@ -315,23 +315,27 @@ class GetDbTreeReq {
 
 class GetDbTreeRes {
     List<GetDbTreeRe> childrenPreview;
+    List<dynamic> key;
     String name;
     ChildrenPreviewType type;
 
     GetDbTreeRes({
         required this.childrenPreview,
+        required this.key,
         required this.name,
         required this.type,
     });
 
     factory GetDbTreeRes.fromJson(Map<String, dynamic> json) => GetDbTreeRes(
         childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
+        key: List<dynamic>.from(json["key"].map((x) => x)),
         name: json["name"],
         type: childrenPreviewTypeValues.map[json["type"]]!,
     );
 
     Map<String, dynamic> toJson() => {
         "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
+        "key": List<dynamic>.from(key.map((x) => x)),
         "name": name,
         "type": childrenPreviewTypeValues.reverse[type],
     };
@@ -339,23 +343,27 @@ class GetDbTreeRes {
 
 class GetDbTreeRe {
     List<GetDbTreeRe> childrenPreview;
+    List<dynamic> key;
     String name;
     ChildrenPreviewType type;
 
     GetDbTreeRe({
         required this.childrenPreview,
+        required this.key,
         required this.name,
         required this.type,
     });
 
     factory GetDbTreeRe.fromJson(Map<String, dynamic> json) => GetDbTreeRe(
         childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
+        key: List<dynamic>.from(json["key"].map((x) => x)),
         name: json["name"],
         type: childrenPreviewTypeValues.map[json["type"]]!,
     );
 
     Map<String, dynamic> toJson() => {
         "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
+        "key": List<dynamic>.from(key.map((x) => x)),
         "name": name,
         "type": childrenPreviewTypeValues.reverse[type],
     };
@@ -374,18 +382,18 @@ final childrenPreviewTypeValues = EnumValues({
 });
 
 class GetDbItemReq {
-    List<dynamic> path;
+    List<List<dynamic>> path;
 
     GetDbItemReq({
         required this.path,
     });
 
     factory GetDbItemReq.fromJson(Map<String, dynamic> json) => GetDbItemReq(
-        path: List<dynamic>.from(json["path"].map((x) => x)),
+        path: List<List<dynamic>>.from(json["path"].map((x) => List<dynamic>.from(x.map((x) => x)))),
     );
 
     Map<String, dynamic> toJson() => {
-        "path": List<dynamic>.from(path.map((x) => x)),
+        "path": List<dynamic>.from(path.map((x) => List<dynamic>.from(x.map((x) => x)))),
     };
 }
 
@@ -804,18 +812,18 @@ final verifySignInCodeResTypeValues = EnumValues({
 });
 
 class DeleteDbItemReq {
-    List<dynamic> path;
+    List<List<dynamic>> path;
 
     DeleteDbItemReq({
         required this.path,
     });
 
     factory DeleteDbItemReq.fromJson(Map<String, dynamic> json) => DeleteDbItemReq(
-        path: List<dynamic>.from(json["path"].map((x) => x)),
+        path: List<List<dynamic>>.from(json["path"].map((x) => List<dynamic>.from(x.map((x) => x)))),
     );
 
     Map<String, dynamic> toJson() => {
-        "path": List<dynamic>.from(path.map((x) => x)),
+        "path": List<dynamic>.from(path.map((x) => List<dynamic>.from(x.map((x) => x)))),
     };
 }
 

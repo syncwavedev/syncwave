@@ -29,8 +29,14 @@ export function encodeTuple(tuple: Tuple): Uint8Array {
     return pack(tuple.map(x => (x instanceof Uint8Array ? Buffer.from(x) : x)));
 }
 
+// `true` has the largest type code in fdb tuple encoding
 export function getTupleLargestChild(tuple: Tuple): Tuple {
-    return [...tuple, ...Array<true>(16).fill(true)];
+    return [
+        ...tuple,
+        ...Array<true>(
+            8 /** magic number, we expect that no more than 8 consecutive true values will be used in a tuple */
+        ).fill(true),
+    ];
 }
 
 export function decodeTuple(buf: Uint8Array): Tuple {

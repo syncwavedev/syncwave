@@ -14,18 +14,15 @@ import {
 import {JobManager} from '../job-manager.js';
 import {log} from '../logger.js';
 import {
-    createMessageId,
-    type Message,
-    type MessageHeaders,
-} from '../transport/message.js';
-import {
     catchConnectionClosed,
     type Connection,
     ConnectionClosedError,
     ConnectionThrowError,
 } from '../transport/transport.js';
 import {assertNever, type Unsubscribe, wait} from '../utils.js';
+import {createRpcMessageId, type MessageHeaders} from './rpc-message.js';
 import {toRequestLog} from './rpc-streamer.js';
+import {RpcConnection} from './rpc-transport.js';
 import {
     getRequiredProcessor,
     type Handler,
@@ -38,7 +35,7 @@ export type HandlerApi<TState> = Record<string, Handler<TState, any, any>>;
 export function launchRpcHandlerServer<T>(
     api: HandlerApi<T>,
     state: T,
-    conn: Connection<Message>,
+    conn: RpcConnection,
     tracer: Tracer
 ): Cancel {
     context().ensureActive();
@@ -89,7 +86,7 @@ export function launchRpcHandlerServer<T>(
 
                             await catchConnectionClosed(
                                 conn.send({
-                                    id: createMessageId(),
+                                    id: createRpcMessageId(),
                                     headers: {
                                         ...context().extract(),
                                     },
@@ -105,7 +102,7 @@ export function launchRpcHandlerServer<T>(
                             );
                             await catchConnectionClosed(
                                 conn.send({
-                                    id: createMessageId(),
+                                    id: createRpcMessageId(),
                                     headers: {
                                         ...context().extract(),
                                     },
@@ -147,7 +144,7 @@ export function launchRpcHandlerServer<T>(
 
 export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
     api: TApi,
-    conn: Connection<Message>,
+    conn: Connection<unknown>,
     getHeaders: () => Partial<MessageHeaders>
 ): InferRpcClient<TApi> {
     function get(_target: unknown, nameOrSymbol: string | symbol) {
@@ -187,14 +184,14 @@ export class RpcError extends AppError {
 export class RpcTimeoutError extends RpcError {}
 
 async function proxyRequest(
-    conn: Connection<Message>,
+    conn: RpcConnection,
     name: string,
     arg: unknown,
     headers: MessageHeaders
 ) {
     context().ensureActive();
 
-    const requestId = createMessageId();
+    const requestId = createRpcMessageId();
     const result = new Deferred<any>();
     const cancelCleanup = context().onEnd(reason => {
         cleanup(reason);
@@ -211,7 +208,7 @@ async function proxyRequest(
             result.reject(toError(reason));
             catchConnectionClosed(
                 conn.send({
-                    id: createMessageId(),
+                    id: createRpcMessageId(),
                     headers: {
                         ...context().extract(),
                     },
@@ -303,11 +300,13 @@ async function proxyRequest(
 }
 
 function createHandlerProxy(
-    conn: Connection<Message>,
+    rawConn: Connection<unknown>,
     getHeaders: () => Partial<MessageHeaders>,
     processor: Processor<unknown, unknown, unknown>,
     name: string
 ) {
+    const conn = new RpcConnection(rawConn);
+
     return async (arg: unknown, partialHeaders?: MessageHeaders) => {
         // validate argument
         try {

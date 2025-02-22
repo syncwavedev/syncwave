@@ -117,6 +117,10 @@ export function toStream<T>(
         | Promise<T>
         | ((writer: ChannelWriter<T>) => Unsubscribe)
 ): Stream<T> {
+    if (source instanceof Stream) {
+        return source;
+    }
+
     if (source instanceof Promise) {
         const factory = new AsyncIteratorFactory<T>(channel => {
             source
@@ -139,7 +143,9 @@ export function toStream<T>(
             };
         });
         return toStream(factory);
-    } else if (Array.isArray(source)) {
+    }
+
+    if (Array.isArray(source)) {
         return toStream(of(...source));
     }
 

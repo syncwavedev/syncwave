@@ -1,4 +1,5 @@
 import {AppError} from '../errors.js';
+import {Channel, toStream} from '../stream.js';
 import type {Observer} from '../subject.js';
 import type {Nothing, Unsubscribe} from '../utils.js';
 
@@ -46,4 +47,24 @@ export function catchConnectionClosed<T>(
         }
         throw error;
     });
+}
+
+export function getMessageStream<T>(connection: Connection<T>) {
+    return toStream(_getMessageAsyncIterable(connection));
+}
+
+async function* _getMessageAsyncIterable<T>(connection: Connection<T>) {
+    const channel = new Channel<T>();
+
+    const unsub = connection.subscribe({
+        next: value => channel.next(value),
+        throw: error => channel.throw(error),
+        close: () => channel.end(),
+    });
+
+    try {
+        yield* channel;
+    } finally {
+        unsub();
+    }
 }

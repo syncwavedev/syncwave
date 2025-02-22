@@ -1,5 +1,4 @@
 import {tracerManager} from '../tracer-manager.js';
-import type {Message} from '../transport/message.js';
 import {RpcServer} from '../transport/rpc.js';
 import type {TransportClient, TransportServer} from '../transport/transport.js';
 import {createParticipantApi, ParticipantState} from './participant-api.js';
@@ -8,8 +7,8 @@ export class ParticipantServer {
     private readonly rpcServer: RpcServer<ParticipantState>;
 
     constructor(params: {
-        server: TransportServer<Message>;
-        client: TransportClient<Message>;
+        server: TransportServer<unknown>;
+        client: TransportClient<unknown>;
     }) {
         const state = new ParticipantState(params.client);
         this.rpcServer = new RpcServer(

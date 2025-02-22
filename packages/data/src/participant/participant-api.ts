@@ -6,8 +6,8 @@ import {
 import {createReadApi} from '../data/read-api.js';
 import {createWriteApi} from '../data/write-api/write-api.js';
 import {tracerManager} from '../tracer-manager.js';
-import type {Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
+import {RpcConnection} from '../transport/rpc-transport.js';
 import {
     createApi,
     createRpcClient,
@@ -16,16 +16,18 @@ import {
     type MapProcessorState,
     type RequestInfo,
 } from '../transport/rpc.js';
-import type {Connection, TransportClient} from '../transport/transport.js';
+import type {TransportClient} from '../transport/transport.js';
 import {assertNever} from '../utils.js';
 
 export class ParticipantState {
-    private readonly connection: Connection<Message>;
+    private readonly connection: RpcConnection;
 
     public readonly coordinator: CoordinatorRpc;
 
-    constructor(transport: TransportClient<Message>) {
-        this.connection = new PersistentConnection(transport);
+    constructor(transport: TransportClient<unknown>) {
+        this.connection = new RpcConnection(
+            new PersistentConnection(transport)
+        );
         this.coordinator = createRpcClient(
             createCoordinatorApi(),
             this.connection,

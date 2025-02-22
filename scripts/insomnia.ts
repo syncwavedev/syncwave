@@ -45,5 +45,5 @@ async function main() {
 }
 
 main().finally(() => {
-    part.close();
+    part.close('end of main');
 });

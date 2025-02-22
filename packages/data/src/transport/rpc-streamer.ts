@@ -16,7 +16,6 @@ import {
     type ChannelWriter,
     toStream,
 } from '../stream.js';
-import type {Message, MessageHeaders} from '../transport/message.js';
 import {
     catchConnectionClosed,
     type Connection,
@@ -36,6 +35,8 @@ import {
     reconstructError,
     reportRpcError,
 } from './rpc-handler.js';
+import type {MessageHeaders} from './rpc-message.js';
+import {RpcConnection} from './rpc-transport.js';
 import {
     createApi,
     getRequiredProcessor,
@@ -53,7 +54,7 @@ export type StreamerApi<TState> = Record<
 export function launchRpcStreamerServer<T>(
     api: StreamerApi<T>,
     state: T,
-    conn: Connection<Message>,
+    conn: RpcConnection,
     serverName: string,
     tracer: Tracer
 ) {
@@ -427,7 +428,7 @@ type RpcStreamerClientRpc = InferRpcClient<
 
 export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     api: TApi,
-    conn: Connection<Message>,
+    conn: Connection<unknown>,
     getHeaders: () => MessageHeaders,
     clientTarget: string,
     tracer: Tracer
@@ -444,7 +445,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     launchRpcHandlerServer(
         createRpcStreamerClientApi(),
         clientApiState,
-        conn,
+        new RpcConnection(conn),
         tracer
     );
 

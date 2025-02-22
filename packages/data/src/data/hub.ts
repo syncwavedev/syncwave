@@ -6,8 +6,8 @@ import {AppError} from '../errors.js';
 import {log} from '../logger.js';
 import {type Observer, Subject} from '../subject.js';
 import {tracerManager} from '../tracer-manager.js';
-import {type Message} from '../transport/message.js';
 import {PersistentConnection} from '../transport/persistent-connection.js';
+import {type RpcMessage} from '../transport/rpc-message.js';
 import {
     applyMiddleware,
     createApi,
@@ -24,7 +24,7 @@ export class HubClient<T> {
     private readonly server: HubServerRpc<T>;
 
     constructor(
-        transportClient: TransportClient<Message>,
+        transportClient: TransportClient<unknown>,
         schema: ZodType<T>,
         authSecret: string,
         hubUser: string,
@@ -74,7 +74,7 @@ export class HubServer<T> {
     private readonly rpcServer: RpcServer<HubServerRpcState<T>>;
 
     constructor(
-        transport: TransportServer<Message>,
+        transport: TransportServer<RpcMessage>,
         schema: ZodType<T>,
         authSecret: string,
         serverName: string

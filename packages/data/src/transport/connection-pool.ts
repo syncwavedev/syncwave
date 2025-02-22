@@ -15,7 +15,7 @@ export class ReleasableConnection<T> implements Connection<T> {
         this.subscription = this.connection.subscribe({
             next: value => this.subject.next(value),
             throw: error => this.subject.throw(error),
-            close: (reason) => this.subject.close(reason),
+            close: reason => this.subject.close(reason),
         });
     }
 

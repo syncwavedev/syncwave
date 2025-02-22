@@ -16,7 +16,7 @@ import {
     MemTransportClient,
     MemTransportServer,
 } from '../transport/mem-transport.js';
-import type {Message} from '../transport/message.js';
+import type {RpcMessage} from '../transport/rpc-message.js';
 import {RpcServer} from '../transport/rpc.js';
 import type {TransportServer} from '../transport/transport.js';
 import type {Tuple} from '../tuple.js';
@@ -27,7 +27,7 @@ import {
 } from './coordinator-api.js';
 
 export interface CoordinatorServerOptions {
-    transport: TransportServer<Message>;
+    transport: TransportServer<RpcMessage>;
     kv: KVStore<Tuple, Uint8Array>;
     jwt: JwtService;
     crypto: CryptoService;

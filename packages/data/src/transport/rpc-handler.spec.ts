@@ -8,29 +8,34 @@ import {CancelledError} from '../errors.js';
 import {log} from '../logger.js';
 import {unreachable, wait} from '../utils.js';
 import {MemTransportClient, MemTransportServer} from './mem-transport.js';
-import {type Message} from './message.js';
 import {createRpcHandlerClient, launchRpcHandlerServer} from './rpc-handler.js';
+import {
+    RpcTransportClient,
+    RpcTransportServer,
+    type RpcConnection,
+} from './rpc-transport.js';
 import {createApi, handler} from './rpc.js';
-import {type Connection} from './transport.js';
 
 describe('RpcHandler', () => {
-    let clientConn: Connection<Message>;
-    let serverConn: Connection<Message>;
+    let clientConn: RpcConnection;
+    let serverConn: RpcConnection;
 
     beforeEach(async () => {
-        const transportServer = new MemTransportServer<Message>(
+        const memTransportServer = new MemTransportServer<unknown>(
             new MsgpackCodec()
         );
-        const transportClient = new MemTransportClient<Message>(
-            transportServer,
+        const memTransportClient = new MemTransportClient<unknown>(
+            memTransportServer,
             new MsgpackCodec()
         );
+        const rpcTransportServer = new RpcTransportServer(memTransportServer);
+        const rpcTransportClient = new RpcTransportClient(memTransportClient);
 
-        const serverConnDeferred = new Deferred<Connection<Message>>();
-        await transportServer.launch(conn => {
+        const serverConnDeferred = new Deferred<RpcConnection>();
+        await rpcTransportServer.launch(conn => {
             serverConnDeferred.resolve(conn);
         });
-        clientConn = await transportClient.connect();
+        clientConn = await rpcTransportClient.connect();
         serverConn = await serverConnDeferred.promise;
 
         log.setLogLevel('silent');

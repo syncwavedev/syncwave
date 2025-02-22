@@ -3,10 +3,11 @@ import type {TypeOf, ZodType} from 'zod';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
-import type {Message, MessageHeaders, MessageId} from '../transport/message.js';
-import type {Connection, TransportServer} from '../transport/transport.js';
 import {assertNever} from '../utils.js';
+import type {MessageHeaders, RpcMessageId} from './rpc-message.js';
 import {launchRpcStreamerServer} from './rpc-streamer.js';
+import {RpcTransportServer, type RpcConnection} from './rpc-transport.js';
+import type {TransportServer} from './transport.js';
 
 export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
@@ -38,7 +39,7 @@ export type HandlerResponseSchema<T extends Handler<any, any, any>> =
 
 export interface RequestInfo {
     headers: MessageHeaders;
-    requestId: MessageId;
+    requestId: RpcMessageId;
 }
 
 export interface HandlerOptions<
@@ -274,13 +275,16 @@ export type InferRpcClientWithRequiredHeaders<T extends Api<any>> = {
 };
 
 export class RpcServer<TState extends {close: (reason: unknown) => void}> {
+    private readonly transport: RpcTransportServer;
     constructor(
-        private readonly transport: TransportServer<Message>,
+        transport: TransportServer<unknown>,
         private readonly api: Api<TState>,
         private readonly state: TState,
         private readonly serverName: string,
         private readonly tracer: Tracer
-    ) {}
+    ) {
+        this.transport = new RpcTransportServer(transport);
+    }
 
     async launch(): Promise<void> {
         await this.transport.launch(conn => this.handleConnection(conn));
@@ -291,7 +295,7 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
         this.transport.close(reason);
     }
 
-    private handleConnection(conn: Connection<Message>): void {
+    private handleConnection(conn: RpcConnection): void {
         launchRpcStreamerServer(
             this.api,
             this.state,

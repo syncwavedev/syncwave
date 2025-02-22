@@ -49,7 +49,7 @@ export type ErrorCode =
     | 'not_authenticated'
     | 'board_change_key_not_supported'
     | 'aggregate'
-    | 'task_not_found'
+    | 'card_not_found'
     | 'board_not_found'
     | 'column_not_found'
     | 'comment_not_found'

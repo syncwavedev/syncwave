@@ -6,7 +6,7 @@
 		toPosition,
 		type BoardViewColumnDto,
 		type BoardViewDto,
-		type BoardViewTaskDto,
+		type BoardViewCardDto,
 	} from 'syncwave-data';
 	import {
 		SHADOW_ITEM_MARKER_PROPERTY_NAME,
@@ -30,20 +30,20 @@
 				item => (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]
 			);
 
-			const shadowTask = dndColumns
-				.flatMap(x => x.tasks)
+			const shadowCard = dndColumns
+				.flatMap(x => x.cards)
 				.find(item => (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]);
 
 			const mapColumn = (column: BoardViewColumnDto) => {
 				return {
 					...column,
-					tasks: column.tasks.map(task =>
-						task.pk[0] === shadowTask?.pk[0]
+					cards: column.cards.map(card =>
+						card.pk[0] === shadowCard?.pk[0]
 							? {
-									...shadowTask,
-									...task,
+									...shadowCard,
+									...card,
 								}
-							: task
+							: card
 					),
 				};
 			};
@@ -65,7 +65,7 @@
 		);
 
 		for (const column of result) {
-			column.tasks = [...column.tasks].sort((a, b) =>
+			column.cards = [...column.cards].sort((a, b) =>
 				compareBigFloat(a.columnPosition, b.columnPosition)
 			);
 		}
@@ -136,9 +136,9 @@
 		dndColumns = newDndColumns;
 	}
 
-	function setTasks(
+	function setCards(
 		dndColumn: BoardViewColumnDto,
-		e: CustomEvent<DndEvent<BoardViewTaskDto>>
+		e: CustomEvent<DndEvent<BoardViewCardDto>>
 	) {
 		assert(dndColumn !== undefined, 'dnd column not found');
 		const localColumn = localBoard
@@ -146,15 +146,15 @@
 			.columns.find(x => x.id === dndColumn.id);
 		assert(localColumn !== undefined, 'local column not found');
 		const update = calculateChange(
-			localColumn.tasks,
-			dndColumn.tasks,
+			localColumn.cards,
+			dndColumn.cards,
 			e.detail.items,
-			task => task?.columnPosition
+			card => card?.columnPosition
 		);
 
 		if (update) {
 			const {target, newPosition} = update;
-			const diff = localBoard.setTaskPosition(
+			const diff = localBoard.setCardPosition(
 				target,
 				newPosition,
 				dndColumn.id
@@ -162,24 +162,24 @@
 
 			if (diff) {
 				sdk(x =>
-					x.applyTaskDiff({
-						taskId: target,
+					x.applyCardDiff({
+						cardId: target,
 						diff: stringifyCrdtDiff(diff),
 					})
 				).catch(error => {
-					log.error(error, 'failed to send task diff');
+					log.error(error, 'failed to send card diff');
 				});
 			}
 		}
 
-		dndColumn.tasks = e.detail.items;
+		dndColumn.cards = e.detail.items;
 	}
 </script>
 
 <BoardView
 	columns={dndColumns}
-	handleDndConsiderTasks={setTasks}
-	handleDndFinalizeTasks={setTasks}
+	handleDndConsiderCards={setCards}
+	handleDndFinalizeCards={setCards}
 	handleDndConsiderColumns={setColumns}
 	handleDndFinalizeColumns={setColumns}
 />

@@ -6,8 +6,8 @@
 		dndzone,
 		type DndEvent,
 	} from 'svelte-dnd-action';
-	import type {BoardViewColumnDto, BoardViewTaskDto} from 'syncwave-data';
-	import TaskTile from './task-tile.svelte';
+	import type {BoardViewColumnDto, BoardViewCardDto} from 'syncwave-data';
+	import CardTile from './card-tile.svelte';
 
 	const flipDurationMs = 100;
 	export let handleDndConsiderColumns: (
@@ -16,13 +16,13 @@
 	export let handleDndFinalizeColumns: (
 		e: CustomEvent<DndEvent<BoardViewColumnDto>>
 	) => void;
-	export let handleDndConsiderTasks: (
+	export let handleDndConsiderCards: (
 		column: BoardViewColumnDto,
-		e: CustomEvent<DndEvent<BoardViewTaskDto>>
+		e: CustomEvent<DndEvent<BoardViewCardDto>>
 	) => void;
-	export let handleDndFinalizeTasks: (
+	export let handleDndFinalizeCards: (
 		column: BoardViewColumnDto,
-		e: CustomEvent<DndEvent<BoardViewTaskDto>>
+		e: CustomEvent<DndEvent<BoardViewCardDto>>
 	) => void;
 
 	export let columns: BoardViewColumnDto[];
@@ -54,17 +54,17 @@
 				<div
 					class="flex flex-1 flex-col gap-2 pb-40"
 					use:dndzone={{
-						items: column.tasks,
+						items: column.cards,
 						flipDurationMs,
-						type: 'tasks',
+						type: 'cards',
 						dropTargetStyle: {},
 					}}
-					on:consider={e => handleDndConsiderTasks(column, e)}
-					on:finalize={e => handleDndFinalizeTasks(column, e)}
+					on:consider={e => handleDndConsiderCards(column, e)}
+					on:finalize={e => handleDndFinalizeCards(column, e)}
 				>
-					{#each column.tasks as task (task.id)}
+					{#each column.cards as card (card.id)}
 						<div animate:flip={{duration: flipDurationMs}}>
-							<TaskTile {task} />
+							<CardTile {card} />
 						</div>
 					{/each}
 				</div>

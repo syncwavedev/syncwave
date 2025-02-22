@@ -13,6 +13,7 @@ import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import {HubClient} from './hub.js';
 import {PermissionService} from './permission-service.js';
 import {type Board, type BoardId, BoardRepo} from './repos/board-repo.js';
+import {type Card, type CardId, CardRepo} from './repos/card-repo.js';
 import {type Column, type ColumnId, ColumnRepo} from './repos/column-repo.js';
 import {
     type Comment,
@@ -25,7 +26,6 @@ import {
     IdentityRepo,
 } from './repos/identity-repo.js';
 import {type Member, type MemberId, MemberRepo} from './repos/member-repo.js';
-import {type Task, type TaskId, TaskRepo} from './repos/task-repo.js';
 import {type User, type UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
@@ -36,7 +36,7 @@ export interface DataTx {
     readonly users: UserRepo;
     readonly members: MemberRepo;
     readonly boards: BoardRepo;
-    readonly tasks: TaskRepo;
+    readonly cards: CardRepo;
     readonly columns: ColumnRepo;
     readonly comments: CommentRepo;
     readonly identities: IdentityRepo;
@@ -73,8 +73,8 @@ export interface MemberChangeEvent
 export interface BoardChangeEvent
     extends BaseChangeEvent<'board', BoardId, Board> {}
 
-export interface TaskChangeEvent
-    extends BaseChangeEvent<'task', TaskId, Task> {}
+export interface CardChangeEvent
+    extends BaseChangeEvent<'card', CardId, Card> {}
 
 export interface IdentityChangeEvent
     extends BaseChangeEvent<'identity', IdentityId, Identity> {}
@@ -89,7 +89,7 @@ export type ChangeEvent =
     | UserChangeEvent
     | MemberChangeEvent
     | BoardChangeEvent
-    | TaskChangeEvent
+    | CardChangeEvent
     | IdentityChangeEvent
     | ColumnChangeEvent
     | CommentChangeEvent;
@@ -157,11 +157,11 @@ export class DataLayer {
                 boards,
                 (pk, diff) => logMemberChange(dataTx, pk, diff)
             );
-            const tasks = new TaskRepo(
-                isolate(['tasks'])(tx),
+            const cards = new CardRepo(
+                isolate(['cards'])(tx),
                 boards,
                 users,
-                (pk, diff) => logTaskChange(dataTx, pk, diff)
+                (pk, diff) => logCardChange(dataTx, pk, diff)
             );
             const columns = new ColumnRepo(
                 isolate(['columns'])(tx),
@@ -171,7 +171,7 @@ export class DataLayer {
             );
             const comments = new CommentRepo(
                 isolate(['comments'])(tx),
-                tasks,
+                cards,
                 users,
                 (pk, diff) => logCommentChange(dataTx, pk, diff)
             );
@@ -180,7 +180,7 @@ export class DataLayer {
                 identities: new RepoDataNode(identities.rawRepo),
                 users: new RepoDataNode(users.rawRepo),
                 boards: new RepoDataNode(boards.rawRepo),
-                tasks: new RepoDataNode(tasks.rawRepo),
+                cards: new RepoDataNode(cards.rawRepo),
                 columns: new RepoDataNode(columns.rawRepo),
                 members: new RepoDataNode(members.rawRepo),
             });
@@ -201,7 +201,7 @@ export class DataLayer {
 
             const dataTx: DataTx = {
                 boards,
-                tasks,
+                cards,
                 columns,
                 comments,
                 events,
@@ -318,12 +318,12 @@ async function logMemberChange(
     ]);
 }
 
-async function logTaskChange(tx: DataTx, [id]: [TaskId], diff: CrdtDiff<Task>) {
-    const task = await tx.tasks.getById(id, true);
-    assert(task !== undefined, `logTaskChange: task ${id} not found`);
+async function logCardChange(tx: DataTx, [id]: [CardId], diff: CrdtDiff<Card>) {
+    const card = await tx.cards.getById(id, true);
+    assert(card !== undefined, `logCardChange: card ${id} not found`);
     const ts = getNow();
-    const event: TaskChangeEvent = {type: 'task', id, diff, ts};
-    await tx.esWriter.append(boardEvents(task.boardId), event);
+    const event: CardChangeEvent = {type: 'card', id, diff, ts};
+    await tx.esWriter.append(boardEvents(card.boardId), event);
 }
 
 async function logColumnChange(
@@ -345,12 +345,12 @@ async function logCommentChange(
 ) {
     const comment = await tx.comments.getById(id, true);
     assert(comment !== undefined, `logCommentChange: comment ${id} not found`);
-    const task = await tx.tasks.getById(comment.taskId, true);
+    const card = await tx.cards.getById(comment.cardId, true);
     assert(
-        task !== undefined,
-        `logCommentChange: task ${comment.taskId} not found`
+        card !== undefined,
+        `logCommentChange: card ${comment.cardId} not found`
     );
     const ts = getNow();
     const event: CommentChangeEvent = {type: 'comment', id, diff, ts};
-    await tx.esWriter.append(boardEvents(task.boardId), event);
+    await tx.esWriter.append(boardEvents(card.boardId), event);
 }

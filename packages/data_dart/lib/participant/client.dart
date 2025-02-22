@@ -296,11 +296,11 @@ class ParticipantClient {
     }
   }
 
-  Future<CreateTaskRes> createTask(CreateTaskReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('createTask');
+  Future<CreateCardRes> createCard(CreateCardReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('createCard');
     try {
-      final json = await _rpc.handle('createTask', request.toJson(), _createHeaders(span, headers));
-      return CreateTaskRes.fromJson(json as Map<String, dynamic>);
+      final json = await _rpc.handle('createCard', request.toJson(), _createHeaders(span, headers));
+      return CreateCardRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    
@@ -378,11 +378,11 @@ class ParticipantClient {
     }
   }
 
-  Future<DeleteTaskRes> deleteTask(DeleteTaskReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('deleteTask');
+  Future<DeleteCardRes> deleteCard(DeleteCardReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('deleteCard');
     try {
-      final json = await _rpc.handle('deleteTask', request.toJson(), _createHeaders(span, headers));
-      return DeleteTaskRes.fromJson(json as Map<String, dynamic>);
+      final json = await _rpc.handle('deleteCard', request.toJson(), _createHeaders(span, headers));
+      return DeleteCardRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    
@@ -432,15 +432,15 @@ class ParticipantClient {
     }
   }
 
-  Stream<GetTaskCommentsValue> getTaskComments(GetTaskCommentsReq request, [MessageHeaders? headers]) async* {
-    final invocationSpan = tracer.startSpan('getTaskComments');
+  Stream<GetCardCommentsValue> getCardComments(GetCardCommentsReq request, [MessageHeaders? headers]) async* {
+    final invocationSpan = tracer.startSpan('getCardComments');
     try {
       while (true) {
-        final attemptSpan = tracer.startSpan('getTaskComments');
+        final attemptSpan = tracer.startSpan('getCardComments');
         try {
-          await for (final json in _rpc.stream('getTaskComments', request.toJson(), _createHeaders(attemptSpan, headers))) {
+          await for (final json in _rpc.stream('getCardComments', request.toJson(), _createHeaders(attemptSpan, headers))) {
             attemptSpan.addEvent("next");
-            yield GetTaskCommentsValue.fromJson(json as Map<String, dynamic>);
+            yield GetCardCommentsValue.fromJson(json as Map<String, dynamic>);
           }
         } catch (error) {
           if (error is TransportException) {
@@ -578,11 +578,11 @@ class ParticipantClient {
     }
   }
 
-  Future<ApplyTaskDiffRes> applyTaskDiff(ApplyTaskDiffReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('applyTaskDiff');
+  Future<ApplyCardDiffRes> applyCardDiff(ApplyCardDiffReq request, [MessageHeaders? headers]) async {
+    final span = tracer.startSpan('applyCardDiff');
     try {
-      final json = await _rpc.handle('applyTaskDiff', request.toJson(), _createHeaders(span, headers));
-      return ApplyTaskDiffRes.fromJson(json as Map<String, dynamic>);
+      final json = await _rpc.handle('applyCardDiff', request.toJson(), _createHeaders(span, headers));
+      return ApplyCardDiffRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    

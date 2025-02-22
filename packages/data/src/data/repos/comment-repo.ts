@@ -12,7 +12,7 @@ import {
     zDoc,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
-import {type TaskId, TaskRepo} from './task-repo.js';
+import {type CardId, CardRepo} from './card-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
 export type CommentId = Brand<Uuid, 'comment_id'>;
@@ -24,19 +24,19 @@ export function createCommentId(): CommentId {
 export interface Comment extends Doc<[CommentId]> {
     readonly id: CommentId;
     readonly authorId: UserId;
-    readonly taskId: TaskId;
+    readonly cardId: CardId;
     readonly text: string;
 }
 
-const TASK_ID_INDEX = 'task_id';
+const TASK_ID_INDEX = 'card_id';
 
-// todo: tests should handle get by task_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
+// todo: tests should handle get by card_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
 export function zComment() {
     return zDoc(z.tuple([zUuid<CommentId>()])).extend({
         id: zUuid<CommentId>(),
         authorId: zUuid<UserId>(),
-        taskId: zUuid<TaskId>(),
+        cardId: zUuid<CardId>(),
         text: z.string(),
     });
 }
@@ -46,7 +46,7 @@ export class CommentRepo {
 
     constructor(
         tx: AppTransaction,
-        taskRepo: TaskRepo,
+        cardRepo: CardRepo,
         userRepo: UserRepo,
         onChange: OnDocChange<Comment>
     ) {
@@ -55,7 +55,7 @@ export class CommentRepo {
             onChange,
             indexes: {
                 [TASK_ID_INDEX]: {
-                    key: x => [x.taskId],
+                    key: x => [x.cardId],
                 },
             },
             schema: zComment(),
@@ -74,21 +74,21 @@ export class CommentRepo {
                     },
                 },
                 {
-                    name: 'comment.taskId fk',
+                    name: 'comment.cardId fk',
                     verify: async comment => {
-                        const task = await taskRepo.getById(
-                            comment.taskId,
+                        const card = await cardRepo.getById(
+                            comment.cardId,
                             true
                         );
-                        if (task === undefined) {
-                            return `task not found: ${comment.taskId}`;
+                        if (card === undefined) {
+                            return `card not found: ${comment.cardId}`;
                         }
                         return;
                     },
                 },
             ],
             readonly: {
-                taskId: true,
+                cardId: true,
                 id: true,
                 text: true,
                 authorId: true,
@@ -103,8 +103,8 @@ export class CommentRepo {
         return this.rawRepo.getById([id], includeDeleted);
     }
 
-    getByTaskId(taskId: TaskId): Stream<Comment> {
-        return this.rawRepo.get(TASK_ID_INDEX, [taskId]);
+    getByCardId(cardId: CardId): Stream<Comment> {
+        return this.rawRepo.get(TASK_ID_INDEX, [cardId]);
     }
 
     async apply(

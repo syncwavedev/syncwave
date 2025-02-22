@@ -3,56 +3,56 @@ import {zCrdtDiffBase64} from '../crdt/crdt.js';
 import {assert} from '../utils.js';
 import {type DataTx} from './data-layer.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
+import {type Card, type CardId, zCard} from './repos/card-repo.js';
 import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
 import {type CommentId, zComment} from './repos/comment-repo.js';
 import {type IdentityId, zIdentity} from './repos/identity-repo.js';
 import {type Member, type MemberId, zMember} from './repos/member-repo.js';
-import {type Task, type TaskId, zTask} from './repos/task-repo.js';
 import {type User, type UserId, zUser} from './repos/user-repo.js';
 
-export function zTaskDto() {
-    return zTask().extend({
+export function zCardDto() {
+    return zCard().extend({
         column: zColumnDto().nullable(),
         author: zUserDto(),
         board: zBoardDto(),
-        state: zCrdtDiffBase64<Task>(),
+        state: zCrdtDiffBase64<Card>(),
     });
 }
 
-export type TaskDto = z.infer<ReturnType<typeof zTaskDto>>;
+export type CardDto = z.infer<ReturnType<typeof zCardDto>>;
 
-export async function toTaskDto(tx: DataTx, taskId: TaskId): Promise<TaskDto> {
-    const task = await tx.tasks.getById(taskId, true);
-    assert(task !== undefined, `toTaskDto: task not found: ${taskId}`);
-    const column = task.columnId ? await toColumnDto(tx, task.columnId) : null;
-    const author = await toUserDto(tx, task.authorId);
-    const board = await toBoardDto(tx, task.boardId);
+export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
+    const card = await tx.cards.getById(cardId, true);
+    assert(card !== undefined, `toCardDto: card not found: ${cardId}`);
+    const column = card.columnId ? await toColumnDto(tx, card.columnId) : null;
+    const author = await toUserDto(tx, card.authorId);
+    const board = await toBoardDto(tx, card.boardId);
 
-    return {...task, column, board, author};
+    return {...card, column, board, author};
 }
 
-export function zBoardViewTaskDto() {
-    return zTask().extend({
+export function zBoardViewCardDto() {
+    return zCard().extend({
         column: zColumnDto().nullable(),
         board: zBoardDto(),
-        state: zCrdtDiffBase64<Task>(),
+        state: zCrdtDiffBase64<Card>(),
         author: zUserDto(),
     });
 }
 
-export type BoardViewTaskDto = z.infer<ReturnType<typeof zBoardViewTaskDto>>;
+export type BoardViewCardDto = z.infer<ReturnType<typeof zBoardViewCardDto>>;
 
-export async function toBoardViewTaskDto(
+export async function toBoardViewCardDto(
     tx: DataTx,
-    taskId: TaskId
-): Promise<BoardViewTaskDto> {
-    const task = await tx.tasks.getById(taskId, true);
-    assert(task !== undefined, `toBoardViewTaskDto: task not found: ${taskId}`);
-    const column = task.columnId ? await toColumnDto(tx, task.columnId) : null;
-    const board = await toBoardDto(tx, task.boardId);
-    const author = await toUserDto(tx, task.authorId);
+    cardId: CardId
+): Promise<BoardViewCardDto> {
+    const card = await tx.cards.getById(cardId, true);
+    assert(card !== undefined, `toBoardViewCardDto: card not found: ${cardId}`);
+    const column = card.columnId ? await toColumnDto(tx, card.columnId) : null;
+    const board = await toBoardDto(tx, card.boardId);
+    const author = await toUserDto(tx, card.authorId);
 
-    return {...task, column, board, author};
+    return {...card, column, board, author};
 }
 
 export function zColumnDto() {
@@ -77,7 +77,7 @@ export async function toColumnDto(
 
 export function zBoardViewColumnDto() {
     return zColumn().extend({
-        tasks: z.array(zBoardViewTaskDto()),
+        cards: z.array(zBoardViewCardDto()),
         state: zCrdtDiffBase64<Column>(),
     });
 }
@@ -95,12 +95,12 @@ export async function toBoardViewColumnDto(
         column !== undefined,
         `toBoardViewColumnDto: column not found: ${columnId}`
     );
-    const tasks = await tx.tasks
+    const cards = await tx.cards
         .getByColumnId(column.id)
-        .mapParallel(x => toBoardViewTaskDto(tx, x.id))
+        .mapParallel(x => toBoardViewCardDto(tx, x.id))
         .toArray();
 
-    return {...column, tasks};
+    return {...column, cards};
 }
 
 export function zBoardDto() {
@@ -234,7 +234,7 @@ export async function toIdentityDto(
 export function zCommentDto() {
     return zComment().extend({
         author: zUserDto(),
-        task: zTaskDto(),
+        card: zCardDto(),
     });
 }
 
@@ -250,7 +250,7 @@ export async function toCommentDto(
         `toCommentDto: comment not found: ${commentId}`
     );
     const author = await toUserDto(tx, comment.authorId);
-    const task = await toTaskDto(tx, comment.taskId);
+    const card = await toCardDto(tx, comment.cardId);
 
-    return {...comment, author, task};
+    return {...comment, author, card};
 }

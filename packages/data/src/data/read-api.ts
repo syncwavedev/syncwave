@@ -27,8 +27,8 @@ import {
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {type BoardId} from './repos/board-repo.js';
+import {type CardId, zCard} from './repos/card-repo.js';
 import {zIdentity} from './repos/identity-repo.js';
-import {type TaskId, zTask} from './repos/task-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
@@ -113,19 +113,19 @@ export function createReadApi() {
                 });
             },
         }),
-        getBoardTasks: streamer({
+        getBoardCards: streamer({
             req: z.object({boardId: zUuid<BoardId>()}),
-            item: z.array(zTask()),
+            item: z.array(zCard()),
             async *stream(st, {boardId}) {
                 yield* observable({
                     async get() {
                         return await st.transact(async tx => {
-                            const [tasks] = await whenAll([
-                                tx.tasks.getByBoardId(boardId).toArray(),
+                            const [cards] = await whenAll([
+                                tx.cards.getByBoardId(boardId).toArray(),
                                 tx.ps.ensureBoardMember(boardId, 'reader'),
                             ]);
 
-                            return tasks;
+                            return cards;
                         });
                     },
                     update$: st.esReader
@@ -134,59 +134,59 @@ export function createReadApi() {
                 });
             },
         }),
-        getTask: streamer({
-            req: z.object({taskId: zUuid<TaskId>()}),
-            item: zTask().optional(),
-            async *stream(st, {taskId}) {
-                const task = await st.transact(tx =>
-                    tx.tasks.getById(taskId, false)
+        getCard: streamer({
+            req: z.object({cardId: zUuid<CardId>()}),
+            item: zCard().optional(),
+            async *stream(st, {cardId}) {
+                const card = await st.transact(tx =>
+                    tx.cards.getById(cardId, false)
                 );
-                if (!task) {
+                if (!card) {
                     throw new BusinessError(
-                        `task with id ${taskId} not found`,
-                        'task_not_found'
+                        `card with id ${cardId} not found`,
+                        'card_not_found'
                     );
                 }
                 yield* observable({
                     async get() {
                         return await st.transact(async tx => {
-                            const task = await tx.tasks.getById(taskId, true);
-                            if (!task) {
+                            const card = await tx.cards.getById(cardId, true);
+                            if (!card) {
                                 return undefined;
                             }
                             await tx.ps.ensureBoardMember(
-                                task.boardId,
+                                card.boardId,
                                 'reader'
                             );
 
-                            return task;
+                            return card;
                         });
                     },
                     update$: st.esReader
-                        .subscribe(boardEvents(task.boardId))
+                        .subscribe(boardEvents(card.boardId))
                         .then(x => x.map(() => undefined)),
                 });
             },
         }),
-        getTaskComments: streamer({
-            req: z.object({taskId: zUuid<TaskId>()}),
+        getCardComments: streamer({
+            req: z.object({cardId: zUuid<CardId>()}),
             item: z.array(zCommentDto()),
-            async *stream(st, {taskId}) {
-                const task = await st.transact(tx =>
-                    tx.ps.ensureTaskMember(taskId, 'reader')
+            async *stream(st, {cardId}) {
+                const card = await st.transact(tx =>
+                    tx.ps.ensureCardMember(cardId, 'reader')
                 );
                 yield* observable({
                     get() {
                         return st.transact(async tx => {
-                            await tx.ps.ensureTaskMember(taskId, 'reader');
+                            await tx.ps.ensureCardMember(cardId, 'reader');
                             return tx.comments
-                                .getByTaskId(taskId)
+                                .getByCardId(cardId)
                                 .mapParallel(x => toCommentDto(tx, x.id))
                                 .toArray();
                         });
                     },
                     update$: st.esReader
-                        .subscribe(boardEvents(task.boardId))
+                        .subscribe(boardEvents(card.boardId))
                         .then(x => x.map(() => undefined)),
                 });
             },

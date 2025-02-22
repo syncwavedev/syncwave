@@ -26,22 +26,22 @@
 //     final getBoardValue = getBoardValueFromJson(jsonString);
 //     final createColumnReq = createColumnReqFromJson(jsonString);
 //     final createColumnRes = createColumnResFromJson(jsonString);
-//     final createTaskReq = createTaskReqFromJson(jsonString);
-//     final createTaskRes = createTaskResFromJson(jsonString);
+//     final createCardReq = createCardReqFromJson(jsonString);
+//     final createCardRes = createCardResFromJson(jsonString);
 //     final getBoardViewReq = getBoardViewReqFromJson(jsonString);
 //     final getBoardViewValue = getBoardViewValueFromJson(jsonString);
 //     final deleteBoardReq = deleteBoardReqFromJson(jsonString);
 //     final deleteBoardRes = deleteBoardResFromJson(jsonString);
 //     final deleteColumnReq = deleteColumnReqFromJson(jsonString);
 //     final deleteColumnRes = deleteColumnResFromJson(jsonString);
-//     final deleteTaskReq = deleteTaskReqFromJson(jsonString);
-//     final deleteTaskRes = deleteTaskResFromJson(jsonString);
+//     final deleteCardReq = deleteCardReqFromJson(jsonString);
+//     final deleteCardRes = deleteCardResFromJson(jsonString);
 //     final createCommentReq = createCommentReqFromJson(jsonString);
 //     final createCommentRes = createCommentResFromJson(jsonString);
 //     final deleteCommentReq = deleteCommentReqFromJson(jsonString);
 //     final deleteCommentRes = deleteCommentResFromJson(jsonString);
-//     final getTaskCommentsReq = getTaskCommentsReqFromJson(jsonString);
-//     final getTaskCommentsValue = getTaskCommentsValueFromJson(jsonString);
+//     final getCardCommentsReq = getCardCommentsReqFromJson(jsonString);
+//     final getCardCommentsValue = getCardCommentsValueFromJson(jsonString);
 //     final createMemberReq = createMemberReqFromJson(jsonString);
 //     final createMemberRes = createMemberResFromJson(jsonString);
 //     final deleteMemberReq = deleteMemberReqFromJson(jsonString);
@@ -54,8 +54,8 @@
 //     final applyBoardDiffRes = applyBoardDiffResFromJson(jsonString);
 //     final applyColumnDiffReq = applyColumnDiffReqFromJson(jsonString);
 //     final applyColumnDiffRes = applyColumnDiffResFromJson(jsonString);
-//     final applyTaskDiffReq = applyTaskDiffReqFromJson(jsonString);
-//     final applyTaskDiffRes = applyTaskDiffResFromJson(jsonString);
+//     final applyCardDiffReq = applyCardDiffReqFromJson(jsonString);
+//     final applyCardDiffRes = applyCardDiffResFromJson(jsonString);
 //     final applyMemberDiffReq = applyMemberDiffReqFromJson(jsonString);
 //     final applyMemberDiffRes = applyMemberDiffResFromJson(jsonString);
 //     final setUserAvatarReq = setUserAvatarReqFromJson(jsonString);
@@ -167,13 +167,13 @@ CreateColumnRes createColumnResFromJson(String str) => CreateColumnRes.fromJson(
 
 String createColumnResToJson(CreateColumnRes data) => json.encode(data.toJson());
 
-CreateTaskReq createTaskReqFromJson(String str) => CreateTaskReq.fromJson(json.decode(str));
+CreateCardReq createCardReqFromJson(String str) => CreateCardReq.fromJson(json.decode(str));
 
-String createTaskReqToJson(CreateTaskReq data) => json.encode(data.toJson());
+String createCardReqToJson(CreateCardReq data) => json.encode(data.toJson());
 
-CreateTaskRes createTaskResFromJson(String str) => CreateTaskRes.fromJson(json.decode(str));
+CreateCardRes createCardResFromJson(String str) => CreateCardRes.fromJson(json.decode(str));
 
-String createTaskResToJson(CreateTaskRes data) => json.encode(data.toJson());
+String createCardResToJson(CreateCardRes data) => json.encode(data.toJson());
 
 GetBoardViewReq getBoardViewReqFromJson(String str) => GetBoardViewReq.fromJson(json.decode(str));
 
@@ -199,13 +199,13 @@ DeleteColumnRes deleteColumnResFromJson(String str) => DeleteColumnRes.fromJson(
 
 String deleteColumnResToJson(DeleteColumnRes data) => json.encode(data.toJson());
 
-DeleteTaskReq deleteTaskReqFromJson(String str) => DeleteTaskReq.fromJson(json.decode(str));
+DeleteCardReq deleteCardReqFromJson(String str) => DeleteCardReq.fromJson(json.decode(str));
 
-String deleteTaskReqToJson(DeleteTaskReq data) => json.encode(data.toJson());
+String deleteCardReqToJson(DeleteCardReq data) => json.encode(data.toJson());
 
-DeleteTaskRes deleteTaskResFromJson(String str) => DeleteTaskRes.fromJson(json.decode(str));
+DeleteCardRes deleteCardResFromJson(String str) => DeleteCardRes.fromJson(json.decode(str));
 
-String deleteTaskResToJson(DeleteTaskRes data) => json.encode(data.toJson());
+String deleteCardResToJson(DeleteCardRes data) => json.encode(data.toJson());
 
 CreateCommentReq createCommentReqFromJson(String str) => CreateCommentReq.fromJson(json.decode(str));
 
@@ -223,13 +223,13 @@ DeleteCommentRes deleteCommentResFromJson(String str) => DeleteCommentRes.fromJs
 
 String deleteCommentResToJson(DeleteCommentRes data) => json.encode(data.toJson());
 
-GetTaskCommentsReq getTaskCommentsReqFromJson(String str) => GetTaskCommentsReq.fromJson(json.decode(str));
+GetCardCommentsReq getCardCommentsReqFromJson(String str) => GetCardCommentsReq.fromJson(json.decode(str));
 
-String getTaskCommentsReqToJson(GetTaskCommentsReq data) => json.encode(data.toJson());
+String getCardCommentsReqToJson(GetCardCommentsReq data) => json.encode(data.toJson());
 
-List<GetTaskCommentsValue> getTaskCommentsValueFromJson(String str) => List<GetTaskCommentsValue>.from(json.decode(str).map((x) => GetTaskCommentsValue.fromJson(x)));
+List<GetCardCommentsValue> getCardCommentsValueFromJson(String str) => List<GetCardCommentsValue>.from(json.decode(str).map((x) => GetCardCommentsValue.fromJson(x)));
 
-String getTaskCommentsValueToJson(List<GetTaskCommentsValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+String getCardCommentsValueToJson(List<GetCardCommentsValue> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 CreateMemberReq createMemberReqFromJson(String str) => CreateMemberReq.fromJson(json.decode(str));
 
@@ -279,13 +279,13 @@ ApplyColumnDiffRes applyColumnDiffResFromJson(String str) => ApplyColumnDiffRes.
 
 String applyColumnDiffResToJson(ApplyColumnDiffRes data) => json.encode(data.toJson());
 
-ApplyTaskDiffReq applyTaskDiffReqFromJson(String str) => ApplyTaskDiffReq.fromJson(json.decode(str));
+ApplyCardDiffReq applyCardDiffReqFromJson(String str) => ApplyCardDiffReq.fromJson(json.decode(str));
 
-String applyTaskDiffReqToJson(ApplyTaskDiffReq data) => json.encode(data.toJson());
+String applyCardDiffReqToJson(ApplyCardDiffReq data) => json.encode(data.toJson());
 
-ApplyTaskDiffRes applyTaskDiffResFromJson(String str) => ApplyTaskDiffRes.fromJson(json.decode(str));
+ApplyCardDiffRes applyCardDiffResFromJson(String str) => ApplyCardDiffRes.fromJson(json.decode(str));
 
-String applyTaskDiffResToJson(ApplyTaskDiffRes data) => json.encode(data.toJson());
+String applyCardDiffResToJson(ApplyCardDiffRes data) => json.encode(data.toJson());
 
 ApplyMemberDiffReq applyMemberDiffReqFromJson(String str) => ApplyMemberDiffReq.fromJson(json.decode(str));
 
@@ -1297,34 +1297,34 @@ final createColumnResVersionValues = EnumValues({
     "3": CreateColumnResVersion.THE_3
 });
 
-class CreateTaskReq {
+class CreateCardReq {
     String boardId;
+    String cardId;
     String columnId;
     Placement placement;
-    String taskId;
     String title;
 
-    CreateTaskReq({
+    CreateCardReq({
         required this.boardId,
+        required this.cardId,
         required this.columnId,
         required this.placement,
-        required this.taskId,
         required this.title,
     });
 
-    factory CreateTaskReq.fromJson(Map<String, dynamic> json) => CreateTaskReq(
+    factory CreateCardReq.fromJson(Map<String, dynamic> json) => CreateCardReq(
         boardId: json["boardId"],
+        cardId: json["cardId"],
         columnId: json["columnId"],
         placement: Placement.fromJson(json["placement"]),
-        taskId: json["taskId"],
         title: json["title"],
     );
 
     Map<String, dynamic> toJson() => {
         "boardId": boardId,
+        "cardId": cardId,
         "columnId": columnId,
         "placement": placement.toJson(),
-        "taskId": taskId,
         "title": title,
     };
 }
@@ -1389,11 +1389,11 @@ class Prev {
     };
 }
 
-class CreateTaskRes {
+class CreateCardRes {
     String authorId;
     String boardId;
     String columnId;
-    CreateTaskResColumnPosition columnPosition;
+    CreateCardResColumnPosition columnPosition;
     double counter;
     double createdAt;
     bool deleted;
@@ -1402,7 +1402,7 @@ class CreateTaskRes {
     String title;
     double updatedAt;
 
-    CreateTaskRes({
+    CreateCardRes({
         required this.authorId,
         required this.boardId,
         required this.columnId,
@@ -1416,11 +1416,11 @@ class CreateTaskRes {
         required this.updatedAt,
     });
 
-    factory CreateTaskRes.fromJson(Map<String, dynamic> json) => CreateTaskRes(
+    factory CreateCardRes.fromJson(Map<String, dynamic> json) => CreateCardRes(
         authorId: json["authorId"],
         boardId: json["boardId"],
         columnId: json["columnId"],
-        columnPosition: CreateTaskResColumnPosition.fromJson(json["columnPosition"]),
+        columnPosition: CreateCardResColumnPosition.fromJson(json["columnPosition"]),
         counter: json["counter"]?.toDouble(),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1445,16 +1445,16 @@ class CreateTaskRes {
     };
 }
 
-class CreateTaskResColumnPosition {
+class CreateCardResColumnPosition {
     String denominator;
     String numerator;
 
-    CreateTaskResColumnPosition({
+    CreateCardResColumnPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory CreateTaskResColumnPosition.fromJson(Map<String, dynamic> json) => CreateTaskResColumnPosition(
+    factory CreateCardResColumnPosition.fromJson(Map<String, dynamic> json) => CreateCardResColumnPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -1537,12 +1537,12 @@ class ColumnElement {
     String authorId;
     String boardId;
     PurpleBoardPosition boardPosition;
+    List<CardElement> cards;
     double createdAt;
     bool deleted;
     String id;
     List<String> pk;
     String state;
-    List<TaskElement> tasks;
     String title;
     double updatedAt;
     CreateColumnResVersion version;
@@ -1551,12 +1551,12 @@ class ColumnElement {
         required this.authorId,
         required this.boardId,
         required this.boardPosition,
+        required this.cards,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.pk,
         required this.state,
-        required this.tasks,
         required this.title,
         required this.updatedAt,
         required this.version,
@@ -1566,12 +1566,12 @@ class ColumnElement {
         authorId: json["authorId"],
         boardId: json["boardId"],
         boardPosition: PurpleBoardPosition.fromJson(json["boardPosition"]),
+        cards: List<CardElement>.from(json["cards"].map((x) => CardElement.fromJson(x))),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
-        tasks: List<TaskElement>.from(json["tasks"].map((x) => TaskElement.fromJson(x))),
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
         version: createColumnResVersionValues.map[json["version"]]!,
@@ -1581,12 +1581,12 @@ class ColumnElement {
         "authorId": authorId,
         "boardId": boardId,
         "boardPosition": boardPosition.toJson(),
+        "cards": List<dynamic>.from(cards.map((x) => x.toJson())),
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
-        "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
         "title": title,
         "updatedAt": updatedAt,
         "version": createColumnResVersionValues.reverse[version],
@@ -1613,7 +1613,7 @@ class PurpleBoardPosition {
     };
 }
 
-class TaskElement {
+class CardElement {
     PurpleAuthor author;
     String authorId;
     PurpleBoard board;
@@ -1630,7 +1630,7 @@ class TaskElement {
     String title;
     double updatedAt;
 
-    TaskElement({
+    CardElement({
         required this.author,
         required this.authorId,
         required this.board,
@@ -1648,7 +1648,7 @@ class TaskElement {
         required this.updatedAt,
     });
 
-    factory TaskElement.fromJson(Map<String, dynamic> json) => TaskElement(
+    factory CardElement.fromJson(Map<String, dynamic> json) => CardElement(
         author: PurpleAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
         board: PurpleBoard.fromJson(json["board"]),
@@ -1981,26 +1981,26 @@ class DeleteColumnRes {
     };
 }
 
-class DeleteTaskReq {
-    String taskId;
+class DeleteCardReq {
+    String cardId;
 
-    DeleteTaskReq({
-        required this.taskId,
+    DeleteCardReq({
+        required this.cardId,
     });
 
-    factory DeleteTaskReq.fromJson(Map<String, dynamic> json) => DeleteTaskReq(
-        taskId: json["taskId"],
+    factory DeleteCardReq.fromJson(Map<String, dynamic> json) => DeleteCardReq(
+        cardId: json["cardId"],
     );
 
     Map<String, dynamic> toJson() => {
-        "taskId": taskId,
+        "cardId": cardId,
     };
 }
 
-class DeleteTaskRes {
-    DeleteTaskRes();
+class DeleteCardRes {
+    DeleteCardRes();
 
-    factory DeleteTaskRes.fromJson(Map<String, dynamic> json) => DeleteTaskRes(
+    factory DeleteCardRes.fromJson(Map<String, dynamic> json) => DeleteCardRes(
     );
 
     Map<String, dynamic> toJson() => {
@@ -2008,25 +2008,25 @@ class DeleteTaskRes {
 }
 
 class CreateCommentReq {
+    String cardId;
     String commentId;
-    String taskId;
     String text;
 
     CreateCommentReq({
+        required this.cardId,
         required this.commentId,
-        required this.taskId,
         required this.text,
     });
 
     factory CreateCommentReq.fromJson(Map<String, dynamic> json) => CreateCommentReq(
+        cardId: json["cardId"],
         commentId: json["commentId"],
-        taskId: json["taskId"],
         text: json["text"],
     );
 
     Map<String, dynamic> toJson() => {
+        "cardId": cardId,
         "commentId": commentId,
-        "taskId": taskId,
         "text": text,
     };
 }
@@ -2034,24 +2034,24 @@ class CreateCommentReq {
 class CreateCommentRes {
     CreateCommentResAuthor author;
     String authorId;
+    CreateCommentResCard card;
+    String cardId;
     double createdAt;
     bool deleted;
     String id;
     List<String> pk;
-    CreateCommentResTask task;
-    String taskId;
     String text;
     double updatedAt;
 
     CreateCommentRes({
         required this.author,
         required this.authorId,
+        required this.card,
+        required this.cardId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.pk,
-        required this.task,
-        required this.taskId,
         required this.text,
         required this.updatedAt,
     });
@@ -2059,12 +2059,12 @@ class CreateCommentRes {
     factory CreateCommentRes.fromJson(Map<String, dynamic> json) => CreateCommentRes(
         author: CreateCommentResAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
+        card: CreateCommentResCard.fromJson(json["card"]),
+        cardId: json["cardId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
-        task: CreateCommentResTask.fromJson(json["task"]),
-        taskId: json["taskId"],
         text: json["text"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -2072,12 +2072,12 @@ class CreateCommentRes {
     Map<String, dynamic> toJson() => {
         "author": author.toJson(),
         "authorId": authorId,
+        "card": card.toJson(),
+        "cardId": cardId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
-        "task": task.toJson(),
-        "taskId": taskId,
         "text": text,
         "updatedAt": updatedAt,
     };
@@ -2131,7 +2131,7 @@ class CreateCommentResAuthor {
     };
 }
 
-class CreateCommentResTask {
+class CreateCommentResCard {
     FluffyAuthor author;
     String authorId;
     TentacledBoard board;
@@ -2148,7 +2148,7 @@ class CreateCommentResTask {
     String title;
     double updatedAt;
 
-    CreateCommentResTask({
+    CreateCommentResCard({
         required this.author,
         required this.authorId,
         required this.board,
@@ -2166,7 +2166,7 @@ class CreateCommentResTask {
         required this.updatedAt,
     });
 
-    factory CreateCommentResTask.fromJson(Map<String, dynamic> json) => CreateCommentResTask(
+    factory CreateCommentResCard.fromJson(Map<String, dynamic> json) => CreateCommentResCard(
         author: FluffyAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
         board: TentacledBoard.fromJson(json["board"]),
@@ -2473,56 +2473,56 @@ class DeleteCommentRes {
     };
 }
 
-class GetTaskCommentsReq {
-    String taskId;
+class GetCardCommentsReq {
+    String cardId;
 
-    GetTaskCommentsReq({
-        required this.taskId,
+    GetCardCommentsReq({
+        required this.cardId,
     });
 
-    factory GetTaskCommentsReq.fromJson(Map<String, dynamic> json) => GetTaskCommentsReq(
-        taskId: json["taskId"],
+    factory GetCardCommentsReq.fromJson(Map<String, dynamic> json) => GetCardCommentsReq(
+        cardId: json["cardId"],
     );
 
     Map<String, dynamic> toJson() => {
-        "taskId": taskId,
+        "cardId": cardId,
     };
 }
 
-class GetTaskCommentsValue {
-    GetTaskCommentsValueAuthor author;
+class GetCardCommentsValue {
+    GetCardCommentsValueAuthor author;
     String authorId;
+    GetCardCommentsValueCard card;
+    String cardId;
     double createdAt;
     bool deleted;
     String id;
     List<String> pk;
-    GetTaskCommentsValueTask task;
-    String taskId;
     String text;
     double updatedAt;
 
-    GetTaskCommentsValue({
+    GetCardCommentsValue({
         required this.author,
         required this.authorId,
+        required this.card,
+        required this.cardId,
         required this.createdAt,
         required this.deleted,
         required this.id,
         required this.pk,
-        required this.task,
-        required this.taskId,
         required this.text,
         required this.updatedAt,
     });
 
-    factory GetTaskCommentsValue.fromJson(Map<String, dynamic> json) => GetTaskCommentsValue(
-        author: GetTaskCommentsValueAuthor.fromJson(json["author"]),
+    factory GetCardCommentsValue.fromJson(Map<String, dynamic> json) => GetCardCommentsValue(
+        author: GetCardCommentsValueAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
+        card: GetCardCommentsValueCard.fromJson(json["card"]),
+        cardId: json["cardId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
-        task: GetTaskCommentsValueTask.fromJson(json["task"]),
-        taskId: json["taskId"],
         text: json["text"],
         updatedAt: json["updatedAt"]?.toDouble(),
     );
@@ -2530,18 +2530,18 @@ class GetTaskCommentsValue {
     Map<String, dynamic> toJson() => {
         "author": author.toJson(),
         "authorId": authorId,
+        "card": card.toJson(),
+        "cardId": cardId,
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
-        "task": task.toJson(),
-        "taskId": taskId,
         "text": text,
         "updatedAt": updatedAt,
     };
 }
 
-class GetTaskCommentsValueAuthor {
+class GetCardCommentsValueAuthor {
     String? avatarKey;
     double createdAt;
     bool deleted;
@@ -2552,7 +2552,7 @@ class GetTaskCommentsValueAuthor {
     double updatedAt;
     UserVersion version;
 
-    GetTaskCommentsValueAuthor({
+    GetCardCommentsValueAuthor({
         this.avatarKey,
         required this.createdAt,
         required this.deleted,
@@ -2564,7 +2564,7 @@ class GetTaskCommentsValueAuthor {
         required this.version,
     });
 
-    factory GetTaskCommentsValueAuthor.fromJson(Map<String, dynamic> json) => GetTaskCommentsValueAuthor(
+    factory GetCardCommentsValueAuthor.fromJson(Map<String, dynamic> json) => GetCardCommentsValueAuthor(
         avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2589,7 +2589,7 @@ class GetTaskCommentsValueAuthor {
     };
 }
 
-class GetTaskCommentsValueTask {
+class GetCardCommentsValueCard {
     TentacledAuthor author;
     String authorId;
     IndigoBoard board;
@@ -2606,7 +2606,7 @@ class GetTaskCommentsValueTask {
     String title;
     double updatedAt;
 
-    GetTaskCommentsValueTask({
+    GetCardCommentsValueCard({
         required this.author,
         required this.authorId,
         required this.board,
@@ -2624,7 +2624,7 @@ class GetTaskCommentsValueTask {
         required this.updatedAt,
     });
 
-    factory GetTaskCommentsValueTask.fromJson(Map<String, dynamic> json) => GetTaskCommentsValueTask(
+    factory GetCardCommentsValueCard.fromJson(Map<String, dynamic> json) => GetCardCommentsValueCard(
         author: TentacledAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
         board: IndigoBoard.fromJson(json["board"]),
@@ -3421,30 +3421,30 @@ class ApplyColumnDiffRes {
     };
 }
 
-class ApplyTaskDiffReq {
+class ApplyCardDiffReq {
+    String cardId;
     String diff;
-    String taskId;
 
-    ApplyTaskDiffReq({
+    ApplyCardDiffReq({
+        required this.cardId,
         required this.diff,
-        required this.taskId,
     });
 
-    factory ApplyTaskDiffReq.fromJson(Map<String, dynamic> json) => ApplyTaskDiffReq(
+    factory ApplyCardDiffReq.fromJson(Map<String, dynamic> json) => ApplyCardDiffReq(
+        cardId: json["cardId"],
         diff: json["diff"],
-        taskId: json["taskId"],
     );
 
     Map<String, dynamic> toJson() => {
+        "cardId": cardId,
         "diff": diff,
-        "taskId": taskId,
     };
 }
 
-class ApplyTaskDiffRes {
-    ApplyTaskDiffRes();
+class ApplyCardDiffRes {
+    ApplyCardDiffRes();
 
-    factory ApplyTaskDiffRes.fromJson(Map<String, dynamic> json) => ApplyTaskDiffRes(
+    factory ApplyCardDiffRes.fromJson(Map<String, dynamic> json) => ApplyCardDiffRes(
     );
 
     Map<String, dynamic> toJson() => {

@@ -2,6 +2,7 @@ import {BusinessError} from '../errors.js';
 import type {AuthContext} from './auth-context.js';
 import type {DataTx} from './data-layer.js';
 import type {BoardId} from './repos/board-repo.js';
+import type {CardId} from './repos/card-repo.js';
 import type {ColumnId} from './repos/column-repo.js';
 import type {CommentId} from './repos/comment-repo.js';
 import {
@@ -10,7 +11,6 @@ import {
     type MemberRole,
     ROLE_ORDER,
 } from './repos/member-repo.js';
-import type {TaskId} from './repos/task-repo.js';
 import type {UserId} from './repos/user-repo.js';
 
 export class PermissionService {
@@ -88,19 +88,19 @@ export class PermissionService {
         return await this.ensureBoardMember(column.boardId, minimum);
     }
 
-    async ensureTaskMember(
-        taskId: TaskId,
+    async ensureCardMember(
+        cardId: CardId,
         minimum: MemberRole
     ): Promise<Member> {
-        const task = await this.tx().tasks.getById(taskId, true);
+        const card = await this.tx().cards.getById(cardId, true);
 
-        if (!task) {
+        if (!card) {
             throw new BusinessError(
-                `task ${taskId} doesn't exist`,
-                'task_not_found'
+                `card ${cardId} doesn't exist`,
+                'card_not_found'
             );
         }
-        return await this.ensureBoardMember(task.boardId, minimum);
+        return await this.ensureBoardMember(card.boardId, minimum);
     }
 
     async ensureMember(memberId: MemberId): Promise<Member> {
@@ -130,13 +130,13 @@ export class PermissionService {
                 'comment_not_found'
             );
         }
-        const task = await this.tx().tasks.getById(comment.taskId, true);
-        if (!task) {
+        const card = await this.tx().cards.getById(comment.cardId, true);
+        if (!card) {
             throw new BusinessError(
-                `task ${comment.taskId} doesn't exist`,
-                'task_not_found'
+                `card ${comment.cardId} doesn't exist`,
+                'card_not_found'
             );
         }
-        return await this.ensureBoardMember(task.boardId, minimum);
+        return await this.ensureBoardMember(card.boardId, minimum);
     }
 }

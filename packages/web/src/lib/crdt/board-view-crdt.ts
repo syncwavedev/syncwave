@@ -1,13 +1,13 @@
 import {
 	type Board,
+	type BoardViewCardDto,
 	type BoardViewColumnDto,
 	type BoardViewDto,
-	type BoardViewTaskDto,
+	type Card,
+	type CardId,
 	type Column,
 	type ColumnId,
 	type CrdtDoc,
-	type Task,
-	type TaskId,
 	type User,
 } from 'syncwave-data';
 import type {BigFloat} from '../../../../data/dist/esm/src/big-float';
@@ -17,15 +17,15 @@ import {SetCrdt} from './set-crdt';
 export class BoardViewCrdt {
 	private board: CrdtDoc<Board>;
 	private columns: SetCrdt<CrdtDoc<Column>>;
-	private tasks: SetCrdt<CrdtDoc<Task>>;
+	private cards: SetCrdt<CrdtDoc<Card>>;
 	private users: SetCrdt<CrdtDoc<User>>;
 
 	constructor(value: BoardViewDto) {
-		const {board, columns, tasks, users} = this._mapView(value);
+		const {board, columns, cards, users} = this._mapView(value);
 
 		this.board = board;
 		this.columns = new SetCrdt(columns);
-		this.tasks = new SetCrdt(tasks);
+		this.cards = new SetCrdt(cards);
 		this.users = new SetCrdt(users);
 	}
 
@@ -36,11 +36,11 @@ export class BoardViewCrdt {
 				(column): BoardViewColumnDto => {
 					return {
 						...column,
-						tasks: [...this.tasks.snapshot().values()]
-							.filter(task => task.columnId === column.id)
+						cards: [...this.cards.snapshot().values()]
+							.filter(card => card.columnId === column.id)
 							.map(
-								(task): BoardViewTaskDto => ({
-									...task,
+								(card): BoardViewCardDto => ({
+									...card,
 									board: this.board,
 									column: {
 										...column,
@@ -48,7 +48,7 @@ export class BoardViewCrdt {
 									},
 									author: findRequired(
 										[...this.users.snapshot().values()],
-										x => x.id === task.authorId
+										x => x.id === card.authorId
 									),
 								})
 							),
@@ -58,16 +58,16 @@ export class BoardViewCrdt {
 		};
 	}
 
-	setTaskColumnId(taskId: TaskId, columnId: ColumnId) {
-		return this.tasks.update(taskId, task => {
-			task.columnId = columnId;
+	setCardColumnId(cardId: CardId, columnId: ColumnId) {
+		return this.cards.update(cardId, card => {
+			card.columnId = columnId;
 		});
 	}
 
-	setTaskPosition(taskId: TaskId, position: BigFloat, columnId: ColumnId) {
-		return this.tasks.update(taskId, task => {
-			task.columnPosition = position;
-			task.columnId = columnId;
+	setCardPosition(cardId: CardId, position: BigFloat, columnId: ColumnId) {
+		return this.cards.update(cardId, card => {
+			card.columnPosition = position;
+			card.columnId = columnId;
 		});
 	}
 
@@ -78,25 +78,25 @@ export class BoardViewCrdt {
 	}
 
 	apply(remote: BoardViewDto) {
-		const {board, columns, tasks, users} = this._mapView(remote);
+		const {board, columns, cards, users} = this._mapView(remote);
 		this.board = board;
 		this.columns.apply(new Set(columns));
-		this.tasks.apply(new Set(tasks));
+		this.cards.apply(new Set(cards));
 		this.users.apply(new Set(users));
 	}
 
 	private _mapView(value: BoardViewDto) {
 		const board = value;
 		const columns: CrdtDoc<Column>[] = value.columns;
-		const tasks: CrdtDoc<Task>[] = value.columns.flatMap(
-			column => column.tasks
+		const cards: CrdtDoc<Card>[] = value.columns.flatMap(
+			column => column.cards
 		);
 		const users: CrdtDoc<User>[] = value.columns.flatMap(column =>
-			column.tasks.map(task => task.author)
+			column.cards.map(card => card.author)
 		);
 
 		return {
-			tasks,
+			cards,
 			columns,
 			board,
 			users,

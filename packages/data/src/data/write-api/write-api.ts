@@ -20,6 +20,7 @@ import {createObjectKey, type ObjectStore} from '../infrastructure.js';
 import {PermissionService} from '../permission-service.js';
 import {toPosition, zPlacement} from '../placement.js';
 import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
+import {type Card, type CardId, zCard} from '../repos/card-repo.js';
 import {type Column, type ColumnId} from '../repos/column-repo.js';
 import {type CommentId} from '../repos/comment-repo.js';
 import {
@@ -28,7 +29,6 @@ import {
     type MemberId,
     zMemberRole,
 } from '../repos/member-repo.js';
-import {type Task, type TaskId, zTask} from '../repos/task-repo.js';
 import {type User, type UserId} from '../repos/user-repo.js';
 import {createReadonlyTransitionChecker} from '../transition-checker.js';
 
@@ -54,18 +54,18 @@ export class WriteApiState {
 
 export function createWriteApi() {
     return createApi<WriteApiState>()({
-        createTask: handler({
+        createCard: handler({
             req: z.object({
-                taskId: zUuid<TaskId>(),
+                cardId: zUuid<CardId>(),
                 boardId: zUuid<BoardId>(),
                 columnId: zUuid<ColumnId>(),
                 title: z.string(),
                 placement: zPlacement(),
             }),
-            res: zTask(),
+            res: zCard(),
             handle: async (
                 st,
-                {boardId, taskId, title, placement, columnId}
+                {boardId, cardId, title, placement, columnId}
             ) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureBoardMember(boardId, 'writer');
@@ -76,8 +76,8 @@ export function createWriteApi() {
                 const counter =
                     await st.tx.boards.incrementBoardCounter(boardId);
 
-                return await st.tx.tasks.create({
-                    id: taskId,
+                return await st.tx.cards.create({
+                    id: cardId,
                     authorId: meId,
                     boardId: boardId,
                     createdAt: now,
@@ -219,13 +219,13 @@ export function createWriteApi() {
                 return {};
             },
         }),
-        deleteTask: handler({
-            req: z.object({taskId: zUuid<TaskId>()}),
+        deleteCard: handler({
+            req: z.object({cardId: zUuid<CardId>()}),
             res: z.object({}),
-            handle: async (st, {taskId}) => {
-                await st.ps.ensureTaskMember(taskId, 'writer');
-                await st.tx.tasks.update(
-                    taskId,
+            handle: async (st, {cardId}) => {
+                await st.ps.ensureCardMember(cardId, 'writer');
+                await st.tx.cards.update(
+                    cardId,
                     x => {
                         x.deleted = true;
                     },
@@ -305,18 +305,18 @@ export function createWriteApi() {
                 return {};
             },
         }),
-        applyTaskDiff: handler({
+        applyCardDiff: handler({
             req: z.object({
-                taskId: zUuid<TaskId>(),
-                diff: zCrdtDiffBase64<Task>(),
+                cardId: zUuid<CardId>(),
+                diff: zCrdtDiffBase64<Card>(),
             }),
             res: z.object({}),
-            handle: async (st, {taskId, diff}) => {
+            handle: async (st, {cardId, diff}) => {
                 await whenAll([
-                    st.ps.ensureTaskMember(taskId, 'writer'),
+                    st.ps.ensureCardMember(cardId, 'writer'),
                     (async () => {
-                        const {before, after} = await st.tx.tasks.apply(
-                            taskId,
+                        const {before, after} = await st.tx.cards.apply(
+                            cardId,
                             parseCrdtDiff(diff),
                             createReadonlyTransitionChecker({
                                 title: false,
@@ -377,16 +377,16 @@ export function createWriteApi() {
         }),
         createComment: handler({
             req: z.object({
-                taskId: zUuid<TaskId>(),
+                cardId: zUuid<CardId>(),
                 text: z.string(),
                 commentId: zUuid<CommentId>(),
             }),
             res: zCommentDto(),
-            handle: async (st, {taskId, text, commentId}) => {
+            handle: async (st, {cardId, text, commentId}) => {
                 const now = getNow();
-                await st.ps.ensureTaskMember(taskId, 'writer');
+                await st.ps.ensureCardMember(cardId, 'writer');
                 await st.tx.comments.create({
-                    taskId,
+                    cardId,
                     text,
                     authorId: st.ps.ensureAuthenticated(),
                     deleted: false,

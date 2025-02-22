@@ -63,7 +63,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
         };
     } else if (STAGE === 'local') {
         return {
-            LOG_LEVEL: 'error' as const,
+            LOG_LEVEL: 'info' as const,
             APP_URL: 'http://localhost:5173',
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
         };
@@ -137,29 +137,6 @@ async function getKVStore(): Promise<KVStore<Tuple, Uint8Array>> {
             return fdbStore;
         }
     })();
-
-    if (new Date() < new Date('2025-02-21T09:14:46.420Z')) {
-        while (true) {
-            const more = await store.transact(async tx => {
-                const keys = await toStream(tx.query({gte: new Uint8Array()}))
-                    .map(entry => entry.key)
-                    .take(100)
-                    .toArray();
-
-                log.info(`Store has ${keys.length} keys, removing them...`);
-
-                for (const key of keys) {
-                    await tx.delete(key);
-                }
-
-                return keys.length > 0;
-            });
-
-            if (!more) {
-                break;
-            }
-        }
-    }
 
     return new InstrumentedKvStore(
         new IsolatedKVStore(new TupleStore(store), ['sw', STAGE])

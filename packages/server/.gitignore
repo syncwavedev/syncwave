@@ -3,3 +3,4 @@ dev.sqlite
 /.env
 !/.env.example
 /dev-object-store
+/backups

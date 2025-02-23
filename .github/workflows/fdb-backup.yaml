@@ -1,3 +1,12 @@
+# restore process
+# connect to the host, then run the following commands in sequence:
+#
+# cd ~/compose/fdb
+# aws s3 sync s3://bridgex-foundationdb-backups ./backups-tmp/
+# sudo mv /backups-tmp/* ./backups
+# docker exec -it fdb fdbcli --exec "writemode on; clearrange \x00 \xff"
+# docker exec -it fdb_backup_agent fdbrestore start -r file:///backups/backup-<latest_backup> --dest-cluster-file /var/fdb/fdb.cluster -w
+
 on:
     schedule:
         - cron: 0 4 * * *

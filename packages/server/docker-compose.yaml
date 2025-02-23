@@ -21,9 +21,6 @@ services:
             - SYS_NICE
         volumes:
             - fdb-data:/var/fdb/data
-        networks:
-            - phoenix
-            - default
     
     fdb_backup_agent:
         image: foundationdb/foundationdb:7.3.59
@@ -31,6 +28,8 @@ services:
         depends_on:
             - fdb
             - s3proxy
+        volumes:
+            - ./backups:/backups
         container_name: fdb_backup_agent
         entrypoint: [
             "/usr/bin/tini",
@@ -63,7 +62,3 @@ services:
 
 volumes:
     fdb-data:
-
-networks:
-    phoenix:
-        external: true

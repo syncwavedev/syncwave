@@ -65,12 +65,6 @@ export class UserRepo {
             indexes: {},
             schema: zUser(),
             constraints: [],
-            readonly: {
-                id: true,
-                fullName: false,
-                version: true,
-                avatarKey: false,
-            },
             upgrade: function upgradeUser(user: StoredUser) {
                 if ('version' in user) {
                     if (user.version === 2) {

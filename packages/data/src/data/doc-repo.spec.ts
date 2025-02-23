@@ -66,7 +66,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.create(doc);
         });
@@ -81,7 +80,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             return repo2.getById(id);
         });
@@ -118,7 +116,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange: async () => {},
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.create(doc);
         });
@@ -133,7 +130,6 @@ describe('DocStore with MemKVStore', () => {
                     onChange: async () => {},
                     schema,
                     constraints: [],
-                    readonly: {age: false, name: false},
                 });
                 await repo.create(doc);
             })
@@ -161,7 +157,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.create(doc);
         });
@@ -174,7 +169,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             return repo.update(id, current => {
                 current.age = 41;
@@ -191,7 +185,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             return repo.getById(id);
         });
@@ -222,7 +215,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.create(doc);
         });
@@ -235,7 +227,6 @@ describe('DocStore with MemKVStore', () => {
                     onChange,
                     schema,
                     constraints: [],
-                    readonly: {age: false, name: false},
                 });
                 return repo.update(id, current => {
                     (current as any).unknownProp = 'val';
@@ -259,7 +250,6 @@ describe('DocStore with MemKVStore', () => {
                     onChange,
                     schema,
                     constraints: [],
-                    readonly: {age: false, name: false},
                 });
                 return repo.update(id, current => {
                     (current as any).pk = 'val';
@@ -275,7 +265,6 @@ describe('DocStore with MemKVStore', () => {
                     onChange,
                     schema,
                     constraints: [],
-                    readonly: {age: false, name: false},
                 });
                 return repo.update(id, current => {
                     (current as any).pk = ['val'];
@@ -295,7 +284,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.create({
                 pk: [createUuid()],
@@ -331,7 +319,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             const results: MyDoc[] = [];
             const doc$ = repo.get('byName', ['Dana']);
@@ -355,7 +342,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             const results: MyDoc[] = [];
             const doc$ = repo.get('byAge', [25]);
@@ -377,7 +363,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.create({
                 pk: [createUuid()],
@@ -434,7 +419,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
 
             const results: MyDoc[] = [];
@@ -474,7 +458,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.create({
                 pk: [createUuid()],
@@ -504,7 +487,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await expect(
                 repo.getUnique('byName', ['Zed'])
@@ -524,7 +506,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             const zedEntries: MyDoc[] = [];
             const zedDoc$ = repo.get('byName', ['Zed']);
@@ -546,7 +527,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             return repo.getUnique('byName', ['Zed']);
         });
@@ -565,7 +545,6 @@ describe('DocStore with MemKVStore', () => {
                     onChange,
                     schema,
                     constraints: [],
-                    readonly: {age: false, name: false},
                 });
                 return repo.update(nonExistentId, doc => {
                     doc.name = 'Nope';
@@ -593,7 +572,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.create(createdDoc);
         });
@@ -616,7 +594,6 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                readonly: {age: false, name: false},
             });
             await repo.update(createdDoc.pk, doc => {
                 doc.age = 2;

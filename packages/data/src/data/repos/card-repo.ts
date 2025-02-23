@@ -97,15 +97,6 @@ export class CardRepo {
                     },
                 },
             ],
-            readonly: {
-                boardId: true,
-                counter: true,
-                id: true,
-                title: false,
-                authorId: true,
-                columnPosition: false,
-                columnId: false,
-            },
         });
     }
 

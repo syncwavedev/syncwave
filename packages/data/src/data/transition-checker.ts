@@ -6,21 +6,12 @@ export type TransitionChecker<T> = (
     next: T
 ) => Promise<{errors: string[]} | void>;
 
-export type ReadonlyDescriptor<T> = {
-    [K in keyof T]-?: Not<
-        IfEquals<{[P in K]: T[K]}, {-readonly [P in K]: T[K]}>
-    >;
+export type WritableDescriptor<T> = {
+    [K in keyof T]-?: boolean;
 };
 
-type Not<T> = T extends true ? false : true;
-
-type IfEquals<X, Y> =
-    (<G>() => G extends X ? 1 : 2) extends <G>() => G extends Y ? 1 : 2
-        ? true
-        : false;
-
-export function createReadonlyTransitionChecker<T extends object>(
-    readonly: ReadonlyDescriptor<T>
+export function writable<T extends object>(
+    writable: WritableDescriptor<T>
 ): TransitionChecker<T> {
     return async (prev: T | undefined, next: T) => {
         if (prev === undefined) {
@@ -39,8 +30,7 @@ export function createReadonlyTransitionChecker<T extends object>(
                 );
             }
 
-            // we use !== false to check for undefined
-            if (prev[key] !== next[key] && (readonly as any)[key] !== false) {
+            if (prev[key] !== next[key] && (writable as any)[key] !== true) {
                 errors.push(`property ${key} is readonly`);
             }
         }

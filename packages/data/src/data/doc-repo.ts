@@ -21,11 +21,7 @@ import {Stream, toStream} from '../stream.js';
 import {getNow, type Timestamp, zTimestamp} from '../timestamp.js';
 import {compareTuple, stringifyTuple, type Tuple} from '../tuple.js';
 import {type Nothing, pipe, whenAll} from '../utils.js';
-import {
-    createReadonlyTransitionChecker,
-    type ReadonlyDescriptor,
-    type TransitionChecker,
-} from './transition-checker.js';
+import {type TransitionChecker} from './transition-checker.js';
 
 export class ConstraintError extends AppError {
     constructor(
@@ -79,9 +75,6 @@ export interface DocStoreOptions<T extends Doc<Tuple>> {
     schema: ZodType<T>;
     onChange: OnDocChange<T>;
     constraints: readonly Constraint<T>[];
-    readonly: ReadonlyDescriptor<
-        Omit<T, 'updatedAt' | 'createdAt' | 'pk' | 'deleted'>
-    >;
     upgrade?: Recipe<any>;
 }
 
@@ -190,18 +183,13 @@ export class DocRepo<T extends Doc<Tuple>> {
 
 class DocRepoImpl<T extends Doc<Tuple>> {
     private readonly indexes: Map<string, Index<T>>;
-    // we use Omit to prevent direct access to the value that might need an upgrade
-    private readonly primary: Omit<
-        Transaction<Tuple, Crdt<T>>,
-        'get' | 'query'
-    >;
+    private readonly primary: Transaction<Tuple, Crdt<T>>;
     private readonly primaryKeyRaw: AppTransaction<Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
     private readonly schema: ZodType<T>;
     // todo: add tests
     private readonly constraints: readonly Constraint<T>[];
     // todo: add tests
-    private readonly transitionChecker: TransitionChecker<T>;
     private readonly upgrade: Recipe<any>;
 
     constructor(options: DocStoreOptions<T>) {
@@ -239,20 +227,13 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         this.onChange = options.onChange;
         this.schema = options.schema;
         this.constraints = options.constraints;
-        this.transitionChecker = createReadonlyTransitionChecker<Doc<Tuple>>({
-            createdAt: true,
-            pk: true,
-            updatedAt: false,
-            deleted: false,
-            ...options.readonly,
-        });
     }
 
     async getById(
         id: Tuple,
         includeDeleted?: boolean
     ): Promise<CrdtDoc<T> | undefined> {
-        const doc = await this._get(id);
+        const doc = await this.getUpgrade(id);
         if (!doc) {
             return undefined;
         }
@@ -305,7 +286,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     }
 
     async unsafe_delete(pk: Tuple) {
-        const doc = await this._get(pk);
+        const doc = await this.primary.get(pk);
         if (!doc) {
             throw new AppError('doc not found: ' + pk);
         }
@@ -337,12 +318,13 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         recipe: Recipe<T>,
         includeDeleted?: boolean
     ): Promise<T> {
-        const doc = await this._get(id);
+        const doc = await this.primary.get(id);
         if (!doc || (!includeDeleted && doc.snapshot().deleted)) {
             throw new AppError('doc not found: ' + id);
         }
 
         const diff = doc.update(draft => {
+            this.upgrade(draft);
             const result = recipe(draft);
 
             (result ?? draft).updatedAt = getNow();
@@ -359,74 +341,52 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         return doc.snapshot();
     }
 
+    // todo: add tests
     async apply(
         pk: Tuple,
         diff: CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
-        const existingDoc: Crdt<T> | undefined = await this._get(pk);
-        return await this._apply({
-            pk,
-            existingDoc,
-            diff,
-            skipTransitionCheck: false,
-            transitionChecker,
+        const existingDoc = await this.primary.get(pk);
+
+        let prev: T | undefined;
+        let next: Crdt<T>;
+        if (existingDoc) {
+            prev = existingDoc.snapshot();
+            next = existingDoc;
+            next.apply(diff);
+        } else {
+            prev = undefined;
+            next = Crdt.load(diff);
+        }
+
+        const upgradeDiff = next.update(draft => {
+            this.upgrade(draft);
         });
-    }
 
-    // todo: add tests
-    private async _apply(params: {
-        pk: Tuple;
-        existingDoc: Crdt<T> | undefined;
-        diff: CrdtDiff<T>;
-        skipTransitionCheck: boolean;
-        transitionChecker?: TransitionChecker<T>;
-    }): Promise<{before: T | undefined; after: T}> {
-        return await context().runChild({span: 'repo._apply'}, async () => {
-            let prev: T | undefined;
-            let next: Crdt<T>;
-            if (params.existingDoc) {
-                prev = context().runChildSync(
-                    {span: 'repo: crdt.snapshot'},
-                    () => {
-                        return params.existingDoc!.snapshot();
-                    }
-                );
-                next = params.existingDoc;
-                context().runChildSync({span: 'repo: crdt.apply'}, () => {
-                    next.apply(params.diff);
-                });
-            } else {
-                prev = undefined;
-                next = context().runChildSync({span: 'repo: crdt.load'}, () => {
-                    return Crdt.load(params.diff);
-                });
-            }
+        const resultDiff = upgradeDiff ? Crdt.merge([upgradeDiff, diff]) : diff;
 
-            if (compareTuple(next.snapshot().pk, params.pk) !== 0) {
-                throw new AppError(
-                    'invalid diff: diff updates primary key ' +
-                        stringifyTuple(params.pk)
-                );
-            }
+        if (compareTuple(next.snapshot().pk, pk) !== 0) {
+            throw new AppError(
+                'invalid diff: diff updates primary key ' + stringifyTuple(pk)
+            );
+        }
 
-            await this._put({
-                prev,
-                next,
-                diff: params.diff,
-                skipTransitionCheck: params.skipTransitionCheck,
-                transitionChecker: params.transitionChecker,
-            });
-
-            return {
-                before: prev,
-                after: next.snapshot(),
-            };
+        await this._put({
+            prev,
+            next,
+            diff: resultDiff,
+            transitionChecker: transitionChecker,
         });
+
+        return {
+            before: prev,
+            after: next.snapshot(),
+        };
     }
 
     async create(doc: T): Promise<T> {
-        const existing = await this._get(doc.pk);
+        const existing = await this.primary.get(doc.pk);
         if (existing) {
             throw new AppError(`doc ${stringifyTuple(doc.pk)} already exists`);
         }
@@ -435,7 +395,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     }
 
     async put(doc: T): Promise<T> {
-        const existing = await this._get(doc.pk);
+        const existing = await this.primary.get(doc.pk);
 
         const now = getNow();
         const crdt = Crdt.from({...doc, createdAt: now, updatedAt: now});
@@ -443,7 +403,6 @@ class DocRepoImpl<T extends Doc<Tuple>> {
             prev: existing?.snapshot(),
             next: crdt,
             diff: crdt.state(),
-            skipTransitionCheck: false,
         });
 
         return crdt.snapshot();
@@ -457,48 +416,23 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         return index;
     }
 
-    // _get must be used everywhere to ensure upgrade
-    private async _get(pk: Tuple): Promise<Crdt<T> | undefined> {
-        return await context().runChild({span: 'repo._get'}, async () => {
-            const doc = await (this.primary as Transaction<Tuple, Crdt<T>>).get(
-                pk
-            );
+    private async getUpgrade(pk: Tuple): Promise<Crdt<T> | undefined> {
+        const doc = await (this.primary as Transaction<Tuple, Crdt<T>>).get(pk);
 
-            if (!doc) {
-                return doc;
-            }
-
-            const original = doc.clone();
-
-            const diff = doc.update(this.upgrade);
-            if (!diff) {
-                return doc;
-            }
-
-            await this._apply({
-                pk,
-                existingDoc: original,
-                diff,
-                skipTransitionCheck: true,
-            });
-
-            return doc;
-        });
+        // ignore diff, because getUpgrade is a readonly operation
+        doc?.update(this.upgrade);
+        return doc;
     }
 
     private async _put(params: {
         prev: T | undefined;
         next: Crdt<T>;
         diff: CrdtDiff<T>;
-        skipTransitionCheck: boolean;
         transitionChecker?: TransitionChecker<T>;
     }): Promise<void> {
         const nextSnapshot = params.next.snapshot();
         this.schema.parse(nextSnapshot);
         await whenAll([
-            params.skipTransitionCheck
-                ? Promise.resolve()
-                : this.transitionChecker(params.prev, nextSnapshot),
             params.transitionChecker?.(params.prev, nextSnapshot) ??
                 Promise.resolve(),
             this.primary.put(nextSnapshot.pk, params.next),
@@ -521,7 +455,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         includeDeleted?: boolean
     ): Stream<T> {
         return toStream(ids)
-            .mapParallel(id => this._get(id))
+            .mapParallel(id => this.getUpgrade(id))
             .assert(x => x !== undefined, message)
             .map(doc => doc.snapshot())
             .filter(x => includeDeleted || !x.deleted);

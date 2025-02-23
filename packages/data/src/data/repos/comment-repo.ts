@@ -87,12 +87,6 @@ export class CommentRepo {
                     },
                 },
             ],
-            readonly: {
-                cardId: true,
-                id: true,
-                text: true,
-                authorId: true,
-            },
         });
     }
 

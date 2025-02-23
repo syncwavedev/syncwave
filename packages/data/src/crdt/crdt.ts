@@ -68,7 +68,7 @@ export interface DiffOptions {
 
 export class Crdt<T> {
     static from<T>(value: T): Crdt<T> {
-        const doc = new YDoc();
+        const doc = new YDoc({gc: true});
         const rootMap = doc.getMap<YValue>(ROOT_KEY);
         rootMap.set(ROOT_VALUE, mapToYValue(value));
 
@@ -76,7 +76,7 @@ export class Crdt<T> {
     }
 
     static load<T>(diff: CrdtDiff<T> | CrdtDiffBase64<T>): Crdt<T> {
-        const doc = new YDoc();
+        const doc = new YDoc({gc: true});
         applyUpdateV2(doc, toCrdtDiff(diff).payload);
 
         return new Crdt(doc);

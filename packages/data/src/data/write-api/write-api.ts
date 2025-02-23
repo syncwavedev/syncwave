@@ -30,7 +30,7 @@ import {
     zMemberRole,
 } from '../repos/member-repo.js';
 import {type User, type UserId} from '../repos/user-repo.js';
-import {createReadonlyTransitionChecker} from '../transition-checker.js';
+import {writable} from '../transition-checker.js';
 
 export class WriteApiState {
     constructor(
@@ -297,9 +297,7 @@ export function createWriteApi() {
                     st.tx.boards.apply(
                         boardId,
                         parseCrdtDiff(diff),
-                        createReadonlyTransitionChecker({
-                            name: false,
-                        })
+                        writable({name: true})
                     ),
                 ]);
                 return {};
@@ -318,9 +316,9 @@ export function createWriteApi() {
                         const {before, after} = await st.tx.cards.apply(
                             cardId,
                             parseCrdtDiff(diff),
-                            createReadonlyTransitionChecker({
-                                title: false,
-                                columnId: false,
+                            writable({
+                                title: true,
+                                columnId: true,
                             })
                         );
                         if (before?.columnId !== after.columnId) {
@@ -346,8 +344,8 @@ export function createWriteApi() {
                     st.tx.members.apply(
                         memberId,
                         parseCrdtDiff(diff),
-                        createReadonlyTransitionChecker({
-                            position: false,
+                        writable({
+                            position: true,
                         })
                     ),
                 ]);
@@ -366,9 +364,9 @@ export function createWriteApi() {
                     st.tx.columns.apply(
                         columnId,
                         parseCrdtDiff(diff),
-                        createReadonlyTransitionChecker({
-                            boardPosition: false,
-                            title: false,
+                        writable({
+                            boardPosition: true,
+                            title: true,
                         })
                     ),
                 ]);
@@ -426,9 +424,7 @@ export function createWriteApi() {
                     st.tx.users.apply(
                         userId,
                         parseCrdtDiff(diff),
-                        createReadonlyTransitionChecker({
-                            fullName: false,
-                        })
+                        writable({fullName: true})
                     ),
                 ]);
                 return {};

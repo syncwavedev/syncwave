@@ -101,13 +101,6 @@ export class IdentityRepo {
                     },
                 },
             ],
-            readonly: {
-                email: false,
-                verificationCode: false,
-                authActivityLog: false,
-                id: true,
-                userId: true,
-            },
         });
     }
 

@@ -136,14 +136,6 @@ export class MemberRepo {
                     },
                 },
             ],
-            readonly: {
-                boardId: true,
-                id: true,
-                userId: true,
-                role: false,
-                version: true,
-                position: false,
-            },
         });
     }
 

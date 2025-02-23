@@ -127,14 +127,6 @@ export class ColumnRepo {
                     },
                 },
             ],
-            readonly: {
-                boardId: true,
-                id: true,
-                authorId: true,
-                version: true,
-                title: false,
-                boardPosition: false,
-            },
         });
     }
 

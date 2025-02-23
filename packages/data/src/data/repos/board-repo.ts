@@ -79,12 +79,6 @@ export class BoardRepo {
                     },
                 },
             ],
-            readonly: {
-                name: false,
-                authorId: true,
-                id: true,
-                key: true,
-            },
         });
         this.counters = new Registry(
             isolate(['c'])(tx),

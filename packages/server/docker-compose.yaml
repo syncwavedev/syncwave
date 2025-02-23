@@ -1,6 +1,6 @@
 # Init db:
 #
-# docker compose exec foundationdb bash -c "fdbcli --exec 'configure new single ssd'"
+# docker compose exec foundationdb bash -c "fdbcli --exec 'configure new single ssd-redwood-1'"
 # docker compose exec foundationdb bash -c "fdbcli --exec 'status'"
 
 # env:
@@ -8,42 +8,62 @@
 # FDB_CLUSTER_FILE
 
 services:
-    foundationdb:
-        image: foundationdb/foundationdb:6.2.30
+    fdb:
+        image: foundationdb/foundationdb:7.3.59
         restart: always
-        container_name: foundationdb
+        depends_on:
+            - s3proxy
+        ports:
+            - "4500:4500"
+        container_name: fdb
         # FoundationDB requires CAP_SYS_NICE for priority-based processes
         cap_add:
             - SYS_NICE
-        ports:
-            - '4500:4500'
         volumes:
             - fdb-data:/var/fdb/data
-
-
-    jaeger:
-        image: jaegertracing/all-in-one:latest
+        networks:
+            - phoenix
+            - default
+    
+    fdb_backup_agent:
+        image: foundationdb/foundationdb:7.3.59
         restart: always
-        # ports:
-        # - "5775:5775"
-        # - "4317:4317"
-        # - "4318:4318"
-        # - "16686:16686"
-        environment:
-            - LOG_LEVEL=debug
-
-    caddy:
-        restart: always
-        image: caddy:latest
-        ports:
-            - "4318:4318"
-            - "16686:16686"
-        volumes:
-            - ./Caddyfile:/etc/caddy/Caddyfile
-        environment:
-            - CADDY_PORT=4318
         depends_on:
-            - jaeger
+            - fdb
+            - s3proxy
+        container_name: fdb_backup_agent
+        entrypoint: [
+            "/usr/bin/tini",
+            "-g",
+            "--",
+            "bash",
+            "-c",
+            "
+                echo docker:docker@fdb:4500 > /var/fdb/fdb.cluster && 
+                /usr/bin/backup_agent --log -C /var/fdb/fdb.cluster --knob_http_verbose_level=4 --knob_http_request_aws_v4_header=true
+            ",
+        ]
+    
+    s3proxy:
+        image: andrewgaul/s3proxy:latest
+        container_name: s3proxy
+        restart: always
+        environment:
+            JCLOUDS_PROVIDER: aws-s3
+            JCLOUDS_ENDPOINT: https://s3.us-east-1.amazonaws.com
+            JCLOUDS_IDENTITY: ${FDB_BACKUP_AWS_ACCESS_KEY_ID}
+            JCLOUDS_CREDENTIAL: ${Zw7aiF5OQw8eGHsUOHd33etSG4rhlkc9RFZ69drA}
+
+            S3PROXY_AUTHORIZATION: none
+            S3PROXY_ENDPOINT: http://0.0.0.0:80
+            S3PROXY_V4_MAX_NONCHUNKED_REQUEST_SIZE: 33554432      # 32 MB
+            S3PROXY_MAX_SINGLE_PART_UPLOAD_SIZE: 5368709120       # 5 GB
+            S3PROXY_IGNORE_UNKNOWN_HEADERS: "true"
+            S3PROXY_CORS_ALLOW_ALL: "true"
 
 volumes:
     fdb-data:
+
+networks:
+    phoenix:
+        external: true

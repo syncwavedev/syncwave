@@ -1,0 +1,27 @@
+on:
+    schedule:
+        - cron: 0 4 * * *
+    workflow_dispatch:
+
+name: backup foundationdb
+
+jobs:
+    deploy:
+        name: Backup
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Backup
+              if: success()
+              uses: appleboy/ssh-action@v0.1.7
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.HOST_USERNAME }}
+                  key: ${{ secrets.HOST_KEY }}
+                  port: 22
+                  script_stop: true
+                  script: |
+                      cd ~/compose/fdb
+                      docker compose exec -it fdb fdbbackup start -d file:///backups -w
+                      aws s3 sync ./backups s3://bridgex-foundationdb-backups/
+                      sudo rm -rf ./backups/*

@@ -5,14 +5,16 @@ import 'dotenv/config';
 
 import {trace} from '@opentelemetry/api';
 
-import {decodeBase64} from '../packages/data/src/base64.js';
-import {encodeString, MsgpackCodec} from '../packages/data/src/codec.js';
+import {MsgpackCodec} from '../packages/data/src/codec.js';
 import {
+    createCardId,
+    createColumnId,
     drop,
     MemTransportClient,
     MemTransportServer,
     ParticipantClient,
     ParticipantServer,
+    toBigFloat,
 } from '../packages/data/src/index.js';
 import {WsTransportClient} from '../packages/web/src/ws-transport-client.js';
 
@@ -35,13 +37,29 @@ const client = new ParticipantClient(
 );
 
 async function main() {
-    const me = await client.rpc.getMe({}).first();
+    const [member] = await client.rpc.getMyMembers({}).first();
 
-    await client.rpc.setUserAvatar({
-        userId: me.user.id,
-        avatar: decodeBase64(encodeString('hello')),
-        contentType: 'image/jpeg',
-    });
+    let columnId = createColumnId();
+
+    for (const title of ['todo', 'doing', 'done']) {
+        columnId = createColumnId();
+        await client.rpc.createColumn({
+            boardId: member.boardId,
+            columnId,
+            title,
+            boardPosition: toBigFloat(Math.random()),
+        });
+    }
+
+    for (let i = 0; i < 20; i++) {
+        await client.rpc.createCard({
+            boardId: member.boardId,
+            cardId: createCardId(),
+            columnId,
+            title: `Card ${i}`,
+            columnPosition: toBigFloat(Math.random()),
+        });
+    }
 }
 
 main().finally(() => {

@@ -1,20 +1,88 @@
 <script lang="ts">
 	import {ScrollArea, type WithoutChild} from 'bits-ui';
+	import {assert} from 'syncwave-data';
 
 	type Props = WithoutChild<ScrollArea.RootProps> & {
 		orientation: 'vertical' | 'horizontal' | 'both';
+		draggable?: boolean;
 	};
 
 	let {
 		ref = $bindable(null),
 		orientation = 'vertical',
 		children,
+		draggable = false,
 		...restProps
 	}: Props = $props();
+
+	let viewportRef = () => {
+		const result = ref?.firstElementChild;
+		assert(!!result, 'Viewport not found');
+
+		return result as HTMLElement;
+	};
+
+	let startX = 0;
+	let startY = 0;
+	let scrollLeft = 0;
+	let scrollTop = 0;
+
+	function checkAllowScrollViewDrag(node: EventTarget | null) {
+		if (!(node instanceof HTMLElement)) {
+			return true;
+		}
+		if (node.dataset.disableScrollViewDrag === 'true') {
+			return false;
+		}
+		return checkAllowScrollViewDrag(node.parentElement);
+	}
+
+	function handlePointerDown(event: PointerEvent) {
+		if (!draggable) return;
+		if (
+			event.target !== viewportRef() &&
+			!checkAllowScrollViewDrag(event.target)
+		) {
+			console.log(event.target);
+			return;
+		}
+
+		event.preventDefault();
+		startX = event.clientX;
+		startY = event.clientY;
+		scrollLeft = viewportRef().scrollLeft;
+		scrollTop = viewportRef().scrollTop;
+
+		console.log({startX, startY, scrollLeft, scrollTop});
+
+		viewportRef().setPointerCapture(event.pointerId);
+		viewportRef().addEventListener('pointermove', handlePointerMove);
+		viewportRef().addEventListener('pointerup', handlePointerUp);
+		viewportRef().addEventListener('pointercancel', handlePointerUp);
+	}
+
+	function handlePointerMove(event: PointerEvent) {
+		const dx = event.clientX - startX;
+		const dy = event.clientY - startY;
+		if (ref) {
+			(ref.firstElementChild as HTMLElement).scrollLeft = scrollLeft - dx;
+			(ref.firstElementChild as HTMLElement).scrollTop = scrollTop - dy;
+		}
+	}
+
+	function handlePointerUp(event: PointerEvent) {
+		viewportRef().releasePointerCapture(event.pointerId);
+		viewportRef().removeEventListener('pointermove', handlePointerMove);
+		viewportRef().removeEventListener('pointerup', handlePointerUp);
+		viewportRef().removeEventListener('pointercancel', handlePointerUp);
+	}
 </script>
 
 <ScrollArea.Root bind:ref {...restProps}>
-	<ScrollArea.Viewport class={restProps.class}>
+	<ScrollArea.Viewport
+		onpointerdown={handlePointerDown}
+		class={restProps.class}
+	>
 		{@render children?.()}
 	</ScrollArea.Viewport>
 	{#if orientation === 'vertical' || orientation === 'both'}

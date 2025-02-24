@@ -18,7 +18,6 @@ import {
 } from '../dto.js';
 import {createObjectKey, type ObjectStore} from '../infrastructure.js';
 import {PermissionService} from '../permission-service.js';
-import {toPosition, zPlacement} from '../placement.js';
 import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
 import {type Card, type CardId, zCard} from '../repos/card-repo.js';
 import {type Column, type ColumnId} from '../repos/column-repo.js';
@@ -60,12 +59,12 @@ export function createWriteApi() {
                 boardId: zUuid<BoardId>(),
                 columnId: zUuid<ColumnId>(),
                 title: z.string(),
-                placement: zPlacement(),
+                columnPosition: zBigFloat(),
             }),
             res: zCard(),
             handle: async (
                 st,
-                {boardId, cardId, title, placement, columnId}
+                {boardId, cardId, title, columnPosition, columnId}
             ) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureBoardMember(boardId, 'writer');
@@ -85,7 +84,7 @@ export function createWriteApi() {
                     deleted: false,
                     title: title,
                     counter,
-                    columnPosition: toPosition(placement),
+                    columnPosition,
                     columnId,
                 });
             },

@@ -1301,14 +1301,14 @@ class CreateCardReq {
     String boardId;
     String cardId;
     String columnId;
-    Placement placement;
+    CreateCardReqColumnPosition columnPosition;
     String title;
 
     CreateCardReq({
         required this.boardId,
         required this.cardId,
         required this.columnId,
-        required this.placement,
+        required this.columnPosition,
         required this.title,
     });
 
@@ -1316,7 +1316,7 @@ class CreateCardReq {
         boardId: json["boardId"],
         cardId: json["cardId"],
         columnId: json["columnId"],
-        placement: Placement.fromJson(json["placement"]),
+        columnPosition: CreateCardReqColumnPosition.fromJson(json["columnPosition"]),
         title: json["title"],
     );
 
@@ -1324,61 +1324,21 @@ class CreateCardReq {
         "boardId": boardId,
         "cardId": cardId,
         "columnId": columnId,
-        "placement": placement.toJson(),
+        "columnPosition": columnPosition.toJson(),
         "title": title,
     };
 }
 
-class Placement {
-    Next? next;
-    Prev? prev;
-
-    Placement({
-        this.next,
-        this.prev,
-    });
-
-    factory Placement.fromJson(Map<String, dynamic> json) => Placement(
-        next: json["next"] == null ? null : Next.fromJson(json["next"]),
-        prev: json["prev"] == null ? null : Prev.fromJson(json["prev"]),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "next": next?.toJson(),
-        "prev": prev?.toJson(),
-    };
-}
-
-class Next {
+class CreateCardReqColumnPosition {
     String denominator;
     String numerator;
 
-    Next({
+    CreateCardReqColumnPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory Next.fromJson(Map<String, dynamic> json) => Next(
-        denominator: json["denominator"],
-        numerator: json["numerator"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "denominator": denominator,
-        "numerator": numerator,
-    };
-}
-
-class Prev {
-    String denominator;
-    String numerator;
-
-    Prev({
-        required this.denominator,
-        required this.numerator,
-    });
-
-    factory Prev.fromJson(Map<String, dynamic> json) => Prev(
+    factory CreateCardReqColumnPosition.fromJson(Map<String, dynamic> json) => CreateCardReqColumnPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );

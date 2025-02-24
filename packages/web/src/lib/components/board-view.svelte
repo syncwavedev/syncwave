@@ -47,6 +47,7 @@
 			>
 				<div
 					use:dragHandle
+					data-disable-scroll-view-drag="true"
 					class="text-ink-body text-2xs sticky top-0 mb-2 bg-white"
 				>
 					{column.title}
@@ -63,7 +64,10 @@
 					on:finalize={e => handleDndFinalizeCards(column, e)}
 				>
 					{#each column.cards as card (card.id)}
-						<div animate:flip={{duration: flipDurationMs}}>
+						<div
+							data-disable-scroll-view-drag="true"
+							animate:flip={{duration: flipDurationMs}}
+						>
 							<CardTile {card} />
 						</div>
 					{/each}

@@ -47,7 +47,7 @@
 	</div>
 
 	<div class="min-h-0 flex-1">
-		<ScrollArea orientation="both" type="always" class="h-full">
+		<ScrollArea draggable orientation="both" type="always" class="h-full">
 			<div class=" pl-6">
 				<BoardViewController board={board.value} />
 			</div>

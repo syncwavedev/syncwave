@@ -31,17 +31,15 @@ services:
         volumes:
             - ./backups:/backups
         container_name: fdb_backup_agent
-        entrypoint: [
-            "/usr/bin/tini",
-            "-g",
-            "--",
-            "bash",
-            "-c",
-            "
+        entrypoint:
+            - /usr/bin/tini
+            - -g
+            - --
+            - bash
+            - -c
+            - |
                 echo docker:docker@fdb:4500 > /var/fdb/fdb.cluster && 
                 /usr/bin/backup_agent --log -C /var/fdb/fdb.cluster --knob_http_verbose_level=4 --knob_http_request_aws_v4_header=true
-            ",
-        ]
     
     s3proxy:
         image: andrewgaul/s3proxy:latest

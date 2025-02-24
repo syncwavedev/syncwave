@@ -16,7 +16,7 @@ export class SesEmailService implements EmailService {
                 Destination: {
                     ToAddresses: [recipient],
                 },
-                Source: 'SyncWave <noreply@edme.io>',
+                Source: 'SyncWave <noreply@bridgex.dev>',
                 Message: {
                     Subject: {
                         Data: subject,

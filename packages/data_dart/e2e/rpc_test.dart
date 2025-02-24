@@ -40,8 +40,8 @@ void main() {
     tracerProvider = TracerProviderBase(
         resource: Resource([Attribute.fromString("service.name", "mobile")]),
         processors: [
-          BatchSpanProcessor(
-              CollectorExporter(Uri.parse('https://otlp.edme.io/v1/traces'))),
+          BatchSpanProcessor(CollectorExporter(
+              Uri.parse('https://otel.bridgex.dev/v1/traces'))),
           BatchSpanProcessor(ConsoleExporter())
         ]);
     registerGlobalTracerProvider(tracerProvider);

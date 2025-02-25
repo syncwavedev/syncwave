@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte';
-	import {onMount} from 'svelte';
 
 	interface Props {
 		freeSide: 'left' | 'right';
@@ -53,7 +52,6 @@
 
 		console;
 
-		// Prevent width from becoming too small
 		if (newWidth >= minWidth && newWidth <= maxWidth) {
 			width = newWidth;
 			onWidthChange?.(width);
@@ -72,23 +70,12 @@
 <div class={`relative flex ${className}`} style={`width: ${width}px;`}>
 	{@render children()}
 
-	{#if freeSide === 'right'}
-		<div
-			class={resizerClass}
-			style="position: absolute; right: 0; top: 0; bottom: 0;"
-			onpointerdown={handlePointerDown}
-			onpointermove={handlePointerMove}
-			onpointerup={handlePointerUp}
-			onpointercancel={handlePointerUp}
-		></div>
-	{:else}
-		<div
-			class={resizerClass}
-			style="position: absolute; left: 0; top: 0; bottom: 0;"
-			onpointerdown={handlePointerDown}
-			onpointermove={handlePointerMove}
-			onpointerup={handlePointerUp}
-			onpointercancel={handlePointerUp}
-		></div>
-	{/if}
+	<div
+		class={resizerClass}
+		style="position: absolute; {freeSide}: 0; top: 0; bottom: 0;"
+		onpointerdown={handlePointerDown}
+		onpointermove={handlePointerMove}
+		onpointerup={handlePointerUp}
+		onpointercancel={handlePointerUp}
+	></div>
 </div>

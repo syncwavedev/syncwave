@@ -11,8 +11,6 @@ services:
     fdb:
         image: foundationdb/foundationdb:7.3.59
         restart: always
-        depends_on:
-            - s3proxy
         ports:
             - "4500:4500"
         container_name: fdb
@@ -27,7 +25,6 @@ services:
         restart: always
         depends_on:
             - fdb
-            - s3proxy
         volumes:
             - ./backups:/backups
         container_name: fdb_backup_agent
@@ -40,23 +37,6 @@ services:
             - |
                 echo docker:docker@fdb:4500 > /var/fdb/fdb.cluster && 
                 /usr/bin/backup_agent --log -C /var/fdb/fdb.cluster --knob_http_verbose_level=4 --knob_http_request_aws_v4_header=true
-    
-    s3proxy:
-        image: andrewgaul/s3proxy:latest
-        container_name: s3proxy
-        restart: always
-        environment:
-            JCLOUDS_PROVIDER: aws-s3
-            JCLOUDS_ENDPOINT: https://s3.us-east-1.amazonaws.com
-            JCLOUDS_IDENTITY: ${FDB_BACKUP_AWS_ACCESS_KEY_ID}
-            JCLOUDS_CREDENTIAL: ${Zw7aiF5OQw8eGHsUOHd33etSG4rhlkc9RFZ69drA}
-
-            S3PROXY_AUTHORIZATION: none
-            S3PROXY_ENDPOINT: http://0.0.0.0:80
-            S3PROXY_V4_MAX_NONCHUNKED_REQUEST_SIZE: 33554432      # 32 MB
-            S3PROXY_MAX_SINGLE_PART_UPLOAD_SIZE: 5368709120       # 5 GB
-            S3PROXY_IGNORE_UNKNOWN_HEADERS: "true"
-            S3PROXY_CORS_ALLOW_ALL: "true"
 
 volumes:
     fdb-data:

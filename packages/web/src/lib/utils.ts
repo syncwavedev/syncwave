@@ -1,4 +1,4 @@
-import {getContext, onDestroy} from 'svelte';
+import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	AppError,
 	CancelledError,
@@ -62,6 +62,23 @@ export function getAuthManager() {
 	return getContext<AuthManager>(AuthManager);
 }
 
+export function setAuthManager(authManager: AuthManager) {
+	setContext(AuthManager, authManager);
+}
+
+export function setUniversalStore(store: UniversalStore) {
+	setContext(UniversalStore, store);
+}
+
+export function getUniversalStore() {
+	const result = getContext<UniversalStore>(UniversalStore);
+	if (!result) {
+		throw new Error('context UniversalStore is not available');
+	}
+
+	return result;
+}
+
 export function formatTime(timestamp: Timestamp) {
 	const date = new Date(timestamp);
 
@@ -77,10 +94,8 @@ export interface CookieEntry {
 	value: string;
 }
 
-export function createAuthManager(cookies: CookieEntry[]) {
-	const cookieMap = new Map(cookies.map(({name, value}) => [name, value]));
-	const universalStore = new UniversalStore(cookieMap);
-	const authManager = new AuthManager(universalStore);
+export function createAuthManager(store: UniversalStore) {
+	const authManager = new AuthManager(store);
 
 	return authManager;
 }
@@ -113,7 +128,9 @@ export function createParticipantClient() {
 }
 
 export function createDirectParticipantClient(serverCookies: CookieEntry[]) {
-	const authManager = createAuthManager(serverCookies);
+	const authManager = createAuthManager(
+		new UniversalStore(new Map(serverCookies.map(x => [x.name, x.value])))
+	);
 	const jwt = authManager.getJwt();
 	const participant = new ParticipantClient(
 		connectionPool,

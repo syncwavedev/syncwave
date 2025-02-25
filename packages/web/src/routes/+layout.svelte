@@ -16,18 +16,25 @@
 
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
-	import {
-		ParticipantClient,
-		CancelledError,
-		ConnectionClosedError,
-	} from 'syncwave-data';
+	import {ParticipantClient, CancelledError} from 'syncwave-data';
 	import {AuthManager} from '$lib/auth-manager';
-	import {createAuthManager, createParticipantClient} from '$lib/utils';
+	import {
+		createAuthManager,
+		createParticipantClient,
+		setAuthManager,
+		setUniversalStore,
+	} from '$lib/utils';
+	import {UniversalStore} from '$lib/universal-store';
 
 	let {children, data}: LayoutProps = $props();
 
-	const authManager = createAuthManager(data.serverCookies);
-	setContext(AuthManager, authManager);
+	const cookieMap = new Map(
+		data.serverCookies.map(({name, value}) => [name, value])
+	);
+	const universalStore = new UniversalStore(cookieMap);
+	setUniversalStore(universalStore);
+	const authManager = createAuthManager(universalStore);
+	setAuthManager(authManager);
 
 	export const participantClient = createParticipantClient();
 	setContext(ParticipantClient, participantClient);

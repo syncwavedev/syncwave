@@ -1,5 +1,6 @@
 import {sveltekit} from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
+import swc from 'unplugin-swc';
 import type {PluginOption} from 'vite';
 import checker from 'vite-plugin-checker';
 import {nodePolyfills} from 'vite-plugin-node-polyfills';
@@ -21,6 +22,7 @@ export default defineConfig({
 			include: ['buffer'],
 		}) as PluginOption,
 		checker({typescript: true}),
+		swc.vite({tsconfigFile: false}),
 	],
 
 	optimizeDeps: {

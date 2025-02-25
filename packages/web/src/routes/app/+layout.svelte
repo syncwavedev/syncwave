@@ -3,6 +3,7 @@
 	import {getUniversalStore} from '$lib/utils.js';
 	import {setSidebarOpen} from '$lib/utils.svelte.js';
 	import ResizablePane from '$lib/components/resizable-pane.svelte';
+	import ErrorCard from '$lib/components/error-card.svelte';
 
 	let {children, data} = $props();
 
@@ -51,7 +52,13 @@
 		</ResizablePane>
 	{/if}
 	<div class="flex min-h-0 min-w-0 flex-1 flex-col">
-		{@render children()}
+		<svelte:boundary>
+			{#snippet failed(error)}
+				<!-- don't allow reset because it doesn't work for board view -->
+				<ErrorCard {error} />
+			{/snippet}
+			{@render children()}
+		</svelte:boundary>
 	</div>
 </main>
 

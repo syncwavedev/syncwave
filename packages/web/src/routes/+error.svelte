@@ -1,30 +1,24 @@
 <script lang="ts">
 	import {page} from '$app/state';
 
-    interface PageInfo {
-        emoji: string;
+	interface PageInfo {
+		emoji: string;
 		title: string;
 		message: string;
-    }
+	}
 
-	const errorConfig: Record<any, any> = {
+	const errorConfig: Record<any, PageInfo> = {
 		404: {
 			emoji: '🤔',
 			title: 'Page Not Found',
 			message:
 				"Hmm... We couldn't find the page you're looking for.<br>It might have been moved or doesn't exist.",
 		},
-		500: {
+		default: {
 			emoji: '😅',
 			title: 'Oops!',
 			message:
 				"Something unexpected happened on our end.<br>Don't worry, our team has been notified and we're working on it!",
-		},
-		default: {
-			emoji: '😕',
-			title: 'Something Went Wrong',
-			message:
-				'We encountered an unexpected error.<br>Please try again later.',
 		},
 	};
 

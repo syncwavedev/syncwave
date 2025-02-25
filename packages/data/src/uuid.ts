@@ -1,4 +1,4 @@
-import {parse, stringify, v7, validate} from 'uuid';
+import {parse, stringify, v4, v7, validate} from 'uuid';
 import {z} from 'zod';
 import type {Codec} from './codec.js';
 import {AppError} from './errors.js';
@@ -19,6 +19,10 @@ export function zUuid<TBrand extends Uuid>() {
 
 export function createUuid(): Uuid {
     return v7() as Uuid;
+}
+
+export function createUuidV4() {
+    return v4() as Uuid;
 }
 
 export class UuidCodec implements Codec<Uuid> {

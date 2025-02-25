@@ -5,7 +5,6 @@ import opentelemetry, {
     type Tracer,
 } from '@opentelemetry/api';
 import AsyncContext from '@webfill/async-context';
-import {customAlphabet} from 'nanoid';
 import {Deferred} from './deferred.js';
 import {CancelledError} from './errors.js';
 import {log, type LogLevel} from './logger.js';
@@ -57,13 +56,7 @@ export type Cancel = (reason: unknown) => Nothing;
 
 export type CancelBehavior = 'reject' | 'resolve' | 'suspend';
 
-const traceNanoId = customAlphabet('1234567890abcdef', 10);
-
 export type TraceId = Brand<string, 'trace_id'>;
-
-export function createTraceId(): TraceId {
-    return traceNanoId() as TraceId;
-}
 
 function getOtSpanContext(span: Span) {
     return trace.setSpan(opentelemetry.context.active(), span);

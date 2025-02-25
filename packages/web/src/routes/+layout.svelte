@@ -17,7 +17,6 @@
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
 	import {ParticipantClient, CancelledError} from 'syncwave-data';
-	import {AuthManager} from '$lib/auth-manager';
 	import {
 		createAuthManager,
 		createParticipantClient,
@@ -25,6 +24,7 @@
 		setUniversalStore,
 	} from '$lib/utils';
 	import {UniversalStore} from '$lib/universal-store';
+	import ErrorCard from '$lib/components/error-card.svelte';
 
 	let {children, data}: LayoutProps = $props();
 
@@ -62,4 +62,9 @@
 
 <svelte:window on:keydown={on_key_down} />
 
-{@render children()}
+<svelte:boundary>
+	{#snippet failed(error, reset)}
+		<ErrorCard {error} {reset} />
+	{/snippet}
+	{@render children()}
+</svelte:boundary>

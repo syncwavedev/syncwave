@@ -1,6 +1,6 @@
 import type {Tracer} from '@opentelemetry/api';
 import {z} from 'zod';
-import {type Cancel, Context, context, createTraceId} from '../context.js';
+import {type Cancel, Context, context} from '../context.js';
 import {
     AppError,
     CancelledError,
@@ -28,7 +28,7 @@ import {
     runAll,
     type Unsubscribe,
 } from '../utils.js';
-import {createUuid, Uuid, zUuid} from '../uuid.js';
+import {createUuid, createUuidV4, Uuid, zUuid} from '../uuid.js';
 import {
     createRpcHandlerClient,
     launchRpcHandlerServer,
@@ -495,7 +495,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             arg = handler.req.parse(arg);
 
             if (handler.type === 'handler') {
-                const requestId = createTraceId();
+                const requestId = createUuidV4();
                 const [requestCtx, cancelRequestCtx] = context().createChild({
                     span: `call ${name}(${toRequestLog(arg)})`,
                     attributes: {

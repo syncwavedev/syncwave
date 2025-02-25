@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte';
+	import Error from '../../routes/+error.svelte';
+	import {browser} from '$app/environment';
 
 	interface Props {
 		freeSide: 'left' | 'right';
@@ -27,10 +29,6 @@
 	let isResizing = false;
 	let startX = 0;
 	let startWidth = 0;
-
-	$effect(() => {
-		console.log('width', width);
-	});
 
 	function handlePointerDown(e: PointerEvent) {
 		isResizing = true;

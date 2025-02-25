@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type {BoardViewCardDto, CardDto} from 'syncwave-data';
+	import type {BoardViewCardDto} from 'syncwave-data';
 	import Avatar from './avatar.svelte';
 
 	let {card}: {card: BoardViewCardDto} = $props();

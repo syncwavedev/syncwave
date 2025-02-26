@@ -8,17 +8,18 @@ import {defineConfig} from 'vitest/config';
 
 const esbuildOptions = {
 	supported: {
-		// required for zonejs package
+		// because of zonejs package
 		'async-await': false,
 	},
 };
 
 export default defineConfig({
+	clearScreen: false,
 	plugins: [
 		tailwindcss(),
 		sveltekit() as PluginOption,
 		nodePolyfills({
-			// required for bytewise package
+			// because of fdb-tuple package
 			include: ['buffer'],
 		}) as PluginOption,
 		checker({typescript: true}),

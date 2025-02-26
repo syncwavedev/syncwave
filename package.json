@@ -13,10 +13,10 @@
         "bootstrap": "npm install && npm install --workspaces && npm run build",
         "test": "npm test --workspaces",
         "build": "npm run build --workspaces",
-        "dev": "run-p dev:*",
-        "dev:server": "npm run dev --workspace=syncwave-server",
-        "dev:web": "npm run dev --workspace=syncwave-web",
-        "dev:data": "npm run dev --workspace=syncwave-data"
+        "dev": "run-p -l srv web dat",
+        "srv": "npm run dev --workspace=syncwave-server",
+        "web": "npm run dev --workspace=syncwave-web",
+        "dat": "npm run dev --workspace=syncwave-data"
     },
     "devDependencies": {
         "editorconfig": "^2.0.0",

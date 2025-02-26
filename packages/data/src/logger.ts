@@ -1,4 +1,5 @@
 import {pino as createPino, type Level} from 'pino';
+import {ENVIRONMENT} from './constants.js';
 import {context, type NestedAttributeMap} from './context.js';
 import {AppError, toError} from './errors.js';
 
@@ -64,7 +65,11 @@ export class Logger {
     ) {
         const ctx = context();
         let log: NestedAttributeMap = {
-            traceId: ctx.traceId,
+            traceId: ctx.traceId.slice(
+                0,
+                // less noise in logs
+                ENVIRONMENT === 'dev' ? 4 : undefined
+            ),
             spanId: ctx.spanId,
             level,
         };

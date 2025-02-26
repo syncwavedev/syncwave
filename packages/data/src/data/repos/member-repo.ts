@@ -60,7 +60,7 @@ export interface MemberV2 extends Doc<[MemberId]> {
     position: BigFloat;
 }
 
-export type Member = MemberV2;
+export interface Member extends MemberV2 {}
 type StoredMember = MemberV1 | MemberV2;
 
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';

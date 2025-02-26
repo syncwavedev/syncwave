@@ -42,7 +42,7 @@ export interface UserV4 extends Doc<[UserId]> {
     avatarKey?: ObjectKey;
 }
 
-export type User = UserV4;
+export interface User extends UserV4 {}
 
 type StoredUser = UserV1 | UserV2 | UserV3 | UserV4;
 

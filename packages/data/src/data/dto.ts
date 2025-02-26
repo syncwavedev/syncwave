@@ -19,7 +19,7 @@ export function zCardDto() {
     });
 }
 
-export type CardDto = z.infer<ReturnType<typeof zCardDto>>;
+export interface CardDto extends z.infer<ReturnType<typeof zCardDto>> {}
 
 export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
     const card = await tx.cards.getById(cardId, true);
@@ -40,7 +40,8 @@ export function zBoardViewCardDto() {
     });
 }
 
-export type BoardViewCardDto = z.infer<ReturnType<typeof zBoardViewCardDto>>;
+export interface BoardViewCardDto
+    extends z.infer<ReturnType<typeof zBoardViewCardDto>> {}
 
 export async function toBoardViewCardDto(
     tx: DataTx,
@@ -62,7 +63,7 @@ export function zColumnDto() {
     });
 }
 
-export type ColumnDto = z.infer<ReturnType<typeof zColumnDto>>;
+export interface ColumnDto extends z.infer<ReturnType<typeof zColumnDto>> {}
 
 export async function toColumnDto(
     tx: DataTx,
@@ -82,9 +83,8 @@ export function zBoardViewColumnDto() {
     });
 }
 
-export type BoardViewColumnDto = z.infer<
-    ReturnType<typeof zBoardViewColumnDto>
->;
+export interface BoardViewColumnDto
+    extends z.infer<ReturnType<typeof zBoardViewColumnDto>> {}
 
 export async function toBoardViewColumnDto(
     tx: DataTx,
@@ -109,7 +109,7 @@ export function zBoardDto() {
     });
 }
 
-export type BoardDto = z.infer<ReturnType<typeof zBoardDto>>;
+export interface BoardDto extends z.infer<ReturnType<typeof zBoardDto>> {}
 
 export async function toBoardDto(
     tx: DataTx,
@@ -128,7 +128,8 @@ export function zBoardViewDto() {
     });
 }
 
-export type BoardViewDto = z.infer<ReturnType<typeof zBoardViewDto>>;
+export interface BoardViewDto
+    extends z.infer<ReturnType<typeof zBoardViewDto>> {}
 
 export async function toBoardViewDto(
     tx: DataTx,
@@ -152,7 +153,7 @@ export function zMemberDto() {
     });
 }
 
-export type MemberDto = z.infer<ReturnType<typeof zMemberDto>>;
+export interface MemberDto extends z.infer<ReturnType<typeof zMemberDto>> {}
 
 export async function toMemberDto(
     tx: DataTx,
@@ -174,7 +175,8 @@ export function zMemberAdminDto() {
     });
 }
 
-export type MemberAdminDto = z.infer<ReturnType<typeof zMemberAdminDto>>;
+export interface MemberAdminDto
+    extends z.infer<ReturnType<typeof zMemberAdminDto>> {}
 
 export async function toMemberAdminDto(
     tx: DataTx,
@@ -200,7 +202,7 @@ export function zUserDto() {
     });
 }
 
-export type UserDto = z.infer<ReturnType<typeof zUserDto>>;
+export interface UserDto extends z.infer<ReturnType<typeof zUserDto>> {}
 
 export async function toUserDto(tx: DataTx, userId: UserId): Promise<UserDto> {
     const user = await tx.users.getById(userId, true);
@@ -215,7 +217,7 @@ export function zIdentityDto() {
     });
 }
 
-export type IdentityDto = z.infer<ReturnType<typeof zIdentityDto>>;
+export interface IdentityDto extends z.infer<ReturnType<typeof zIdentityDto>> {}
 
 export async function toIdentityDto(
     tx: DataTx,
@@ -238,7 +240,7 @@ export function zCommentDto() {
     });
 }
 
-export type CommentDto = z.infer<ReturnType<typeof zCommentDto>>;
+export interface CommentDto extends z.infer<ReturnType<typeof zCommentDto>> {}
 
 export async function toCommentDto(
     tx: DataTx,

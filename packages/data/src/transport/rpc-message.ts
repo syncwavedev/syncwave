@@ -20,7 +20,8 @@ export function zRpcMessageHeaders() {
     });
 }
 
-export type MessageHeaders = z.infer<ReturnType<typeof zRpcMessageHeaders>>;
+export interface MessageHeaders
+    extends z.infer<ReturnType<typeof zRpcMessageHeaders>> {}
 
 export function zBaseRpcMessage<TType extends string>(type: TType) {
     return z.object({
@@ -39,7 +40,8 @@ export function zRequestRpcMessage() {
     });
 }
 
-export type RequestRpcMessage = z.infer<ReturnType<typeof zRequestRpcMessage>>;
+export interface RequestRpcMessage
+    extends z.infer<ReturnType<typeof zRequestRpcMessage>> {}
 
 export function zCancelRpcMessage() {
     return zBaseRpcMessage('cancel').extend({
@@ -48,7 +50,8 @@ export function zCancelRpcMessage() {
     });
 }
 
-export type CancelRpcMessage = z.infer<ReturnType<typeof zCancelRpcMessage>>;
+export interface CancelRpcMessage
+    extends z.infer<ReturnType<typeof zCancelRpcMessage>> {}
 
 export function zBaseRpcResponsePayload<TType extends string>(type: TType) {
     return z.object({
@@ -66,9 +69,8 @@ export function zRpcSuccessResponsePayload() {
     });
 }
 
-export type RpcSuccessResponsePayload = z.infer<
-    ReturnType<typeof zRpcSuccessResponsePayload>
->;
+export interface RpcSuccessResponsePayload
+    extends z.infer<ReturnType<typeof zRpcSuccessResponsePayload>> {}
 
 export function zRpcErrorResponsePayload() {
     return zBaseRpcResponsePayload('error').extend({
@@ -77,9 +79,8 @@ export function zRpcErrorResponsePayload() {
     });
 }
 
-export type RpcErrorResponsePayload = z.infer<
-    ReturnType<typeof zRpcErrorResponsePayload>
->;
+export interface RpcErrorResponsePayload
+    extends z.infer<ReturnType<typeof zRpcErrorResponsePayload>> {}
 
 export function zRpcResponsePayload() {
     return z.discriminatedUnion('type', [
@@ -99,9 +100,8 @@ export function zResponseRpcMessage() {
     });
 }
 
-export type ResponseRpcMessage = z.infer<
-    ReturnType<typeof zResponseRpcMessage>
->;
+export interface ResponseRpcMessage
+    extends z.infer<ReturnType<typeof zResponseRpcMessage>> {}
 
 export function zRpcMessage() {
     return z.discriminatedUnion('type', [

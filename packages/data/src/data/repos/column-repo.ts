@@ -50,7 +50,7 @@ export interface ColumnV3 extends Doc<[ColumnId]> {
     boardPosition: BigFloat;
 }
 
-export type Column = ColumnV3;
+export interface Column extends ColumnV3 {}
 type StoredColumn = ColumnV1 | ColumnV2 | ColumnV3;
 
 const BOARD_ID = 'boardId';

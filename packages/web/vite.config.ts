@@ -22,7 +22,12 @@ export default defineConfig({
 			include: ['buffer'],
 		}) as PluginOption,
 		checker({typescript: true}),
-		swc.vite({tsconfigFile: false}),
+		{
+			// we need swc to transform async/await for zonejs to work
+			// in dev mode, prod build will be processed by esbuild
+			...swc.vite({tsconfigFile: false}),
+			apply: 'serve',
+		},
 	],
 
 	optimizeDeps: {

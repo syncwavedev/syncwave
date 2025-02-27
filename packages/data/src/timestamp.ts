@@ -4,7 +4,7 @@ import type {Brand} from './utils.js';
 export type Timestamp = Brand<number, 'timestamp'>;
 
 export function getNow(): Timestamp {
-    return Date.now() as Timestamp;
+    return toTimestamp(new Date());
 }
 
 export function addHours(timestamp: Timestamp, hours: number): Timestamp {
@@ -23,4 +23,8 @@ export function zTimestamp() {
     return z.number().refine(value => !Number.isNaN(value), {
         message: 'Invalid timestamp',
     }) as unknown as z.ZodType<Timestamp>;
+}
+
+export function toTimestamp(date: Date) {
+    return date.getTime() as Timestamp;
 }

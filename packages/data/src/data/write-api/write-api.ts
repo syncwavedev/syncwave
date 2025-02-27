@@ -1,7 +1,8 @@
 import {z} from 'zod';
 import {encodeBase64, zBase64} from '../../base64.js';
 import {toBigFloat, zBigFloat} from '../../big-float.js';
-import {parseCrdtDiff, zCrdtDiffBase64} from '../../crdt/crdt.js';
+import {Crdt, parseCrdtDiff, zCrdtDiffBase64} from '../../crdt/crdt.js';
+import {createRichtext} from '../../crdt/richtext.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
 import {createApi, handler, type InferRpcClient} from '../../transport/rpc.js';
@@ -29,7 +30,12 @@ import {
     zMemberRole,
 } from '../repos/member-repo.js';
 import {type User, type UserId} from '../repos/user-repo.js';
-import {writable} from '../transition-checker.js';
+import {
+    creatable,
+    expectBoolean,
+    expectTimestamp,
+    writable,
+} from '../transition-checker.js';
 
 export class WriteApiState {
     constructor(
@@ -55,38 +61,44 @@ export function createWriteApi() {
     return createApi<WriteApiState>()({
         createCard: handler({
             req: z.object({
-                cardId: zUuid<CardId>(),
-                boardId: zUuid<BoardId>(),
-                columnId: zUuid<ColumnId>(),
-                title: z.string(),
-                columnPosition: zBigFloat(),
+                diff: zCrdtDiffBase64<Card>(),
             }),
             res: zCard(),
-            handle: async (
-                st,
-                {boardId, cardId, title, columnPosition, columnId}
-            ) => {
+            handle: async (st, {diff}) => {
+                const crdt = Crdt.load(diff);
+                const card = crdt.snapshot();
+
                 const meId = st.ps.ensureAuthenticated();
-                await st.ps.ensureBoardMember(boardId, 'writer');
-                const now = getNow();
+                await st.ps.ensureBoardMember(card.boardId, 'writer');
+                await st.ps.ensureColumnMember(card.columnId, 'writer');
 
-                await st.ps.ensureColumnMember(columnId, 'writer');
+                const counter = await st.tx.boards.incrementBoardCounter(
+                    card.boardId
+                );
 
-                const counter =
-                    await st.tx.boards.incrementBoardCounter(boardId);
-
-                return await st.tx.cards.create({
-                    id: cardId,
-                    authorId: meId,
-                    boardId: boardId,
-                    createdAt: now,
-                    updatedAt: now,
-                    deleted: false,
-                    title: title,
-                    counter,
-                    columnPosition,
-                    columnId,
+                crdt.update(draft => {
+                    draft.counter = counter;
                 });
+
+                const {after} = await st.tx.cards.apply(
+                    card.id,
+                    crdt.state(),
+                    creatable<Card>({
+                        id: card.id,
+                        pk: [card.id],
+                        authorId: meId,
+                        boardId: card.boardId,
+                        columnId: card.columnId,
+                        counter,
+                        columnPosition: card.columnPosition,
+                        createdAt: expectTimestamp(),
+                        deleted: expectBoolean(),
+                        updatedAt: expectTimestamp(),
+                        text: createRichtext(),
+                    })
+                );
+
+                return after;
             },
         }),
         createMember: handler({
@@ -316,7 +328,7 @@ export function createWriteApi() {
                             cardId,
                             parseCrdtDiff(diff),
                             writable({
-                                title: true,
+                                text: true,
                                 columnId: true,
                             })
                         );

@@ -31,6 +31,14 @@ export function assert(
     }
 }
 
+export function assertSingle<T>(value: T[], message: string): T {
+    if (value.length !== 1) {
+        throw new AppError('assertSingle failed: ' + message);
+    }
+
+    return value[0];
+}
+
 export function assertDefined<T>(value: T | undefined | null): T {
     if (value === null || value === undefined) {
         throw new AppError('assertion failed: value is not defined');

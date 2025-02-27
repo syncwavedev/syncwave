@@ -1,4 +1,5 @@
 import {AppError} from '../errors.js';
+import {isRichtext, type Richtext} from './richtext.js';
 
 interface BaseOpLogEntry<TType extends string> {
     readonly type: TType;
@@ -308,6 +309,26 @@ function createObjectProxy<T extends object>(subject: T, log: OpLog): T {
     });
 }
 
+function createRichtextProxy(subject: Richtext, log: OpLog): Richtext {
+    return new Proxy({} as any, {
+        get(target, prop, receiver) {
+            throw new AppError(
+                'unsupported richtext operation: get ' + String(prop)
+            );
+        },
+        set(target, prop, value, receiver) {
+            throw new AppError(
+                'unsupported richtext modification: set ' + String(prop)
+            );
+        },
+        deleteProperty(target, prop) {
+            throw new AppError(
+                'unsupported richtext modification: delete ' + String(prop)
+            );
+        },
+    });
+}
+
 function createProxy<T>(value: T, log: OpLog): T {
     if (
         typeof value === 'number' ||
@@ -324,6 +345,8 @@ function createProxy<T>(value: T, log: OpLog): T {
         return createArrayProxy(value, log) as T;
     } else if (value.constructor === Object) {
         return createObjectProxy(value, log) as T;
+    } else if (isRichtext(value)) {
+        return createRichtextProxy(value, log) as T;
     } else {
         throw new AppError('unsupported value for proxy: ' + value);
     }

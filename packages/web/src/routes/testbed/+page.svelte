@@ -1,9 +1,9 @@
 <script lang="ts">
 	import Editor from '$lib/components/editor.svelte';
-	import {Crdt, Richtext} from 'syncwave-data';
+	import {Crdt, createRichtext} from 'syncwave-data';
 
 	const a = Crdt.from({
-		text: new Richtext(),
+		text: createRichtext(),
 	});
 	const b = a.clone();
 

@@ -1,4 +1,5 @@
 import {AppError} from '../errors.js';
+import type {Timestamp} from '../timestamp.js';
 import {whenAll} from '../utils.js';
 
 export type TransitionChecker<T> = (
@@ -9,6 +10,182 @@ export type TransitionChecker<T> = (
 export type WritableDescriptor<T> = {
     [K in keyof T]-?: boolean;
 };
+
+class ExpectAny<T> {
+    constructor(public readonly ctor: new () => T) {}
+}
+
+function expectAny<T>(ctor: new () => T): T {
+    return new ExpectAny(ctor) as any;
+}
+
+export function expectBoolean() {
+    return expectAny(Boolean) as boolean;
+}
+
+export function expectNumber() {
+    return expectAny(Number) as number;
+}
+
+export function expectString() {
+    return expectAny(String) as string;
+}
+
+export function expectTimestamp() {
+    return expectAny(Number) as Timestamp;
+}
+
+interface ValidationError {
+    path: string[];
+    message: string;
+}
+
+function validateCondition(
+    valid: boolean,
+    error: ValidationError
+): ValidationError[] {
+    if (valid) {
+        return [];
+    }
+    return [error];
+}
+
+function validate<T>(value: T, expected: T): ValidationError[] {
+    if (expected instanceof ExpectAny) {
+        if (expected.ctor === String) {
+            return validateCondition(typeof value === 'string', {
+                message: `expected string, but got ${typeof value}`,
+                path: [],
+            });
+        } else if (expected.ctor === Number) {
+            return validateCondition(typeof value === 'number', {
+                message: `expected number, but got ${typeof value}`,
+                path: [],
+            });
+        } else if (expected.ctor === Boolean) {
+            return validateCondition(typeof value === 'boolean', {
+                message: `expected boolean, but got ${typeof value}`,
+                path: [],
+            });
+        } else {
+            return validateCondition(value instanceof expected.ctor, {
+                message: `expected ${expected.ctor.name}, but got ${typeof value}`,
+                path: [],
+            });
+        }
+    } else {
+        if (
+            typeof expected === 'bigint' ||
+            typeof expected === 'number' ||
+            typeof expected === 'string' ||
+            typeof expected === 'boolean' ||
+            typeof expected === 'undefined' ||
+            typeof expected === 'symbol'
+        ) {
+            return validateCondition(value === expected, {
+                message: `expected ${String(expected)}, but got ${value}`,
+                path: [],
+            });
+        } else if (Array.isArray(expected)) {
+            if (!Array.isArray(value)) {
+                return validateCondition(false, {
+                    message: `expected array, but got ${typeof value}`,
+                    path: [],
+                });
+            }
+
+            if (expected.length !== value.length) {
+                return validateCondition(false, {
+                    message: `expected array of length ${expected.length}, but got ${value.length}`,
+                    path: [],
+                });
+            }
+
+            const errors: ValidationError[] = [];
+
+            for (let i = 0; i < expected.length; i++) {
+                const expectedValue = expected[i];
+                const valueValue = value[i];
+
+                errors.push(
+                    ...validate(valueValue, expectedValue).map(error => ({
+                        ...error,
+                        path: [String(i), ...error.path],
+                    }))
+                );
+            }
+
+            return errors;
+        } else if (typeof expected === 'object') {
+            if (expected === null) {
+                return validateCondition(value === null, {
+                    message: `expected null, but got ${typeof value}`,
+                    path: [],
+                });
+            }
+
+            if (typeof value !== 'object' || value === null) {
+                return validateCondition(false, {
+                    message: `expected object, but got ${typeof value}`,
+                    path: [],
+                });
+            }
+
+            const keys = new Set([
+                ...Object.keys(expected),
+                ...Object.keys(value),
+            ]);
+
+            const errors: ValidationError[] = [];
+
+            for (const key of keys) {
+                if (typeof key !== 'string') {
+                    throw new AppError(
+                        'property (with non-string name) modification is not allowed: ' +
+                            String(key)
+                    );
+                }
+
+                const expectedValue = (expected as any)[key];
+                const valueValue = (value as any)[key];
+
+                errors.push(
+                    ...validate(valueValue, expectedValue).map(error => ({
+                        ...error,
+                        path: [key, ...error.path],
+                    }))
+                );
+            }
+
+            return errors;
+        } else {
+            throw new AppError(
+                `Unexpected type of expected value: ${typeof expected}`
+            );
+        }
+    }
+}
+
+export function creatable<T>(expected: T): TransitionChecker<T> {
+    return async (prev, next) => {
+        if (prev !== undefined) {
+            return {
+                errors: ['object is not creatable, because it already exists'],
+            };
+        }
+
+        const errors = validate(next, expected);
+        if (errors.length > 0) {
+            return {
+                errors: errors.map(error => {
+                    return `'${error.path.join('.')}' is invalid: ${error.message}`;
+                }),
+            };
+        }
+
+        return;
+    };
+}
 
 export function writable<T extends object>(
     writable: WritableDescriptor<T>

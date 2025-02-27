@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import {type BigFloat, zBigFloat} from '../../big-float.js';
-import {type CrdtDiff} from '../../crdt/crdt.js';
+import {type CrdtDiff, type CrdtDiffBase64} from '../../crdt/crdt.js';
+import {type Richtext, zRichtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
@@ -27,8 +28,8 @@ export interface Card extends Doc<[CardId]> {
     readonly id: CardId;
     readonly authorId: UserId;
     readonly boardId: BoardId;
-    readonly counter: number;
-    title: string;
+    counter: number;
+    text: Richtext;
     columnPosition: BigFloat;
     columnId: ColumnId;
 }
@@ -44,7 +45,7 @@ export function zCard() {
         authorId: zUuid<UserId>(),
         boardId: zUuid<BoardId>(),
         counter: z.number(),
-        title: z.string(),
+        text: zRichtext(),
         columnPosition: zBigFloat(),
         columnId: zUuid<ColumnId>(),
     });
@@ -114,7 +115,7 @@ export class CardRepo {
 
     async apply(
         id: Uuid,
-        diff: CrdtDiff<Card>,
+        diff: CrdtDiff<Card> | CrdtDiffBase64<Card>,
         checker: TransitionChecker<Card>
     ) {
         return await this.rawRepo.apply([id], diff, checker);

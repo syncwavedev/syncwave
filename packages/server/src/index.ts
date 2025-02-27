@@ -157,7 +157,7 @@ async function upgradeKVStore(kvStore: KVStore<Tuple, Uint8Array>) {
     });
     log.info('KV store version: ' + version);
 
-    if (!version) {
+    if (!version || version === 1) {
         log.info("KV store doesn't have a version, upgrading...");
         await kvStore.transact(async tx => {
             const keys = await toStream(tx.query({gte: []}))
@@ -175,7 +175,7 @@ async function upgradeKVStore(kvStore: KVStore<Tuple, Uint8Array>) {
             }
 
             log.info('Set KV store version to 1...');
-            await tx.put(versionKey, encodeNumber(1));
+            await tx.put(versionKey, encodeNumber(2));
         });
     }
 }

@@ -1,7 +1,9 @@
 import {describe, expect, it, vi} from 'vitest';
+import {XmlFragment} from 'yjs';
 import type {Timestamp} from '../timestamp.js';
 import {assert} from '../utils.js';
 import {Crdt} from './crdt.js';
+import {createRichtext} from './richtext.js';
 
 const createTestDocDiff = <T>(data: T) => Crdt.from(data).state();
 
@@ -21,6 +23,7 @@ describe('Doc', () => {
                 b: 15,
             },
             optional: undefined,
+            richtext: createRichtext(),
             nullable: null,
         });
 
@@ -37,6 +40,7 @@ describe('Doc', () => {
                 a: 14,
                 b: 15,
             },
+            richtext: createRichtext(),
             optional: undefined,
             nullable: null,
         });
@@ -481,5 +485,14 @@ describe('Doc', () => {
         });
 
         expect(crdt.snapshot().key[500].value).toEqual('updatedValue');
+    });
+
+    it('should extract richtext', () => {
+        const doc = Crdt.from({
+            richtext: createRichtext(),
+        });
+
+        const fragment = doc.extractXmlFragment(x => x.richtext);
+        expect(fragment).toBeInstanceOf(XmlFragment);
     });
 });

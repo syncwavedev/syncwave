@@ -23,6 +23,7 @@ import {
 } from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {observe, type OpLog} from './observe.js';
+import {createRichtext, isRichtext, type Richtext} from './richtext.js';
 
 export interface CrdtDiff<T> {
     readonly timestamp: Timestamp;
@@ -212,12 +213,6 @@ type YValue =
 
 const INTERPRET_AS_KEY = '__interpret_as__';
 
-export class Richtext {
-    constructor(
-        private readonly _xmlFragment: YXmlFragment = new YXmlFragment()
-    ) {}
-}
-
 function mapFromYValue(yValue: YValue): unknown {
     if (
         yValue === null ||
@@ -251,7 +246,7 @@ function mapFromYValue(yValue: YValue): unknown {
             );
         }
     } else if (yValue.constructor === YXmlFragment) {
-        return new Richtext(yValue as YXmlFragment);
+        return createRichtext();
     } else {
         throw new AppError('cannot map unsupported YValue: ' + yValue);
     }
@@ -267,6 +262,8 @@ function mapToYValue(value: any): YValue {
         typeof value === 'boolean'
     ) {
         return value;
+    } else if (isRichtext(value)) {
+        return new YXmlFragment();
     } else if (value.constructor === Map) {
         const entries = [...value.entries()].map(
             ([key, value]) => [key, mapToYValue(value)] as const
@@ -292,9 +289,6 @@ function mapToYValue(value: any): YValue {
         result.set(INTERPRET_AS_KEY, 'uuid');
         result.set('value', value.toString());
         return result;
-    } else if (value.constructor === Richtext) {
-        const fragment: YXmlFragment = (value as Richtext)['_xmlFragment'];
-        return fragment.clone();
     } else {
         throw new AppError('cannot map unsupported value to YValue: ' + value);
     }
@@ -349,7 +343,7 @@ class Locator {
                 const yValueValue = (yValue as YMap<YValue>).get(key);
                 this.addDeep(subjectValue, yValueValue);
             }
-        } else if (subject.constructor === Richtext) {
+        } else if (isRichtext(subject)) {
             this.map.set(subject, yValue);
         } else {
             throw new AppError(

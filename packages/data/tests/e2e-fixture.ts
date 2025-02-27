@@ -16,7 +16,7 @@ import {
     type RpcMessage,
 } from '../src/index.js';
 import {log} from '../src/logger.js';
-import {drop} from '../src/utils.js';
+import {assert, drop} from '../src/utils.js';
 
 export class E2eFixture {
     static async start() {
@@ -83,6 +83,24 @@ export class E2eFixture {
         public readonly client: ParticipantClient,
         public readonly outbox: readonly EmailMessage[]
     ) {}
+
+    async signIn() {
+        await this.client.rpc.sendSignInEmail({email: 'test@test.com'});
+        const message = this.outbox.at(-1);
+        assert(message !== undefined, 'message expected');
+        const code = message.text
+            .split('\n')
+            .find(x => x.includes('Your one-time code is'))
+            ?.split(': ')[1];
+        const token = await this.client.rpc.verifySignInCode({
+            email: 'test@test.com',
+            code: code!,
+        });
+
+        assert(token.type === 'success', 'token expected');
+
+        this.client.setAuthToken(token.token);
+    }
 
     close(reason: unknown) {
         this.client.close(reason);

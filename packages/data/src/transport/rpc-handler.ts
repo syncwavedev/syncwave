@@ -21,7 +21,7 @@ import {
 } from '../transport/transport.js';
 import {assertNever, type Unsubscribe, wait} from '../utils.js';
 import {createRpcMessageId, type MessageHeaders} from './rpc-message.js';
-import {toRequestLog, toResponseLog} from './rpc-streamer.js';
+import {stringifyLogPart} from './rpc-streamer.js';
 import {RpcConnection} from './rpc-transport.js';
 import {
     getRequiredProcessor,
@@ -55,10 +55,10 @@ export function launchRpcHandlerServer<T>(
             if (msg.type === 'request') {
                 const [actionCtx, cancelActionCtx] = Context.restore(
                     {
-                        span: `raw_handle ${msg.payload.name}(${toRequestLog(msg.payload.arg)})`,
+                        span: `raw_handle ${msg.payload.name}(${stringifyLogPart(msg.payload.arg)})`,
                         attributes: {
                             'rpc.method': msg.payload.name,
-                            'rpc.arg': toRequestLog(msg.payload.arg),
+                            'rpc.arg': stringifyLogPart(msg.payload.arg),
                         },
                     },
                     msg.headers,
@@ -98,7 +98,7 @@ export function launchRpcHandlerServer<T>(
                         } catch (error) {
                             reportRpcError(
                                 toError(error),
-                                `${msg.payload.name}(${toRequestLog(msg.payload.arg)})`
+                                `${msg.payload.name}(${stringifyLogPart(msg.payload.arg)})`
                             );
                             await catchConnectionClosed(
                                 conn.send({
@@ -319,10 +319,10 @@ function createHandlerProxy(
         }
 
         const [requestCtx, cancelRequestCtx] = context().createChild({
-            span: `raw_call ${name}(${toRequestLog(arg)})`,
+            span: `raw_call ${name}(${stringifyLogPart(arg)})`,
             attributes: {
                 'rpc.method': name,
-                'rpc.arg': toRequestLog(arg),
+                'rpc.arg': stringifyLogPart(arg),
             },
         });
 
@@ -357,7 +357,7 @@ export function reportRpcError(error: AppError, callInfo: string) {
     } else {
         log.error(
             error,
-            `${callInfo} failed: ` + toResponseLog(error.toJSON())
+            `${callInfo} failed: ` + stringifyLogPart(error.toJSON())
         );
     }
 }

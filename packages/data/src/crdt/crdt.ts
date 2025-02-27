@@ -120,10 +120,9 @@ export class Crdt<T> {
     /**
      * This method exposes underlying Yjs XmlFragment. It's an escape hatch for
      * advanced use cases where you need to manipulate the XML directly.
-     * In particular, it's used in native Yjs bindings with Prosemirror
+     * In particular, it's used in Yjs bindings with Prosemirror
      */
     extractXmlFragment(selector: (x: T) => Richtext) {
-        // we create a clone to avoid modifying the original doc through exposed YValue
         const snapshot = this.snapshot();
         const locator = new Locator();
         locator.addDeep(snapshot, this.yValue);
@@ -312,7 +311,7 @@ class Locator {
             typeof subject === 'number' ||
             typeof subject === 'boolean'
         ) {
-            // need to track primitives, because they can't be modified
+            // no need to track primitives, because they can't be modified
         } else if (subject.constructor === Map) {
             this.map.set(subject, yValue);
 

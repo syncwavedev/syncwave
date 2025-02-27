@@ -124,11 +124,7 @@ class RpcStreamerServerApiState<T> {
     }
 }
 
-export function toResponseLog(arg: unknown) {
-    return JSON.stringify(arg)?.slice(0, 100);
-}
-
-export function toRequestLog(arg: unknown) {
+export function stringifyLogPart(arg: unknown) {
     return JSON.stringify(arg)?.slice(0, 100);
 }
 
@@ -143,7 +139,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a handler');
                 }
 
-                const callInfo = `handle_call ${state.serverName}.${req.name}(${toRequestLog(req.arg)}) [rid=${ctx.requestId}]`;
+                const callInfo = `handle_call ${state.serverName}.${req.name}(${stringifyLogPart(req.arg)}) [rid=${ctx.requestId}]`;
 
                 try {
                     log.info(`${callInfo}...`);
@@ -154,7 +150,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         ctx
                     );
 
-                    log.info(`${callInfo} => ${toResponseLog(result)}`);
+                    log.info(`${callInfo} => ${stringifyLogPart(result)}`);
 
                     return result;
                 } catch (error) {
@@ -176,16 +172,16 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a streamer');
                 }
 
-                const callInfo = `handle ${state.serverName}.${name}(${toRequestLog(arg)}) [sid=${streamId}]`;
+                const callInfo = `handle ${state.serverName}.${name}(${stringifyLogPart(arg)}) [sid=${streamId}]`;
 
                 log.info(`${callInfo}...`);
 
                 const [ctx, cancelCtx] = context().createDetached({
-                    span: `handle_stream ${name}(${toRequestLog(arg)})`,
+                    span: `handle_stream ${name}(${stringifyLogPart(arg)})`,
                     attributes: {
                         'rpc.streamId': streamId,
                         'rpc.method': name,
-                        'rpc.arg': toRequestLog(arg),
+                        'rpc.arg': stringifyLogPart(arg),
                     },
                 });
 
@@ -201,7 +197,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                 )
                                     .mapParallel(async value => {
                                         log.info(
-                                            `${callInfo} => ${toResponseLog(value)}`
+                                            `${callInfo} => ${stringifyLogPart(value)}`
                                         );
                                         await catchConnectionClosed(
                                             state.client.next({streamId, value})
@@ -300,7 +296,7 @@ class RpcStreamerClientApiState {
         await sub?.context.runChild(
             {
                 span: 'next',
-                attributes: {'rpc.next.value': toResponseLog(value)},
+                attributes: {'rpc.next.value': stringifyLogPart(value)},
             },
             async () => {
                 await sub.writer.next(value);
@@ -315,7 +311,7 @@ class RpcStreamerClientApiState {
                 span: 'throw',
                 attributes: {
                     'rpc.throw.code': params.code,
-                    'rpc.throw.message': toResponseLog(params.message),
+                    'rpc.throw.message': stringifyLogPart(params.message),
                 },
             },
             async () => {
@@ -497,22 +493,22 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             if (handler.type === 'handler') {
                 const requestId = createUuidV4();
                 const [requestCtx, cancelRequestCtx] = context().createChild({
-                    span: `call ${name}(${toRequestLog(arg)})`,
+                    span: `call ${name}(${stringifyLogPart(arg)})`,
                     attributes: {
                         'rpc.requestId': requestId,
                         'rpc.method': name,
-                        'rpc.arg': toRequestLog(arg),
+                        'rpc.arg': stringifyLogPart(arg),
                     },
                 });
                 return requestCtx
                     .run(async () => {
-                        const callInfo = `call ${clientTarget}.${name}(${toRequestLog(arg)}) [rid=${requestId}]`;
+                        const callInfo = `call ${clientTarget}.${name}(${stringifyLogPart(arg)}) [rid=${requestId}]`;
                         log.info(`${callInfo}...`);
                         return server
                             .handle({name, arg}, headers)
                             .then(async result => {
                                 log.info(
-                                    `${callInfo} => ${toResponseLog(result)}`
+                                    `${callInfo} => ${stringifyLogPart(result)}`
                                 );
                                 return result;
                             })
@@ -544,11 +540,11 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                     const streamId = createStreamId();
                     const [requestCtx, cancelRequestCtx] =
                         parentCtx.createChild({
-                            span: `stream ${name}(${toRequestLog(arg)})`,
+                            span: `stream ${name}(${stringifyLogPart(arg)})`,
                             attributes: {
                                 'rpc.streamId': streamId,
                                 'rpc.method': name,
-                                'rpc.arg': toRequestLog(arg),
+                                'rpc.arg': stringifyLogPart(arg),
                             },
                         });
                     const cancelRequestCtxCleanUp = requestCtx.onEnd(reason => {

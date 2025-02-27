@@ -1298,54 +1298,18 @@ final createColumnResVersionValues = EnumValues({
 });
 
 class CreateCardReq {
-    String boardId;
-    String cardId;
-    String columnId;
-    CreateCardReqColumnPosition columnPosition;
-    String title;
+    String diff;
 
     CreateCardReq({
-        required this.boardId,
-        required this.cardId,
-        required this.columnId,
-        required this.columnPosition,
-        required this.title,
+        required this.diff,
     });
 
     factory CreateCardReq.fromJson(Map<String, dynamic> json) => CreateCardReq(
-        boardId: json["boardId"],
-        cardId: json["cardId"],
-        columnId: json["columnId"],
-        columnPosition: CreateCardReqColumnPosition.fromJson(json["columnPosition"]),
-        title: json["title"],
+        diff: json["diff"],
     );
 
     Map<String, dynamic> toJson() => {
-        "boardId": boardId,
-        "cardId": cardId,
-        "columnId": columnId,
-        "columnPosition": columnPosition.toJson(),
-        "title": title,
-    };
-}
-
-class CreateCardReqColumnPosition {
-    String denominator;
-    String numerator;
-
-    CreateCardReqColumnPosition({
-        required this.denominator,
-        required this.numerator,
-    });
-
-    factory CreateCardReqColumnPosition.fromJson(Map<String, dynamic> json) => CreateCardReqColumnPosition(
-        denominator: json["denominator"],
-        numerator: json["numerator"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "denominator": denominator,
-        "numerator": numerator,
+        "diff": diff,
     };
 }
 
@@ -1359,7 +1323,7 @@ class CreateCardRes {
     bool deleted;
     String id;
     List<String> pk;
-    String title;
+    CreateCardResText text;
     double updatedAt;
 
     CreateCardRes({
@@ -1372,7 +1336,7 @@ class CreateCardRes {
         required this.deleted,
         required this.id,
         required this.pk,
-        required this.title,
+        required this.text,
         required this.updatedAt,
     });
 
@@ -1386,7 +1350,7 @@ class CreateCardRes {
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
-        title: json["title"],
+        text: CreateCardResText.fromJson(json["text"]),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1400,7 +1364,7 @@ class CreateCardRes {
         "deleted": deleted,
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
-        "title": title,
+        "text": text.toJson(),
         "updatedAt": updatedAt,
     };
 }
@@ -1422,6 +1386,22 @@ class CreateCardResColumnPosition {
     Map<String, dynamic> toJson() => {
         "denominator": denominator,
         "numerator": numerator,
+    };
+}
+
+class CreateCardResText {
+    bool isRichtextMarker;
+
+    CreateCardResText({
+        required this.isRichtextMarker,
+    });
+
+    factory CreateCardResText.fromJson(Map<String, dynamic> json) => CreateCardResText(
+        isRichtextMarker: json["__isRichtextMarker"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "__isRichtextMarker": isRichtextMarker,
     };
 }
 
@@ -1587,7 +1567,7 @@ class CardElement {
     String id;
     List<String> pk;
     String state;
-    String title;
+    PurpleText text;
     double updatedAt;
 
     CardElement({
@@ -1604,7 +1584,7 @@ class CardElement {
         required this.id,
         required this.pk,
         required this.state,
-        required this.title,
+        required this.text,
         required this.updatedAt,
     });
 
@@ -1622,7 +1602,7 @@ class CardElement {
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
-        title: json["title"],
+        text: PurpleText.fromJson(json["text"]),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1640,7 +1620,7 @@ class CardElement {
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
-        "title": title,
+        "text": text.toJson(),
         "updatedAt": updatedAt,
     };
 }
@@ -1889,6 +1869,22 @@ class PurpleColumnPosition {
     };
 }
 
+class PurpleText {
+    bool isRichtextMarker;
+
+    PurpleText({
+        required this.isRichtextMarker,
+    });
+
+    factory PurpleText.fromJson(Map<String, dynamic> json) => PurpleText(
+        isRichtextMarker: json["__isRichtextMarker"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "__isRichtextMarker": isRichtextMarker,
+    };
+}
+
 class DeleteBoardReq {
     String boardId;
 
@@ -2105,7 +2101,7 @@ class CreateCommentResCard {
     String id;
     List<String> pk;
     String state;
-    String title;
+    FluffyText text;
     double updatedAt;
 
     CreateCommentResCard({
@@ -2122,7 +2118,7 @@ class CreateCommentResCard {
         required this.id,
         required this.pk,
         required this.state,
-        required this.title,
+        required this.text,
         required this.updatedAt,
     });
 
@@ -2140,7 +2136,7 @@ class CreateCommentResCard {
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
-        title: json["title"],
+        text: FluffyText.fromJson(json["text"]),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2158,7 +2154,7 @@ class CreateCommentResCard {
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
-        "title": title,
+        "text": text.toJson(),
         "updatedAt": updatedAt,
     };
 }
@@ -2407,6 +2403,22 @@ class FluffyColumnPosition {
     };
 }
 
+class FluffyText {
+    bool isRichtextMarker;
+
+    FluffyText({
+        required this.isRichtextMarker,
+    });
+
+    factory FluffyText.fromJson(Map<String, dynamic> json) => FluffyText(
+        isRichtextMarker: json["__isRichtextMarker"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "__isRichtextMarker": isRichtextMarker,
+    };
+}
+
 class DeleteCommentReq {
     String commentId;
 
@@ -2563,7 +2575,7 @@ class GetCardCommentsValueCard {
     String id;
     List<String> pk;
     String state;
-    String title;
+    TentacledText text;
     double updatedAt;
 
     GetCardCommentsValueCard({
@@ -2580,7 +2592,7 @@ class GetCardCommentsValueCard {
         required this.id,
         required this.pk,
         required this.state,
-        required this.title,
+        required this.text,
         required this.updatedAt,
     });
 
@@ -2598,7 +2610,7 @@ class GetCardCommentsValueCard {
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
-        title: json["title"],
+        text: TentacledText.fromJson(json["text"]),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2616,7 +2628,7 @@ class GetCardCommentsValueCard {
         "id": id,
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
-        "title": title,
+        "text": text.toJson(),
         "updatedAt": updatedAt,
     };
 }
@@ -2862,6 +2874,22 @@ class TentacledColumnPosition {
     Map<String, dynamic> toJson() => {
         "denominator": denominator,
         "numerator": numerator,
+    };
+}
+
+class TentacledText {
+    bool isRichtextMarker;
+
+    TentacledText({
+        required this.isRichtextMarker,
+    });
+
+    factory TentacledText.fromJson(Map<String, dynamic> json) => TentacledText(
+        isRichtextMarker: json["__isRichtextMarker"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "__isRichtextMarker": isRichtextMarker,
     };
 }
 

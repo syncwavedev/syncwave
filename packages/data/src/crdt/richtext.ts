@@ -11,7 +11,7 @@ export function createRichtext(): Richtext {
 
 export function zRichtext() {
     return z.object({
-        [RICHTEXT_MARKER_KEY]: z.literal(true),
+        [RICHTEXT_MARKER_KEY]: z.boolean(),
     }) as unknown as z.ZodType<Richtext>;
 }
 

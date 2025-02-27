@@ -1,10 +1,10 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {type BigFloat, toBigFloat, zBigFloat} from '../../big-float.js';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand, unreachable} from '../../utils.js';
-import {createUuid, Uuid, zUuid} from '../../uuid.js';
+import {createUuid, Uuid} from '../../uuid.js';
 import {
     type Doc,
     DocRepo,
@@ -56,14 +56,17 @@ type StoredColumn = ColumnV1 | ColumnV2 | ColumnV3;
 const BOARD_ID = 'boardId';
 
 export function zColumn() {
-    return zDoc(z.tuple([zUuid<ColumnId>()])).extend({
-        id: zUuid<ColumnId>(),
-        authorId: zUuid<UserId>(),
-        boardId: zUuid<BoardId>(),
-        title: z.string(),
-        version: z.literal('3'),
-        boardPosition: zBigFloat(),
-    });
+    return Type.Composite([
+        zDoc(Type.Tuple([Uuid<ColumnId>()])),
+        Type.Object({
+            id: Uuid<ColumnId>(),
+            authorId: Uuid<UserId>(),
+            boardId: Uuid<BoardId>(),
+            title: Type.String(),
+            version: Type.Literal('3'),
+            boardPosition: zBigFloat(),
+        }),
+    ]);
 }
 
 export class ColumnRepo {

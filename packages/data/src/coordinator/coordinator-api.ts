@@ -1,5 +1,4 @@
 import {type AuthContext, AuthContextParser} from '../data/auth-context.js';
-import {dataInspectorApi} from '../data/data-inspector-api.js';
 import {
     type ChangeEvent,
     type Config,
@@ -15,7 +14,6 @@ import type {
 } from '../data/infrastructure.js';
 import {createReadApi, ReadApiState} from '../data/read-api.js';
 import {createWriteApi, WriteApiState} from '../data/write-api/write-api.js';
-import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {
     type Api,
@@ -64,31 +62,6 @@ export function createCoordinatorApi() {
         }
     );
 
-    const adaptedInspectorApi = applyMiddleware(
-        dataInspectorApi,
-        async (next, state: CoordinatorApiState) => {
-            await state.transact(async tx => {
-                await next({
-                    dataNode: tx.dataNode,
-                    rootTx: tx.tx,
-                });
-            });
-        }
-    );
-
-    const wrappedAndAdaptedInspectorApi = applyMiddleware(
-        adaptedInspectorApi,
-        async (next, state: CoordinatorApiState) => {
-            if (!state.auth.superadmin) {
-                throw new BusinessError(
-                    `only superadmins can use inspector api. id = ${state.auth.identityId}`,
-                    'forbidden'
-                );
-            }
-            await next(state);
-        }
-    );
-
     const adaptedAuthApi = applyMiddleware<
         AuthApiState,
         CoordinatorApiState,
@@ -112,7 +85,6 @@ export function createCoordinatorApi() {
         ...adaptedReadApi,
         ...adaptedWriteApi,
         ...adaptedAuthApi,
-        ...wrappedAndAdaptedInspectorApi,
     } satisfies Api<CoordinatorApiState>;
 
     const timeLoggerApi = applyMiddleware<

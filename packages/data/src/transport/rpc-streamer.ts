@@ -1,5 +1,5 @@
 import type {Tracer} from '@opentelemetry/api';
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {type Cancel, Context, context} from '../context.js';
 import {
     AppError,
@@ -24,11 +24,12 @@ import {
     assertNever,
     type Brand,
     catchCancel,
+    ensureValid,
     run,
     runAll,
     type Unsubscribe,
 } from '../utils.js';
-import {createUuid, createUuidV4, Uuid, zUuid} from '../uuid.js';
+import {createUuid, createUuidV4, Uuid} from '../uuid.js';
 import {
     createRpcHandlerClient,
     launchRpcHandlerServer,
@@ -107,7 +108,7 @@ function createStreamId() {
 }
 
 function zStreamId() {
-    return zUuid<StreamId>();
+    return Uuid<StreamId>();
 }
 
 class RpcStreamerServerApiState<T> {
@@ -131,8 +132,8 @@ export function stringifyLogPart(arg: unknown) {
 function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
     return createApi<RpcStreamerServerApiState<TState>>()({
         handle: handler({
-            req: z.object({name: z.string(), arg: z.unknown()}),
-            res: z.unknown(),
+            req: Type.Object({name: Type.String(), arg: Type.Unknown()}),
+            res: Type.Unknown(),
             handle: async (state, req, ctx) => {
                 const processor = getRequiredProcessor(api, req.name);
                 if (processor.type !== 'handler') {
@@ -160,12 +161,12 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
             },
         }),
         stream: handler({
-            req: z.object({
-                name: z.string(),
-                arg: z.any(),
+            req: Type.Object({
+                name: Type.String(),
+                arg: Type.Any(),
                 streamId: zStreamId(),
             }),
-            res: z.object({}),
+            res: Type.Object({}),
             handle: async (state, {name, streamId, arg}, headers) => {
                 const processor = getRequiredProcessor(api, name);
                 if (processor.type !== 'streamer') {
@@ -241,8 +242,8 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
             },
         }),
         cancel: handler({
-            req: z.object({streamId: zStreamId(), reason: z.string()}),
-            res: z.object({}),
+            req: Type.Object({streamId: zStreamId(), reason: Type.String()}),
+            res: Type.Object({}),
             handle: async (state, {streamId, reason}) => {
                 state.jobManager.cancel(
                     streamId,
@@ -385,8 +386,8 @@ class RpcStreamerClientApiState {
 function createRpcStreamerClientApi() {
     return createApi<RpcStreamerClientApiState>()({
         next: handler({
-            req: z.object({streamId: zStreamId(), value: z.unknown()}),
-            res: z.object({}),
+            req: Type.Object({streamId: zStreamId(), value: Type.Unknown()}),
+            res: Type.Object({}),
             handle: async (state, {streamId, value}) => {
                 await state.next(streamId, value);
 
@@ -394,12 +395,12 @@ function createRpcStreamerClientApi() {
             },
         }),
         throw: handler({
-            req: z.object({
+            req: Type.Object({
                 streamId: zStreamId(),
-                message: z.string(),
-                code: z.string(),
+                message: Type.String(),
+                code: Type.String(),
             }),
-            res: z.object({}),
+            res: Type.Object({}),
             handle: async (state, {streamId, message, code}) => {
                 await state.throw({streamId, message, code});
 
@@ -407,8 +408,8 @@ function createRpcStreamerClientApi() {
             },
         }),
         end: handler({
-            req: z.object({streamId: zStreamId()}),
-            res: z.object({}),
+            req: Type.Object({streamId: zStreamId()}),
+            res: Type.Object({}),
             handle: async (state, {streamId}) => {
                 state.end(streamId);
 
@@ -487,8 +488,16 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
         return (arg: unknown, headers?: Partial<MessageHeaders>) => {
             context().ensureActive();
 
-            // validate argument
-            arg = handler.req.parse(arg);
+            try {
+                ensureValid(arg, handler.req);
+            } catch (error) {
+                log.error(
+                    toError(error),
+                    `invalid request for ${name}` + JSON.stringify(arg)
+                );
+
+                throw error;
+            }
 
             if (handler.type === 'handler') {
                 const requestId = createUuidV4();

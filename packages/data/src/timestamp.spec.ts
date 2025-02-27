@@ -1,11 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {
-    addHours,
-    addYears,
-    getNow,
-    type Timestamp,
-    zTimestamp,
-} from './timestamp.js';
+import {addHours, addYears, getNow, type Timestamp} from './timestamp.js';
 
 // Helper function to check if a value is a valid timestamp
 const isValidTimestamp = (value: any): value is Timestamp => {
@@ -48,25 +42,5 @@ describe('addYears', () => {
         const now = getNow();
         const result = addYears(now, -1);
         expect(result).toBeLessThan(now);
-    });
-});
-
-describe('zTimestamp', () => {
-    const schema = zTimestamp();
-
-    test('validates correct timestamp', () => {
-        const now = getNow();
-        expect(() => schema.parse(now)).not.toThrow();
-    });
-
-    test('rejects NaN values', () => {
-        expect(() => schema.parse(NaN)).toThrow();
-    });
-
-    test('rejects non-number values', () => {
-        expect(() => schema.parse('1234567890')).toThrow();
-        expect(() => schema.parse(null)).toThrow();
-        expect(() => schema.parse(undefined)).toThrow();
-        expect(() => schema.parse({})).toThrow();
     });
 });

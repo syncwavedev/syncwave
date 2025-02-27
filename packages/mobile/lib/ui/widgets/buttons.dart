@@ -20,7 +20,7 @@ class _BaseButton extends StatefulWidget {
     this.textStyle,
     this.borderRadius = 8.0,
     this.padding,
-    // ignore: unused_element
+    // ignore: unused_element, unused_element_parameter
     this.backgroundColor,
   });
 

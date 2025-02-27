@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import type {Codec} from './codec.js';
 import type {Brand} from './utils.js';
 
@@ -25,9 +25,9 @@ export function encodeBase64(data: Base64): Uint8Array {
 }
 
 export function zBase64() {
-    return z.string().refine(validateBase64, {
-        message: 'Invalid Base64 format',
-    }) as unknown as z.ZodType<Base64>;
+    return Type.Unsafe<Base64>(
+        Type.String({format: 'regex', pattern: base64Regex.source})
+    );
 }
 
 const base64Regex =

@@ -1,5 +1,7 @@
-import {z} from 'zod';
-import {type CancelBehavior, context} from './context.js';
+import {Type, type TSchema} from '@sinclair/typebox';
+import {Ajv} from 'ajv';
+import addFormats from 'ajv-formats';
+import {context, type CancelBehavior} from './context.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
@@ -12,11 +14,41 @@ import {
 } from './errors.js';
 import {Stream, toStream} from './stream.js';
 
+const ajv = addFormats.default(new Ajv({}), [
+    'date-time',
+    'time',
+    'date',
+    'email',
+    'hostname',
+    'ipv4',
+    'ipv6',
+    'uri',
+    'uri-reference',
+    'uuid',
+    'uri-template',
+    'json-pointer',
+    'relative-json-pointer',
+    'regex',
+]);
+export function ensureValid<T>(
+    x: unknown,
+    schema: InferSchema<T>
+): asserts x is T {
+    const validate = ajv.compile(schema);
+    if (!validate(x)) {
+        throw new AppError(
+            'validation failed: ' + JSON.stringify(validate.errors, null, 2)
+        );
+    }
+}
+
 export type Brand<T, B> = T & {__brand: () => B | undefined};
 
 export type Nothing = void | undefined;
 
 export type Unsubscribe = () => void;
+
+export type InferSchema<T> = TSchema & {static: T};
 
 export function assertNever(value: never): never {
     throw new AppError('assertNever failed: ' + value);
@@ -328,9 +360,7 @@ export async function whenAny<T>(promises: Promise<T>[]) {
 }
 
 export function zUint8Array() {
-    return z.custom<Uint8Array>(x => x instanceof Uint8Array, {
-        message: 'Uint8Array expected',
-    });
+    return Type.Uint8Array();
 }
 
 export function run<R>(fn: () => R) {

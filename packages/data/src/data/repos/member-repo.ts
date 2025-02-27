@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {type BigFloat, toBigFloat, zBigFloat} from '../../big-float.js';
 import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
@@ -6,7 +6,7 @@ import {UniqueError} from '../../kv/data-index.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand, unreachable} from '../../utils.js';
-import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {createUuid, Uuid} from '../../uuid.js';
 import {
     type Doc,
     DocRepo,
@@ -27,11 +27,11 @@ export function createMemberId(): MemberId {
 export type MemberRole = 'owner' | 'admin' | 'writer' | 'reader';
 
 export function zMemberRole() {
-    return z.union([
-        z.literal('owner'),
-        z.literal('admin'),
-        z.literal('writer'),
-        z.literal('reader'),
+    return Type.Union([
+        Type.Literal('owner'),
+        Type.Literal('admin'),
+        Type.Literal('writer'),
+        Type.Literal('reader'),
     ]);
 }
 
@@ -67,14 +67,17 @@ const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
 
 export function zMember() {
-    return zDoc(z.tuple([zUuid<MemberId>()])).extend({
-        id: zUuid<MemberId>(),
-        userId: zUuid<UserId>(),
-        boardId: zUuid<BoardId>(),
-        role: zMemberRole(),
-        version: z.literal('2'),
-        position: zBigFloat(),
-    });
+    return Type.Composite([
+        zDoc(Type.Tuple([Uuid<MemberId>()])),
+        Type.Object({
+            id: Uuid<MemberId>(),
+            userId: Uuid<UserId>(),
+            boardId: Uuid<BoardId>(),
+            role: zMemberRole(),
+            version: Type.Literal('2'),
+            position: zBigFloat(),
+        }),
+    ]);
 }
 
 export class MemberRepo {

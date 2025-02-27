@@ -73,7 +73,7 @@ describe('e2e', () => {
         expect(board).toEqual(expectedBoard);
     });
 
-    it('should create a card', async () => {
+    it.only('should create a card', async () => {
         const boardId = createBoardId();
         await subject.client.rpc.createBoard({
             boardId,

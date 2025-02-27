@@ -1,4 +1,4 @@
-import {z, ZodType} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {context} from '../context.js';
 import {
     Crdt,
@@ -21,7 +21,13 @@ import {
 import {Stream, toStream} from '../stream.js';
 import {getNow, type Timestamp, zTimestamp} from '../timestamp.js';
 import {compareTuple, stringifyTuple, type Tuple} from '../tuple.js';
-import {type Nothing, pipe, whenAll} from '../utils.js';
+import {
+    ensureValid,
+    type InferSchema,
+    type Nothing,
+    pipe,
+    whenAll,
+} from '../utils.js';
 import {type TransitionChecker} from './transition-checker.js';
 
 export class ConstraintError extends AppError {
@@ -41,12 +47,12 @@ export interface Doc<TKey extends Tuple> {
     deleted: boolean;
 }
 
-export function zDoc<T extends Tuple>(pk: ZodType<T>) {
-    return z.object({
+export function zDoc<T extends Tuple>(pk: InferSchema<T>) {
+    return Type.Object({
         pk: pk,
         createdAt: zTimestamp(),
         updatedAt: zTimestamp(),
-        deleted: z.boolean(),
+        deleted: Type.Boolean(),
     });
 }
 
@@ -73,7 +79,7 @@ export interface Constraint<T extends Doc<Tuple>> {
 export interface DocStoreOptions<T extends Doc<Tuple>> {
     tx: AppTransaction;
     indexes: IndexMap<T>;
-    schema: ZodType<T>;
+    schema: InferSchema<T>;
     onChange: OnDocChange<T>;
     constraints: readonly Constraint<T>[];
     upgrade?: Recipe<any>;
@@ -187,7 +193,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     private readonly primary: Transaction<Tuple, Crdt<T>>;
     private readonly primaryKeyRaw: AppTransaction<Crdt<T>>;
     private readonly onChange: OnDocChange<T>;
-    private readonly schema: ZodType<T>;
+    private readonly schema: InferSchema<T>;
     // todo: add tests
     private readonly constraints: readonly Constraint<T>[];
     // todo: add tests
@@ -432,7 +438,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         transitionChecker?: TransitionChecker<T>;
     }): Promise<void> {
         const nextSnapshot = params.next.snapshot();
-        this.schema.parse(nextSnapshot);
+        ensureValid(nextSnapshot, this.schema);
         await whenAll([
             params.transitionChecker?.(params.prev, nextSnapshot) ??
                 Promise.resolve(),

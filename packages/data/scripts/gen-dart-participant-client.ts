@@ -6,7 +6,6 @@ import {
     JSONSchemaInput,
     quicktype,
 } from 'quicktype-core';
-import {zodToJsonSchema} from 'zod-to-json-schema';
 import {createParticipantApi, toError} from '../src/index.js';
 import {log} from '../src/logger.js';
 import type {Api, Processor} from '../src/transport/rpc.js';
@@ -16,11 +15,28 @@ interface Type {
     schema: object;
 }
 
+function addAdditionalPropertiesFalse(schema: any) {
+    if (typeof schema !== 'object' || schema === null) return schema;
+
+    if (schema.type === 'object' && 'properties' in schema) {
+        schema.additionalProperties = false;
+    }
+
+    for (const key in schema) {
+        addAdditionalPropertiesFalse(schema[key]);
+    }
+
+    return schema;
+}
+
 async function quicktypeJSONSchema(types: Type[]) {
     const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore());
 
     for (const {name, schema} of types) {
-        await schemaInput.addSource({name, schema: JSON.stringify(schema)});
+        await schemaInput.addSource({
+            name,
+            schema: JSON.stringify(addAdditionalPropertiesFalse(schema)),
+        });
     }
 
     const inputData = new InputData();
@@ -47,22 +63,22 @@ async function genDto(api: Api<unknown>) {
                 return [
                     {
                         name: getRequestName(name),
-                        schema: zodToJsonSchema(processor.req),
+                        schema: processor.req,
                     },
                     {
                         name: getResponseName(name),
-                        schema: zodToJsonSchema(processor.res),
+                        schema: processor.res,
                     },
                 ];
             } else if (processor.type === 'streamer') {
                 return [
                     {
                         name: getRequestName(name),
-                        schema: zodToJsonSchema(processor.req),
+                        schema: processor.req,
                     },
                     {
                         name: getValueName(name),
-                        schema: zodToJsonSchema(processor.item),
+                        schema: processor.item,
                     },
                 ];
             }

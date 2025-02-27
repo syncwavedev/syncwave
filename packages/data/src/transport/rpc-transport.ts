@@ -1,6 +1,5 @@
-import {AppError} from '../errors.js';
 import type {Observer} from '../subject.js';
-import type {Nothing, Unsubscribe} from '../utils.js';
+import {ensureValid, type Nothing, type Unsubscribe} from '../utils.js';
 import {zRpcMessage, type RpcMessage} from './rpc-message.js';
 import type {
     Connection,
@@ -29,11 +28,8 @@ export class RpcConnection implements Connection<RpcMessage> {
     }
 
     private parse(data: unknown) {
-        try {
-            return messageSchema.parse(data);
-        } catch (error) {
-            throw new AppError('RpcMessage validation failed', {cause: error});
-        }
+        ensureValid(data, messageSchema);
+        return data;
     }
 }
 

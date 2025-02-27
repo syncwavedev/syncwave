@@ -1,12 +1,12 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import type {AppStore, Condition} from '../kv/kv-store.js';
 import {MemKVStore} from '../kv/mem-kv-store.js';
 import {TupleStore} from '../kv/tuple-store.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import type {Tuple} from '../tuple.js';
-import {createUuid, Uuid, zUuid} from '../uuid.js';
+import {createUuid, Uuid} from '../uuid.js';
 import {
     type Doc,
     DocRepo,
@@ -21,10 +21,13 @@ interface MyDoc extends Doc<readonly [Uuid]> {
 }
 
 function zMyDoc() {
-    return zDoc(z.tuple([zUuid()])).extend({
-        name: z.string(),
-        age: z.number(),
-    });
+    return Type.Composite([
+        zDoc(Type.Tuple([Uuid()])),
+        Type.Object({
+            name: Type.String(),
+            age: Type.Number(),
+        }),
+    ]);
 }
 
 const schema = zMyDoc();

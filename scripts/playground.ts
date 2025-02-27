@@ -1,39 +1,47 @@
 /* eslint-disable */
+import {Type} from '@sinclair/typebox';
+import {
+    FetchingJSONSchemaStore,
+    InputData,
+    JSONSchemaInput,
+    quicktype,
+} from 'quicktype-core';
+import {z} from 'zod';
+import {zodToJsonSchema} from 'zod-to-json-schema';
 
-import {decodeTuple, encodeTuple} from '../packages/data/src/tuple.js';
+const typeBoxSchema = Type.Object({}, {additionalProperties: false});
 
-const res = encodeTuple([
-    null,
-    Buffer.from(new Uint8Array([1, 2, 3])),
-    'string',
-    123,
-    true,
-    false,
-]);
+console.log(typeBoxSchema);
 
-console.log(res);
+const zodSchema = zodToJsonSchema(z.object({}));
 
-console.log(decodeTuple(new Uint8Array([0x01, 0x02])));
+console.log(zodSchema);
 
-// export function decodeTuple(buf: Uint8Array): any[] {
-//     const tuple = unpack(Buffer.from(buf));
-//     if (!Array.isArray(tuple)) {
-//         throw new Error('Invalid tuple: ' + JSON.stringify(tuple));
-//     }
+const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore());
+schemaInput.addSource({
+    name: 'SomeName',
+    schema: JSON.stringify(addAdditionalPropertiesFalse(typeBoxSchema)),
+});
 
-//     return tuple.map(x => {
-//         if (x instanceof Uint8Array) {
-//             return x;
-//         } else if (typeof x === 'string') {
-//             return x;
-//         } else if (typeof x === 'number') {
-//             return x;
-//         } else if (typeof x === 'boolean') {
-//             return x;
-//         } else if (x === null) {
-//             return null;
-//         } else {
-//             throw new AppError('Invalid tuple item: ' + JSON.stringify(x));
-//         }
-//     });
-// }
+const inputData = new InputData();
+inputData.addInput(schemaInput);
+console.log(
+    await quicktype({
+        inputData,
+        lang: 'dart',
+    }).then(x => x.lines.join('\n'))
+);
+
+function addAdditionalPropertiesFalse(schema: any) {
+    if (typeof schema !== 'object' || schema === null) return schema;
+
+    if (schema.type === 'object' && 'properties' in schema) {
+        schema.additionalProperties = false;
+    }
+
+    for (const key in schema) {
+        addAdditionalPropertiesFalse(schema[key]);
+    }
+
+    return schema;
+}

@@ -1,26 +1,26 @@
+import {type Static, Type} from '@sinclair/typebox';
 import {pack, unpack} from 'fdb-tuple';
-import {z} from 'zod';
 import type {Codec} from './codec.js';
 import {AppError} from './errors.js';
 import {decodeHex} from './hex.js';
 import {assertNever, compareUint8Array, zUint8Array} from './utils.js';
-import {parseUuid, stringifyUuid, zUuid, type Uuid} from './uuid.js';
+import {parseUuid, stringifyUuid, Uuid} from './uuid.js';
 
 export function zPrimitive() {
-    return z.union([
-        z.null(),
-        z.boolean(),
-        z.number(),
-        z.string(),
-        zUuid<Uuid>(),
+    return Type.Union([
+        Type.Null(),
+        Type.Boolean(),
+        Type.Number(),
+        Type.String(),
+        Uuid<Uuid>(),
         zUint8Array(),
     ]);
 }
 
-export type Primitive = z.infer<ReturnType<typeof zPrimitive>>;
+export type Primitive = Static<ReturnType<typeof zPrimitive>>;
 
 export function zTuple() {
-    return z.array(zPrimitive()).readonly();
+    return Type.Unsafe<Tuple>(Type.Array(zPrimitive()));
 }
 
 export type Tuple = readonly Primitive[];

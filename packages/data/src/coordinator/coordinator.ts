@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
 import {AuthContextParser} from '../data/auth-context.js';
 import {DataLayer} from '../data/data-layer.js';
@@ -22,8 +22,8 @@ import type {TransportServer} from '../transport/transport.js';
 import type {Tuple} from '../tuple.js';
 import {getIdentity, signJwtToken} from './auth-api.js';
 import {
-    type CoordinatorApiInputState,
     createCoordinatorApi,
+    type CoordinatorApiInputState,
 } from './coordinator-api.js';
 
 export interface CoordinatorServerOptions {
@@ -44,7 +44,7 @@ export class CoordinatorServer {
         const hubMemTransportServer = new MemTransportServer(
             new MsgpackCodec()
         );
-        const hubMessageSchema = z.void();
+        const hubMessageSchema = Type.Void();
         const hubAuthSecret = 'hub-auth-secret';
         const hubServer = new HubServer(
             hubMemTransportServer,

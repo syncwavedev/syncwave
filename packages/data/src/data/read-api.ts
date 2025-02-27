@@ -1,10 +1,10 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {observable, toStream} from '../stream.js';
 import {createApi, type InferRpcClient, streamer} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
-import {zUuid} from '../uuid.js';
+import {Uuid} from '../uuid.js';
 import type {AuthContext} from './auth-context.js';
 import {
     boardEvents,
@@ -53,8 +53,8 @@ export class ReadApiState {
 export function createReadApi() {
     return createApi<ReadApiState>()({
         getMe: streamer({
-            req: z.object({}),
-            item: z.object({
+            req: Type.Object({}),
+            item: Type.Object({
                 user: zUserDto(),
                 identity: zIdentity(),
             }),
@@ -82,8 +82,8 @@ export function createReadApi() {
             },
         }),
         getMyMembers: streamer({
-            req: z.object({}),
-            item: z.array(zMemberDto()),
+            req: Type.Object({}),
+            item: Type.Array(zMemberDto()),
             async *stream(st) {
                 const userId = st.ensureAuthenticated();
 
@@ -114,8 +114,8 @@ export function createReadApi() {
             },
         }),
         getBoardCards: streamer({
-            req: z.object({boardId: zUuid<BoardId>()}),
-            item: z.array(zCard()),
+            req: Type.Object({boardId: Uuid<BoardId>()}),
+            item: Type.Array(zCard()),
             async *stream(st, {boardId}) {
                 yield* observable({
                     async get() {
@@ -135,8 +135,8 @@ export function createReadApi() {
             },
         }),
         getCard: streamer({
-            req: z.object({cardId: zUuid<CardId>()}),
-            item: zCard().optional(),
+            req: Type.Object({cardId: Uuid<CardId>()}),
+            item: Type.Union([zCard(), Type.Undefined()]),
             async *stream(st, {cardId}) {
                 const card = await st.transact(tx =>
                     tx.cards.getById(cardId, false)
@@ -169,8 +169,8 @@ export function createReadApi() {
             },
         }),
         getCardComments: streamer({
-            req: z.object({cardId: zUuid<CardId>()}),
-            item: z.array(zCommentDto()),
+            req: Type.Object({cardId: Uuid<CardId>()}),
+            item: Type.Array(zCommentDto()),
             async *stream(st, {cardId}) {
                 const card = await st.transact(tx =>
                     tx.ps.ensureCardMember(cardId, 'reader')
@@ -192,8 +192,8 @@ export function createReadApi() {
             },
         }),
         getBoardMembers: streamer({
-            req: z.object({boardId: zUuid<BoardId>()}),
-            item: z.array(zMemberAdminDto()),
+            req: Type.Object({boardId: Uuid<BoardId>()}),
+            item: Type.Array(zMemberAdminDto()),
             async *stream(st, {boardId}) {
                 yield* observable({
                     get() {
@@ -212,8 +212,8 @@ export function createReadApi() {
             },
         }),
         getBoard: streamer({
-            req: z.object({
-                key: z.string(),
+            req: Type.Object({
+                key: Type.String(),
             }),
             item: zBoardDto(),
             async *stream(st, {key}) {
@@ -249,8 +249,8 @@ export function createReadApi() {
             },
         }),
         getBoardView: streamer({
-            req: z.object({
-                key: z.string(),
+            req: Type.Object({
+                key: Type.String(),
             }),
             item: zBoardViewDto(),
             async *stream(st, {key}) {

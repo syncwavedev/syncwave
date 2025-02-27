@@ -1,11 +1,11 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {type Timestamp, zTimestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
-import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {createUuid, Uuid} from '../../uuid.js';
 import {
     type Doc,
     DocRepo,
@@ -41,9 +41,9 @@ const USER_ID_INDEX = 'userId';
 export class EmailTakenIdentityRepoError extends BusinessError {}
 
 export function zVerificationCode() {
-    return z.object(
+    return Type.Object(
         {
-            code: z.string(),
+            code: Type.String(),
             expires: zTimestamp(),
         },
         {
@@ -53,13 +53,16 @@ export function zVerificationCode() {
 }
 
 export function zIdentity() {
-    return zDoc(z.tuple([zUuid<IdentityId>()])).extend({
-        id: zUuid<IdentityId>(),
-        userId: zUuid<UserId>(),
-        email: z.string(),
-        authActivityLog: z.array(zTimestamp()),
-        verificationCode: zVerificationCode(),
-    });
+    return Type.Composite([
+        zDoc(Type.Tuple([Uuid<IdentityId>()])),
+        Type.Object({
+            id: Uuid<IdentityId>(),
+            userId: Uuid<UserId>(),
+            email: Type.String(),
+            authActivityLog: Type.Array(zTimestamp()),
+            verificationCode: zVerificationCode(),
+        }),
+    ]);
 }
 
 export class IdentityRepo {

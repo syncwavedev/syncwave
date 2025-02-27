@@ -1,9 +1,9 @@
 import type {Tracer} from '@opentelemetry/api';
-import type {TypeOf, ZodType} from 'zod';
+import type {Static, TSchema} from '@sinclair/typebox';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
-import {assertNever} from '../utils.js';
+import {assertNever, ensureValid, type InferSchema} from '../utils.js';
 import type {MessageHeaders, RpcMessageId} from './rpc-message.js';
 import {launchRpcStreamerServer} from './rpc-streamer.js';
 import {RpcTransportServer, type RpcConnection} from './rpc-transport.js';
@@ -11,15 +11,15 @@ import type {TransportServer} from './transport.js';
 
 export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
-    req: ZodType<TRequest>;
-    res: ZodType<TResponse>;
+    req: InferSchema<TRequest>;
+    res: InferSchema<TResponse>;
     handle(state: TState, req: TRequest, ctx: RequestInfo): Promise<TResponse>;
 }
 
 export interface Streamer<TState, TRequest, TItem> {
     type: 'streamer';
-    req: ZodType<TRequest>;
-    item: ZodType<TItem>;
+    req: InferSchema<TRequest>;
+    item: InferSchema<TItem>;
     stream(
         state: TState,
         req: TRequest,
@@ -44,33 +44,34 @@ export interface RequestInfo {
 
 export interface HandlerOptions<
     TState,
-    TRequestSchema extends ZodType<any, any, any>,
-    TResponseSchema extends ZodType<any, any, any>,
+    TRequestSchema extends TSchema,
+    TResponseSchema extends TSchema,
 > {
     req: TRequestSchema;
     res: TResponseSchema;
     handle: (
         state: TState,
-        req: TypeOf<TRequestSchema>,
+        req: Static<TRequestSchema>,
         ctx: RequestInfo
-    ) => Promise<TypeOf<TResponseSchema>>;
+    ) => Promise<Static<TResponseSchema>>;
 }
 
 export function handler<
     TState,
-    TRequestSchema extends ZodType<any, any, any>,
-    TResponseSchema extends ZodType<any, any, any>,
+    TRequestSchema extends TSchema,
+    TResponseSchema extends TSchema,
 >(
     options: HandlerOptions<TState, TRequestSchema, TResponseSchema>
-): Handler<TState, TypeOf<TRequestSchema>, TypeOf<TResponseSchema>> {
+): Handler<TState, Static<TRequestSchema>, Static<TResponseSchema>> {
     async function wrapper(
         state: TState,
-        req: TypeOf<TRequestSchema>,
+        req: Static<TRequestSchema>,
         info: RequestInfo
     ) {
-        req = options.req.parse(req);
+        ensureValid(req, options.req);
         const res = await options.handle(state, req, info);
-        return options.res.parse(res);
+        ensureValid(res, options.res);
+        return res;
     }
 
     return {
@@ -89,33 +90,34 @@ export type StreamerItemSchema<T extends Streamer<any, any, any>> =
 
 export interface StreamerOptions<
     TState,
-    TRequestSchema extends ZodType<any, any, any>,
-    TItemSchema extends ZodType<any, any, any>,
+    TRequestSchema extends TSchema,
+    TItemSchema extends TSchema,
 > {
     req: TRequestSchema;
     item: TItemSchema;
     stream: (
         state: TState,
-        req: TypeOf<TRequestSchema>,
+        req: Static<TRequestSchema>,
         ctx: RequestInfo
-    ) => AsyncIterable<TypeOf<TItemSchema>>;
+    ) => AsyncIterable<Static<TItemSchema>>;
 }
 
 export function streamer<
     TState,
-    TRequestSchema extends ZodType<any, any, any>,
-    TItemSchema extends ZodType<any, any, any>,
+    TRequestSchema extends TSchema,
+    TItemSchema extends TSchema,
 >(
     options: StreamerOptions<TState, TRequestSchema, TItemSchema>
-): Streamer<TState, TypeOf<TRequestSchema>, TypeOf<TItemSchema>> {
+): Streamer<TState, Static<TRequestSchema>, Static<TItemSchema>> {
     async function* wrapper(
         state: TState,
-        req: TypeOf<TRequestSchema>,
+        req: Static<TRequestSchema>,
         ctx: RequestInfo
-    ): AsyncIterable<TypeOf<TItemSchema>> {
-        req = options.req.parse(req);
+    ): AsyncIterable<Static<TItemSchema>> {
+        ensureValid(req, options.req);
         for await (const item of options.stream(state, req, ctx)) {
-            yield options.item.parse(item);
+            ensureValid(item, options.item);
+            yield item;
         }
     }
     return {

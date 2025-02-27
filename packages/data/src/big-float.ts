@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type, type Static} from '@sinclair/typebox';
 
 export function stringifyBigInt(x: bigint): string {
     return x.toString();
@@ -9,13 +9,13 @@ export function parseBigInt(x: string): bigint {
 }
 
 export function zBigFloat() {
-    return z.object({
-        numerator: z.string(),
-        denominator: z.string(),
+    return Type.Object({
+        numerator: Type.String(),
+        denominator: Type.String(),
     });
 }
 
-export type BigFloat = z.infer<ReturnType<typeof zBigFloat>>;
+export type BigFloat = Static<ReturnType<typeof zBigFloat>>;
 
 export function toBigFloat(x: Num): BigFloat {
     if (typeof x === 'object') {

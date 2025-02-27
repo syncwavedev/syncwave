@@ -63,11 +63,6 @@ export interface DiffOptions {
     readonly origin?: any;
 }
 
-export interface ExtractedRichtext<T> {
-    readonly crdt: Crdt<T>;
-    readonly fragment: YXmlFragment;
-}
-
 export class Crdt<T> {
     static from<T>(value: T): Crdt<T> {
         const doc = new YDoc({gc: true});

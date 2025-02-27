@@ -5,20 +5,18 @@ export interface Codec<TData> {
     decode(buf: Uint8Array): TData;
 }
 
-export class MsgpackCodec implements Codec<any> {
-    encode(data: any): Uint8Array {
-        return encode(data);
+export class MsgpackCodec<T = unknown> implements Codec<T> {
+    encode(data: T): Uint8Array {
+        return encodeMsgpack(data);
     }
 
-    decode(buf: Uint8Array): any {
-        return decode(buf);
+    decode(buf: Uint8Array): T {
+        return decodeMsgpack(buf) as T;
     }
 }
 
-const msgpackCodec = new MsgpackCodec();
-export const encodeMsgpack = (data: unknown) => msgpackCodec.encode(data);
-export const decodeMsgpack = (buf: Uint8Array) =>
-    msgpackCodec.decode(buf) as unknown;
+export const encodeMsgpack = (data: unknown) => encode(data);
+export const decodeMsgpack = (buf: Uint8Array) => decode(buf) as unknown;
 
 export class StringCodec implements Codec<string> {
     private encoder = new TextEncoder();

@@ -21,7 +21,7 @@ import {
 } from '../transport/transport.js';
 import {assertNever, type Unsubscribe, wait} from '../utils.js';
 import {createRpcMessageId, type MessageHeaders} from './rpc-message.js';
-import {toRequestLog} from './rpc-streamer.js';
+import {toRequestLog, toResponseLog} from './rpc-streamer.js';
 import {RpcConnection} from './rpc-transport.js';
 import {
     getRequiredProcessor,
@@ -357,7 +357,7 @@ export function reportRpcError(error: AppError, callInfo: string) {
     } else {
         log.error(
             error,
-            `${callInfo} failed: ` + JSON.stringify(error.toJSON())
+            `${callInfo} failed: ` + toResponseLog(error.toJSON())
         );
     }
 }

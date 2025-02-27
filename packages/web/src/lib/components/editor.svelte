@@ -9,12 +9,25 @@
 		EditorContent,
 	} from 'svelte-tiptap';
 	import StarterKit from '@tiptap/starter-kit';
+	import {Collaboration} from '@tiptap/extension-collaboration';
+	import {Doc, XmlFragment} from 'yjs';
 
 	let editor = $state() as Readable<Editor>;
 
+	interface Props {
+		fragment: XmlFragment;
+	}
+
+	let {fragment}: Props = $props();
+
 	onMount(() => {
 		editor = createEditor({
-			extensions: [StarterKit],
+			extensions: [
+				StarterKit,
+				Collaboration.configure({
+					fragment,
+				}),
+			],
 			content: `Hello world!`,
 		});
 	});
@@ -55,4 +68,4 @@
 	</BubbleMenu>
 {/if}
 
-<EditorContent editor={$editor} />
+<EditorContent class="border" editor={$editor} />

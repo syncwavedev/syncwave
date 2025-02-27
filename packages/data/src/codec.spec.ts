@@ -19,7 +19,7 @@ const testData = [
 ];
 
 describe('MsgpackrCode', () => {
-    const codec = new MsgpackCodec();
+    const codec = new MsgpackCodec<any>();
 
     describe('round-trip', () => {
         testData.forEach(({input, description}) => {

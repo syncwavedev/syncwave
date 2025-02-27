@@ -1,24 +1,23 @@
 <script lang="ts">
-	import ScrollArea from '$lib/components/scroll-area.svelte';
-	import Tiptap from '$lib/components/editor.svelte';
-	import UploadButton from '$lib/components/upload-button.svelte';
-	import {getAuthManager, getSdk} from '$lib/utils';
-	import {observe} from '$lib/utils.svelte';
-	import {untrack} from 'svelte';
-	import {
-		Crdt,
-		log,
-		stringifyCrdtDiff,
-		toCrdtDiff,
-		type Board,
-		type CrdtDiff,
-	} from 'syncwave-data';
+	import Editor from '$lib/components/editor.svelte';
+	import {Crdt, Richtext} from 'syncwave-data';
 
-	const sdk = getSdk();
+	const a = Crdt.from({
+		text: new Richtext(),
+	});
+	const b = a.clone();
+
+	const fragmentA = a.extractXmlFragment(x => x.text);
+	const fragmentB = b.extractXmlFragment(x => x.text);
+
+	$effect(() => a.subscribe('update', diff => b.apply(diff)));
+	$effect(() => b.subscribe('update', diff => a.apply(diff)));
 </script>
 
 <div class="flex flex-col gap-4">testbed</div>
 
 <div class="mx-auto max-w-md">
-	<Tiptap />
+	<Editor fragment={fragmentA} />
+
+	<Editor fragment={fragmentB} />
 </div>

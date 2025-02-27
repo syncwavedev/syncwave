@@ -6,15 +6,11 @@ import {
     Doc as YDoc,
     Map as YMap,
     Text as YText,
+    XmlFragment as YXmlFragment,
 } from 'yjs';
 import {z} from 'zod';
 import {type Base64, decodeBase64, encodeBase64, zBase64} from '../base64.js';
-import {
-    type Codec,
-    decodeMsgpack,
-    encodeMsgpack,
-    MsgpackCodec,
-} from '../codec.js';
+import {type Codec, decodeMsgpack, encodeMsgpack} from '../codec.js';
 import {AppError} from '../errors.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import {
@@ -64,6 +60,11 @@ const ROOT_VALUE = 'value';
 
 export interface DiffOptions {
     readonly origin?: any;
+}
+
+export interface ExtractedRichtext<T> {
+    readonly crdt: Crdt<T>;
+    readonly fragment: YXmlFragment;
 }
 
 export class Crdt<T> {
@@ -120,6 +121,22 @@ export class Crdt<T> {
         };
     }
 
+    /**
+     * This method exposes underlying Yjs XmlFragment. It's an escape hatch for
+     * advanced use cases where you need to manipulate the XML directly.
+     * In particular, it's used in native Yjs bindings with Prosemirror
+     */
+    extractXmlFragment(selector: (x: T) => Richtext) {
+        // we create a clone to avoid modifying the original doc through exposed YValue
+        const snapshot = this.snapshot();
+        const locator = new Locator();
+        locator.addDeep(snapshot, this.yValue);
+        const result = selector(snapshot);
+        const yValue = locator.locate(result);
+        assert(yValue instanceof YXmlFragment, 'expected YXmlFragment');
+        return yValue;
+    }
+
     clone(): Crdt<T> {
         return Crdt.load(this.state());
     }
@@ -163,7 +180,7 @@ export class Crdt<T> {
     }
 
     subscribe(
-        event: 'update',
+        _event: 'update',
         next: (diff: CrdtDiff<T>, options: DiffOptions) => Nothing
     ): Unsubscribe {
         const fn = (state: Uint8Array, origin: string | undefined) =>
@@ -186,6 +203,7 @@ type YValue =
     | YMap<YValue>
     | YArray<YValue>
     | YText
+    | YXmlFragment
     | number
     | boolean
     | string
@@ -193,6 +211,12 @@ type YValue =
     | undefined;
 
 const INTERPRET_AS_KEY = '__interpret_as__';
+
+export class Richtext {
+    constructor(
+        private readonly _xmlFragment: YXmlFragment = new YXmlFragment()
+    ) {}
+}
 
 function mapFromYValue(yValue: YValue): unknown {
     if (
@@ -226,6 +250,8 @@ function mapFromYValue(yValue: YValue): unknown {
                 ])
             );
         }
+    } else if (yValue.constructor === YXmlFragment) {
+        return new Richtext(yValue as YXmlFragment);
     } else {
         throw new AppError('cannot map unsupported YValue: ' + yValue);
     }
@@ -266,6 +292,9 @@ function mapToYValue(value: any): YValue {
         result.set(INTERPRET_AS_KEY, 'uuid');
         result.set('value', value.toString());
         return result;
+    } else if (value.constructor === Richtext) {
+        const fragment: YXmlFragment = (value as Richtext)['_xmlFragment'];
+        return fragment.clone();
     } else {
         throw new AppError('cannot map unsupported value to YValue: ' + value);
     }
@@ -292,10 +321,9 @@ class Locator {
             subject === undefined ||
             typeof subject === 'string' ||
             typeof subject === 'number' ||
-            typeof subject === 'boolean' ||
-            subject.constructor === Uuid
+            typeof subject === 'boolean'
         ) {
-            return subject;
+            // need to track primitives, because they can't be modified
         } else if (subject.constructor === Map) {
             this.map.set(subject, yValue);
 
@@ -321,6 +349,8 @@ class Locator {
                 const yValueValue = (yValue as YMap<YValue>).get(key);
                 this.addDeep(subjectValue, yValueValue);
             }
+        } else if (subject.constructor === Richtext) {
+            this.map.set(subject, yValue);
         } else {
             throw new AppError(
                 'cannot add unsupported subject to Locator: ' + subject
@@ -388,14 +418,20 @@ function replayLog(log: OpLog, locator: Locator): void {
     }
 }
 
-export class CrdtCodec<T> implements Codec<Crdt<T>> {
-    private readonly msgpackCoder = new MsgpackCodec();
+export function encodeCrdt<T>(crdt: Crdt<T>) {
+    return encodeMsgpack(crdt.state());
+}
 
+export function decodeCrdt<T>(buf: Uint8Array): Crdt<T> {
+    return Crdt.load(decodeMsgpack(buf) as CrdtDiff<T>);
+}
+
+export class CrdtCodec<T> implements Codec<Crdt<T>> {
     encode(data: Crdt<T>): Uint8Array {
-        return this.msgpackCoder.encode(data.state());
+        return encodeCrdt(data);
     }
 
     decode(buf: Uint8Array): Crdt<T> {
-        return Crdt.load(this.msgpackCoder.decode(buf));
+        return decodeCrdt(buf);
     }
 }

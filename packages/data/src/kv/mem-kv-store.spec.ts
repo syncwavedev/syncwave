@@ -37,6 +37,43 @@ describe('mem-kv-store', () => {
         store = mapStore(rawMvccStore);
     });
 
+    it('should delete key multiple times', async () => {
+        await store.transact(async tx => {
+            let value = await tx.get(1);
+            expect(value).toBe(undefined);
+            await tx.put(1, 'one');
+            value = await tx.get(1);
+            expect(value).toBe('one');
+        });
+
+        await store.transact(async tx => {
+            let value = await tx.get(1);
+            expect(value).toBe('one');
+            await tx.delete(1);
+            value = await tx.get(1);
+            expect(value).toBe(undefined);
+            await tx.delete(1);
+            value = await tx.get(1);
+            expect(value).toBe(undefined);
+        });
+
+        await store.transact(async tx => {
+            let value = await tx.get(1);
+            expect(value).toBe(undefined);
+            await tx.delete(1);
+            value = await tx.get(1);
+            expect(value).toBe(undefined);
+        });
+
+        await store.transact(async tx => {
+            let value = await tx.get(1);
+            expect(value).toBe(undefined);
+            await tx.put(1, 'one');
+            value = await tx.get(1);
+            expect(value).toBe('one');
+        });
+    });
+
     it('should store keys', async () => {
         await store.transact(async tx => {
             await tx.put(1, 'one');

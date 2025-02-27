@@ -311,11 +311,6 @@ function createObjectProxy<T extends object>(subject: T, log: OpLog): T {
 
 function createRichtextProxy(subject: Richtext, log: OpLog): Richtext {
     return new Proxy({} as any, {
-        get(target, prop, receiver) {
-            throw new AppError(
-                'unsupported richtext operation: get ' + String(prop)
-            );
-        },
         set(target, prop, value, receiver) {
             throw new AppError(
                 'unsupported richtext modification: set ' + String(prop)

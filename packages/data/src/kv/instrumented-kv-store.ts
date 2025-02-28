@@ -1,6 +1,6 @@
 import {context} from '../context.js';
 import type {Tuple} from '../tuple.js';
-import type {Condition, Entry, KVStore, Transaction} from './kv-store.js';
+import type {Condition, Entry, MvccStore, Transaction} from './kv-store.js';
 
 export class InstrumentedTransaction<K extends Tuple, V>
     implements Transaction<K, V>
@@ -34,8 +34,10 @@ export class InstrumentedTransaction<K extends Tuple, V>
     }
 }
 
-export class InstrumentedKvStore<K extends Tuple, V> implements KVStore<K, V> {
-    constructor(private readonly store: KVStore<K, V>) {}
+export class InstrumentedKvStore<K extends Tuple, V>
+    implements MvccStore<K, V>
+{
+    constructor(private readonly store: MvccStore<K, V>) {}
     async transact<TResult>(
         fn: (tx: Transaction<K, V>) => Promise<TResult>
     ): Promise<TResult> {
@@ -51,7 +53,7 @@ export class InstrumentedKvStore<K extends Tuple, V> implements KVStore<K, V> {
             });
         });
     }
-    close(): void {
-        this.store.close();
+    close(reason: unknown): void {
+        this.store.close(reason);
     }
 }

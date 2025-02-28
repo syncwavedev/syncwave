@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {toStream} from '../stream.js';
 import {createUuid, Uuid} from '../uuid.js';
 import {createIndex} from './data-index.js';
-import {MemKVStore} from './mem-kv-store.js';
+import {MemMvccStore} from './mem-mvcc-store.js';
 import {TupleStore} from './tuple-store.js';
 
 interface TestUser {
@@ -31,7 +31,7 @@ const INDEX_NAME = 'some_index_name';
 const idSelector = (x: TestUser) => [x.id];
 
 async function getTxn() {
-    const store = new TupleStore(new MemKVStore());
+    const store = new TupleStore(new MemMvccStore());
     const tx = await store.transact(async tx => tx);
 
     return {store, tx};

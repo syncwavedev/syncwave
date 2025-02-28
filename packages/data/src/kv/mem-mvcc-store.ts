@@ -10,7 +10,7 @@ import {
     type Entry,
     InvalidQueryCondition,
     type Transaction,
-    type Uint8KVStore,
+    type Uint8MvccStore,
     type Uint8Transaction,
 } from './kv-store.js';
 
@@ -26,7 +26,7 @@ interface KeyRange {
 
 type WriteSet = Tree<Uint8Array, {readonly value: Uint8Array | undefined}>;
 
-export class MemTransaction implements Uint8Transaction {
+export class MemMvccTransaction implements Uint8Transaction {
     public writeSet: WriteSet = createTree(compareUint8Array);
     public readonly readRanges: KeyRange[] = [];
 
@@ -196,7 +196,7 @@ export interface MemMvccKvStoreOptions {
     readonly transactionRetryCount: number;
 }
 
-export class MemKVStore implements Uint8KVStore {
+export class MemMvccStore implements Uint8MvccStore {
     private version = 1;
     private commited: CommitedTx[] = [];
     private running: RunningTx[] = [];
@@ -238,7 +238,7 @@ export class MemKVStore implements Uint8KVStore {
             this.running.push(runningTx);
 
             try {
-                const tx = new MemTransaction(this.tree);
+                const tx = new MemMvccTransaction(this.tree);
 
                 const result = await fn(tx);
 

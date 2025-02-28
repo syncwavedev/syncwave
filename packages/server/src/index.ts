@@ -24,9 +24,9 @@ import {
     IsolatedKVStore,
     type JwtPayload,
     type JwtService,
-    type KVStore,
     log,
     MsgpackCodec,
+    type MvccStore,
     toError,
     toStream,
     TupleStore,
@@ -112,7 +112,7 @@ const jwtService: JwtService = {
         }),
 };
 
-async function getKVStore(): Promise<KVStore<Tuple, Uint8Array>> {
+async function getKVStore(): Promise<MvccStore<Tuple, Uint8Array>> {
     const store = await (async () => {
         if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
             log.info('using PostgreSQL as primary store');
@@ -143,7 +143,7 @@ async function getKVStore(): Promise<KVStore<Tuple, Uint8Array>> {
     );
 }
 
-async function upgradeKVStore(kvStore: KVStore<Tuple, Uint8Array>) {
+async function upgradeKVStore(kvStore: MvccStore<Tuple, Uint8Array>) {
     const versionKey = ['version'];
     log.info('Retrieving KV store version...');
     const version = await kvStore.transact(async tx => {

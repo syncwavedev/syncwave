@@ -3,12 +3,12 @@ import {encodeString} from '../codec.js';
 import {toStream} from '../stream.js';
 import {IsolatedKVStore, IsolatedTransaction} from './isolated-kv-store.js';
 import type {AppEntry} from './kv-store.js';
-import {MemKVStore} from './mem-kv-store.js';
+import {MemMvccStore} from './mem-mvcc-store.js';
 import {TupleStore} from './tuple-store.js';
 
 describe('PrefixedTransaction', () => {
     it('should get a value with the correct prefixed key', async () => {
-        const store = new TupleStore(new MemKVStore());
+        const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
             await tx.put(['key1'], encodeString('value1'));
             await tx.put(['key3'], encodeString('value3'));
@@ -50,7 +50,7 @@ describe('PrefixedTransaction', () => {
     });
 
     it('should put a value with the correct prefixed key', async () => {
-        const store = new TupleStore(new MemKVStore());
+        const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
             const prefixedTxn = new IsolatedTransaction(tx, ['pre', 'fix']);
             await prefixedTxn.put(['key'], encodeString('value'));
@@ -63,7 +63,7 @@ describe('PrefixedTransaction', () => {
     });
 
     it('should delete a value with the correct prefixed key', async () => {
-        const store = new TupleStore(new MemKVStore());
+        const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
             await tx.put(['prefix', 'key'], encodeString('value'));
         });
@@ -80,7 +80,7 @@ describe('PrefixedTransaction', () => {
     });
 
     it('should query with a prefixed condition', async () => {
-        const store = new TupleStore(new MemKVStore());
+        const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
             await tx.put(['prefix', 'key1'], encodeString('value1'));
             await tx.put(['prefix', 'key2'], encodeString('value2'));
@@ -114,7 +114,7 @@ describe('PrefixedTransaction', () => {
 
 describe('PrefixedKVStore', () => {
     it('should execute a transaction with the correct prefix', async () => {
-        const store = new TupleStore(new MemKVStore());
+        const store = new TupleStore(new MemMvccStore());
         const prefixedStore = new IsolatedKVStore(store, ['prefix']);
 
         await prefixedStore.transact(async tx => {
@@ -130,7 +130,7 @@ describe('PrefixedKVStore', () => {
     });
 
     it('should isolate transactions', async () => {
-        const store = new TupleStore(new MemKVStore());
+        const store = new TupleStore(new MemMvccStore());
         const prefixedStore1 = new IsolatedKVStore(store, ['prefix1']);
         const prefixedStore2 = new IsolatedKVStore(store, ['prefix2']);
 

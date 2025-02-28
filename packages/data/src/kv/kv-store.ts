@@ -4,64 +4,49 @@ import {Stream, toStream} from '../stream.js';
 import {tupleStartsWith, type Packer, type Tuple} from '../tuple.js';
 import {unreachable} from '../utils.js';
 import {IsolatedTransaction} from './isolated-kv-store.js';
-import {MappedTransaction, type Mapper} from './mapped-kv-store.js';
+import {MappedTransaction, type Mapper} from './mapped-mvcc-store.js';
 
-export interface GtCondition<TKey> {
-    readonly gt: TKey;
+export interface GtCondition<K> {
+    readonly gt: K;
     readonly gte?: undefined;
     readonly lt?: undefined;
     readonly lte?: undefined;
 }
 
-export interface GteCondition<TKey> {
+export interface GteCondition<K> {
     readonly gt?: undefined;
-    readonly gte: TKey;
+    readonly gte: K;
     readonly lt?: undefined;
     readonly lte?: undefined;
 }
 
-export interface LtCondition<TKey> {
+export interface LtCondition<K> {
     readonly gt?: undefined;
     readonly gte?: undefined;
-    readonly lt: TKey;
+    readonly lt: K;
     readonly lte?: undefined;
 }
 
-export interface LteCondition<TKey> {
+export interface LteCondition<K> {
     readonly gt?: undefined;
     readonly gte?: undefined;
     readonly lt?: undefined;
-    readonly lte: TKey;
+    readonly lte: K;
 }
 
-export interface PutMutation<TKey, TValue> {
-    readonly type: 'put';
-    readonly key: TKey;
-    readonly value: TValue;
-}
-
-export interface DeleteMutation<TKey> {
-    readonly type: 'delete';
-    readonly key: TKey;
-}
-
-export interface Entry<TKey, TValue> {
-    readonly key: TKey;
-    readonly value: TValue;
+export interface Entry<K, V> {
+    readonly key: K;
+    readonly value: V;
 }
 
 export type Uint8Entry = Entry<Uint8Array, Uint8Array>;
 export type AppEntry<T = Uint8Array> = Entry<Tuple, T>;
 
-export type Mutation<TKey, TValue> =
-    | PutMutation<TKey, TValue>
-    | DeleteMutation<TKey>;
-
-export type Condition<TKey> =
-    | GtCondition<TKey>
-    | GteCondition<TKey>
-    | LtCondition<TKey>
-    | LteCondition<TKey>;
+export type Condition<K> =
+    | GtCondition<K>
+    | GteCondition<K>
+    | LtCondition<K>
+    | LteCondition<K>;
 
 export class InvalidQueryCondition extends AppError {
     constructor(public readonly condition: Condition<unknown>) {
@@ -69,45 +54,58 @@ export class InvalidQueryCondition extends AppError {
     }
 }
 
-export interface Transaction<TKey, TValue> {
-    get(key: TKey): Promise<TValue | undefined>;
-    query(condition: Condition<TKey>): AsyncIterable<Entry<TKey, TValue>>;
-    put(key: TKey, value: TValue): Promise<void>;
-    delete(key: TKey): Promise<void>;
+export interface ReadTransaction<K, V> {
+    get(key: K): Promise<V | undefined>;
+    query(condition: Condition<K>): AsyncIterable<Entry<K, V>>;
 }
 
-export interface KVStore<TKey, TValue> {
+export interface Transaction<K, V> extends ReadTransaction<K, V> {
+    put(key: K, value: V): Promise<void>;
+    delete(key: K): Promise<void>;
+}
+
+export interface SingleWriterStore<K, V> {
+    transactRead<TResult>(
+        fn: (tx: ReadTransaction<K, V>) => Promise<TResult>
+    ): Promise<TResult>;
+    transactWrite<TResult>(
+        fn: (tx: Transaction<K, V>) => Promise<TResult>
+    ): Promise<TResult>;
+    close(reason: unknown): void;
+}
+
+export interface MvccStore<K, V> {
     // fn must be called multiple times in case of a conflict (optimistic concurrency)
     transact<TResult>(
-        fn: (tx: Transaction<TKey, TValue>) => Promise<TResult>
+        fn: (tx: Transaction<K, V>) => Promise<TResult>
     ): Promise<TResult>;
-    close(): void;
+    close(reason: unknown): void;
 }
 
-export type Uint8KVStore = KVStore<Uint8Array, Uint8Array>;
+export type Uint8MvccStore = MvccStore<Uint8Array, Uint8Array>;
 export type Uint8Transaction = Transaction<Uint8Array, Uint8Array>;
-export type AppStore<T = Uint8Array> = KVStore<Tuple, T>;
+export type AppStore<T = Uint8Array> = MvccStore<Tuple, T>;
 export type AppTransaction<T = Uint8Array> = Transaction<Tuple, T>;
 
-export interface ConditionMapper<TKey, TResult> {
-    gt: (cond: GtCondition<TKey>) => TResult;
-    gte: (cond: GteCondition<TKey>) => TResult;
-    lt: (cond: LtCondition<TKey>) => TResult;
-    lte: (cond: LteCondition<TKey>) => TResult;
+export interface ConditionMapper<K, TResult> {
+    gt: (cond: GtCondition<K>) => TResult;
+    gte: (cond: GteCondition<K>) => TResult;
+    lt: (cond: LtCondition<K>) => TResult;
+    lte: (cond: LteCondition<K>) => TResult;
 }
 
-export function mapCondition<TKey, TResult>(
-    condition: Condition<TKey>,
-    mapper: ConditionMapper<TKey, TResult>
+export function mapCondition<K, TResult>(
+    condition: Condition<K>,
+    mapper: ConditionMapper<K, TResult>
 ): TResult {
     if (condition.gt !== undefined) {
-        return mapper.gt(condition as GtCondition<TKey>);
+        return mapper.gt(condition as GtCondition<K>);
     } else if (condition.gte !== undefined) {
-        return mapper.gte(condition as GteCondition<TKey>);
+        return mapper.gte(condition as GteCondition<K>);
     } else if (condition.lt !== undefined) {
-        return mapper.lt(condition as LtCondition<TKey>);
+        return mapper.lt(condition as LtCondition<K>);
     } else if (condition.lte !== undefined) {
-        return mapper.lte(condition as LteCondition<TKey>);
+        return mapper.lte(condition as LteCondition<K>);
     } else {
         return unreachable();
     }
@@ -140,13 +138,13 @@ function createCodecMapper<TData>(
 
 export function isolate(
     prefix: Tuple
-): <TValue>(store: Transaction<Tuple, TValue>) => Transaction<Tuple, TValue> {
+): <V>(store: Transaction<Tuple, V>) => Transaction<Tuple, V> {
     return store => new IsolatedTransaction(store, prefix);
 }
 
 export function withCodec<TData>(
     codec: Codec<TData>
-): <TKey>(store: Transaction<TKey, Uint8Array>) => Transaction<TKey, TData> {
+): <K>(store: Transaction<K, Uint8Array>) => Transaction<K, TData> {
     return store =>
         new MappedTransaction(
             store,
@@ -157,7 +155,7 @@ export function withCodec<TData>(
 
 export function withPacker<T>(
     codec: Packer<T>
-): <TValue>(store: Transaction<Tuple, TValue>) => Transaction<T, TValue> {
+): <V>(store: Transaction<Tuple, V>) => Transaction<T, V> {
     return store =>
         new MappedTransaction(
             store,

@@ -1,8 +1,8 @@
 import {
+    mapCondition,
     type Condition,
     type Entry,
-    type KVStore,
-    mapCondition,
+    type MvccStore,
     type Transaction,
 } from './kv-store.js';
 
@@ -59,11 +59,15 @@ export class MappedTransaction<
     }
 }
 
-export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
-    implements KVStore<TKeyPublic, TValuePublic>
+export class MappedMvccStore<
+    TKeyPrivate,
+    TKeyPublic,
+    TValuePrivate,
+    TValuePublic,
+> implements MvccStore<TKeyPublic, TValuePublic>
 {
     constructor(
-        private store: KVStore<TKeyPrivate, TValuePrivate>,
+        private store: MvccStore<TKeyPrivate, TValuePrivate>,
         private keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
@@ -76,8 +80,8 @@ export class MappedKVStore<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
         );
     }
 
-    close(): void {
-        this.store.close();
+    close(reason: unknown): void {
+        this.store.close(reason);
     }
 }
 

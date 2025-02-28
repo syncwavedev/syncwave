@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {Type} from '@sinclair/typebox';
 import type {AppStore, Condition} from '../kv/kv-store.js';
-import {MemKVStore} from '../kv/mem-kv-store.js';
+import {MemMvccStore} from '../kv/mem-mvcc-store.js';
 import {TupleStore} from '../kv/tuple-store.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import type {Tuple} from '../tuple.js';
@@ -44,7 +44,7 @@ describe('DocStore with MemKVStore', () => {
     const now = getNow();
 
     beforeEach(() => {
-        store = new TupleStore(new MemKVStore());
+        store = new TupleStore(new MemMvccStore());
     });
 
     it('should create and retrieve a document by ID', async () => {

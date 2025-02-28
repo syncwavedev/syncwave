@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import type {Tuple} from '../tuple.js';
 import {whenAll} from '../utils.js';
 import type {AppStore} from './kv-store.js';
-import {MemKVStore} from './mem-kv-store.js';
+import {MemMvccStore} from './mem-mvcc-store.js';
 import {OptimisticLock} from './optimistic-lock.js';
 import {TupleStore} from './tuple-store.js';
 
@@ -10,7 +10,7 @@ describe('OptimisticLock', () => {
     let kvStore: AppStore;
 
     beforeEach(() => {
-        kvStore = new TupleStore(new MemKVStore());
+        kvStore = new TupleStore(new MemMvccStore());
     });
 
     it('should create a lock with an empty key if no key is provided', async () => {

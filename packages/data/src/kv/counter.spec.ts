@@ -1,14 +1,14 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {Counter} from './counter.js';
 import {type AppStore, isolate} from './kv-store.js';
-import {MemKVStore} from './mem-kv-store.js';
+import {MemMvccStore} from './mem-mvcc-store.js';
 import {TupleStore} from './tuple-store.js';
 
 describe('Counter', () => {
     let kvStore: AppStore;
 
     beforeEach(() => {
-        kvStore = new TupleStore(new MemKVStore());
+        kvStore = new TupleStore(new MemMvccStore());
     });
 
     it('should initialize with the provided initial value', async () => {

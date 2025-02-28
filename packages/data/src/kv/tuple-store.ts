@@ -2,7 +2,7 @@ import {decodeTuple, encodeTuple, type Tuple} from '../tuple.js';
 import {
     mapCondition,
     type Condition,
-    type KVStore,
+    type MvccStore,
     type Transaction,
 } from './kv-store.js';
 
@@ -40,9 +40,9 @@ export class TupleTransaction<TKey extends Tuple, TValue>
 }
 
 export class TupleStore<TKey extends Tuple, TValue>
-    implements KVStore<TKey, TValue>
+    implements MvccStore<TKey, TValue>
 {
-    constructor(private readonly store: KVStore<Uint8Array, TValue>) {}
+    constructor(private readonly store: MvccStore<Uint8Array, TValue>) {}
 
     transact<TResult>(
         fn: (tx: TupleTransaction<TKey, TValue>) => Promise<TResult>
@@ -52,7 +52,7 @@ export class TupleStore<TKey extends Tuple, TValue>
             return await fn(tupleTx);
         });
     }
-    close(): void {
-        this.store.close();
+    close(reason: unknown): void {
+        this.store.close(reason);
     }
 }

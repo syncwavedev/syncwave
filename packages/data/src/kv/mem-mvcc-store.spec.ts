@@ -8,19 +8,23 @@ import {decodeTuple, encodeTuple} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
 import type {
     Condition,
-    KVStore,
+    MvccStore,
     Transaction,
-    Uint8KVStore,
+    Uint8MvccStore,
 } from './kv-store.js';
-import {MappedKVStore, MappedTransaction} from './mapped-kv-store.js';
-import {MemKVStore, MemTransaction, MvccConflictError} from './mem-kv-store.js';
+import {MappedMvccStore, MappedTransaction} from './mapped-mvcc-store.js';
+import {
+    MemMvccStore,
+    MemMvccTransaction,
+    MvccConflictError,
+} from './mem-mvcc-store.js';
 
-describe('mem-kv-store', () => {
-    let store: KVStore<number, string>;
-    let rawMvccStore: MemKVStore;
+describe('mem-mvcc-store', () => {
+    let store: MvccStore<number, string>;
+    let rawMvccStore: MemMvccStore;
 
-    function mapStore<T>(rawStore: Uint8KVStore): KVStore<number, T> {
-        return new MappedKVStore(
+    function mapStore<T>(rawStore: Uint8MvccStore): MvccStore<number, T> {
+        return new MappedMvccStore(
             rawStore,
             {
                 decode: x => decodeTuple(x)[0] as number,
@@ -31,7 +35,7 @@ describe('mem-kv-store', () => {
     }
 
     beforeEach(() => {
-        rawMvccStore = new MemKVStore({
+        rawMvccStore = new MemMvccStore({
             transactionRetryCount: 0,
         });
         store = mapStore(rawMvccStore);
@@ -1060,7 +1064,7 @@ describe('mem-kv-store', () => {
             let expected = 0;
             const transactionRetryCount = 100;
             const store2 = mapStore<number>(
-                new MemKVStore({transactionRetryCount})
+                new MemMvccStore({transactionRetryCount})
             );
             await whenAll(
                 Array(transactionRetryCount)
@@ -1086,7 +1090,7 @@ describe('mem-kv-store', () => {
         it('should throw conflict if not enough retries', async () => {
             const transactionRetryCount = 10;
             const store = mapStore<number>(
-                new MemKVStore({transactionRetryCount})
+                new MemMvccStore({transactionRetryCount})
             );
             const promise = whenAll(
                 Array(transactionRetryCount * 10)
@@ -1628,7 +1632,7 @@ describe('mem-kv-store', () => {
 
     it('should retry on transaction failure', async () => {
         const store = mapStore<number>(
-            new MemKVStore({transactionRetryCount: 2})
+            new MemMvccStore({transactionRetryCount: 2})
         );
 
         let attempt = 0;
@@ -1683,7 +1687,7 @@ class TxController<K, V> {
         const tx = (this.tx as MappedTransaction<any, any, any, any>)['target'];
 
         assert(
-            tx instanceof MemTransaction,
+            tx instanceof MemMvccTransaction,
             'must be instance of MappedTransaction'
         );
 

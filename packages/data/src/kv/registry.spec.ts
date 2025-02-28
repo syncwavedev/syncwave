@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {encodeString} from '../codec.js';
 import type {AppStore, AppTransaction} from './kv-store.js';
-import {MemKVStore} from './mem-kv-store.js';
+import {MemMvccStore} from './mem-mvcc-store.js';
 import {Registry} from './registry.js';
 import {TupleStore} from './tuple-store.js';
 
@@ -18,7 +18,7 @@ describe('Registry', () => {
     let kvStore: AppStore;
 
     beforeEach(() => {
-        kvStore = new TupleStore(new MemKVStore());
+        kvStore = new TupleStore(new MemMvccStore());
     });
 
     it('should return a constructed object from the factory', async () => {

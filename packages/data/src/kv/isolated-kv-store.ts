@@ -1,10 +1,10 @@
 import type {Tuple} from '../tuple.js';
 import {compareTuple} from '../tuple.js';
 import {
+    mapCondition,
     type Condition,
     type Entry,
-    type KVStore,
-    mapCondition,
+    type MvccStore,
     type Transaction,
 } from './kv-store.js';
 
@@ -53,9 +53,9 @@ export class IsolatedTransaction<TValue> implements Transaction<Tuple, TValue> {
     }
 }
 
-export class IsolatedKVStore<TValue> implements KVStore<Tuple, TValue> {
+export class IsolatedKVStore<TValue> implements MvccStore<Tuple, TValue> {
     constructor(
-        private readonly target: KVStore<Tuple, TValue>,
+        private readonly target: MvccStore<Tuple, TValue>,
         private readonly prefix: Tuple
     ) {}
 
@@ -67,7 +67,7 @@ export class IsolatedKVStore<TValue> implements KVStore<Tuple, TValue> {
         );
     }
 
-    close(): void {
-        this.target.close();
+    close(reason: unknown): void {
+        this.target.close(reason);
     }
 }

@@ -2,7 +2,7 @@ import {trace} from '@opentelemetry/api';
 import {MsgpackCodec} from '../src/codec.js';
 import {
     CoordinatorServer,
-    MemKVStore,
+    MemMvccStore,
     MemObjectStore,
     MemTransportClient,
     MemTransportServer,
@@ -24,7 +24,7 @@ export class E2eFixture {
         const coordinatorTransportServer = new MemTransportServer<RpcMessage>(
             new MsgpackCodec()
         );
-        const coordinatorKv = new MemKVStore();
+        const coordinatorKv = new MemMvccStore();
         const jwt: JwtService = {
             sign: async payload => JSON.stringify(payload),
             verify: token => JSON.parse(token),

@@ -1,6 +1,5 @@
-import {z} from 'zod';
+import {Type, type Static} from '@sinclair/typebox';
 import {
-    type BigFloat,
     bigFloatAbs,
     bigFloatAdd,
     bigFloatDiv,
@@ -8,16 +7,17 @@ import {
     bigFloatSub,
     toBigFloat,
     zBigFloat,
+    type BigFloat,
 } from '../big-float.js';
 
 export function zPlacement() {
-    return z.object({
-        prev: zBigFloat().optional(),
-        next: zBigFloat().optional(),
+    return Type.Object({
+        prev: Type.Optional(zBigFloat()),
+        next: Type.Optional(zBigFloat()),
     });
 }
 
-export type Placement = z.infer<ReturnType<typeof zPlacement>>;
+export type Placement = Static<ReturnType<typeof zPlacement>>;
 
 export function toPosition(placement: Placement): BigFloat {
     const rand = Math.random();

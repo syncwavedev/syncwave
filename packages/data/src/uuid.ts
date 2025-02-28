@@ -1,20 +1,22 @@
+import {Type} from '@sinclair/typebox';
 import {parse, stringify, v4, v7, validate} from 'uuid';
-import {z} from 'zod';
 import type {Codec} from './codec.js';
 import {AppError} from './errors.js';
 import type {Brand} from './utils.js';
 
 export type Uuid = Brand<string, 'uuid'>;
 
+export function Uuid<TBrand extends Uuid>() {
+    return Type.Unsafe<TBrand>(Type.String({format: 'uuid'}));
+}
+
 export namespace Uuid {
     export const min = '00000000-0000-0000-0000-000000000000' as Uuid;
     export const max = 'ffffffff-ffff-ffff-ffff-ffffffffffff' as Uuid;
 }
 
-export function zUuid<TBrand extends Uuid>() {
-    return z.string().refine(validate, {
-        message: 'Invalid UUID format',
-    }) as unknown as z.ZodType<TBrand>;
+export function validateUuid(value: unknown): value is Uuid {
+    return validate(value);
 }
 
 export function createUuid(): Uuid {

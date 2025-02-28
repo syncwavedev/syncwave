@@ -1,8 +1,8 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {assertNever, type Brand} from '../../utils.js';
-import {createUuid, Uuid, zUuid} from '../../uuid.js';
+import {createUuid, Uuid} from '../../uuid.js';
 import {
     type Doc,
     DocRepo,
@@ -47,12 +47,15 @@ export interface User extends UserV4 {}
 type StoredUser = UserV1 | UserV2 | UserV3 | UserV4;
 
 export function zUser() {
-    return zDoc(z.tuple([zUuid<UserId>()])).extend({
-        id: zUuid<UserId>(),
-        fullName: z.string(),
-        version: z.literal('4'),
-        avatarKey: zObjectKey().optional(),
-    });
+    return Type.Composite([
+        zDoc(Type.Tuple([Uuid<UserId>()])),
+        Type.Object({
+            id: Uuid<UserId>(),
+            fullName: Type.String(),
+            version: Type.Literal('4'),
+            avatarKey: Type.Optional(zObjectKey()),
+        }),
+    ]);
 }
 
 export class UserRepo {

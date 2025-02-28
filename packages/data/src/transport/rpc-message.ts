@@ -1,9 +1,9 @@
-import {z} from 'zod';
+import {Type, type Static} from '@sinclair/typebox';
 import type {Brand} from '../utils.js';
-import {createUuid, Uuid, zUuid} from '../uuid.js';
+import {createUuid, Uuid} from '../uuid.js';
 
 export function zRpcMessageId() {
-    return zUuid<RpcMessageId>();
+    return Uuid<RpcMessageId>();
 }
 
 export type RpcMessageId = Brand<Uuid, 'rpc_message_id'>;
@@ -13,102 +13,115 @@ export function createRpcMessageId(): RpcMessageId {
 }
 
 export function zRpcMessageHeaders() {
-    return z.object({
-        auth: z.string().optional(),
-        traceparent: z.string(),
-        tracestate: z.string(),
+    return Type.Object({
+        auth: Type.Optional(Type.String()),
+        traceparent: Type.String(),
+        tracestate: Type.String(),
     });
 }
 
 export interface MessageHeaders
-    extends z.infer<ReturnType<typeof zRpcMessageHeaders>> {}
+    extends Static<ReturnType<typeof zRpcMessageHeaders>> {}
 
 export function zBaseRpcMessage<TType extends string>(type: TType) {
-    return z.object({
-        type: z.literal(type),
+    return Type.Object({
+        type: Type.Literal(type),
         id: zRpcMessageId(),
         headers: zRpcMessageHeaders(),
     });
 }
 
 export function zRequestRpcMessage() {
-    return zBaseRpcMessage('request').extend({
-        payload: z.object({
-            name: z.string(),
-            arg: z.any(),
+    return Type.Composite([
+        zBaseRpcMessage('request'),
+        Type.Object({
+            payload: Type.Object({
+                name: Type.String(),
+                arg: Type.Any(),
+            }),
         }),
-    });
+    ]);
 }
 
 export interface RequestRpcMessage
-    extends z.infer<ReturnType<typeof zRequestRpcMessage>> {}
+    extends Static<ReturnType<typeof zRequestRpcMessage>> {}
 
 export function zCancelRpcMessage() {
-    return zBaseRpcMessage('cancel').extend({
-        requestId: zRpcMessageId(),
-        reason: z.string(),
-    });
+    return Type.Composite([
+        zBaseRpcMessage('cancel'),
+        Type.Object({
+            requestId: zRpcMessageId(),
+            reason: Type.String(),
+        }),
+    ]);
 }
 
 export interface CancelRpcMessage
-    extends z.infer<ReturnType<typeof zCancelRpcMessage>> {}
+    extends Static<ReturnType<typeof zCancelRpcMessage>> {}
 
 export function zBaseRpcResponsePayload<TType extends string>(type: TType) {
-    return z.object({
-        type: z.literal(type),
+    return Type.Object({
+        type: Type.Literal(type),
     });
 }
 
-export type BaseRpcResponsePayload<TType extends string> = z.infer<
+export type BaseRpcResponsePayload<TType extends string> = Static<
     ReturnType<typeof zBaseRpcResponsePayload<TType>>
 >;
 
 export function zRpcSuccessResponsePayload() {
-    return zBaseRpcResponsePayload('success').extend({
-        result: z.unknown(),
-    });
+    return Type.Composite([
+        zBaseRpcResponsePayload('success'),
+        Type.Object({
+            result: Type.Unknown(),
+        }),
+    ]);
 }
 
 export interface RpcSuccessResponsePayload
-    extends z.infer<ReturnType<typeof zRpcSuccessResponsePayload>> {}
+    extends Static<ReturnType<typeof zRpcSuccessResponsePayload>> {}
 
 export function zRpcErrorResponsePayload() {
-    return zBaseRpcResponsePayload('error').extend({
-        message: z.string(),
-        code: z.string(),
-    });
+    return Type.Composite([
+        zBaseRpcResponsePayload('error'),
+        Type.Object({
+            message: Type.String(),
+            code: Type.String(),
+        }),
+    ]);
 }
 
 export interface RpcErrorResponsePayload
-    extends z.infer<ReturnType<typeof zRpcErrorResponsePayload>> {}
+    extends Static<ReturnType<typeof zRpcErrorResponsePayload>> {}
 
 export function zRpcResponsePayload() {
-    return z.discriminatedUnion('type', [
+    return Type.Union([
         zRpcSuccessResponsePayload(),
         zRpcErrorResponsePayload(),
     ]);
 }
 
-export type RpcResponsePayload = z.infer<
-    ReturnType<typeof zRpcResponsePayload>
->;
+export type RpcResponsePayload = Static<ReturnType<typeof zRpcResponsePayload>>;
 
 export function zResponseRpcMessage() {
-    return zBaseRpcMessage('response').extend({
-        requestId: zRpcMessageId(),
-        payload: zRpcResponsePayload(),
-    });
+    return Type.Composite([
+        zBaseRpcMessage('response'),
+        Type.Object({
+            requestId: zRpcMessageId(),
+            payload: zRpcResponsePayload(),
+        }),
+    ]);
 }
 
 export interface ResponseRpcMessage
-    extends z.infer<ReturnType<typeof zResponseRpcMessage>> {}
+    extends Static<ReturnType<typeof zResponseRpcMessage>> {}
 
 export function zRpcMessage() {
-    return z.discriminatedUnion('type', [
+    return Type.Union([
         zRequestRpcMessage(),
         zCancelRpcMessage(),
         zResponseRpcMessage(),
     ]);
 }
 
-export type RpcMessage = z.infer<ReturnType<typeof zRpcMessage>>;
+export type RpcMessage = Static<ReturnType<typeof zRpcMessage>>;

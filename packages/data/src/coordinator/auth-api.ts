@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import type {DataEffectScheduler, DataTx} from '../data/data-layer.js';
 import type {
     CryptoService,
@@ -11,7 +11,7 @@ import {
     type IdentityRepo,
     type VerificationCode,
 } from '../data/repos/identity-repo.js';
-import {createUserId, type UserId, UserRepo} from '../data/repos/user-repo.js';
+import {createUserId, UserRepo, type UserId} from '../data/repos/user-repo.js';
 import {AppError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {
@@ -32,19 +32,19 @@ export interface AuthApiState {
 export function createAuthApi() {
     return createApi<AuthApiState>()({
         debug: handler({
-            req: z.object({}),
-            res: z.object({}),
+            req: Type.Object({}),
+            res: Type.Object({}),
             handle: async () => {
                 return {};
             },
         }),
         sendSignInEmail: handler({
-            req: z.object({
-                email: z.string(),
+            req: Type.Object({
+                email: Type.String(),
             }),
-            res: z.discriminatedUnion('type', [
-                z.object({type: z.literal('success')}),
-                z.object({type: z.literal('cooldown')}),
+            res: Type.Union([
+                Type.Object({type: Type.Literal('success')}),
+                Type.Object({type: Type.Literal('cooldown')}),
             ]),
             handle: async (
                 {cx: {identities, users}, crypto, scheduleEffect, emailService},
@@ -99,18 +99,18 @@ export function createAuthApi() {
             },
         }),
         verifySignInCode: handler({
-            req: z.object({
-                email: z.string(),
-                code: z.string(),
+            req: Type.Object({
+                email: Type.String(),
+                code: Type.String(),
             }),
-            res: z.discriminatedUnion('type', [
-                z.object({
-                    type: z.literal('success'),
-                    token: z.string(),
+            res: Type.Union([
+                Type.Object({
+                    type: Type.Literal('success'),
+                    token: Type.String(),
                 }),
-                z.object({type: z.literal('invalid_code')}),
-                z.object({type: z.literal('code_expired')}),
-                z.object({type: z.literal('cooldown')}),
+                Type.Object({type: Type.Literal('invalid_code')}),
+                Type.Object({type: Type.Literal('code_expired')}),
+                Type.Object({type: Type.Literal('cooldown')}),
             ]),
             handle: async (
                 {cx: {identities, config}, crypto, jwt},

@@ -1,39 +1,26 @@
 /* eslint-disable */
+import {Type} from '@sinclair/typebox';
+import {TypeCompiler} from '@sinclair/typebox/compiler';
+import {Parse} from '@sinclair/typebox/value';
 
-import {decodeTuple, encodeTuple} from '../packages/data/src/tuple.js';
+import Ajv from 'ajv';
+import {createUuid} from '../packages/data/src/uuid.js';
 
-const res = encodeTuple([
-    null,
-    Buffer.from(new Uint8Array([1, 2, 3])),
-    'string',
-    123,
-    true,
-    false,
-]);
+const ajv = new Ajv({});
 
-console.log(res);
+const schema = Type.Object({
+    uuid: Type.String({
+        format: 'uuid',
+    }),
+    buf: Type.Uint8Array(),
+});
+const C = TypeCompiler.Compile(schema);
 
-console.log(decodeTuple(new Uint8Array([0x01, 0x02])));
+// const validate = ajv.compile(schema);
 
-// export function decodeTuple(buf: Uint8Array): any[] {
-//     const tuple = unpack(Buffer.from(buf));
-//     if (!Array.isArray(tuple)) {
-//         throw new Error('Invalid tuple: ' + JSON.stringify(tuple));
-//     }
+const val = Parse(schema, {
+    uuid: createUuid(),
+    buf: new Uint8Array([1, 2, 3]),
+});
 
-//     return tuple.map(x => {
-//         if (x instanceof Uint8Array) {
-//             return x;
-//         } else if (typeof x === 'string') {
-//             return x;
-//         } else if (typeof x === 'number') {
-//             return x;
-//         } else if (typeof x === 'boolean') {
-//             return x;
-//         } else if (x === null) {
-//             return null;
-//         } else {
-//             throw new AppError('Invalid tuple item: ' + JSON.stringify(x));
-//         }
-//     });
-// }
+console.log(typeof val, val);

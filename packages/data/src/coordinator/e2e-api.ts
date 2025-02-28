@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
 import {context} from '../context.js';
 import {toCursor} from '../cursor.js';
@@ -10,8 +10,8 @@ import {
     createApi,
     decorateApi,
     handler,
-    type Processor,
     streamer,
+    type Processor,
 } from '../transport/rpc.js';
 import {assertNever, wait} from '../utils.js';
 
@@ -25,15 +25,15 @@ export function createE2eApi() {
 
     const api = createApi<E2eApiState>()({
         e2eEcho: handler({
-            req: z.object({msg: z.string()}),
-            res: z.object({msg: z.string()}),
+            req: Type.Object({msg: Type.String()}),
+            res: Type.Object({msg: Type.String()}),
             handle: async (state, {msg}, headers) => {
                 return {msg};
             },
         }),
         e2eCounter: streamer({
-            req: z.object({count: z.number()}),
-            item: z.number(),
+            req: Type.Object({count: Type.Number()}),
+            item: Type.Number(),
             async *stream(state, {count}, headers) {
                 for (let i = 0; i < count; i++) {
                     yield i;
@@ -42,8 +42,8 @@ export function createE2eApi() {
             },
         }),
         e2eObservable: streamer({
-            req: z.object({initialValue: z.number()}),
-            item: z.number(),
+            req: Type.Object({initialValue: Type.Number()}),
+            item: Type.Number(),
             async *stream(state, {initialValue}, headers) {
                 let currentValue = initialValue;
                 yield* observable({
@@ -64,15 +64,15 @@ export function createE2eApi() {
             },
         }),
         e2eError: handler({
-            req: z.object({}),
-            res: z.object({}),
+            req: Type.Object({}),
+            res: Type.Object({}),
             handle: async () => {
                 throw new BusinessError('Test error', 'unknown');
             },
         }),
         e2eTimeout: handler({
-            req: z.object({}),
-            res: z.object({}),
+            req: Type.Object({}),
+            res: Type.Object({}),
             handle: async () => {
                 await wait({
                     ms: RPC_CALL_TIMEOUT_MS + 1000,
@@ -82,16 +82,16 @@ export function createE2eApi() {
             },
         }),
         echo: handler({
-            req: z.object({msg: z.string()}),
-            res: z.object({msg: z.string()}),
+            req: Type.Object({msg: Type.String()}),
+            res: Type.Object({msg: Type.String()}),
             handle: async (state, {msg}) => {
                 return {msg};
             },
         }),
         e2eSystemState: handler({
-            req: z.object({}),
-            res: z.object({
-                runningProcessIds: z.array(z.string()),
+            req: Type.Object({}),
+            res: Type.Object({
+                runningProcessIds: Type.Array(Type.String()),
             }),
             handle: async () => {
                 return {

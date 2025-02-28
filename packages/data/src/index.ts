@@ -6,7 +6,6 @@ export * from './context.js';
 export * from './coordinator/coordinator.js';
 export * from './crdt/crdt.js';
 export * from './crdt/richtext.js';
-export * from './data/data-inspector-api.js';
 export * from './data/doc-repo.js';
 export * from './data/dto.js';
 export * from './data/infrastructure.js';

@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import type {Brand} from './utils.js';
 
 export type Timestamp = Brand<number, 'timestamp'>;
@@ -20,9 +20,7 @@ export function addYears(timestamp: Timestamp, years: number): Timestamp {
 }
 
 export function zTimestamp() {
-    return z.number().refine(value => !Number.isNaN(value), {
-        message: 'Invalid timestamp',
-    }) as unknown as z.ZodType<Timestamp>;
+    return Type.Unsafe<Timestamp>(Type.Number());
 }
 
 export function toTimestamp(date: Date) {

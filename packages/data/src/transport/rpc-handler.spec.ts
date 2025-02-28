@@ -1,6 +1,6 @@
 import {trace} from '@opentelemetry/api';
+import {Type} from '@sinclair/typebox';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {z} from 'zod';
 import {MsgpackCodec} from '../codec.js';
 import {context, type TraceId} from '../context.js';
 import {Deferred} from '../deferred.js';
@@ -46,8 +46,8 @@ describe('RpcHandler', () => {
 
         const api = createApi()({
             test: handler({
-                req: z.object({}),
-                res: z.object({}),
+                req: Type.Object({}),
+                res: Type.Object({}),
                 handle: async () => {
                     serverTraceIdDeferred.resolve(context().traceId);
                     return {};
@@ -71,8 +71,8 @@ describe('RpcHandler', () => {
 
         const api = createApi()({
             test: handler({
-                req: z.object({}),
-                res: z.object({}),
+                req: Type.Object({}),
+                res: Type.Object({}),
                 handle: async () => {
                     serverTraceIdDeferred.resolve(context().traceId);
                     return {};
@@ -100,8 +100,8 @@ describe('RpcHandler', () => {
 
         const api = createApi()({
             test: handler({
-                req: z.object({}),
-                res: z.object({}),
+                req: Type.Object({}),
+                res: Type.Object({}),
                 handle: async () => {
                     serverTraceIdDeferred.resolve(context().traceId);
                     return {};
@@ -127,8 +127,8 @@ describe('RpcHandler', () => {
     it('should support request/response semantics', async () => {
         const api = createApi()({
             test: handler({
-                req: z.object({value: z.string()}),
-                res: z.object({echo: z.string()}),
+                req: Type.Object({value: Type.String()}),
+                res: Type.Object({echo: Type.String()}),
                 handle: async (_, {value}) => {
                     return {echo: `echo: ${value}`};
                 },
@@ -146,8 +146,8 @@ describe('RpcHandler', () => {
     it('should support request validation', async () => {
         const api = createApi()({
             test: handler({
-                req: z.object({value: z.number()}),
-                res: z.object({}),
+                req: Type.Object({value: Type.Number()}),
+                res: Type.Object({}),
                 handle: async () => {
                     return {};
                 },
@@ -167,8 +167,8 @@ describe('RpcHandler', () => {
     it('should support response validation', async () => {
         const api = createApi()({
             test: handler({
-                req: z.object({}),
-                res: z.object({value: z.number()}),
+                req: Type.Object({}),
+                res: Type.Object({value: Type.Number()}),
                 handle: async () => {
                     return {value: 'invalid' as unknown as number};
                 },
@@ -180,17 +180,15 @@ describe('RpcHandler', () => {
 
         const result = client.test({});
 
-        await expect(result).rejects.toThrow(
-            /Expected number, received string/i
-        );
+        await expect(result).rejects.toThrow(/Parse error/i);
     });
 
     it('should support cancellation', async () => {
         const cancelledDef = new Deferred<boolean>();
         const api = createApi()({
             test: handler({
-                req: z.object({}),
-                res: z.object({}),
+                req: Type.Object({}),
+                res: Type.Object({}),
                 handle: async () => {
                     context().onEnd(() => {
                         cancelledDef.resolve(true);

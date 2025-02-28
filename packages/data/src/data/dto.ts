@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {type Static, Type} from '@sinclair/typebox';
 import {zCrdtDiffBase64} from '../crdt/crdt.js';
 import {assert} from '../utils.js';
 import {type DataTx} from './data-layer.js';
@@ -11,15 +11,18 @@ import {type Member, type MemberId, zMember} from './repos/member-repo.js';
 import {type User, type UserId, zUser} from './repos/user-repo.js';
 
 export function zCardDto() {
-    return zCard().extend({
-        column: zColumnDto().nullable(),
-        author: zUserDto(),
-        board: zBoardDto(),
-        state: zCrdtDiffBase64<Card>(),
-    });
+    return Type.Composite([
+        zCard(),
+        Type.Object({
+            column: Type.Union([zColumnDto(), Type.Null()]),
+            author: zUserDto(),
+            board: zBoardDto(),
+            state: zCrdtDiffBase64<Card>(),
+        }),
+    ]);
 }
 
-export interface CardDto extends z.infer<ReturnType<typeof zCardDto>> {}
+export interface CardDto extends Static<ReturnType<typeof zCardDto>> {}
 
 export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
     const card = await tx.cards.getById(cardId, true);
@@ -32,16 +35,19 @@ export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
 }
 
 export function zBoardViewCardDto() {
-    return zCard().extend({
-        column: zColumnDto().nullable(),
-        board: zBoardDto(),
-        state: zCrdtDiffBase64<Card>(),
-        author: zUserDto(),
-    });
+    return Type.Composite([
+        zCard(),
+        Type.Object({
+            column: Type.Union([zColumnDto(), Type.Null()]),
+            board: zBoardDto(),
+            state: zCrdtDiffBase64<Card>(),
+            author: zUserDto(),
+        }),
+    ]);
 }
 
 export interface BoardViewCardDto
-    extends z.infer<ReturnType<typeof zBoardViewCardDto>> {}
+    extends Static<ReturnType<typeof zBoardViewCardDto>> {}
 
 export async function toBoardViewCardDto(
     tx: DataTx,
@@ -57,13 +63,16 @@ export async function toBoardViewCardDto(
 }
 
 export function zColumnDto() {
-    return zColumn().extend({
-        board: zBoardDto(),
-        state: zCrdtDiffBase64<Column>(),
-    });
+    return Type.Composite([
+        zColumn(),
+        Type.Object({
+            board: zBoardDto(),
+            state: zCrdtDiffBase64<Column>(),
+        }),
+    ]);
 }
 
-export interface ColumnDto extends z.infer<ReturnType<typeof zColumnDto>> {}
+export interface ColumnDto extends Static<ReturnType<typeof zColumnDto>> {}
 
 export async function toColumnDto(
     tx: DataTx,
@@ -77,14 +86,17 @@ export async function toColumnDto(
 }
 
 export function zBoardViewColumnDto() {
-    return zColumn().extend({
-        cards: z.array(zBoardViewCardDto()),
-        state: zCrdtDiffBase64<Column>(),
-    });
+    return Type.Composite([
+        zColumn(),
+        Type.Object({
+            cards: Type.Array(zBoardViewCardDto()),
+            state: zCrdtDiffBase64<Column>(),
+        }),
+    ]);
 }
 
 export interface BoardViewColumnDto
-    extends z.infer<ReturnType<typeof zBoardViewColumnDto>> {}
+    extends Static<ReturnType<typeof zBoardViewColumnDto>> {}
 
 export async function toBoardViewColumnDto(
     tx: DataTx,
@@ -104,12 +116,15 @@ export async function toBoardViewColumnDto(
 }
 
 export function zBoardDto() {
-    return zBoard().extend({
-        state: zCrdtDiffBase64<Board>(),
-    });
+    return Type.Composite([
+        zBoard(),
+        Type.Object({
+            state: zCrdtDiffBase64<Board>(),
+        }),
+    ]);
 }
 
-export interface BoardDto extends z.infer<ReturnType<typeof zBoardDto>> {}
+export interface BoardDto extends Static<ReturnType<typeof zBoardDto>> {}
 
 export async function toBoardDto(
     tx: DataTx,
@@ -122,14 +137,17 @@ export async function toBoardDto(
 }
 
 export function zBoardViewDto() {
-    return zBoard().extend({
-        columns: z.array(zBoardViewColumnDto()),
-        state: zCrdtDiffBase64<Board>(),
-    });
+    return Type.Composite([
+        zBoard(),
+        Type.Object({
+            columns: Type.Array(zBoardViewColumnDto()),
+            state: zCrdtDiffBase64<Board>(),
+        }),
+    ]);
 }
 
 export interface BoardViewDto
-    extends z.infer<ReturnType<typeof zBoardViewDto>> {}
+    extends Static<ReturnType<typeof zBoardViewDto>> {}
 
 export async function toBoardViewDto(
     tx: DataTx,
@@ -146,14 +164,17 @@ export async function toBoardViewDto(
 }
 
 export function zMemberDto() {
-    return zMember().extend({
-        user: zUserDto(),
-        board: zBoardDto(),
-        state: zCrdtDiffBase64<Member>(),
-    });
+    return Type.Composite([
+        zMember(),
+        Type.Object({
+            user: zUserDto(),
+            board: zBoardDto(),
+            state: zCrdtDiffBase64<Member>(),
+        }),
+    ]);
 }
 
-export interface MemberDto extends z.infer<ReturnType<typeof zMemberDto>> {}
+export interface MemberDto extends Static<ReturnType<typeof zMemberDto>> {}
 
 export async function toMemberDto(
     tx: DataTx,
@@ -168,15 +189,18 @@ export async function toMemberDto(
 }
 
 export function zMemberAdminDto() {
-    return zMember().extend({
-        user: zUserDto(),
-        board: zBoardDto(),
-        identity: z.union([zIdentityDto(), z.undefined()]),
-    });
+    return Type.Composite([
+        zMember(),
+        Type.Object({
+            user: zUserDto(),
+            board: zBoardDto(),
+            identity: Type.Optional(zIdentityDto()),
+        }),
+    ]);
 }
 
 export interface MemberAdminDto
-    extends z.infer<ReturnType<typeof zMemberAdminDto>> {}
+    extends Static<ReturnType<typeof zMemberAdminDto>> {}
 
 export async function toMemberAdminDto(
     tx: DataTx,
@@ -197,12 +221,15 @@ export async function toMemberAdminDto(
 }
 
 export function zUserDto() {
-    return zUser().extend({
-        state: zCrdtDiffBase64<User>(),
-    });
+    return Type.Composite([
+        zUser(),
+        Type.Object({
+            state: zCrdtDiffBase64<User>(),
+        }),
+    ]);
 }
 
-export interface UserDto extends z.infer<ReturnType<typeof zUserDto>> {}
+export interface UserDto extends Static<ReturnType<typeof zUserDto>> {}
 
 export async function toUserDto(tx: DataTx, userId: UserId): Promise<UserDto> {
     const user = await tx.users.getById(userId, true);
@@ -212,12 +239,15 @@ export async function toUserDto(tx: DataTx, userId: UserId): Promise<UserDto> {
 }
 
 export function zIdentityDto() {
-    return zIdentity().extend({
-        zUser: zUserDto(),
-    });
+    return Type.Composite([
+        zIdentity(),
+        Type.Object({
+            zUser: zUserDto(),
+        }),
+    ]);
 }
 
-export interface IdentityDto extends z.infer<ReturnType<typeof zIdentityDto>> {}
+export interface IdentityDto extends Static<ReturnType<typeof zIdentityDto>> {}
 
 export async function toIdentityDto(
     tx: DataTx,
@@ -234,13 +264,16 @@ export async function toIdentityDto(
 }
 
 export function zCommentDto() {
-    return zComment().extend({
-        author: zUserDto(),
-        card: zCardDto(),
-    });
+    return Type.Composite([
+        zComment(),
+        Type.Object({
+            author: zUserDto(),
+            card: zCardDto(),
+        }),
+    ]);
 }
 
-export interface CommentDto extends z.infer<ReturnType<typeof zCommentDto>> {}
+export interface CommentDto extends Static<ReturnType<typeof zCommentDto>> {}
 
 export async function toCommentDto(
     tx: DataTx,

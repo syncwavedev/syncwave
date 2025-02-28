@@ -1,6 +1,6 @@
 import {context} from '../context.js';
 import type {Brand} from '../utils.js';
-import {createUuid, Uuid, zUuid} from '../uuid.js';
+import {createUuid, Uuid} from '../uuid.js';
 
 export interface JwtPayload {
     sub: string | undefined;
@@ -47,7 +47,7 @@ export interface ObjectMetadata {
 export type ObjectKey = Brand<Uuid, 'ObjectKey'>;
 
 export function zObjectKey() {
-    return zUuid<ObjectKey>();
+    return Uuid<ObjectKey>();
 }
 
 export function createObjectKey() {

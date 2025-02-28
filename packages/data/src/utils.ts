@@ -1,5 +1,4 @@
-import {z} from 'zod';
-import {type CancelBehavior, context} from './context.js';
+import {context, type CancelBehavior} from './context.js';
 import {Deferred} from './deferred.js';
 import {
     AggregateBusinessError,
@@ -325,12 +324,6 @@ export async function whenAny<T>(promises: Promise<T>[]) {
         racer.result,
         promises.filter((_, idx) => idx !== racer.idx),
     ] as const;
-}
-
-export function zUint8Array() {
-    return z.custom<Uint8Array>(x => x instanceof Uint8Array, {
-        message: 'Uint8Array expected',
-    });
 }
 
 export function run<R>(fn: () => R) {

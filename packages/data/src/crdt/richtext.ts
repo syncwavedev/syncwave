@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import type {Brand} from '../utils.js';
 
 export type Richtext = Brand<{[RICHTEXT_MARKER_KEY]: true}, 'richtext'>;
@@ -10,9 +10,11 @@ export function createRichtext(): Richtext {
 }
 
 export function zRichtext() {
-    return z.object({
-        [RICHTEXT_MARKER_KEY]: z.boolean(),
-    }) as unknown as z.ZodType<Richtext>;
+    return Type.Unsafe<Richtext>(
+        Type.Object({
+            [RICHTEXT_MARKER_KEY]: Type.Boolean(),
+        })
+    );
 }
 
 export function isRichtext(x: unknown): x is Richtext {

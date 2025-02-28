@@ -1,3 +1,4 @@
+import {Type} from '@sinclair/typebox';
 import {
     applyUpdateV2,
     encodeStateAsUpdateV2,
@@ -8,7 +9,6 @@ import {
     Text as YText,
     XmlFragment as YXmlFragment,
 } from 'yjs';
-import {z} from 'zod';
 import {type Base64, decodeBase64, encodeBase64, zBase64} from '../base64.js';
 import {type Codec, decodeMsgpack, encodeMsgpack} from '../codec.js';
 import {AppError} from '../errors.js';
@@ -35,7 +35,7 @@ export type CrdtDiffPayload<T> = Brand<Uint8Array, [T, 'crdt_diff_buffer']>;
 export type CrdtDiffBase64<T> = Brand<Base64, [T, 'crdt_diff_base64']>;
 
 export function zCrdtDiffBase64<T>() {
-    return zBase64() as unknown as z.ZodType<CrdtDiffBase64<T>>;
+    return Type.Unsafe<CrdtDiffBase64<T>>(zBase64());
 }
 
 export function stringifyCrdtDiff<T>(diff: CrdtDiff<T>): CrdtDiffBase64<T> {

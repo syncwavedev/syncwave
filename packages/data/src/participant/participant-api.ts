@@ -87,10 +87,6 @@ export function createParticipantApi() {
     }
 
     return createApi<ParticipantState>()({
-        getDbTree: proxy('getDbTree'),
-        getDbItem: proxy('getDbItem'),
-        truncateDb: proxy('truncateDb'),
-
         debug: proxy('debug'),
         echo: proxy('echo'),
 
@@ -98,7 +94,6 @@ export function createParticipantApi() {
         sendSignInEmail: proxy('sendSignInEmail'),
         createBoard: proxy('createBoard'),
         verifySignInCode: proxy('verifySignInCode'),
-        deleteDbItem: proxy('deleteDbItem'),
         getMyMembers: proxy('getMyMembers'),
         getBoard: proxy('getBoard'),
         createColumn: proxy('createColumn'),

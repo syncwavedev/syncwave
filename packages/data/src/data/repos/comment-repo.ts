@@ -1,9 +1,9 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
-import {createUuid, Uuid, zUuid} from '../../uuid.js';
+import {createUuid, Uuid} from '../../uuid.js';
 import {
     type Doc,
     DocRepo,
@@ -33,12 +33,15 @@ const TASK_ID_INDEX = 'card_id';
 // todo: tests should handle get by card_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
 export function zComment() {
-    return zDoc(z.tuple([zUuid<CommentId>()])).extend({
-        id: zUuid<CommentId>(),
-        authorId: zUuid<UserId>(),
-        cardId: zUuid<CardId>(),
-        text: z.string(),
-    });
+    return Type.Composite([
+        zDoc(Type.Tuple([Uuid<CommentId>()])),
+        Type.Object({
+            id: Uuid<CommentId>(),
+            authorId: Uuid<UserId>(),
+            cardId: Uuid<CardId>(),
+            text: Type.String(),
+        }),
+    ]);
 }
 
 export class CommentRepo {

@@ -1,11 +1,5 @@
 // To parse this JSON data, do
 //
-//     final getDbTreeReq = getDbTreeReqFromJson(jsonString);
-//     final getDbTreeRes = getDbTreeResFromJson(jsonString);
-//     final getDbItemReq = getDbItemReqFromJson(jsonString);
-//     final getDbItemRes = getDbItemResFromJson(jsonString);
-//     final truncateDbReq = truncateDbReqFromJson(jsonString);
-//     final truncateDbRes = truncateDbResFromJson(jsonString);
 //     final debugReq = debugReqFromJson(jsonString);
 //     final debugRes = debugResFromJson(jsonString);
 //     final echoReq = echoReqFromJson(jsonString);
@@ -18,8 +12,6 @@
 //     final createBoardRes = createBoardResFromJson(jsonString);
 //     final verifySignInCodeReq = verifySignInCodeReqFromJson(jsonString);
 //     final verifySignInCodeRes = verifySignInCodeResFromJson(jsonString);
-//     final deleteDbItemReq = deleteDbItemReqFromJson(jsonString);
-//     final deleteDbItemRes = deleteDbItemResFromJson(jsonString);
 //     final getMyMembersReq = getMyMembersReqFromJson(jsonString);
 //     final getMyMembersValue = getMyMembersValueFromJson(jsonString);
 //     final getBoardReq = getBoardReqFromJson(jsonString);
@@ -62,30 +54,6 @@
 //     final setUserAvatarRes = setUserAvatarResFromJson(jsonString);
 
 import 'dart:convert';
-
-GetDbTreeReq getDbTreeReqFromJson(String str) => GetDbTreeReq.fromJson(json.decode(str));
-
-String getDbTreeReqToJson(GetDbTreeReq data) => json.encode(data.toJson());
-
-GetDbTreeRes getDbTreeResFromJson(String str) => GetDbTreeRes.fromJson(json.decode(str));
-
-String getDbTreeResToJson(GetDbTreeRes data) => json.encode(data.toJson());
-
-GetDbItemReq getDbItemReqFromJson(String str) => GetDbItemReq.fromJson(json.decode(str));
-
-String getDbItemReqToJson(GetDbItemReq data) => json.encode(data.toJson());
-
-GetDbItemRes getDbItemResFromJson(String str) => GetDbItemRes.fromJson(json.decode(str));
-
-String getDbItemResToJson(GetDbItemRes data) => json.encode(data.toJson());
-
-TruncateDbReq truncateDbReqFromJson(String str) => TruncateDbReq.fromJson(json.decode(str));
-
-String truncateDbReqToJson(TruncateDbReq data) => json.encode(data.toJson());
-
-TruncateDbRes truncateDbResFromJson(String str) => TruncateDbRes.fromJson(json.decode(str));
-
-String truncateDbResToJson(TruncateDbRes data) => json.encode(data.toJson());
 
 DebugReq debugReqFromJson(String str) => DebugReq.fromJson(json.decode(str));
 
@@ -134,14 +102,6 @@ String verifySignInCodeReqToJson(VerifySignInCodeReq data) => json.encode(data.t
 VerifySignInCodeRes verifySignInCodeResFromJson(String str) => VerifySignInCodeRes.fromJson(json.decode(str));
 
 String verifySignInCodeResToJson(VerifySignInCodeRes data) => json.encode(data.toJson());
-
-DeleteDbItemReq deleteDbItemReqFromJson(String str) => DeleteDbItemReq.fromJson(json.decode(str));
-
-String deleteDbItemReqToJson(DeleteDbItemReq data) => json.encode(data.toJson());
-
-DeleteDbItemRes deleteDbItemResFromJson(String str) => DeleteDbItemRes.fromJson(json.decode(str));
-
-String deleteDbItemResToJson(DeleteDbItemRes data) => json.encode(data.toJson());
 
 GetMyMembersReq getMyMembersReqFromJson(String str) => GetMyMembersReq.fromJson(json.decode(str));
 
@@ -303,140 +263,6 @@ SetUserAvatarRes setUserAvatarResFromJson(String str) => SetUserAvatarRes.fromJs
 
 String setUserAvatarResToJson(SetUserAvatarRes data) => json.encode(data.toJson());
 
-class GetDbTreeReq {
-    GetDbTreeReq();
-
-    factory GetDbTreeReq.fromJson(Map<String, dynamic> json) => GetDbTreeReq(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
-class GetDbTreeRes {
-    List<GetDbTreeRe> childrenPreview;
-    List<dynamic> key;
-    String name;
-    ChildrenPreviewType type;
-
-    GetDbTreeRes({
-        required this.childrenPreview,
-        required this.key,
-        required this.name,
-        required this.type,
-    });
-
-    factory GetDbTreeRes.fromJson(Map<String, dynamic> json) => GetDbTreeRes(
-        childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
-        key: List<dynamic>.from(json["key"].map((x) => x)),
-        name: json["name"],
-        type: childrenPreviewTypeValues.map[json["type"]]!,
-    );
-
-    Map<String, dynamic> toJson() => {
-        "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
-        "key": List<dynamic>.from(key.map((x) => x)),
-        "name": name,
-        "type": childrenPreviewTypeValues.reverse[type],
-    };
-}
-
-class GetDbTreeRe {
-    List<GetDbTreeRe> childrenPreview;
-    List<dynamic> key;
-    String name;
-    ChildrenPreviewType type;
-
-    GetDbTreeRe({
-        required this.childrenPreview,
-        required this.key,
-        required this.name,
-        required this.type,
-    });
-
-    factory GetDbTreeRe.fromJson(Map<String, dynamic> json) => GetDbTreeRe(
-        childrenPreview: List<GetDbTreeRe>.from(json["childrenPreview"].map((x) => GetDbTreeRe.fromJson(x))),
-        key: List<dynamic>.from(json["key"].map((x) => x)),
-        name: json["name"],
-        type: childrenPreviewTypeValues.map[json["type"]]!,
-    );
-
-    Map<String, dynamic> toJson() => {
-        "childrenPreview": List<dynamic>.from(childrenPreview.map((x) => x.toJson())),
-        "key": List<dynamic>.from(key.map((x) => x)),
-        "name": name,
-        "type": childrenPreviewTypeValues.reverse[type],
-    };
-}
-
-enum ChildrenPreviewType {
-    AGGREGATE,
-    DOC,
-    REPO
-}
-
-final childrenPreviewTypeValues = EnumValues({
-    "aggregate": ChildrenPreviewType.AGGREGATE,
-    "doc": ChildrenPreviewType.DOC,
-    "repo": ChildrenPreviewType.REPO
-});
-
-class GetDbItemReq {
-    List<List<dynamic>> path;
-
-    GetDbItemReq({
-        required this.path,
-    });
-
-    factory GetDbItemReq.fromJson(Map<String, dynamic> json) => GetDbItemReq(
-        path: List<List<dynamic>>.from(json["path"].map((x) => List<dynamic>.from(x.map((x) => x)))),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "path": List<dynamic>.from(path.map((x) => List<dynamic>.from(x.map((x) => x)))),
-    };
-}
-
-class GetDbItemRes {
-    ChildrenPreviewType type;
-    dynamic snapshot;
-
-    GetDbItemRes({
-        required this.type,
-        this.snapshot,
-    });
-
-    factory GetDbItemRes.fromJson(Map<String, dynamic> json) => GetDbItemRes(
-        type: childrenPreviewTypeValues.map[json["type"]]!,
-        snapshot: json["snapshot"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "type": childrenPreviewTypeValues.reverse[type],
-        "snapshot": snapshot,
-    };
-}
-
-class TruncateDbReq {
-    TruncateDbReq();
-
-    factory TruncateDbReq.fromJson(Map<String, dynamic> json) => TruncateDbReq(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
-class TruncateDbRes {
-    TruncateDbRes();
-
-    factory TruncateDbRes.fromJson(Map<String, dynamic> json) => TruncateDbRes(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
-
 class DebugReq {
     DebugReq();
 
@@ -500,7 +326,7 @@ class GetMeReq {
 }
 
 class GetMeValue {
-    Identity identity;
+    GetMeValueIdentity identity;
     GetMeValueUser user;
 
     GetMeValue({
@@ -509,7 +335,7 @@ class GetMeValue {
     });
 
     factory GetMeValue.fromJson(Map<String, dynamic> json) => GetMeValue(
-        identity: Identity.fromJson(json["identity"]),
+        identity: GetMeValueIdentity.fromJson(json["identity"]),
         user: GetMeValueUser.fromJson(json["user"]),
     );
 
@@ -519,7 +345,7 @@ class GetMeValue {
     };
 }
 
-class Identity {
+class GetMeValueIdentity {
     List<double> authActivityLog;
     double createdAt;
     bool deleted;
@@ -530,9 +356,9 @@ class Identity {
     String userId;
     
     ///VerificationCode
-    VerificationCode verificationCode;
+    PurpleVerificationCode verificationCode;
 
-    Identity({
+    GetMeValueIdentity({
         required this.authActivityLog,
         required this.createdAt,
         required this.deleted,
@@ -544,7 +370,7 @@ class Identity {
         required this.verificationCode,
     });
 
-    factory Identity.fromJson(Map<String, dynamic> json) => Identity(
+    factory GetMeValueIdentity.fromJson(Map<String, dynamic> json) => GetMeValueIdentity(
         authActivityLog: List<double>.from(json["authActivityLog"].map((x) => x?.toDouble())),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -553,7 +379,7 @@ class Identity {
         pk: List<String>.from(json["pk"].map((x) => x)),
         updatedAt: json["updatedAt"]?.toDouble(),
         userId: json["userId"],
-        verificationCode: VerificationCode.fromJson(json["verificationCode"]),
+        verificationCode: PurpleVerificationCode.fromJson(json["verificationCode"]),
     );
 
     Map<String, dynamic> toJson() => {
@@ -571,16 +397,16 @@ class Identity {
 
 
 ///VerificationCode
-class VerificationCode {
+class PurpleVerificationCode {
     String code;
     double expires;
 
-    VerificationCode({
+    PurpleVerificationCode({
         required this.code,
         required this.expires,
     });
 
-    factory VerificationCode.fromJson(Map<String, dynamic> json) => VerificationCode(
+    factory PurpleVerificationCode.fromJson(Map<String, dynamic> json) => PurpleVerificationCode(
         code: json["code"],
         expires: json["expires"]?.toDouble(),
     );
@@ -810,32 +636,6 @@ final verifySignInCodeResTypeValues = EnumValues({
     "invalid_code": VerifySignInCodeResType.INVALID_CODE,
     "success": VerifySignInCodeResType.SUCCESS
 });
-
-class DeleteDbItemReq {
-    List<List<dynamic>> path;
-
-    DeleteDbItemReq({
-        required this.path,
-    });
-
-    factory DeleteDbItemReq.fromJson(Map<String, dynamic> json) => DeleteDbItemReq(
-        path: List<List<dynamic>>.from(json["path"].map((x) => List<dynamic>.from(x.map((x) => x)))),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "path": List<dynamic>.from(path.map((x) => List<dynamic>.from(x.map((x) => x)))),
-    };
-}
-
-class DeleteDbItemRes {
-    DeleteDbItemRes();
-
-    factory DeleteDbItemRes.fromJson(Map<String, dynamic> json) => DeleteDbItemRes(
-    );
-
-    Map<String, dynamic> toJson() => {
-    };
-}
 
 class GetMyMembersReq {
     GetMyMembersReq();
@@ -3145,7 +2945,7 @@ class GetBoardMembersValue {
     double createdAt;
     bool deleted;
     String id;
-    dynamic identity;
+    GetBoardMembersValueIdentity? identity;
     List<String> pk;
     GetBoardMembersValuePosition position;
     Role role;
@@ -3176,7 +2976,7 @@ class GetBoardMembersValue {
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
-        identity: json["identity"],
+        identity: json["identity"] == null ? null : GetBoardMembersValueIdentity.fromJson(json["identity"]),
         pk: List<String>.from(json["pk"].map((x) => x)),
         position: GetBoardMembersValuePosition.fromJson(json["position"]),
         role: roleValues.map[json["role"]]!,
@@ -3192,7 +2992,7 @@ class GetBoardMembersValue {
         "createdAt": createdAt,
         "deleted": deleted,
         "id": id,
-        "identity": identity,
+        "identity": identity?.toJson(),
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "position": position.toJson(),
         "role": roleValues.reverse[role],
@@ -3248,6 +3048,130 @@ class GetBoardMembersValueBoard {
         "pk": List<dynamic>.from(pk.map((x) => x)),
         "state": state,
         "updatedAt": updatedAt,
+    };
+}
+
+class GetBoardMembersValueIdentity {
+    List<double> authActivityLog;
+    double createdAt;
+    bool deleted;
+    String email;
+    String id;
+    List<String> pk;
+    double updatedAt;
+    String userId;
+    
+    ///VerificationCode
+    FluffyVerificationCode verificationCode;
+    ZUser zUser;
+
+    GetBoardMembersValueIdentity({
+        required this.authActivityLog,
+        required this.createdAt,
+        required this.deleted,
+        required this.email,
+        required this.id,
+        required this.pk,
+        required this.updatedAt,
+        required this.userId,
+        required this.verificationCode,
+        required this.zUser,
+    });
+
+    factory GetBoardMembersValueIdentity.fromJson(Map<String, dynamic> json) => GetBoardMembersValueIdentity(
+        authActivityLog: List<double>.from(json["authActivityLog"].map((x) => x?.toDouble())),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        email: json["email"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        updatedAt: json["updatedAt"]?.toDouble(),
+        userId: json["userId"],
+        verificationCode: FluffyVerificationCode.fromJson(json["verificationCode"]),
+        zUser: ZUser.fromJson(json["zUser"]),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authActivityLog": List<dynamic>.from(authActivityLog.map((x) => x)),
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "email": email,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "updatedAt": updatedAt,
+        "userId": userId,
+        "verificationCode": verificationCode.toJson(),
+        "zUser": zUser.toJson(),
+    };
+}
+
+
+///VerificationCode
+class FluffyVerificationCode {
+    String code;
+    double expires;
+
+    FluffyVerificationCode({
+        required this.code,
+        required this.expires,
+    });
+
+    factory FluffyVerificationCode.fromJson(Map<String, dynamic> json) => FluffyVerificationCode(
+        code: json["code"],
+        expires: json["expires"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "code": code,
+        "expires": expires,
+    };
+}
+
+class ZUser {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    ZUser({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory ZUser.fromJson(Map<String, dynamic> json) => ZUser(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
     };
 }
 

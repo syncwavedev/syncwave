@@ -19,6 +19,7 @@ import {
     ConnectionClosedError,
     ConnectionThrowError,
 } from '../transport/transport.js';
+import {parseValue} from '../type.js';
 import {assertNever, type Unsubscribe, wait} from '../utils.js';
 import {createRpcMessageId, type MessageHeaders} from './rpc-message.js';
 import {stringifyLogPart} from './rpc-streamer.js';
@@ -308,9 +309,8 @@ function createHandlerProxy(
     const conn = new RpcConnection(rawConn);
 
     return async (arg: unknown, partialHeaders?: MessageHeaders) => {
-        // validate argument
         try {
-            arg = processor.req.parse(arg);
+            arg = parseValue(processor.req, arg);
         } catch (error) {
             throw new AppError(
                 `rpc ${name}(${JSON.stringify(arg)}) validation failed`,

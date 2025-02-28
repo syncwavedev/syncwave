@@ -1,11 +1,11 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {type BigFloat, zBigFloat} from '../../big-float.js';
 import {type CrdtDiff, type CrdtDiffBase64} from '../../crdt/crdt.js';
 import {type Richtext, zRichtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
-import {createUuid, Uuid, zUuid} from '../../uuid.js';
+import {createUuid, Uuid} from '../../uuid.js';
 import {
     type Doc,
     DocRepo,
@@ -40,15 +40,18 @@ const COLUMN_ID_INDEX = 'column_id';
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
 export function zCard() {
-    return zDoc(z.tuple([zUuid<CardId>()])).extend({
-        id: zUuid<CardId>(),
-        authorId: zUuid<UserId>(),
-        boardId: zUuid<BoardId>(),
-        counter: z.number(),
-        text: zRichtext(),
-        columnPosition: zBigFloat(),
-        columnId: zUuid<ColumnId>(),
-    });
+    return Type.Composite([
+        zDoc(Type.Tuple([Uuid<CardId>()])),
+        Type.Object({
+            id: Uuid<CardId>(),
+            authorId: Uuid<UserId>(),
+            boardId: Uuid<BoardId>(),
+            counter: Type.Number(),
+            text: zRichtext(),
+            columnPosition: zBigFloat(),
+            columnId: Uuid<ColumnId>(),
+        }),
+    ]);
 }
 
 export class CardRepo {

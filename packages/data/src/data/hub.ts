@@ -1,5 +1,5 @@
 import type {Tracer} from '@opentelemetry/api';
-import {z, ZodType} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
 import {AppError} from '../errors.js';
@@ -18,14 +18,15 @@ import {
     streamer,
 } from '../transport/rpc.js';
 import type {TransportClient, TransportServer} from '../transport/transport.js';
-import {assert, pipe, runAll} from '../utils.js';
+import type {ToSchema} from '../type.js';
+import {pipe, runAll} from '../utils.js';
 
 export class HubClient<T> {
     private readonly server: HubServerRpc<T>;
 
     constructor(
         transportClient: TransportClient<unknown>,
-        schema: ZodType<T>,
+        schema: ToSchema<T>,
         authSecret: string,
         hubUser: string,
         tracer: Tracer
@@ -56,13 +57,7 @@ export class HubClient<T> {
             .subscribe({topic})
             .partition(x => x.type === 'init');
         await init.first();
-        return updates.map(x => {
-            assert(
-                x.type === 'item' && 'item' in x,
-                'expected item after partition'
-            );
-            return x.item as T;
-        });
+        return updates.map(x => x.item);
     }
 
     close(reason: unknown) {
@@ -75,7 +70,7 @@ export class HubServer<T> {
 
     constructor(
         transport: TransportServer<RpcMessage>,
-        schema: ZodType<T>,
+        schema: ToSchema<T>,
         authSecret: string,
         serverName: string
     ) {
@@ -157,36 +152,38 @@ class HubServerRpcState<T> {
     }
 }
 
-function createHubServerApi<T>(zMessage: ZodType<T>) {
+function createHubServerApi<T>(zMessage: ToSchema<T>) {
     return pipe(
         createApi<HubServerRpcState<T>>()({
             publish: handler({
-                req: z.object({
-                    topic: z.string(),
+                req: Type.Object({
+                    topic: Type.String(),
                     message: zMessage,
                 }),
-                res: z.void(),
+                res: Type.Object({}),
                 handle: async (state, {topic, message}) => {
                     state.subjects.next(topic, message!).catch(error => {
                         log.error(error, 'HubServer.publish');
                     });
+                    return {};
                 },
             }),
             throw: handler({
-                req: z.object({topic: z.string(), error: z.string()}),
-                res: z.void(),
+                req: Type.Object({topic: Type.String(), error: Type.String()}),
+                res: Type.Object({}),
                 handle: async (state, {topic, error}) => {
                     await state.subjects.throw(
                         topic,
                         new AppError('EventHubServerApi.throw', {cause: error})
                     );
+                    return {};
                 },
             }),
             subscribe: streamer({
-                req: z.object({topic: z.string()}),
-                item: z.discriminatedUnion('type', [
-                    z.object({type: z.literal('init')}),
-                    z.object({type: z.literal('item'), item: zMessage}),
+                req: Type.Object({topic: Type.String()}),
+                item: Type.Union([
+                    Type.Object({type: Type.Literal('init')}),
+                    Type.Object({type: Type.Literal('item'), item: zMessage}),
                 ]),
                 async *stream({subjects}, {topic}) {
                     const message$ = subjects.value$(topic).toCursor();

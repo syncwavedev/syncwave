@@ -1,8 +1,8 @@
 import type {Tracer} from '@opentelemetry/api';
-import type {TypeOf, ZodType} from 'zod';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
+import {parseValue, type ToSchema} from '../type.js';
 import {assertNever} from '../utils.js';
 import type {MessageHeaders, RpcMessageId} from './rpc-message.js';
 import {launchRpcStreamerServer} from './rpc-streamer.js';
@@ -11,15 +11,15 @@ import type {TransportServer} from './transport.js';
 
 export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
-    req: ZodType<TRequest>;
-    res: ZodType<TResponse>;
+    req: ToSchema<TRequest>;
+    res: ToSchema<TResponse>;
     handle(state: TState, req: TRequest, ctx: RequestInfo): Promise<TResponse>;
 }
 
 export interface Streamer<TState, TRequest, TItem> {
     type: 'streamer';
-    req: ZodType<TRequest>;
-    item: ZodType<TItem>;
+    req: ToSchema<TRequest>;
+    item: ToSchema<TItem>;
     stream(
         state: TState,
         req: TRequest,
@@ -42,35 +42,26 @@ export interface RequestInfo {
     requestId: RpcMessageId;
 }
 
-export interface HandlerOptions<
-    TState,
-    TRequestSchema extends ZodType<any, any, any>,
-    TResponseSchema extends ZodType<any, any, any>,
-> {
-    req: TRequestSchema;
-    res: TResponseSchema;
+export interface HandlerOptions<TState, TRequest, TResponse> {
+    req: ToSchema<TRequest>;
+    res: ToSchema<TResponse>;
     handle: (
         state: TState,
-        req: TypeOf<TRequestSchema>,
+        req: TRequest,
         ctx: RequestInfo
-    ) => Promise<TypeOf<TResponseSchema>>;
+    ) => Promise<TResponse>;
 }
 
-export function handler<
-    TState,
-    TRequestSchema extends ZodType<any, any, any>,
-    TResponseSchema extends ZodType<any, any, any>,
->(
-    options: HandlerOptions<TState, TRequestSchema, TResponseSchema>
-): Handler<TState, TypeOf<TRequestSchema>, TypeOf<TResponseSchema>> {
-    async function wrapper(
-        state: TState,
-        req: TypeOf<TRequestSchema>,
-        info: RequestInfo
-    ) {
-        req = options.req.parse(req);
-        const res = await options.handle(state, req, info);
-        return options.res.parse(res);
+export function handler<TState, TRequest, TResponse>(
+    options: HandlerOptions<TState, TRequest, TResponse>
+): Handler<TState, TRequest, TResponse> {
+    async function wrapper(state: TState, req: TRequest, info: RequestInfo) {
+        const res = await options.handle(
+            state,
+            parseValue(options.req, req),
+            info
+        );
+        return parseValue(options.res, res);
     }
 
     return {
@@ -87,35 +78,30 @@ export type StreamerRequestSchema<T extends Streamer<any, any, any>> =
 export type StreamerItemSchema<T extends Streamer<any, any, any>> =
     T extends Streamer<any, any, infer R> ? R : never;
 
-export interface StreamerOptions<
-    TState,
-    TRequestSchema extends ZodType<any, any, any>,
-    TItemSchema extends ZodType<any, any, any>,
-> {
-    req: TRequestSchema;
-    item: TItemSchema;
+export interface StreamerOptions<TState, TRequest, TItem> {
+    req: ToSchema<TRequest>;
+    item: ToSchema<TItem>;
     stream: (
         state: TState,
-        req: TypeOf<TRequestSchema>,
+        req: TRequest,
         ctx: RequestInfo
-    ) => AsyncIterable<TypeOf<TItemSchema>>;
+    ) => AsyncIterable<TItem>;
 }
 
-export function streamer<
-    TState,
-    TRequestSchema extends ZodType<any, any, any>,
-    TItemSchema extends ZodType<any, any, any>,
->(
-    options: StreamerOptions<TState, TRequestSchema, TItemSchema>
-): Streamer<TState, TypeOf<TRequestSchema>, TypeOf<TItemSchema>> {
+export function streamer<TState, TRequest, TItem>(
+    options: StreamerOptions<TState, TRequest, TItem>
+): Streamer<TState, TRequest, TItem> {
     async function* wrapper(
         state: TState,
-        req: TypeOf<TRequestSchema>,
+        req: TRequest,
         ctx: RequestInfo
-    ): AsyncIterable<TypeOf<TItemSchema>> {
-        req = options.req.parse(req);
-        for await (const item of options.stream(state, req, ctx)) {
-            yield options.item.parse(item);
+    ): AsyncIterable<TItem> {
+        for await (const item of options.stream(
+            state,
+            parseValue(options.req, req),
+            ctx
+        )) {
+            yield parseValue(options.item, item);
         }
     }
     return {

@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {Counter} from '../../kv/counter.js';
@@ -6,7 +6,7 @@ import {UniqueError} from '../../kv/data-index.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Registry} from '../../kv/registry.js';
 import {type Brand} from '../../utils.js';
-import {Uuid, createUuid, zUuid} from '../../uuid.js';
+import {createUuid, Uuid} from '../../uuid.js';
 import {type DataTx} from '../data-layer.js';
 import {
     type Doc,
@@ -34,13 +34,16 @@ export interface Board extends Doc<[BoardId]> {
 const BOARD_KEY_INDEX = 'key';
 
 export function zBoard() {
-    return zDoc(z.tuple([zUuid<BoardId>()])).extend({
-        id: zUuid<BoardId>(),
-        key: z.string(),
-        name: z.string(),
-        authorId: zUuid<UserId>(),
-        deleted: z.boolean(),
-    });
+    return Type.Composite([
+        zDoc(Type.Tuple([Uuid<BoardId>()])),
+        Type.Object({
+            id: Uuid<BoardId>(),
+            key: Type.String(),
+            name: Type.String(),
+            authorId: Uuid<UserId>(),
+            deleted: Type.Boolean(),
+        }),
+    ]);
 }
 
 export class BoardRepo {

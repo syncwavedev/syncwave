@@ -32,60 +32,6 @@ class ParticipantClient {
     authToken = token;
   }
 
-  Future<GetDbTreeRes> getDbTree(GetDbTreeReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('getDbTree');
-    try {
-      final json = await _rpc.handle('getDbTree', request.toJson(), _createHeaders(span, headers));
-      return GetDbTreeRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
-  Future<GetDbItemRes> getDbItem(GetDbItemReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('getDbItem');
-    try {
-      final json = await _rpc.handle('getDbItem', request.toJson(), _createHeaders(span, headers));
-      return GetDbItemRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
-  Future<TruncateDbRes> truncateDb(TruncateDbReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('truncateDb');
-    try {
-      final json = await _rpc.handle('truncateDb', request.toJson(), _createHeaders(span, headers));
-      return TruncateDbRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
   Future<DebugRes> debug(DebugReq request, [MessageHeaders? headers]) async {
     final span = tracer.startSpan('debug');
     try {
@@ -191,24 +137,6 @@ class ParticipantClient {
     try {
       final json = await _rpc.handle('verifySignInCode', request.toJson(), _createHeaders(span, headers));
       return VerifySignInCodeRes.fromJson(json as Map<String, dynamic>);
-    } catch (error) {
-      if (error is TransportException) {
-        _transportErrors.add(error);    
-      } else {
-        _unknownErrors.add(error);
-      }
-  
-      rethrow;
-    } finally {
-      span.end();
-    }
-  }
-
-  Future<DeleteDbItemRes> deleteDbItem(DeleteDbItemReq request, [MessageHeaders? headers]) async {
-    final span = tracer.startSpan('deleteDbItem');
-    try {
-      final json = await _rpc.handle('deleteDbItem', request.toJson(), _createHeaders(span, headers));
-      return DeleteDbItemRes.fromJson(json as Map<String, dynamic>);
     } catch (error) {
       if (error is TransportException) {
         _transportErrors.add(error);    

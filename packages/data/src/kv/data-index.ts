@@ -1,4 +1,3 @@
-import {z} from 'zod';
 import {AppError} from '../errors.js';
 import {
     compareTuple,
@@ -9,12 +8,11 @@ import {
     type Tuple,
 } from '../tuple.js';
 import {assert, zip} from '../utils.js';
-import {zUuid} from '../uuid.js';
 import {
+    mapCondition,
     type AppEntry,
     type AppTransaction,
     type Condition,
-    mapCondition,
 } from './kv-store.js';
 
 export interface IndexGetOptions {
@@ -186,18 +184,4 @@ export function createIndex<TValue>({
             }
         },
     };
-}
-
-export function zIndexKey() {
-    return z.array(
-        z.union([
-            z.null(),
-            z.boolean(),
-            z.number(),
-            z.string(),
-            zUuid(),
-            z.instanceof(Uint8Array),
-            z.undefined(),
-        ])
-    );
 }

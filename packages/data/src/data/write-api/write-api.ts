@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {Type} from '@sinclair/typebox';
 import {encodeBase64, zBase64} from '../../base64.js';
 import {toBigFloat, zBigFloat} from '../../big-float.js';
 import {Crdt, parseCrdtDiff, zCrdtDiffBase64} from '../../crdt/crdt.js';
@@ -7,7 +7,7 @@ import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
 import {createApi, handler, type InferRpcClient} from '../../transport/rpc.js';
 import {whenAll} from '../../utils.js';
-import {zUuid} from '../../uuid.js';
+import {Uuid} from '../../uuid.js';
 import type {DataTx} from '../data-layer.js';
 import {
     toColumnDto,
@@ -60,7 +60,7 @@ export class WriteApiState {
 export function createWriteApi() {
     return createApi<WriteApiState>()({
         createCard: handler({
-            req: z.object({
+            req: Type.Object({
                 diff: zCrdtDiffBase64<Card>(),
             }),
             res: zCard(),
@@ -102,9 +102,9 @@ export function createWriteApi() {
             },
         }),
         createMember: handler({
-            req: z.object({
-                boardId: zUuid<BoardId>(),
-                email: z.string(),
+            req: Type.Object({
+                boardId: Uuid<BoardId>(),
+                email: Type.String(),
                 role: zMemberRole(),
             }),
             res: zMemberDto(),
@@ -162,8 +162,8 @@ export function createWriteApi() {
             },
         }),
         deleteMember: handler({
-            req: z.object({memberId: zUuid<MemberId>()}),
-            res: z.object({}),
+            req: Type.Object({memberId: Uuid<MemberId>()}),
+            res: Type.Object({}),
             handle: async (st, {memberId}) => {
                 const member = await st.tx.members.getById(memberId, true);
 
@@ -187,10 +187,10 @@ export function createWriteApi() {
             },
         }),
         createColumn: handler({
-            req: z.object({
-                columnId: zUuid<ColumnId>(),
-                boardId: zUuid<BoardId>(),
-                title: z.string(),
+            req: Type.Object({
+                columnId: Uuid<ColumnId>(),
+                boardId: Uuid<BoardId>(),
+                title: Type.String(),
                 boardPosition: zBigFloat(),
             }),
             res: zColumnDto(),
@@ -215,8 +215,8 @@ export function createWriteApi() {
             },
         }),
         deleteColumn: handler({
-            req: z.object({columnId: zUuid<ColumnId>()}),
-            res: z.object({}),
+            req: Type.Object({columnId: Uuid<ColumnId>()}),
+            res: Type.Object({}),
             handle: async (st, {columnId}) => {
                 await st.ps.ensureColumnMember(columnId, 'writer');
                 await st.tx.columns.update(
@@ -231,8 +231,8 @@ export function createWriteApi() {
             },
         }),
         deleteCard: handler({
-            req: z.object({cardId: zUuid<CardId>()}),
-            res: z.object({}),
+            req: Type.Object({cardId: Uuid<CardId>()}),
+            res: Type.Object({}),
             handle: async (st, {cardId}) => {
                 await st.ps.ensureCardMember(cardId, 'writer');
                 await st.tx.cards.update(
@@ -247,10 +247,10 @@ export function createWriteApi() {
             },
         }),
         createBoard: handler({
-            req: z.object({
-                boardId: zUuid<BoardId>(),
-                name: z.string(),
-                key: z.string(),
+            req: Type.Object({
+                boardId: Uuid<BoardId>(),
+                name: Type.String(),
+                key: Type.String(),
             }),
             res: zBoard(),
             handle: async (st, req) => {
@@ -284,8 +284,8 @@ export function createWriteApi() {
             },
         }),
         deleteBoard: handler({
-            req: z.object({boardId: zUuid<BoardId>()}),
-            res: z.object({}),
+            req: Type.Object({boardId: Uuid<BoardId>()}),
+            res: Type.Object({}),
             handle: async (st, {boardId}) => {
                 await whenAll([
                     st.ps.ensureBoardMember(boardId, 'owner'),
@@ -297,11 +297,11 @@ export function createWriteApi() {
             },
         }),
         applyBoardDiff: handler({
-            req: z.object({
-                boardId: zUuid<BoardId>(),
+            req: Type.Object({
+                boardId: Uuid<BoardId>(),
                 diff: zCrdtDiffBase64<Board>(),
             }),
-            res: z.object({}),
+            res: Type.Object({}),
             handle: async (st, {boardId, diff}) => {
                 await whenAll([
                     st.ps.ensureBoardMember(boardId, 'admin'),
@@ -311,15 +311,15 @@ export function createWriteApi() {
                         writable({name: true})
                     ),
                 ]);
-                return {};
+                return {x: null};
             },
         }),
         applyCardDiff: handler({
-            req: z.object({
-                cardId: zUuid<CardId>(),
+            req: Type.Object({
+                cardId: Uuid<CardId>(),
                 diff: zCrdtDiffBase64<Card>(),
             }),
-            res: z.object({}),
+            res: Type.Object({}),
             handle: async (st, {cardId, diff}) => {
                 await whenAll([
                     st.ps.ensureCardMember(cardId, 'writer'),
@@ -344,11 +344,11 @@ export function createWriteApi() {
             },
         }),
         applyMemberDiff: handler({
-            req: z.object({
-                memberId: zUuid<MemberId>(),
+            req: Type.Object({
+                memberId: Uuid<MemberId>(),
                 diff: zCrdtDiffBase64<Member>(),
             }),
-            res: z.object({}),
+            res: Type.Object({}),
             handle: async (st, {memberId, diff}) => {
                 await whenAll([
                     st.ps.ensureMember(memberId),
@@ -364,11 +364,11 @@ export function createWriteApi() {
             },
         }),
         applyColumnDiff: handler({
-            req: z.object({
-                columnId: zUuid<ColumnId>(),
+            req: Type.Object({
+                columnId: Uuid<ColumnId>(),
                 diff: zCrdtDiffBase64<Column>(),
             }),
-            res: z.object({}),
+            res: Type.Object({}),
             handle: async (st, {columnId, diff}) => {
                 await whenAll([
                     st.ps.ensureColumnMember(columnId, 'writer'),
@@ -385,10 +385,10 @@ export function createWriteApi() {
             },
         }),
         createComment: handler({
-            req: z.object({
-                cardId: zUuid<CardId>(),
-                text: z.string(),
-                commentId: zUuid<CommentId>(),
+            req: Type.Object({
+                cardId: Uuid<CardId>(),
+                text: Type.String(),
+                commentId: Uuid<CommentId>(),
             }),
             res: zCommentDto(),
             handle: async (st, {cardId, text, commentId}) => {
@@ -408,8 +408,8 @@ export function createWriteApi() {
             },
         }),
         deleteComment: handler({
-            req: z.object({commentId: zUuid<CommentId>()}),
-            res: z.object({}),
+            req: Type.Object({commentId: Uuid<CommentId>()}),
+            res: Type.Object({}),
             handle: async (st, {commentId}) => {
                 await st.ps.ensureCommentMember(commentId, 'writer');
                 await st.tx.comments.update(
@@ -424,11 +424,11 @@ export function createWriteApi() {
             },
         }),
         applyUserDiff: handler({
-            req: z.object({
-                userId: zUuid<UserId>(),
+            req: Type.Object({
+                userId: Uuid<UserId>(),
                 diff: zCrdtDiffBase64<User>(),
             }),
-            res: z.object({}),
+            res: Type.Object({}),
             handle: async (st, {userId, diff}) => {
                 await whenAll([
                     st.ps.ensureUser(userId),
@@ -442,15 +442,15 @@ export function createWriteApi() {
             },
         }),
         setUserAvatar: handler({
-            req: z.object({
-                userId: zUuid<UserId>(),
+            req: Type.Object({
+                userId: Uuid<UserId>(),
                 avatar: zBase64(),
-                contentType: z.union([
-                    z.literal('image/png'),
-                    z.literal('image/jpeg'),
+                contentType: Type.Union([
+                    Type.Literal('image/png'),
+                    Type.Literal('image/jpeg'),
                 ]),
             }),
-            res: z.object({}),
+            res: Type.Object({}),
             handle: async (st, {userId, avatar, contentType}) => {
                 await st.ps.ensureUser(userId);
                 const avatarKey = createObjectKey();

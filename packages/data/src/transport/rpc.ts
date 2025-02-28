@@ -2,7 +2,7 @@ import type {Tracer} from '@opentelemetry/api';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
-import {parseValue, type InferSchema} from '../type.js';
+import {parseValue, type ToSchema} from '../type.js';
 import {assertNever} from '../utils.js';
 import type {MessageHeaders, RpcMessageId} from './rpc-message.js';
 import {launchRpcStreamerServer} from './rpc-streamer.js';
@@ -11,15 +11,15 @@ import type {TransportServer} from './transport.js';
 
 export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
-    req: InferSchema<TRequest>;
-    res: InferSchema<TResponse>;
+    req: ToSchema<TRequest>;
+    res: ToSchema<TResponse>;
     handle(state: TState, req: TRequest, ctx: RequestInfo): Promise<TResponse>;
 }
 
 export interface Streamer<TState, TRequest, TItem> {
     type: 'streamer';
-    req: InferSchema<TRequest>;
-    item: InferSchema<TItem>;
+    req: ToSchema<TRequest>;
+    item: ToSchema<TItem>;
     stream(
         state: TState,
         req: TRequest,
@@ -43,8 +43,8 @@ export interface RequestInfo {
 }
 
 export interface HandlerOptions<TState, TRequest, TResponse> {
-    req: InferSchema<TRequest>;
-    res: InferSchema<TResponse>;
+    req: ToSchema<TRequest>;
+    res: ToSchema<TResponse>;
     handle: (
         state: TState,
         req: TRequest,
@@ -79,8 +79,8 @@ export type StreamerItemSchema<T extends Streamer<any, any, any>> =
     T extends Streamer<any, any, infer R> ? R : never;
 
 export interface StreamerOptions<TState, TRequest, TItem> {
-    req: InferSchema<TRequest>;
-    item: InferSchema<TItem>;
+    req: ToSchema<TRequest>;
+    item: ToSchema<TItem>;
     stream: (
         state: TState,
         req: TRequest,

@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {toStream} from '../stream.js';
-import {Uuid, createUuid} from '../uuid.js';
+import {createUuid, Uuid} from '../uuid.js';
 import {createIndex} from './data-index.js';
 import {MemKVStore} from './mem-kv-store.js';
 import {TupleStore} from './tuple-store.js';

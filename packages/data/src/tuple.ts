@@ -3,7 +3,6 @@ import {pack, unpack} from 'fdb-tuple';
 import type {Codec} from './codec.js';
 import {AppError} from './errors.js';
 import {decodeHex} from './hex.js';
-import {zUint8Array} from './type.js';
 import {assertNever, compareUint8Array} from './utils.js';
 import {parseUuid, stringifyUuid, Uuid} from './uuid.js';
 
@@ -14,7 +13,7 @@ export function zPrimitive() {
         Type.Number(),
         Type.String(),
         Uuid<Uuid>(),
-        zUint8Array(),
+        Type.Uint8Array(),
     ]);
 }
 

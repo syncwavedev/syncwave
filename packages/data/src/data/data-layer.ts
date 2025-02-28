@@ -6,7 +6,7 @@ import {log} from '../logger.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import type {Tuple} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
-import {Uuid} from '../uuid.js';
+import type {Uuid} from '../uuid.js';
 import {type AuthContext} from './auth-context.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';

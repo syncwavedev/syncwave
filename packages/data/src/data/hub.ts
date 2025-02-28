@@ -18,7 +18,7 @@ import {
     streamer,
 } from '../transport/rpc.js';
 import type {TransportClient, TransportServer} from '../transport/transport.js';
-import type {InferSchema} from '../type.js';
+import type {ToSchema} from '../type.js';
 import {pipe, runAll} from '../utils.js';
 
 export class HubClient<T> {
@@ -26,7 +26,7 @@ export class HubClient<T> {
 
     constructor(
         transportClient: TransportClient<unknown>,
-        schema: InferSchema<T>,
+        schema: ToSchema<T>,
         authSecret: string,
         hubUser: string,
         tracer: Tracer
@@ -70,7 +70,7 @@ export class HubServer<T> {
 
     constructor(
         transport: TransportServer<RpcMessage>,
-        schema: InferSchema<T>,
+        schema: ToSchema<T>,
         authSecret: string,
         serverName: string
     ) {
@@ -152,7 +152,7 @@ class HubServerRpcState<T> {
     }
 }
 
-function createHubServerApi<T>(zMessage: InferSchema<T>) {
+function createHubServerApi<T>(zMessage: ToSchema<T>) {
     return pipe(
         createApi<HubServerRpcState<T>>()({
             publish: handler({

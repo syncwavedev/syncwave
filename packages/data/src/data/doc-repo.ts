@@ -21,13 +21,8 @@ import {
 import {Stream, toStream} from '../stream.js';
 import {getNow, type Timestamp, zTimestamp} from '../timestamp.js';
 import {compareTuple, stringifyTuple, type Tuple} from '../tuple.js';
-import {
-    ensureValid,
-    type InferSchema,
-    type Nothing,
-    pipe,
-    whenAll,
-} from '../utils.js';
+import {type InferSchema, parseValue} from '../type.js';
+import {type Nothing, pipe, whenAll} from '../utils.js';
 import {type TransitionChecker} from './transition-checker.js';
 
 export class ConstraintError extends AppError {
@@ -438,7 +433,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         transitionChecker?: TransitionChecker<T>;
     }): Promise<void> {
         const nextSnapshot = params.next.snapshot();
-        ensureValid(nextSnapshot, this.schema);
+        parseValue(this.schema, nextSnapshot);
         await whenAll([
             params.transitionChecker?.(params.prev, nextSnapshot) ??
                 Promise.resolve(),

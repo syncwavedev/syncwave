@@ -1,47 +1,26 @@
 /* eslint-disable */
 import {Type} from '@sinclair/typebox';
-import {
-    FetchingJSONSchemaStore,
-    InputData,
-    JSONSchemaInput,
-    quicktype,
-} from 'quicktype-core';
-import {z} from 'zod';
-import {zodToJsonSchema} from 'zod-to-json-schema';
+import {TypeCompiler} from '@sinclair/typebox/compiler';
+import {Parse} from '@sinclair/typebox/value';
 
-const typeBoxSchema = Type.Object({}, {additionalProperties: false});
+import Ajv from 'ajv';
+import {createUuid} from '../packages/data/src/uuid.js';
 
-console.log(typeBoxSchema);
+const ajv = new Ajv({});
 
-const zodSchema = zodToJsonSchema(z.object({}));
+const schema = Type.Object({
+    uuid: Type.String({
+        format: 'uuid',
+    }),
+    buf: Type.Uint8Array(),
+});
+const C = TypeCompiler.Compile(schema);
 
-console.log(zodSchema);
+// const validate = ajv.compile(schema);
 
-const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore());
-schemaInput.addSource({
-    name: 'SomeName',
-    schema: JSON.stringify(addAdditionalPropertiesFalse(typeBoxSchema)),
+const val = Parse(schema, {
+    uuid: createUuid(),
+    buf: new Uint8Array([1, 2, 3]),
 });
 
-const inputData = new InputData();
-inputData.addInput(schemaInput);
-console.log(
-    await quicktype({
-        inputData,
-        lang: 'dart',
-    }).then(x => x.lines.join('\n'))
-);
-
-function addAdditionalPropertiesFalse(schema: any) {
-    if (typeof schema !== 'object' || schema === null) return schema;
-
-    if (schema.type === 'object' && 'properties' in schema) {
-        schema.additionalProperties = false;
-    }
-
-    for (const key in schema) {
-        addAdditionalPropertiesFalse(schema[key]);
-    }
-
-    return schema;
-}
+console.log(typeof val, val);

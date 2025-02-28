@@ -19,6 +19,8 @@
         "forceConsistentCasingInFileNames": true,
         "allowSyntheticDefaultImports": true,
         "noFallthroughCasesInSwitch": true,
+        "noImplicitOverride": true,
+        "noImplicitThis": true,
         "noImplicitReturns": true,
         "pretty": true,
         "sourceMap": true,

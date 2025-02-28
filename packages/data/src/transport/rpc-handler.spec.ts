@@ -180,7 +180,7 @@ describe('RpcHandler', () => {
 
         const result = client.test({});
 
-        await expect(result).rejects.toThrow(/validation failed/i);
+        await expect(result).rejects.toThrow(/Parse error/i);
     });
 
     it('should support cancellation', async () => {

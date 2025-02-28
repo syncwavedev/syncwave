@@ -12,8 +12,8 @@ import {
 
 export function zPlacement() {
     return Type.Object({
-        prev: Type.Union([zBigFloat(), Type.Undefined()]),
-        next: Type.Union([zBigFloat(), Type.Undefined()]),
+        prev: Type.Optional(zBigFloat()),
+        next: Type.Optional(zBigFloat()),
     });
 }
 

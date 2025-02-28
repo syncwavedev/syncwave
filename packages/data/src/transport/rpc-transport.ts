@@ -1,5 +1,6 @@
 import type {Observer} from '../subject.js';
-import {ensureValid, type Nothing, type Unsubscribe} from '../utils.js';
+import {parseValue} from '../type.js';
+import {type Nothing, type Unsubscribe} from '../utils.js';
 import {zRpcMessage, type RpcMessage} from './rpc-message.js';
 import type {
     Connection,
@@ -28,8 +29,7 @@ export class RpcConnection implements Connection<RpcMessage> {
     }
 
     private parse(data: unknown) {
-        ensureValid(data, messageSchema);
-        return data;
+        return parseValue(messageSchema, data);
     }
 }
 

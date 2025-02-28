@@ -15,6 +15,10 @@ export namespace Uuid {
     export const max = 'ffffffff-ffff-ffff-ffff-ffffffffffff' as Uuid;
 }
 
+export function validateUuid(value: unknown): value is Uuid {
+    return validate(value);
+}
+
 export function createUuid(): Uuid {
     return v7() as Uuid;
 }

@@ -18,7 +18,8 @@ import {
     streamer,
 } from '../transport/rpc.js';
 import type {TransportClient, TransportServer} from '../transport/transport.js';
-import {type InferSchema, pipe, runAll} from '../utils.js';
+import type {InferSchema} from '../type.js';
+import {pipe, runAll} from '../utils.js';
 
 export class HubClient<T> {
     private readonly server: HubServerRpc<T>;
@@ -159,21 +160,23 @@ function createHubServerApi<T>(zMessage: InferSchema<T>) {
                     topic: Type.String(),
                     message: zMessage,
                 }),
-                res: Type.Void(),
+                res: Type.Object({}),
                 handle: async (state, {topic, message}) => {
                     state.subjects.next(topic, message!).catch(error => {
                         log.error(error, 'HubServer.publish');
                     });
+                    return {};
                 },
             }),
             throw: handler({
                 req: Type.Object({topic: Type.String(), error: Type.String()}),
-                res: Type.Void(),
+                res: Type.Object({}),
                 handle: async (state, {topic, error}) => {
                     await state.subjects.throw(
                         topic,
                         new AppError('EventHubServerApi.throw', {cause: error})
                     );
+                    return {};
                 },
             }),
             subscribe: streamer({

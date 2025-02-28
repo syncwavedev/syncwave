@@ -44,7 +44,7 @@ export class CoordinatorServer {
         const hubMemTransportServer = new MemTransportServer(
             new MsgpackCodec()
         );
-        const hubMessageSchema = Type.Void();
+        const hubMessageSchema = Type.Object({});
         const hubAuthSecret = 'hub-auth-secret';
         const hubServer = new HubServer(
             hubMemTransportServer,

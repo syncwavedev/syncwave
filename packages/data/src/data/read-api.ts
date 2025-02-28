@@ -136,7 +136,7 @@ export function createReadApi() {
         }),
         getCard: streamer({
             req: Type.Object({cardId: Uuid<CardId>()}),
-            item: Type.Union([zCard(), Type.Undefined()]),
+            item: Type.Union([zCard(), Type.Null()]),
             async *stream(st, {cardId}) {
                 const card = await st.transact(tx =>
                     tx.cards.getById(cardId, false)
@@ -152,7 +152,7 @@ export function createReadApi() {
                         return await st.transact(async tx => {
                             const card = await tx.cards.getById(cardId, true);
                             if (!card) {
-                                return undefined;
+                                return null;
                             }
                             await tx.ps.ensureBoardMember(
                                 card.boardId,

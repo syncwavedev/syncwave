@@ -20,14 +20,14 @@ export class EventStoreWriter<T> implements EventStoreWriter<T> {
     constructor(
         private readonly events: CollectionManager<T>,
         private readonly id: string,
-        private readonly hub: HubClient<void>,
+        private readonly hub: HubClient<{}>,
         private readonly scheduleEffect: DataEffectScheduler
     ) {}
 
     async append(collection: string, event: T): Promise<void> {
         await this.events.get(collection).append(event);
         const topic = getEventHubTopic(this.id, collection);
-        this.scheduleEffect(() => this.hub.publish(topic, undefined));
+        this.scheduleEffect(() => this.hub.publish(topic, {}));
     }
 }
 
@@ -39,7 +39,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
     constructor(
         private transact: EventStoreReaderTransact<T>,
         private id: string,
-        private readonly hub: HubClient<void>
+        private readonly hub: HubClient<{}>
     ) {}
 
     async subscribe(

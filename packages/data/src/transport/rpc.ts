@@ -1,9 +1,9 @@
 import type {Tracer} from '@opentelemetry/api';
-import type {Static, TSchema} from '@sinclair/typebox';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
-import {assertNever, ensureValid, type InferSchema} from '../utils.js';
+import {parseValue, type InferSchema} from '../type.js';
+import {assertNever} from '../utils.js';
 import type {MessageHeaders, RpcMessageId} from './rpc-message.js';
 import {launchRpcStreamerServer} from './rpc-streamer.js';
 import {RpcTransportServer, type RpcConnection} from './rpc-transport.js';
@@ -42,36 +42,26 @@ export interface RequestInfo {
     requestId: RpcMessageId;
 }
 
-export interface HandlerOptions<
-    TState,
-    TRequestSchema extends TSchema,
-    TResponseSchema extends TSchema,
-> {
-    req: TRequestSchema;
-    res: TResponseSchema;
+export interface HandlerOptions<TState, TRequest, TResponse> {
+    req: InferSchema<TRequest>;
+    res: InferSchema<TResponse>;
     handle: (
         state: TState,
-        req: Static<TRequestSchema>,
+        req: TRequest,
         ctx: RequestInfo
-    ) => Promise<Static<TResponseSchema>>;
+    ) => Promise<TResponse>;
 }
 
-export function handler<
-    TState,
-    TRequestSchema extends TSchema,
-    TResponseSchema extends TSchema,
->(
-    options: HandlerOptions<TState, TRequestSchema, TResponseSchema>
-): Handler<TState, Static<TRequestSchema>, Static<TResponseSchema>> {
-    async function wrapper(
-        state: TState,
-        req: Static<TRequestSchema>,
-        info: RequestInfo
-    ) {
-        ensureValid(req, options.req);
-        const res = await options.handle(state, req, info);
-        ensureValid(res, options.res);
-        return res;
+export function handler<TState, TRequest, TResponse>(
+    options: HandlerOptions<TState, TRequest, TResponse>
+): Handler<TState, TRequest, TResponse> {
+    async function wrapper(state: TState, req: TRequest, info: RequestInfo) {
+        const res = await options.handle(
+            state,
+            parseValue(options.req, req),
+            info
+        );
+        return parseValue(options.res, res);
     }
 
     return {
@@ -88,36 +78,30 @@ export type StreamerRequestSchema<T extends Streamer<any, any, any>> =
 export type StreamerItemSchema<T extends Streamer<any, any, any>> =
     T extends Streamer<any, any, infer R> ? R : never;
 
-export interface StreamerOptions<
-    TState,
-    TRequestSchema extends TSchema,
-    TItemSchema extends TSchema,
-> {
-    req: TRequestSchema;
-    item: TItemSchema;
+export interface StreamerOptions<TState, TRequest, TItem> {
+    req: InferSchema<TRequest>;
+    item: InferSchema<TItem>;
     stream: (
         state: TState,
-        req: Static<TRequestSchema>,
+        req: TRequest,
         ctx: RequestInfo
-    ) => AsyncIterable<Static<TItemSchema>>;
+    ) => AsyncIterable<TItem>;
 }
 
-export function streamer<
-    TState,
-    TRequestSchema extends TSchema,
-    TItemSchema extends TSchema,
->(
-    options: StreamerOptions<TState, TRequestSchema, TItemSchema>
-): Streamer<TState, Static<TRequestSchema>, Static<TItemSchema>> {
+export function streamer<TState, TRequest, TItem>(
+    options: StreamerOptions<TState, TRequest, TItem>
+): Streamer<TState, TRequest, TItem> {
     async function* wrapper(
         state: TState,
-        req: Static<TRequestSchema>,
+        req: TRequest,
         ctx: RequestInfo
-    ): AsyncIterable<Static<TItemSchema>> {
-        ensureValid(req, options.req);
-        for await (const item of options.stream(state, req, ctx)) {
-            ensureValid(item, options.item);
-            yield item;
+    ): AsyncIterable<TItem> {
+        for await (const item of options.stream(
+            state,
+            parseValue(options.req, req),
+            ctx
+        )) {
+            yield parseValue(options.item, item);
         }
     }
     return {

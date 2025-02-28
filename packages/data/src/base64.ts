@@ -25,9 +25,7 @@ export function encodeBase64(data: Base64): Uint8Array {
 }
 
 export function zBase64() {
-    return Type.Unsafe<Base64>(
-        Type.String({format: 'regex', pattern: base64Regex.source})
-    );
+    return Type.Unsafe<Base64>(Type.String({format: 'base64'}));
 }
 
 const base64Regex =

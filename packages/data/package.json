@@ -59,8 +59,6 @@
         "@opentelemetry/semantic-conventions": "^1.30.0",
         "@sinclair/typebox": "^0.34.28",
         "@webfill/async-context": "^1.0.0",
-        "ajv": "^8.17.1",
-        "ajv-formats": "^3.0.1",
         "async-channel": "^0.2.0",
         "deep-equal": "^2.2.3",
         "fdb-tuple": "^1.0.0",

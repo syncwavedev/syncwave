@@ -1,4 +1,3 @@
-import {Type} from '@sinclair/typebox';
 import {AppError} from '../errors.js';
 import {
     compareTuple,
@@ -9,7 +8,6 @@ import {
     type Tuple,
 } from '../tuple.js';
 import {assert, zip} from '../utils.js';
-import {Uuid} from '../uuid.js';
 import {
     mapCondition,
     type AppEntry,
@@ -186,18 +184,4 @@ export function createIndex<TValue>({
             }
         },
     };
-}
-
-export function zIndexKey() {
-    return Type.Array(
-        Type.Union([
-            Type.Null(),
-            Type.Boolean(),
-            Type.Number(),
-            Type.String(),
-            Uuid(),
-            Type.Uint8Array(),
-            Type.Undefined(),
-        ])
-    );
 }

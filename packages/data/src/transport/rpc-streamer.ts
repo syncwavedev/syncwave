@@ -20,11 +20,11 @@ import {
     catchConnectionClosed,
     type Connection,
 } from '../transport/transport.js';
+import {parseValue} from '../type.js';
 import {
     assertNever,
     type Brand,
     catchCancel,
-    ensureValid,
     run,
     runAll,
     type Unsubscribe,
@@ -489,7 +489,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             context().ensureActive();
 
             try {
-                ensureValid(arg, handler.req);
+                arg = parseValue(handler.req, arg);
             } catch (error) {
                 log.error(
                     toError(error),

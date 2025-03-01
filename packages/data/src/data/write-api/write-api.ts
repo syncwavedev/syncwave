@@ -1,6 +1,7 @@
 import {Type} from '@sinclair/typebox';
 import {encodeBase64, zBase64} from '../../base64.js';
 import {toBigFloat, zBigFloat} from '../../big-float.js';
+import {getIdentity} from '../../coordinator/auth-api.js';
 import {Crdt, parseCrdtDiff, zCrdtDiffBase64} from '../../crdt/crdt.js';
 import {createRichtext} from '../../crdt/richtext.js';
 import {BusinessError} from '../../errors.js';
@@ -17,7 +18,12 @@ import {
     zCommentDto,
     zMemberDto,
 } from '../dto.js';
-import {createObjectKey, type ObjectStore} from '../infrastructure.js';
+import {
+    createObjectKey,
+    type CryptoService,
+    type EmailService,
+    type ObjectStore,
+} from '../infrastructure.js';
 import {PermissionService} from '../permission-service.js';
 import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
 import {type Card, type CardId, zCard} from '../repos/card-repo.js';
@@ -41,7 +47,9 @@ export class WriteApiState {
     constructor(
         public readonly tx: DataTx,
         public readonly objectStore: ObjectStore,
-        public readonly ps: PermissionService
+        public readonly ps: PermissionService,
+        public readonly crypto: CryptoService,
+        public readonly email: EmailService
     ) {}
 
     async getBoardRequired(boardId: BoardId): Promise<Board> {
@@ -251,6 +259,7 @@ export function createWriteApi() {
                 boardId: Uuid<BoardId>(),
                 name: Type.String(),
                 key: Type.String(),
+                members: Type.Array(Type.String()),
             }),
             res: zBoard(),
             handle: async (st, req) => {
@@ -267,18 +276,42 @@ export function createWriteApi() {
                     authorId: userId,
                     key: req.key.toUpperCase(),
                 });
-                await st.tx.members.create({
-                    id: createMemberId(),
-                    boardId: board.id,
-                    createdAt: now,
-                    updatedAt: now,
-                    userId: userId,
-                    deleted: false,
-                    role: 'owner',
-                    // todo: add to the beginning of the user list
-                    position: toBigFloat(Math.random()),
-                    version: '2',
-                });
+
+                await whenAll([
+                    st.tx.members.create({
+                        id: createMemberId(),
+                        boardId: board.id,
+                        createdAt: now,
+                        updatedAt: now,
+                        userId: userId,
+                        deleted: false,
+                        role: 'owner',
+                        // todo: add to the beginning of the user list
+                        position: toBigFloat(Math.random()),
+                        version: '2',
+                    }),
+                    ...req.members.map(async member => {
+                        const identity = await getIdentity({
+                            identities: st.tx.identities,
+                            crypto: st.crypto,
+                            email: member,
+                            fullName: 'Anonymous',
+                            users: st.tx.users,
+                        });
+
+                        await st.tx.members.create({
+                            boardId: board.id,
+                            createdAt: now,
+                            deleted: false,
+                            id: createMemberId(),
+                            position: toBigFloat(Math.random()),
+                            role: 'writer',
+                            updatedAt: now,
+                            userId: identity.userId,
+                            version: '2',
+                        });
+                    }),
+                ]);
 
                 return board;
             },

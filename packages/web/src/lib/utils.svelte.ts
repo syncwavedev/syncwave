@@ -174,6 +174,12 @@ export function toggle(initial = false) {
 		toggle: () => {
 			result.value = !result.value;
 		},
+		off: () => {
+			result.value = false;
+		},
+		on: () => {
+			result.value = true;
+		},
 	});
 	return result;
 }

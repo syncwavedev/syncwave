@@ -1,8 +1,7 @@
 <script lang="ts">
-	import type {Snippet} from 'svelte';
 	import type {UserDto} from 'syncwave-data';
 
-	let {user}: {user: UserDto} = $props();
+	let {user}: {user: {fullName: string}} = $props();
 </script>
 
 <div

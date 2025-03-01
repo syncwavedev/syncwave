@@ -50,7 +50,15 @@ export function createCoordinatorApi() {
         createWriteApi(),
         async (next, state: CoordinatorApiState) => {
             await state.transact(async tx => {
-                await next(new WriteApiState(tx, state.objectStore, tx.ps));
+                await next(
+                    new WriteApiState(
+                        tx,
+                        state.objectStore,
+                        tx.ps,
+                        state.crypto,
+                        state.emailService
+                    )
+                );
             });
         }
     );

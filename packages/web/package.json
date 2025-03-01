@@ -32,6 +32,7 @@
 		"prettier-plugin-organize-imports": "^4.1.0",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.10",
+		"@tailwindcss/vite": "^4.0.7",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"typescript": "^5.0.0",
@@ -41,11 +42,9 @@
 		"vite-bundle-visualizer": "^1.2.1",
 		"vite-plugin-checker": "^0.8.0",
 		"vite-plugin-node-polyfills": "^0.23.0",
-		"vitest": "^2.1.8",
-		"zod": "^3.24.2"
+		"vitest": "^2.1.8"
 	},
 	"dependencies": {
-		"@tailwindcss/vite": "^4.0.7",
 		"@tiptap/core": "^2.11.5",
 		"@tiptap/extension-bubble-menu": "^2.11.5",
 		"@tiptap/extension-collaboration": "^2.11.5",

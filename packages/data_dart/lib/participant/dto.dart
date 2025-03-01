@@ -518,23 +518,27 @@ final sendSignInEmailResTypeValues = EnumValues({
 class CreateBoardReq {
     String boardId;
     String key;
+    List<String> members;
     String name;
 
     CreateBoardReq({
         required this.boardId,
         required this.key,
+        required this.members,
         required this.name,
     });
 
     factory CreateBoardReq.fromJson(Map<String, dynamic> json) => CreateBoardReq(
         boardId: json["boardId"],
         key: json["key"],
+        members: List<String>.from(json["members"].map((x) => x)),
         name: json["name"],
     );
 
     Map<String, dynamic> toJson() => {
         "boardId": boardId,
         "key": key,
+        "members": List<dynamic>.from(members.map((x) => x)),
         "name": name,
     };
 }

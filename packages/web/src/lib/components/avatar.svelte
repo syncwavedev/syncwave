@@ -1,6 +1,4 @@
 <script lang="ts">
-	import type {UserDto} from 'syncwave-data';
-
 	let {user}: {user: {fullName: string}} = $props();
 </script>
 

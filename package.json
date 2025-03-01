@@ -9,7 +9,7 @@
     },
     "scripts": {
         "start": "tsx ./scripts/playground.ts | pino-pretty --config .pino-prettyrc",
-        "insomnia": "tsx --require ./packages/server/src/instrumentation.ts ./scripts/insomnia.ts | pino-pretty --config .pino-prettyrc",
+        "insomnia": "tsx --import ./packages/server/src/instrumentation.ts ./scripts/insomnia.ts | pino-pretty --config .pino-prettyrc",
         "bootstrap": "npm install && npm install --workspaces && npm run build",
         "test": "npm test --workspaces",
         "build": "npm run build --workspaces",

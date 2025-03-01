@@ -1,7 +1,10 @@
 import {Type} from '@sinclair/typebox';
 import type {Brand} from '../utils.js';
 
-export type Richtext = Brand<{[RICHTEXT_MARKER_KEY]: true}, 'richtext'>;
+export type Richtext = Brand<
+    {[RICHTEXT_MARKER_KEY]: true; preview: string},
+    'richtext'
+>;
 
 const RICHTEXT_MARKER_KEY = '__isRichtextMarker';
 

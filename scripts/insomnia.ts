@@ -1,4 +1,4 @@
-import '../packages/server/src/instrumentation.js';
+// import '../packages/server/src/instrumentation.js';
 
 /* eslint-disable */
 import 'dotenv/config';
@@ -7,13 +7,18 @@ import {trace} from '@opentelemetry/api';
 
 import {MsgpackCodec} from '../packages/data/src/codec.js';
 import {
+    type Card,
+    Crdt,
     createCardId,
     createColumnId,
+    createRichtext,
     drop,
+    getNow,
     MemTransportClient,
     MemTransportServer,
     ParticipantClient,
     ParticipantServer,
+    stringifyCrdtDiff,
     toBigFloat,
 } from '../packages/data/src/index.js';
 import {WsTransportClient} from '../packages/web/src/ws-transport-client.js';
@@ -52,12 +57,22 @@ async function main() {
     }
 
     for (let i = 0; i < 20; i++) {
-        await client.rpc.createCard({
+        const cardId = createCardId();
+        const card = Crdt.from<Card>({
             boardId: member.boardId,
-            cardId: createCardId(),
+            id: cardId,
+            pk: [cardId],
+            authorId: member.userId,
+            createdAt: getNow(),
+            deleted: false,
+            counter: -1,
             columnId,
-            title: `Card ${i}`,
+            text: createRichtext(),
+            updatedAt: getNow(),
             columnPosition: toBigFloat(Math.random()),
+        });
+        await client.rpc.createCard({
+            diff: stringifyCrdtDiff(card.state()),
         });
     }
 }

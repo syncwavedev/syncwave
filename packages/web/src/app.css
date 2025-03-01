@@ -34,36 +34,61 @@
 	--text-8xl--line-height: 1;
 	--text-9xl--line-height: 0.95;
 
+	/* Sage Gray */
+	--color-sage-10: oklch(98.5% 0.0029 130deg);
+	--color-sage-30: oklch(97% 0.003 130deg);
+	--color-sage-40: oklch(95.5% 0.0031 130deg);
+	--color-sage-50: oklch(94% 0.0032 130deg);
+	--color-sage-70: oklch(92.5% 0.0033 130deg);
+	--color-sage-100: oklch(91% 0.0034 130deg);
+	--color-sage-150: oklch(87% 0.0035 130deg);
+	--color-sage-200: oklch(83% 0.0036 130deg);
+	--color-sage-250: oklch(79% 0.0037 130deg);
+	--color-sage-300: oklch(75% 0.0038 130deg);
+	--color-sage-350: oklch(71% 0.0039 130deg);
+	--color-sage-400: oklch(67% 0.004 130deg);
+	--color-sage-450: oklch(63% 0.0041 130deg);
+	--color-sage-500: oklch(59% 0.0042 130deg);
+	--color-sage-550: oklch(55% 0.0042 130deg);
+	--color-sage-600: oklch(51% 0.0043 130deg);
+	--color-sage-650: oklch(47% 0.0043 130deg);
+	--color-sage-700: oklch(43% 0.0044 130deg);
+	--color-sage-750: oklch(39% 0.0044 130deg);
+	--color-sage-800: oklch(35% 0.0044 130deg);
+	--color-sage-850: oklch(31% 0.0045 130deg);
+	--color-sage-870: oklch(29% 0.0045 130deg);
+	--color-sage-900: oklch(27% 0.0045 130deg);
+	--color-sage-930: oklch(25% 0.0045 130deg);
+	--color-sage-950: oklch(23% 0.0045 130deg);
+
 	/* Gray */
-	--color-gray-10: oklch(99% 0 260deg);
-	--color-gray-30: oklch(97% 0 260deg);
-	--color-gray-40: oklch(96% 0 260deg);
-	--color-gray-50: oklch(95% 0 260deg);
-	--color-gray-70: oklch(93% 0 260deg);
-	--color-gray-100: oklch(91% 0 260deg);
-	--color-gray-150: oklch(87% 0.0005 260deg);
-	--color-gray-200: oklch(83% 0.0008 260deg);
-	--color-gray-250: oklch(79% 0.0011 260deg);
-	--color-gray-300: oklch(75% 0.0014 260deg);
-	--color-gray-350: oklch(71% 0.0017 260deg);
-	--color-gray-400: oklch(67% 0.002 260deg);
-	--color-gray-450: oklch(63% 0.0023 260deg);
-	--color-gray-500: oklch(59% 0.0026 260deg);
-	--color-gray-550: oklch(55% 0.0029 260deg);
-	--color-gray-600: oklch(51% 0.0032 260deg);
-	--color-gray-650: oklch(47% 0.0035 260deg);
-	--color-gray-700: oklch(43% 0.0038 260deg);
-	--color-gray-750: oklch(39% 0.004 260deg);
-	--color-gray-800: oklch(35% 0.0042 260deg);
-	--color-gray-850: oklch(31% 0.0043 260deg);
-	--color-gray-870: oklch(29% 0.0044 260deg);
-	--color-gray-900: oklch(27% 0.0044 260deg);
+	--color-gray-10: oklch(98.5% 0.0029 260deg);
+	--color-gray-30: oklch(97% 0.003 260deg);
+	--color-gray-40: oklch(95.5% 0.0031 260deg);
+	--color-gray-50: oklch(94% 0.0032 260deg);
+	--color-gray-70: oklch(92.5% 0.0033 260deg);
+	--color-gray-100: oklch(91% 0.0034 260deg);
+	--color-gray-150: oklch(87% 0.0035 260deg);
+	--color-gray-200: oklch(83% 0.0036 260deg);
+	--color-gray-250: oklch(79% 0.0037 260deg);
+	--color-gray-300: oklch(75% 0.0038 260deg);
+	--color-gray-350: oklch(71% 0.0039 260deg);
+	--color-gray-400: oklch(67% 0.004 260deg);
+	--color-gray-450: oklch(63% 0.0041 260deg);
+	--color-gray-500: oklch(59% 0.0042 260deg);
+	--color-gray-550: oklch(55% 0.0042 260deg);
+	--color-gray-600: oklch(51% 0.0043 260deg);
+	--color-gray-650: oklch(47% 0.0043 260deg);
+	--color-gray-700: oklch(43% 0.0044 260deg);
+	--color-gray-750: oklch(39% 0.0044 260deg);
+	--color-gray-800: oklch(35% 0.0044 260deg);
+	--color-gray-850: oklch(31% 0.0045 260deg);
+	--color-gray-870: oklch(29% 0.0045 260deg);
+	--color-gray-900: oklch(27% 0.0045 260deg);
 	--color-gray-930: oklch(25% 0.0045 260deg);
 	--color-gray-950: oklch(23% 0.0045 260deg);
 
 	/* Semantics */
-	--color-background: var(--theme-color-background);
-
 	--color-ink: var(--theme-color-ink);
 	--color-ink-body: var(--theme-color-ink-body);
 	--color-ink-detail: var(--theme-color-ink-detail);
@@ -73,6 +98,7 @@
 	--color-divider: var(--theme-color-divider);
 	--color-divider-object: var(--theme-color-divider-object);
 
+	--color-subtle-0: var(--theme-color-subtle-0);
 	--color-subtle-1: var(--theme-color-subtle-1);
 	--color-subtle-2: var(--theme-color-subtle-2);
 	--color-subtle-3: var(--theme-color-subtle-3);
@@ -83,26 +109,23 @@
 
 @layer base {
 	[data-theme='light'] {
-		--theme-color-background: var(--color-white);
-
-		--theme-color-ink: var(--color-gray-900);
-		--theme-color-ink-body: var(--color-gray-600);
-		--theme-color-ink-detail: var(--color-gray-450);
-		--theme-color-ink-placeholder: var(--color-gray-350);
+		--theme-color-ink: var(--color-sage-900);
+		--theme-color-ink-body: var(--color-sage-600);
+		--theme-color-ink-detail: var(--color-sage-450);
+		--theme-color-ink-placeholder: var(--color-sage-350);
 		--theme-color-ink-reverse: var(--color-white);
 
-		--theme-color-divider: var(--color-gray-40);
-		--theme-color-divider-object: var(--color-gray-70);
+		--theme-color-divider: var(--color-sage-40);
+		--theme-color-divider-object: var(--color-sage-70);
 
-		--theme-color-subtle-1: var(--color-gray-10);
-		--theme-color-subtle-2: var(--color-gray-30);
-		--theme-color-subtle-3: var(--color-gray-50);
-		--theme-color-subtle-4: var(--color-gray-70);
+		--theme-color-subtle-0: var(--color-white);
+		--theme-color-subtle-1: var(--color-sage-10);
+		--theme-color-subtle-2: var(--color-sage-30);
+		--theme-color-subtle-3: var(--color-sage-50);
+		--theme-color-subtle-4: var(--color-sage-70);
 	}
 
 	[data-theme='dark'] {
-		--theme-color-background: var(--color-gray-950);
-
 		--theme-color-ink: var(--color-gray-50);
 		--theme-color-ink-body: var(--color-gray-300);
 		--theme-color-ink-reverse: var(--color-black);
@@ -112,6 +135,7 @@
 		--theme-color-divider: var(--color-gray-870);
 		--theme-color-divider-object: var(--color-gray-800);
 
+		--theme-color-subtle-0: var(--color-gray-950);
 		--theme-color-subtle-1: var(--color-gray-930);
 		--theme-color-subtle-2: var(--color-gray-900);
 		--theme-color-subtle-3: var(--color-gray-850);
@@ -120,7 +144,7 @@
 
 	html,
 	body {
-		@apply bg-background text-ink font-sans antialiased;
+		@apply text-ink font-sans antialiased;
 	}
 
 	hr {
@@ -142,7 +166,7 @@
 	}
 
 	.btn--icon {
-		@apply text-ink-body hover:bg-subtle-3 hover:text-ink grid aspect-square h-[2em] w-[2em] cursor-pointer place-items-center rounded-full;
+		@apply text-ink-body hover:bg-subtle-2 hover:text-ink grid aspect-square h-[2em] w-[2em] cursor-pointer place-items-center rounded-full;
 
 		&.btn--icon--ink {
 			@apply bg-ink hover:bg-gray-650 text-ink-reverse;
@@ -154,7 +178,7 @@
 	}
 
 	.btn--block {
-		@apply text-ink-body hover:bg-subtle-3 hover:text-ink flex h-[2em] cursor-pointer items-center justify-center rounded-2xl px-[0.5em];
+		@apply text-ink-body hover:bg-subtle-2 hover:text-ink flex h-[2em] cursor-pointer items-center justify-center rounded-2xl px-[0.5em];
 	}
 
 	/* Icons */

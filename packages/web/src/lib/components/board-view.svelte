@@ -30,7 +30,7 @@
 
 <div class="mt-2 flex-1">
 	<div
-		class="flex gap-6 text-sm"
+		class="flex gap-4 text-sm"
 		use:dragHandleZone={{
 			items: columns,
 			flipDurationMs,
@@ -48,7 +48,7 @@
 				<div
 					use:dragHandle
 					data-disable-scroll-view-drag="true"
-					class="text-ink-body text-2xs sticky top-0 mb-2 bg-white"
+					class="text-ink-body text-2xs mb-2"
 				>
 					{column.title}
 				</div>

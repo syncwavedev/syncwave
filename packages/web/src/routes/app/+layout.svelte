@@ -34,7 +34,7 @@
 	</div>
 </noscript>
 
-<main class="flex h-screen w-full">
+<main class="bg-subtle-1 dark:bg-subtle-0 flex h-screen w-full">
 	{#if sidebarOpen.value}
 		<ResizablePane
 			minWidth={200}

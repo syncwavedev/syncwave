@@ -97,7 +97,7 @@ const jwtService: JwtService = {
         new Promise((resolve, reject) => {
             jwt.verify(token, secret, (err, result) => {
                 if (err) {
-                    return reject(err);
+                    return reject({token, err});
                 }
 
                 resolve(result as JwtPayload);

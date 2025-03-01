@@ -3,8 +3,8 @@ import {AppError} from '../errors.js';
 import {Stream, toStream} from '../stream.js';
 import {tupleStartsWith, type Packer, type Tuple} from '../tuple.js';
 import {unreachable} from '../utils.js';
-import {IsolatedTransaction} from './isolated-kv-store.js';
-import {MappedTransaction, type Mapper} from './mapped-mvcc-store.js';
+import {SnapshotIsolator, TransactionIsolator} from './kv-store-isolator.js';
+import {SnapshotMapper, TransactionMapper} from './kv-store-mapper.js';
 
 export interface GtCondition<K> {
     readonly gt: K;
@@ -54,37 +54,26 @@ export class InvalidQueryCondition extends AppError {
     }
 }
 
-export interface ReadTransaction<K, V> {
+export interface Snapshot<K, V> {
     get(key: K): Promise<V | undefined>;
     query(condition: Condition<K>): AsyncIterable<Entry<K, V>>;
 }
 
-export interface Transaction<K, V> extends ReadTransaction<K, V> {
+export interface Transaction<K, V> extends Snapshot<K, V> {
     put(key: K, value: V): Promise<void>;
     delete(key: K): Promise<void>;
 }
 
-export interface SingleWriterStore<K, V> {
-    transactRead<TResult>(
-        fn: (tx: ReadTransaction<K, V>) => Promise<TResult>
-    ): Promise<TResult>;
-    transactWrite<TResult>(
-        fn: (tx: Transaction<K, V>) => Promise<TResult>
-    ): Promise<TResult>;
+export interface KvStore<K, V> {
+    snapshot<R>(fn: (snapshot: Snapshot<K, V>) => Promise<R>): Promise<R>;
+    transact<R>(fn: (tx: Transaction<K, V>) => Promise<R>): Promise<R>;
     close(reason: unknown): void;
 }
 
-export interface MvccStore<K, V> {
-    // fn must be called multiple times in case of a conflict (optimistic concurrency)
-    transact<TResult>(
-        fn: (tx: Transaction<K, V>) => Promise<TResult>
-    ): Promise<TResult>;
-    close(reason: unknown): void;
-}
-
-export type Uint8MvccStore = MvccStore<Uint8Array, Uint8Array>;
+export type Uint8KvStore = KvStore<Uint8Array, Uint8Array>;
 export type Uint8Transaction = Transaction<Uint8Array, Uint8Array>;
-export type AppStore<T = Uint8Array> = MvccStore<Tuple, T>;
+export type Uint8Snapshot = Snapshot<Uint8Array, Uint8Array>;
+export type AppStore<T = Uint8Array> = KvStore<Tuple, T>;
 export type AppTransaction<T = Uint8Array> = Transaction<Tuple, T>;
 
 export interface ConditionMapper<K, TResult> {
@@ -113,11 +102,19 @@ export function mapCondition<K, TResult>(
 
 // utils
 
-function createIdMapper<T>(): Mapper<T, T> {
-    return {
-        decode: x => x,
-        encode: x => x,
-    };
+export interface Mapper<TPrivate, TPublic> {
+    decode(x: TPrivate): TPublic;
+    encode(x: TPublic): TPrivate;
+}
+
+export class IdMapper<T> implements Mapper<T, T> {
+    decode(x: T): T {
+        return x;
+    }
+
+    encode(x: T): T {
+        return x;
+    }
 }
 
 function createPackerMapper<TData>(codec: Packer<TData>): Mapper<Tuple, TData> {
@@ -139,29 +136,41 @@ function createCodecMapper<TData>(
 export function isolate(
     prefix: Tuple
 ): <V>(store: Transaction<Tuple, V>) => Transaction<Tuple, V> {
-    return store => new IsolatedTransaction(store, prefix);
+    return store => new TransactionIsolator(store, prefix);
+}
+
+export function isolateSnapshot(
+    prefix: Tuple
+): <V>(store: Snapshot<Tuple, V>) => Snapshot<Tuple, V> {
+    return store => new SnapshotIsolator(store, prefix);
 }
 
 export function withCodec<TData>(
     codec: Codec<TData>
 ): <K>(store: Transaction<K, Uint8Array>) => Transaction<K, TData> {
     return store =>
-        new MappedTransaction(
-            store,
-            createIdMapper(),
-            createCodecMapper(codec)
-        );
+        new TransactionMapper(store, new IdMapper(), createCodecMapper(codec));
+}
+
+export function withSnapshotCodec<TData>(
+    codec: Codec<TData>
+): <K>(store: Snapshot<K, Uint8Array>) => Snapshot<K, TData> {
+    return store =>
+        new SnapshotMapper(store, new IdMapper(), createCodecMapper(codec));
 }
 
 export function withPacker<T>(
     codec: Packer<T>
 ): <V>(store: Transaction<Tuple, V>) => Transaction<T, V> {
     return store =>
-        new MappedTransaction(
-            store,
-            createPackerMapper(codec),
-            createIdMapper()
-        );
+        new TransactionMapper(store, createPackerMapper(codec), new IdMapper());
+}
+
+export function withSnapshotPacker<T>(
+    codec: Packer<T>
+): <V>(store: Snapshot<Tuple, V>) => Snapshot<T, V> {
+    return store =>
+        new SnapshotMapper(store, createPackerMapper(codec), new IdMapper());
 }
 
 export function queryStartsWith<T>(

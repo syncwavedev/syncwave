@@ -2,30 +2,27 @@ import {
     mapCondition,
     type Condition,
     type Entry,
-    type MvccStore,
+    type KvStore,
+    type Mapper,
+    type Snapshot,
     type Transaction,
 } from './kv-store.js';
 
-export interface Mapper<TPrivate, TPublic> {
-    decode(x: TPrivate): TPublic;
-    encode(x: TPublic): TPrivate;
-}
-
-export class MappedTransaction<
+export class SnapshotMapper<
     TKeyPrivate,
     TKeyPublic,
     TValuePrivate,
     TValuePublic,
-> implements Transaction<TKeyPublic, TValuePublic>
+> implements Snapshot<TKeyPublic, TValuePublic>
 {
     constructor(
-        private target: Transaction<TKeyPrivate, TValuePrivate>,
-        private keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
-        private valueMapper: Mapper<TValuePrivate, TValuePublic>
+        private snapshot: Snapshot<TKeyPrivate, TValuePrivate>,
+        protected keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
+        protected valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
 
     async get(key: TKeyPublic): Promise<TValuePublic | undefined> {
-        const result = await this.target.get(this.keyMapper.encode(key));
+        const result = await this.snapshot.get(this.keyMapper.encode(key));
         if (result) {
             return this.valueMapper.decode(result);
         } else {
@@ -36,7 +33,7 @@ export class MappedTransaction<
     async *query(
         condition: Condition<TKeyPublic>
     ): AsyncIterable<Entry<TKeyPublic, TValuePublic>> {
-        const entries = this.target.query(
+        const entries = this.snapshot.query(
             projectCondition(condition, this.keyMapper)
         );
         for await (const {key, value} of entries) {
@@ -46,37 +43,59 @@ export class MappedTransaction<
             };
         }
     }
+}
+
+export class TransactionMapper<
+        TKeyPrivate,
+        TKeyPublic,
+        TValuePrivate,
+        TValuePublic,
+    >
+    extends SnapshotMapper<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
+    implements Transaction<TKeyPublic, TValuePublic>
+{
+    constructor(
+        private tx: Transaction<TKeyPrivate, TValuePrivate>,
+        keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
+        valueMapper: Mapper<TValuePrivate, TValuePublic>
+    ) {
+        super(tx, keyMapper, valueMapper);
+    }
 
     async put(key: TKeyPublic, value: TValuePublic): Promise<void> {
-        return await this.target.put(
+        return await this.tx.put(
             this.keyMapper.encode(key),
             this.valueMapper.encode(value)
         );
     }
 
     async delete(key: TKeyPublic): Promise<void> {
-        await this.target.delete(this.keyMapper.encode(key));
+        await this.tx.delete(this.keyMapper.encode(key));
     }
 }
 
-export class MappedMvccStore<
-    TKeyPrivate,
-    TKeyPublic,
-    TValuePrivate,
-    TValuePublic,
-> implements MvccStore<TKeyPublic, TValuePublic>
+export class KvStoreMapper<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
+    implements KvStore<TKeyPublic, TValuePublic>
 {
     constructor(
-        private store: MvccStore<TKeyPrivate, TValuePrivate>,
+        private store: KvStore<TKeyPrivate, TValuePrivate>,
         private keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
         private valueMapper: Mapper<TValuePrivate, TValuePublic>
     ) {}
+
+    snapshot<TResult>(
+        fn: (tx: Snapshot<TKeyPublic, TValuePublic>) => Promise<TResult>
+    ): Promise<TResult> {
+        return this.store.transact(tx =>
+            fn(new SnapshotMapper(tx, this.keyMapper, this.valueMapper))
+        );
+    }
 
     transact<TResult>(
         fn: (tx: Transaction<TKeyPublic, TValuePublic>) => Promise<TResult>
     ): Promise<TResult> {
         return this.store.transact(tx =>
-            fn(new MappedTransaction(tx, this.keyMapper, this.valueMapper))
+            fn(new TransactionMapper(tx, this.keyMapper, this.valueMapper))
         );
     }
 

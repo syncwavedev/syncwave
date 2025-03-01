@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
-import {AppError} from '../errors.js';
-import {whenAll} from '../utils.js';
+import {AppError} from './errors.js';
 import {RwLock} from './rw-lock.js';
+import {whenAll} from './utils.js';
 
 describe('RwLock', () => {
     it('should acquire a read lock when not locked', async () => {

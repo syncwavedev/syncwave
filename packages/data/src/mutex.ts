@@ -1,5 +1,5 @@
-import {Deferred} from '../deferred.js';
-import {AppError} from '../errors.js';
+import {Deferred} from './deferred.js';
+import {AppError} from './errors.js';
 
 export class Mutex {
     private locked = false;

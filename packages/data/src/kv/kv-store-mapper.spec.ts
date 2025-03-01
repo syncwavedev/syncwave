@@ -1,13 +1,9 @@
 import {describe, expect, it} from 'vitest';
-import type {Condition, Entry} from './kv-store.js';
-import {
-    MappedMvccStore,
-    MappedTransaction,
-    type Mapper,
-} from './mapped-mvcc-store.js';
+import {KvStoreMapper, TransactionMapper} from './kv-store-mapper.js';
+import type {Condition, Entry, Mapper} from './kv-store.js';
 import {MemMvccStore} from './mem-mvcc-store.js';
 
-describe('MappedTransaction with MemKVStore', () => {
+describe('TransactionMapper', () => {
     const keyMapper: Mapper<Uint8Array, string> = {
         encode: key => Buffer.from(key, 'base64'),
         decode: key => Buffer.from(key).toString('base64'),
@@ -24,7 +20,7 @@ describe('MappedTransaction with MemKVStore', () => {
             await tx.put(Uint8Array.from([1]), Uint8Array.from([42]));
         });
 
-        const mappedTxn = new MappedTransaction(
+        const mappedTxn = new TransactionMapper(
             await store.transact(async tx => tx),
             keyMapper,
             valueMapper
@@ -36,7 +32,7 @@ describe('MappedTransaction with MemKVStore', () => {
 
     it('should return undefined for a missing key', async () => {
         const store = new MemMvccStore();
-        const mappedTxn = new MappedTransaction(
+        const mappedTxn = new TransactionMapper(
             await store.transact(async tx => tx),
             keyMapper,
             valueMapper
@@ -53,7 +49,7 @@ describe('MappedTransaction with MemKVStore', () => {
             await tx.put(Uint8Array.from([3]), Uint8Array.from([200]));
         });
 
-        const mappedTxn = new MappedTransaction(
+        const mappedTxn = new TransactionMapper(
             await store.transact(async tx => tx),
             keyMapper,
             valueMapper
@@ -78,7 +74,7 @@ describe('MappedTransaction with MemKVStore', () => {
 
     it('should put a value with encoded key and value', async () => {
         const store = new MemMvccStore();
-        const mappedTxn = new MappedTransaction(
+        const mappedTxn = new TransactionMapper(
             await store.transact(async tx => tx),
             keyMapper,
             valueMapper
@@ -95,7 +91,7 @@ describe('MappedTransaction with MemKVStore', () => {
     });
 });
 
-describe('MappedKVStore with MemKVStore', () => {
+describe('KvStoreMapper', () => {
     const keyMapper: Mapper<Uint8Array, string> = {
         encode: key => Buffer.from(key, 'base64'),
         decode: key => Buffer.from(key).toString('base64'),
@@ -108,7 +104,7 @@ describe('MappedKVStore with MemKVStore', () => {
 
     it('should execute a transaction with mapped keys and values', async () => {
         const store = new MemMvccStore();
-        const mappedStore = new MappedMvccStore(store, keyMapper, valueMapper);
+        const mappedStore = new KvStoreMapper(store, keyMapper, valueMapper);
 
         const result = await mappedStore.transact(async tx => {
             await tx.put(

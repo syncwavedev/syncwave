@@ -3,21 +3,21 @@ import {MsgpackCodec} from '../codec.js';
 import {Deferred} from '../deferred.js';
 import {decodeTuple, encodeTuple} from '../tuple.js';
 import {whenAll} from '../utils.js';
-import type {SingleWriterStore} from './kv-store.js';
-import {MappedMvccStore} from './mapped-mvcc-store.js';
+import {KvStoreMapper} from './kv-store-mapper.js';
+import type {KvStore} from './kv-store.js';
 import {MemMvccStore} from './mem-mvcc-store.js';
-import {MemSingleWriterStore} from './mem-single-writer-store.js';
+import {MemRwStore} from './mem-rw-store.js';
 
 function asyncDelay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-describe('mem-single-writer-store', () => {
-    let store: SingleWriterStore<number, string>;
+describe('mem-rw-store', () => {
+    let store: KvStore<number, string>;
 
     beforeEach(() => {
-        store = new MemSingleWriterStore(
-            new MappedMvccStore(
+        store = new MemRwStore(
+            new KvStoreMapper(
                 new MemMvccStore(),
                 {
                     decode: x => decodeTuple(x)[0] as number,
@@ -29,12 +29,12 @@ describe('mem-single-writer-store', () => {
     });
 
     it('should store and retrieve keys in write transaction', async () => {
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(1, 'one');
             await tx.put(2, 'two');
         });
 
-        await store.transactRead(async tx => {
+        await store.snapshot(async tx => {
             const value1 = await tx.get(1);
             const value2 = await tx.get(2);
 
@@ -44,17 +44,17 @@ describe('mem-single-writer-store', () => {
     });
 
     it('should delete keys in write transaction', async () => {
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(1, 'one');
             await tx.put(2, 'two');
             await tx.put(3, 'three');
         });
 
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.delete(2);
         });
 
-        await store.transactRead(async tx => {
+        await store.snapshot(async tx => {
             const result = await toArray(tx.query({gte: 0}));
 
             expect(result).toEqual([
@@ -65,17 +65,17 @@ describe('mem-single-writer-store', () => {
     });
 
     it('should update existing keys in write transaction', async () => {
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(1, 'one');
             await tx.put(2, 'two');
         });
 
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(2, 'updated-two');
             await tx.put(3, 'three');
         });
 
-        await store.transactRead(async tx => {
+        await store.snapshot(async tx => {
             const value1 = await tx.get(1);
             const value2 = await tx.get(2);
             const value3 = await tx.get(3);
@@ -87,13 +87,13 @@ describe('mem-single-writer-store', () => {
     });
 
     it('should query keys in read transaction', async () => {
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(1, 'one');
             await tx.put(2, 'two');
             await tx.put(3, 'three');
         });
 
-        await store.transactRead(async tx => {
+        await store.snapshot(async tx => {
             const values = await toArray(tx.query({gte: 2}));
             expect(values).toEqual([
                 {key: 2, value: 'two'},
@@ -103,7 +103,7 @@ describe('mem-single-writer-store', () => {
     });
 
     it('should allow multiple concurrent read transactions', async () => {
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(1, 'one');
             await tx.put(2, 'two');
             await tx.put(3, 'three');
@@ -116,7 +116,7 @@ describe('mem-single-writer-store', () => {
         const transaction2Finished = new Deferred<void>();
 
         // Run two read transactions concurrently
-        const tx1 = store.transactRead(async tx => {
+        const tx1 = store.snapshot(async tx => {
             transaction1Started.resolve();
             await transaction2Started.promise; // Wait for tx2 to start
             await asyncDelay(10); // Small delay to ensure overlap
@@ -126,7 +126,7 @@ describe('mem-single-writer-store', () => {
             return value;
         });
 
-        const tx2 = store.transactRead(async tx => {
+        const tx2 = store.snapshot(async tx => {
             transaction2Started.resolve();
             await transaction1Started.promise; // Wait for tx1 to start
             const value = await tx.get(2);
@@ -142,7 +142,7 @@ describe('mem-single-writer-store', () => {
     });
 
     it('should block read transactions during write transaction', async () => {
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(1, 'one');
             await tx.put(2, 'two');
         });
@@ -153,7 +153,7 @@ describe('mem-single-writer-store', () => {
         const readFinished = new Deferred<void>();
 
         // Start a write transaction but don't finish it immediately
-        const writeTx = store.transactWrite(async tx => {
+        const writeTx = store.transact(async tx => {
             writeStarted.resolve();
             await tx.put(1, 'updated-one');
             await asyncDelay(50); // Hold the write lock for a while
@@ -165,7 +165,7 @@ describe('mem-single-writer-store', () => {
         await writeStarted.promise;
 
         // Try to start a read transaction
-        const readTx = store.transactRead(async tx => {
+        const readTx = store.snapshot(async tx => {
             readBlocked.resolve();
             const value = await tx.get(1);
             readFinished.resolve();
@@ -191,7 +191,7 @@ describe('mem-single-writer-store', () => {
     });
 
     it('should block a write transaction during another write transaction', async () => {
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(1, 'one');
         });
 
@@ -201,7 +201,7 @@ describe('mem-single-writer-store', () => {
         const write2Finished = new Deferred<void>();
 
         // Start first write transaction
-        const write1Tx = store.transactWrite(async tx => {
+        const write1Tx = store.transact(async tx => {
             write1Started.resolve();
             await tx.put(1, 'one-updated');
             await asyncDelay(50); // Hold the lock for a while
@@ -213,7 +213,7 @@ describe('mem-single-writer-store', () => {
         await write1Started.promise;
 
         // Try to start second write transaction
-        const write2Tx = store.transactWrite(async tx => {
+        const write2Tx = store.transact(async tx => {
             write2Blocked.resolve();
             await tx.put(2, 'two');
             write2Finished.resolve();
@@ -239,7 +239,7 @@ describe('mem-single-writer-store', () => {
     });
 
     it('should close the store', async () => {
-        await store.transactWrite(async tx => {
+        await store.transact(async tx => {
             await tx.put(1, 'one');
         });
 

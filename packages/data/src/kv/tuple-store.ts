@@ -2,23 +2,24 @@ import {decodeTuple, encodeTuple, type Tuple} from '../tuple.js';
 import {
     mapCondition,
     type Condition,
-    type MvccStore,
+    type KvStore,
+    type Snapshot,
     type Transaction,
 } from './kv-store.js';
 
-export class TupleTransaction<TKey extends Tuple, TValue>
-    implements Transaction<TKey, TValue>
+export class TupleSnapshot<TKey extends Tuple, TValue>
+    implements Snapshot<TKey, TValue>
 {
-    constructor(private readonly target: Transaction<Uint8Array, TValue>) {}
+    constructor(private readonly snap: Snapshot<Uint8Array, TValue>) {}
 
     get(key: TKey): Promise<TValue | undefined> {
-        return this.target.get(encodeTuple(key));
+        return this.snap.get(encodeTuple(key));
     }
 
     async *query(
         condition: Condition<TKey>
     ): AsyncIterable<{key: TKey; value: TValue}> {
-        for await (const {key, value} of this.target.query(
+        for await (const {key, value} of this.snap.query(
             mapCondition<TKey, Condition<Uint8Array>>(condition, {
                 gt: cond => ({gt: encodeTuple(cond.gt)}),
                 gte: cond => ({gte: encodeTuple(cond.gte)}),
@@ -29,20 +30,38 @@ export class TupleTransaction<TKey extends Tuple, TValue>
             yield {key: decodeTuple(key) as TKey, value};
         }
     }
+}
 
-    put(key: TKey, value: TValue): Promise<void> {
-        return this.target.put(encodeTuple(key), value);
+export class TupleTransaction<K extends Tuple, V>
+    extends TupleSnapshot<K, V>
+    implements Transaction<K, V>
+{
+    constructor(private readonly tx: Transaction<Uint8Array, V>) {
+        super(tx);
     }
 
-    delete(key: TKey): Promise<void> {
-        return this.target.delete(encodeTuple(key));
+    put(key: K, value: V): Promise<void> {
+        return this.tx.put(encodeTuple(key), value);
+    }
+
+    delete(key: K): Promise<void> {
+        return this.tx.delete(encodeTuple(key));
     }
 }
 
 export class TupleStore<TKey extends Tuple, TValue>
-    implements MvccStore<TKey, TValue>
+    implements KvStore<TKey, TValue>
 {
-    constructor(private readonly store: MvccStore<Uint8Array, TValue>) {}
+    constructor(private readonly store: KvStore<Uint8Array, TValue>) {}
+
+    snapshot<TResult>(
+        fn: (tx: TupleSnapshot<TKey, TValue>) => Promise<TResult>
+    ): Promise<TResult> {
+        return this.store.snapshot(async tx => {
+            const tupleTx = new TupleSnapshot<TKey, TValue>(tx);
+            return await fn(tupleTx);
+        });
+    }
 
     transact<TResult>(
         fn: (tx: TupleTransaction<TKey, TValue>) => Promise<TResult>
@@ -52,6 +71,7 @@ export class TupleStore<TKey extends Tuple, TValue>
             return await fn(tupleTx);
         });
     }
+
     close(reason: unknown): void {
         this.store.close(reason);
     }

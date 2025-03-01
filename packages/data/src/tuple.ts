@@ -154,13 +154,13 @@ export function unpackNumber(value: Tuple) {
     return primitive;
 }
 
-export class NumberPacker implements Packer<number> {
-    pack(value: number): Tuple {
+export class NumberPacker<T extends number = number> implements Packer<T> {
+    pack(value: T): Tuple {
         return packNumber(value);
     }
 
-    unpack(value: Tuple): number {
-        return unpackNumber(value);
+    unpack(value: Tuple): T {
+        return unpackNumber(value) as T;
     }
 }
 

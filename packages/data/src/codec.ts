@@ -35,15 +35,16 @@ const stringCodec = new StringCodec();
 export const encodeString = (data: string) => stringCodec.encode(data);
 export const decodeString = (buf: Uint8Array) => stringCodec.decode(buf);
 
-export class NumberCodec implements Codec<number> {
-    encode(data: number): Uint8Array {
-        return new Uint8Array(encode(data));
+export class NumberCodec<T extends number = number> implements Codec<T> {
+    encode(data: T): Uint8Array {
+        return encodeNumber(data);
     }
-    decode(buf: Uint8Array): number {
-        return decode(Buffer.from(buf));
+    decode(buf: Uint8Array): T {
+        return decodeNumber(buf);
     }
 }
 
-const numberCodec = new NumberCodec();
-export const encodeNumber = (data: number) => numberCodec.encode(data);
-export const decodeNumber = (buf: Uint8Array) => numberCodec.decode(buf);
+export const encodeNumber = <T extends number = number>(data: T) =>
+    new Uint8Array(encode(data));
+export const decodeNumber = <T extends number = number>(buf: Uint8Array) =>
+    decode(Buffer.from(buf)) as T;

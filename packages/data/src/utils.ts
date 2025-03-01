@@ -21,18 +21,30 @@ export function assertNever(value: never): never {
     throw new AppError('assertNever failed: ' + value);
 }
 
-export function assert(
-    expression: boolean,
-    message: string
-): asserts expression {
-    if (!expression) {
-        throw new AppError('assertion failed: ' + message);
+export type AssertMessage = string | (() => string);
+
+function renderAssertMessage(message: AssertMessage): string {
+    if (typeof message === 'function') {
+        return message();
+    } else {
+        return message;
     }
 }
 
-export function assertSingle<T>(value: T[], message: string): T {
+export function assert(
+    expression: boolean,
+    message: AssertMessage
+): asserts expression {
+    if (!expression) {
+        throw new AppError('assertion failed: ' + renderAssertMessage(message));
+    }
+}
+
+export function assertSingle<T>(value: T[], message: AssertMessage): T {
     if (value.length !== 1) {
-        throw new AppError('assertSingle failed: ' + message);
+        throw new AppError(
+            'assertSingle failed: ' + renderAssertMessage(message)
+        );
     }
 
     return value[0];

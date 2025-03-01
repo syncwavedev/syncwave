@@ -1,7 +1,7 @@
 import {MsgpackCodec} from '../codec.js';
 import {type CrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
-import {type AppTransaction, isolate, type MvccStore} from '../kv/kv-store.js';
+import {type AppTransaction, isolate, type KvStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import type {Tuple} from '../tuple.js';
@@ -105,7 +105,7 @@ export class DataLayer {
     public readonly esReader: EventStoreReader<ChangeEvent>;
 
     constructor(
-        private readonly kv: MvccStore<Tuple, Uint8Array>,
+        private readonly kv: KvStore<Tuple, Uint8Array>,
         private readonly hub: HubClient<{}>,
         private readonly jwtSecret: string
     ) {

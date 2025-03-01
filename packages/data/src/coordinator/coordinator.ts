@@ -9,7 +9,7 @@ import type {
     JwtService,
     ObjectStore,
 } from '../data/infrastructure.js';
-import type {MvccStore} from '../kv/kv-store.js';
+import type {KvStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
 import {tracerManager} from '../tracer-manager.js';
 import {
@@ -28,7 +28,7 @@ import {
 
 export interface CoordinatorServerOptions {
     transport: TransportServer<RpcMessage>;
-    kv: MvccStore<Tuple, Uint8Array>;
+    kv: KvStore<Tuple, Uint8Array>;
     jwt: JwtService;
     crypto: CryptoService;
     email: EmailService;

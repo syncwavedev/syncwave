@@ -1,7 +1,7 @@
 import {describe, expect, it, vi} from 'vitest';
-import {AppError} from '../errors.js';
-import {whenAll} from '../utils.js';
+import {AppError} from './errors.js';
 import {Mutex} from './mutex.js';
+import {whenAll} from './utils.js';
 
 describe('Mutex', () => {
     it('should acquire a lock when not locked', async () => {

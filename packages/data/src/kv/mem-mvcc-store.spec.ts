@@ -6,25 +6,25 @@ import {AggregateError, AppError} from '../errors.js';
 import {toStream} from '../stream.js';
 import {decodeTuple, encodeTuple} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
+import {KvStoreMapper, TransactionMapper} from './kv-store-mapper.js';
 import type {
     Condition,
-    MvccStore,
+    KvStore,
     Transaction,
-    Uint8MvccStore,
+    Uint8KvStore,
 } from './kv-store.js';
-import {MappedMvccStore, MappedTransaction} from './mapped-mvcc-store.js';
 import {
     MemMvccStore,
-    MemMvccTransaction,
     MvccConflictError,
+    MvccTransaction,
 } from './mem-mvcc-store.js';
 
 describe('mem-mvcc-store', () => {
-    let store: MvccStore<number, string>;
+    let store: KvStore<number, string>;
     let rawMvccStore: MemMvccStore;
 
-    function mapStore<T>(rawStore: Uint8MvccStore): MvccStore<number, T> {
-        return new MappedMvccStore(
+    function mapStore<T>(rawStore: Uint8KvStore): KvStore<number, T> {
+        return new KvStoreMapper(
             rawStore,
             {
                 decode: x => decodeTuple(x)[0] as number,
@@ -39,6 +39,26 @@ describe('mem-mvcc-store', () => {
             transactionRetryCount: 0,
         });
         store = mapStore(rawMvccStore);
+    });
+
+    it('should remove entry in write set (case: query)', async () => {
+        await store.transact(async tx => {
+            await tx.put(1, 'one');
+            await tx.delete(1);
+
+            const values = await toStream(tx.query({gte: 0})).toArray();
+            expect(values).toEqual([]);
+        });
+    });
+
+    it('should remove entry in write set (case: get)', async () => {
+        await store.transact(async tx => {
+            await tx.put(1, 'one');
+            await tx.delete(1);
+
+            const value = await tx.get(1);
+            expect(value).toEqual(undefined);
+        });
     });
 
     it('should delete key multiple times', async () => {
@@ -1684,10 +1704,10 @@ class TxController<K, V> {
     }
 
     getReadRanges() {
-        const tx = (this.tx as MappedTransaction<any, any, any, any>)['target'];
+        const tx = (this.tx as TransactionMapper<any, any, any, any>)['target'];
 
         assert(
-            tx instanceof MemMvccTransaction,
+            tx instanceof MvccTransaction,
             'must be instance of MappedTransaction'
         );
 

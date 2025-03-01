@@ -1,12 +1,12 @@
 import {describe, expect, it} from 'vitest';
 import {encodeString} from '../codec.js';
 import {toStream} from '../stream.js';
-import {IsolatedKVStore, IsolatedTransaction} from './isolated-kv-store.js';
+import {KvStoreIsolator, TransactionIsolator} from './kv-store-isolator.js';
 import type {AppEntry} from './kv-store.js';
 import {MemMvccStore} from './mem-mvcc-store.js';
 import {TupleStore} from './tuple-store.js';
 
-describe('PrefixedTransaction', () => {
+describe('TransactionIsolator', () => {
     it('should get a value with the correct prefixed key', async () => {
         const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
@@ -15,7 +15,7 @@ describe('PrefixedTransaction', () => {
         });
 
         await store.transact(async tx => {
-            const prefixedTxn = new IsolatedTransaction(tx, ['prefix:']);
+            const prefixedTxn = new TransactionIsolator(tx, ['prefix:']);
             await prefixedTxn.put(['key2'], encodeString('value2'));
 
             const value1 = await prefixedTxn.get(['key1']);
@@ -52,7 +52,7 @@ describe('PrefixedTransaction', () => {
     it('should put a value with the correct prefixed key', async () => {
         const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
-            const prefixedTxn = new IsolatedTransaction(tx, ['pre', 'fix']);
+            const prefixedTxn = new TransactionIsolator(tx, ['pre', 'fix']);
             await prefixedTxn.put(['key'], encodeString('value'));
         });
 
@@ -69,7 +69,7 @@ describe('PrefixedTransaction', () => {
         });
 
         await store.transact(async tx => {
-            const prefixedTxn = new IsolatedTransaction(tx, ['prefix']);
+            const prefixedTxn = new TransactionIsolator(tx, ['prefix']);
             await prefixedTxn.delete(['key']);
         });
 
@@ -88,7 +88,7 @@ describe('PrefixedTransaction', () => {
         });
 
         await store.transact(async tx => {
-            const prefixedTxn = new IsolatedTransaction(tx, ['prefix']);
+            const prefixedTxn = new TransactionIsolator(tx, ['prefix']);
             const results: AppEntry[] = [];
 
             const entry$ = prefixedTxn.query({
@@ -115,7 +115,7 @@ describe('PrefixedTransaction', () => {
 describe('PrefixedKVStore', () => {
     it('should execute a transaction with the correct prefix', async () => {
         const store = new TupleStore(new MemMvccStore());
-        const prefixedStore = new IsolatedKVStore(store, ['prefix']);
+        const prefixedStore = new KvStoreIsolator(store, ['prefix']);
 
         await prefixedStore.transact(async tx => {
             await tx.put(['key1'], encodeString('value1'));
@@ -131,8 +131,8 @@ describe('PrefixedKVStore', () => {
 
     it('should isolate transactions', async () => {
         const store = new TupleStore(new MemMvccStore());
-        const prefixedStore1 = new IsolatedKVStore(store, ['prefix1']);
-        const prefixedStore2 = new IsolatedKVStore(store, ['prefix2']);
+        const prefixedStore1 = new KvStoreIsolator(store, ['prefix1']);
+        const prefixedStore2 = new KvStoreIsolator(store, ['prefix2']);
 
         await prefixedStore1.transact(async tx => {
             await tx.put(['key'], encodeString('value1'));

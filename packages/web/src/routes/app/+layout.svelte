@@ -1,24 +1,7 @@
 <script lang="ts">
-	import Sidebar from '$lib/components/sidebar.svelte';
-	import {getUniversalStore} from '$lib/utils.js';
-	import {setSidebarOpen} from '$lib/utils.svelte.js';
-	import ResizablePane from '$lib/components/resizable-pane.svelte';
 	import ErrorCard from '$lib/components/error-card.svelte';
 
-	let {children, data} = $props();
-
-	const storage = getUniversalStore();
-
-	const SIDEBAR_WIDTH_KEY = 'sbw';
-
-	const initialSidebarWidth =
-		Number.parseInt(storage.get(SIDEBAR_WIDTH_KEY) ?? '200') || 200;
-
-	function handleSidebarWidthChange(sidebarWidth: number) {
-		storage.set(SIDEBAR_WIDTH_KEY, Math.round(sidebarWidth).toString());
-	}
-
-	const sidebarOpen = setSidebarOpen();
+	let {children} = $props();
 </script>
 
 <noscript>
@@ -35,22 +18,6 @@
 </noscript>
 
 <main class="bg-subtle-1 dark:bg-subtle-0 flex h-screen w-full">
-	{#if sidebarOpen.value}
-		<ResizablePane
-			minWidth={200}
-			maxWidth={400}
-			freeSide="right"
-			onWidthChange={handleSidebarWidthChange}
-			defaultSize={initialSidebarWidth}
-			class="border-default flex shrink-0 flex-col border-r px-2"
-		>
-			<Sidebar
-				ontoggle={sidebarOpen.toggle}
-				initialMe={data.initialMe}
-				initialMyMembers={data.initialMyMembers}
-			/>
-		</ResizablePane>
-	{/if}
 	<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 		<svelte:boundary>
 			{#snippet failed(error)}

@@ -7,8 +7,9 @@ import {
     CancelledError,
     type Condition,
     type Entry,
+    type Snapshot,
     TXN_RETRIES_COUNT,
-    type Uint8KVStore,
+    type Uint8KvStore,
     type Uint8Transaction,
     checkError,
     context,
@@ -94,7 +95,7 @@ class PostgresTransaction implements Uint8Transaction {
     }
 }
 
-export class PostgresUint8KVStore implements Uint8KVStore {
+export class PostgresUint8KvStore implements Uint8KvStore {
     private pool: pg.Pool;
     private init: Promise<unknown>;
 
@@ -108,6 +109,12 @@ export class PostgresUint8KVStore implements Uint8KVStore {
                 value BYTEA
             );
         `);
+    }
+
+    async snapshot<R>(
+        fn: (snapshot: Snapshot<Uint8Array, Uint8Array>) => Promise<R>
+    ): Promise<R> {
+        return await this.transact(fn);
     }
 
     async transact<TResult>(

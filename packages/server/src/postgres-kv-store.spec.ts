@@ -1,10 +1,10 @@
-import {PostgresUint8KVStore} from './postgres-kv-store.js';
+import {PostgresUint8KvStore} from './postgres-kv-store.js';
 import {describeKVStore} from './store-spec.js';
 
 describeKVStore(
     'PostgresUint8KVStore',
     () =>
-        new PostgresUint8KVStore({
+        new PostgresUint8KvStore({
             connectionString:
                 'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_test',
             max: 20, // maximum number of clients in the pool

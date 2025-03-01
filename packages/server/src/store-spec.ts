@@ -6,11 +6,11 @@ import {
     type LtCondition,
     type LteCondition,
     toStream,
-    type Uint8KVStore,
+    type Uint8KvStore,
 } from 'syncwave-data';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 
-export function describeKVStore<T extends Uint8KVStore>(
+export function describeKVStore<T extends Uint8KvStore>(
     name: string,
     createStore: () => T,
     cleanup: (store: T) => Promise<void>
@@ -24,7 +24,7 @@ export function describeKVStore<T extends Uint8KVStore>(
 
         afterEach(async () => {
             await cleanup(store);
-            store.close();
+            store.close('end of the test');
         });
 
         it('should return undefined for a missing key', async () => {

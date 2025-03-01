@@ -1704,7 +1704,7 @@ class TxController<K, V> {
     }
 
     getReadRanges() {
-        const tx = (this.tx as TransactionMapper<any, any, any, any>)['target'];
+        const tx = (this.tx as TransactionMapper<any, any, any, any>)['tx'];
 
         assert(
             tx instanceof MvccTransaction,

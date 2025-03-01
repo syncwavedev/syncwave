@@ -11,7 +11,7 @@ import {
 	toError,
 	toStream,
 	type Condition,
-	type Uint8KVStore,
+	type Uint8KvStore,
 	type Uint8Transaction,
 } from 'syncwave-data';
 
@@ -123,7 +123,7 @@ export class IndexedDBTransaction implements Uint8Transaction {
 	}
 }
 
-export class IndexedDBKVStore implements Uint8KVStore {
+export class IndexedDBKVStore implements Uint8KvStore {
 	private dbPromise: Promise<IDBPDatabase<KVDBSchema>>;
 
 	constructor(dbName: string) {
@@ -134,6 +134,12 @@ export class IndexedDBKVStore implements Uint8KVStore {
 				}
 			},
 		});
+	}
+
+	public async snapshot<TResult>(
+		fn: (tx: Uint8Transaction) => Promise<TResult>
+	): Promise<TResult> {
+		return await this.transact(fn);
 	}
 
 	public async transact<TResult>(

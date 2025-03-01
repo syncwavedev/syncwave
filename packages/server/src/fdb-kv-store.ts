@@ -8,7 +8,7 @@ import {
     type LteCondition,
     mapCondition,
     toStream,
-    type Uint8KVStore,
+    type Uint8KvStore,
     type Uint8Transaction,
 } from 'syncwave-data';
 
@@ -82,11 +82,19 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
     }
 }
 
-export class FoundationDBUint8KVStore implements Uint8KVStore {
+export class FoundationDBUint8KvStore implements Uint8KvStore {
     private readonly db: fdb.Database;
 
     constructor(clusterFilePath?: string) {
         this.db = fdb.open(clusterFilePath);
+    }
+
+    async snapshot<TResult>(
+        fn: (tx: Uint8Transaction) => Promise<TResult>
+    ): Promise<TResult> {
+        return this.db.doTransaction(async nativeTxn => {
+            return fn(new FoundationDBUint8Transaction(nativeTxn));
+        });
     }
 
     async transact<TResult>(

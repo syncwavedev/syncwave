@@ -21,12 +21,12 @@ import {
     InstrumentedEmailService,
     InstrumentedKvStore,
     InstrumentedTransportServer,
-    IsolatedKVStore,
     type JwtPayload,
     type JwtService,
+    type KvStore,
+    KvStoreIsolator,
     log,
     MsgpackCodec,
-    type MvccStore,
     toError,
     toStream,
     TupleStore,
@@ -112,13 +112,13 @@ const jwtService: JwtService = {
         }),
 };
 
-async function getKVStore(): Promise<MvccStore<Tuple, Uint8Array>> {
+async function getKVStore(): Promise<KvStore<Tuple, Uint8Array>> {
     const store = await (async () => {
         if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
             log.info('using PostgreSQL as primary store');
             return await import('./postgres-kv-store.js').then(
                 x =>
-                    new x.PostgresUint8KVStore({
+                    new x.PostgresUint8KvStore({
                         connectionString:
                             'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_dev',
                         max: 20,
@@ -132,18 +132,18 @@ async function getKVStore(): Promise<MvccStore<Tuple, Uint8Array>> {
             );
             const fdbStore = await import('./fdb-kv-store.js').then(
                 x =>
-                    new x.FoundationDBUint8KVStore(`./fdb/fdb.${STAGE}.cluster`)
+                    new x.FoundationDBUint8KvStore(`./fdb/fdb.${STAGE}.cluster`)
             );
             return fdbStore;
         }
     })();
 
     return new InstrumentedKvStore(
-        new IsolatedKVStore(new TupleStore(store), ['sw', STAGE])
+        new KvStoreIsolator(new TupleStore(store), ['sw', STAGE])
     );
 }
 
-async function upgradeKVStore(kvStore: MvccStore<Tuple, Uint8Array>) {
+async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
     const versionKey = ['version'];
     log.info('Retrieving KV store version...');
     const version = await kvStore.transact(async tx => {

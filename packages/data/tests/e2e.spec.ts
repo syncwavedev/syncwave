@@ -49,6 +49,7 @@ describe('e2e', () => {
             boardId,
             name: 'Test board',
             key: 'test-board',
+            members: [],
         });
 
         const board = await subject.client.rpc
@@ -79,6 +80,7 @@ describe('e2e', () => {
             boardId,
             name: 'Test board',
             key: 'TEST',
+            members: [],
         });
 
         const me = await subject.client.rpc.getMe({}).first();

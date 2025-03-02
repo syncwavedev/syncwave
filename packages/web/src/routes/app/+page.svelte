@@ -1,7 +1,12 @@
 <script lang="ts">
 	import AddBoardDialog from '$lib/components/add-board-dialog.svelte';
+	import Dashboard from '$lib/components/dashboard.svelte';
+	import Sidebar from '$lib/components/sidebar.svelte';
 	import {getAuthManager} from '$lib/utils';
 	import {toggle} from '$lib/utils.svelte';
+
+	let {data} = $props();
+	let {initialMyMembers} = $derived(data);
 
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
@@ -9,11 +14,8 @@
 	const addBoardDialogToggle = toggle();
 </script>
 
-<header
-	class="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12"
->
-	<div class="flex items-center gap-2 px-4">SyncWave board</div>
-</header>
+<Dashboard {initialMyMembers} />
+
 <div class="p-4">
 	{#if idInfo}
 		<div>

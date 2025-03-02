@@ -1,30 +1,72 @@
 <script lang="ts">
 	import {observe} from '$lib/utils.svelte';
-	import {log} from 'syncwave-data';
+	import {
+		Crdt,
+		createCardId,
+		createRichtext,
+		getNow,
+		log,
+		stringifyCrdtDiff,
+		toPosition,
+		type Card,
+	} from 'syncwave-data';
 
 	import {goto} from '$app/navigation';
 	import BoardViewController from '$lib/components/board-view-controller.svelte';
 	import SearchIcon from '$lib/components/icons/search-icon.svelte';
 	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
 	import ScrollArea from '$lib/components/scroll-area.svelte';
-	import {getContext} from 'svelte';
-	import PanelRightIcon from '$lib/components/icons/panel-right-icon.svelte';
 	import EllipsisIcon from '$lib/components/icons/ellipsis-icon.svelte';
 	import type {LayoutProps} from './$types';
+	import {getAppRoute, getCardRoute} from '$lib/routes';
+	import {getSdk} from '$lib/utils';
 
 	const {data, children}: LayoutProps = $props();
-	const {boardKey, initialBoard} = data;
+	const {boardKey, initialBoard, initialMe} = $derived(data);
 
-	const board = observe(initialBoard, x => {
-		return x.getBoardView({key: boardKey});
-	});
+	const board = $derived(
+		observe(initialBoard, x => x.getBoardView({key: boardKey}))
+	);
+	const me = $derived(observe(initialMe, x => x.getMe({})));
 
 	$effect(() => {
 		if (board.value.deleted) {
 			log.info(`board ${board.value.id} got deleted, redirect to app...`);
-			goto('/app');
+			goto(getAppRoute());
 		}
 	});
+
+	const sdk = getSdk();
+
+	async function createCard() {
+		const firstColumn = board.value.columns[0];
+		if (firstColumn === undefined) {
+			alert('Please, create a column first');
+			return;
+		}
+
+		const now = getNow();
+		const cardId = createCardId();
+		const cardCrdt = Crdt.from<Card>({
+			authorId: me.value.user.id,
+			boardId: board.value.id,
+			columnId: board.value.columns[0].id,
+			createdAt: now,
+			deleted: false,
+			id: cardId,
+			columnPosition: toPosition({next: undefined, prev: undefined}),
+			counter: 0,
+			pk: [cardId],
+			updatedAt: now,
+			text: createRichtext(),
+		});
+
+		const card = await sdk(x =>
+			x.createCard({diff: stringifyCrdtDiff(cardCrdt.state())})
+		);
+
+		goto(getCardRoute(boardKey, card.counter));
+	}
 </script>
 
 <div class="flex h-full">
@@ -32,11 +74,11 @@
 		<div class="sticky top-0 z-10 shrink-0 px-6">
 			<div class="bg-subtle-1 dark:bg-subtle-0 sticky top-0 z-10">
 				<div class="my-2 flex items-center">
-					<div class="text-xs leading-none font-semibold">
-						Syncwave Core
+					<div class="text-xs leading-none font-semibold capitalize">
+						{board.value.name}
 					</div>
 
-					<button class="btn--icon ml-auto">
+					<button onclick={createCard} class="btn--icon ml-auto">
 						<PlusIcon />
 					</button>
 					<button class="btn--icon"><SearchIcon /></button>
@@ -52,15 +94,12 @@
 				type="always"
 				class="h-full"
 			>
-				<div class="pl-6">
+				<div class="px-6">
 					<BoardViewController board={board.value} />
 				</div>
 			</ScrollArea>
 		</div>
 	</div>
-	<div
-		class="border-divider bg-subtle-0 dark:bg-subtle-1 z-10 flex h-full w-112 min-w-84 flex-shrink-0 flex-col border-l"
-	>
-		{@render children()}
-	</div>
+
+	{@render children()}
 </div>

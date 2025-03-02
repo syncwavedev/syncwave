@@ -206,6 +206,62 @@ class ParticipantClient {
     }
   }
 
+  Stream<GetCardViewValue> getCardView(GetCardViewReq request, [MessageHeaders? headers]) async* {
+    final invocationSpan = tracer.startSpan('getCardView');
+    try {
+      while (true) {
+        final attemptSpan = tracer.startSpan('getCardView');
+        try {
+          await for (final json in _rpc.stream('getCardView', request.toJson(), _createHeaders(attemptSpan, headers))) {
+            attemptSpan.addEvent("next");
+            yield GetCardViewValue.fromJson(json as Map<String, dynamic>);
+          }
+        } catch (error) {
+          if (error is TransportException) {
+            _transportErrors.add(error);
+          } else {
+            _unknownErrors.add(error);
+            rethrow;
+          }
+        } finally {
+          attemptSpan.end();
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
+    } finally {
+      invocationSpan.end();
+    }
+  }
+
+  Stream<GetCardViewByKeyValue> getCardViewByKey(GetCardViewByKeyReq request, [MessageHeaders? headers]) async* {
+    final invocationSpan = tracer.startSpan('getCardViewByKey');
+    try {
+      while (true) {
+        final attemptSpan = tracer.startSpan('getCardViewByKey');
+        try {
+          await for (final json in _rpc.stream('getCardViewByKey', request.toJson(), _createHeaders(attemptSpan, headers))) {
+            attemptSpan.addEvent("next");
+            yield GetCardViewByKeyValue.fromJson(json as Map<String, dynamic>);
+          }
+        } catch (error) {
+          if (error is TransportException) {
+            _transportErrors.add(error);
+          } else {
+            _unknownErrors.add(error);
+            rethrow;
+          }
+        } finally {
+          attemptSpan.end();
+        }
+  
+        await Future<void>.delayed(Duration(milliseconds: rpcRetryDelayMs));
+      }
+    } finally {
+      invocationSpan.end();
+    }
+  }
+
   Future<CreateColumnRes> createColumn(CreateColumnReq request, [MessageHeaders? headers]) async {
     final span = tracer.startSpan('createColumn');
     try {

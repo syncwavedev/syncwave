@@ -96,6 +96,8 @@ export function createParticipantApi() {
         verifySignInCode: proxy('verifySignInCode'),
         getMyMembers: proxy('getMyMembers'),
         getBoard: proxy('getBoard'),
+        getCardView: proxy('getCardView'),
+        getCardViewByKey: proxy('getCardViewByKey'),
         createColumn: proxy('createColumn'),
         createCard: proxy('createCard'),
         getBoardView: proxy('getBoardView'),

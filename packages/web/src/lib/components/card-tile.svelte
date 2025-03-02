@@ -1,11 +1,13 @@
 <script lang="ts">
 	import type {BoardViewCardDto} from 'syncwave-data';
 	import Avatar from './avatar.svelte';
+	import {getCardRoute} from '$lib/routes';
 
 	let {card}: {card: BoardViewCardDto} = $props();
 </script>
 
-<div
+<a
+	href={getCardRoute(card.board.key, card.counter)}
 	class="bg-subtle-0 dark:bg-subtle-1 border-divider hover:border-divider-object hover:bg-subtle-2 flex cursor-pointer items-end gap-1 rounded-lg border p-2"
 >
 	<div class="flex w-full flex-col gap-1 truncate">
@@ -19,4 +21,4 @@
 	<div>
 		<Avatar user={card.author} />
 	</div>
-</div>
+</a>

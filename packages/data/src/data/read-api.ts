@@ -14,12 +14,14 @@ import {
 } from './data-layer.js';
 import {
     toBoardViewDto,
+    toCardViewDto,
     toCommentDto,
     toMemberAdminDto,
     toMemberDto,
     toUserDto,
     zBoardDto,
     zBoardViewDto,
+    zCardViewDto,
     zCommentDto,
     zMemberAdminDto,
     zMemberDto,
@@ -134,9 +136,9 @@ export function createReadApi() {
                 });
             },
         }),
-        getCard: streamer({
+        getCardView: streamer({
             req: Type.Object({cardId: Uuid<CardId>()}),
-            item: Type.Union([zCard(), Type.Null()]),
+            item: zCardViewDto(),
             async *stream(st, {cardId}) {
                 const card = await st.transact(tx =>
                     tx.cards.getById(cardId, false)
@@ -150,20 +152,57 @@ export function createReadApi() {
                 yield* observable({
                     async get() {
                         return await st.transact(async tx => {
-                            const card = await tx.cards.getById(cardId, true);
-                            if (!card) {
-                                return null;
-                            }
-                            await tx.ps.ensureBoardMember(
-                                card.boardId,
-                                'reader'
-                            );
-
-                            return card;
+                            const [nextCard] = await whenAll([
+                                toCardViewDto(tx, cardId),
+                                tx.ps.ensureCardMember(cardId, 'reader'),
+                            ]);
+                            return nextCard;
                         });
                     },
                     update$: st.esReader
                         .subscribe(boardEvents(card.boardId))
+                        .then(x => x.map(() => undefined)),
+                });
+            },
+        }),
+        getCardViewByKey: streamer({
+            req: Type.Object({
+                boardKey: Type.String(),
+                counter: Type.Number(),
+            }),
+            item: zCardViewDto(),
+            async *stream(st, {boardKey, counter}) {
+                const board = await st.transact(tx =>
+                    tx.boards.getByKey(boardKey)
+                );
+                if (board === undefined) {
+                    throw new BusinessError(
+                        `board with key ${boardKey} not found`,
+                        'board_not_found'
+                    );
+                }
+                const card = await st.transact(tx =>
+                    tx.cards.getByBoardIdAndCounter(board.id, counter)
+                );
+                if (card === undefined) {
+                    throw new BusinessError(
+                        `card with counter ${counter} not found`,
+                        'card_not_found'
+                    );
+                }
+                const boardId = board.id;
+                yield* observable({
+                    async get() {
+                        return await st.transact(async tx => {
+                            const [nextCard] = await whenAll([
+                                toCardViewDto(tx, card.id),
+                                tx.ps.ensureBoardMember(card.boardId, 'reader'),
+                            ]);
+                            return nextCard;
+                        });
+                    },
+                    update$: st.esReader
+                        .subscribe(boardEvents(boardId))
                         .then(x => x.map(() => undefined)),
                 });
             },

@@ -1,6 +1,6 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {zCrdtDiffBase64} from '../crdt/crdt.js';
-import {assert} from '../utils.js';
+import {assert, whenAll} from '../utils.js';
 import {type DataTx} from './data-layer.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
 import {type Card, type CardId, zCard} from './repos/card-repo.js';
@@ -32,6 +32,32 @@ export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
     const board = await toBoardDto(tx, card.boardId);
 
     return {...card, column, board, author};
+}
+
+export function zCardViewDto() {
+    return Type.Composite([
+        zCardDto(),
+        Type.Object({
+            comments: Type.Array(zCommentDto()),
+        }),
+    ]);
+}
+
+export interface CardViewDto extends Static<ReturnType<typeof zCardViewDto>> {}
+
+export async function toCardViewDto(
+    tx: DataTx,
+    cardId: CardId
+): Promise<CardViewDto> {
+    const [card, comments] = await whenAll([
+        toCardDto(tx, cardId),
+        tx.comments
+            .getByCardId(cardId)
+            .mapParallel(x => toCommentDto(tx, x.id))
+            .toArray(),
+    ]);
+
+    return {...card, comments};
 }
 
 export function zBoardViewCardDto() {

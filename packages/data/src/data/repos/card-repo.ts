@@ -112,6 +112,16 @@ export class CardRepo {
         return this.rawRepo.get(BOARD_ID_COUNTER_INDEX, [boardId]);
     }
 
+    async getByBoardIdAndCounter(
+        boardId: BoardId,
+        counter: number
+    ): Promise<Card | undefined> {
+        return await this.rawRepo.getUnique(BOARD_ID_COUNTER_INDEX, [
+            boardId,
+            counter,
+        ]);
+    }
+
     getByColumnId(columnId: ColumnId | null): Stream<Card> {
         return this.rawRepo.get(COLUMN_ID_INDEX, [columnId]);
     }

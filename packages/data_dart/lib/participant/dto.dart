@@ -16,6 +16,10 @@
 //     final getMyMembersValue = getMyMembersValueFromJson(jsonString);
 //     final getBoardReq = getBoardReqFromJson(jsonString);
 //     final getBoardValue = getBoardValueFromJson(jsonString);
+//     final getCardViewReq = getCardViewReqFromJson(jsonString);
+//     final getCardViewValue = getCardViewValueFromJson(jsonString);
+//     final getCardViewByKeyReq = getCardViewByKeyReqFromJson(jsonString);
+//     final getCardViewByKeyValue = getCardViewByKeyValueFromJson(jsonString);
 //     final createColumnReq = createColumnReqFromJson(jsonString);
 //     final createColumnRes = createColumnResFromJson(jsonString);
 //     final createCardReq = createCardReqFromJson(jsonString);
@@ -118,6 +122,22 @@ String getBoardReqToJson(GetBoardReq data) => json.encode(data.toJson());
 GetBoardValue getBoardValueFromJson(String str) => GetBoardValue.fromJson(json.decode(str));
 
 String getBoardValueToJson(GetBoardValue data) => json.encode(data.toJson());
+
+GetCardViewReq getCardViewReqFromJson(String str) => GetCardViewReq.fromJson(json.decode(str));
+
+String getCardViewReqToJson(GetCardViewReq data) => json.encode(data.toJson());
+
+GetCardViewValue getCardViewValueFromJson(String str) => GetCardViewValue.fromJson(json.decode(str));
+
+String getCardViewValueToJson(GetCardViewValue data) => json.encode(data.toJson());
+
+GetCardViewByKeyReq getCardViewByKeyReqFromJson(String str) => GetCardViewByKeyReq.fromJson(json.decode(str));
+
+String getCardViewByKeyReqToJson(GetCardViewByKeyReq data) => json.encode(data.toJson());
+
+GetCardViewByKeyValue getCardViewByKeyValueFromJson(String str) => GetCardViewByKeyValue.fromJson(json.decode(str));
+
+String getCardViewByKeyValueToJson(GetCardViewByKeyValue data) => json.encode(data.toJson());
 
 CreateColumnReq createColumnReqFromJson(String str) => CreateColumnReq.fromJson(json.decode(str));
 
@@ -917,6 +937,1586 @@ class GetBoardValue {
     };
 }
 
+class GetCardViewReq {
+    String cardId;
+
+    GetCardViewReq({
+        required this.cardId,
+    });
+
+    factory GetCardViewReq.fromJson(Map<String, dynamic> json) => GetCardViewReq(
+        cardId: json["cardId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "cardId": cardId,
+    };
+}
+
+class GetCardViewValue {
+    GetCardViewValueAuthor author;
+    String authorId;
+    GetCardViewValueBoard board;
+    String boardId;
+    GetCardViewValueColumn? column;
+    String columnId;
+    GetCardViewValueColumnPosition columnPosition;
+    List<GetCardViewValueComment> comments;
+    double counter;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String state;
+    GetCardViewValueText text;
+    double updatedAt;
+
+    GetCardViewValue({
+        required this.author,
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.column,
+        required this.columnId,
+        required this.columnPosition,
+        required this.comments,
+        required this.counter,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.text,
+        required this.updatedAt,
+    });
+
+    factory GetCardViewValue.fromJson(Map<String, dynamic> json) => GetCardViewValue(
+        author: GetCardViewValueAuthor.fromJson(json["author"]),
+        authorId: json["authorId"],
+        board: GetCardViewValueBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        column: json["column"] == null ? null : GetCardViewValueColumn.fromJson(json["column"]),
+        columnId: json["columnId"],
+        columnPosition: GetCardViewValueColumnPosition.fromJson(json["columnPosition"]),
+        comments: List<GetCardViewValueComment>.from(json["comments"].map((x) => GetCardViewValueComment.fromJson(x))),
+        counter: json["counter"]?.toDouble(),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        text: GetCardViewValueText.fromJson(json["text"]),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
+        "column": column?.toJson(),
+        "columnId": columnId,
+        "columnPosition": columnPosition.toJson(),
+        "comments": List<dynamic>.from(comments.map((x) => x.toJson())),
+        "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "text": text.toJson(),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetCardViewValueAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    GetCardViewValueAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory GetCardViewValueAuthor.fromJson(Map<String, dynamic> json) => GetCardViewValueAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
+    };
+}
+
+class GetCardViewValueBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    String state;
+    double updatedAt;
+
+    GetCardViewValueBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+    });
+
+    factory GetCardViewValueBoard.fromJson(Map<String, dynamic> json) => GetCardViewValueBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetCardViewValueColumn {
+    String authorId;
+    PurpleBoard board;
+    String boardId;
+    PurpleBoardPosition boardPosition;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String state;
+    String title;
+    double updatedAt;
+    ColumnVersion version;
+
+    GetCardViewValueColumn({
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.boardPosition,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.title,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory GetCardViewValueColumn.fromJson(Map<String, dynamic> json) => GetCardViewValueColumn(
+        authorId: json["authorId"],
+        board: PurpleBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        boardPosition: PurpleBoardPosition.fromJson(json["boardPosition"]),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: columnVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "title": title,
+        "updatedAt": updatedAt,
+        "version": columnVersionValues.reverse[version],
+    };
+}
+
+class PurpleBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    String state;
+    double updatedAt;
+
+    PurpleBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+    });
+
+    factory PurpleBoard.fromJson(Map<String, dynamic> json) => PurpleBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+    };
+}
+
+class PurpleBoardPosition {
+    String denominator;
+    String numerator;
+
+    PurpleBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory PurpleBoardPosition.fromJson(Map<String, dynamic> json) => PurpleBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+enum ColumnVersion {
+    THE_3
+}
+
+final columnVersionValues = EnumValues({
+    "3": ColumnVersion.THE_3
+});
+
+class GetCardViewValueColumnPosition {
+    String denominator;
+    String numerator;
+
+    GetCardViewValueColumnPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory GetCardViewValueColumnPosition.fromJson(Map<String, dynamic> json) => GetCardViewValueColumnPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class GetCardViewValueComment {
+    PurpleAuthor author;
+    String authorId;
+    PurpleCard card;
+    String cardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String text;
+    double updatedAt;
+
+    GetCardViewValueComment({
+        required this.author,
+        required this.authorId,
+        required this.card,
+        required this.cardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.text,
+        required this.updatedAt,
+    });
+
+    factory GetCardViewValueComment.fromJson(Map<String, dynamic> json) => GetCardViewValueComment(
+        author: PurpleAuthor.fromJson(json["author"]),
+        authorId: json["authorId"],
+        card: PurpleCard.fromJson(json["card"]),
+        cardId: json["cardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        text: json["text"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
+        "authorId": authorId,
+        "card": card.toJson(),
+        "cardId": cardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "text": text,
+        "updatedAt": updatedAt,
+    };
+}
+
+class PurpleAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    PurpleAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory PurpleAuthor.fromJson(Map<String, dynamic> json) => PurpleAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
+    };
+}
+
+class PurpleCard {
+    FluffyAuthor author;
+    String authorId;
+    FluffyBoard board;
+    String boardId;
+    PurpleColumn? column;
+    String columnId;
+    PurpleColumnPosition columnPosition;
+    double counter;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String state;
+    PurpleText text;
+    double updatedAt;
+
+    PurpleCard({
+        required this.author,
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.column,
+        required this.columnId,
+        required this.columnPosition,
+        required this.counter,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.text,
+        required this.updatedAt,
+    });
+
+    factory PurpleCard.fromJson(Map<String, dynamic> json) => PurpleCard(
+        author: FluffyAuthor.fromJson(json["author"]),
+        authorId: json["authorId"],
+        board: FluffyBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        column: json["column"] == null ? null : PurpleColumn.fromJson(json["column"]),
+        columnId: json["columnId"],
+        columnPosition: PurpleColumnPosition.fromJson(json["columnPosition"]),
+        counter: json["counter"]?.toDouble(),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        text: PurpleText.fromJson(json["text"]),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
+        "column": column?.toJson(),
+        "columnId": columnId,
+        "columnPosition": columnPosition.toJson(),
+        "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "text": text.toJson(),
+        "updatedAt": updatedAt,
+    };
+}
+
+class FluffyAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    FluffyAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory FluffyAuthor.fromJson(Map<String, dynamic> json) => FluffyAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
+    };
+}
+
+class FluffyBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    String state;
+    double updatedAt;
+
+    FluffyBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+    });
+
+    factory FluffyBoard.fromJson(Map<String, dynamic> json) => FluffyBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+    };
+}
+
+class PurpleColumn {
+    String authorId;
+    TentacledBoard board;
+    String boardId;
+    FluffyBoardPosition boardPosition;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String state;
+    String title;
+    double updatedAt;
+    ColumnVersion version;
+
+    PurpleColumn({
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.boardPosition,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.title,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory PurpleColumn.fromJson(Map<String, dynamic> json) => PurpleColumn(
+        authorId: json["authorId"],
+        board: TentacledBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        boardPosition: FluffyBoardPosition.fromJson(json["boardPosition"]),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: columnVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "title": title,
+        "updatedAt": updatedAt,
+        "version": columnVersionValues.reverse[version],
+    };
+}
+
+class TentacledBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    String state;
+    double updatedAt;
+
+    TentacledBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+    });
+
+    factory TentacledBoard.fromJson(Map<String, dynamic> json) => TentacledBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+    };
+}
+
+class FluffyBoardPosition {
+    String denominator;
+    String numerator;
+
+    FluffyBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory FluffyBoardPosition.fromJson(Map<String, dynamic> json) => FluffyBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class PurpleColumnPosition {
+    String denominator;
+    String numerator;
+
+    PurpleColumnPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory PurpleColumnPosition.fromJson(Map<String, dynamic> json) => PurpleColumnPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class PurpleText {
+    bool isRichtextMarker;
+
+    PurpleText({
+        required this.isRichtextMarker,
+    });
+
+    factory PurpleText.fromJson(Map<String, dynamic> json) => PurpleText(
+        isRichtextMarker: json["__isRichtextMarker"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "__isRichtextMarker": isRichtextMarker,
+    };
+}
+
+class GetCardViewValueText {
+    bool isRichtextMarker;
+
+    GetCardViewValueText({
+        required this.isRichtextMarker,
+    });
+
+    factory GetCardViewValueText.fromJson(Map<String, dynamic> json) => GetCardViewValueText(
+        isRichtextMarker: json["__isRichtextMarker"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "__isRichtextMarker": isRichtextMarker,
+    };
+}
+
+class GetCardViewByKeyReq {
+    String boardKey;
+    double counter;
+
+    GetCardViewByKeyReq({
+        required this.boardKey,
+        required this.counter,
+    });
+
+    factory GetCardViewByKeyReq.fromJson(Map<String, dynamic> json) => GetCardViewByKeyReq(
+        boardKey: json["boardKey"],
+        counter: json["counter"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "boardKey": boardKey,
+        "counter": counter,
+    };
+}
+
+class GetCardViewByKeyValue {
+    GetCardViewByKeyValueAuthor author;
+    String authorId;
+    GetCardViewByKeyValueBoard board;
+    String boardId;
+    GetCardViewByKeyValueColumn? column;
+    String columnId;
+    GetCardViewByKeyValueColumnPosition columnPosition;
+    List<GetCardViewByKeyValueComment> comments;
+    double counter;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String state;
+    GetCardViewByKeyValueText text;
+    double updatedAt;
+
+    GetCardViewByKeyValue({
+        required this.author,
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.column,
+        required this.columnId,
+        required this.columnPosition,
+        required this.comments,
+        required this.counter,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.text,
+        required this.updatedAt,
+    });
+
+    factory GetCardViewByKeyValue.fromJson(Map<String, dynamic> json) => GetCardViewByKeyValue(
+        author: GetCardViewByKeyValueAuthor.fromJson(json["author"]),
+        authorId: json["authorId"],
+        board: GetCardViewByKeyValueBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        column: json["column"] == null ? null : GetCardViewByKeyValueColumn.fromJson(json["column"]),
+        columnId: json["columnId"],
+        columnPosition: GetCardViewByKeyValueColumnPosition.fromJson(json["columnPosition"]),
+        comments: List<GetCardViewByKeyValueComment>.from(json["comments"].map((x) => GetCardViewByKeyValueComment.fromJson(x))),
+        counter: json["counter"]?.toDouble(),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        text: GetCardViewByKeyValueText.fromJson(json["text"]),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
+        "column": column?.toJson(),
+        "columnId": columnId,
+        "columnPosition": columnPosition.toJson(),
+        "comments": List<dynamic>.from(comments.map((x) => x.toJson())),
+        "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "text": text.toJson(),
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetCardViewByKeyValueAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    GetCardViewByKeyValueAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory GetCardViewByKeyValueAuthor.fromJson(Map<String, dynamic> json) => GetCardViewByKeyValueAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
+    };
+}
+
+class GetCardViewByKeyValueBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    String state;
+    double updatedAt;
+
+    GetCardViewByKeyValueBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+    });
+
+    factory GetCardViewByKeyValueBoard.fromJson(Map<String, dynamic> json) => GetCardViewByKeyValueBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+    };
+}
+
+class GetCardViewByKeyValueColumn {
+    String authorId;
+    StickyBoard board;
+    String boardId;
+    TentacledBoardPosition boardPosition;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String state;
+    String title;
+    double updatedAt;
+    ColumnVersion version;
+
+    GetCardViewByKeyValueColumn({
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.boardPosition,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.title,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory GetCardViewByKeyValueColumn.fromJson(Map<String, dynamic> json) => GetCardViewByKeyValueColumn(
+        authorId: json["authorId"],
+        board: StickyBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        boardPosition: TentacledBoardPosition.fromJson(json["boardPosition"]),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: columnVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "title": title,
+        "updatedAt": updatedAt,
+        "version": columnVersionValues.reverse[version],
+    };
+}
+
+class StickyBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    String state;
+    double updatedAt;
+
+    StickyBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+    });
+
+    factory StickyBoard.fromJson(Map<String, dynamic> json) => StickyBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+    };
+}
+
+class TentacledBoardPosition {
+    String denominator;
+    String numerator;
+
+    TentacledBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory TentacledBoardPosition.fromJson(Map<String, dynamic> json) => TentacledBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class GetCardViewByKeyValueColumnPosition {
+    String denominator;
+    String numerator;
+
+    GetCardViewByKeyValueColumnPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory GetCardViewByKeyValueColumnPosition.fromJson(Map<String, dynamic> json) => GetCardViewByKeyValueColumnPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class GetCardViewByKeyValueComment {
+    TentacledAuthor author;
+    String authorId;
+    FluffyCard card;
+    String cardId;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String text;
+    double updatedAt;
+
+    GetCardViewByKeyValueComment({
+        required this.author,
+        required this.authorId,
+        required this.card,
+        required this.cardId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.text,
+        required this.updatedAt,
+    });
+
+    factory GetCardViewByKeyValueComment.fromJson(Map<String, dynamic> json) => GetCardViewByKeyValueComment(
+        author: TentacledAuthor.fromJson(json["author"]),
+        authorId: json["authorId"],
+        card: FluffyCard.fromJson(json["card"]),
+        cardId: json["cardId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        text: json["text"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
+        "authorId": authorId,
+        "card": card.toJson(),
+        "cardId": cardId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "text": text,
+        "updatedAt": updatedAt,
+    };
+}
+
+class TentacledAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    TentacledAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory TentacledAuthor.fromJson(Map<String, dynamic> json) => TentacledAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
+    };
+}
+
+class FluffyCard {
+    StickyAuthor author;
+    String authorId;
+    IndigoBoard board;
+    String boardId;
+    FluffyColumn? column;
+    String columnId;
+    FluffyColumnPosition columnPosition;
+    double counter;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String state;
+    FluffyText text;
+    double updatedAt;
+
+    FluffyCard({
+        required this.author,
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.column,
+        required this.columnId,
+        required this.columnPosition,
+        required this.counter,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.text,
+        required this.updatedAt,
+    });
+
+    factory FluffyCard.fromJson(Map<String, dynamic> json) => FluffyCard(
+        author: StickyAuthor.fromJson(json["author"]),
+        authorId: json["authorId"],
+        board: IndigoBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        column: json["column"] == null ? null : FluffyColumn.fromJson(json["column"]),
+        columnId: json["columnId"],
+        columnPosition: FluffyColumnPosition.fromJson(json["columnPosition"]),
+        counter: json["counter"]?.toDouble(),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        text: FluffyText.fromJson(json["text"]),
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "author": author.toJson(),
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
+        "column": column?.toJson(),
+        "columnId": columnId,
+        "columnPosition": columnPosition.toJson(),
+        "counter": counter,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "text": text.toJson(),
+        "updatedAt": updatedAt,
+    };
+}
+
+class StickyAuthor {
+    String? avatarKey;
+    double createdAt;
+    bool deleted;
+    String fullName;
+    String id;
+    List<String> pk;
+    String state;
+    double updatedAt;
+    UserVersion version;
+
+    StickyAuthor({
+        this.avatarKey,
+        required this.createdAt,
+        required this.deleted,
+        required this.fullName,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory StickyAuthor.fromJson(Map<String, dynamic> json) => StickyAuthor(
+        avatarKey: json["avatarKey"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        fullName: json["fullName"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: userVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "avatarKey": avatarKey,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "fullName": fullName,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+        "version": userVersionValues.reverse[version],
+    };
+}
+
+class IndigoBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    String state;
+    double updatedAt;
+
+    IndigoBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+    });
+
+    factory IndigoBoard.fromJson(Map<String, dynamic> json) => IndigoBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+    };
+}
+
+class FluffyColumn {
+    String authorId;
+    IndecentBoard board;
+    String boardId;
+    StickyBoardPosition boardPosition;
+    double createdAt;
+    bool deleted;
+    String id;
+    List<String> pk;
+    String state;
+    String title;
+    double updatedAt;
+    ColumnVersion version;
+
+    FluffyColumn({
+        required this.authorId,
+        required this.board,
+        required this.boardId,
+        required this.boardPosition,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.pk,
+        required this.state,
+        required this.title,
+        required this.updatedAt,
+        required this.version,
+    });
+
+    factory FluffyColumn.fromJson(Map<String, dynamic> json) => FluffyColumn(
+        authorId: json["authorId"],
+        board: IndecentBoard.fromJson(json["board"]),
+        boardId: json["boardId"],
+        boardPosition: StickyBoardPosition.fromJson(json["boardPosition"]),
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        title: json["title"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+        version: columnVersionValues.map[json["version"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "board": board.toJson(),
+        "boardId": boardId,
+        "boardPosition": boardPosition.toJson(),
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "title": title,
+        "updatedAt": updatedAt,
+        "version": columnVersionValues.reverse[version],
+    };
+}
+
+class IndecentBoard {
+    String authorId;
+    double createdAt;
+    bool deleted;
+    String id;
+    String key;
+    String name;
+    List<String> pk;
+    String state;
+    double updatedAt;
+
+    IndecentBoard({
+        required this.authorId,
+        required this.createdAt,
+        required this.deleted,
+        required this.id,
+        required this.key,
+        required this.name,
+        required this.pk,
+        required this.state,
+        required this.updatedAt,
+    });
+
+    factory IndecentBoard.fromJson(Map<String, dynamic> json) => IndecentBoard(
+        authorId: json["authorId"],
+        createdAt: json["createdAt"]?.toDouble(),
+        deleted: json["deleted"],
+        id: json["id"],
+        key: json["key"],
+        name: json["name"],
+        pk: List<String>.from(json["pk"].map((x) => x)),
+        state: json["state"],
+        updatedAt: json["updatedAt"]?.toDouble(),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "authorId": authorId,
+        "createdAt": createdAt,
+        "deleted": deleted,
+        "id": id,
+        "key": key,
+        "name": name,
+        "pk": List<dynamic>.from(pk.map((x) => x)),
+        "state": state,
+        "updatedAt": updatedAt,
+    };
+}
+
+class StickyBoardPosition {
+    String denominator;
+    String numerator;
+
+    StickyBoardPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory StickyBoardPosition.fromJson(Map<String, dynamic> json) => StickyBoardPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class FluffyColumnPosition {
+    String denominator;
+    String numerator;
+
+    FluffyColumnPosition({
+        required this.denominator,
+        required this.numerator,
+    });
+
+    factory FluffyColumnPosition.fromJson(Map<String, dynamic> json) => FluffyColumnPosition(
+        denominator: json["denominator"],
+        numerator: json["numerator"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "denominator": denominator,
+        "numerator": numerator,
+    };
+}
+
+class FluffyText {
+    bool isRichtextMarker;
+
+    FluffyText({
+        required this.isRichtextMarker,
+    });
+
+    factory FluffyText.fromJson(Map<String, dynamic> json) => FluffyText(
+        isRichtextMarker: json["__isRichtextMarker"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "__isRichtextMarker": isRichtextMarker,
+    };
+}
+
+class GetCardViewByKeyValueText {
+    bool isRichtextMarker;
+
+    GetCardViewByKeyValueText({
+        required this.isRichtextMarker,
+    });
+
+    factory GetCardViewByKeyValueText.fromJson(Map<String, dynamic> json) => GetCardViewByKeyValueText(
+        isRichtextMarker: json["__isRichtextMarker"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "__isRichtextMarker": isRichtextMarker,
+    };
+}
+
 class CreateColumnReq {
     String boardId;
     CreateColumnReqBoardPosition boardPosition;
@@ -977,7 +2577,7 @@ class CreateColumnRes {
     String state;
     String title;
     double updatedAt;
-    CreateColumnResVersion version;
+    ColumnVersion version;
 
     CreateColumnRes({
         required this.authorId,
@@ -1006,7 +2606,7 @@ class CreateColumnRes {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: createColumnResVersionValues.map[json["version"]]!,
+        version: columnVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -1021,7 +2621,7 @@ class CreateColumnRes {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
-        "version": createColumnResVersionValues.reverse[version],
+        "version": columnVersionValues.reverse[version],
     };
 }
 
@@ -1092,14 +2692,6 @@ class CreateColumnResBoardPosition {
         "numerator": numerator,
     };
 }
-
-enum CreateColumnResVersion {
-    THE_3
-}
-
-final createColumnResVersionValues = EnumValues({
-    "3": CreateColumnResVersion.THE_3
-});
 
 class CreateCardReq {
     String diff;
@@ -1280,7 +2872,7 @@ class GetBoardViewValue {
 class ColumnElement {
     String authorId;
     String boardId;
-    PurpleBoardPosition boardPosition;
+    IndigoBoardPosition boardPosition;
     List<CardElement> cards;
     double createdAt;
     bool deleted;
@@ -1289,7 +2881,7 @@ class ColumnElement {
     String state;
     String title;
     double updatedAt;
-    CreateColumnResVersion version;
+    ColumnVersion version;
 
     ColumnElement({
         required this.authorId,
@@ -1309,7 +2901,7 @@ class ColumnElement {
     factory ColumnElement.fromJson(Map<String, dynamic> json) => ColumnElement(
         authorId: json["authorId"],
         boardId: json["boardId"],
-        boardPosition: PurpleBoardPosition.fromJson(json["boardPosition"]),
+        boardPosition: IndigoBoardPosition.fromJson(json["boardPosition"]),
         cards: List<CardElement>.from(json["cards"].map((x) => CardElement.fromJson(x))),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1318,7 +2910,7 @@ class ColumnElement {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: createColumnResVersionValues.map[json["version"]]!,
+        version: columnVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -1333,20 +2925,20 @@ class ColumnElement {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
-        "version": createColumnResVersionValues.reverse[version],
+        "version": columnVersionValues.reverse[version],
     };
 }
 
-class PurpleBoardPosition {
+class IndigoBoardPosition {
     String denominator;
     String numerator;
 
-    PurpleBoardPosition({
+    IndigoBoardPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory PurpleBoardPosition.fromJson(Map<String, dynamic> json) => PurpleBoardPosition(
+    factory IndigoBoardPosition.fromJson(Map<String, dynamic> json) => IndigoBoardPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -1358,20 +2950,20 @@ class PurpleBoardPosition {
 }
 
 class CardElement {
-    PurpleAuthor author;
+    IndigoAuthor author;
     String authorId;
-    PurpleBoard board;
+    HilariousBoard board;
     String boardId;
-    PurpleColumn? column;
+    TentacledColumn? column;
     String columnId;
-    PurpleColumnPosition columnPosition;
+    TentacledColumnPosition columnPosition;
     double counter;
     double createdAt;
     bool deleted;
     String id;
     List<String> pk;
     String state;
-    PurpleText text;
+    TentacledText text;
     double updatedAt;
 
     CardElement({
@@ -1393,20 +2985,20 @@ class CardElement {
     });
 
     factory CardElement.fromJson(Map<String, dynamic> json) => CardElement(
-        author: PurpleAuthor.fromJson(json["author"]),
+        author: IndigoAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
-        board: PurpleBoard.fromJson(json["board"]),
+        board: HilariousBoard.fromJson(json["board"]),
         boardId: json["boardId"],
-        column: json["column"] == null ? null : PurpleColumn.fromJson(json["column"]),
+        column: json["column"] == null ? null : TentacledColumn.fromJson(json["column"]),
         columnId: json["columnId"],
-        columnPosition: PurpleColumnPosition.fromJson(json["columnPosition"]),
+        columnPosition: TentacledColumnPosition.fromJson(json["columnPosition"]),
         counter: json["counter"]?.toDouble(),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
-        text: PurpleText.fromJson(json["text"]),
+        text: TentacledText.fromJson(json["text"]),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1429,7 +3021,7 @@ class CardElement {
     };
 }
 
-class PurpleAuthor {
+class IndigoAuthor {
     String? avatarKey;
     double createdAt;
     bool deleted;
@@ -1440,7 +3032,7 @@ class PurpleAuthor {
     double updatedAt;
     UserVersion version;
 
-    PurpleAuthor({
+    IndigoAuthor({
         this.avatarKey,
         required this.createdAt,
         required this.deleted,
@@ -1452,7 +3044,7 @@ class PurpleAuthor {
         required this.version,
     });
 
-    factory PurpleAuthor.fromJson(Map<String, dynamic> json) => PurpleAuthor(
+    factory IndigoAuthor.fromJson(Map<String, dynamic> json) => IndigoAuthor(
         avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1477,7 +3069,7 @@ class PurpleAuthor {
     };
 }
 
-class PurpleBoard {
+class HilariousBoard {
     String authorId;
     double createdAt;
     bool deleted;
@@ -1488,7 +3080,7 @@ class PurpleBoard {
     String state;
     double updatedAt;
 
-    PurpleBoard({
+    HilariousBoard({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -1500,7 +3092,7 @@ class PurpleBoard {
         required this.updatedAt,
     });
 
-    factory PurpleBoard.fromJson(Map<String, dynamic> json) => PurpleBoard(
+    factory HilariousBoard.fromJson(Map<String, dynamic> json) => HilariousBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1525,11 +3117,11 @@ class PurpleBoard {
     };
 }
 
-class PurpleColumn {
+class TentacledColumn {
     String authorId;
-    FluffyBoard board;
+    AmbitiousBoard board;
     String boardId;
-    FluffyBoardPosition boardPosition;
+    IndecentBoardPosition boardPosition;
     double createdAt;
     bool deleted;
     String id;
@@ -1537,9 +3129,9 @@ class PurpleColumn {
     String state;
     String title;
     double updatedAt;
-    CreateColumnResVersion version;
+    ColumnVersion version;
 
-    PurpleColumn({
+    TentacledColumn({
         required this.authorId,
         required this.board,
         required this.boardId,
@@ -1554,11 +3146,11 @@ class PurpleColumn {
         required this.version,
     });
 
-    factory PurpleColumn.fromJson(Map<String, dynamic> json) => PurpleColumn(
+    factory TentacledColumn.fromJson(Map<String, dynamic> json) => TentacledColumn(
         authorId: json["authorId"],
-        board: FluffyBoard.fromJson(json["board"]),
+        board: AmbitiousBoard.fromJson(json["board"]),
         boardId: json["boardId"],
-        boardPosition: FluffyBoardPosition.fromJson(json["boardPosition"]),
+        boardPosition: IndecentBoardPosition.fromJson(json["boardPosition"]),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -1566,7 +3158,7 @@ class PurpleColumn {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: createColumnResVersionValues.map[json["version"]]!,
+        version: columnVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -1581,11 +3173,11 @@ class PurpleColumn {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
-        "version": createColumnResVersionValues.reverse[version],
+        "version": columnVersionValues.reverse[version],
     };
 }
 
-class FluffyBoard {
+class AmbitiousBoard {
     String authorId;
     double createdAt;
     bool deleted;
@@ -1596,7 +3188,7 @@ class FluffyBoard {
     String state;
     double updatedAt;
 
-    FluffyBoard({
+    AmbitiousBoard({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -1608,7 +3200,7 @@ class FluffyBoard {
         required this.updatedAt,
     });
 
-    factory FluffyBoard.fromJson(Map<String, dynamic> json) => FluffyBoard(
+    factory AmbitiousBoard.fromJson(Map<String, dynamic> json) => AmbitiousBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -1633,16 +3225,16 @@ class FluffyBoard {
     };
 }
 
-class FluffyBoardPosition {
+class IndecentBoardPosition {
     String denominator;
     String numerator;
 
-    FluffyBoardPosition({
+    IndecentBoardPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory FluffyBoardPosition.fromJson(Map<String, dynamic> json) => FluffyBoardPosition(
+    factory IndecentBoardPosition.fromJson(Map<String, dynamic> json) => IndecentBoardPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -1653,16 +3245,16 @@ class FluffyBoardPosition {
     };
 }
 
-class PurpleColumnPosition {
+class TentacledColumnPosition {
     String denominator;
     String numerator;
 
-    PurpleColumnPosition({
+    TentacledColumnPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory PurpleColumnPosition.fromJson(Map<String, dynamic> json) => PurpleColumnPosition(
+    factory TentacledColumnPosition.fromJson(Map<String, dynamic> json) => TentacledColumnPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -1673,14 +3265,14 @@ class PurpleColumnPosition {
     };
 }
 
-class PurpleText {
+class TentacledText {
     bool isRichtextMarker;
 
-    PurpleText({
+    TentacledText({
         required this.isRichtextMarker,
     });
 
-    factory PurpleText.fromJson(Map<String, dynamic> json) => PurpleText(
+    factory TentacledText.fromJson(Map<String, dynamic> json) => TentacledText(
         isRichtextMarker: json["__isRichtextMarker"],
     );
 
@@ -1892,20 +3484,20 @@ class CreateCommentResAuthor {
 }
 
 class CreateCommentResCard {
-    FluffyAuthor author;
+    IndecentAuthor author;
     String authorId;
-    TentacledBoard board;
+    CunningBoard board;
     String boardId;
-    FluffyColumn? column;
+    StickyColumn? column;
     String columnId;
-    FluffyColumnPosition columnPosition;
+    StickyColumnPosition columnPosition;
     double counter;
     double createdAt;
     bool deleted;
     String id;
     List<String> pk;
     String state;
-    FluffyText text;
+    StickyText text;
     double updatedAt;
 
     CreateCommentResCard({
@@ -1927,20 +3519,20 @@ class CreateCommentResCard {
     });
 
     factory CreateCommentResCard.fromJson(Map<String, dynamic> json) => CreateCommentResCard(
-        author: FluffyAuthor.fromJson(json["author"]),
+        author: IndecentAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
-        board: TentacledBoard.fromJson(json["board"]),
+        board: CunningBoard.fromJson(json["board"]),
         boardId: json["boardId"],
-        column: json["column"] == null ? null : FluffyColumn.fromJson(json["column"]),
+        column: json["column"] == null ? null : StickyColumn.fromJson(json["column"]),
         columnId: json["columnId"],
-        columnPosition: FluffyColumnPosition.fromJson(json["columnPosition"]),
+        columnPosition: StickyColumnPosition.fromJson(json["columnPosition"]),
         counter: json["counter"]?.toDouble(),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
-        text: FluffyText.fromJson(json["text"]),
+        text: StickyText.fromJson(json["text"]),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -1963,7 +3555,7 @@ class CreateCommentResCard {
     };
 }
 
-class FluffyAuthor {
+class IndecentAuthor {
     String? avatarKey;
     double createdAt;
     bool deleted;
@@ -1974,7 +3566,7 @@ class FluffyAuthor {
     double updatedAt;
     UserVersion version;
 
-    FluffyAuthor({
+    IndecentAuthor({
         this.avatarKey,
         required this.createdAt,
         required this.deleted,
@@ -1986,7 +3578,7 @@ class FluffyAuthor {
         required this.version,
     });
 
-    factory FluffyAuthor.fromJson(Map<String, dynamic> json) => FluffyAuthor(
+    factory IndecentAuthor.fromJson(Map<String, dynamic> json) => IndecentAuthor(
         avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2011,7 +3603,7 @@ class FluffyAuthor {
     };
 }
 
-class TentacledBoard {
+class CunningBoard {
     String authorId;
     double createdAt;
     bool deleted;
@@ -2022,7 +3614,7 @@ class TentacledBoard {
     String state;
     double updatedAt;
 
-    TentacledBoard({
+    CunningBoard({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -2034,7 +3626,7 @@ class TentacledBoard {
         required this.updatedAt,
     });
 
-    factory TentacledBoard.fromJson(Map<String, dynamic> json) => TentacledBoard(
+    factory CunningBoard.fromJson(Map<String, dynamic> json) => CunningBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2059,11 +3651,11 @@ class TentacledBoard {
     };
 }
 
-class FluffyColumn {
+class StickyColumn {
     String authorId;
-    StickyBoard board;
+    MagentaBoard board;
     String boardId;
-    TentacledBoardPosition boardPosition;
+    HilariousBoardPosition boardPosition;
     double createdAt;
     bool deleted;
     String id;
@@ -2071,9 +3663,9 @@ class FluffyColumn {
     String state;
     String title;
     double updatedAt;
-    CreateColumnResVersion version;
+    ColumnVersion version;
 
-    FluffyColumn({
+    StickyColumn({
         required this.authorId,
         required this.board,
         required this.boardId,
@@ -2088,11 +3680,11 @@ class FluffyColumn {
         required this.version,
     });
 
-    factory FluffyColumn.fromJson(Map<String, dynamic> json) => FluffyColumn(
+    factory StickyColumn.fromJson(Map<String, dynamic> json) => StickyColumn(
         authorId: json["authorId"],
-        board: StickyBoard.fromJson(json["board"]),
+        board: MagentaBoard.fromJson(json["board"]),
         boardId: json["boardId"],
-        boardPosition: TentacledBoardPosition.fromJson(json["boardPosition"]),
+        boardPosition: HilariousBoardPosition.fromJson(json["boardPosition"]),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -2100,7 +3692,7 @@ class FluffyColumn {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: createColumnResVersionValues.map[json["version"]]!,
+        version: columnVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2115,11 +3707,11 @@ class FluffyColumn {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
-        "version": createColumnResVersionValues.reverse[version],
+        "version": columnVersionValues.reverse[version],
     };
 }
 
-class StickyBoard {
+class MagentaBoard {
     String authorId;
     double createdAt;
     bool deleted;
@@ -2130,7 +3722,7 @@ class StickyBoard {
     String state;
     double updatedAt;
 
-    StickyBoard({
+    MagentaBoard({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -2142,7 +3734,7 @@ class StickyBoard {
         required this.updatedAt,
     });
 
-    factory StickyBoard.fromJson(Map<String, dynamic> json) => StickyBoard(
+    factory MagentaBoard.fromJson(Map<String, dynamic> json) => MagentaBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2167,16 +3759,16 @@ class StickyBoard {
     };
 }
 
-class TentacledBoardPosition {
+class HilariousBoardPosition {
     String denominator;
     String numerator;
 
-    TentacledBoardPosition({
+    HilariousBoardPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory TentacledBoardPosition.fromJson(Map<String, dynamic> json) => TentacledBoardPosition(
+    factory HilariousBoardPosition.fromJson(Map<String, dynamic> json) => HilariousBoardPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -2187,16 +3779,16 @@ class TentacledBoardPosition {
     };
 }
 
-class FluffyColumnPosition {
+class StickyColumnPosition {
     String denominator;
     String numerator;
 
-    FluffyColumnPosition({
+    StickyColumnPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory FluffyColumnPosition.fromJson(Map<String, dynamic> json) => FluffyColumnPosition(
+    factory StickyColumnPosition.fromJson(Map<String, dynamic> json) => StickyColumnPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -2207,14 +3799,14 @@ class FluffyColumnPosition {
     };
 }
 
-class FluffyText {
+class StickyText {
     bool isRichtextMarker;
 
-    FluffyText({
+    StickyText({
         required this.isRichtextMarker,
     });
 
-    factory FluffyText.fromJson(Map<String, dynamic> json) => FluffyText(
+    factory StickyText.fromJson(Map<String, dynamic> json) => StickyText(
         isRichtextMarker: json["__isRichtextMarker"],
     );
 
@@ -2366,20 +3958,20 @@ class GetCardCommentsValueAuthor {
 }
 
 class GetCardCommentsValueCard {
-    TentacledAuthor author;
+    HilariousAuthor author;
     String authorId;
-    IndigoBoard board;
+    FriskyBoard board;
     String boardId;
-    TentacledColumn? column;
+    IndigoColumn? column;
     String columnId;
-    TentacledColumnPosition columnPosition;
+    IndigoColumnPosition columnPosition;
     double counter;
     double createdAt;
     bool deleted;
     String id;
     List<String> pk;
     String state;
-    TentacledText text;
+    IndigoText text;
     double updatedAt;
 
     GetCardCommentsValueCard({
@@ -2401,20 +3993,20 @@ class GetCardCommentsValueCard {
     });
 
     factory GetCardCommentsValueCard.fromJson(Map<String, dynamic> json) => GetCardCommentsValueCard(
-        author: TentacledAuthor.fromJson(json["author"]),
+        author: HilariousAuthor.fromJson(json["author"]),
         authorId: json["authorId"],
-        board: IndigoBoard.fromJson(json["board"]),
+        board: FriskyBoard.fromJson(json["board"]),
         boardId: json["boardId"],
-        column: json["column"] == null ? null : TentacledColumn.fromJson(json["column"]),
+        column: json["column"] == null ? null : IndigoColumn.fromJson(json["column"]),
         columnId: json["columnId"],
-        columnPosition: TentacledColumnPosition.fromJson(json["columnPosition"]),
+        columnPosition: IndigoColumnPosition.fromJson(json["columnPosition"]),
         counter: json["counter"]?.toDouble(),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
         pk: List<String>.from(json["pk"].map((x) => x)),
         state: json["state"],
-        text: TentacledText.fromJson(json["text"]),
+        text: IndigoText.fromJson(json["text"]),
         updatedAt: json["updatedAt"]?.toDouble(),
     );
 
@@ -2437,7 +4029,7 @@ class GetCardCommentsValueCard {
     };
 }
 
-class TentacledAuthor {
+class HilariousAuthor {
     String? avatarKey;
     double createdAt;
     bool deleted;
@@ -2448,7 +4040,7 @@ class TentacledAuthor {
     double updatedAt;
     UserVersion version;
 
-    TentacledAuthor({
+    HilariousAuthor({
         this.avatarKey,
         required this.createdAt,
         required this.deleted,
@@ -2460,7 +4052,7 @@ class TentacledAuthor {
         required this.version,
     });
 
-    factory TentacledAuthor.fromJson(Map<String, dynamic> json) => TentacledAuthor(
+    factory HilariousAuthor.fromJson(Map<String, dynamic> json) => HilariousAuthor(
         avatarKey: json["avatarKey"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2485,7 +4077,7 @@ class TentacledAuthor {
     };
 }
 
-class IndigoBoard {
+class FriskyBoard {
     String authorId;
     double createdAt;
     bool deleted;
@@ -2496,7 +4088,7 @@ class IndigoBoard {
     String state;
     double updatedAt;
 
-    IndigoBoard({
+    FriskyBoard({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -2508,7 +4100,7 @@ class IndigoBoard {
         required this.updatedAt,
     });
 
-    factory IndigoBoard.fromJson(Map<String, dynamic> json) => IndigoBoard(
+    factory FriskyBoard.fromJson(Map<String, dynamic> json) => FriskyBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2533,11 +4125,11 @@ class IndigoBoard {
     };
 }
 
-class TentacledColumn {
+class IndigoColumn {
     String authorId;
-    IndecentBoard board;
+    MischievousBoard board;
     String boardId;
-    StickyBoardPosition boardPosition;
+    AmbitiousBoardPosition boardPosition;
     double createdAt;
     bool deleted;
     String id;
@@ -2545,9 +4137,9 @@ class TentacledColumn {
     String state;
     String title;
     double updatedAt;
-    CreateColumnResVersion version;
+    ColumnVersion version;
 
-    TentacledColumn({
+    IndigoColumn({
         required this.authorId,
         required this.board,
         required this.boardId,
@@ -2562,11 +4154,11 @@ class TentacledColumn {
         required this.version,
     });
 
-    factory TentacledColumn.fromJson(Map<String, dynamic> json) => TentacledColumn(
+    factory IndigoColumn.fromJson(Map<String, dynamic> json) => IndigoColumn(
         authorId: json["authorId"],
-        board: IndecentBoard.fromJson(json["board"]),
+        board: MischievousBoard.fromJson(json["board"]),
         boardId: json["boardId"],
-        boardPosition: StickyBoardPosition.fromJson(json["boardPosition"]),
+        boardPosition: AmbitiousBoardPosition.fromJson(json["boardPosition"]),
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
         id: json["id"],
@@ -2574,7 +4166,7 @@ class TentacledColumn {
         state: json["state"],
         title: json["title"],
         updatedAt: json["updatedAt"]?.toDouble(),
-        version: createColumnResVersionValues.map[json["version"]]!,
+        version: columnVersionValues.map[json["version"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -2589,11 +4181,11 @@ class TentacledColumn {
         "state": state,
         "title": title,
         "updatedAt": updatedAt,
-        "version": createColumnResVersionValues.reverse[version],
+        "version": columnVersionValues.reverse[version],
     };
 }
 
-class IndecentBoard {
+class MischievousBoard {
     String authorId;
     double createdAt;
     bool deleted;
@@ -2604,7 +4196,7 @@ class IndecentBoard {
     String state;
     double updatedAt;
 
-    IndecentBoard({
+    MischievousBoard({
         required this.authorId,
         required this.createdAt,
         required this.deleted,
@@ -2616,7 +4208,7 @@ class IndecentBoard {
         required this.updatedAt,
     });
 
-    factory IndecentBoard.fromJson(Map<String, dynamic> json) => IndecentBoard(
+    factory MischievousBoard.fromJson(Map<String, dynamic> json) => MischievousBoard(
         authorId: json["authorId"],
         createdAt: json["createdAt"]?.toDouble(),
         deleted: json["deleted"],
@@ -2641,16 +4233,16 @@ class IndecentBoard {
     };
 }
 
-class StickyBoardPosition {
+class AmbitiousBoardPosition {
     String denominator;
     String numerator;
 
-    StickyBoardPosition({
+    AmbitiousBoardPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory StickyBoardPosition.fromJson(Map<String, dynamic> json) => StickyBoardPosition(
+    factory AmbitiousBoardPosition.fromJson(Map<String, dynamic> json) => AmbitiousBoardPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -2661,16 +4253,16 @@ class StickyBoardPosition {
     };
 }
 
-class TentacledColumnPosition {
+class IndigoColumnPosition {
     String denominator;
     String numerator;
 
-    TentacledColumnPosition({
+    IndigoColumnPosition({
         required this.denominator,
         required this.numerator,
     });
 
-    factory TentacledColumnPosition.fromJson(Map<String, dynamic> json) => TentacledColumnPosition(
+    factory IndigoColumnPosition.fromJson(Map<String, dynamic> json) => IndigoColumnPosition(
         denominator: json["denominator"],
         numerator: json["numerator"],
     );
@@ -2681,14 +4273,14 @@ class TentacledColumnPosition {
     };
 }
 
-class TentacledText {
+class IndigoText {
     bool isRichtextMarker;
 
-    TentacledText({
+    IndigoText({
         required this.isRichtextMarker,
     });
 
-    factory TentacledText.fromJson(Map<String, dynamic> json) => TentacledText(
+    factory IndigoText.fromJson(Map<String, dynamic> json) => IndigoText(
         isRichtextMarker: json["__isRichtextMarker"],
     );
 

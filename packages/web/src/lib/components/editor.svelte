@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {onMount} from 'svelte';
 	import cx from 'clsx';
-	import type {Readable} from 'svelte/store';
+	import {get, type Readable} from 'svelte/store';
 	import {
 		BubbleMenu,
 		createEditor,
@@ -10,15 +10,17 @@
 	} from 'svelte-tiptap';
 	import StarterKit from '@tiptap/starter-kit';
 	import {Collaboration} from '@tiptap/extension-collaboration';
+	import Placeholder from '@tiptap/extension-placeholder';
 	import {XmlFragment} from 'yjs';
 
 	let editor = $state() as Readable<Editor>;
 
 	interface Props {
 		fragment: XmlFragment;
+		placeholder: string;
 	}
 
-	let {fragment}: Props = $props();
+	let {fragment, placeholder}: Props = $props();
 
 	onMount(() => {
 		editor = createEditor({
@@ -27,20 +29,23 @@
 				Collaboration.configure({
 					fragment,
 				}),
+				Placeholder.configure({
+					placeholder,
+				}),
 			],
-			content: `Hello world!`,
+			content: '',
 		});
 	});
 	const toggleBold = () => {
-		$editor.chain().focus().toggleBold().run();
+		get(editor).chain().focus().toggleBold().run();
 	};
 
 	const toggleItalic = () => {
-		$editor.chain().focus().toggleItalic().run();
+		get(editor).chain().focus().toggleItalic().run();
 	};
 
 	const isActive = (name: string, attrs = {}) =>
-		$editor.isActive(name, attrs);
+		get(editor).isActive(name, attrs);
 </script>
 
 {#if editor}
@@ -68,4 +73,19 @@
 	</BubbleMenu>
 {/if}
 
-<EditorContent class="border" editor={$editor} />
+<EditorContent class="min-h-[100px] outline-0" editor={$editor} />
+
+<style>
+	:global {
+		.tiptap p.is-editor-empty:first-child::before {
+			color: #adb5bd;
+			content: attr(data-placeholder);
+			float: left;
+			height: 0;
+			pointer-events: none;
+		}
+		.ProseMirror:focus {
+			outline: none;
+		}
+	}
+</style>

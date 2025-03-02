@@ -240,10 +240,7 @@ function mapFromYValue(yValue: YValue): unknown {
             );
         }
     } else if (yValue.constructor === YXmlFragment) {
-        return {
-            ...createRichtext(),
-            preview: JSON.stringify(yValue.toJSON()),
-        } satisfies Richtext;
+        return createRichtext();
     } else {
         throw new AppError('cannot map unsupported YValue: ' + yValue);
     }

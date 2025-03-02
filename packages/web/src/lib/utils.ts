@@ -15,6 +15,8 @@ import {
 	unimplemented,
 	type ParticipantRpc,
 } from 'syncwave-data';
+import {DOMParser} from 'xmldom';
+import {XmlFragment} from 'yjs';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
 import {WsTransportClient} from '../ws-transport-client';
 import {AuthManager} from './auth-manager';
@@ -175,4 +177,13 @@ const timeAgo = new TimeAgo('en-US');
 
 export function timeSince(ts: Timestamp) {
 	return timeAgo.format(new Date(ts));
+}
+
+export function yFragmentToPlaintext(fragment: XmlFragment) {
+	const xmlString = fragment.toJSON();
+	const wrappedXml = `<div>${xmlString}</div>`;
+	const parser = new DOMParser();
+	const doc = parser.parseFromString(wrappedXml, 'text/xml');
+	const plainText = doc.documentElement.textContent;
+	return plainText?.trim() ?? '';
 }

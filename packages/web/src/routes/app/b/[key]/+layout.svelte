@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {observe} from '$lib/utils.svelte';
+	import {observe, toggle} from '$lib/utils.svelte';
 	import {
 		Crdt,
 		createCardId,
@@ -20,6 +20,7 @@
 	import type {LayoutProps} from './$types';
 	import {getAppRoute, getCardRoute} from '$lib/routes';
 	import {getSdk} from '$lib/utils';
+	import EditBoardDialog from '$lib/components/edit-board-dialog.svelte';
 
 	const {data, children}: LayoutProps = $props();
 	const {boardKey, initialBoard, initialMe} = $derived(data);
@@ -67,6 +68,8 @@
 
 		goto(getCardRoute(boardKey, card.counter));
 	}
+
+	const editToggle = toggle();
 </script>
 
 <div class="flex h-full">
@@ -82,7 +85,9 @@
 						<PlusIcon />
 					</button>
 					<button class="btn--icon"><SearchIcon /></button>
-					<button class="btn--icon -mr-2"><EllipsisIcon /></button>
+					<button onclick={editToggle.on} class="btn--icon -mr-2">
+						<EllipsisIcon />
+					</button>
 				</div>
 			</div>
 		</div>
@@ -103,3 +108,5 @@
 
 	{@render children()}
 </div>
+
+<EditBoardDialog open={editToggle.value} onClose={editToggle.off} />

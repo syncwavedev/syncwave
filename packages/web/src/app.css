@@ -62,31 +62,31 @@
 	--color-sage-950: oklch(23% 0.0045 130deg);
 
 	/* Gray */
-	--color-gray-10: oklch(98.5% 0.0029 260deg);
-	--color-gray-30: oklch(97% 0.003 260deg);
-	--color-gray-40: oklch(95.5% 0.0031 260deg);
-	--color-gray-50: oklch(94% 0.0032 260deg);
-	--color-gray-70: oklch(92.5% 0.0033 260deg);
-	--color-gray-100: oklch(91% 0.0034 260deg);
-	--color-gray-150: oklch(87% 0.0035 260deg);
-	--color-gray-200: oklch(83% 0.0036 260deg);
-	--color-gray-250: oklch(79% 0.0037 260deg);
-	--color-gray-300: oklch(75% 0.0038 260deg);
-	--color-gray-350: oklch(71% 0.0039 260deg);
-	--color-gray-400: oklch(67% 0.004 260deg);
-	--color-gray-450: oklch(63% 0.0041 260deg);
-	--color-gray-500: oklch(59% 0.0042 260deg);
-	--color-gray-550: oklch(55% 0.0042 260deg);
-	--color-gray-600: oklch(51% 0.0043 260deg);
-	--color-gray-650: oklch(47% 0.0043 260deg);
-	--color-gray-700: oklch(43% 0.0044 260deg);
-	--color-gray-750: oklch(39% 0.0044 260deg);
-	--color-gray-800: oklch(35% 0.0044 260deg);
-	--color-gray-850: oklch(31% 0.0045 260deg);
-	--color-gray-870: oklch(29% 0.0045 260deg);
-	--color-gray-900: oklch(27% 0.0045 260deg);
-	--color-gray-930: oklch(25% 0.0045 260deg);
-	--color-gray-950: oklch(23% 0.0045 260deg);
+	--color-gray-10: oklch(98.5% 0.0029 250deg);
+	--color-gray-30: oklch(97% 0.003 250deg);
+	--color-gray-40: oklch(95.5% 0.0031 250deg);
+	--color-gray-50: oklch(94% 0.0032 250deg);
+	--color-gray-70: oklch(92.5% 0.0033 250deg);
+	--color-gray-100: oklch(91% 0.0034 250deg);
+	--color-gray-150: oklch(87% 0.0035 250deg);
+	--color-gray-200: oklch(83% 0.0036 250deg);
+	--color-gray-250: oklch(79% 0.0037 250deg);
+	--color-gray-300: oklch(75% 0.0038 250deg);
+	--color-gray-350: oklch(71% 0.0039 250deg);
+	--color-gray-400: oklch(67% 0.004 250deg);
+	--color-gray-450: oklch(63% 0.0041 250deg);
+	--color-gray-500: oklch(59% 0.0042 250deg);
+	--color-gray-550: oklch(55% 0.0043 250deg);
+	--color-gray-600: oklch(51% 0.0044 250deg);
+	--color-gray-650: oklch(47% 0.0045 250deg);
+	--color-gray-700: oklch(43% 0.0046 250deg);
+	--color-gray-750: oklch(39% 0.0047 250deg);
+	--color-gray-800: oklch(35% 0.0048 250deg);
+	--color-gray-850: oklch(31% 0.0055 250deg);
+	--color-gray-870: oklch(29% 0.0055 250deg);
+	--color-gray-900: oklch(27% 0.0055 250deg);
+	--color-gray-930: oklch(25% 0.0055 250deg);
+	--color-gray-950: oklch(23% 0.0055 250deg);
 
 	/* Semantics */
 	--color-ink: var(--theme-color-ink);
@@ -162,7 +162,7 @@
 	}
 
 	.input--bordered {
-		@apply border-divider h-[2rem] rounded-md border px-2;
+		@apply border-divider-object bg-subtle-1 h-[2.6em] rounded-md border px-2;
 	}
 
 	.btn--icon {

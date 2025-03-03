@@ -2,7 +2,6 @@
 	import {
 		assert,
 		log,
-		stringifyCrdtDiff,
 		toPosition,
 		type Member,
 		type MemberDto,
@@ -71,7 +70,7 @@
 				sdk(x =>
 					x.applyMemberDiff({
 						memberId: target,
-						diff: stringifyCrdtDiff(diff),
+						diff,
 					})
 				).catch(error => {
 					log.error(error, 'failed to send member diff');

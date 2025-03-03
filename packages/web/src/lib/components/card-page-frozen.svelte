@@ -1,8 +1,6 @@
 <script lang="ts">
 	import Avatar from '$lib/components/avatar.svelte';
 	import Editor from '$lib/components/editor.svelte';
-	import ArrowUpIcon from '$lib/components/icons/arrow-up-icon.svelte';
-	import AttachIcon from '$lib/components/icons/attach-icon.svelte';
 	import CircleDashedIcon from '$lib/components/icons/circle-dashed-icon.svelte';
 	import EllipsisIcon from '$lib/components/icons/ellipsis-icon.svelte';
 	import TimesIcon from '$lib/components/icons/times-icon.svelte';
@@ -14,12 +12,7 @@
 	import {getSdk} from '$lib/utils';
 	import {observe} from '$lib/utils.svelte';
 	import {onDestroy} from 'svelte';
-	import {
-		Crdt,
-		log,
-		stringifyCrdtDiff,
-		type CardViewDto,
-	} from 'syncwave-data';
+	import {Crdt, log, type CardViewDto} from 'syncwave-data';
 
 	interface Props {
 		boardKey: string;
@@ -42,7 +35,7 @@
 		sdk(x =>
 			x.applyCardDiff({
 				cardId: card.value.id,
-				diff: stringifyCrdtDiff(diff),
+				diff,
 			})
 		).catch(error => {
 			log.error(error, 'failed to apply card diff');

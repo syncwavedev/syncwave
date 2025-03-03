@@ -1,10 +1,10 @@
 <script>
-	import PageImpl from './page-impl.svelte';
+	import CardPageFrozen from '$lib/components/card-page-frozen.svelte';
 
 	let {data} = $props();
 	let {boardKey, counter, initialCard} = $derived(data);
 </script>
 
 {#key initialCard.id}
-	<PageImpl {boardKey} {counter} {initialCard} />
+	<CardPageFrozen {boardKey} {counter} {initialCard} />
 {/key}

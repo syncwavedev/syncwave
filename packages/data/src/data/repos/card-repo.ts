@@ -1,6 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {type BigFloat, zBigFloat} from '../../big-float.js';
-import {type CrdtDiff, type CrdtDiffBase64} from '../../crdt/crdt.js';
+import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type Richtext, zRichtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
@@ -128,7 +128,7 @@ export class CardRepo {
 
     async apply(
         id: Uuid,
-        diff: CrdtDiff<Card> | CrdtDiffBase64<Card>,
+        diff: CrdtDiff<Card>,
         checker: TransitionChecker<Card>
     ) {
         return await this.rawRepo.apply([id], diff, checker);

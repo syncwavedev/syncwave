@@ -18,7 +18,6 @@ import {
     MemTransportServer,
     ParticipantClient,
     ParticipantServer,
-    stringifyCrdtDiff,
     toBigFloat,
 } from '../packages/data/src/index.js';
 import {WsTransportClient} from '../packages/web/src/ws-transport-client.js';
@@ -72,7 +71,7 @@ async function main() {
             columnPosition: toBigFloat(Math.random()),
         });
         await client.rpc.createCard({
-            diff: stringifyCrdtDiff(card.state()),
+            diff: card.state(),
         });
     }
 }

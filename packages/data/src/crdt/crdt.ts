@@ -9,7 +9,6 @@ import {
     Text as YText,
     XmlFragment as YXmlFragment,
 } from 'yjs';
-import {type Base64, decodeBase64, encodeBase64, zBase64} from '../base64.js';
 import {type Codec, decodeMsgpack, encodeMsgpack} from '../codec.js';
 import {AppError} from '../errors.js';
 import {getNow, type Timestamp} from '../timestamp.js';
@@ -32,28 +31,13 @@ export interface CrdtDiff<T> {
 
 export type CrdtDiffPayload<T> = Brand<Uint8Array, [T, 'crdt_diff_buffer']>;
 
-export type CrdtDiffBase64<T> = Brand<Base64, [T, 'crdt_diff_base64']>;
-
-export function zCrdtDiffBase64<T>() {
-    return Type.Unsafe<CrdtDiffBase64<T>>(zBase64());
-}
-
-export function stringifyCrdtDiff<T>(diff: CrdtDiff<T>): CrdtDiffBase64<T> {
-    return decodeBase64(encodeMsgpack(diff)) as CrdtDiffBase64<T>;
-}
-
-export function parseCrdtDiff<T>(diff: CrdtDiffBase64<T>): CrdtDiff<T> {
-    return decodeMsgpack(encodeBase64(diff)) as CrdtDiff<T>;
-}
-
-export function toCrdtDiff<T>(
-    diff: CrdtDiff<T> | CrdtDiffBase64<T>
-): CrdtDiff<T> {
-    if (typeof diff === 'string') {
-        return parseCrdtDiff(diff);
-    } else {
-        return diff;
-    }
+export function zCrdtDiff<T>() {
+    return Type.Unsafe<CrdtDiff<T>>(
+        Type.Object({
+            timestamp: Type.Number(),
+            payload: Type.Uint8Array(),
+        })
+    );
 }
 
 const ROOT_KEY = 'root';
@@ -72,22 +56,20 @@ export class Crdt<T> {
         return new Crdt(doc);
     }
 
-    static load<T>(diff: CrdtDiff<T> | CrdtDiffBase64<T>): Crdt<T> {
+    static load<T>(diff: CrdtDiff<T>): Crdt<T> {
         const doc = new YDoc({gc: true});
-        applyUpdateV2(doc, toCrdtDiff(diff).payload);
+        applyUpdateV2(doc, diff.payload);
 
         return new Crdt(doc);
     }
 
-    static merge<T>(
-        diffs: Array<CrdtDiff<T> | CrdtDiffBase64<T>>
-    ): CrdtDiff<T> {
+    static merge<T>(diffs: Array<CrdtDiff<T>>): CrdtDiff<T> {
         return {
             timestamp: Math.max(
-                ...diffs.map(diff => toCrdtDiff(diff).timestamp)
+                ...diffs.map(diff => diff.timestamp)
             ) as Timestamp,
             payload: mergeUpdatesV2(
-                diffs.map(diff => toCrdtDiff(diff).payload)
+                diffs.map(diff => diff.payload)
             ) as CrdtDiffPayload<T>,
         };
     }
@@ -170,8 +152,8 @@ export class Crdt<T> {
         return diff;
     }
 
-    apply(diff: CrdtDiff<T> | CrdtDiffBase64<T>, options?: DiffOptions): void {
-        applyUpdateV2(this.doc, toCrdtDiff(diff).payload, options?.origin);
+    apply(diff: CrdtDiff<T>, options?: DiffOptions): void {
+        applyUpdateV2(this.doc, diff.payload, options?.origin);
     }
 
     subscribe(

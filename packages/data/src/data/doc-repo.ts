@@ -1,13 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {context} from '../context.js';
-import {
-    Crdt,
-    CrdtCodec,
-    type CrdtDiff,
-    type CrdtDiffBase64,
-    stringifyCrdtDiff,
-    toCrdtDiff,
-} from '../crdt/crdt.js';
+import {Crdt, CrdtCodec, type CrdtDiff} from '../crdt/crdt.js';
 import {AppError} from '../errors.js';
 import {createIndex, type Index} from '../kv/data-index.js';
 import {
@@ -82,7 +75,7 @@ export interface DocStoreOptions<T extends Doc<Tuple>> {
 
 export type Recipe<T> = (doc: T) => Nothing;
 
-export type CrdtDoc<T> = T & {state: CrdtDiffBase64<T>};
+export type CrdtDoc<T> = T & {state: CrdtDiff<T>};
 
 export class DocRepo<T extends Doc<Tuple>> {
     public readonly rawRepo: DocRepoImpl<T>;
@@ -162,7 +155,7 @@ export class DocRepo<T extends Doc<Tuple>> {
 
     async apply(
         pk: Tuple,
-        diff: CrdtDiff<T> | CrdtDiffBase64<T>,
+        diff: CrdtDiff<T> | CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
         return await context().runChild({span: 'repo.apply'}, async () => {
@@ -245,7 +238,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
             return undefined;
         }
 
-        return Object.assign(snapshot, {state: stringifyCrdtDiff(doc.state())});
+        return Object.assign(snapshot, {state: doc.state()});
     }
 
     get(indexName: string, key: Tuple, includeDeleted?: boolean): Stream<T> {
@@ -346,7 +339,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     // todo: add tests
     async apply(
         pk: Tuple,
-        diff: CrdtDiff<T> | CrdtDiffBase64<T>,
+        diff: CrdtDiff<T> | CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
         const existingDoc = await this.primary.get(pk);
@@ -429,7 +422,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     private async _put(params: {
         prev: T | undefined;
         next: Crdt<T>;
-        diff: CrdtDiff<T> | CrdtDiffBase64<T>;
+        diff: CrdtDiff<T>;
         transitionChecker?: TransitionChecker<T>;
     }): Promise<void> {
         const nextSnapshot = params.next.snapshot();
@@ -447,7 +440,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
                     throw new ConstraintError(c.name, result);
                 }
             }),
-            this.onChange(nextSnapshot.pk, toCrdtDiff(params.diff)),
+            this.onChange(nextSnapshot.pk, params.diff),
         ]);
     }
 

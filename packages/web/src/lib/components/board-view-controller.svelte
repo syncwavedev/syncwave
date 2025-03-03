@@ -2,7 +2,6 @@
 	import {
 		assert,
 		log,
-		stringifyCrdtDiff,
 		toPosition,
 		type BoardViewColumnDto,
 		type BoardViewDto,
@@ -125,7 +124,7 @@
 				sdk(x =>
 					x.applyColumnDiff({
 						columnId: target,
-						diff: stringifyCrdtDiff(diff),
+						diff,
 					})
 				).catch(error => {
 					log.error(error, 'failed to send column diff');
@@ -164,7 +163,7 @@
 				sdk(x =>
 					x.applyCardDiff({
 						cardId: target,
-						diff: stringifyCrdtDiff(diff),
+						diff,
 					})
 				).catch(error => {
 					log.error(error, 'failed to send card diff');

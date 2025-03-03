@@ -4,15 +4,40 @@
 	import TrashIcon from './icons/trash-icon.svelte';
 	import TimesIcon from './icons/times-icon.svelte';
 	import ChevronIcon from './icons/chevron-icon.svelte';
+	import {Crdt, type BoardDto, type BoardViewDto} from 'syncwave-data';
 
 	interface Props {
+		board: BoardViewDto;
 		open: boolean;
 		onClose: () => void;
 	}
 
-	let {open, onClose}: Props = $props();
+	let {board: remoteBoard, open, onClose}: Props = $props();
 
 	const sdk = getSdk();
+
+	const localBoard = Crdt.load(remoteBoard.state);
+	$effect(() => {
+		localBoard.apply(remoteBoard.state);
+		name = localBoard.snapshot().name;
+	});
+
+	let name = $state(localBoard.snapshot().name);
+
+	async function updateBoardName() {
+		const diff = localBoard.update(x => {
+			x.name = name;
+		});
+
+		if (diff) {
+			await sdk(x =>
+				x.applyBoardDiff({
+					boardId: remoteBoard.id,
+					diff,
+				})
+			);
+		}
+	}
 </script>
 
 <svelte:body onkeydown={e => e.key === 'Escape' && onClose()} />
@@ -30,9 +55,10 @@
 		<input
 			type="text"
 			id="name"
+			bind:value={name}
+			oninput={updateBoardName}
 			class="input input--bordered text-xs"
 			placeholder="Name"
-			value="Syncwave"
 		/>
 	</div>
 	<div class="mx-4 my-4 flex flex-col gap-1">

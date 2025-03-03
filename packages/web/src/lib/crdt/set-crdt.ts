@@ -1,13 +1,7 @@
-import {
-	assert,
-	Crdt,
-	stringifyCrdtDiff,
-	type CrdtDiffBase64,
-	type Recipe,
-} from 'syncwave-data';
+import {assert, Crdt, type CrdtDiff, type Recipe} from 'syncwave-data';
 
 export class SetCrdt<
-	T extends {id: string; state: CrdtDiffBase64<Omit<T, 'state'>>},
+	T extends {id: string; state: CrdtDiff<Omit<T, 'state'>>},
 > {
 	private items: Array<Crdt<Omit<T, 'state'>>>;
 
@@ -19,7 +13,7 @@ export class SetCrdt<
 		return new Set(
 			this.items.map(x => ({
 				...x.snapshot(),
-				state: stringifyCrdtDiff(x.state()),
+				state: x.state(),
 			}))
 		);
 	}

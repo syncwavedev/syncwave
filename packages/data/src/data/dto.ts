@@ -1,5 +1,5 @@
 import {type Static, Type} from '@sinclair/typebox';
-import {zCrdtDiffBase64} from '../crdt/crdt.js';
+import {zCrdtDiff} from '../crdt/crdt.js';
 import {assert, whenAll} from '../utils.js';
 import {type DataTx} from './data-layer.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
@@ -17,7 +17,7 @@ export function zCardDto() {
             column: Type.Union([zColumnDto(), Type.Null()]),
             author: zUserDto(),
             board: zBoardDto(),
-            state: zCrdtDiffBase64<Card>(),
+            state: zCrdtDiff<Card>(),
         }),
     ]);
 }
@@ -66,7 +66,7 @@ export function zBoardViewCardDto() {
         Type.Object({
             column: Type.Union([zColumnDto(), Type.Null()]),
             board: zBoardDto(),
-            state: zCrdtDiffBase64<Card>(),
+            state: zCrdtDiff<Card>(),
             author: zUserDto(),
         }),
     ]);
@@ -93,7 +93,7 @@ export function zColumnDto() {
         zColumn(),
         Type.Object({
             board: zBoardDto(),
-            state: zCrdtDiffBase64<Column>(),
+            state: zCrdtDiff<Column>(),
         }),
     ]);
 }
@@ -116,7 +116,7 @@ export function zBoardViewColumnDto() {
         zColumn(),
         Type.Object({
             cards: Type.Array(zBoardViewCardDto()),
-            state: zCrdtDiffBase64<Column>(),
+            state: zCrdtDiff<Column>(),
         }),
     ]);
 }
@@ -145,7 +145,7 @@ export function zBoardDto() {
     return Type.Composite([
         zBoard(),
         Type.Object({
-            state: zCrdtDiffBase64<Board>(),
+            state: zCrdtDiff<Board>(),
         }),
     ]);
 }
@@ -167,7 +167,7 @@ export function zBoardViewDto() {
         zBoard(),
         Type.Object({
             columns: Type.Array(zBoardViewColumnDto()),
-            state: zCrdtDiffBase64<Board>(),
+            state: zCrdtDiff<Board>(),
         }),
     ]);
 }
@@ -195,7 +195,7 @@ export function zMemberDto() {
         Type.Object({
             user: zUserDto(),
             board: zBoardDto(),
-            state: zCrdtDiffBase64<Member>(),
+            state: zCrdtDiff<Member>(),
         }),
     ]);
 }
@@ -250,7 +250,7 @@ export function zUserDto() {
     return Type.Composite([
         zUser(),
         Type.Object({
-            state: zCrdtDiffBase64<User>(),
+            state: zCrdtDiff<User>(),
         }),
     ]);
 }

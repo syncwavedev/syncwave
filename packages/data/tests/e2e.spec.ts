@@ -6,7 +6,6 @@ import {
     createBoardId,
     createCardId,
     createColumnId,
-    stringifyCrdtDiff,
     toPosition,
     toTimestamp,
     type BoardDto,
@@ -109,7 +108,7 @@ describe('e2e', () => {
         });
 
         await subject.client.rpc.createCard({
-            diff: stringifyCrdtDiff(cardCrdt.state()),
+            diff: cardCrdt.state(),
         });
 
         const overview = await subject.client.rpc

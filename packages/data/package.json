@@ -31,7 +31,7 @@
     "scripts": {
         "clean": "rimraf dist",
         "build": "tsc",
-        "dev": "run-p -l js dt",
+        "dev": "npm run js",
         "js": "tsc -w --preserveWatchOutput",
         "dt": "tsx watch --clear-screen=false scripts/gen-dart-participant-client.ts | pino-pretty --config ../../.pino-prettyrc",
         "deploy": "cp ../../README.md ./ && tsx ../../scripts/deploy.ts && rm ./README.md",

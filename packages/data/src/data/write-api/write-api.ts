@@ -2,7 +2,7 @@ import {Type} from '@sinclair/typebox';
 import {encodeBase64, zBase64} from '../../base64.js';
 import {toBigFloat, zBigFloat} from '../../big-float.js';
 import {getIdentity} from '../../coordinator/auth-api.js';
-import {Crdt, parseCrdtDiff, zCrdtDiffBase64} from '../../crdt/crdt.js';
+import {Crdt, zCrdtDiff} from '../../crdt/crdt.js';
 import {createRichtext} from '../../crdt/richtext.js';
 import {BusinessError} from '../../errors.js';
 import {getNow} from '../../timestamp.js';
@@ -69,7 +69,7 @@ export function createWriteApi() {
     return createApi<WriteApiState>()({
         createCard: handler({
             req: Type.Object({
-                diff: zCrdtDiffBase64<Card>(),
+                diff: zCrdtDiff<Card>(),
             }),
             res: zCard(),
             handle: async (st, {diff}) => {
@@ -332,17 +332,13 @@ export function createWriteApi() {
         applyBoardDiff: handler({
             req: Type.Object({
                 boardId: Uuid<BoardId>(),
-                diff: zCrdtDiffBase64<Board>(),
+                diff: zCrdtDiff<Board>(),
             }),
             res: Type.Object({}),
             handle: async (st, {boardId, diff}) => {
                 await whenAll([
                     st.ps.ensureBoardMember(boardId, 'admin'),
-                    st.tx.boards.apply(
-                        boardId,
-                        parseCrdtDiff(diff),
-                        writable({name: true})
-                    ),
+                    st.tx.boards.apply(boardId, diff, writable({name: true})),
                 ]);
                 return {x: null};
             },
@@ -350,7 +346,7 @@ export function createWriteApi() {
         applyCardDiff: handler({
             req: Type.Object({
                 cardId: Uuid<CardId>(),
-                diff: zCrdtDiffBase64<Card>(),
+                diff: zCrdtDiff<Card>(),
             }),
             res: Type.Object({}),
             handle: async (st, {cardId, diff}) => {
@@ -359,7 +355,7 @@ export function createWriteApi() {
                     (async () => {
                         const {before, after} = await st.tx.cards.apply(
                             cardId,
-                            parseCrdtDiff(diff),
+                            diff,
                             writable({
                                 text: true,
                                 columnId: true,
@@ -379,7 +375,7 @@ export function createWriteApi() {
         applyMemberDiff: handler({
             req: Type.Object({
                 memberId: Uuid<MemberId>(),
-                diff: zCrdtDiffBase64<Member>(),
+                diff: zCrdtDiff<Member>(),
             }),
             res: Type.Object({}),
             handle: async (st, {memberId, diff}) => {
@@ -387,7 +383,7 @@ export function createWriteApi() {
                     st.ps.ensureMember(memberId),
                     st.tx.members.apply(
                         memberId,
-                        parseCrdtDiff(diff),
+                        diff,
                         writable({
                             position: true,
                         })
@@ -399,7 +395,7 @@ export function createWriteApi() {
         applyColumnDiff: handler({
             req: Type.Object({
                 columnId: Uuid<ColumnId>(),
-                diff: zCrdtDiffBase64<Column>(),
+                diff: zCrdtDiff<Column>(),
             }),
             res: Type.Object({}),
             handle: async (st, {columnId, diff}) => {
@@ -407,7 +403,7 @@ export function createWriteApi() {
                     st.ps.ensureColumnMember(columnId, 'writer'),
                     st.tx.columns.apply(
                         columnId,
-                        parseCrdtDiff(diff),
+                        diff,
                         writable({
                             boardPosition: true,
                             title: true,
@@ -459,17 +455,13 @@ export function createWriteApi() {
         applyUserDiff: handler({
             req: Type.Object({
                 userId: Uuid<UserId>(),
-                diff: zCrdtDiffBase64<User>(),
+                diff: zCrdtDiff<User>(),
             }),
             res: Type.Object({}),
             handle: async (st, {userId, diff}) => {
                 await whenAll([
                     st.ps.ensureUser(userId),
-                    st.tx.users.apply(
-                        userId,
-                        parseCrdtDiff(diff),
-                        writable({fullName: true})
-                    ),
+                    st.tx.users.apply(userId, diff, writable({fullName: true})),
                 ]);
                 return {};
             },

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type {CommentDto} from 'syncwave-data';
+	import type {MessageDto} from 'syncwave-data';
 	import Avatar from './avatar.svelte';
 	import {timeSince} from '$lib/utils';
 
 	interface Props {
-		message: CommentDto;
+		message: MessageDto;
 	}
 
 	let {message}: Props = $props();

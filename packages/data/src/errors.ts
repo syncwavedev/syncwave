@@ -56,7 +56,7 @@ export type ErrorCode =
     | 'card_not_found'
     | 'board_not_found'
     | 'column_not_found'
-    | 'comment_not_found'
+    | 'message_not_found'
     | 'unknown_processor'
     | 'member_not_found'
     | 'cancelled'

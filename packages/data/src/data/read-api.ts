@@ -15,17 +15,17 @@ import {
 import {
     toBoardViewDto,
     toCardViewDto,
-    toCommentDto,
     toMemberAdminDto,
     toMemberDto,
+    toMessageDto,
     toUserDto,
     zBoardDto,
     zBoardViewDto,
     zCardViewDto,
-    zCommentDto,
     zMeDto,
     zMemberAdminDto,
     zMemberDto,
+    zMessageDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {type BoardId} from './repos/board-repo.js';
@@ -203,9 +203,9 @@ export function createReadApi() {
                 });
             },
         }),
-        getCardComments: streamer({
+        getCardMessages: streamer({
             req: Type.Object({cardId: Uuid<CardId>()}),
-            item: Type.Array(zCommentDto()),
+            item: Type.Array(zMessageDto()),
             async *stream(st, {cardId}) {
                 const card = await st.transact(tx =>
                     tx.ps.ensureCardMember(cardId, 'reader')
@@ -214,9 +214,9 @@ export function createReadApi() {
                     get() {
                         return st.transact(async tx => {
                             await tx.ps.ensureCardMember(cardId, 'reader');
-                            return tx.comments
+                            return tx.messages
                                 .getByCardId(cardId)
-                                .mapParallel(x => toCommentDto(tx, x.id))
+                                .mapParallel(x => toMessageDto(tx, x.id))
                                 .toArray();
                         });
                     },

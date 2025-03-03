@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {getSdk} from '$lib/utils';
-	import {createCommentId, type CardId, type UserDto} from 'syncwave-data';
+	import {createMessageId, type CardId, type UserDto} from 'syncwave-data';
 	import ArrowUpIcon from './icons/arrow-up-icon.svelte';
 	import AttachIcon from './icons/attach-icon.svelte';
 
@@ -23,8 +23,8 @@
 
 	async function sendMessage() {
 		if (text.trim() !== '') {
-			const commentId = createCommentId();
-			await sdk(x => x.createComment({cardId, commentId, text}));
+			const messageId = createMessageId();
+			await sdk(x => x.createMessage({cardId, messageId, text}));
 		}
 
 		text = '';

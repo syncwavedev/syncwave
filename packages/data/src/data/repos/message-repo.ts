@@ -15,14 +15,14 @@ import type {TransitionChecker} from '../transition-checker.js';
 import {type CardId, CardRepo} from './card-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
-export type CommentId = Brand<Uuid, 'comment_id'>;
+export type MessageId = Brand<Uuid, 'message_id'>;
 
-export function createCommentId(): CommentId {
-    return createUuid() as CommentId;
+export function createMessageId(): MessageId {
+    return createUuid() as MessageId;
 }
 
-export interface Comment extends Doc<[CommentId]> {
-    readonly id: CommentId;
+export interface Message extends Doc<[MessageId]> {
+    readonly id: MessageId;
     readonly authorId: UserId;
     readonly cardId: CardId;
     readonly text: string;
@@ -32,11 +32,11 @@ const TASK_ID_INDEX = 'card_id';
 
 // todo: tests should handle get by card_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
-export function zComment() {
+export function zMessage() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<CommentId>()])),
+        zDoc(Type.Tuple([Uuid<MessageId>()])),
         Type.Object({
-            id: Uuid<CommentId>(),
+            id: Uuid<MessageId>(),
             authorId: Uuid<UserId>(),
             cardId: Uuid<CardId>(),
             text: Type.String(),
@@ -44,16 +44,16 @@ export function zComment() {
     ]);
 }
 
-export class CommentRepo {
-    public readonly rawRepo: DocRepo<Comment>;
+export class MessageRepo {
+    public readonly rawRepo: DocRepo<Message>;
 
     constructor(
         tx: AppTransaction,
         cardRepo: CardRepo,
         userRepo: UserRepo,
-        onChange: OnDocChange<Comment>
+        onChange: OnDocChange<Message>
     ) {
-        this.rawRepo = new DocRepo<Comment>({
+        this.rawRepo = new DocRepo<Message>({
             tx: isolate(['d'])(tx),
             onChange,
             indexes: {
@@ -61,30 +61,30 @@ export class CommentRepo {
                     key: x => [x.cardId],
                 },
             },
-            schema: zComment(),
+            schema: zMessage(),
             constraints: [
                 {
-                    name: 'comment.authorId fk',
-                    verify: async comment => {
+                    name: 'message.authorId fk',
+                    verify: async message => {
                         const user = await userRepo.getById(
-                            comment.authorId,
+                            message.authorId,
                             true
                         );
                         if (user === undefined) {
-                            return `user not found: ${comment.authorId}`;
+                            return `user not found: ${message.authorId}`;
                         }
                         return;
                     },
                 },
                 {
-                    name: 'comment.cardId fk',
-                    verify: async comment => {
+                    name: 'message.cardId fk',
+                    verify: async message => {
                         const card = await cardRepo.getById(
-                            comment.cardId,
+                            message.cardId,
                             true
                         );
                         if (card === undefined) {
-                            return `card not found: ${comment.cardId}`;
+                            return `card not found: ${message.cardId}`;
                         }
                         return;
                     },
@@ -94,33 +94,33 @@ export class CommentRepo {
     }
 
     getById(
-        id: CommentId,
+        id: MessageId,
         includeDeleted: boolean
-    ): Promise<Comment | undefined> {
+    ): Promise<Message | undefined> {
         return this.rawRepo.getById([id], includeDeleted);
     }
 
-    getByCardId(cardId: CardId): Stream<Comment> {
+    getByCardId(cardId: CardId): Stream<Message> {
         return this.rawRepo.get(TASK_ID_INDEX, [cardId]);
     }
 
     async apply(
         id: Uuid,
-        diff: CrdtDiff<Comment>,
-        checker: TransitionChecker<Comment>
+        diff: CrdtDiff<Message>,
+        checker: TransitionChecker<Message>
     ) {
         return await this.rawRepo.apply([id], diff, checker);
     }
 
-    create(user: Omit<Comment, 'pk'>): Promise<Comment> {
+    create(user: Omit<Message, 'pk'>): Promise<Message> {
         return this.rawRepo.create({pk: [user.id], ...user});
     }
 
     update(
-        id: CommentId,
-        recipe: Recipe<Comment>,
+        id: MessageId,
+        recipe: Recipe<Message>,
         includeDeleted = false
-    ): Promise<Comment> {
+    ): Promise<Message> {
         return this.rawRepo.update([id], recipe, includeDeleted);
     }
 }

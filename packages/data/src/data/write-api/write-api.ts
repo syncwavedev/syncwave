@@ -12,11 +12,11 @@ import {Uuid} from '../../uuid.js';
 import type {DataTx} from '../data-layer.js';
 import {
     toColumnDto,
-    toCommentDto,
     toMemberDto,
+    toMessageDto,
     zColumnDto,
-    zCommentDto,
     zMemberDto,
+    zMessageDto,
 } from '../dto.js';
 import {
     createObjectKey,
@@ -28,13 +28,13 @@ import {PermissionService} from '../permission-service.js';
 import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
 import {type Card, type CardId, zCard} from '../repos/card-repo.js';
 import {type Column, type ColumnId} from '../repos/column-repo.js';
-import {type CommentId} from '../repos/comment-repo.js';
 import {
     createMemberId,
     type Member,
     type MemberId,
     zMemberRole,
 } from '../repos/member-repo.js';
+import {type MessageId} from '../repos/message-repo.js';
 import {type User, type UserId} from '../repos/user-repo.js';
 import {
     creatable,
@@ -433,36 +433,36 @@ export function createWriteApi() {
                 return {};
             },
         }),
-        createComment: handler({
+        createMessage: handler({
             req: Type.Object({
                 cardId: Uuid<CardId>(),
                 text: Type.String(),
-                commentId: Uuid<CommentId>(),
+                messageId: Uuid<MessageId>(),
             }),
-            res: zCommentDto(),
-            handle: async (st, {cardId, text, commentId}) => {
+            res: zMessageDto(),
+            handle: async (st, {cardId, text, messageId}) => {
                 const now = getNow();
                 await st.ps.ensureCardMember(cardId, 'writer');
-                await st.tx.comments.create({
+                await st.tx.messages.create({
                     cardId,
                     text,
                     authorId: st.ps.ensureAuthenticated(),
                     deleted: false,
-                    id: commentId,
+                    id: messageId,
                     createdAt: now,
                     updatedAt: now,
                 });
 
-                return await toCommentDto(st.tx, commentId);
+                return await toMessageDto(st.tx, messageId);
             },
         }),
-        deleteComment: handler({
-            req: Type.Object({commentId: Uuid<CommentId>()}),
+        deleteMessage: handler({
+            req: Type.Object({messageId: Uuid<MessageId>()}),
             res: Type.Object({}),
-            handle: async (st, {commentId}) => {
-                await st.ps.ensureCommentMember(commentId, 'writer');
-                await st.tx.comments.update(
-                    commentId,
+            handle: async (st, {messageId}) => {
+                await st.ps.ensureMessageMember(messageId, 'writer');
+                await st.tx.messages.update(
+                    messageId,
                     x => {
                         x.deleted = true;
                     },

@@ -5,9 +5,9 @@ import {type DataTx} from './data-layer.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
 import {type Card, type CardId, zCard} from './repos/card-repo.js';
 import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
-import {type CommentId, zComment} from './repos/comment-repo.js';
 import {type IdentityId, zIdentity} from './repos/identity-repo.js';
 import {type Member, type MemberId, zMember} from './repos/member-repo.js';
+import {type MessageId, zMessage} from './repos/message-repo.js';
 import {type User, type UserId, zUser} from './repos/user-repo.js';
 
 export function zCardDto() {
@@ -38,7 +38,7 @@ export function zCardViewDto() {
     return Type.Composite([
         zCardDto(),
         Type.Object({
-            comments: Type.Array(zCommentDto()),
+            messages: Type.Array(zMessageDto()),
         }),
     ]);
 }
@@ -49,15 +49,15 @@ export async function toCardViewDto(
     tx: DataTx,
     cardId: CardId
 ): Promise<CardViewDto> {
-    const [card, comments] = await whenAll([
+    const [card, messages] = await whenAll([
         toCardDto(tx, cardId),
-        tx.comments
+        tx.messages
             .getByCardId(cardId)
-            .mapParallel(x => toCommentDto(tx, x.id))
+            .mapParallel(x => toMessageDto(tx, x.id))
             .toArray(),
     ]);
 
-    return {...card, comments};
+    return {...card, messages};
 }
 
 export function zBoardViewCardDto() {
@@ -289,9 +289,9 @@ export async function toIdentityDto(
     return {...identity, zUser};
 }
 
-export function zCommentDto() {
+export function zMessageDto() {
     return Type.Composite([
-        zComment(),
+        zMessage(),
         Type.Object({
             author: zUserDto(),
             card: zCardDto(),
@@ -299,21 +299,21 @@ export function zCommentDto() {
     ]);
 }
 
-export interface CommentDto extends Static<ReturnType<typeof zCommentDto>> {}
+export interface MessageDto extends Static<ReturnType<typeof zMessageDto>> {}
 
-export async function toCommentDto(
+export async function toMessageDto(
     tx: DataTx,
-    commentId: CommentId
-): Promise<CommentDto> {
-    const comment = await tx.comments.getById(commentId, true);
+    messageId: MessageId
+): Promise<MessageDto> {
+    const message = await tx.messages.getById(messageId, true);
     assert(
-        comment !== undefined,
-        `toCommentDto: comment not found: ${commentId}`
+        message !== undefined,
+        `toMessageDto: message not found: ${messageId}`
     );
-    const author = await toUserDto(tx, comment.authorId);
-    const card = await toCardDto(tx, comment.cardId);
+    const author = await toUserDto(tx, message.authorId);
+    const card = await toCardDto(tx, message.cardId);
 
-    return {...comment, author, card};
+    return {...message, author, card};
 }
 
 export function zMeDto() {

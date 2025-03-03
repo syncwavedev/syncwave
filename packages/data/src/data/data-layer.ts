@@ -16,16 +16,16 @@ import {type Board, type BoardId, BoardRepo} from './repos/board-repo.js';
 import {type Card, type CardId, CardRepo} from './repos/card-repo.js';
 import {type Column, type ColumnId, ColumnRepo} from './repos/column-repo.js';
 import {
-    type Comment,
-    type CommentId,
-    CommentRepo,
-} from './repos/comment-repo.js';
-import {
     type Identity,
     type IdentityId,
     IdentityRepo,
 } from './repos/identity-repo.js';
 import {type Member, type MemberId, MemberRepo} from './repos/member-repo.js';
+import {
+    type Message,
+    type MessageId,
+    MessageRepo,
+} from './repos/message-repo.js';
 import {type User, type UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
@@ -38,7 +38,7 @@ export interface DataTx {
     readonly boards: BoardRepo;
     readonly cards: CardRepo;
     readonly columns: ColumnRepo;
-    readonly comments: CommentRepo;
+    readonly messages: MessageRepo;
     readonly identities: IdentityRepo;
     readonly config: Config;
     readonly tx: AppTransaction;
@@ -82,8 +82,8 @@ export interface IdentityChangeEvent
 export interface ColumnChangeEvent
     extends BaseChangeEvent<'column', ColumnId, Column> {}
 
-export interface CommentChangeEvent
-    extends BaseChangeEvent<'comment', CommentId, Comment> {}
+export interface MessageChangeEvent
+    extends BaseChangeEvent<'message', MessageId, Message> {}
 
 export type ChangeEvent =
     | UserChangeEvent
@@ -92,7 +92,7 @@ export type ChangeEvent =
     | CardChangeEvent
     | IdentityChangeEvent
     | ColumnChangeEvent
-    | CommentChangeEvent;
+    | MessageChangeEvent;
 
 export type DataEffect = () => Promise<void>;
 export type DataEffectScheduler = (effect: DataEffect) => void;
@@ -169,11 +169,11 @@ export class DataLayer {
                 users,
                 (pk, diff) => logColumnChange(dataTx, pk, diff)
             );
-            const comments = new CommentRepo(
-                isolate(['comments'])(tx),
+            const messages = new MessageRepo(
+                isolate(['messages'])(tx),
                 cards,
                 users,
-                (pk, diff) => logCommentChange(dataTx, pk, diff)
+                (pk, diff) => logMessageChange(dataTx, pk, diff)
             );
 
             const dataNode = new AggregateDataNode({
@@ -203,7 +203,7 @@ export class DataLayer {
                 boards,
                 cards,
                 columns,
-                comments,
+                messages,
                 events,
                 identities,
                 esWriter,
@@ -338,19 +338,19 @@ async function logColumnChange(
     await tx.esWriter.append(boardEvents(column.boardId), event);
 }
 
-async function logCommentChange(
+async function logMessageChange(
     tx: DataTx,
-    [id]: [CommentId],
-    diff: CrdtDiff<Comment>
+    [id]: [MessageId],
+    diff: CrdtDiff<Message>
 ) {
-    const comment = await tx.comments.getById(id, true);
-    assert(comment !== undefined, `logCommentChange: comment ${id} not found`);
-    const card = await tx.cards.getById(comment.cardId, true);
+    const message = await tx.messages.getById(id, true);
+    assert(message !== undefined, `logMessageChange: message ${id} not found`);
+    const card = await tx.cards.getById(message.cardId, true);
     assert(
         card !== undefined,
-        `logCommentChange: card ${comment.cardId} not found`
+        `logMessageChange: card ${message.cardId} not found`
     );
     const ts = getNow();
-    const event: CommentChangeEvent = {type: 'comment', id, diff, ts};
+    const event: MessageChangeEvent = {type: 'message', id, diff, ts};
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }

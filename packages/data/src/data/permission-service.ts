@@ -4,13 +4,13 @@ import type {DataTx} from './data-layer.js';
 import type {BoardId} from './repos/board-repo.js';
 import type {CardId} from './repos/card-repo.js';
 import type {ColumnId} from './repos/column-repo.js';
-import type {CommentId} from './repos/comment-repo.js';
 import {
     type Member,
     type MemberId,
     type MemberRole,
     ROLE_ORDER,
 } from './repos/member-repo.js';
+import type {MessageId} from './repos/message-repo.js';
 import type {UserId} from './repos/user-repo.js';
 
 export function canManageRole(managerRole: MemberRole, role: MemberRole) {
@@ -125,22 +125,22 @@ export class PermissionService {
         return member;
     }
 
-    async ensureCommentMember(
-        commentId: CommentId,
+    async ensureMessageMember(
+        messageId: MessageId,
         minimum: MemberRole
     ): Promise<Member> {
-        const comment = await this.tx().comments.getById(commentId, true);
+        const message = await this.tx().messages.getById(messageId, true);
 
-        if (!comment) {
+        if (!message) {
             throw new BusinessError(
-                `comment ${commentId} doesn't exist`,
-                'comment_not_found'
+                `message ${messageId} doesn't exist`,
+                'message_not_found'
             );
         }
-        const card = await this.tx().cards.getById(comment.cardId, true);
+        const card = await this.tx().cards.getById(message.cardId, true);
         if (!card) {
             throw new BusinessError(
-                `card ${comment.cardId} doesn't exist`,
+                `card ${message.cardId} doesn't exist`,
                 'card_not_found'
             );
         }

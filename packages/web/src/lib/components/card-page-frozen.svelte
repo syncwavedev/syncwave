@@ -91,7 +91,7 @@
 						author={card.value.author.fullName}
 						message={`created on ${new Date(card.value.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}`}
 					/>
-					{#each card.value.comments as message (message.id)}
+					{#each card.value.messages as message (message.id)}
 						<UserMessage {message} />
 					{/each}
 				</div>

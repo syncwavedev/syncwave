@@ -111,7 +111,7 @@
 	<div class="min-h-0 flex-1">
 		<ScrollArea orientation="both" class="h-full">
 			<div class="mx-2 my-2 flex flex-col">
-				{#each members as member}
+				{#each members as member (member.id)}
 					{@const removeDisabledReason =
 						getRemoveDisabledReason(member)}
 					<div class="flex items-center p-2">

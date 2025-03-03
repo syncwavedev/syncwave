@@ -6,17 +6,18 @@
 		type BoardViewColumnDto,
 		type BoardViewDto,
 		type BoardViewCardDto,
+		Crdt,
 	} from 'syncwave-data';
 	import {
 		SHADOW_ITEM_MARKER_PROPERTY_NAME,
 		type DndEvent,
 	} from 'svelte-dnd-action';
-	import BoardView from './board-view.svelte';
 	import {BoardViewCrdt} from '$lib/crdt/board-view-crdt';
-	import {compareBigFloat, type BigFloat} from 'syncwave-data';
+	import {compareBigFloat} from 'syncwave-data';
 	import {getSdk} from '$lib/utils';
 	import {untrack} from 'svelte';
-	import {calculateChange, findMoved} from '$lib/dnd';
+	import {calculateChange} from '$lib/dnd';
+	import ColumnList from './column-list.svelte';
 
 	let {board: remoteBoard}: {board: BoardViewDto} = $props();
 
@@ -73,7 +74,9 @@
 	}
 
 	let dndColumns = $state(
-		applyOrder($state.snapshot(remoteBoard.columns) as BoardViewColumnDto[])
+		applyOrder(
+			remoteBoard.columns.map(x => ({...x})) as BoardViewColumnDto[]
+		)
 	);
 
 	const sdk = getSdk();
@@ -106,51 +109,10 @@
 
 		dndColumns = newDndColumns;
 	}
-
-	function setCards(
-		dndColumn: BoardViewColumnDto,
-		e: CustomEvent<DndEvent<BoardViewCardDto>>
-	) {
-		assert(dndColumn !== undefined, 'dnd column not found');
-		const localColumn = localBoard
-			.snapshot()
-			.columns.find(x => x.id === dndColumn.id);
-		assert(localColumn !== undefined, 'local column not found');
-		const update = calculateChange(
-			localColumn.cards,
-			dndColumn.cards,
-			e.detail.items,
-			card => card?.columnPosition
-		);
-
-		if (update) {
-			const {target, newPosition} = update;
-			const diff = localBoard.setCardPosition(
-				target,
-				newPosition,
-				dndColumn.id
-			);
-
-			if (diff) {
-				sdk(x =>
-					x.applyCardDiff({
-						cardId: target,
-						diff,
-					})
-				).catch(error => {
-					log.error(error, 'failed to send card diff');
-				});
-			}
-		}
-
-		dndColumn.cards = e.detail.items;
-	}
 </script>
 
-<BoardView
+<ColumnList
 	columns={dndColumns}
-	handleDndConsiderCards={setCards}
-	handleDndFinalizeCards={setCards}
 	handleDndConsiderColumns={setColumns}
 	handleDndFinalizeColumns={setColumns}
 />

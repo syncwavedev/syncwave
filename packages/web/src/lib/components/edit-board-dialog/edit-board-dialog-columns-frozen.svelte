@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type {BoardViewDto} from 'syncwave-data';
+	import {createColumnId, toPosition, type BoardViewDto} from 'syncwave-data';
 	import ArrowLeftIcon from '../icons/arrow-left-icon.svelte';
 	import TimesIcon from '../icons/times-icon.svelte';
-	import TrashIcon from '../icons/trash-icon.svelte';
-	import {BoardViewCrdt} from '$lib/crdt/board-view-crdt';
-	import EditBoardDialogColumnsFrozenColumn from './edit-board-dialog-columns-frozen-column.svelte';
+	import {getSdk} from '$lib/utils';
+	import ColumnList from './column-list.svelte';
+	import ColumnListController from './column-list-controller.svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -12,11 +12,27 @@
 		board: BoardViewDto;
 	}
 
-	let {onClose, onBack, board: remoteBoard}: Props = $props();
+	let {onClose, onBack, board}: Props = $props();
 
-	const localBoard = new BoardViewCrdt(remoteBoard);
+	let newColumnName = $state('');
 
-	let columns = $state(localBoard.snapshot().columns);
+	const sdk = getSdk();
+	async function addColumn(e: Event) {
+		e.preventDefault();
+
+		await sdk(x =>
+			x.createColumn({
+				boardId: board.id,
+				title: newColumnName,
+				columnId: createColumnId(),
+				boardPosition: toPosition({
+					prev: board.columns.at(-1)?.boardPosition,
+					next: undefined,
+				}),
+			})
+		);
+		newColumnName = '';
+	}
 </script>
 
 <div class="mx-4 my-2 flex items-center">
@@ -29,21 +45,16 @@
 <hr />
 <div class="px-4 py-3">
 	<div class="flex flex-col">
-		{#each columns as column}
-			<div
-				class="border-divider flex items-center gap-2 border-b border-dashed px-2 py-1"
-			>
-				<EditBoardDialogColumnsFrozenColumn {column} />
-			</div>
-		{/each}
+		<ColumnListController {board} />
 
-		<div class="flex items-center gap-2 p-2">
+		<form onsubmit={addColumn} class="flex items-center gap-2 p-2">
 			<input
 				type="text"
+				bind:value={newColumnName}
 				placeholder="Add new column"
 				class="input text-xs"
 			/>
-		</div>
+		</form>
 	</div>
 </div>
 <hr />

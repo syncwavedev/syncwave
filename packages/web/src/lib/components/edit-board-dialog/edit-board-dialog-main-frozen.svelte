@@ -69,9 +69,10 @@
 	<label for="key" class="text-xs"> Board Key </label>
 	<input
 		disabled
+		title="Board key cannot be changed"
 		type="text"
 		id="name"
-		class="input input--bordered text-xs"
+		class="input input--bordered cursor-not-allowed text-xs"
 		placeholder="Name"
 		value={remoteBoard.key}
 	/>

@@ -1,12 +1,8 @@
 <script lang="ts">
 	import {
-		assert,
 		log,
-		toPosition,
 		type BoardViewColumnDto,
 		type BoardViewDto,
-		type BoardViewCardDto,
-		Crdt,
 	} from 'syncwave-data';
 	import {
 		SHADOW_ITEM_MARKER_PROPERTY_NAME,

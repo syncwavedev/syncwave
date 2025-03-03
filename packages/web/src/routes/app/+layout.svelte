@@ -1,7 +1,14 @@
 <script lang="ts">
 	import ErrorCard from '$lib/components/error-card.svelte';
+	import {setMe} from '$lib/utils';
+	import {observe} from '$lib/utils.svelte';
+	import type {LayoutProps} from './$types';
 
-	let {children} = $props();
+	let {children, data}: LayoutProps = $props();
+
+	const me = observe(data.initialMe, x => x.getMe({}));
+
+	setMe(me);
 </script>
 
 <noscript>

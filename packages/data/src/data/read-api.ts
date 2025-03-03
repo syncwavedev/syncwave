@@ -23,14 +23,13 @@ import {
     zBoardViewDto,
     zCardViewDto,
     zCommentDto,
+    zMeDto,
     zMemberAdminDto,
     zMemberDto,
-    zUserDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {type BoardId} from './repos/board-repo.js';
 import {type CardId, zCard} from './repos/card-repo.js';
-import {zIdentity} from './repos/identity-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
@@ -56,10 +55,7 @@ export function createReadApi() {
     return createApi<ReadApiState>()({
         getMe: streamer({
             req: Type.Object({}),
-            item: Type.Object({
-                user: zUserDto(),
-                identity: zIdentity(),
-            }),
+            item: zMeDto(),
             async *stream(st, _, ctx) {
                 const userId = st.ensureAuthenticated();
 
@@ -100,7 +96,7 @@ export function createReadApi() {
                                 .mapParallel(member =>
                                     toMemberDto(tx, member.id)
                                 )
-                                .filter(x => !x.deleted)
+                                .filter(x => !x.deleted && !x.board.deleted)
                                 .toArray();
                         });
                     },

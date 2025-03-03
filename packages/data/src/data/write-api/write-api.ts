@@ -119,7 +119,13 @@ export function createWriteApi() {
             handle: async (st, {boardId, email, role}) => {
                 await st.ps.ensureCanManage(boardId, role);
 
-                const identity = await st.tx.identities.getByEmail(email);
+                const identity = await getIdentity({
+                    email,
+                    crypto: st.crypto,
+                    fullName: undefined,
+                    identities: st.tx.identities,
+                    users: st.tx.users,
+                });
 
                 if (!identity) {
                     throw new BusinessError(
@@ -183,6 +189,20 @@ export function createWriteApi() {
                 }
 
                 await st.ps.ensureCanManage(member.boardId, member.role);
+                if (member.role === 'owner') {
+                    const allMembers = await st.tx.members
+                        .getByBoardId(member.boardId)
+                        .filter(x => x.role === 'owner')
+                        .toArray();
+
+                    if (allMembers.length === 1) {
+                        throw new BusinessError(
+                            'cannot remove last owner',
+                            'last_owner'
+                        );
+                    }
+                }
+
                 await st.tx.members.update(
                     memberId,
                     x => {
@@ -295,7 +315,7 @@ export function createWriteApi() {
                             identities: st.tx.identities,
                             crypto: st.crypto,
                             email: member,
-                            fullName: 'Anonymous',
+                            fullName: undefined,
                             users: st.tx.users,
                         });
 

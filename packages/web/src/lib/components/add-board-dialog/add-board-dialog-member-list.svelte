@@ -1,7 +1,7 @@
 <script lang="ts">
-	import TimesIcon from './icons/times-icon.svelte';
-	import ArrowLeftIcon from './icons/arrow-left-icon.svelte';
-	import Avatar from './avatar.svelte';
+	import TimesIcon from '../icons/times-icon.svelte';
+	import ArrowLeftIcon from '../icons/arrow-left-icon.svelte';
+	import Avatar from '../avatar.svelte';
 
 	interface Props {
 		onBack: () => void;

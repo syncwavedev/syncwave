@@ -21,7 +21,7 @@
 	import EllipsisIcon from '$lib/components/icons/ellipsis-icon.svelte';
 	import {getAppRoute, getCardRoute} from '$lib/routes';
 	import {getSdk} from '$lib/utils';
-	import EditBoardDialogFrozen from '$lib/components/edit-board-dialog-frozen.svelte';
+	import EditBoardDialogFrozen from '$lib/components/edit-board-dialog/edit-board-dialog.svelte';
 	import type {Snippet} from 'svelte';
 
 	interface Props {

@@ -315,3 +315,12 @@ export async function toCommentDto(
 
     return {...comment, author, card};
 }
+
+export function zMeDto() {
+    return Type.Object({
+        user: zUserDto(),
+        identity: zIdentity(),
+    });
+}
+
+export interface MeDto extends Static<ReturnType<typeof zMeDto>> {}

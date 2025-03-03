@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte';
+	import ScrollArea from './scroll-area.svelte';
 
 	interface Props {
 		open: boolean;
@@ -24,6 +25,8 @@
 	<div
 		class="bg-subtle-0 fixed top-1/6 left-1/2 z-[1000] w-106 -translate-x-1/2 rounded-2xl"
 	>
-		{@render children()}
+		<ScrollArea class="max-h-dialog" orientation="both">
+			{@render children()}
+		</ScrollArea>
 	</div>
 {/if}

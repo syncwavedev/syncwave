@@ -9,6 +9,7 @@ export * from './crdt/richtext.js';
 export * from './data/doc-repo.js';
 export * from './data/dto.js';
 export * from './data/infrastructure.js';
+export * from './data/permission-service.js';
 export * from './data/placement.js';
 export * from './data/repos/board-repo.js';
 export * from './data/repos/card-repo.js';

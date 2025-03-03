@@ -1,8 +1,8 @@
 <script lang="ts">
-	import TimesIcon from './icons/times-icon.svelte';
-	import ArrowRightIcon from './icons/arrow-right-icon.svelte';
-	import KanbanIcon from './icons/kanban-icon.svelte';
-	import KeyIcon from './icons/key-icon.svelte';
+	import TimesIcon from '../icons/times-icon.svelte';
+	import ArrowRightIcon from '../icons/arrow-right-icon.svelte';
+	import KanbanIcon from '../icons/kanban-icon.svelte';
+	import KeyIcon from '../icons/key-icon.svelte';
 
 	interface Props {
 		name: string;

@@ -1,7 +1,6 @@
 <script lang="ts">
-	import AddBoardDialog from '$lib/components/add-board-dialog.svelte';
+	import AddBoardDialog from '$lib/components/add-board-dialog/add-board-dialog.svelte';
 	import Dashboard from '$lib/components/dashboard.svelte';
-	import Sidebar from '$lib/components/sidebar.svelte';
 	import {getAuthManager} from '$lib/utils';
 	import {toggle} from '$lib/utils.svelte';
 

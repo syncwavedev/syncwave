@@ -13,6 +13,13 @@ import {
 } from './repos/member-repo.js';
 import type {UserId} from './repos/user-repo.js';
 
+export function canManageRole(managerRole: MemberRole, role: MemberRole) {
+    const adminOrOwner: MemberRole[] = ['owner', 'admin'];
+
+    const minimumRequiredRole = adminOrOwner.includes(role) ? 'owner' : 'admin';
+    return ROLE_ORDER[managerRole] >= ROLE_ORDER[minimumRequiredRole];
+}
+
 export class PermissionService {
     constructor(
         private readonly auth: AuthContext,
@@ -63,7 +70,7 @@ export class PermissionService {
             );
         }
 
-        if (ROLE_ORDER[member.role] < ROLE_ORDER[minimum]) {
+        if (!canManageRole(member.role, minimum)) {
             throw new BusinessError(
                 `user ${meId} is not a ${minimum} of the board ${boardId}`,
                 'forbidden'

@@ -62,7 +62,8 @@ export type ErrorCode =
     | 'cancelled'
     | 'user_not_found'
     | 'unknown'
-    | 'member_exists';
+    | 'member_exists'
+    | 'last_owner';
 
 export class BusinessError extends AppError {
     constructor(

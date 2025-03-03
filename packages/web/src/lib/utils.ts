@@ -5,6 +5,8 @@ import {
 	ConnectionPool,
 	context,
 	drop,
+	getReadableError,
+	log,
 	MemTransportClient,
 	MemTransportServer,
 	MsgpackCodec,
@@ -13,6 +15,7 @@ import {
 	toStream,
 	tracerManager,
 	unimplemented,
+	type MeDto,
 	type ParticipantRpc,
 } from 'syncwave-data';
 import {DOMParser} from 'xmldom';
@@ -186,4 +189,24 @@ export function yFragmentToPlaintext(fragment: XmlFragment) {
 	const doc = parser.parseFromString(wrappedXml, 'text/xml');
 	const plainText = doc.documentElement.textContent;
 	return plainText?.trim() ?? '';
+}
+
+export function markErrorAsHandled(error: unknown) {
+	log.info('error handled + ' + getReadableError(error));
+}
+
+const ME_CONTEXT_KEY = 'me-context';
+export interface MeContext {
+	readonly value: MeDto;
+}
+export function setMe(me: MeContext) {
+	setContext(ME_CONTEXT_KEY, me);
+}
+
+export function getMe() {
+	const me = getContext<MeContext>(ME_CONTEXT_KEY);
+	if (!me) {
+		throw new Error('context MeDto is not available');
+	}
+	return me;
 }

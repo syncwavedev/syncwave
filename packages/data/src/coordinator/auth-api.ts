@@ -57,7 +57,7 @@ export function createAuthApi() {
                     users,
                     email,
                     crypto,
-                    fullName: 'Anonymous',
+                    fullName: undefined,
                 });
 
                 if (await needsCooldown(identity)) {
@@ -217,7 +217,7 @@ export async function getIdentity(params: {
     users: UserRepo;
     email: string;
     crypto: CryptoService;
-    fullName: string;
+    fullName: string | undefined;
 }): Promise<Identity> {
     const existingIdentity = await params.identities.getByEmail(params.email);
     if (existingIdentity) {
@@ -232,7 +232,7 @@ export async function getIdentity(params: {
         createdAt: now,
         updatedAt: now,
         deleted: false,
-        fullName: params.fullName,
+        fullName: params.fullName ?? 'Anonymous',
         version: '4',
     });
 

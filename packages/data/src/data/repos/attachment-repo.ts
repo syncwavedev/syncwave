@@ -1,6 +1,5 @@
 import {Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
-import {type Richtext, zRichtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
@@ -12,61 +11,64 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
+import {type ObjectKey, zObjectKey} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
-import type {AttachmentId} from './attachment-repo.js';
-import type {BoardId} from './board-repo.js';
+import type {BoardId, BoardRepo} from './board-repo.js';
 import {type CardId, CardRepo} from './card-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
-export type MessageId = Brand<Uuid, 'message_id'>;
+export type AttachmentId = Brand<Uuid, 'message_id'>;
 
-export function createMessageId(): MessageId {
-    return createUuid() as MessageId;
+export function createAttachmentId(): AttachmentId {
+    return createUuid() as AttachmentId;
 }
 
-export interface Message extends Doc<[MessageId]> {
-    readonly id: MessageId;
+export interface Attachment extends Doc<[AttachmentId]> {
+    readonly id: AttachmentId;
     readonly authorId: UserId;
-    readonly cardId: CardId;
     readonly boardId: BoardId;
-    readonly text: Richtext;
-    readonly attachmentIds: AttachmentId[];
+    readonly cardId: CardId;
+    readonly objectKey: ObjectKey;
 }
 
 const CARD_ID_INDEX = 'card_id';
+const BOARD_ID_INDEX = 'board_id';
 
-export function zMessage() {
+export function zAttachment() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<MessageId>()])),
+        zDoc(Type.Tuple([Uuid<AttachmentId>()])),
         Type.Object({
-            id: Uuid<MessageId>(),
+            id: Uuid<AttachmentId>(),
             authorId: Uuid<UserId>(),
-            cardId: Uuid<CardId>(),
             boardId: Uuid<BoardId>(),
-            attachmentIds: Type.Array(Uuid<AttachmentId>()),
-            text: zRichtext(),
+            cardId: Uuid<CardId>(),
+            objectKey: zObjectKey(),
         }),
     ]);
 }
 
-export class MessageRepo {
-    public readonly rawRepo: DocRepo<Message>;
+export class AttachmentRepo {
+    public readonly rawRepo: DocRepo<Attachment>;
 
     constructor(
         tx: AppTransaction,
         cardRepo: CardRepo,
         userRepo: UserRepo,
-        onChange: OnDocChange<Message>
+        boardRepo: BoardRepo,
+        onChange: OnDocChange<Attachment>
     ) {
-        this.rawRepo = new DocRepo<Message>({
+        this.rawRepo = new DocRepo<Attachment>({
             tx: isolate(['d'])(tx),
             onChange,
             indexes: {
                 [CARD_ID_INDEX]: {
                     key: x => [x.cardId],
                 },
+                [BOARD_ID_INDEX]: {
+                    key: x => [x.boardId],
+                },
             },
-            schema: zMessage(),
+            schema: zAttachment(),
             constraints: [
                 {
                     name: 'message.authorId fk',
@@ -94,35 +96,52 @@ export class MessageRepo {
                         return;
                     },
                 },
+                {
+                    name: 'message.boardId fk',
+                    verify: async message => {
+                        const board = await boardRepo.getById(
+                            message.boardId,
+                            true
+                        );
+                        if (board === undefined) {
+                            return `board not found: ${message.boardId}`;
+                        }
+                        return;
+                    },
+                },
             ],
         });
     }
 
-    getById(id: MessageId, includeDeleted: boolean) {
+    getById(id: AttachmentId, includeDeleted: boolean) {
         return this.rawRepo.getById([id], includeDeleted);
     }
 
-    getByCardId(cardId: CardId): Stream<Message> {
+    getByCardId(cardId: CardId): Stream<Attachment> {
+        return this.rawRepo.get(CARD_ID_INDEX, [cardId]);
+    }
+
+    getByBoardId(cardId: BoardId): Stream<Attachment> {
         return this.rawRepo.get(CARD_ID_INDEX, [cardId]);
     }
 
     async apply(
         id: Uuid,
-        diff: CrdtDiff<Message>,
-        checker: TransitionChecker<Message>
+        diff: CrdtDiff<Attachment>,
+        checker: TransitionChecker<Attachment>
     ) {
         return await this.rawRepo.apply([id], diff, checker);
     }
 
-    create(user: Omit<Message, 'pk'>): Promise<Message> {
+    create(user: Omit<Attachment, 'pk'>): Promise<Attachment> {
         return this.rawRepo.create({pk: [user.id], ...user});
     }
 
     update(
-        id: MessageId,
-        recipe: Recipe<Message>,
+        id: AttachmentId,
+        recipe: Recipe<Attachment>,
         includeDeleted = false
-    ): Promise<Message> {
+    ): Promise<Attachment> {
         return this.rawRepo.update([id], recipe, includeDeleted);
     }
 }

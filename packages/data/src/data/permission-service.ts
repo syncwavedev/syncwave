@@ -1,6 +1,7 @@
 import {BusinessError} from '../errors.js';
 import type {AuthContext} from './auth-context.js';
 import type {DataTx} from './data-layer.js';
+import type {AttachmentId} from './repos/attachment-repo.js';
 import type {BoardId} from './repos/board-repo.js';
 import type {CardId} from './repos/card-repo.js';
 import type {ColumnId} from './repos/column-repo.js';
@@ -93,6 +94,24 @@ export class PermissionService {
             );
         }
         return await this.ensureBoardMember(column.boardId, minimum);
+    }
+
+    async ensureAttachmentMember(
+        attachmentId: AttachmentId,
+        minimum: MemberRole
+    ): Promise<Member> {
+        const attachment = await this.tx().attachments.getById(
+            attachmentId,
+            true
+        );
+
+        if (!attachment) {
+            throw new BusinessError(
+                `attachment ${attachmentId} doesn't exist`,
+                'attachment_not_found'
+            );
+        }
+        return await this.ensureBoardMember(attachment.boardId, minimum);
     }
 
     async ensureCardMember(

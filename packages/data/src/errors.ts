@@ -59,6 +59,7 @@ export type ErrorCode =
     | 'message_not_found'
     | 'unknown_processor'
     | 'member_not_found'
+    | 'attachment_not_found'
     | 'cancelled'
     | 'user_not_found'
     | 'unknown'

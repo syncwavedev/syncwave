@@ -12,6 +12,11 @@ import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import {HubClient} from './hub.js';
 import {PermissionService} from './permission-service.js';
+import {
+    type Attachment,
+    type AttachmentId,
+    AttachmentRepo,
+} from './repos/attachment-repo.js';
 import {type Board, type BoardId, BoardRepo} from './repos/board-repo.js';
 import {type Card, type CardId, CardRepo} from './repos/card-repo.js';
 import {type Column, type ColumnId, ColumnRepo} from './repos/column-repo.js';
@@ -39,6 +44,7 @@ export interface DataTx {
     readonly cards: CardRepo;
     readonly columns: ColumnRepo;
     readonly messages: MessageRepo;
+    readonly attachments: AttachmentRepo;
     readonly identities: IdentityRepo;
     readonly config: Config;
     readonly tx: AppTransaction;
@@ -85,6 +91,9 @@ export interface ColumnChangeEvent
 export interface MessageChangeEvent
     extends BaseChangeEvent<'message', MessageId, Message> {}
 
+export interface AttachmentChangeEvent
+    extends BaseChangeEvent<'attachment', AttachmentId, Attachment> {}
+
 export type ChangeEvent =
     | UserChangeEvent
     | MemberChangeEvent
@@ -92,7 +101,8 @@ export type ChangeEvent =
     | CardChangeEvent
     | IdentityChangeEvent
     | ColumnChangeEvent
-    | MessageChangeEvent;
+    | MessageChangeEvent
+    | AttachmentChangeEvent;
 
 export type DataEffect = () => Promise<void>;
 export type DataEffectScheduler = (effect: DataEffect) => void;
@@ -175,6 +185,13 @@ export class DataLayer {
                 users,
                 (pk, diff) => logMessageChange(dataTx, pk, diff)
             );
+            const attachments = new AttachmentRepo(
+                isolate(['attachments'])(tx),
+                cards,
+                users,
+                boards,
+                (pk, diff) => logAttachmentChange(dataTx, pk, diff)
+            );
 
             const dataNode = new AggregateDataNode({
                 identities: new RepoDataNode(identities.rawRepo),
@@ -203,6 +220,7 @@ export class DataLayer {
                 boards,
                 cards,
                 columns,
+                attachments,
                 messages,
                 events,
                 identities,
@@ -352,5 +370,25 @@ async function logMessageChange(
     );
     const ts = getNow();
     const event: MessageChangeEvent = {type: 'message', id, diff, ts};
+    await tx.esWriter.append(boardEvents(card.boardId), event);
+}
+
+async function logAttachmentChange(
+    tx: DataTx,
+    [id]: [AttachmentId],
+    diff: CrdtDiff<Attachment>
+) {
+    const attachment = await tx.attachments.getById(id, true);
+    assert(
+        attachment !== undefined,
+        `logAttachmentChange: attachment ${id} not found`
+    );
+    const card = await tx.cards.getById(attachment.cardId, true);
+    assert(
+        card !== undefined,
+        `logAttachmentChange: card ${attachment.cardId} not found`
+    );
+    const ts = getNow();
+    const event: AttachmentChangeEvent = {type: 'attachment', id, diff, ts};
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }

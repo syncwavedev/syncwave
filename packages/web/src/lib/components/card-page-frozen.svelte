@@ -101,6 +101,6 @@
 				</div>
 			</ScrollArea>
 		</div>
-		<MessageForm cardId={card.value.id} />
+		<MessageForm cardId={card.value.id} boardId={card.value.boardId} />
 	</div>
 </div>

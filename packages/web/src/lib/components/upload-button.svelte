@@ -1,19 +1,20 @@
 <script lang="ts">
-	export let callback: (data: Uint8Array, contentType: string) => void;
+	import type {Snippet} from 'svelte';
 
-	let fileName: string = '';
-	let fileContent: Uint8Array | null = null;
+	interface Props {
+		callback: (file: File) => void;
+		children: Snippet;
+		class?: string;
+	}
+
+	let {callback, children, class: className}: Props = $props();
 
 	const handleFileChange = async (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 
 		if (file) {
-			fileName = file.name;
-			const content = await file.arrayBuffer();
-			fileContent = new Uint8Array(content);
-
-			callback(fileContent, file.type || 'application/octet-stream');
+			callback(file);
 		}
 	};
 </script>
@@ -21,34 +22,10 @@
 <input
 	type="file"
 	id="file"
-	style="display: none"
-	on:change={handleFileChange}
+	class="hidden"
+	onchange={handleFileChange}
+	accept="image/*"
 />
-<label for="file" class="file-upload"> Choose File </label>
-{#if fileName}
-	<span class="file-name">{fileName}</span>
-{/if}
-
-<style>
-	.file-upload {
-		display: inline-block;
-		padding: 10px 20px;
-		background-color: #66cdaa;
-		color: white;
-		font-weight: bold;
-		border: none;
-		border-radius: 5px;
-		cursor: pointer;
-		font-size: 16px;
-		transition: background-color 0.3s ease;
-	}
-
-	.file-upload:hover {
-		background-color: #57b293;
-	}
-
-	.file-name {
-		margin-left: 10px;
-		font-style: italic;
-	}
-</style>
+<label for="file" class={className}>
+	{@render children()}
+</label>

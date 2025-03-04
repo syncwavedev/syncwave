@@ -25,6 +25,7 @@ import {
     type ObjectStore,
 } from '../infrastructure.js';
 import {PermissionService} from '../permission-service.js';
+import {createAttachmentId, zAttachment} from '../repos/attachment-repo.js';
 import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
 import {type Card, type CardId, zCard} from '../repos/card-repo.js';
 import {type Column, type ColumnId} from '../repos/column-repo.js';
@@ -109,6 +110,41 @@ export function createWriteApi() {
                 return after;
             },
         }),
+        createAttachment: handler({
+            req: Type.Object({
+                cardId: Uuid<CardId>(),
+                data: Type.Uint8Array(),
+                fileName: Type.String(),
+                contentType: Type.String(),
+            }),
+            res: zAttachment(),
+            handle: async (st, {cardId, data, fileName, contentType}) => {
+                const meId = st.ps.ensureAuthenticated();
+                await st.ps.ensureCardMember(cardId, 'writer');
+                const card = await st.tx.cards.getById(cardId, true);
+                if (!card) {
+                    throw new BusinessError(
+                        `card not found: ${cardId}`,
+                        'card_not_found'
+                    );
+                }
+                const now = getNow();
+
+                const objectKey = createObjectKey();
+                await st.objectStore.put(objectKey, data, {contentType});
+
+                return await st.tx.attachments.create({
+                    authorId: meId,
+                    boardId: card.boardId,
+                    cardId,
+                    createdAt: now,
+                    deleted: false,
+                    id: createAttachmentId(),
+                    objectKey,
+                    updatedAt: now,
+                });
+            },
+        }),
         createMessage: handler({
             req: Type.Object({
                 diff: zCrdtDiff<Message>(),
@@ -119,7 +155,28 @@ export function createWriteApi() {
                 const message = crdt.snapshot();
 
                 const meId = st.ps.ensureAuthenticated();
-                await st.ps.ensureCardMember(message.cardId, 'writer');
+
+                await whenAll([
+                    ...message.attachmentIds.map(id =>
+                        st.ps.ensureAttachmentMember(id, 'reader')
+                    ),
+                    st.ps.ensureCardMember(message.cardId, 'writer'),
+                ]);
+
+                const card = await st.tx.cards.getById(message.cardId, true);
+                if (!card) {
+                    throw new BusinessError(
+                        `card not found: ${message.cardId}`,
+                        'card_not_found'
+                    );
+                }
+
+                if (card.boardId !== message.boardId) {
+                    throw new BusinessError(
+                        `card ${message.cardId} doesn't belong to board ${message.boardId}`,
+                        'forbidden'
+                    );
+                }
 
                 const {after} = await st.tx.messages.apply(
                     message.id,
@@ -133,6 +190,8 @@ export function createWriteApi() {
                         deleted: expectBoolean(),
                         updatedAt: expectTimestamp(),
                         text: createRichtext(),
+                        boardId: card.boardId,
+                        attachmentIds: [],
                     })
                 );
 

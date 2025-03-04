@@ -5,6 +5,7 @@
 		createMessageId,
 		createRichtext,
 		getNow,
+		type BoardId,
 		type CardId,
 		type Message,
 		type MessageId,
@@ -14,12 +15,16 @@
 	import AttachIcon from './icons/attach-icon.svelte';
 	import Editor from './editor.svelte';
 	import {Doc} from 'yjs';
+	import UploadButton from './upload-button.svelte';
+	import TimesIcon from './icons/times-icon.svelte';
+	import AttachmentPreview from './attachment-preview.svelte';
 
 	interface Props {
 		cardId: CardId;
+		boardId: BoardId;
 	}
 
-	let {cardId}: Props = $props();
+	let {cardId, boardId}: Props = $props();
 	const me = getMe();
 
 	const doc = new Doc();
@@ -29,14 +34,17 @@
 		return yFragmentToPlaintext(fragment).trim() !== '';
 	}
 
-	let showSendButton = $state(shouldShowSendButton());
+	let textSendable = $state(shouldShowSendButton());
 	$effect(() => {
-		const listener = () => (showSendButton = shouldShowSendButton());
+		const listener = () => (textSendable = shouldShowSendButton());
 		doc.on('updateV2', listener);
 		return () => doc.off('updateV2', listener);
 	});
 
 	const sdk = getSdk();
+
+	let attachments: File[] = $state([]);
+	let showSendButton = $derived(attachments.length > 0 || textSendable);
 
 	let editorRef: Editor | undefined = $state(undefined);
 
@@ -53,46 +61,56 @@
 				updatedAt: createdAt,
 				deleted: false,
 				text: createRichtext(fragment),
+				attachmentIds: [],
+				boardId: boardId,
 			});
 
 			await sdk(x => x.createMessage({diff: message.state()}));
 		}
 
 		editorRef?.clear();
+		attachments = [];
 	}
 </script>
 
-{#key fragment}
-	<div
-		class="border-divider bg-subtle-0 dark:bg-subtle-1 z-10 flex shrink-0 items-center gap-1 border-t p-2"
-	>
-		<button type="button" class="btn--icon mt-auto">
-			<AttachIcon />
-		</button>
-		<div class="flex-1">
-			<Editor
-				bind:this={editorRef}
-				onEnter={sendMessage}
-				{fragment}
-				placeholder="Type a message..."
-			/>
+<div>
+	{#if attachments.length > 0}
+		<div class="flex flex-wrap gap-1">
+			{#each attachments as file}
+				<AttachmentPreview
+					{file}
+					onRemove={() => {
+						attachments = attachments.filter(f => f !== file);
+					}}
+				/>
+			{/each}
 		</div>
-		<!-- <textarea
-			class="input flex-grow text-xs leading-relaxed"
-			rows="1"
-			bind:value={text}
-			required
+	{/if}
+</div>
+<div
+	class="border-divider bg-subtle-0 dark:bg-subtle-1 z-10 flex shrink-0 items-center gap-1 border-t p-2"
+>
+	<UploadButton
+		class="btn--icon mt-auto"
+		callback={file => attachments.push(file)}
+	>
+		<AttachIcon />
+	</UploadButton>
+	<div class="flex-1">
+		<Editor
+			bind:this={editorRef}
+			onEnter={sendMessage}
+			{fragment}
 			placeholder="Type a message..."
-			onkeydown={handleKeyDown}
-		></textarea> -->
-		{#if showSendButton}
-			<button
-				onclick={sendMessage}
-				type="submit"
-				class="btn--icon btn--icon--ink mt-auto"
-			>
-				<ArrowUpIcon />
-			</button>
-		{/if}
+		/>
 	</div>
-{/key}
+	{#if showSendButton}
+		<button
+			onclick={sendMessage}
+			type="submit"
+			class="btn--icon btn--icon--ink mt-auto"
+		>
+			<ArrowUpIcon />
+		</button>
+	{/if}
+</div>

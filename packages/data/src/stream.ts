@@ -377,7 +377,7 @@ export class Stream<T> implements AsyncIterable<T> {
         });
     }
 
-    map<R>(mapper: (value: T) => R | Promise<R>): Stream<R> {
+    map<R>(mapper: (value: T, index: number) => R | Promise<R>): Stream<R> {
         return toStream(this._map(mapper));
     }
 
@@ -386,10 +386,12 @@ export class Stream<T> implements AsyncIterable<T> {
     }
 
     private async *_map<R>(
-        mapper: (value: T) => R | Promise<R>
+        mapper: (value: T, index: number) => R | Promise<R>
     ): AsyncIterable<R> {
+        let index = 0;
         for await (const item of this) {
-            yield await mapper(item);
+            yield await mapper(item, index);
+            index += 1;
         }
     }
 

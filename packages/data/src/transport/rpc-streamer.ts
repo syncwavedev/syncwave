@@ -22,6 +22,7 @@ import {
 } from '../transport/transport.js';
 import {parseValue} from '../type.js';
 import {
+    assert,
     assertNever,
     type Brand,
     catchCancel,
@@ -192,16 +193,26 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         ctx,
                         cancelCtx,
                         async () => {
+                            let counter = 0;
                             try {
                                 await toStream(
                                     processor.stream(state.state, arg, headers)
                                 )
-                                    .mapParallel(async value => {
+                                    .map((value, index) => ({value, index}))
+                                    .mapParallel(async ({value, index}) => {
                                         log.info(
                                             `${callInfo} => ${stringifyLogPart(value)}`
                                         );
+                                        assert(
+                                            index === counter,
+                                            'stream value index !== counter'
+                                        );
                                         await catchConnectionClosed(
-                                            state.client.next({streamId, value})
+                                            state.client.next({
+                                                streamId,
+                                                value,
+                                                counter: counter++,
+                                            })
                                         );
                                     })
                                     .consume();
@@ -214,6 +225,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                             streamId,
                                             message: getReadableError(error),
                                             code: getErrorCode(error),
+                                            counter: counter++,
                                         })
                                     );
                                 }
@@ -223,7 +235,10 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                 // no point in sending end if the stream was cancelled by client
                                 if (!state.jobManager.isCancelled(streamId)) {
                                     await catchConnectionClosed(
-                                        state.client.end({streamId})
+                                        state.client.end({
+                                            streamId,
+                                            counter: counter++,
+                                        })
                                     );
                                 }
 
@@ -269,6 +284,7 @@ class RpcStreamerClientApiState {
     private readonly subs = new Map<
         StreamId,
         {
+            counter: number;
             context: Context;
             method: string;
             writer: ChannelWriter<unknown>;
@@ -286,14 +302,15 @@ class RpcStreamerClientApiState {
         }
 
         this.subs.set(params.streamId, {
+            counter: 0,
             context: context(),
             writer: params.writer,
             method: params.method,
         });
     }
 
-    async next(streamId: StreamId, value: unknown) {
-        const sub = this.getSub(streamId);
+    async next(streamId: StreamId, value: unknown, counter: number) {
+        const sub = this.getSub(streamId, counter);
         await sub?.context.runChild(
             {
                 span: 'next',
@@ -305,8 +322,13 @@ class RpcStreamerClientApiState {
         );
     }
 
-    async throw(params: {streamId: StreamId; code: string; message: string}) {
-        const sub = this.getSub(params.streamId);
+    async throw(params: {
+        streamId: StreamId;
+        code: string;
+        message: string;
+        counter: number;
+    }) {
+        const sub = this.getSub(params.streamId, params.counter);
         await sub?.context.runChild(
             {
                 span: 'throw',
@@ -328,8 +350,8 @@ class RpcStreamerClientApiState {
         );
     }
 
-    end(streamId: StreamId) {
-        const sub = this.getSub(streamId);
+    end(streamId: StreamId, counter: number) {
+        const sub = this.getSub(streamId, counter);
         sub?.writer.end();
     }
 
@@ -360,8 +382,12 @@ class RpcStreamerClientApiState {
         runAll([...this.subs.keys()].map(x => () => this.finish(x, reason)));
     }
 
-    private getSub(streamId: StreamId) {
+    private getSub(streamId: StreamId, counter: number) {
         const channel = this.subs.get(streamId);
+        if (channel) {
+            assert(channel.counter === counter, 'stream counter mismatch');
+            channel.counter++;
+        }
         if (!channel) {
             log.warn(`unknown streamId: ${streamId}`);
             context().detach({span: 'getSub: cancel stream'}, () => {
@@ -386,10 +412,14 @@ class RpcStreamerClientApiState {
 function createRpcStreamerClientApi() {
     return createApi<RpcStreamerClientApiState>()({
         next: handler({
-            req: Type.Object({streamId: zStreamId(), value: Type.Unknown()}),
+            req: Type.Object({
+                streamId: zStreamId(),
+                value: Type.Unknown(),
+                counter: Type.Number(),
+            }),
             res: Type.Object({}),
-            handle: async (state, {streamId, value}) => {
-                await state.next(streamId, value);
+            handle: async (state, {streamId, value, counter}) => {
+                await state.next(streamId, value, counter);
 
                 return {};
             },
@@ -399,19 +429,20 @@ function createRpcStreamerClientApi() {
                 streamId: zStreamId(),
                 message: Type.String(),
                 code: Type.String(),
+                counter: Type.Number(),
             }),
             res: Type.Object({}),
-            handle: async (state, {streamId, message, code}) => {
-                await state.throw({streamId, message, code});
+            handle: async (state, {streamId, message, code, counter}) => {
+                await state.throw({streamId, message, code, counter});
 
                 return {};
             },
         }),
         end: handler({
-            req: Type.Object({streamId: zStreamId()}),
+            req: Type.Object({streamId: zStreamId(), counter: Type.Number()}),
             res: Type.Object({}),
-            handle: async (state, {streamId}) => {
-                state.end(streamId);
+            handle: async (state, {streamId, counter}) => {
+                state.end(streamId, counter);
 
                 return {};
             },

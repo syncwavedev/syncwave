@@ -4,7 +4,7 @@
 	import CircleDashedIcon from '$lib/components/icons/circle-dashed-icon.svelte';
 	import EllipsisIcon from '$lib/components/icons/ellipsis-icon.svelte';
 	import TimesIcon from '$lib/components/icons/times-icon.svelte';
-	import MessageForm from '$lib/components/message-form.svelte';
+	import MessageForm from '$lib/components/add-message-form.svelte';
 	import ScrollArea from '$lib/components/scroll-area.svelte';
 	import SystemMessage from '$lib/components/system-message.svelte';
 	import UserMessage from '$lib/components/user-message.svelte';
@@ -69,7 +69,11 @@
 							<TimesIcon />
 						</a>
 					</div>
-					<Editor placeholder="Write here..." {fragment} />
+					<Editor
+						class="min-h-[100px]"
+						placeholder="Write here..."
+						{fragment}
+					/>
 					<div class="flex gap-1">
 						<div class="btn--block">
 							<CircleDashedIcon />

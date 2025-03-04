@@ -1,13 +1,18 @@
 <script lang="ts">
-	import type {MessageDto} from 'syncwave-data';
+	import {Crdt, type MessageDto} from 'syncwave-data';
 	import Avatar from './avatar.svelte';
 	import {timeSince} from '$lib/utils';
+	import RichtextView from './richtext-view.svelte';
 
 	interface Props {
 		message: MessageDto;
 	}
 
 	let {message}: Props = $props();
+
+	let fragment = $derived(
+		Crdt.load(message.state).extractXmlFragment(x => x.text)
+	);
 
 	let when = $state(timeSince(message.createdAt));
 	$effect(() => {
@@ -29,6 +34,6 @@
 		</div>
 	</div>
 	<div class="ml-[calc(1.325em+0.5rem)] text-xs leading-relaxed">
-		{message.text}
+		<RichtextView {fragment} />
 	</div>
 </div>

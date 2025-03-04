@@ -12,15 +12,40 @@
 	import {Collaboration} from '@tiptap/extension-collaboration';
 	import Placeholder from '@tiptap/extension-placeholder';
 	import {XmlFragment} from 'yjs';
+	import {Extension} from '@tiptap/core';
 
 	let editor = $state() as Readable<Editor>;
 
 	interface Props {
 		fragment: XmlFragment;
 		placeholder: string;
+		class?: string;
+		onEnter?: () => void;
 	}
 
-	let {fragment, placeholder}: Props = $props();
+	let {fragment, placeholder, class: className, onEnter}: Props = $props();
+
+	const SendMessageExtension = Extension.create({
+		addKeyboardShortcuts() {
+			return {
+				Enter: () => {
+					// Call your send message function
+					onEnter?.();
+					// Optionally clear the editor after sending:
+					this.editor.commands.clearContent();
+					return true; // prevent the default newline insertion
+				},
+				'Shift-Enter': () => {
+					// Insert a newline when Shift+Enter is pressed
+					return this.editor.commands.setHardBreak();
+				},
+			};
+		},
+	});
+
+	export function clear() {
+		get(editor).commands.clearContent();
+	}
 
 	onMount(() => {
 		editor = createEditor({
@@ -32,6 +57,7 @@
 				Placeholder.configure({
 					placeholder,
 				}),
+				...(onEnter ? [SendMessageExtension] : []),
 			],
 			content: '',
 		});
@@ -73,7 +99,7 @@
 	</BubbleMenu>
 {/if}
 
-<EditorContent class="min-h-[100px] outline-0" editor={$editor} />
+<EditorContent class={`${className} outline-0`} editor={$editor} />
 
 <style>
 	:global {

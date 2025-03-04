@@ -239,7 +239,7 @@ function mapToYValue(value: any): YValue {
     ) {
         return value;
     } else if (isRichtext(value)) {
-        return new YXmlFragment();
+        return value.__fragment ?? new YXmlFragment();
     } else if (value.constructor === Map) {
         const entries = [...value.entries()].map(
             ([key, value]) => [key, mapToYValue(value)] as const

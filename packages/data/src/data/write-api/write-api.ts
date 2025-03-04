@@ -34,7 +34,7 @@ import {
     type MemberId,
     zMemberRole,
 } from '../repos/member-repo.js';
-import {type MessageId} from '../repos/message-repo.js';
+import {type Message, type MessageId} from '../repos/message-repo.js';
 import {type User, type UserId} from '../repos/user-repo.js';
 import {
     creatable,
@@ -107,6 +107,36 @@ export function createWriteApi() {
                 );
 
                 return after;
+            },
+        }),
+        createMessage: handler({
+            req: Type.Object({
+                diff: zCrdtDiff<Message>(),
+            }),
+            res: zMessageDto(),
+            handle: async (st, {diff}) => {
+                const crdt = Crdt.load(diff);
+                const message = crdt.snapshot();
+
+                const meId = st.ps.ensureAuthenticated();
+                await st.ps.ensureCardMember(message.cardId, 'writer');
+
+                const {after} = await st.tx.messages.apply(
+                    message.id,
+                    crdt.state(),
+                    creatable<Message>({
+                        id: message.id,
+                        pk: [message.id],
+                        authorId: meId,
+                        cardId: message.cardId,
+                        createdAt: expectTimestamp(),
+                        deleted: expectBoolean(),
+                        updatedAt: expectTimestamp(),
+                        text: createRichtext(),
+                    })
+                );
+
+                return await toMessageDto(st.tx, after.id);
             },
         }),
         createMember: handler({
@@ -431,29 +461,6 @@ export function createWriteApi() {
                     ),
                 ]);
                 return {};
-            },
-        }),
-        createMessage: handler({
-            req: Type.Object({
-                cardId: Uuid<CardId>(),
-                text: Type.String(),
-                messageId: Uuid<MessageId>(),
-            }),
-            res: zMessageDto(),
-            handle: async (st, {cardId, text, messageId}) => {
-                const now = getNow();
-                await st.ps.ensureCardMember(cardId, 'writer');
-                await st.tx.messages.create({
-                    cardId,
-                    text,
-                    authorId: st.ps.ensureAuthenticated(),
-                    deleted: false,
-                    id: messageId,
-                    createdAt: now,
-                    updatedAt: now,
-                });
-
-                return await toMessageDto(st.tx, messageId);
             },
         }),
         deleteMessage: handler({

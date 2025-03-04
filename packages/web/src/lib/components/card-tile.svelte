@@ -8,7 +8,7 @@
 	let preview = $derived.by(() => {
 		const crdt = Crdt.load(card.state);
 		const fragment = crdt.extractXmlFragment(x => x.text);
-		const result = yFragmentToPlaintext(fragment);
+		const result = yFragmentToPlaintext(fragment).split('\n')[0]?.trim();
 
 		return result || 'Untitled';
 	});

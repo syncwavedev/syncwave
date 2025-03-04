@@ -1,12 +1,19 @@
 import {Type} from '@sinclair/typebox';
+import type {XmlFragment} from 'yjs';
 import type {Brand} from '../utils.js';
 
-export type Richtext = Brand<{[RICHTEXT_MARKER_KEY]: true}, 'richtext'>;
+export type Richtext = Brand<
+    {[RICHTEXT_MARKER_KEY]: true; __fragment?: XmlFragment},
+    'richtext'
+>;
 
 const RICHTEXT_MARKER_KEY = '__isRichtextMarker';
 
-export function createRichtext(): Richtext {
-    return {[RICHTEXT_MARKER_KEY]: true} as Richtext;
+export function createRichtext(fragment?: XmlFragment): Richtext {
+    return {
+        [RICHTEXT_MARKER_KEY]: true,
+        __fragment: fragment?.clone(),
+    } as Richtext;
 }
 
 export function zRichtext() {

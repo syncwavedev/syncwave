@@ -1,5 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
+import {type Richtext, zRichtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
@@ -25,7 +26,7 @@ export interface Message extends Doc<[MessageId]> {
     readonly id: MessageId;
     readonly authorId: UserId;
     readonly cardId: CardId;
-    readonly text: string;
+    readonly text: Richtext;
 }
 
 const TASK_ID_INDEX = 'card_id';
@@ -39,7 +40,7 @@ export function zMessage() {
             id: Uuid<MessageId>(),
             authorId: Uuid<UserId>(),
             cardId: Uuid<CardId>(),
-            text: Type.String(),
+            text: zRichtext(),
         }),
     ]);
 }
@@ -93,10 +94,7 @@ export class MessageRepo {
         });
     }
 
-    getById(
-        id: MessageId,
-        includeDeleted: boolean
-    ): Promise<Message | undefined> {
+    getById(id: MessageId, includeDeleted: boolean) {
         return this.rawRepo.getById([id], includeDeleted);
     }
 

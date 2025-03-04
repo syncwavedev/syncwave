@@ -51,6 +51,7 @@
 		"@tiptap/extension-collaboration": "^2.11.5",
 		"@tiptap/extension-floating-menu": "^2.11.5",
 		"@tiptap/extension-placeholder": "^2.11.5",
+		"@tiptap/html": "^2.11.5",
 		"@tiptap/pm": "^2.11.5",
 		"@tiptap/starter-kit": "^2.11.5",
 		"bits-ui": "^1.3.0",
@@ -63,7 +64,6 @@
 		"syncwave-data": "*",
 		"tailwindcss": "^4.0.7",
 		"ws": "^8.18.0",
-		"xmldom": "^0.6.0",
 		"y-prosemirror": "^1.2.16"
 	}
 }

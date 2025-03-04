@@ -7,7 +7,7 @@ import {type Card, type CardId, zCard} from './repos/card-repo.js';
 import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
 import {type IdentityId, zIdentity} from './repos/identity-repo.js';
 import {type Member, type MemberId, zMember} from './repos/member-repo.js';
-import {type MessageId, zMessage} from './repos/message-repo.js';
+import {type Message, type MessageId, zMessage} from './repos/message-repo.js';
 import {type User, type UserId, zUser} from './repos/user-repo.js';
 
 export function zCardDto() {
@@ -295,6 +295,7 @@ export function zMessageDto() {
         Type.Object({
             author: zUserDto(),
             card: zCardDto(),
+            state: zCrdtDiff<Message>(),
         }),
     ]);
 }

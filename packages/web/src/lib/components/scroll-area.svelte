@@ -43,7 +43,6 @@
 			event.target !== viewportRef() &&
 			!checkAllowScrollViewDrag(event.target)
 		) {
-			console.log(event.target);
 			return;
 		}
 
@@ -52,8 +51,6 @@
 		startY = event.clientY;
 		scrollLeft = viewportRef().scrollLeft;
 		scrollTop = viewportRef().scrollTop;
-
-		console.log({startX, startY, scrollLeft, scrollTop});
 
 		viewportRef().setPointerCapture(event.pointerId);
 		viewportRef().addEventListener('pointermove', handlePointerMove);

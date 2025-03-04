@@ -62,12 +62,6 @@ export function launchRpcStreamerServer<T>(
 ) {
     context().ensureActive();
 
-    const client = createRpcHandlerClient(
-        createRpcStreamerClientApi(),
-        conn,
-        () => ({...context().extract()})
-    );
-
     function cleanup(reason: unknown) {
         unsub();
         serverApiState.close(reason);
@@ -90,8 +84,9 @@ export function launchRpcStreamerServer<T>(
 
     const serverApiState = new RpcStreamerServerApiState(
         state,
-        new JobManager(),
-        client,
+        createRpcHandlerClient(createRpcStreamerClientApi(), conn, () => ({
+            ...context().extract(),
+        })),
         serverName,
         tracer
     );
@@ -113,9 +108,10 @@ function zStreamId() {
 }
 
 class RpcStreamerServerApiState<T> {
+    public readonly jobManager = new JobManager<StreamId>();
+
     constructor(
         public readonly state: T,
-        public readonly jobManager: JobManager<StreamId>,
         public readonly client: RpcStreamerClientRpc,
         public readonly serverName: string,
         public readonly tracer: Tracer
@@ -123,6 +119,7 @@ class RpcStreamerServerApiState<T> {
 
     close(reason: unknown) {
         this.jobManager.finishAll(reason);
+        this.client.close(reason);
     }
 }
 
@@ -470,7 +467,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     );
 
     const clientApiState = new RpcStreamerClientApiState(server);
-    launchRpcHandlerServer(
+    const stopRpcHandlerServer = launchRpcHandlerServer(
         createRpcStreamerClientApi(),
         clientApiState,
         new RpcConnection(conn),
@@ -482,6 +479,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
         unsub();
         clientApiState.finishAll(reason);
         cancelCleanup?.();
+        stopRpcHandlerServer(reason);
         conn.close(reason);
     }
 

@@ -354,16 +354,6 @@ export function getRequiredKey<T, K extends keyof T>(
     return value;
 }
 
-export function stringify(x: unknown) {
-    if (x === undefined) {
-        return 'undefined';
-    } else if (x === null) {
-        return 'null';
-    } else {
-        return x.toString();
-    }
-}
-
 export function drop<T>(_: T) {}
 
 export function shuffle<T>(array: T[]): T[] {

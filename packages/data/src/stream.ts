@@ -4,13 +4,7 @@ import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cursor, toCursor} from './cursor.js';
 import {AppError, CancelledError, toError} from './errors.js';
 import {log} from './logger.js';
-import {
-    assert,
-    type Nothing,
-    stringify,
-    type Unsubscribe,
-    whenAll,
-} from './utils.js';
+import {assert, type Nothing, type Unsubscribe, whenAll} from './utils.js';
 
 export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;
@@ -22,10 +16,6 @@ export class Channel<T> implements AsyncIterable<T>, ChannelWriter<T> {
     private chan = new AsyncChannel<T>();
 
     async next(value: T) {
-        if (this.chan.closed) {
-            log.debug('Channel closed, next, ' + stringify(value));
-            return;
-        }
         await this.chan.push(value);
     }
 

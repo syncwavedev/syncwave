@@ -20,6 +20,7 @@
 	import {
 		createAuthManager,
 		createParticipantClient,
+		createParticipantClientDummy,
 		setAuthManager,
 		setUniversalStore,
 	} from '$lib/utils';
@@ -36,7 +37,9 @@
 	const authManager = createAuthManager(universalStore);
 	setAuthManager(authManager);
 
-	export const participantClient = createParticipantClient();
+	export const participantClient = browser
+		? createParticipantClient()
+		: createParticipantClientDummy(); // server must not use participantClient
 	setContext(ParticipantClient, participantClient);
 
 	onDestroy(() => {

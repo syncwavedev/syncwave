@@ -5,7 +5,6 @@ import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	AppError,
 	CancelledError,
-	ConnectionPool,
 	context,
 	drop,
 	getReadableError,
@@ -14,7 +13,9 @@ import {
 	MemTransportServer,
 	MsgpackCodec,
 	ParticipantClient,
+	ParticipantClientDummy,
 	ParticipantServer,
+	PersistentConnection,
 	toStream,
 	tracerManager,
 	unimplemented,
@@ -113,11 +114,9 @@ export function createAuthManager(store: UniversalStore) {
 	return authManager;
 }
 
-const transport = new WsTransportClient({
-	url: appConfig.serverWsUrl,
-	codec: new MsgpackCodec(),
-});
-const connectionPool = new ConnectionPool(transport);
+export function createParticipantClientDummy(): ParticipantClient {
+	return new ParticipantClientDummy() as ParticipantClient;
+}
 
 export function createParticipantClient() {
 	const authManager = getAuthManager();
@@ -125,14 +124,19 @@ export function createParticipantClient() {
 
 	const partTransportServer = new MemTransportServer(new MsgpackCodec());
 	const part = new ParticipantServer({
-		client: connectionPool,
+		client: new WsTransportClient({
+			url: appConfig.serverWsUrl,
+			codec: new MsgpackCodec(),
+		}),
 		server: partTransportServer,
 	});
 
 	drop(part.launch());
 
 	const participant = new ParticipantClient(
-		new MemTransportClient(partTransportServer, new MsgpackCodec()),
+		new PersistentConnection(
+			new MemTransportClient(partTransportServer, new MsgpackCodec())
+		),
 		jwt,
 		tracerManager.get('view')
 	);
@@ -140,13 +144,18 @@ export function createParticipantClient() {
 	return participant;
 }
 
-export function createDirectParticipantClient(serverCookies: CookieEntry[]) {
+export async function createDirectParticipantClient(
+	serverCookies: CookieEntry[]
+) {
 	const authManager = createAuthManager(
 		new UniversalStore(new Map(serverCookies.map(x => [x.name, x.value])))
 	);
 	const jwt = authManager.getJwt();
 	const participant = new ParticipantClient(
-		connectionPool,
+		await new WsTransportClient({
+			url: appConfig.serverWsUrl,
+			codec: new MsgpackCodec(),
+		}).connect(),
 		jwt,
 		tracerManager.get('view')
 	);
@@ -163,7 +172,7 @@ export async function sdkOnce<T>(
 		let participant: ParticipantClient | undefined = undefined;
 		try {
 			return await ctx.run(async () => {
-				participant = createDirectParticipantClient(cookies);
+				participant = await createDirectParticipantClient(cookies);
 				return await fn(participant.rpc);
 			});
 		} finally {

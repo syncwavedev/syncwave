@@ -71,7 +71,7 @@ export class E2eFixture {
             new MsgpackCodec()
         );
         const client = new ParticipantClient(
-            clientTransportClient,
+            await clientTransportClient.connect(),
             undefined,
             trace.getTracer('e2e')
         );

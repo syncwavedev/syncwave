@@ -9,10 +9,18 @@
 	import SystemMessage from '$lib/components/system-message.svelte';
 	import UserMessage from '$lib/components/user-message.svelte';
 	import {getBoardRoute} from '$lib/routes';
-	import {getSdk} from '$lib/utils';
+	import {getMe, getSdk} from '$lib/utils';
 	import {observe} from '$lib/utils.svelte';
 	import {onDestroy} from 'svelte';
-	import {Crdt, log, type CardViewDto} from 'syncwave-data';
+	import {
+		Crdt,
+		log,
+		type CardViewDto,
+		type CrdtDoc,
+		type Message,
+		type MessageDto,
+		type User,
+	} from 'syncwave-data';
 
 	interface Props {
 		boardKey: string;
@@ -42,7 +50,30 @@
 		});
 	});
 
+	type UserMessageModel = CrdtDoc<Message> & {author: User};
+
+	const sentMessages: UserMessageModel[] = $state([]);
+	let localMessages = $derived.by(() => {
+		const existingMessages = new Set(card.value.messages.map(x => x.id));
+		const remoteMessages: UserMessageModel[] = card.value.messages;
+		const result = remoteMessages.concat(
+			sentMessages.filter(x => !existingMessages.has(x.id))
+		);
+		result.sort((a, b) => a.createdAt - b.createdAt);
+		return result;
+	});
+
 	onDestroy(() => unsub());
+
+	const me = getMe();
+
+	function handleMessageSend(message: Crdt<Message>) {
+		sentMessages.push({
+			...message.snapshot(),
+			state: message.state(),
+			author: me.value.user,
+		});
+	}
 </script>
 
 <div
@@ -95,12 +126,16 @@
 						author={card.value.author.fullName}
 						message={`created on ${new Date(card.value.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}`}
 					/>
-					{#each card.value.messages as message (message.id)}
-						<UserMessage {message} />
+					{#each localMessages as message (message.id)}
+						<UserMessage author={message.author} {message} />
 					{/each}
 				</div>
 			</ScrollArea>
 		</div>
-		<MessageForm cardId={card.value.id} boardId={card.value.boardId} />
+		<MessageForm
+			onSend={handleMessageSend}
+			cardId={card.value.id}
+			boardId={card.value.boardId}
+		/>
 	</div>
 </div>

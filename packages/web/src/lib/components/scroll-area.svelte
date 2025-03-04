@@ -105,25 +105,3 @@
 	<ScrollArea.Corner />
 	<ScrollArea.Corner />
 </ScrollArea.Root>
-<!-- 
-<ScrollArea.Root
-  class="border-dark-10 bg-background-alt shadow-card relative overflow-hidden rounded-[10px] border px-4 py-4"
->
-  <ScrollArea.Viewport class="h-full max-h-[200px] w-full max-w-[200px]">
-    <h4
-      class="text-foreground mb-4 mt-2 text-xl font-semibold leading-none tracking-[-0.01em]"
-    >
-      Scroll Area
-    </h4>
-    <p class="text-foreground-alt text-wrap text-sm leading-5">
-      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos
-      impedit rem, repellat deserunt ducimus quasi nisi voluptatem cumque
-      aliquid esse ea deleniti eveniet incidunt! Deserunt minus laborum
-      accusamus iusto dolorum. Lorem ipsum dolor sit, amet consectetur
-      adipisicing elit. Blanditiis officiis error minima eos fugit voluptate
-      excepturi eveniet dolore et, ratione impedit consequuntur dolorem hic quae
-      corrupti autem? Dolorem, sit voluptatum.
-    </p>
-  </ScrollArea.Viewport>
-  <ScrollArea.Corner />
-</ScrollArea.Root> -->

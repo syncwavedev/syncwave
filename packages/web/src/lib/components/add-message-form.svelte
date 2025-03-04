@@ -8,23 +8,22 @@
 		type BoardId,
 		type CardId,
 		type Message,
-		type MessageId,
-		type UserDto,
+		type MessageDto,
 	} from 'syncwave-data';
 	import ArrowUpIcon from './icons/arrow-up-icon.svelte';
 	import AttachIcon from './icons/attach-icon.svelte';
 	import Editor from './editor.svelte';
 	import {Doc} from 'yjs';
 	import UploadButton from './upload-button.svelte';
-	import TimesIcon from './icons/times-icon.svelte';
 	import AttachmentPreview from './attachment-preview.svelte';
 
 	interface Props {
 		cardId: CardId;
 		boardId: BoardId;
+		onSend: (message: Crdt<Message>) => void;
 	}
 
-	let {cardId, boardId}: Props = $props();
+	let {cardId, boardId, onSend}: Props = $props();
 	const me = getMe();
 
 	const doc = new Doc();
@@ -65,9 +64,17 @@
 				boardId: boardId,
 			});
 
-			await sdk(x => x.createMessage({diff: message.state()}));
-		}
+			onSend(message);
 
+			reset();
+
+			await sdk(x => x.createMessage({diff: message.state()}));
+		} else {
+			reset();
+		}
+	}
+
+	function reset() {
 		editorRef?.clear();
 		attachments = [];
 	}

@@ -23,7 +23,7 @@
 		await sdk(x =>
 			x.createColumn({
 				boardId: board.id,
-				title: newColumnName,
+				name: newColumnName,
 				columnId: createColumnId(),
 				boardPosition: toPosition({
 					prev: board.columns.at(-1)?.boardPosition,
@@ -58,6 +58,6 @@
 	</div>
 </div>
 <hr />
-<button class="btn--block mx-4 my-2 ml-auto">
+<button onclick={onClose} class="btn--block mx-4 my-2 ml-auto">
 	<span class="text-xs">Done</span>
 </button>

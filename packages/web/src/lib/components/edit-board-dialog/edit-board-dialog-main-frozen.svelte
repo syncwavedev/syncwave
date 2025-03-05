@@ -102,5 +102,5 @@
 <hr />
 <button onclick={deleteBoard} class="btn--block mx-auto my-2">
 	<TrashIcon />
-	<span class="ml-1.5 text-xs">Delete Syncwave</span>
+	<span class="ml-1.5 text-xs">Delete {name}</span>
 </button>

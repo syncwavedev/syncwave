@@ -116,7 +116,7 @@
 						<div class="btn--block">
 							<CircleDashedIcon />
 							<span class="ml-1.5 text-xs capitalize"
-								>{card.value.column?.title}</span
+								>{card.value.column?.name}</span
 							>
 						</div>
 						<div class="btn--block">

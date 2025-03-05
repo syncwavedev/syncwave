@@ -1,13 +1,8 @@
 <script lang="ts">
 	import {flip} from 'svelte/animate';
-	import {
-		dragHandleZone,
-		dragHandle,
-		dndzone,
-		type DndEvent,
-	} from 'svelte-dnd-action';
+	import {dragHandleZone, type DndEvent} from 'svelte-dnd-action';
 	import type {BoardViewColumnDto, BoardViewCardDto} from 'syncwave-data';
-	import CardTile from './card-tile.svelte';
+	import BoardViewColumn from './board-view-column.svelte';
 
 	const flipDurationMs = 100;
 	export let handleDndConsiderColumns: (
@@ -42,36 +37,14 @@
 	>
 		{#each columns as column (column.id)}
 			<div
-				class="flex w-64 flex-col"
+				class="group flex w-64 flex-col"
 				animate:flip={{duration: flipDurationMs}}
 			>
-				<div
-					use:dragHandle
-					data-disable-scroll-view-drag="true"
-					class="text-ink-body text-2xs mb-2"
-				>
-					{column.title}
-				</div>
-				<div
-					class="flex flex-1 flex-col gap-2 pb-40"
-					use:dndzone={{
-						items: column.cards,
-						flipDurationMs,
-						type: 'cards',
-						dropTargetStyle: {},
-					}}
-					on:consider={e => handleDndConsiderCards(column, e)}
-					on:finalize={e => handleDndFinalizeCards(column, e)}
-				>
-					{#each column.cards as card (card.id)}
-						<div
-							data-disable-scroll-view-drag="true"
-							animate:flip={{duration: flipDurationMs}}
-						>
-							<CardTile {card} />
-						</div>
-					{/each}
-				</div>
+				<BoardViewColumn
+					{column}
+					{handleDndConsiderCards}
+					{handleDndFinalizeCards}
+				/>
 			</div>
 		{/each}
 	</div>

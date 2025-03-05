@@ -50,8 +50,18 @@ export interface ColumnV3 extends Doc<[ColumnId]> {
     boardPosition: BigFloat;
 }
 
-export interface Column extends ColumnV3 {}
-type StoredColumn = ColumnV1 | ColumnV2 | ColumnV3;
+export interface ColumnV4 extends Doc<[ColumnId]> {
+    readonly id: ColumnId;
+    readonly version: '4';
+    readonly authorId: UserId;
+    readonly boardId: BoardId;
+    name: string;
+    deleted: boolean;
+    boardPosition: BigFloat;
+}
+
+export interface Column extends ColumnV4 {}
+type StoredColumn = ColumnV1 | ColumnV2 | ColumnV3 | ColumnV4;
 
 const BOARD_ID = 'boardId';
 
@@ -62,8 +72,8 @@ export function zColumn() {
             id: Uuid<ColumnId>(),
             authorId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
-            title: Type.String(),
-            version: Type.Literal('3'),
+            name: Type.String(),
+            version: Type.Literal('4'),
             boardPosition: zBigFloat(),
         }),
     ]);
@@ -92,7 +102,14 @@ export class ColumnRepo {
 
                         upgradeColumn(column);
                     } else if (typeof column.version === 'string') {
-                        // latest version
+                        if (column.version === '3') {
+                            (column as any).version = '4';
+                            (column as any).name = column.title;
+
+                            upgradeColumn(column);
+                        } else if (column.version === '4') {
+                            // latest version
+                        }
                     } else {
                         // assertNever(column);
                         unreachable();

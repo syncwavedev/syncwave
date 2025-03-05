@@ -12,10 +12,10 @@
 	const localColumn = Crdt.load(remoteColumn.state);
 	$effect(() => {
 		localColumn.apply(remoteColumn.state);
-		name = localColumn.snapshot().title;
+		name = localColumn.snapshot().name;
 	});
 
-	let name = $state(remoteColumn.title);
+	let name = $state(remoteColumn.name);
 
 	const sdk = getSdk();
 	async function deleteColumn() {
@@ -24,7 +24,7 @@
 
 	async function updateColumnName() {
 		const diff = localColumn.update(x => {
-			x.title = name;
+			x.name = name;
 		});
 
 		if (diff) {

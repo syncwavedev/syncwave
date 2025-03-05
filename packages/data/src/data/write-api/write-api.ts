@@ -314,11 +314,11 @@ export function createWriteApi() {
             req: Type.Object({
                 columnId: Uuid<ColumnId>(),
                 boardId: Uuid<BoardId>(),
-                title: Type.String(),
+                name: Type.String(),
                 boardPosition: zBigFloat(),
             }),
             res: zColumnDto(),
-            handle: async (st, {boardId, columnId, title, boardPosition}) => {
+            handle: async (st, {boardId, columnId, name, boardPosition}) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureBoardMember(boardId, 'writer');
                 const now = getNow();
@@ -330,9 +330,9 @@ export function createWriteApi() {
                     createdAt: now,
                     updatedAt: now,
                     deleted: false,
-                    title: title,
+                    name: name,
                     boardPosition,
-                    version: '3',
+                    version: '4',
                 });
 
                 return await toColumnDto(st.tx, column.id);
@@ -522,7 +522,7 @@ export function createWriteApi() {
                         diff,
                         writable({
                             boardPosition: true,
-                            title: true,
+                            name: true,
                         })
                     ),
                 ]);

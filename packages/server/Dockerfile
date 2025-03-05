@@ -18,7 +18,7 @@ COPY . .
 
 # Install dependencies
 WORKDIR /app
-RUN npm ci
+RUN npm i
 
 # Build common data package
 WORKDIR /app/packages/data

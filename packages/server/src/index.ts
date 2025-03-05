@@ -3,9 +3,11 @@ import './instrumentation.js';
 
 import Router from '@koa/router';
 import {createHash, randomBytes} from 'crypto';
+import helmet from 'helmet';
 import {createServer} from 'http';
 import jwt from 'jsonwebtoken';
 import Koa from 'koa';
+import koaConnect from 'koa-connect';
 import {
     AppError,
     assertDefined,
@@ -209,6 +211,7 @@ async function launch() {
 
     const app = new Koa();
     app.use(router.routes()).use(router.allowedMethods());
+    app.use(koaConnect(helmet()));
 
     const httpServer = createServer(app.callback());
 

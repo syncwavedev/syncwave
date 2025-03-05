@@ -89,7 +89,7 @@ describe('e2e', () => {
             boardId,
             boardPosition: toPosition({next: undefined, prev: undefined}),
             columnId,
-            title: 'Test column',
+            name: 'Test column',
         });
 
         const cardId = createCardId();
@@ -159,11 +159,11 @@ describe('e2e', () => {
                 deleted: false,
                 id: columnId,
                 pk: [columnId],
-                title: 'Test column',
+                name: 'Test column',
                 updatedAt: toTimestamp(now),
                 state: expect.any(String),
                 board: expectedBoard,
-                version: '3',
+                version: '4',
             },
         };
 

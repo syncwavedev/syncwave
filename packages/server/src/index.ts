@@ -3,11 +3,10 @@ import './instrumentation.js';
 
 import Router from '@koa/router';
 import {createHash, randomBytes} from 'crypto';
-import helmet from 'helmet';
 import {createServer} from 'http';
 import jwt from 'jsonwebtoken';
 import Koa from 'koa';
-import koaConnect from 'koa-connect';
+import helmet from 'koa-helmet';
 import {
     AppError,
     assertDefined,
@@ -65,7 +64,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
         };
     } else if (STAGE === 'local') {
         return {
-            LOG_LEVEL: 'error' as const,
+            LOG_LEVEL: 'info' as const,
             APP_URL: 'http://localhost:5173',
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
         };
@@ -211,7 +210,7 @@ async function launch() {
 
     const app = new Koa();
     app.use(router.routes()).use(router.allowedMethods());
-    app.use(koaConnect(helmet()));
+    app.use(helmet.default());
 
     const httpServer = createServer(app.callback());
 

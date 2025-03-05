@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		Crdt,
+		type AttachmentDto,
 		type CrdtDoc,
 		type Message,
 		type MessageDto,
@@ -9,13 +10,16 @@
 	import Avatar from './avatar.svelte';
 	import {timeSince} from '$lib/utils';
 	import RichtextView from './richtext-view.svelte';
+	import AttachmentView from './attachment-view.svelte';
+	import type {AttachmentId} from '../../../../data/dist/esm/src/data/repos/attachment-repo';
 
 	interface Props {
 		message: CrdtDoc<Message>;
+		attachments: AttachmentDto[];
 		author: User;
 	}
 
-	let {message, author}: Props = $props();
+	let {message, author, attachments}: Props = $props();
 
 	let fragment = $derived(
 		Crdt.load(message.state).extractXmlFragment(x => x.text)
@@ -40,6 +44,9 @@
 			<div class="text-4xs text-ink-detail">{when}</div>
 		</div>
 	</div>
+	{#each attachments as attachment}
+		<AttachmentView {attachment} />
+	{/each}
 	<div class="ml-[calc(1.325em+0.5rem)] text-xs leading-relaxed">
 		<RichtextView {fragment} />
 	</div>

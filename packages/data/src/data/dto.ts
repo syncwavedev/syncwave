@@ -2,6 +2,7 @@ import {type Static, Type} from '@sinclair/typebox';
 import {zCrdtDiff} from '../crdt/crdt.js';
 import {assert, whenAll} from '../utils.js';
 import {type DataTx} from './data-layer.js';
+import {type AttachmentId, zAttachment} from './repos/attachment-repo.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
 import {type Card, type CardId, zCard} from './repos/card-repo.js';
 import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
@@ -289,6 +290,26 @@ export async function toIdentityDto(
     return {...identity, zUser};
 }
 
+export function zAttachmentDto() {
+    return zAttachment();
+}
+
+export interface AttachmentDto
+    extends Static<ReturnType<typeof zAttachmentDto>> {}
+
+export async function toAttachmentDto(
+    tx: DataTx,
+    attachmentId: AttachmentId
+): Promise<AttachmentDto> {
+    const attachment = await tx.attachments.getById(attachmentId, true);
+    assert(
+        attachment !== undefined,
+        `toAttachmentDto: attachment not found: ${attachmentId}`
+    );
+
+    return attachment;
+}
+
 export function zMessageDto() {
     return Type.Composite([
         zMessage(),
@@ -296,6 +317,7 @@ export function zMessageDto() {
             author: zUserDto(),
             card: zCardDto(),
             state: zCrdtDiff<Message>(),
+            attachments: Type.Array(zAttachmentDto()),
         }),
     ]);
 }
@@ -313,8 +335,11 @@ export async function toMessageDto(
     );
     const author = await toUserDto(tx, message.authorId);
     const card = await toCardDto(tx, message.cardId);
+    const attachments = await whenAll(
+        message.attachmentIds.map(x => toAttachmentDto(tx, x))
+    );
 
-    return {...message, author, card};
+    return {...message, author, card, attachments};
 }
 
 export function zMeDto() {

@@ -34,9 +34,14 @@ export class FsObjectStore implements ObjectStore {
         } catch {
             return undefined;
         }
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         const encodedEnvelope = await readFile(filePath);
 
-        return decodeMsgpack(encodedEnvelope) as ObjectEnvelope;
+        const res = decodeMsgpack(encodedEnvelope) as ObjectEnvelope;
+
+        return res;
     }
 
     async put(
@@ -48,7 +53,8 @@ export class FsObjectStore implements ObjectStore {
             data,
             metadata,
         };
-        await writeFile(this.getFilePath(key), encodeMsgpack(data));
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await writeFile(this.getFilePath(key), encodeMsgpack(envelope));
     }
 
     async delete(key: ObjectKey): Promise<void> {

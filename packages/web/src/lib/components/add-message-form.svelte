@@ -1,10 +1,17 @@
 <script lang="ts">
-	import {getMe, getSdk, yFragmentToPlaintext} from '$lib/utils';
+	import {
+		getMe,
+		getSdk,
+		getUploadManager,
+		yFragmentToPlaintext,
+	} from '$lib/utils';
 	import {
 		Crdt,
 		createMessageId,
 		createRichtext,
 		getNow,
+		whenAll,
+		type AttachmentDto,
 		type BoardId,
 		type CardId,
 		type Message,
@@ -16,11 +23,12 @@
 	import {Doc} from 'yjs';
 	import UploadButton from './upload-button.svelte';
 	import AttachmentPreview from './attachment-preview.svelte';
+	import SpinnerIcon from './icons/spinner-icon.svelte';
 
 	interface Props {
 		cardId: CardId;
 		boardId: BoardId;
-		onSend: (message: Crdt<Message>) => void;
+		onSend: (message: Crdt<Message>, attachments: AttachmentDto[]) => void;
 	}
 
 	let {cardId, boardId, onSend}: Props = $props();
@@ -42,52 +50,91 @@
 
 	const sdk = getSdk();
 
-	let attachments: File[] = $state([]);
-	let showSendButton = $derived(attachments.length > 0 || textSendable);
+	interface FileState {
+		file: File;
+		uploading: boolean;
+		attachment: Promise<AttachmentDto>;
+	}
+
+	let files: readonly FileState[] = $state.raw([]);
+	let showSendButton = $derived(files.length > 0 || textSendable);
 
 	let editorRef: Editor | undefined = $state(undefined);
 
+	let sendInProgress = $state(false);
+
 	async function sendMessage() {
-		if (yFragmentToPlaintext(fragment).trim() !== '') {
-			const createdAt = getNow();
-			const messageId = createMessageId();
-			const message = Crdt.from<Message>({
-				id: messageId,
-				pk: [messageId],
-				authorId: me.value.user.id,
-				cardId,
-				createdAt,
-				updatedAt: createdAt,
-				deleted: false,
-				text: createRichtext(fragment),
-				attachmentIds: [],
-				boardId: boardId,
-			});
+		if (sendInProgress) return;
+		try {
+			sendInProgress = true;
+			if (
+				yFragmentToPlaintext(fragment).trim() !== '' ||
+				files.length > 0
+			) {
+				const createdAt = getNow();
+				const messageId = createMessageId();
+				const attachments = await whenAll(files.map(x => x.attachment));
+				const message = Crdt.from<Message>({
+					id: messageId,
+					pk: [messageId],
+					authorId: me.value.user.id,
+					cardId,
+					createdAt,
+					updatedAt: createdAt,
+					deleted: false,
+					text: createRichtext(fragment),
+					attachmentIds: attachments.map(x => x.id),
+					boardId: boardId,
+				});
 
-			onSend(message);
+				onSend(message, attachments);
 
-			reset();
+				reset();
 
-			await sdk(x => x.createMessage({diff: message.state()}));
-		} else {
-			reset();
+				await sdk(x => x.createMessage({diff: message.state()}));
+			} else {
+				reset();
+			}
+		} finally {
+			sendInProgress = false;
 		}
 	}
 
 	function reset() {
 		editorRef?.clear();
-		attachments = [];
+		files = [];
+	}
+
+	const uploadManager = getUploadManager();
+
+	async function handleAttach(file: File) {
+		const fileState = {
+			file,
+			uploading: true,
+			attachment: uploadManager
+				.upload({files: [file], boardId, cardId})
+				.then(([attachment]) => {
+					files = files.map(x =>
+						x === fileState ? {...x, uploading: false} : x
+					);
+
+					return attachment;
+				}),
+		};
+		files = [...files, fileState];
 	}
 </script>
 
 <div>
-	{#if attachments.length > 0}
+	{#if files.length > 0}
 		<div class="flex flex-wrap gap-1">
-			{#each attachments as file}
+			{#each files as file}
 				<AttachmentPreview
-					{file}
+					file={file.file}
+					loading={file.uploading}
 					onRemove={() => {
-						attachments = attachments.filter(f => f !== file);
+						console.log('hello');
+						files = files.filter(f => f !== file);
 					}}
 				/>
 			{/each}
@@ -97,10 +144,7 @@
 <div
 	class="border-divider bg-subtle-0 dark:bg-subtle-1 z-10 flex shrink-0 items-center gap-1 border-t p-2"
 >
-	<UploadButton
-		class="btn--icon mt-auto"
-		callback={file => attachments.push(file)}
-	>
+	<UploadButton class="btn--icon mt-auto" callback={handleAttach}>
 		<AttachIcon />
 	</UploadButton>
 	<div class="flex-1">
@@ -117,7 +161,11 @@
 			type="submit"
 			class="btn--icon btn--icon--ink mt-auto"
 		>
-			<ArrowUpIcon />
+			{#if sendInProgress}
+				<SpinnerIcon />
+			{:else}
+				<ArrowUpIcon />
+			{/if}
 		</button>
 	{/if}
 </div>

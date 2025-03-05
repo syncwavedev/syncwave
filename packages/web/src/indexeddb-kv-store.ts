@@ -60,7 +60,7 @@ export class IndexedDBTransaction implements Uint8Transaction {
 		this.tx.oncomplete = () => {
 			this.active = false;
 			if (!this.done && ENVIRONMENT !== 'test') {
-				console.error(
+				log.error(
 					'Transaction completed (auto-commit) before user function finished'
 				);
 			}

@@ -89,7 +89,6 @@ export function createParticipantApi() {
     return createApi<ParticipantState>()({
         debug: proxy('debug'),
         echo: proxy('echo'),
-
         getMe: proxy('getMe'),
         sendSignInEmail: proxy('sendSignInEmail'),
         createBoard: proxy('createBoard'),
@@ -110,14 +109,14 @@ export function createParticipantApi() {
         createMember: proxy('createMember'),
         deleteMember: proxy('deleteMember'),
         getBoardMembers: proxy('getBoardMembers'),
-
         applyUserDiff: proxy('applyUserDiff'),
         applyBoardDiff: proxy('applyBoardDiff'),
         applyColumnDiff: proxy('applyColumnDiff'),
         applyCardDiff: proxy('applyCardDiff'),
         applyMemberDiff: proxy('applyMemberDiff'),
-
         setUserAvatar: proxy('setUserAvatar'),
+        createAttachment: proxy('createAttachment'),
+        getAttachmentObject: proxy('getAttachmentObject'),
     });
 }
 

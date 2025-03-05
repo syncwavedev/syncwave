@@ -11,7 +11,12 @@ import {
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
-import {type ObjectKey, zObjectKey} from '../infrastructure.js';
+import {
+    type ObjectKey,
+    type ObjectMetadata,
+    zObjectKey,
+    zObjectMetadata,
+} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {BoardId, BoardRepo} from './board-repo.js';
 import {type CardId, CardRepo} from './card-repo.js';
@@ -28,6 +33,7 @@ export interface Attachment extends Doc<[AttachmentId]> {
     readonly authorId: UserId;
     readonly boardId: BoardId;
     readonly cardId: CardId;
+    readonly metadata: ObjectMetadata;
     readonly objectKey: ObjectKey;
 }
 
@@ -43,6 +49,7 @@ export function zAttachment() {
             boardId: Uuid<BoardId>(),
             cardId: Uuid<CardId>(),
             objectKey: zObjectKey(),
+            metadata: zObjectMetadata(),
         }),
     ]);
 }

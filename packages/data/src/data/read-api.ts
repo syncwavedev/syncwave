@@ -2,7 +2,12 @@ import {Type} from '@sinclair/typebox';
 import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {observable, toStream} from '../stream.js';
-import {createApi, type InferRpcClient, streamer} from '../transport/rpc.js';
+import {
+    createApi,
+    handler,
+    type InferRpcClient,
+    streamer,
+} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {AuthContext} from './auth-context.js';
@@ -28,6 +33,8 @@ import {
     zMessageDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
+import {type ObjectStore, zObjectEnvelope} from './infrastructure.js';
+import type {AttachmentId} from './repos/attachment-repo.js';
 import {type BoardId} from './repos/board-repo.js';
 import {type CardId, zCard} from './repos/card-repo.js';
 import {type UserId} from './repos/user-repo.js';
@@ -36,7 +43,8 @@ export class ReadApiState {
     constructor(
         public readonly transact: Transact,
         readonly esReader: EventStoreReader<ChangeEvent>,
-        public readonly auth: AuthContext
+        public readonly auth: AuthContext,
+        public readonly objectStore: ObjectStore
     ) {}
 
     ensureAuthenticated(): UserId {
@@ -200,6 +208,37 @@ export function createReadApi() {
                     update$: st.esReader
                         .subscribe(boardEvents(boardId))
                         .then(x => x.map(() => undefined)),
+                });
+            },
+        }),
+        getAttachmentObject: handler({
+            req: Type.Object({
+                attachmentId: Uuid<AttachmentId>(),
+            }),
+            res: zObjectEnvelope(),
+            async handle(st, {attachmentId}) {
+                return await st.transact(async tx => {
+                    await tx.ps.ensureAttachmentMember(attachmentId, 'reader');
+                    const attachment = await tx.attachments.getById(
+                        attachmentId,
+                        true
+                    );
+                    if (attachment === undefined) {
+                        throw new BusinessError(
+                            `attachment with id ${attachmentId} not found`,
+                            'attachment_not_found'
+                        );
+                    }
+
+                    const envelope = await st.objectStore.get(
+                        attachment.objectKey
+                    );
+                    assert(
+                        envelope !== undefined,
+                        'getAttachmentObject: object not found'
+                    );
+
+                    return envelope;
                 });
             },
         }),

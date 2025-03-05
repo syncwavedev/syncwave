@@ -1,3 +1,4 @@
+import {Type} from '@sinclair/typebox';
 import {context} from '../context.js';
 import type {Brand} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
@@ -44,6 +45,12 @@ export interface ObjectMetadata {
     contentType: string;
 }
 
+export function zObjectMetadata() {
+    return Type.Object({
+        contentType: Type.String(),
+    });
+}
+
 export type ObjectKey = Brand<Uuid, 'ObjectKey'>;
 
 export function zObjectKey() {
@@ -57,6 +64,13 @@ export function createObjectKey() {
 export interface ObjectEnvelope {
     readonly data: Uint8Array;
     readonly metadata: ObjectMetadata;
+}
+
+export function zObjectEnvelope() {
+    return Type.Object({
+        data: Type.Uint8Array(),
+        metadata: zObjectMetadata(),
+    });
 }
 
 export interface ObjectStore {

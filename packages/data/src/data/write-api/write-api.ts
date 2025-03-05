@@ -11,9 +11,11 @@ import {whenAll} from '../../utils.js';
 import {Uuid} from '../../uuid.js';
 import type {DataTx} from '../data-layer.js';
 import {
+    toAttachmentDto,
     toColumnDto,
     toMemberDto,
     toMessageDto,
+    zAttachmentDto,
     zColumnDto,
     zMemberDto,
     zMessageDto,
@@ -22,10 +24,11 @@ import {
     createObjectKey,
     type CryptoService,
     type EmailService,
+    type ObjectMetadata,
     type ObjectStore,
 } from '../infrastructure.js';
 import {PermissionService} from '../permission-service.js';
-import {createAttachmentId, zAttachment} from '../repos/attachment-repo.js';
+import {createAttachmentId} from '../repos/attachment-repo.js';
 import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
 import {type Card, type CardId, zCard} from '../repos/card-repo.js';
 import {type Column, type ColumnId} from '../repos/column-repo.js';
@@ -117,8 +120,8 @@ export function createWriteApi() {
                 fileName: Type.String(),
                 contentType: Type.String(),
             }),
-            res: zAttachment(),
-            handle: async (st, {cardId, data, fileName, contentType}) => {
+            res: zAttachmentDto(),
+            handle: async (st, {cardId, data, contentType}) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureCardMember(cardId, 'writer');
                 const card = await st.tx.cards.getById(cardId, true);
@@ -131,9 +134,10 @@ export function createWriteApi() {
                 const now = getNow();
 
                 const objectKey = createObjectKey();
-                await st.objectStore.put(objectKey, data, {contentType});
+                const metadata: ObjectMetadata = {contentType};
+                await st.objectStore.put(objectKey, data, metadata);
 
-                return await st.tx.attachments.create({
+                const attachment = await st.tx.attachments.create({
                     authorId: meId,
                     boardId: card.boardId,
                     cardId,
@@ -142,7 +146,10 @@ export function createWriteApi() {
                     id: createAttachmentId(),
                     objectKey,
                     updatedAt: now,
+                    metadata,
                 });
+
+                return toAttachmentDto(st.tx, attachment.id);
             },
         }),
         createMessage: handler({

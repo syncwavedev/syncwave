@@ -15,6 +15,7 @@
 	import {
 		Crdt,
 		log,
+		type AttachmentDto,
 		type CardViewDto,
 		type CrdtDoc,
 		type Message,
@@ -50,7 +51,10 @@
 		});
 	});
 
-	type UserMessageModel = CrdtDoc<Message> & {author: User};
+	type UserMessageModel = CrdtDoc<Message> & {
+		author: User;
+		attachments: AttachmentDto[];
+	};
 
 	const sentMessages: UserMessageModel[] = $state([]);
 	let localMessages = $derived.by(() => {
@@ -67,11 +71,15 @@
 
 	const me = getMe();
 
-	function handleMessageSend(message: Crdt<Message>) {
+	function handleMessageSend(
+		message: Crdt<Message>,
+		attachments: AttachmentDto[]
+	) {
 		sentMessages.push({
 			...message.snapshot(),
 			state: message.state(),
 			author: me.value.user,
+			attachments,
 		});
 	}
 </script>
@@ -127,7 +135,11 @@
 						message={`created on ${new Date(card.value.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}`}
 					/>
 					{#each localMessages as message (message.id)}
-						<UserMessage author={message.author} {message} />
+						<UserMessage
+							author={message.author}
+							{message}
+							attachments={message.attachments}
+						/>
 					{/each}
 				</div>
 			</ScrollArea>

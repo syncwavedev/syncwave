@@ -32,6 +32,7 @@ import {UniversalStore} from './universal-store';
 
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import {UploadManager} from './upload-manager.svelte';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -88,6 +89,19 @@ export function getUniversalStore() {
 	const result = getContext<UniversalStore>(UniversalStore);
 	if (!result) {
 		throw new Error('context UniversalStore is not available');
+	}
+
+	return result;
+}
+
+export function setUploadManager(store: UploadManager) {
+	setContext(UploadManager, store);
+}
+
+export function getUploadManager() {
+	const result = getContext<UploadManager>(UploadManager);
+	if (!result) {
+		throw new Error('context UploadManager is not available');
 	}
 
 	return result;

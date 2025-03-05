@@ -66,7 +66,12 @@ export function createCoordinatorApi() {
     const adaptedReadApi = mapApiState(
         createReadApi(),
         (state: CoordinatorApiState) => {
-            return new ReadApiState(state.transact, state.esReader, state.auth);
+            return new ReadApiState(
+                state.transact,
+                state.esReader,
+                state.auth,
+                state.objectStore
+            );
         }
     );
 

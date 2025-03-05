@@ -23,9 +23,11 @@
 		createParticipantClientDummy,
 		setAuthManager,
 		setUniversalStore,
+		setUploadManager,
 	} from '$lib/utils';
 	import {UniversalStore} from '$lib/universal-store';
 	import ErrorCard from '$lib/components/error-card.svelte';
+	import {UploadManager} from '$lib/upload-manager.svelte';
 
 	let {children, data}: LayoutProps = $props();
 
@@ -41,6 +43,7 @@
 		? createParticipantClient()
 		: createParticipantClientDummy(); // server must not use participantClient
 	setContext(ParticipantClient, participantClient);
+	setUploadManager(new UploadManager(participantClient));
 
 	onDestroy(() => {
 		participantClient.close('layout destroyed');

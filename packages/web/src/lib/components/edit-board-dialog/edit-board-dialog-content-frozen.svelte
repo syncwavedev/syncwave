@@ -14,7 +14,10 @@
 
 	type Route = 'main' | 'members' | 'columns';
 
-	let route = usePageState<Route>('board-settings-route', 'main');
+	let route = usePageState<Route>(
+		'board-settings-route' + Math.random(),
+		'main'
+	);
 
 	const membersPromise = observeAsync(x =>
 		x.getBoardMembers({boardId: board.id})

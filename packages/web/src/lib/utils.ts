@@ -229,7 +229,6 @@ export function getMe() {
 
 export function fireEscape() {
 	const highestPriority = escapeHandlers[0]?.priority;
-	console.log('highestPriority', highestPriority);
 	runAll(
 		escapeHandlers
 			.filter(x => x.priority === highestPriority)

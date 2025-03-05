@@ -1,5 +1,6 @@
 import {browser} from '$app/environment';
-import {goto} from '$app/navigation';
+import {goto, pushState} from '$app/navigation';
+import {page} from '$app/state';
 import {onDestroy} from 'svelte';
 import type {Readable, Subscriber} from 'svelte/store';
 import {
@@ -168,18 +169,24 @@ function useStream<T>(
 	}
 }
 
-export function toggle(initial = false) {
+export function usePageState<T>(id: string, initialValue: T) {
+	const getValue = () =>
+		id in page.state ? (page.state as Record<string, T>)[id] : initialValue;
+
+	$effect(() => {
+		result.value = getValue();
+	});
+
 	const result = $state({
-		value: initial,
-		toggle: () => {
-			result.value = !result.value;
+		value: getValue(),
+		// note: browser might skip history entry if it was added after pressing escape button
+		push: (value: T) => {
+			setTimeout(() => pushState('', {...page.state, [id]: value}), 0);
 		},
-		off: () => {
-			result.value = false;
-		},
-		on: () => {
-			result.value = true;
+		pop: () => {
+			history.back();
 		},
 	});
+
 	return result;
 }

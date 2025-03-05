@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {observe, toggle} from '$lib/utils.svelte';
+	import {observe, usePageState} from '$lib/utils.svelte';
 	import {
 		Crdt,
 		createCardId,
@@ -76,7 +76,7 @@
 		goto(getCardRoute(boardKey, card.counter));
 	}
 
-	const editToggle = toggle();
+	const editToggle = usePageState('board-settings', false);
 </script>
 
 <div class="flex h-full">
@@ -92,7 +92,10 @@
 						<PlusIcon />
 					</button>
 					<button class="btn--icon"><SearchIcon /></button>
-					<button onclick={editToggle.on} class="btn--icon -mr-2">
+					<button
+						onclick={() => editToggle.push(true)}
+						class="btn--icon -mr-2"
+					>
 						<EllipsisIcon />
 					</button>
 				</div>
@@ -119,5 +122,5 @@
 <EditBoardDialogFrozen
 	board={board.value}
 	open={editToggle.value}
-	onClose={editToggle.off}
+	onClose={() => editToggle.push(false)}
 />

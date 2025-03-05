@@ -3,7 +3,7 @@
 	import EditBoardDialogFrozenMain from './edit-board-dialog-main-frozen.svelte';
 	import EditBoardDialogFrozenColumns from './edit-board-dialog-columns-frozen.svelte';
 	import EditBoardDialogFrozenMembers from './edit-board-dialog-members-frozen.svelte';
-	import {observeAsync} from '$lib/utils.svelte';
+	import {observeAsync, usePageState} from '$lib/utils.svelte';
 
 	interface Props {
 		board: BoardViewDto;
@@ -14,39 +14,35 @@
 
 	type Route = 'main' | 'members' | 'columns';
 
-	let route: Route = $state('main');
+	let route = usePageState<Route>('board-settings-route', 'main');
 
 	const membersPromise = observeAsync(x =>
 		x.getBoardMembers({boardId: board.id})
 	);
 </script>
 
-{#if route === 'main'}
+{#if route.value === 'main'}
 	<EditBoardDialogFrozenMain
-		onColumns={() => (route = 'columns')}
-		onMembers={() => (route = 'members')}
+		onColumns={() => route.push('columns')}
+		onMembers={() => route.push('members')}
 		{board}
 		{onClose}
 	/>
 {/if}
 
-{#if route === 'members'}
+{#if route.value === 'members'}
 	{#await membersPromise}
 		Loading...
 	{:then members}
 		<EditBoardDialogFrozenMembers
 			boardId={board.id}
 			members={members.value}
-			onBack={() => (route = 'main')}
+			onBack={route.pop}
 			{onClose}
 		/>
 	{/await}
 {/if}
 
-{#if route === 'columns'}
-	<EditBoardDialogFrozenColumns
-		{board}
-		onBack={() => (route = 'main')}
-		{onClose}
-	/>
+{#if route.value === 'columns'}
+	<EditBoardDialogFrozenColumns {board} onBack={route.pop} {onClose} />
 {/if}

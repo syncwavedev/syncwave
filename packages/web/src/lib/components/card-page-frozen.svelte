@@ -9,7 +9,7 @@
 	import SystemMessage from '$lib/components/system-message.svelte';
 	import UserMessage from '$lib/components/user-message.svelte';
 	import {getBoardRoute} from '$lib/routes';
-	import {getMe, getSdk} from '$lib/utils';
+	import {CARD_DETAILS_PRIORITY, getMe, getSdk, onEscape} from '$lib/utils';
 	import {observe} from '$lib/utils.svelte';
 	import {onDestroy} from 'svelte';
 	import {
@@ -21,6 +21,7 @@
 		type Message,
 		type User,
 	} from 'syncwave-data';
+	import {goto} from '$app/navigation';
 
 	interface Props {
 		boardKey: string;
@@ -81,6 +82,14 @@
 			attachments,
 		});
 	}
+
+	console.log('more!');
+
+	$effect(() =>
+		onEscape(CARD_DETAILS_PRIORITY, () => {
+			goto(getBoardRoute(boardKey));
+		})
+	);
 </script>
 
 <div

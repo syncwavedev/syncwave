@@ -13,11 +13,14 @@ import {
 	ParticipantClientDummy,
 	ParticipantServer,
 	PersistentConnection,
+	runAll,
 	toStream,
 	tracerManager,
 	unimplemented,
 	type MeDto,
+	type Nothing,
 	type ParticipantRpc,
+	type Unsubscribe,
 } from 'syncwave-data';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
 import {WsTransportClient} from '../ws-transport-client';
@@ -222,4 +225,31 @@ export function getMe() {
 		throw new Error('context MeDto is not available');
 	}
 	return me;
+}
+
+export function fireEscape() {
+	const highestPriority = escapeHandlers[0]?.priority;
+	console.log('highestPriority', highestPriority);
+	runAll(
+		escapeHandlers
+			.filter(x => x.priority === highestPriority)
+			.map(x => x.cb)
+	);
+}
+
+const escapeHandlers: Array<{priority: number; cb: () => Nothing}> = [];
+
+export const DIALOG_PRIORITY = 100;
+export const CARD_DETAILS_PRIORITY = 10;
+
+export function onEscape(priority: number, cb: () => Nothing): Unsubscribe {
+	const handler = {priority, cb};
+	escapeHandlers.push(handler);
+	escapeHandlers.sort((a, b) => b.priority - a.priority);
+	return () => {
+		const index = escapeHandlers.indexOf(handler);
+		if (index !== -1) {
+			escapeHandlers.splice(index, 1);
+		}
+	};
 }

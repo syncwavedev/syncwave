@@ -2,6 +2,7 @@
 	import type {Snippet} from 'svelte';
 	import ScrollArea from './scroll-area.svelte';
 	import {Portal} from 'bits-ui';
+	import {DIALOG_PRIORITY, onEscape} from '$lib/utils';
 
 	interface Props {
 		open: boolean;
@@ -10,9 +11,15 @@
 	}
 
 	let {open, onClose, children}: Props = $props();
-</script>
 
-<svelte:body onkeydown={e => e.key === 'Escape' && onClose()} />
+	$effect(() => {
+		if (open) {
+			return onEscape(DIALOG_PRIORITY, onClose);
+		}
+
+		return undefined;
+	});
+</script>
 
 {#if open}
 	<Portal>

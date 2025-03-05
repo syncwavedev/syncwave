@@ -21,6 +21,7 @@
 		createAuthManager,
 		createParticipantClient,
 		createParticipantClientDummy,
+		fireEscape,
 		setAuthManager,
 		setUniversalStore,
 		setUploadManager,
@@ -67,6 +68,14 @@
 </script>
 
 <svelte:window on:keydown={on_key_down} />
+
+<svelte:body
+	onkeydown={e => {
+		if (e.key === 'Escape') {
+			fireEscape();
+		}
+	}}
+/>
 
 <svelte:boundary>
 	{#snippet failed(error, reset)}

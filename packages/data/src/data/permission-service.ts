@@ -17,7 +17,7 @@ import type {UserId} from './repos/user-repo.js';
 export function canManageRole(managerRole: MemberRole, role: MemberRole) {
     const adminOrOwner: MemberRole[] = ['owner', 'admin'];
 
-    const minimumRequiredRole = adminOrOwner.includes(role) ? 'owner' : 'admin';
+    const minimumRequiredRole = adminOrOwner.includes(role) ? 'owner' : role;
     return ROLE_ORDER[managerRole] >= ROLE_ORDER[minimumRequiredRole];
 }
 

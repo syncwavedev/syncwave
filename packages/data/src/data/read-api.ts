@@ -329,7 +329,7 @@ export function createReadApi() {
             item: zBoardViewDto(),
             async *stream(st, {key}) {
                 const board = await log.time('getBoardView get board', () =>
-                    st.transact(tx => tx.boards.getByKey(key))
+                    st.transact(tx => tx.boards.getByKey(key.toUpperCase()))
                 );
                 if (board === undefined) {
                     throw new BusinessError(

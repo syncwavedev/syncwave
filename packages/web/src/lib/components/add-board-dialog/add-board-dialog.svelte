@@ -4,6 +4,8 @@
 	import AddBoardDialogSettings from './add-board-dialog-board-settings.svelte';
 	import AddBoardDialogMemberList from './add-board-dialog-member-list.svelte';
 	import Dialog from '../dialog.svelte';
+	import {goto} from '$app/navigation';
+	import {getBoardRoute} from '$lib/routes';
 
 	interface Props {
 		open: boolean;
@@ -30,6 +32,7 @@
 				x.createBoard({boardId: createBoardId(), key, name, members})
 			);
 			onClose();
+			goto(getBoardRoute(key.toUpperCase()));
 		} catch (e) {
 			if (e instanceof BusinessError) {
 				if (e.code === 'board_key_taken') {

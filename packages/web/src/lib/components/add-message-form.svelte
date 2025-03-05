@@ -1,10 +1,5 @@
 <script lang="ts">
-	import {
-		getMe,
-		getSdk,
-		getUploadManager,
-		yFragmentToPlaintext,
-	} from '$lib/utils';
+	import {getMe, getSdk, getUploadManager, showErrorToast} from '$lib/utils';
 	import {
 		Crdt,
 		createMessageId,
@@ -24,6 +19,8 @@
 	import UploadButton from './upload-button.svelte';
 	import AttachmentPreview from './attachment-preview.svelte';
 	import SpinnerIcon from './icons/spinner-icon.svelte';
+	import Error from './error.svelte';
+	import {yFragmentToPlaintext} from '$lib/richtext';
 
 	interface Props {
 		cardId: CardId;
@@ -121,6 +118,10 @@
 					return attachment;
 				}),
 		};
+		fileState.attachment.catch((error: unknown) => {
+			files = files.filter(x => x !== fileState);
+			showErrorToast(error);
+		});
 		files = [...files, fileState];
 	}
 </script>
@@ -142,7 +143,7 @@
 	{/if}
 </div>
 <div
-	class="border-divider bg-subtle-0 dark:bg-subtle-1 z-10 flex shrink-0 items-center gap-1 border-t p-2"
+	class="border-divider bg-subtle-0 dark:bg-subtle-1 flex shrink-0 items-center gap-1 border-t p-2"
 >
 	<UploadButton class="btn--icon mt-auto" callback={handleAttach}>
 		<AttachIcon />

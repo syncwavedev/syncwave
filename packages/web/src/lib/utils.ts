@@ -1,6 +1,3 @@
-import {getSchema} from '@tiptap/core';
-import {generateHTML} from '@tiptap/html';
-import StarterKit from '@tiptap/starter-kit';
 import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	AppError,
@@ -22,8 +19,6 @@ import {
 	type MeDto,
 	type ParticipantRpc,
 } from 'syncwave-data';
-import {yXmlFragmentToProsemirrorJSON} from 'y-prosemirror';
-import {XmlFragment} from 'yjs';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
 import {WsTransportClient} from '../ws-transport-client';
 import {AuthManager} from './auth-manager';
@@ -198,7 +193,8 @@ export async function sdkOnce<T>(
 	}
 }
 
-export function showErrorToast() {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function showErrorToast(_error: unknown) {
 	unimplemented();
 }
 
@@ -206,24 +202,6 @@ const timeAgo = new TimeAgo('en-US');
 
 export function timeSince(ts: Timestamp) {
 	return timeAgo.format(new Date(ts));
-}
-
-const tiptapExtensions = [StarterKit];
-
-export function yFragmentToJSON(fragment: XmlFragment) {
-	return yXmlFragmentToProsemirrorJSON(fragment);
-}
-
-export function yFragmentToHtml(fragment: XmlFragment) {
-	const prosemirrorJSON = yFragmentToJSON(fragment);
-	return generateHTML(prosemirrorJSON, tiptapExtensions);
-}
-
-export function yFragmentToPlaintext(fragment: XmlFragment) {
-	const schema = getSchema(tiptapExtensions);
-	const prosemirrorJSON = yFragmentToJSON(fragment);
-	const node = schema.nodeFromJSON(prosemirrorJSON);
-	return node.textBetween(0, node.content.size, '\n', '\n');
 }
 
 export function markErrorAsHandled(error: unknown) {

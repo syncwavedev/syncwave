@@ -12,6 +12,7 @@
 	import RichtextView from './richtext-view.svelte';
 	import AttachmentView from './attachment-view.svelte';
 	import type {AttachmentId} from '../../../../data/dist/esm/src/data/repos/attachment-repo';
+	import {yFragmentToJSON} from '$lib/richtext';
 
 	interface Props {
 		message: CrdtDoc<Message>;

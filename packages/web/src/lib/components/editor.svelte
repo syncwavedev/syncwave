@@ -1,4 +1,5 @@
 <script lang="ts">
+	import {tiptapExtensions} from '$lib/richtext';
 	import {onMount} from 'svelte';
 	import cx from 'clsx';
 	import {get, type Readable} from 'svelte/store';
@@ -8,7 +9,6 @@
 		Editor,
 		EditorContent,
 	} from 'svelte-tiptap';
-	import StarterKit from '@tiptap/starter-kit';
 	import {Collaboration} from '@tiptap/extension-collaboration';
 	import Placeholder from '@tiptap/extension-placeholder';
 	import {XmlFragment} from 'yjs';
@@ -29,15 +29,8 @@
 		addKeyboardShortcuts() {
 			return {
 				Enter: () => {
-					// Call your send message function
 					onEnter?.();
-					// Optionally clear the editor after sending:
-					this.editor.commands.clearContent();
-					return true; // prevent the default newline insertion
-				},
-				'Shift-Enter': () => {
-					// Insert a newline when Shift+Enter is pressed
-					return this.editor.commands.setHardBreak();
+					return true;
 				},
 			};
 		},
@@ -50,7 +43,7 @@
 	onMount(() => {
 		editor = createEditor({
 			extensions: [
-				StarterKit,
+				...tiptapExtensions,
 				Collaboration.configure({
 					fragment,
 				}),

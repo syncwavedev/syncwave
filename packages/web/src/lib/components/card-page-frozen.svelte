@@ -19,7 +19,6 @@
 		type CardViewDto,
 		type CrdtDoc,
 		type Message,
-		type MessageDto,
 		type User,
 	} from 'syncwave-data';
 
@@ -85,7 +84,7 @@
 </script>
 
 <div
-	class="border-divider bg-subtle-0 dark:bg-subtle-1 z-10 flex h-full w-112 min-w-84 flex-shrink-0 flex-col border-l"
+	class="border-divider bg-subtle-0 dark:bg-subtle-1 flex h-full w-full flex-shrink-0 flex-col border-l"
 >
 	<div class="flex h-full flex-col">
 		<div class="min-h-0 flex-1">

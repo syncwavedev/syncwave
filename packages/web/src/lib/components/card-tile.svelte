@@ -2,7 +2,7 @@
 	import {Crdt, type BoardViewCardDto} from 'syncwave-data';
 	import Avatar from './avatar.svelte';
 	import {getCardRoute} from '$lib/routes';
-	import {yFragmentToPlaintext} from '$lib/utils';
+	import {yFragmentToPlaintext} from '$lib/richtext';
 
 	let {card}: {card: BoardViewCardDto} = $props();
 	let preview = $derived.by(() => {

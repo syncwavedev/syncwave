@@ -8,7 +8,7 @@
 		defaultSize: number;
 		onWidthChange: (width: number) => void;
 		children: Snippet;
-		class: string;
+		class?: string;
 		minWidth: number;
 		maxWidth: number;
 		resizerClass?: string;
@@ -69,7 +69,7 @@
 	{@render children()}
 
 	<div
-		class={resizerClass}
+		class={`resizer ${resizerClass}`}
 		style="position: absolute; {freeSide}: 0; top: 0; bottom: 0;"
 		onpointerdown={handlePointerDown}
 		onpointermove={handlePointerMove}

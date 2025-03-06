@@ -11,9 +11,8 @@ import type {
 export class InstrumentedConnection<T> implements Connection<T> {
     constructor(private readonly connection: Connection<T>) {}
     async send(message: T): Promise<void> {
-        return await context().runChild({span: 'connection.send'}, async () => {
-            return await this.connection.send(message);
-        });
+        context().addEvent('info', 'connection.send');
+        return await this.connection.send(message);
     }
     subscribe(observer: Observer<T>): Unsubscribe {
         return this.connection.subscribe(observer);

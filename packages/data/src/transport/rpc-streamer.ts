@@ -141,7 +141,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                 const callInfo = `handle_call ${state.serverName}.${req.name}(${stringifyLogPart(req.arg)}) [rid=${ctx.requestId}]`;
 
                 try {
-                    log.info(`${callInfo}...`);
+                    log.debug(`${callInfo}...`);
 
                     const result = await processor.handle(
                         state.state,
@@ -149,7 +149,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         ctx
                     );
 
-                    log.info(`${callInfo} => ${stringifyLogPart(result)}`);
+                    log.debug(`${callInfo} => ${stringifyLogPart(result)}`);
 
                     return result;
                 } catch (error) {
@@ -171,16 +171,14 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a streamer');
                 }
 
-                const callInfo = `handle ${state.serverName}.${name}(${stringifyLogPart(arg)}) [sid=${streamId}]`;
+                const callInfo = `handle ${state.serverName}.${name} [sid=${streamId}]`;
 
-                log.info(`${callInfo}...`);
+                log.debug(`${callInfo}...`);
 
                 const [ctx, cancelCtx] = context().createDetached({
-                    span: `handle_stream ${name}(${stringifyLogPart(arg)})`,
+                    span: `handle_stream ${name}`,
                     attributes: {
                         'rpc.streamId': streamId,
-                        'rpc.method': name,
-                        'rpc.arg': stringifyLogPart(arg),
                     },
                 });
 
@@ -197,7 +195,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                 )
                                     .map((value, index) => ({value, index}))
                                     .mapParallel(async ({value, index}) => {
-                                        log.info(
+                                        log.debug(
                                             `${callInfo} => ${stringifyLogPart(value)}`
                                         );
                                         assert(
@@ -227,7 +225,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                     );
                                 }
                             } finally {
-                                log.info(`${callInfo} finished`);
+                                log.debug(`${callInfo} finished`);
 
                                 // no point in sending end if the stream was cancelled by client
                                 if (!state.jobManager.isCancelled(streamId)) {
@@ -308,15 +306,8 @@ class RpcStreamerClientApiState {
 
     async next(streamId: StreamId, value: unknown, counter: number) {
         const sub = this.getSub(streamId, counter);
-        await sub?.context.runChild(
-            {
-                span: 'next',
-                attributes: {'rpc.next.value': stringifyLogPart(value)},
-            },
-            async () => {
-                await sub.writer.next(value);
-            }
-        );
+        sub?.context.addEvent('info', 'next');
+        await sub?.writer.next(value);
     }
 
     async throw(params: {
@@ -326,24 +317,17 @@ class RpcStreamerClientApiState {
         counter: number;
     }) {
         const sub = this.getSub(params.streamId, params.counter);
-        await sub?.context.runChild(
-            {
-                span: 'throw',
-                attributes: {
-                    'rpc.throw.code': params.code,
-                    'rpc.throw.message': stringifyLogPart(params.message),
-                },
-            },
-            async () => {
-                await sub.writer.throw(
-                    toError(
-                        reconstructError({
-                            message: params.message,
-                            code: params.code,
-                        })
-                    )
-                );
-            }
+        sub?.context.addEvent('info', 'throw', {
+            'rpc.throw.code': params.code,
+            'rpc.throw.message': stringifyLogPart(params.message),
+        });
+        await sub?.writer.throw(
+            toError(
+                reconstructError({
+                    message: params.message,
+                    code: params.code,
+                })
+            )
         );
     }
 
@@ -531,21 +515,19 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             if (handler.type === 'handler') {
                 const requestId = createUuidV4();
                 const [requestCtx, cancelRequestCtx] = context().createChild({
-                    span: `call ${name}(${stringifyLogPart(arg)})`,
+                    span: `call ${name}`,
                     attributes: {
                         'rpc.requestId': requestId,
-                        'rpc.method': name,
-                        'rpc.arg': stringifyLogPart(arg),
                     },
                 });
                 return requestCtx
                     .run(async () => {
-                        const callInfo = `call ${clientTarget}.${name}(${stringifyLogPart(arg)}) [rid=${requestId}]`;
-                        log.info(`${callInfo}...`);
+                        const callInfo = `call ${clientTarget}.${name} [rid=${requestId}]`;
+                        log.debug(`${callInfo}...`);
                         return server
                             .handle({name, arg}, headers)
                             .then(async result => {
-                                log.info(
+                                log.debug(
                                     `${callInfo} => ${stringifyLogPart(result)}`
                                 );
                                 return result;
@@ -578,11 +560,9 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                     const streamId = createStreamId();
                     const [requestCtx, cancelRequestCtx] =
                         parentCtx.createChild({
-                            span: `stream ${name}(${stringifyLogPart(arg)})`,
+                            span: `stream ${name}`,
                             attributes: {
                                 'rpc.streamId': streamId,
-                                'rpc.method': name,
-                                'rpc.arg': stringifyLogPart(arg),
                             },
                         });
                     const cancelRequestCtxCleanUp = requestCtx.onEnd(reason => {
@@ -607,7 +587,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                 arg,
                             });
 
-                            log.info('start rpc stream...');
+                            log.debug('start rpc stream...');
                             await server.stream(
                                 {streamId, name, arg},
                                 {...headers}
@@ -625,7 +605,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             );
                             // we need to run cancellation separately to avoid cancellation of the cancellation
                             context().detach({span: 'cancel stream'}, () => {
-                                log.info(
+                                log.debug(
                                     'stream consumer unsubscribed, send cancellation to the server...'
                                 );
                                 cleanup(new AppError('stream cancelled'));
@@ -636,7 +616,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                     })
                                 )
                                     .then(() => {
-                                        log.info('cancelled');
+                                        log.debug('cancelled');
                                     })
                                     .catch(error => {
                                         log.error(

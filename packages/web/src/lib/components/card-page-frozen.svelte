@@ -83,8 +83,6 @@
 		});
 	}
 
-	console.log('more!');
-
 	$effect(() =>
 		onEscape(CARD_DETAILS_PRIORITY, () => {
 			goto(getBoardRoute(boardKey));

@@ -83,6 +83,7 @@ export class InstrumentedKvStore<K extends Tuple, V> implements KvStore<K, V> {
             });
         });
     }
+
     close(reason: unknown): void {
         this.store.close(reason);
     }

@@ -3,8 +3,6 @@
 	import {dragHandle, dndzone, type DndEvent} from 'svelte-dnd-action';
 	import type {BoardViewColumnDto, BoardViewCardDto} from 'syncwave-data';
 	import CardTile from './card-tile.svelte';
-	import EllipsisIcon from './icons/ellipsis-icon.svelte';
-	import EditColumnDialog from './edit-column-dialog/edit-column-dialog.svelte';
 	import BoardViewColumnEditButton from './board-view-column-edit-button.svelte';
 
 	const flipDurationMs = 100;

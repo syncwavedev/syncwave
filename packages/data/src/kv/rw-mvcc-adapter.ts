@@ -10,6 +10,7 @@ import {
     compareUint8Array,
     pipe,
     unimplemented,
+    unreachable,
     whenAll,
     zip,
 } from '../utils.js';
@@ -213,7 +214,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             }
         }
 
-        unimplemented();
+        unreachable();
     }
 
     private async recordTransactionStart(runningKey: RunningTransactionKey) {

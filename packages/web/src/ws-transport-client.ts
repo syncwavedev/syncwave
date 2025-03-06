@@ -80,15 +80,7 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	send(message: T): Promise<void> {
-		if (
-			this.ws.readyState === this.ws.CLOSED ||
-			this.ws.readyState === this.ws.CLOSING
-		) {
-			throw new ConnectionClosedError('ws client closed');
-		}
-		if (this.ws.readyState === this.ws.CONNECTING) {
-			throw new AppError('ws client is not open');
-		}
+		this.ensureReady();
 
 		log.trace('ws client: send: ' + JSON.stringify(message));
 		const data = this.codec.encode(message);
@@ -98,6 +90,7 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	subscribe(cb: Observer<T>): Unsubscribe {
+		this.ensureReady();
 		log.trace('ws subscribe');
 		return this.subject.subscribe(cb);
 	}
@@ -105,6 +98,18 @@ export class WsClientConnection<T> implements Connection<T> {
 	close(): void {
 		log.trace('ws client: close');
 		this.ws.close();
+	}
+
+	private ensureReady() {
+		if (
+			this.ws.readyState === this.ws.CLOSED ||
+			this.ws.readyState === this.ws.CLOSING
+		) {
+			throw new ConnectionClosedError('ws client closed');
+		}
+		if (this.ws.readyState === this.ws.CONNECTING) {
+			throw new AppError('ws client is not open');
+		}
 	}
 
 	private setupListeners(): void {

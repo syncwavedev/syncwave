@@ -56,11 +56,7 @@ export function launchRpcHandlerServer<T>(
             if (msg.type === 'request') {
                 const [actionCtx, cancelActionCtx] = Context.restore(
                     {
-                        span: `raw_handle ${msg.payload.name}(${stringifyLogPart(msg.payload.arg)})`,
-                        attributes: {
-                            'rpc.method': msg.payload.name,
-                            'rpc.arg': stringifyLogPart(msg.payload.arg),
-                        },
+                        span: `raw_handle ${msg.payload.name}`,
                     },
                     msg.headers,
                     tracer
@@ -319,11 +315,7 @@ function createHandlerProxy(
         }
 
         const [requestCtx, cancelRequestCtx] = context().createChild({
-            span: `raw_call ${name}(${stringifyLogPart(arg)})`,
-            attributes: {
-                'rpc.method': name,
-                'rpc.arg': stringifyLogPart(arg),
-            },
+            span: `raw_call ${name}`,
         });
 
         const result: unknown = await requestCtx.run(async () => {
@@ -346,11 +338,10 @@ export function reportRpcError(error: AppError, callInfo: string) {
     if (error instanceof BusinessError) {
         log.warn(error, `[${callInfo}] business error`);
     } else if (error instanceof CancelledError) {
-        if (
-            error.cause === 'stream_has_no_consumers' ||
-            error.cause === 'connection_closed'
-        ) {
-            log.info(`[${callInfo}] cancelled: stream has no consumers`);
+        if (error.cause === 'stream_has_no_consumers') {
+            log.debug(`[${callInfo}] cancelled: stream has no consumers`);
+        } else if (error.cause === 'connection_closed') {
+            log.debug(`[${callInfo}] cancelled: connection closed`);
         } else {
             log.warn(error, `[${callInfo}] cancelled`);
         }

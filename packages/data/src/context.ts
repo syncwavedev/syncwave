@@ -267,14 +267,10 @@ export class Context {
     }
 
     private end(reason: unknown) {
-        if (this._endRequested) {
-            log.warn('Context.end: end was called twice');
+        if (this._endRequested || this._ended) {
             return;
         }
-        if (this._ended) {
-            log.warn('Context.end: end was called after cancelled');
-            return;
-        }
+
         this._endReason = reason;
 
         try {

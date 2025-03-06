@@ -96,8 +96,6 @@ jobs:
           script: |
             docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-            docker system prune -af --filter until=30m
-
             docker pull ghcr.io/syncwavedev/syncwave-server:${{ steps.config.outputs.TAG }}
 
             docker stop syncwave-server-${{ steps.config.outputs.STAGE }} || true

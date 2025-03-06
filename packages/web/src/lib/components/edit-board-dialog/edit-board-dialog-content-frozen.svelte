@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {type BoardViewDto} from 'syncwave-data';
+	import {createUuidV4, type BoardViewDto} from 'syncwave-data';
 	import EditBoardDialogFrozenMain from './edit-board-dialog-main-frozen.svelte';
 	import EditBoardDialogFrozenColumns from './edit-board-dialog-columns-frozen.svelte';
 	import EditBoardDialogFrozenMembers from './edit-board-dialog-members-frozen.svelte';
@@ -15,7 +15,7 @@
 	type Route = 'main' | 'members' | 'columns';
 
 	let route = usePageState<Route>(
-		'board-settings-route' + Math.random(),
+		createUuidV4(), // we use uuid to forget the route on unmount
 		'main'
 	);
 

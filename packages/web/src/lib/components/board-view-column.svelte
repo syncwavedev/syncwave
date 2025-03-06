@@ -31,7 +31,7 @@
 		/>
 	</div>
 	<div
-		class="flex flex-1 flex-col gap-2 pb-40"
+		class="dnd-column flex flex-1 flex-col gap-2 pb-40"
 		use:dndzone={{
 			items: column.cards,
 			flipDurationMs,
@@ -46,8 +46,24 @@
 				data-disable-scroll-view-drag="true"
 				animate:flip={{duration: flipDurationMs}}
 			>
-				<CardTile {card} />
+				<div class="inner-card">
+					<CardTile {card} />
+				</div>
 			</div>
 		{/each}
 	</div>
 </div>
+
+<style>
+	:global {
+		.dnd-column *[data-is-dnd-shadow-item-internal='true'] {
+			visibility: visible !important;
+			background: #eee;
+			border-radius: 10px;
+
+			.inner-card {
+				visibility: hidden;
+			}
+		}
+	}
+</style>

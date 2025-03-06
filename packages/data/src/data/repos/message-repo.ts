@@ -31,6 +31,7 @@ export interface Message extends Doc<[MessageId]> {
     readonly boardId: BoardId;
     readonly text: Richtext;
     readonly attachmentIds: AttachmentId[];
+    readonly replyToId?: MessageId;
 }
 
 const CARD_ID_INDEX = 'card_id';
@@ -45,6 +46,7 @@ export function zMessage() {
             boardId: Uuid<BoardId>(),
             attachmentIds: Type.Array(Uuid<AttachmentId>()),
             text: zRichtext(),
+            replyToId: Type.Optional(Uuid<MessageId>()),
         }),
     ]);
 }

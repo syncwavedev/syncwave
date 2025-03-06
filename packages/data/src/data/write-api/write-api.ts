@@ -185,6 +185,31 @@ export function createWriteApi() {
                     );
                 }
 
+                if (message.replyToId) {
+                    const replyTo = await st.tx.messages.getById(
+                        message.replyToId,
+                        true
+                    );
+                    if (!replyTo) {
+                        throw new BusinessError(
+                            `message ${message.replyToId} not found`,
+                            'message_not_found'
+                        );
+                    }
+                    if (replyTo.boardId !== message.boardId) {
+                        throw new BusinessError(
+                            `message ${message.replyToId} doesn't belong to board ${message.boardId}`,
+                            'forbidden'
+                        );
+                    }
+                    if (replyTo.cardId !== message.cardId) {
+                        throw new BusinessError(
+                            `message ${message.replyToId} doesn't belong to card ${message.cardId}`,
+                            'forbidden'
+                        );
+                    }
+                }
+
                 const {after} = await st.tx.messages.apply(
                     message.id,
                     crdt.state(),
@@ -199,6 +224,7 @@ export function createWriteApi() {
                         text: createRichtext(),
                         boardId: card.boardId,
                         attachmentIds: [],
+                        replyToId: message.replyToId,
                     })
                 );
 

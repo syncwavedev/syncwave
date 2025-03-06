@@ -310,7 +310,7 @@ export async function toAttachmentDto(
     return attachment;
 }
 
-export function zMessageDto() {
+export function zMessageWithoutReplyDto() {
     return Type.Composite([
         zMessage(),
         Type.Object({
@@ -322,12 +322,13 @@ export function zMessageDto() {
     ]);
 }
 
-export interface MessageDto extends Static<ReturnType<typeof zMessageDto>> {}
+export interface MessageWithoutReplyDto
+    extends Static<ReturnType<typeof zMessageWithoutReplyDto>> {}
 
-export async function toMessageDto(
+export async function toMessageWithoutReplyDto(
     tx: DataTx,
     messageId: MessageId
-): Promise<MessageDto> {
+): Promise<MessageWithoutReplyDto> {
     const message = await tx.messages.getById(messageId, true);
     assert(
         message !== undefined,
@@ -340,6 +341,29 @@ export async function toMessageDto(
     );
 
     return {...message, author, card, attachments};
+}
+
+export function zMessageDto() {
+    return Type.Composite([
+        zMessageWithoutReplyDto(),
+        Type.Object({
+            replyTo: Type.Optional(zMessageWithoutReplyDto()),
+        }),
+    ]);
+}
+
+export interface MessageDto extends Static<ReturnType<typeof zMessageDto>> {}
+
+export async function toMessageDto(
+    tx: DataTx,
+    messageId: MessageId
+): Promise<MessageDto> {
+    const dto = await toMessageWithoutReplyDto(tx, messageId);
+    const replyTo = dto.replyToId
+        ? await toMessageWithoutReplyDto(tx, dto.replyToId)
+        : undefined;
+
+    return {...dto, replyTo};
 }
 
 export function zMeDto() {

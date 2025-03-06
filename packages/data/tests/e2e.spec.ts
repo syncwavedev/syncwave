@@ -6,11 +6,13 @@ import {
     createBoardId,
     createCardId,
     createColumnId,
+    createMessageId,
     toPosition,
     toTimestamp,
     type BoardDto,
     type BoardViewCardDto,
     type Card,
+    type Message,
 } from '../src/index.js';
 import {E2eFixture} from './e2e-fixture.js';
 
@@ -68,7 +70,7 @@ describe('e2e', () => {
             name: 'Test board',
             updatedAt: toTimestamp(now),
             pk: [boardId],
-            state: expect.any(String),
+            state: expect.any(Object),
         };
         expect(board).toEqual(expectedBoard);
     });
@@ -127,7 +129,7 @@ describe('e2e', () => {
             name: 'Test board',
             updatedAt: toTimestamp(now),
             pk: [boardId],
-            state: expect.any(String),
+            state: expect.any(Object),
         };
 
         const expectedCard: BoardViewCardDto = {
@@ -146,7 +148,7 @@ describe('e2e', () => {
             updatedAt: toTimestamp(now),
             text: createRichtext(),
             author: me.user,
-            state: expect.any(String),
+            state: expect.any(Object),
             board: expectedBoard,
             column: {
                 authorId: me.user.id,
@@ -161,12 +163,101 @@ describe('e2e', () => {
                 pk: [columnId],
                 name: 'Test column',
                 updatedAt: toTimestamp(now),
-                state: expect.any(String),
+                state: expect.any(Object),
                 board: expectedBoard,
                 version: '4',
             },
         };
 
         expect(card).toEqual(expectedCard);
+    });
+
+    it('should reply to messages', async () => {
+        const card = await subject.createCard();
+
+        const messageAId = createMessageId();
+        await subject.client.rpc.createMessage({
+            diff: Crdt.from<Message>({
+                authorId: card.authorId,
+                cardId: card.id,
+                createdAt: toTimestamp(now),
+                deleted: false,
+                id: messageAId,
+                updatedAt: toTimestamp(now),
+                text: createRichtext(),
+                pk: [messageAId],
+                attachmentIds: [],
+                boardId: card.boardId,
+                replyToId: undefined,
+            }).state(),
+        });
+
+        const messageBId = createMessageId();
+        await subject.client.rpc.createMessage({
+            diff: Crdt.from<Message>({
+                authorId: card.authorId,
+                cardId: card.id,
+                createdAt: toTimestamp(now),
+                deleted: false,
+                id: messageBId,
+                updatedAt: toTimestamp(now),
+                text: createRichtext(),
+                pk: [messageBId],
+                attachmentIds: [],
+                boardId: card.boardId,
+                replyToId: messageAId,
+            }).state(),
+        });
+
+        const cardView = await subject.client.rpc
+            .getCardView({cardId: card.id})
+            .first();
+        expect(cardView.messages[0].id).toEqual(messageAId);
+        expect(cardView.messages[1].id).toEqual(messageBId);
+        expect(cardView.messages[1].replyToId).toEqual(messageAId);
+        expect(cardView.messages[1].replyTo?.id).toEqual(messageAId);
+    });
+
+    it('should forbid to reply to an invalid message', async () => {
+        const cardA = await subject.createCard();
+
+        const messageAId = createMessageId();
+        await subject.client.rpc.createMessage({
+            diff: Crdt.from<Message>({
+                authorId: cardA.authorId,
+                cardId: cardA.id,
+                createdAt: toTimestamp(now),
+                deleted: false,
+                id: messageAId,
+                updatedAt: toTimestamp(now),
+                text: createRichtext(),
+                pk: [messageAId],
+                attachmentIds: [],
+                boardId: cardA.boardId,
+                replyToId: undefined,
+            }).state(),
+        });
+
+        const cardB = await subject.createCard(cardA.boardId);
+        const messageBId = createMessageId();
+        const createPromise = subject.client.rpc.createMessage({
+            diff: Crdt.from<Message>({
+                authorId: cardB.authorId,
+                cardId: cardB.id,
+                createdAt: toTimestamp(now),
+                deleted: false,
+                id: messageBId,
+                updatedAt: toTimestamp(now),
+                text: createRichtext(),
+                pk: [messageBId],
+                attachmentIds: [],
+                boardId: cardA.boardId,
+                replyToId: messageAId,
+            }).state(),
+        });
+
+        await expect(createPromise).rejects.toThrowError(
+            /doesn't belong to card/
+        );
     });
 });

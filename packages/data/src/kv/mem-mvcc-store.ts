@@ -367,7 +367,11 @@ export class MemMvccStore implements Uint8KvStore {
                     throw error;
                 }
             } finally {
-                this.running = this.running.filter(x => x !== txVersion);
+                const runningIndex = this.running.indexOf(txVersion);
+                if (runningIndex !== -1) {
+                    this.running.splice(runningIndex, 1);
+                }
+
                 this.gc();
             }
         }
@@ -418,7 +422,8 @@ export function ensureSerializable(
     readVersion: MvccVersion,
     readRanges: KeyRange[],
     attempt: number,
-    commited: WriteEntry[]
+    commited: WriteEntry[],
+    log = false
 ) {
     const conflicts: [
         version: number,

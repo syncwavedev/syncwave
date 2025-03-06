@@ -92,7 +92,10 @@ describe('DocStore with MemKVStore', () => {
             ...doc,
             createdAt: expect.any(Number) as Timestamp,
             updatedAt: expect.any(Number) as Timestamp,
-            state: expect.any(String) as string,
+            state: {
+                payload: expect.any(Uint8Array),
+                timestamp: expect.any(Number),
+            },
         });
         expect(retrieved?.updatedAt).toBeGreaterThan(doc.updatedAt);
         expect(retrieved?.updatedAt).toEqual(retrieved?.createdAt);

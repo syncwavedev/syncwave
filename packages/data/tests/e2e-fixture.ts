@@ -2,13 +2,22 @@ import {trace} from '@opentelemetry/api';
 import {MsgpackCodec} from '../src/codec.js';
 import {
     CoordinatorServer,
+    Crdt,
+    createBoardId,
+    createCardId,
+    createColumnId,
+    createRichtext,
     MemMvccStore,
     MemObjectStore,
     MemTransportClient,
     MemTransportServer,
     ParticipantClient,
     ParticipantServer,
+    toPosition,
+    toTimestamp,
     TupleStore,
+    type BoardId,
+    type Card,
     type CryptoService,
     type EmailMessage,
     type EmailService,
@@ -16,7 +25,7 @@ import {
     type RpcMessage,
 } from '../src/index.js';
 import {log} from '../src/logger.js';
-import {assert, drop} from '../src/utils.js';
+import {assert, assertSingle, drop} from '../src/utils.js';
 
 export class E2eFixture {
     static async start() {
@@ -100,6 +109,68 @@ export class E2eFixture {
         assert(token.type === 'success', 'token expected');
 
         this.client.setAuthToken(token.token);
+    }
+
+    async createCard(targetBoardId?: BoardId) {
+        await this.signIn();
+
+        let boardId: BoardId;
+        if (targetBoardId === undefined) {
+            boardId = createBoardId();
+            await this.client.rpc.createBoard({
+                boardId,
+                name: 'Test board',
+                key: 'TEST',
+                members: [],
+            });
+        } else {
+            boardId = targetBoardId;
+        }
+
+        const me = await this.client.rpc.getMe({}).first();
+
+        const columnId = createColumnId();
+        await this.client.rpc.createColumn({
+            boardId,
+            boardPosition: toPosition({next: undefined, prev: undefined}),
+            columnId,
+            name: 'Test column',
+        });
+
+        const now = new Date();
+        const cardId = createCardId();
+        const cardCrdt = Crdt.from<Card>({
+            authorId: me.user.id,
+            boardId,
+            columnId,
+            createdAt: toTimestamp(now),
+            deleted: false,
+            id: cardId,
+            columnPosition: toPosition({next: undefined, prev: undefined}),
+            counter: 0,
+            pk: [cardId],
+            updatedAt: toTimestamp(now),
+            text: createRichtext(),
+        });
+
+        await this.client.rpc.createCard({
+            diff: cardCrdt.state(),
+        });
+
+        const overview = await this.client.rpc
+            .getBoardView({key: 'TEST'})
+            .first();
+
+        const column = assertSingle(
+            overview.columns.filter(x => x.id === columnId),
+            'expected single column'
+        );
+        const card = assertSingle(
+            column.cards.filter(x => x.id === cardId),
+            'expected single card'
+        );
+
+        return card;
     }
 
     close(reason: unknown) {

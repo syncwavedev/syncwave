@@ -2,6 +2,7 @@ import WebSocket from 'isomorphic-ws';
 import {
 	AppError,
 	assert,
+	ConnectionClosedError,
 	log,
 	Subject,
 	toError,
@@ -79,6 +80,16 @@ export class WsClientConnection<T> implements Connection<T> {
 	}
 
 	send(message: T): Promise<void> {
+		if (
+			this.ws.readyState === this.ws.CLOSED ||
+			this.ws.readyState === this.ws.CLOSING
+		) {
+			throw new ConnectionClosedError('ws client closed');
+		}
+		if (this.ws.readyState === this.ws.CONNECTING) {
+			throw new AppError('ws client is not open');
+		}
+
 		log.trace('ws client: send: ' + JSON.stringify(message));
 		const data = this.codec.encode(message);
 		this.ws.send(data);

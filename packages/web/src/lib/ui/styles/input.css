@@ -1,0 +1,7 @@
+.input {
+	@apply placeholder:text-ink-placeholder w-full flex-grow focus-visible:outline-none;
+}
+
+.input--bordered {
+	@apply border-divider-object bg-subtle-1 h-[2.6em] rounded-md border px-2;
+}

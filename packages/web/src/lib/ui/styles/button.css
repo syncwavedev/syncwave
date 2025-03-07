@@ -1,0 +1,19 @@
+.btn--icon {
+	@apply text-ink-body hover:bg-subtle-2 hover:text-ink grid aspect-square h-[2em] w-[2em] cursor-pointer place-items-center rounded-full;
+
+	&.btn--icon--ink {
+		@apply bg-subtle-3 hover:bg-subtle-4 text-ink rounded-lg;
+	}
+
+	&.btn-sm {
+		@apply h-[1.5em] w-[1.5em];
+	}
+}
+
+.btn--block {
+	@apply text-ink-body hover:bg-subtle-2 hover:text-ink flex h-[2em] cursor-pointer items-center justify-center rounded-2xl px-[0.5em];
+
+	&.btn--block--danger {
+		@apply text-ink-danger;
+	}
+}

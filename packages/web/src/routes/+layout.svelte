@@ -1,22 +1,21 @@
 <script module lang="ts">
 	import {browser} from '$app/environment';
+	import {CancelledError} from 'syncwave-data';
+
 	if (browser) {
 		window.addEventListener('unhandledrejection', event => {
 			if (event.reason instanceof CancelledError) {
 				event.preventDefault();
-
-				return;
 			}
 		});
 	}
 </script>
 
 <script lang="ts">
-	import '../app.css';
-
+	import '../lib/ui/styles/main.css';
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
-	import {ParticipantClient, CancelledError} from 'syncwave-data';
+	import {ParticipantClient} from 'syncwave-data';
 	import {
 		createAuthManager,
 		createParticipantClient,
@@ -29,9 +28,18 @@
 	import {UniversalStore} from '$lib/universal-store';
 	import ErrorCard from '$lib/components/error-card.svelte';
 	import {UploadManager} from '$lib/upload-manager.svelte';
+	import {createThemeManager} from '$lib/ui/theme-manager.svelte.js';
+
+	// Set up theme context
+	const themeManager = createThemeManager();
+	setContext('theme', {
+		getTheme: themeManager.getTheme,
+		setUserTheme: themeManager.setUserTheme,
+	});
 
 	let {children, data}: LayoutProps = $props();
 
+	// Initialize universal store and auth manager
 	const cookieMap = new Map(
 		data.serverCookies.map(({name, value}) => [name, value])
 	);
@@ -40,43 +48,29 @@
 	const authManager = createAuthManager(universalStore);
 	setAuthManager(authManager);
 
-	export const participantClient = browser
+	// Participant client setup (no export needed since it's set in context)
+	const participantClient = browser
 		? createParticipantClient()
-		: createParticipantClientDummy(); // server must not use participantClient
+		: createParticipantClientDummy();
 	setContext(ParticipantClient, participantClient);
 	setUploadManager(new UploadManager(participantClient));
 
+	// Cleanup on component destruction
 	onDestroy(() => {
 		participantClient.close('layout destroyed');
 	});
-
-	let devToolsOpen = $state(false);
-
-	function on_key_down(event: any) {
-		const {key, ctrlKey, repeat} = event;
-		if (repeat) return;
-
-		switch (key) {
-			case 'h':
-				if (ctrlKey) {
-					event.preventDefault();
-					devToolsOpen = true;
-					break;
-				}
-		}
-	}
 </script>
 
-<svelte:window on:keydown={on_key_down} />
-
+<!-- Body-level keydown handler with proper event syntax -->
 <svelte:body
-	onkeydown={e => {
+	on:keydown={(e: KeyboardEvent) => {
 		if (e.key === 'Escape') {
 			fireEscape();
 		}
 	}}
 />
 
+<!-- Error boundary and children rendering -->
 <svelte:boundary>
 	{#snippet failed(error, reset)}
 		<ErrorCard {error} {reset} />

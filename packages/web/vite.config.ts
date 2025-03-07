@@ -16,7 +16,7 @@ const esbuildOptions = {
 export default defineConfig({
 	clearScreen: false,
 	plugins: [
-		tailwindcss(),
+		tailwindcss() as PluginOption,
 		sveltekit() as PluginOption,
 		nodePolyfills({
 			// because of fdb-tuple package
@@ -28,7 +28,7 @@ export default defineConfig({
 			// in dev mode, prod build will be processed by esbuild
 			...swc.vite({tsconfigFile: false}),
 			apply: 'serve',
-		},
+		} as PluginOption,
 	],
 
 	optimizeDeps: {

@@ -10,7 +10,6 @@
 		type BoardId,
 		type CardId,
 		type Message,
-		type MessageDto,
 	} from 'syncwave-data';
 	import ArrowUpIcon from './icons/arrow-up-icon.svelte';
 	import AttachIcon from './icons/attach-icon.svelte';
@@ -19,7 +18,6 @@
 	import UploadButton from './upload-button.svelte';
 	import AttachmentPreview from './attachment-preview.svelte';
 	import SpinnerIcon from './icons/spinner-icon.svelte';
-	import Error from './error.svelte';
 	import {yFragmentToPlaintext} from '$lib/richtext';
 
 	interface Props {
@@ -64,10 +62,7 @@
 		if (sendInProgress) return;
 		try {
 			sendInProgress = true;
-			if (
-				yFragmentToPlaintext(fragment).trim() !== '' ||
-				files.length > 0
-			) {
+			if (yFragmentToPlaintext(fragment).trim() !== '' || files.length > 0) {
 				const createdAt = getNow();
 				const messageId = createMessageId();
 				const attachments = await whenAll(files.map(x => x.attachment));

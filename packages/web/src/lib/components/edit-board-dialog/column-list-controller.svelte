@@ -91,16 +91,14 @@
 			const {target, newPosition} = update;
 			const diff = localBoard.setColumnPosition(target, newPosition);
 
-			if (diff) {
-				sdk(x =>
-					x.applyColumnDiff({
-						columnId: target,
-						diff,
-					})
-				).catch(error => {
-					log.error(error, 'failed to send column diff');
-				});
-			}
+			sdk(x =>
+				x.applyColumnDiff({
+					columnId: target,
+					diff,
+				})
+			).catch(error => {
+				log.error(error, 'failed to send column diff');
+			});
 		}
 
 		dndColumns = newDndColumns;

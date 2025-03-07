@@ -92,16 +92,14 @@
 			const {target, newPosition} = update;
 			const diff = localBoard.setColumnPosition(target, newPosition);
 
-			if (diff) {
-				sdk(x =>
-					x.applyColumnDiff({
-						columnId: target,
-						diff,
-					})
-				).catch(error => {
-					log.error(error, 'failed to send column diff');
-				});
-			}
+			sdk(x =>
+				x.applyColumnDiff({
+					columnId: target,
+					diff,
+				})
+			).catch(error => {
+				log.error(error, 'failed to send column diff');
+			});
 		}
 
 		dndColumns = newDndColumns;
@@ -131,16 +129,14 @@
 				dndColumn.id
 			);
 
-			if (diff) {
-				sdk(x =>
-					x.applyCardDiff({
-						cardId: target,
-						diff,
-					})
-				).catch(error => {
-					log.error(error, 'failed to send card diff');
-				});
-			}
+			sdk(x =>
+				x.applyCardDiff({
+					cardId: target,
+					diff,
+				})
+			).catch(error => {
+				log.error(error, 'failed to send card diff');
+			});
 		}
 
 		dndColumn.cards = e.detail.items;

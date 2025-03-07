@@ -25,18 +25,16 @@
 	let name = $state(localBoard.snapshot().name);
 
 	async function updateBoardName() {
-		const diff = localBoard.update(x => {
+		localBoard.update(x => {
 			x.name = name;
 		});
 
-		if (diff) {
-			await sdk(x =>
-				x.applyBoardDiff({
-					boardId: remoteBoard.id,
-					diff,
-				})
-			);
-		}
+		await sdk(x =>
+			x.applyBoardDiff({
+				boardId: remoteBoard.id,
+				diff: localBoard.state(),
+			})
+		);
 	}
 
 	async function deleteBoard() {

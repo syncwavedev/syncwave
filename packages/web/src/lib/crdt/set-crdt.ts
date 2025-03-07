@@ -22,7 +22,9 @@ export class SetCrdt<
 		const item = this.items.find(x => x.snapshot().id === id);
 		assert(item !== undefined, 'SetCrdt: item not found');
 
-		return item.update(recipe);
+		item.update(recipe);
+
+		return item.state();
 	}
 
 	apply(remote: Set<T>) {

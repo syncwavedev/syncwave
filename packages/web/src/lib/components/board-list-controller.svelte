@@ -66,16 +66,14 @@
 			const {target, newPosition} = update;
 			const diff = localMembers.setPosition(target, newPosition);
 
-			if (diff) {
-				sdk(x =>
-					x.applyMemberDiff({
-						memberId: target,
-						diff,
-					})
-				).catch(error => {
-					log.error(error, 'failed to send member diff');
-				});
-			}
+			sdk(x =>
+				x.applyMemberDiff({
+					memberId: target,
+					diff,
+				})
+			).catch(error => {
+				log.error(error, 'failed to send member diff');
+			});
 		}
 
 		dndMembers = newDndMembers;

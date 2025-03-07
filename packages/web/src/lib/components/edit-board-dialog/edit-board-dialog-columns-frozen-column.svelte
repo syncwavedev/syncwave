@@ -23,15 +23,16 @@
 	}
 
 	async function updateColumnName() {
-		const diff = localColumn.update(x => {
+		localColumn.update(x => {
 			x.name = name;
 		});
 
-		if (diff) {
-			await sdk(x =>
-				x.applyColumnDiff({columnId: remoteColumn.id, diff})
-			);
-		}
+		await sdk(x =>
+			x.applyColumnDiff({
+				columnId: remoteColumn.id,
+				diff: localColumn.state(),
+			})
+		);
 	}
 </script>
 

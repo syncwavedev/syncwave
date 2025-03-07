@@ -2,7 +2,7 @@
 	import type {BoardViewColumnDto} from 'syncwave-data';
 	import CardTile from './card-tile.svelte';
 
-	let {column}: {column: BoardViewColumnDto} = $props();
+	const {column}: {column: BoardViewColumnDto} = $props();
 </script>
 
 <div class="w-76 flex-shrink-0">

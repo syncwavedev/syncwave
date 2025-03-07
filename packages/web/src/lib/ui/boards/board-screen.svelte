@@ -22,7 +22,11 @@
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import BoardColumn from './board-column.svelte';
 
-	interface Props {
+	const {
+		boardKey,
+		initialBoard,
+		initialMe,
+	}: {
 		children: Snippet;
 		boardKey: string;
 		initialBoard: BoardViewDto;
@@ -30,9 +34,7 @@
 			user: UserDto;
 			identity: Identity;
 		};
-	}
-
-	const {boardKey, initialBoard, initialMe}: Props = $props();
+	} = $props();
 
 	const board = observe(initialBoard, x => x.getBoardView({key: boardKey}));
 	const me = observe(initialMe, x => x.getMe({}));

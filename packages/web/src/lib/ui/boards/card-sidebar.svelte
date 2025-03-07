@@ -3,7 +3,7 @@
 	import {yFragmentToPlaintext} from '$lib/richtext';
 	import Avatar from '../components/avatar.svelte';
 
-	let {card}: {card: BoardViewCardDto} = $props();
+	const {card}: {card: BoardViewCardDto} = $props();
 
 	let preview = $derived.by(() => {
 		const crdt = Crdt.load(card.state);

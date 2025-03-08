@@ -15,7 +15,7 @@
 </script>
 
 <div
-	class="bg-subtle-0 dark:bg-subtle-1 hover:border-divider-object hover:bg-subtle-2 group flex cursor-pointer items-end gap-1 rounded-md border border-transparent p-2"
+	class="bg-subtle-0 dark:bg-subtle-1 hover:border-divider-object hover:bg-subtle-2 group border-divider flex cursor-pointer items-end gap-1 rounded-md border p-2"
 >
 	<div class="flex w-full flex-col gap-1 truncate">
 		<span class="text-2xs text-ink-detail">{card.board.key}-{card.counter}</span

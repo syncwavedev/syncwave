@@ -3,6 +3,7 @@ import {TXN_RETRIES_COUNT} from '../constants.js';
 import {context} from '../context.js';
 import {toCursor} from '../cursor.js';
 import {AppError} from '../errors.js';
+import {decodeHex} from '../hex.js';
 import {compareUint8Array, unreachable, zip, type Brand} from '../utils.js';
 import {
     mapCondition,
@@ -300,7 +301,7 @@ interface WriteEntry {
 }
 
 export interface MemMvccKvStoreOptions {
-    readonly transactionRetryCount: number;
+    readonly conflictRetryCount: number;
 }
 
 export type MvccVersion = Brand<number, 'mvcc_version'>;
@@ -324,7 +325,7 @@ export class MemMvccStore implements Uint8KvStore {
     constructor(options: Partial<MemMvccKvStoreOptions> = {}) {
         this.options = Object.assign(
             {
-                transactionRetryCount: TXN_RETRIES_COUNT,
+                conflictRetryCount: TXN_RETRIES_COUNT,
             } satisfies MemMvccKvStoreOptions,
             options
         );
@@ -338,7 +339,7 @@ export class MemMvccStore implements Uint8KvStore {
         this.ensureOpen();
         for (
             let attempt = 0;
-            attempt <= this.options.transactionRetryCount;
+            attempt <= this.options.conflictRetryCount;
             attempt += 1
         ) {
             const txVersion = this.version;
@@ -363,7 +364,10 @@ export class MemMvccStore implements Uint8KvStore {
 
                 return result;
             } catch (error) {
-                if (attempt === this.options.transactionRetryCount) {
+                if (
+                    attempt === this.options.conflictRetryCount ||
+                    !(error instanceof MvccConflictError)
+                ) {
                     throw error;
                 }
             } finally {
@@ -466,7 +470,7 @@ export function ensureSerializable(
         const conflictMessages: string[] = [];
         for (const [version, min, key, max] of conflicts) {
             conflictMessages.push(
-                `- ${version}: ${min?.toString()}, ${key.toString()}, ${max?.toString()}`
+                `- ${version}: read range = ${stringifyBound(min, max)}, write key = ${decodeHex(key)}`
             );
         }
 
@@ -476,4 +480,26 @@ export function ensureSerializable(
             )}`
         );
     }
+}
+
+function stringifyBound(
+    start: Bound | undefined,
+    end: Bound | undefined
+): string {
+    const result: string[] = [];
+    if (start?.key) {
+        result.push(start.inclusive ? '[' : '(');
+        result.push(decodeHex(start.key));
+    } else {
+        result.push('(-inf');
+    }
+    result.push(', ');
+    if (end?.key) {
+        result.push(decodeHex(end.key));
+        result.push(end.inclusive ? ']' : ')');
+    } else {
+        result.push('inf)');
+    }
+
+    return result.join('');
 }

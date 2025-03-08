@@ -86,7 +86,7 @@ export class KvStoreMapper<TKeyPrivate, TKeyPublic, TValuePrivate, TValuePublic>
     snapshot<TResult>(
         fn: (tx: Snapshot<TKeyPublic, TValuePublic>) => Promise<TResult>
     ): Promise<TResult> {
-        return this.store.transact(tx =>
+        return this.store.snapshot(tx =>
             fn(new SnapshotMapper(tx, this.keyMapper, this.valueMapper))
         );
     }

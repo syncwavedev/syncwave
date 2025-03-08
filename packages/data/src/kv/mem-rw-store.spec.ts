@@ -1,11 +1,10 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {MsgpackCodec} from '../codec.js';
 import {Deferred} from '../deferred.js';
-import {decodeTuple, encodeTuple} from '../tuple.js';
+import {decodeTuple, encodeTuple, packNumber, unpackNumber} from '../tuple.js';
 import {whenAll} from '../utils.js';
 import {KvStoreMapper} from './kv-store-mapper.js';
 import type {KvStore} from './kv-store.js';
-import {MemMvccStore} from './mem-mvcc-store.js';
 import {MemRwStore} from './mem-rw-store.js';
 
 function asyncDelay(ms: number): Promise<void> {
@@ -16,15 +15,13 @@ describe('mem-rw-store', () => {
     let store: KvStore<number, string>;
 
     beforeEach(() => {
-        store = new MemRwStore(
-            new KvStoreMapper(
-                new MemMvccStore(),
-                {
-                    decode: x => decodeTuple(x)[0] as number,
-                    encode: x => encodeTuple([x]),
-                },
-                new MsgpackCodec()
-            )
+        store = new KvStoreMapper(
+            new MemRwStore(),
+            {
+                decode: x => unpackNumber(decodeTuple(x)),
+                encode: x => encodeTuple(packNumber(x)),
+            },
+            new MsgpackCodec()
         );
     });
 

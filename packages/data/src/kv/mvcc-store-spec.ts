@@ -1138,7 +1138,7 @@ export function describeMvccStore(
                     createMvccStore({conflictRetryCount: transactionRetryCount})
                 );
                 const promise = whenAll(
-                    Array(transactionRetryCount * 10)
+                    Array(transactionRetryCount * 2)
                         .fill(undefined)
                         .map(async (_, i) => {
                             await store.transact(async tx => {

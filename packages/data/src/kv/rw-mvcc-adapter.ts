@@ -1,12 +1,18 @@
-import {NumberCodec} from '../codec.js';
+import {MsgpackCodec, NumberCodec} from '../codec.js';
 import {AppError, toError} from '../errors.js';
 import {log} from '../logger.js';
 import {toStream} from '../stream.js';
 import {getNow, type Timestamp} from '../timestamp.js';
-import {stringifyTuple, type Packer, type Tuple} from '../tuple.js';
+import {
+    NumberPacker,
+    stringifyTuple,
+    type Packer,
+    type Tuple,
+} from '../tuple.js';
 import {
     assert,
     compareUint8Array,
+    partition,
     pipe,
     unreachable,
     whenAll,
@@ -169,37 +175,49 @@ interface ReadSuite {
     readonly log: Snapshot<LogKey, Uint8Array>;
     readonly version: Snapshot<VersionKey, number>;
     readonly activeTransactions: Snapshot<MvccSnapshotKey, Timestamp>;
+    readonly gcScanOffset: Snapshot<GcOffsetKey, DataKey>;
 }
 
 type LogKey = readonly [commitVersion: MvccVersion, writeKeyIndex: number];
-
 type MvccSnapshotKey = readonly [readVersion: MvccVersion, transactionId: Uuid];
-
 type VersionKey = readonly [];
+type GcOffsetKey = number;
+
+const MIN_DATA_KEY: DataKey = [new Uint8Array(), 0, false];
 
 interface WriteSuite {
     readonly data: Transaction<DataKey, Uint8Array>;
     readonly log: Transaction<LogKey, Uint8Array>;
     readonly version: Transaction<VersionKey, number>;
     readonly activeTransactions: Transaction<MvccSnapshotKey, Timestamp>;
+    readonly gcScanOffset: Transaction<GcOffsetKey, DataKey>;
 }
 
 export interface MvccAdapterGcOptions {
-    readonly everyNthCall: number;
-    readonly staleTransactionThresholdMs: number;
+    readonly staleTransactionAgeMs: number;
     readonly transactionThresholdVersions: number;
-    readonly maxDeleteBatchSize: number;
 }
 
 export interface MvccAdapterOptions {
     readonly conflictRetryCount: number;
     readonly queryBatchSize: number;
-    readonly gc: MvccAdapterGcOptions | false;
 }
+
+// the perfect scan size should be small to prevent long GC pauses
+// and big enough to make GC efficient
+const PERFECT_SCAN_SIZE = 128;
+// we wanna have multiple offsets to prevent concurrent GCs scanning the same key range
+const GC_OFFSETS = 128;
+// abort snapshots that are 5s old and 128 read versions behind
+const STALE_SNAPSHOT_AGE_MS = 5 * 1000;
+const STALE_SNAPSHOT_VERSIONS_BEHIND = 128;
 
 export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
     private readonly store: KvStore<Tuple, Uint8Array>;
     public readonly options: MvccAdapterOptions;
+    // always start with GC in case if adapter is recreated frequently
+    private writtenCount = PERFECT_SCAN_SIZE;
+    private gcScanOffsetKey = Math.trunc(Math.random() * GC_OFFSETS);
 
     constructor(
         store: KvStore<Uint8Array, Uint8Array>,
@@ -207,12 +225,6 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
     ) {
         this.options = {
             conflictRetryCount: Number.MAX_SAFE_INTEGER,
-            gc: {
-                everyNthCall: 100,
-                staleTransactionThresholdMs: 1000 * 60 * 5, // 5m,
-                transactionThresholdVersions: 1000,
-                maxDeleteBatchSize: 1000,
-            },
             queryBatchSize: 100,
             ...options,
         };
@@ -221,7 +233,9 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
 
     async snapshot<TResult>(
         fn: (span: MvccSnapshotAdapter) => Promise<TResult>,
-        options: {autoFree: boolean} = {autoFree: true}
+        options: {autoFree: boolean} = {
+            autoFree: true,
+        }
     ): Promise<TResult> {
         const readVersion = await this.getReadVersion();
         const snapKey: MvccSnapshotKey = [readVersion, createUuidV4()];
@@ -235,9 +249,6 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
         } finally {
             if (options.autoFree) {
                 this.endSnapshotLease(snapKey);
-                this.gc().catch(error => {
-                    log.error(toError(error), 'Failed to run GC');
-                });
             }
         }
     }
@@ -263,6 +274,14 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                 );
 
                 await this.commit(tx, snapKey, attempt);
+
+                this.writtenCount += tx.writeSet.length;
+                if (this.writtenCount >= PERFECT_SCAN_SIZE) {
+                    this.writtenCount = 0;
+                    this.gc(this.writtenCount).catch(error => {
+                        log.error(toError(error), 'Failed to run GC');
+                    });
+                }
 
                 return result;
             } catch (error) {
@@ -302,18 +321,8 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
         }
     }
 
-    private _gcCallCount = 0;
-
-    private async gc() {
-        if (this.options.gc === false) return;
-
-        const options = this.options.gc;
-
-        this._gcCallCount += 1;
-        if ((this._gcCallCount - 1) % this.options.gc.everyNthCall !== 0)
-            return;
-
-        const [activeTransactions, version] = await this._read(
+    private async gc(writtenCount: number) {
+        const [activeSnapshots, version] = await this._read(
             undefined,
             async suite => {
                 const activeTransactions = await toStream(
@@ -326,38 +335,20 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             }
         );
 
-        // cleanup stale transactions
+        // cleanup stale snapshots
 
-        const staleTransactions: MvccSnapshotKey[] = [];
-        let oldestReadVersionInUse: MvccVersion = version;
-        for (const {
-            key: [readVersion, id],
-            value: ts,
-        } of activeTransactions) {
-            if (
-                getNow() - ts > this.options.gc.staleTransactionThresholdMs &&
-                version - readVersion >
-                    this.options.gc.transactionThresholdVersions
-            ) {
-                await this._write(
-                    [readVersion, id],
-                    async ({activeTransactions: tx}) => {
-                        await tx.delete([readVersion, id]);
-                    }
-                );
+        const now = getNow();
+        const [staleSnaps, freshSnaps] = partition(
+            activeSnapshots,
+            ({key: [readVersion], value: ts}) =>
+                now - ts > STALE_SNAPSHOT_AGE_MS &&
+                version - readVersion > STALE_SNAPSHOT_VERSIONS_BEHIND
+        );
 
-                staleTransactions.push([readVersion, id]);
-            } else {
-                if (readVersion < oldestReadVersionInUse) {
-                    oldestReadVersionInUse = readVersion;
-                }
-            }
-        }
-
-        if (staleTransactions.length > 0) {
+        if (staleSnaps.length > 0) {
             await this._write(undefined, async suite => {
                 await whenAll(
-                    staleTransactions.map(key =>
+                    staleSnaps.map(({key}) =>
                         suite.activeTransactions.delete(key)
                     )
                 );
@@ -366,21 +357,49 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
 
         // cleanup stale data
 
-        const staleData: DataKey[] = [];
-        await this._read(undefined, async suite => {
-            for await (const {
-                key: [key, version, deleted],
-            } of suite.data.query({
-                gte: [new Uint8Array(), 0, false],
-            })) {
-                if (version < oldestReadVersionInUse) {
-                    staleData.push([key, version, deleted]);
+        const oldestReadVersionInUse: MvccVersion = toMvccVersion(
+            Math.min(
+                version,
+                ...freshSnaps.map(({key: [readVersion]}) => readVersion)
+            )
+        );
+
+        const gcScanOffset = await this._read<DataKey>(
+            undefined,
+            async suite => {
+                return (
+                    (await suite.gcScanOffset.get(this.gcScanOffsetKey)) ??
+                    MIN_DATA_KEY
+                );
+            }
+        );
+
+        const [nextGcScanOffset, staleData] = await this._read(
+            undefined,
+            async suite => {
+                const entries = await toStream(
+                    suite.data.query({gt: gcScanOffset})
+                )
+                    .map(x => x.key)
+                    .take(writtenCount * 2) // multiply to stay ahead of the garbage
+                    .toArray();
+
+                if (entries.length === 0) {
+                    return [MIN_DATA_KEY, []];
                 }
 
-                if (staleData.length >= options.maxDeleteBatchSize) {
-                    break;
-                }
+                return [
+                    entries[entries.length - 1],
+                    entries.filter(([, , deleted]) => deleted),
+                ];
             }
+        );
+
+        await this._write(undefined, async suite => {
+            await suite.gcScanOffset.put(
+                this.gcScanOffsetKey,
+                nextGcScanOffset
+            );
         });
 
         if (staleData.length > 0) {
@@ -400,10 +419,6 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             })) {
                 if (version < oldestReadVersionInUse) {
                     staleLogs.push([version, index]);
-                }
-
-                if (staleLogs.length >= options.maxDeleteBatchSize) {
-                    break;
                 }
             }
         });
@@ -503,6 +518,12 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     withSnapshotPacker(new VersionKeyPacker()),
                     withSnapshotCodec(new NumberCodec())
                 ),
+                gcScanOffset: pipe(
+                    tx,
+                    isolateSnapshot(['gcScanOffset']),
+                    withSnapshotPacker(new NumberPacker()),
+                    withSnapshotCodec(new MsgpackCodec())
+                ),
                 log: pipe(
                     tx,
                     isolateSnapshot(['log']),
@@ -544,6 +565,12 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     isolate(['version']),
                     withPacker(new VersionKeyPacker()),
                     withCodec(new NumberCodec())
+                ),
+                gcScanOffset: pipe(
+                    tx,
+                    isolate(['gcScanOffset']),
+                    withPacker(new NumberPacker()),
+                    withCodec(new MsgpackCodec())
                 ),
                 activeTransactions: pipe(
                     tx,

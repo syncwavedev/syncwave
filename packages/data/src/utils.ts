@@ -363,3 +363,31 @@ export function shuffle<T>(array: T[]): T[] {
     }
     return array;
 }
+
+export function partition<T, S extends T>(
+    items: T[],
+    predicate: (value: T) => value is S
+): [Array<S>, Array<Exclude<T, S>>];
+export function partition<T>(
+    items: T[],
+    predicate: (value: T) => Promise<boolean> | boolean
+): [Array<T>, Array<T>];
+export function partition<T, S extends T>(
+    items: T[],
+    predicate:
+        | ((value: T) => value is S)
+        | ((value: T) => Promise<boolean> | boolean)
+): [Array<S>, Array<Exclude<T, S>>] | [Array<T>, Array<T>] {
+    const truthyItems: T[] = [];
+    const falsyItems: T[] = [];
+
+    for (const item of items) {
+        if (predicate(item)) {
+            truthyItems.push(item);
+        } else {
+            falsyItems.push(item);
+        }
+    }
+
+    return [truthyItems, falsyItems];
+}

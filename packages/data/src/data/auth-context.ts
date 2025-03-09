@@ -4,6 +4,12 @@ import {type JwtService} from './infrastructure.js';
 import {type IdentityId} from './repos/identity-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
+export const anonAuthContext: AuthContext = {
+    userId: undefined,
+    identityId: undefined,
+    superadmin: false,
+};
+
 export interface AuthContext {
     readonly userId: UserId | undefined;
     readonly identityId: IdentityId | undefined;

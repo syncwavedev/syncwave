@@ -1,6 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
-import {AuthContextParser} from '../data/auth-context.js';
+import {anonAuthContext, AuthContextParser} from '../data/auth-context.js';
 import {DataLayer} from '../data/data-layer.js';
 import {HubClient, HubServer} from '../data/hub.js';
 import type {
@@ -93,6 +93,14 @@ export class CoordinatorServer {
             'server',
             tracerManager.get('coord')
         );
+    }
+
+    async status() {
+        await this.dataLayer.transact(anonAuthContext, async tx => {
+            await tx.boards.getByKey('SYNC');
+        });
+
+        return {status: 'ok'};
     }
 
     async launch(): Promise<void> {

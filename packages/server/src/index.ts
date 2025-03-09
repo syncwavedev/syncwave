@@ -260,6 +260,10 @@ async function launch() {
 }
 
 function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
+    router.get('/status', async request => {
+        return request.json(await coordinator().status());
+    });
+
     router.get('/callbacks/google', async request => {
         try {
             const {code, state} = request.query;

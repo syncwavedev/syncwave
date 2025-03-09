@@ -129,7 +129,8 @@ export class AggregateError extends AppError {
                             .map((x, idx) => (idx === 0 ? x : `  ${x}`))
                             .join('\n')
                     )
-                    .join('\n- ')
+                    .join('\n - '),
+            {cause: errors}
         );
     }
 
@@ -148,7 +149,7 @@ export function getReadableError(error: unknown): string {
 
     // eslint-disable-next-line no-restricted-globals
     if (error instanceof Error) {
-        return error.message;
+        return `${error.name} (${error.constructor.name}): ${error.message}`;
     }
 
     if (

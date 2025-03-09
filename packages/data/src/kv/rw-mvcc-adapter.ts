@@ -84,11 +84,13 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
 
     async *query(condition: Condition<Uint8Array>): AsyncIterable<Uint8Entry> {
         let cond = mapCondition<Uint8Array, Condition<DataKey>>(condition, {
-            gt: cond => ({gt: [cond.gt, this.readVersion, true]}),
-            gte: cond => ({gte: [cond.gte, this.readVersion, false]}),
-            lt: cond => ({lte: [cond.lt, this.readVersion, false]}),
+            gt: cond => ({gt: [cond.gt, Number.MAX_SAFE_INTEGER, true]}),
+            gte: cond => ({gte: [cond.gte, 0, false]}),
+            lt: cond => ({lt: [cond.lt, 0, false]}),
             lte: cond => ({lte: [cond.lte, this.readVersion, true]}),
         });
+
+        const forward = cond.gt !== undefined || cond.gte !== undefined;
 
         let lastObservedEntry:
             | {key: Uint8Array; value: Uint8Array | undefined}
@@ -139,15 +141,27 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                     }
                 }
 
-                if (lastObservedEntry) {
+                if (forward) {
                     // detect key change, that means that we got to the end of
                     // the current key versions and can safely yield
-                    if (compareUint8Array(key, lastObservedEntry.key) !== 0) {
+                    if (
+                        lastObservedEntry &&
+                        compareUint8Array(key, lastObservedEntry.key) !== 0
+                    ) {
                         if (lastObservedEntry.value) {
                             yield {
                                 key: lastObservedEntry.key,
                                 value: lastObservedEntry.value,
                             };
+                        }
+                    }
+                } else {
+                    if (
+                        lastObservedEntry === undefined ||
+                        compareUint8Array(key, lastObservedEntry.key) !== 0
+                    ) {
+                        if (!deleted) {
+                            yield {key, value};
                         }
                     }
                 }
@@ -159,7 +173,7 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
             }
         }
 
-        if (lastObservedEntry?.value) {
+        if (forward && lastObservedEntry?.value) {
             yield {
                 key: lastObservedEntry.key,
                 value: lastObservedEntry.value,

@@ -35,7 +35,9 @@
         "js": "tsc -w --preserveWatchOutput",
         "dt": "tsx watch --clear-screen=false scripts/gen-dart-participant-client.ts | pino-pretty --config ../../.pino-prettyrc",
         "deploy": "cp ../../README.md ./ && tsx ../../scripts/deploy.ts && rm ./README.md",
-        "test": "vitest run"
+        "test": "vitest run",
+        "stress": "run-s stress:*",
+        "stress:mvcc-adapter": "NODE_ENV=test tsx ./stress/rw-mvcc-adapter.ts ci"
     },
     "devDependencies": {
         "@types/bytewise": "^1.1.2",

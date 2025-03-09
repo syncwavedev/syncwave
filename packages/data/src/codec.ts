@@ -1,4 +1,5 @@
 import {decode, encode} from 'msgpackr';
+import {decodeTuple, encodeTuple, packNumber, unpackNumber} from './tuple.js';
 
 export interface Codec<TData> {
     encode(data: TData): Uint8Array;
@@ -45,6 +46,6 @@ export class NumberCodec<T extends number = number> implements Codec<T> {
 }
 
 export const encodeNumber = <T extends number = number>(data: T) =>
-    new Uint8Array(encode(data));
+    new Uint8Array(encodeTuple(packNumber(data)));
 export const decodeNumber = <T extends number = number>(buf: Uint8Array) =>
-    decode(Buffer.from(buf)) as T;
+    unpackNumber(decodeTuple(buf)) as T;

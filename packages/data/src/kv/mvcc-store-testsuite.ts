@@ -1,4 +1,3 @@
-import {Channel} from 'async-channel';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {MsgpackCodec} from '../codec.js';
 import {Deferred} from '../deferred.js';
@@ -7,13 +6,9 @@ import {toStream} from '../stream.js';
 import {decodeTuple, encodeTuple} from '../tuple.js';
 import {whenAll} from '../utils.js';
 import {KvStoreMapper} from './kv-store-mapper.js';
-import type {
-    Condition,
-    KvStore,
-    Transaction,
-    Uint8KvStore,
-} from './kv-store.js';
+import type {Condition, KvStore, Uint8KvStore} from './kv-store.js';
 import {MvccConflictError} from './mem-mvcc-store.js';
+import {TxController} from './tx-controller.js';
 
 // todo: extract KvStore testsuite (without conflicts)
 
@@ -39,6 +34,56 @@ export function describeMvccStore(
         beforeEach(() => {
             rawMvccStore = createMvccStore({conflictRetryCount: 0});
             store = mapStore(rawMvccStore);
+        });
+
+        it('should delete concurrent transaction entry without a conflict', async () => {
+            const t1Started = new Deferred<void>();
+            const t2Started = new Deferred<void>();
+            const t1Done = new Deferred<void>();
+
+            const t1 = store.transact(async tx => {
+                t1Started.resolve();
+                await t2Started.promise;
+                await tx.delete(0);
+                await tx.put(1, 'zero');
+                t1Done.resolve();
+            });
+
+            const t2 = store.transact(async tx => {
+                t2Started.resolve();
+                await t1Started.promise;
+                await tx.delete(1);
+                await t1Done.promise;
+            });
+
+            await t1;
+            // t2 commits after t1, so it will delete key 1 without a conflict
+            // because it didn't read anything
+            await t2;
+
+            await store.snapshot(async tx => {
+                const result = await toStream(tx.query({lte: 4}))
+                    .take(3)
+                    .toArray();
+
+                expect(result).toEqual([]);
+            });
+        });
+
+        it('should query (case: delete before entry after commit)', async () => {
+            await store.transact(async tx => {
+                await tx.put(1, '80');
+            });
+
+            await store.transact(async tx => {
+                await tx.delete(0);
+            });
+
+            await store.transact(async tx => {
+                const entries = await toStream(tx.query({gte: 1})).toArray();
+
+                expect(entries).toEqual([{key: 1, value: '80'}]);
+            });
         });
 
         it('should remove entry in write set (case: query)', async () => {
@@ -1177,8 +1222,8 @@ export function describeMvccStore(
                         await t2.get(1);
                         await t2.put(2, 'two');
                         // write before read
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1191,8 +1236,8 @@ export function describeMvccStore(
                         await t2.get(1);
                         await t2.put(2, 'two');
                         // write after read
-                        t2.commit();
-                        t1.commit();
+                        t2.done();
+                        t1.done();
                     },
                 },
                 {
@@ -1203,8 +1248,8 @@ export function describeMvccStore(
                         await t2.accept();
                         await t1.put(1, 'one');
                         await t2.get(1);
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 ...conditions.map(
@@ -1218,8 +1263,8 @@ export function describeMvccStore(
                             await t1.put(-10, 'conflict');
                             await t1.put(10, 'conflict');
                             await toStream(t2.query(condition)).toArray();
-                            t1.commit();
-                            t2.commit();
+                            t1.done();
+                            t2.done();
                         },
                     })
                 ),
@@ -1235,8 +1280,8 @@ export function describeMvccStore(
                                 await t1.put(condition.gt, 'conflict');
                                 await t2.put(123, 'new');
                                 await toStream(t2.query(condition)).first();
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1256,8 +1301,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1276,8 +1321,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1295,8 +1340,8 @@ export function describeMvccStore(
                                 await t2.put(-123, 'new');
                                 await toStream(t2.query(condition)).toArray();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1315,8 +1360,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1335,8 +1380,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1355,8 +1400,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1376,8 +1421,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1396,8 +1441,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1415,8 +1460,8 @@ export function describeMvccStore(
                                 await t2.put(123, 'new');
                                 await toStream(t2.query(condition)).toArray();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1435,8 +1480,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1455,8 +1500,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1475,8 +1520,8 @@ export function describeMvccStore(
                                     t2.query(condition)
                                 ).firstOrDefault();
 
-                                t1.commit();
-                                t2.commit();
+                                t1.done();
+                                t2.done();
                             },
                         })
                     ),
@@ -1490,8 +1535,8 @@ export function describeMvccStore(
                         await t2.put(123, 'new');
                         await toStream(t2.query({lte: 0})).firstOrDefault();
 
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1502,8 +1547,8 @@ export function describeMvccStore(
                         await t2.accept();
                         await t1.put(1, 'conflict');
                         await t2.put(1, 'new');
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1514,8 +1559,8 @@ export function describeMvccStore(
                         await t2.accept();
                         await t1.put(1, 'conflict');
                         await t2.delete(1);
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1526,8 +1571,8 @@ export function describeMvccStore(
                         await t2.accept();
                         await t1.delete(1);
                         await t2.put(1, 'new');
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1538,8 +1583,8 @@ export function describeMvccStore(
                         await t2.accept();
                         await t1.delete(1);
                         await t2.delete(1);
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1550,8 +1595,8 @@ export function describeMvccStore(
                         await t2.accept();
                         await t1.put(20, 't1-update');
                         await t2.get(30);
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1563,8 +1608,8 @@ export function describeMvccStore(
                         await t2.put(40, 't2-new');
                         await t2.get(40);
                         await t1.put(40, 't1-update');
-                        t2.commit();
-                        t1.commit();
+                        t2.done();
+                        t1.done();
                     },
                 },
                 {
@@ -1575,8 +1620,8 @@ export function describeMvccStore(
                         await t2.accept();
                         await t1.put(80, 't1-update');
                         await t2.put(81, 't2-update');
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1588,8 +1633,8 @@ export function describeMvccStore(
                         await t1.put(90, 't1-value');
                         await t1.get(90);
                         await t2.put(90, 't2-value');
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
                 {
@@ -1600,8 +1645,8 @@ export function describeMvccStore(
                         await t2.accept();
                         await t1.get(1);
                         await t2.get(2);
-                        t1.commit();
-                        t2.commit();
+                        t1.done();
+                        t2.done();
                     },
                 },
             ];
@@ -1621,11 +1666,11 @@ export function describeMvccStore(
                     const promise = whenAll([
                         store.transact(async tx => {
                             await t1.use(tx);
-                            await t1.waitOnCommit();
+                            await t1.result();
                         }),
                         store.transact(async tx => {
                             await t2.use(tx);
-                            await t2.waitOnCommit();
+                            await t2.result();
                         }),
                     ]);
 
@@ -1721,43 +1766,4 @@ export function describeMvccStore(
             });
         });
     });
-}
-
-export class TxController<K, V> {
-    private tx: Transaction<K, V> | undefined = undefined;
-    private commitSignal = new Deferred<void>();
-    private useQueue = new Channel<Transaction<K, V>>();
-
-    async use(tx: Transaction<K, V>) {
-        await this.useQueue.push(tx);
-    }
-
-    async accept() {
-        this.tx = await this.useQueue.get();
-    }
-
-    async get(key: K) {
-        return this.tx!.get(key);
-    }
-
-    async put(key: K, value: V) {
-        return this.tx!.put(key, value);
-    }
-
-    async delete(key: K) {
-        return this.tx!.delete(key);
-    }
-
-    query(condition: Condition<K>) {
-        return this.tx!.query(condition);
-    }
-
-    commit() {
-        this.useQueue.close();
-        this.commitSignal.resolve();
-    }
-
-    waitOnCommit() {
-        return this.commitSignal.promise;
-    }
 }

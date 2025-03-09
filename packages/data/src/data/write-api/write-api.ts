@@ -12,6 +12,7 @@ import {Uuid} from '../../uuid.js';
 import type {DataTx} from '../data-layer.js';
 import {
     toAttachmentDto,
+    toCardDto,
     toColumnDto,
     toMemberDto,
     toMessageDto,
@@ -110,7 +111,7 @@ export function createWriteApi() {
                     })
                 );
 
-                return after;
+                return toCardDto(st.tx, after.id);
             },
         }),
         createAttachment: handler({

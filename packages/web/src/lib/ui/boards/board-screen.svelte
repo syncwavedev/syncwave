@@ -26,6 +26,7 @@
 	import appNavigator from '../app-navigator';
 	import {useBoardView} from './use-board-view.svelte';
 	import {dragHandleZone} from 'svelte-dnd-action';
+	import Scrollable from '../components/scrollable.svelte';
 
 	const {
 		boardKey,
@@ -40,14 +41,13 @@
 			identity: Identity;
 		};
 	} = $props();
-
 	const board = observe(initialBoard, x => x.getBoardView({key: boardKey}));
 	const {
 		columns,
 		handleDndConsiderColumns,
 		handleDndFinalizeColumns,
 		createCardHandler,
-	} = useBoardView(board.value);
+	} = useBoardView(board);
 
 	const me = observe(initialMe, x => x.getMe({}));
 
@@ -103,9 +103,7 @@
 <main class="flex h-screen w-full">
 	<div class="bg-subtle-1 dark:bg-subtle-0 flex min-w-0 grow flex-col">
 		<!-- Fixed Header -->
-		<div
-			class="bg-subtle-1 dark:bg-subtle-0 border-divider sticky top-0 z-10 border-b px-4"
-		>
+		<div class="bg-subtle-1 dark:bg-subtle-0 border-divider border-b px-4">
 			<div class="my-1 flex items-center">
 				<div class="text-xs leading-none">{board.value.name}</div>
 				<button class="btn--icon ml-auto" onclick={createCard}>
@@ -119,25 +117,27 @@
 				</button>
 			</div>
 		</div>
-		<div
-			class="flex h-full flex-1 gap-4 overflow-x-auto p-4 text-xs"
-			use:dragHandleZone={{
-				items: columns,
-				flipDurationMs: 100,
-				type: 'columns',
-				dropTargetStyle: {},
-			}}
-			onconsider={handleDndConsiderColumns}
-			onfinalize={handleDndFinalizeColumns}
-		>
-			{#each columns as column (column.id)}
-				<BoardColumn
-					{column}
-					{onCardClick}
-					handleCardDnd={createCardHandler(column)}
-				/>
-			{/each}
-		</div>
+		<Scrollable orientation="horizontal" class="flex-grow">
+			<div
+				class="flex gap-4 p-4 text-xs"
+				use:dragHandleZone={{
+					items: columns,
+					flipDurationMs: 100,
+					type: 'columns',
+					dropTargetStyle: {},
+				}}
+				onconsider={handleDndConsiderColumns}
+				onfinalize={handleDndFinalizeColumns}
+			>
+				{#each columns as column (column.id)}
+					<BoardColumn
+						{column}
+						{onCardClick}
+						handleCardDnd={createCardHandler(column)}
+					/>
+				{/each}
+			</div>
+		</Scrollable>
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}

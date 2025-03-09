@@ -1,6 +1,7 @@
 import {BoardViewCrdt} from '$lib/crdt/board-view-crdt';
 import {calculateChange} from '$lib/dnd';
 import {getSdk} from '$lib/utils';
+import type {Observable} from '$lib/utils.svelte';
 import {untrack} from 'svelte';
 import {
 	SHADOW_ITEM_MARKER_PROPERTY_NAME,
@@ -15,16 +16,16 @@ import {
 	type BoardViewDto,
 } from 'syncwave-data';
 
-export function useBoardView(remoteBoard: BoardViewDto) {
+export function useBoardView(remoteBoard: Observable<BoardViewDto>) {
 	// Initialize local CRDT instance
-	const localBoard = new BoardViewCrdt(remoteBoard);
+	const localBoard = new BoardViewCrdt(remoteBoard.value);
 
 	// Reactive state for columns with initial sorting
-	let dndColumns = $state(applyOrder(remoteBoard.columns));
+	let dndColumns = $state(applyOrder(remoteBoard.value.columns));
 
 	// Effect to sync remoteBoard with localBoard and update dndColumns
 	$effect(() => {
-		localBoard.apply(remoteBoard);
+		localBoard.apply(remoteBoard.value);
 		const latestColumns = applyOrder(localBoard.snapshot().columns);
 		untrack(() => {
 			// Handle drag-and-drop shadow items

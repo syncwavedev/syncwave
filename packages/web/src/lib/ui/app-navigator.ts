@@ -1,77 +1,95 @@
+/**
+ * Represents an item in the navigation stack.
+ */
 export interface NavigatorItem {
-	onBack: () => void;
-	onEscape: boolean;
+  /** Function to call when navigating back from this item. */
+  onBack: () => void;
+  /** Indicates if this item should handle escape key presses. */
+  onEscape: boolean;
 }
 
 /**
- * Singleton class to manage a stack-based navigation history.
+ * Defines the public API for the navigator.
  */
-class Navigator {
-	/** Internal history stack storing navigation items. */
-	private history: NavigatorItem[];
+export interface NavigatorAPI {
+  /**
+   * Adds a new item to the top of the navigation stack.
+   * @param item - The navigation item to push.
+   */
+  push: (item: NavigatorItem) => void;
 
-	constructor() {
-		this.history = [];
-	}
+  /**
+   * Removes and executes the onBack function of the top item in the stack.
+   * @returns `true` if an item was popped and its onBack was called, `false` otherwise.
+   */
+  back: () => boolean;
 
-	/**
-	 * Pushes a new item onto the history stack.
-	 * @param item - The navigation item to add.
-	 */
-	push(item: NavigatorItem): void {
-		this.history.push(item);
-	}
+  /**
+   * Replaces the top item in the stack with a new item. If the stack is empty, pushes the item.
+   * @param item - The new navigation item to replace the top item.
+   */
+  replace: (item: NavigatorItem) => void;
 
-	/**
-	 * Pops the top item from the history stack and calls its onBack function.
-	 * @returns True if an item was popped and onBack was called, false otherwise.
-	 */
-	back(): boolean {
-		if (this.history.length > 0) {
-			const item = this.history.pop();
-			if (item) {
-				item.onBack();
-				return true;
-			}
-		}
-		return false;
-	}
+  /**
+   * Retrieves the top item in the stack without removing it.
+   * @returns The top item, or `undefined` if the stack is empty.
+   */
+  peek: () => NavigatorItem | undefined;
 
-	/**
-	 * Replaces the top item in the history stack with a new item.
-	 * If the history is empty, pushes the item instead.
-	 * @param item - The new navigation item to replace the top item.
-	 */
-	replace(item: NavigatorItem): void {
-		if (this.history.length > 0) {
-			this.history[this.history.length - 1] = item;
-		} else {
-			this.push(item);
-		}
-	}
+  /**
+   * The current number of items in the navigation stack.
+   */
+  readonly length: number;
 
-	/**
-	 * Returns the top item in the history stack without removing it.
-	 * @returns The top navigation item, or undefined if the history is empty.
-	 */
-	peek(): NavigatorItem | undefined {
-		return this.history[this.history.length - 1];
-	}
-
-	/**
-	 * Gets the current number of items in the history stack.
-	 */
-	get length(): number {
-		return this.history.length;
-	}
-
-	/**
-	 * Clears the entire history stack.
-	 * Use with caution, as it removes all navigation history.
-	 */
-	clear(): void {
-		this.history = [];
-	}
+  /**
+   * Removes all items from the navigation stack.
+   */
+  clear: () => void;
 }
 
-export default new Navigator();
+/**
+ * Creates a new navigator instance for managing a stack-based navigation history.
+ * @returns A navigator object implementing the NavigatorAPI.
+ */
+const createNavigator = (): NavigatorAPI => {
+  // Private stack to store navigation items
+  const history: NavigatorItem[] = [];
+
+  return {
+    push: (item: NavigatorItem): void => {
+      history.push(item);
+    },
+
+    back: (): boolean => {
+      if (history.length > 0) {
+        const item = history.pop();
+        if (item) {
+          item.onBack();
+          return true;
+        }
+      }
+      return false;
+    },
+
+    replace: (item: NavigatorItem): void => {
+      if (history.length > 0) {
+        history[history.length - 1] = item;
+      } else {
+        history.push(item);
+      }
+    },
+
+    peek: (): NavigatorItem | undefined => history[history.length - 1],
+
+    get length(): number {
+      return history.length;
+    },
+
+    clear: (): void => {
+      history.length = 0; // Efficiently clears the array in place
+    },
+  };
+};
+
+// Export a singleton instance of the navigator
+export default createNavigator();

@@ -260,16 +260,16 @@ async function launch() {
 }
 
 function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
-    router.get('/status', async request => {
-        return request.json(await coordinator().status());
+    router.get('/status', async ctx => {
+        ctx.body = await coordinator().status();
     });
 
-    router.get('/callbacks/google', async request => {
+    router.get('/callbacks/google', async ctx => {
         try {
-            const {code, state} = request.query;
+            const {code, state} = ctx.query;
 
             if (typeof code !== 'string') {
-                return request.redirect(`${APP_URL}/auth/log-in/failed`);
+                return ctx.redirect(`${APP_URL}/auth/log-in/failed`);
             }
 
             const result = await getGoogleUser(code, {
@@ -278,14 +278,14 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
                 redirectUri: GOOGLE_REDIRECT_URL,
             });
             if (result.type === 'error') {
-                return request.redirect(`${APP_URL}/auth/log-in/failed`);
+                return ctx.redirect(`${APP_URL}/auth/log-in/failed`);
             }
 
             if (!result.user.verified_email || !result.user.email) {
                 log.warn(
                     `Google user has unverified email: ${result.user.email}`
                 );
-                return request.redirect(`${APP_URL}/auth/log-in/failed`);
+                return ctx.redirect(`${APP_URL}/auth/log-in/failed`);
             }
 
             const jwtToken = await coordinator().issueJwtByUserEmail({
@@ -298,12 +298,12 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
                     ''
             );
 
-            return request.redirect(
+            return ctx.redirect(
                 `${APP_URL}/auth/log-in/callback/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
             );
         } catch (error) {
             log.error(toError(error), 'failed to handle google callback');
-            return request.redirect(`${APP_URL}/auth/log-in/failed`);
+            return ctx.redirect(`${APP_URL}/auth/log-in/failed`);
         }
     });
 }

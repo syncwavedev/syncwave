@@ -17,6 +17,7 @@ import {
     toMemberDto,
     toMessageDto,
     zAttachmentDto,
+    zCardDto,
     zColumnDto,
     zMemberDto,
     zMessageDto,
@@ -31,7 +32,7 @@ import {
 import {PermissionService} from '../permission-service.js';
 import {createAttachmentId} from '../repos/attachment-repo.js';
 import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
-import {type Card, type CardId, zCard} from '../repos/card-repo.js';
+import {type Card, type CardId} from '../repos/card-repo.js';
 import {type Column, type ColumnId} from '../repos/column-repo.js';
 import {
     createMemberId,
@@ -76,7 +77,7 @@ export function createWriteApi() {
             req: Type.Object({
                 diff: zCrdtDiff<Card>(),
             }),
-            res: zCard(),
+            res: zCardDto(),
             handle: async (st, {diff}) => {
                 const crdt = Crdt.load(diff);
                 const card = crdt.snapshot();

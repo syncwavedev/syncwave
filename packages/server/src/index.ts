@@ -151,7 +151,12 @@ async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
         log.info('Running tx.get(versionKey)...');
         const version = await tx.get(versionKey);
         if (version) {
-            return decodeNumber(version);
+            try {
+                return decodeNumber(version);
+            } catch {
+                await tx.put(versionKey, encodeNumber(2));
+                return 2;
+            }
         } else {
             return 0;
         }

@@ -11,6 +11,7 @@
 	import {onDestroy} from 'svelte';
 	import {getSdk} from '$lib/utils';
 	import Editor from '$lib/components/editor.svelte';
+	import appNavigator from '../app-navigator';
 
 	const {
 		initialCard,
@@ -75,7 +76,7 @@
 					</ul>
 				</div>
 			</div>
-			<button class="btn--icon">
+			<button class="btn--icon" onclick={appNavigator.back}>
 				<TimesIcon />
 			</button>
 		</div>

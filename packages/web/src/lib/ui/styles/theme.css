@@ -181,7 +181,7 @@
 
 	html,
 	body {
-		@apply text-ink bg-gray-950 font-sans antialiased;
+		@apply text-ink bg-subtle-0 font-sans antialiased;
 	}
 
 	hr {

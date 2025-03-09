@@ -15,7 +15,7 @@
 	} from 'syncwave-data';
 
 	import {goto} from '$app/navigation';
-	import {getAppRoute, getCardRoute} from '$lib/routes';
+	import {getAppRoute} from '$lib/routes';
 	import {getSdk} from '$lib/utils';
 	import type {Snippet} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
@@ -24,6 +24,8 @@
 	import BoardColumn from './board-column.svelte';
 	import CardDetails from './card-details.svelte';
 	import appNavigator from '../app-navigator';
+	import {useBoardView} from './use-board-view.svelte';
+	import {dragHandleZone} from 'svelte-dnd-action';
 
 	const {
 		boardKey,
@@ -40,6 +42,13 @@
 	} = $props();
 
 	const board = observe(initialBoard, x => x.getBoardView({key: boardKey}));
+	const {
+		columns,
+		handleDndConsiderColumns,
+		handleDndFinalizeColumns,
+		createCardHandler,
+	} = useBoardView(board.value);
+
 	const me = observe(initialMe, x => x.getMe({}));
 
 	let selectedCard = $state<BoardViewCardDto | null>(null);
@@ -87,9 +96,7 @@
 			text: createRichtext(),
 		});
 
-		const card = await sdk(x => x.createCard({diff: cardCrdt.state()}));
-
-		goto(getCardRoute(boardKey, card.counter));
+		await sdk(x => x.createCard({diff: cardCrdt.state()}));
 	}
 </script>
 
@@ -112,12 +119,24 @@
 				</button>
 			</div>
 		</div>
-		<div class="mt-4 flex-1 overflow-x-auto px-4 pb-4">
-			<div class="flex gap-4 text-xs">
-				{#each board.value.columns as column (column.id)}
-					<BoardColumn {column} {onCardClick} />
-				{/each}
-			</div>
+		<div
+			class="flex h-full flex-1 gap-4 overflow-x-auto p-4 text-xs"
+			use:dragHandleZone={{
+				items: columns,
+				flipDurationMs: 100,
+				type: 'columns',
+				dropTargetStyle: {},
+			}}
+			onconsider={handleDndConsiderColumns}
+			onfinalize={handleDndFinalizeColumns}
+		>
+			{#each columns as column (column.id)}
+				<BoardColumn
+					{column}
+					{onCardClick}
+					handleCardDnd={createCardHandler(column)}
+				/>
+			{/each}
 		</div>
 	</div>
 	{#if selectedCard !== null}

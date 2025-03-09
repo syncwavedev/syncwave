@@ -3,7 +3,13 @@
 	import {yFragmentToPlaintext} from '$lib/richtext';
 	import Avatar from '../components/avatar.svelte';
 
-	const {card}: {card: BoardViewCardDto} = $props();
+	const {
+		card,
+		onClick,
+	}: {
+		card: BoardViewCardDto;
+		onClick: () => void;
+	} = $props();
 
 	let preview = $derived.by(() => {
 		const crdt = Crdt.load(card.state);
@@ -15,7 +21,11 @@
 </script>
 
 <div
+	role="button"
+	tabindex="0"
 	class="bg-subtle-0 dark:bg-subtle-1 hover:border-divider-object hover:bg-subtle-2 group border-divider flex cursor-pointer items-end gap-1 rounded-md border p-2"
+	onclick={onClick}
+	onkeydown={e => e.key === 'Enter' && onClick()}
 >
 	<div class="flex w-full flex-col gap-1 truncate">
 		<span class="text-2xs text-ink-detail">{card.board.key}-{card.counter}</span

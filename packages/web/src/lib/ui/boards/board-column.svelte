@@ -1,8 +1,14 @@
 <script lang="ts">
-	import type {BoardViewColumnDto} from 'syncwave-data';
+	import type {BoardViewCardDto, BoardViewColumnDto} from 'syncwave-data';
 	import CardTile from './card-tile.svelte';
 
-	const {column}: {column: BoardViewColumnDto} = $props();
+	const {
+		column,
+		onCardClick,
+	}: {
+		column: BoardViewColumnDto;
+		onCardClick: (card: BoardViewCardDto) => void;
+	} = $props();
 </script>
 
 <div class="w-76 flex-shrink-0">
@@ -10,7 +16,7 @@
 	<div class="flex flex-col gap-2">
 		{#each column.cards as card (card.id)}
 			<div data-disable-scroll-view-drag="true">
-				<CardTile {card} />
+				<CardTile {card} onClick={() => onCardClick(card)} />
 			</div>
 		{/each}
 	</div>

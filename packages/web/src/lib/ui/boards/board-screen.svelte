@@ -7,6 +7,7 @@
 		getNow,
 		log,
 		toPosition,
+		type BoardViewCardDto,
 		type BoardViewDto,
 		type Card,
 		type Identity,
@@ -21,6 +22,8 @@
 	import SearchIcon from '../components/icons/search-icon.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import BoardColumn from './board-column.svelte';
+	import CardDetails from './card-details.svelte';
+	import appNavigator from '../app-navigator';
 
 	const {
 		boardKey,
@@ -38,6 +41,19 @@
 
 	const board = observe(initialBoard, x => x.getBoardView({key: boardKey}));
 	const me = observe(initialMe, x => x.getMe({}));
+
+	let selectedCard = $state<BoardViewCardDto | null>(null);
+
+	function onCardClick(item: BoardViewCardDto) {
+		appNavigator.replace({
+			onBack: () => {
+				selectedCard = null;
+			},
+			onEscape: true,
+		});
+
+		selectedCard = item;
+	}
 
 	$effect(() => {
 		if (board.value.deleted) {
@@ -99,9 +115,14 @@
 		<div class="mt-4 flex-1 overflow-x-auto px-4 pb-4">
 			<div class="flex gap-4 text-xs">
 				{#each board.value.columns as column (column.id)}
-					<BoardColumn {column} />
+					<BoardColumn {column} {onCardClick} />
 				{/each}
 			</div>
 		</div>
 	</div>
+	{#if selectedCard !== null}
+		{#key selectedCard.id}
+			<CardDetails initialCard={selectedCard} />
+		{/key}
+	{/if}
 </main>

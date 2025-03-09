@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {Crdt, log, type CardViewDto} from 'syncwave-data';
+	import {Crdt, log, type BoardViewCardDto} from 'syncwave-data';
 	import Avatar from '../components/avatar.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import LinkIcon from '../components/icons/link-icon.svelte';
@@ -15,7 +15,7 @@
 	const {
 		initialCard,
 	}: {
-		initialCard: CardViewDto;
+		initialCard: BoardViewCardDto;
 	} = $props();
 
 	const card = observe(initialCard, x =>

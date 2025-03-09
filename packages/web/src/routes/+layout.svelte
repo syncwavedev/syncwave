@@ -20,7 +20,6 @@
 		createAuthManager,
 		createParticipantClient,
 		createParticipantClientDummy,
-		fireEscape,
 		setAuthManager,
 		setUniversalStore,
 		setUploadManager,
@@ -29,6 +28,8 @@
 	import ErrorCard from '$lib/components/error-card.svelte';
 	import {UploadManager} from '$lib/upload-manager.svelte';
 	import {createThemeManager} from '$lib/ui/theme-manager.svelte.js';
+	import {beforeNavigate} from '$app/navigation';
+	import appNavigator from '$lib/ui/app-navigator';
 
 	// Set up theme context
 	const themeManager = createThemeManager();
@@ -55,6 +56,22 @@
 	setContext(ParticipantClient, participantClient);
 	setUploadManager(new UploadManager(participantClient));
 
+	//navigation
+	function handleEscape(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			const topItem = appNavigator.peek();
+			if (topItem && topItem.onEscape) {
+				appNavigator.back();
+			}
+		}
+	}
+
+	beforeNavigate(({cancel}) => {
+		if (appNavigator.back()) {
+			cancel();
+		}
+	});
+
 	// Cleanup on component destruction
 	onDestroy(() => {
 		participantClient.close('layout destroyed');
@@ -62,13 +79,7 @@
 </script>
 
 <!-- Body-level keydown handler with proper event syntax -->
-<svelte:body
-	on:keydown={(e: KeyboardEvent) => {
-		if (e.key === 'Escape') {
-			fireEscape();
-		}
-	}}
-/>
+<svelte:body on:keydown={handleEscape} />
 
 <!-- Error boundary and children rendering -->
 <svelte:boundary>

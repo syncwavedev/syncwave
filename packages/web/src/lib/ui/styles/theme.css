@@ -115,6 +115,33 @@
 	--color-gray-930: oklch(24% 0.0085 250deg);
 	--color-gray-950: oklch(22% 0.0095 250deg);
 
+	/* Blue */
+	--color-blue-10: oklch(98% 0.029 245deg);
+	--color-blue-30: oklch(96% 0.03 245deg);
+	--color-blue-40: oklch(95% 0.031 245deg);
+	--color-blue-50: oklch(94% 0.032 245deg);
+	--color-blue-70: oklch(92% 0.033 245deg);
+	--color-blue-100: oklch(90% 0.034 245deg);
+	--color-blue-150: oklch(86% 0.035 245deg);
+	--color-blue-200: oklch(82% 0.036 245deg);
+	--color-blue-250: oklch(78% 0.037 245deg);
+	--color-blue-300: oklch(74% 0.038 245deg);
+	--color-blue-350: oklch(70% 0.039 245deg);
+	--color-blue-400: oklch(66% 0.04 245deg);
+	--color-blue-450: oklch(62% 0.041 245deg);
+	--color-blue-500: oklch(58% 0.042 245deg);
+	--color-blue-550: oklch(54% 0.042 245deg);
+	--color-blue-600: oklch(50% 0.043 245deg);
+	--color-blue-650: oklch(46% 0.043 245deg);
+	--color-blue-700: oklch(42% 0.044 245deg);
+	--color-blue-750: oklch(38% 0.044 245deg);
+	--color-blue-800: oklch(34% 0.044 245deg);
+	--color-blue-850: oklch(30% 0.055 245deg);
+	--color-blue-870: oklch(28% 0.055 245deg);
+	--color-blue-900: oklch(26% 0.055 245deg);
+	--color-blue-930: oklch(24% 0.055 245deg);
+	--color-blue-950: oklch(22% 0.055 245deg);
+
 	/* Semantics */
 	--color-ink: var(--theme-color-ink);
 	--color-ink-body: var(--theme-color-ink-body);

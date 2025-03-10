@@ -17,7 +17,7 @@
 	import {goto} from '$app/navigation';
 	import {getAppRoute} from '$lib/routes';
 	import {getSdk} from '$lib/utils';
-	import type {Snippet} from 'svelte';
+	import {tick, type Snippet} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
 	import SearchIcon from '../components/icons/search-icon.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
@@ -52,6 +52,27 @@
 	const me = observe(initialMe, x => x.getMe({}));
 
 	let selectedCard = $state<BoardViewCardDto | null>(null);
+	let boardRef: HTMLElement | null = $state(null);
+
+	$effect(() => {
+		if (selectedCard && boardRef) {
+			tick().then(() => {
+				if (boardRef && selectedCard) {
+					const cardElement = boardRef.querySelector(
+						`[data-card-id="${selectedCard.id}"]`
+					) as HTMLElement;
+
+					if (cardElement) {
+						cardElement.scrollIntoView({
+							behavior: 'smooth',
+							block: 'center',
+							inline: 'center',
+						});
+					}
+				}
+			});
+		}
+	});
 
 	function onCardClick(item: BoardViewCardDto) {
 		appNavigator.replace({
@@ -119,6 +140,7 @@
 		</div>
 		<Scrollable orientation="horizontal" class="flex-grow">
 			<div
+				bind:this={boardRef}
 				class="flex gap-4 p-4 text-xs"
 				use:dragHandleZone={{
 					items: columns,
@@ -134,6 +156,7 @@
 						{column}
 						{onCardClick}
 						handleCardDnd={createCardHandler(column)}
+						activeCardId={selectedCard?.id}
 					/>
 				{/each}
 			</div>

@@ -6,9 +6,11 @@
 	const {
 		card,
 		onClick,
+		active,
 	}: {
 		card: BoardViewCardDto;
 		onClick: () => void;
+		active: boolean;
 	} = $props();
 
 	let preview = $derived.by(() => {
@@ -21,9 +23,27 @@
 </script>
 
 <div
+	data-card-id={card.id}
 	role="button"
 	tabindex="0"
-	class="bg-subtle-0 dark:bg-subtle-1 hover:border-divider-object hover:bg-subtle-2 group border-divider flex cursor-pointer items-end gap-1 rounded-md border p-2"
+	data-active={active || undefined}
+	class="
+	bg-subtle-0
+	dark:bg-subtle-1
+	hover:border-divider-object
+	hover:bg-subtle-2
+	group
+	border-divider
+	data-active:border-divider-object
+	data-active:bg-subtle-2
+	flex
+	cursor-pointer
+	items-end
+	gap-1
+	rounded-md
+	border
+	p-2
+	"
 	onclick={onClick}
 	onkeydown={e => e.key === 'Enter' && onClick()}
 >
@@ -33,7 +53,9 @@
 		<span class="text-ink truncate">
 			{preview}
 		</span>
-		<span class="text-2xs text-ink-detail">By Andrei on Thu</span>
+		<span class="text-2xs text-ink-detail"
+			>By {card.author.fullName} on Thu</span
+		>
 	</div>
 	<div class="">
 		<span class="text-[1.325rem]">

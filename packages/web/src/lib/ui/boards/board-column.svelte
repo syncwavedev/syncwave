@@ -8,10 +8,12 @@
 		column,
 		onCardClick,
 		handleCardDnd,
+		activeCardId,
 	}: {
 		column: BoardViewColumnDto;
 		onCardClick: (card: BoardViewCardDto) => void;
 		handleCardDnd: (e: CustomEvent<DndEvent<BoardViewCardDto>>) => void;
+		activeCardId?: string;
 	} = $props();
 
 	let hasBottomScroll = $state(false);
@@ -51,7 +53,11 @@
 		>
 			{#each column.cards as card (card.id)}
 				<div data-disable-scroll-view-drag="true">
-					<CardTile {card} onClick={() => onCardClick(card)} />
+					<CardTile
+						{card}
+						onClick={() => onCardClick(card)}
+						active={card.id === activeCardId}
+					/>
 				</div>
 			{/each}
 		</div>

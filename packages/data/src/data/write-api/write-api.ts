@@ -503,6 +503,9 @@ export function createWriteApi() {
                             writable({
                                 text: true,
                                 columnId: true,
+                                columnPosition: true,
+                                deleted: true,
+                                updatedAt: true,
                             })
                         );
                         if (before?.columnId !== after.columnId) {

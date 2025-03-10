@@ -1,4 +1,4 @@
-import {assert, describe, expect, it} from 'vitest';
+import {assert, describe, expect, it, vi} from 'vitest';
 import {
     AggregateBusinessError,
     AggregateError,
@@ -13,7 +13,13 @@ import {
     compareUint8Array,
     concatBuffers,
     distinct,
+    drop,
+    equals,
+    getRequiredKey,
+    partition,
     pipe,
+    run,
+    shuffle,
     whenAll,
     zip,
 } from './utils.js';
@@ -488,5 +494,360 @@ describe('whenAll', () => {
         const promises: Promise<any>[] = [];
         const result = await whenAll(promises);
         expect(result).toEqual([]);
+    });
+});
+
+describe('equals', () => {
+    it('should return true for identical primitive values', () => {
+        expect(equals(42, 42)).toBe(true);
+        expect(equals('hello', 'hello')).toBe(true);
+        expect(equals(true, true)).toBe(true);
+        expect(equals(null, null)).toBe(true);
+        expect(equals(undefined, undefined)).toBe(true);
+    });
+
+    it('should return false for different primitive values', () => {
+        expect(equals(42, 43)).toBe(false);
+        expect(equals('hello', 'world')).toBe(false);
+        expect(equals(true, false)).toBe(false);
+        expect(equals(null, undefined)).toBe(false);
+        expect(equals(42, '42')).toBe(false);
+    });
+
+    it('should compare Uint8Arrays correctly', () => {
+        const a1 = new Uint8Array([1, 2, 3]);
+        const a2 = new Uint8Array([1, 2, 3]);
+        const a3 = new Uint8Array([1, 2, 4]);
+        const a4 = new Uint8Array([1, 2]);
+
+        expect(equals(a1, a2)).toBe(true);
+        expect(equals(a1, a3)).toBe(false);
+        expect(equals(a1, a4)).toBe(false);
+    });
+
+    it('should compare Date objects correctly', () => {
+        const d1 = new Date('2023-01-01');
+        const d2 = new Date('2023-01-01');
+        const d3 = new Date('2023-01-02');
+
+        expect(equals(d1, d2)).toBe(true);
+        expect(equals(d1, d3)).toBe(false);
+    });
+
+    it('should compare RegExp objects correctly', () => {
+        const r1 = /test/g;
+        const r2 = /test/g;
+        const r3 = /test/i;
+        const r4 = /other/g;
+
+        expect(equals(r1, r2)).toBe(true);
+        expect(equals(r1, r3)).toBe(false);
+        expect(equals(r1, r4)).toBe(false);
+    });
+
+    it('should compare Sets correctly', () => {
+        const s1 = new Set([1, 2, 3]);
+        const s2 = new Set([1, 2, 3]);
+        const s3 = new Set([1, 2, 4]);
+        const s4 = new Set([1, 2]);
+
+        expect(equals(s1, s2)).toBe(true);
+        expect(equals(s1, s3)).toBe(false);
+        expect(equals(s1, s4)).toBe(false);
+    });
+
+    it('should compare Maps correctly', () => {
+        const m1 = new Map([
+            ['a', 1],
+            ['b', 2],
+        ]);
+        const m2 = new Map([
+            ['a', 1],
+            ['b', 2],
+        ]);
+        const m3 = new Map([
+            ['a', 1],
+            ['b', 3],
+        ]);
+        const m4 = new Map([['a', 1]]);
+
+        expect(equals(m1, m2)).toBe(true);
+        expect(equals(m1, m3)).toBe(false);
+        expect(equals(m1, m4)).toBe(false);
+    });
+
+    it('should compare arrays correctly', () => {
+        const a1 = [1, 2, 3];
+        const a2 = [1, 2, 3];
+        const a3 = [1, 2, 4];
+        const a4 = [1, 2];
+
+        expect(equals(a1, a2)).toBe(true);
+        expect(equals(a1, a3)).toBe(false);
+        expect(equals(a1, a4)).toBe(false);
+    });
+
+    it('should compare objects correctly', () => {
+        const o1 = {a: 1, b: 2};
+        const o2 = {a: 1, b: 2};
+        const o3 = {a: 1, b: 3};
+        const o4 = {a: 1};
+        const o5 = {a: 1, b: 2, c: 3};
+
+        expect(equals(o1, o2)).toBe(true);
+        expect(equals(o1, o3)).toBe(false);
+        expect(equals(o1, o4)).toBe(false);
+        expect(equals(o1, o5)).toBe(false);
+    });
+
+    it('should compare nested structures correctly', () => {
+        const n1 = {
+            a: 1,
+            b: [1, 2, {c: 3}],
+            d: new Set([1, 2]),
+        };
+
+        const n2 = {
+            a: 1,
+            b: [1, 2, {c: 3}],
+            d: new Set([1, 2]),
+        };
+
+        const n3 = {
+            a: 1,
+            b: [1, 2, {c: 4}], // Different value
+            d: new Set([1, 2]),
+        };
+
+        expect(equals(n1, n2)).toBe(true);
+        expect(equals(n1, n3)).toBe(false);
+    });
+
+    it('should handle empty data structures', () => {
+        expect(equals([], [])).toBe(true);
+        expect(equals({}, {})).toBe(true);
+        expect(equals(new Set(), new Set())).toBe(true);
+        expect(equals(new Map(), new Map())).toBe(true);
+    });
+});
+
+describe('partition', () => {
+    it('should partition an array based on a boolean predicate', () => {
+        const numbers = [1, 2, 3, 4, 5];
+        const [evens, odds] = partition(numbers, n => n % 2 === 0);
+
+        expect(evens).toEqual([2, 4]);
+        expect(odds).toEqual([1, 3, 5]);
+    });
+
+    it('should work with type predicates', () => {
+        const items = [1, 'two', 3, 'four', 5];
+        const isString = (x: unknown): x is string => typeof x === 'string';
+
+        const [strings, numbers] = partition(items, isString);
+
+        expect(strings).toEqual(['two', 'four']);
+        expect(numbers).toEqual([1, 3, 5]);
+    });
+
+    it('should handle empty arrays', () => {
+        const empty: number[] = [];
+        const [truthy, falsy] = partition(empty, n => n > 0);
+
+        expect(truthy).toEqual([]);
+        expect(falsy).toEqual([]);
+    });
+
+    it('should handle all elements matching the predicate', () => {
+        const allPositive = [1, 2, 3, 4, 5];
+        const [positive, negative] = partition(allPositive, n => n > 0);
+
+        expect(positive).toEqual([1, 2, 3, 4, 5]);
+        expect(negative).toEqual([]);
+    });
+
+    it('should handle no elements matching the predicate', () => {
+        const allNegative = [-1, -2, -3, -4, -5];
+        const [positive, negative] = partition(allNegative, n => n > 0);
+
+        expect(positive).toEqual([]);
+        expect(negative).toEqual([-1, -2, -3, -4, -5]);
+    });
+
+    it('should work with complex predicates', () => {
+        const people = [
+            {name: 'Alice', age: 25},
+            {name: 'Bob', age: 17},
+            {name: 'Charlie', age: 30},
+            {name: 'Dave', age: 12},
+        ];
+
+        const [adults, minors] = partition(people, person => person.age >= 18);
+
+        expect(adults).toEqual([
+            {name: 'Alice', age: 25},
+            {name: 'Charlie', age: 30},
+        ]);
+        expect(minors).toEqual([
+            {name: 'Bob', age: 17},
+            {name: 'Dave', age: 12},
+        ]);
+    });
+});
+
+describe('shuffle', () => {
+    it('should return an array of the same length', () => {
+        const original = [1, 2, 3, 4, 5];
+        const shuffled = shuffle([...original]);
+
+        expect(shuffled.length).toBe(original.length);
+    });
+
+    it('should contain the same elements as the original array', () => {
+        const original = [1, 2, 3, 4, 5];
+        const shuffled = shuffle([...original]);
+
+        expect(shuffled.sort()).toEqual(original.sort());
+    });
+
+    it('should handle empty arrays', () => {
+        const empty: number[] = [];
+        const result = shuffle(empty);
+
+        expect(result).toEqual([]);
+    });
+
+    it('should handle arrays with a single element', () => {
+        const single = [42];
+        const result = shuffle(single);
+
+        expect(result).toEqual([42]);
+    });
+
+    it('should sometimes change the order of elements (non-deterministic)', () => {
+        // This is a probabilistic test; it could theoretically fail
+        // even with a correct implementation, but the probability is tiny
+        const original = Array.from({length: 100}, (_, i) => i);
+        let allSame = true;
+
+        // Run shuffle multiple times
+        for (let i = 0; i < 5; i++) {
+            const shuffled = shuffle([...original]);
+
+            // Check if any element's position changed
+            if (!arrayEqual(original, shuffled)) {
+                allSame = false;
+                break;
+            }
+        }
+
+        expect(allSame).toBe(false);
+    });
+});
+
+describe('drop', () => {
+    it('should return undefined regardless of input', () => {
+        expect(drop(42)).toBe(undefined);
+        expect(drop('hello')).toBe(undefined);
+        expect(drop({key: 'value'})).toBe(undefined);
+        expect(drop([1, 2, 3])).toBe(undefined);
+    });
+
+    it('should accept any type of input', () => {
+        expect(() => drop(null)).not.toThrow();
+        expect(() => drop(undefined)).not.toThrow();
+        expect(() => drop(() => {})).not.toThrow();
+        expect(() => drop(Symbol('test'))).not.toThrow();
+    });
+});
+
+describe('getRequiredKey', () => {
+    it('should return the value when the key exists', () => {
+        const obj = {name: 'Test', value: 42};
+        const error = new AppError('Key not found');
+
+        expect(getRequiredKey(obj, 'name', error)).toBe('Test');
+        expect(getRequiredKey(obj, 'value', error)).toBe(42);
+    });
+
+    it('should throw the provided error when the key does not exist', () => {
+        const obj = {name: 'Test'};
+        const error = new AppError('Missing key: age');
+
+        expect(() =>
+            getRequiredKey(obj, 'age' as keyof typeof obj, error)
+        ).toThrow(error);
+    });
+
+    it('should throw when the key value is undefined', () => {
+        const obj = {name: 'Test', age: undefined};
+        const error = new AppError('Age is required');
+
+        expect(() => getRequiredKey(obj, 'age', error)).toThrow(error);
+    });
+
+    it('should work with complex objects', () => {
+        const complex = {
+            user: {
+                profile: {
+                    details: {
+                        name: 'Test User',
+                    },
+                },
+            },
+        };
+        const error = new AppError('Key not found');
+
+        expect(getRequiredKey(complex, 'user', error)).toBe(complex.user);
+    });
+
+    it('should accept falsy values other than undefined', () => {
+        const obj = {count: 0, empty: '', isActive: false};
+        const error = new AppError('Key not found');
+
+        expect(getRequiredKey(obj, 'count', error)).toBe(0);
+        expect(getRequiredKey(obj, 'empty', error)).toBe('');
+        expect(getRequiredKey(obj, 'isActive', error)).toBe(false);
+    });
+});
+
+describe('run', () => {
+    it('should call the function and return its result', () => {
+        const fn = () => 42;
+        expect(run(fn)).toBe(42);
+    });
+
+    it('should work with functions returning different types', () => {
+        expect(run(() => 'hello')).toBe('hello');
+        expect(run(() => true)).toBe(true);
+        expect(run(() => null)).toBe(null);
+        expect(run(() => ({key: 'value'}))).toEqual({key: 'value'});
+    });
+
+    it('should propagate errors thrown by the function', () => {
+        const errorFn = () => {
+            throw new AppError('Test error');
+        };
+
+        expect(() => run(errorFn)).toThrow('Test error');
+    });
+
+    it('should pass through the function execution context', () => {
+        const mockFn = vi.fn();
+        run(mockFn);
+
+        expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should work with complex functions', () => {
+        const complexFn = () => {
+            const result = [];
+            for (let i = 0; i < 5; i++) {
+                result.push(i * i);
+            }
+            return result;
+        };
+
+        expect(run(complexFn)).toEqual([0, 1, 4, 9, 16]);
     });
 });

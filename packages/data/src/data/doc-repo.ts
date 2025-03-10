@@ -428,8 +428,15 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         const nextSnapshot = params.next.snapshot();
         parseValue(this.schema, nextSnapshot);
         await whenAll([
-            params.transitionChecker?.(params.prev, nextSnapshot) ??
-                Promise.resolve(),
+            params
+                .transitionChecker?.(params.prev, nextSnapshot)
+                .then(({errors}) => {
+                    if (errors.length > 0) {
+                        throw new AppError(
+                            'transition checker failed: ' + errors.join(', ')
+                        );
+                    }
+                }) ?? Promise.resolve(),
             this.primary.put(nextSnapshot.pk, params.next),
             ...[...this.indexes.values()].map(x =>
                 x.sync(params.prev, nextSnapshot)

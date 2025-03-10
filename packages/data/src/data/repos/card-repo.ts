@@ -28,6 +28,7 @@ export interface Card extends Doc<[CardId]> {
     readonly id: CardId;
     readonly authorId: UserId;
     readonly boardId: BoardId;
+    assigneeId?: UserId;
     counter: number;
     text: Richtext;
     columnPosition: BigFloat;
@@ -47,6 +48,7 @@ export function zCard() {
             authorId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
             counter: Type.Number(),
+            assigneeId: Type.Optional(Uuid<UserId>()),
             text: zRichtext(),
             columnPosition: zBigFloat(),
             columnId: Uuid<ColumnId>(),
@@ -85,7 +87,7 @@ export class CardRepo {
                             true
                         );
                         if (user === undefined) {
-                            return `user not found: ${card.authorId}`;
+                            return `author not found: ${card.authorId}`;
                         }
                         return;
                     },
@@ -96,6 +98,23 @@ export class CardRepo {
                         const board = await boardRepo.getById(card.boardId);
                         if (board === undefined) {
                             return `board not found: ${card.boardId}`;
+                        }
+                        return;
+                    },
+                },
+                {
+                    name: 'card.assigneeId fk',
+                    verify: async card => {
+                        if (card.assigneeId === undefined) {
+                            return;
+                        }
+
+                        const user = await userRepo.getById(
+                            card.assigneeId,
+                            true
+                        );
+                        if (user === undefined) {
+                            return `assignee not found: ${card.authorId}`;
                         }
                         return;
                     },

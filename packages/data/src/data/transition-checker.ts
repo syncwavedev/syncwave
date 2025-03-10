@@ -1,11 +1,11 @@
 import {AppError} from '../errors.js';
 import type {Timestamp} from '../timestamp.js';
-import {whenAll} from '../utils.js';
+import {equals, whenAll} from '../utils.js';
 
 export type TransitionChecker<T> = (
     prev: T | undefined,
     next: T
-) => Promise<{errors: string[]} | void>;
+) => Promise<{errors: string[]}>;
 
 export type WritableDescriptor<T> = {
     [K in keyof T]-?: boolean;
@@ -175,15 +175,11 @@ export function creatable<T>(expected: T): TransitionChecker<T> {
         }
 
         const errors = validate(next, expected);
-        if (errors.length > 0) {
-            return {
-                errors: errors.map(error => {
-                    return `'${error.path.join('.')}' is invalid: ${error.message}`;
-                }),
-            };
-        }
-
-        return;
+        return {
+            errors: errors.map(error => {
+                return `'${error.path.join('.')}' is invalid: ${error.message}`;
+            }),
+        };
     };
 }
 
@@ -192,7 +188,7 @@ export function writable<T extends object>(
 ): TransitionChecker<T> {
     return async (prev: T | undefined, next: T) => {
         if (prev === undefined) {
-            return;
+            return {errors: []};
         }
         const keys = new Set([
             ...Object.keys(prev),
@@ -207,18 +203,18 @@ export function writable<T extends object>(
                 );
             }
 
-            if (prev[key] !== next[key] && (writable as any)[key] !== true) {
+            if (
+                (writable as any)[key] !== true &&
+                !equals(prev[key], next[key])
+            ) {
                 errors.push(`property ${key} is readonly`);
             }
         }
 
-        if (errors.length > 0) {
-            return {errors};
-        }
-
-        return;
+        return {errors};
     };
 }
+
 export function combineTransitionCheckers<T>(
     checkers: Array<TransitionChecker<T>>
 ): TransitionChecker<T> {
@@ -232,12 +228,8 @@ export function combineTransitionCheckers<T>(
             if (aResult) errors.push(...aResult.errors);
             if (bResult) errors.push(...bResult.errors);
 
-            if (errors.length > 0) {
-                return {errors};
-            }
-
-            return;
+            return {errors};
         },
-        () => Promise.resolve()
+        () => Promise.resolve({errors: []})
     );
 }

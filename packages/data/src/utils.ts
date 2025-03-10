@@ -322,22 +322,6 @@ export async function whenAll<const T extends Promise<any>[]>(
     >;
 }
 
-export async function whenAny<T>(promises: Promise<T>[]) {
-    if (promises.length === 0) {
-        return [];
-    }
-
-    const withId = promises.map((promise, idx) =>
-        promise.then(result => ({result, idx}))
-    );
-    const racer = await Promise.race(withId);
-
-    return [
-        racer.result,
-        promises.filter((_, idx) => idx !== racer.idx),
-    ] as const;
-}
-
 export function run<R>(fn: () => R) {
     return fn();
 }
@@ -390,4 +374,83 @@ export function partition<T, S extends T>(
     }
 
     return [truthyItems, falsyItems];
+}
+
+export function equals(a: unknown, b: unknown): boolean {
+    if (a === b) {
+        return true;
+    }
+
+    if (typeof a !== typeof b) {
+        return false;
+    }
+
+    if (a === null || b === null) {
+        return false;
+    }
+
+    if (typeof a === 'object' && typeof b === 'object') {
+        if (a instanceof Uint8Array && b instanceof Uint8Array) {
+            if (a.length !== b.length) {
+                return false;
+            }
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) {
+                    return false;
+                }
+            }
+            return true;
+        } else if (a instanceof Date && b instanceof Date) {
+            return a.getTime() === b.getTime();
+        } else if (a instanceof RegExp && b instanceof RegExp) {
+            return a.source === b.source && a.flags === b.flags;
+        } else if (a instanceof Set && b instanceof Set) {
+            if (a.size !== b.size) {
+                return false;
+            }
+            for (const item of a) {
+                if (!b.has(item)) {
+                    return false;
+                }
+            }
+            return true;
+        } else if (a instanceof Map && b instanceof Map) {
+            if (a.size !== b.size) {
+                return false;
+            }
+            for (const [key, value] of a) {
+                if (!b.has(key) || !equals(value, b.get(key))) {
+                    return false;
+                }
+            }
+            return true;
+        } else if (Array.isArray(a) && Array.isArray(b)) {
+            if (a.length !== b.length) {
+                return false;
+            }
+            for (let i = 0; i < a.length; i++) {
+                if (!equals(a[i], b[i])) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            const aKeys = Object.keys(a);
+            const bKeys = Object.keys(b);
+            if (aKeys.length !== bKeys.length) {
+                return false;
+            }
+            for (const key of aKeys) {
+                if (
+                    !bKeys.includes(key) ||
+                    !equals((a as any)[key], (b as any)[key])
+                ) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    return false;
 }

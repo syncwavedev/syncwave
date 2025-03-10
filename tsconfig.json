@@ -4,6 +4,8 @@
         "outDir": "build",
         "strictFunctionTypes": true,
         "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "moduleDetection": "force",
         "checkJs": true,
         "allowJs": true,
         "verbatimModuleSyntax": true,
@@ -31,6 +33,8 @@
         "moduleResolution": "nodenext",
         "lib": ["ES2020"],
         "target": "ES2022"
+        // "allowImportingTsExtensions": true,
+        // "rewriteRelativeImportExtensions": true,
         // "noPropertyAccessFromIndexSignature": true,
         // "noUncheckedIndexedAccess": true
     },

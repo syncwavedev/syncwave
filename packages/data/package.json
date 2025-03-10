@@ -71,7 +71,7 @@
         "nanoid": "^5.0.9",
         "pino": "^9.6.0",
         "seedrandom": "^3.0.5",
-        "typescript": "^5.7.0",
+        "typescript": "^5.8.0",
         "uuid": "^11.0.3",
         "yjs": "^13.6.20"
     }

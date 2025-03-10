@@ -40,7 +40,7 @@
 	const fragment = crdt.extractXmlFragment(x => x.text);
 
 	const sdk = getSdk();
-	const unsub = crdt.subscribe('update', diff => {
+	const unsub = crdt.onUpdate(diff => {
 		sdk(x =>
 			x.applyCardDiff({
 				cardId: card.value.id,

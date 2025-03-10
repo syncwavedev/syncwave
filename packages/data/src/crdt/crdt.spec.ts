@@ -2,7 +2,7 @@ import {describe, expect, it, vi} from 'vitest';
 import {XmlFragment} from 'yjs';
 import type {Timestamp} from '../timestamp.js';
 import {assert} from '../utils.js';
-import {Crdt} from './crdt.js';
+import {Crdt, type ValueChange} from './crdt.js';
 import {createRichtext} from './richtext.js';
 
 const createTestDocDiff = <T>(data: T) => Crdt.from(data).state();
@@ -48,7 +48,7 @@ describe('Doc', () => {
 
     function createReplica<T>(doc: Crdt<T>): Crdt<T> {
         const replica = Crdt.load(doc.state());
-        doc.subscribe('update', diff => replica.apply(diff));
+        doc.onUpdate(diff => replica.apply(diff));
         return replica;
     }
 
@@ -246,7 +246,7 @@ describe('Doc', () => {
         it('should unsubscribe from updates', async () => {
             const a = Crdt.from({val: 1});
             const b = Crdt.load(a.state());
-            const unsub = a.subscribe('update', diff => b.apply(diff));
+            const unsub = a.onUpdate(diff => b.apply(diff));
 
             expect(b.snapshot()).toEqual({val: 1});
 
@@ -310,7 +310,7 @@ describe('Doc', () => {
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const unsub = crdt.subscribe('update', callback);
+        const unsub = crdt.onUpdate(callback);
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -333,7 +333,7 @@ describe('Doc', () => {
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const unsub = crdt.subscribe('update', callback);
+        const unsub = crdt.onUpdate(callback);
         unsub();
 
         const diff = createTestDocDiff({key: 'newValue'});
@@ -418,8 +418,8 @@ describe('Doc', () => {
         const callback1 = vi.fn();
         const callback2 = vi.fn();
 
-        const unsub1 = crdt.subscribe('update', callback1);
-        const unsub2 = crdt.subscribe('update', callback2);
+        const unsub1 = crdt.onUpdate(callback1);
+        const unsub2 = crdt.onUpdate(callback2);
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -447,7 +447,7 @@ describe('Doc', () => {
         const crdt = Crdt.from(value);
         const events: string[] = [];
 
-        crdt.subscribe('update', (diff, options) => {
+        crdt.onUpdate((diff, options) => {
             events.push(options.origin || 'no-tag');
         });
 
@@ -462,7 +462,7 @@ describe('Doc', () => {
         const crdt = Crdt.from(value);
         const callback = vi.fn();
 
-        const unsub = crdt.subscribe('update', callback);
+        const unsub = crdt.onUpdate(callback);
         unsub();
 
         const diff = createTestDocDiff({key: 'newValue'});
@@ -494,5 +494,57 @@ describe('Doc', () => {
 
         const fragment = doc.extractXmlFragment(x => x.richtext);
         expect(fragment).toBeInstanceOf(XmlFragment);
+    });
+
+    it('should track changes', () => {
+        const doc = Crdt.from<any>({
+            a: 1,
+            b: [2, {x: new Map([['value', 3]])}] as const,
+            z: 'delete me',
+        });
+
+        const changes: ValueChange[] = [];
+        doc.onChange(x => {
+            changes.push(...x);
+        });
+
+        doc.update(x => {
+            x.a = 2;
+            x.c = 'new';
+            delete x.z;
+            x.b[1].x.set('value', 4);
+        });
+
+        expect(changes).toEqual([
+            {path: ['a'], value: 2},
+            {path: ['c'], value: 'new'},
+            {path: ['z'], value: undefined},
+            {path: ['b', 1, 'x', 'value'], value: 4},
+        ]);
+    });
+
+    it('should unsubscribe from changes', () => {
+        const doc = Crdt.from<any>({
+            a: 1,
+            b: [2, {x: new Map([['value', 3]])}] as const,
+            z: 'delete me',
+        });
+
+        const changes: ValueChange[] = [];
+        const unsub = doc.onChange(x => {
+            changes.push(...x);
+        });
+
+        doc.update(x => {
+            x.a = 2;
+        });
+
+        unsub();
+
+        doc.update(x => {
+            x.a = 3;
+        });
+
+        expect(changes).toEqual([{path: ['a'], value: 2}]);
     });
 });

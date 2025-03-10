@@ -10,8 +10,8 @@
 	const fragmentA = a.extractXmlFragment(x => x.text);
 	const fragmentB = b.extractXmlFragment(x => x.text);
 
-	$effect(() => a.subscribe('update', diff => b.apply(diff)));
-	$effect(() => b.subscribe('update', diff => a.apply(diff)));
+	$effect(() => a.onUpdate(diff => b.apply(diff)));
+	$effect(() => b.onUpdate(diff => a.apply(diff)));
 </script>
 
 <div class="flex flex-col gap-4">testbed</div>

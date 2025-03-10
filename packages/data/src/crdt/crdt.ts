@@ -5,6 +5,7 @@ import {
     mergeUpdatesV2,
     Array as YArray,
     Doc as YDoc,
+    YEvent,
     Map as YMap,
     Text as YText,
     XmlFragment as YXmlFragment,
@@ -38,6 +39,12 @@ export function zCrdtDiff<T>() {
             payload: Type.Uint8Array(),
         })
     );
+}
+
+export type ValuePath = Array<string | number>;
+export interface ValueChange {
+    readonly path: ValuePath;
+    readonly value: unknown;
 }
 
 const ROOT_KEY = 'root';
@@ -136,7 +143,7 @@ export class Crdt<T> {
         const [replacement, log] = observe(snapshot, draft => recipe(draft));
         // diff can be undefined if no change were made in recipe
         let diff: CrdtDiff<T> | undefined = undefined;
-        const unsub = this.subscribe('update', (nextDiff: CrdtDiff<T>) => {
+        const unsub = this.onUpdate((nextDiff: CrdtDiff<T>) => {
             diff = nextDiff;
         });
         this.doc.transact(() => {
@@ -156,12 +163,34 @@ export class Crdt<T> {
         applyUpdateV2(this.doc, diff.payload, options?.origin);
     }
 
-    subscribe(
-        _event: 'update',
-        next: (diff: CrdtDiff<T>, options: DiffOptions) => Nothing
+    onChange(cb: (changes: ValueChange[]) => Nothing): Unsubscribe {
+        const fn = (events: Array<YEvent<any>>) => {
+            const changes: ValueChange[] = [];
+            for (const event of events) {
+                for (const key of event.keys.keys()) {
+                    changes.push({
+                        path: mapFromYPath(
+                            event.currentTarget as YValue,
+                            event.path.concat([key])
+                        ).slice(1),
+                        value: mapFromYValue(event.target.get(key)),
+                    });
+                }
+            }
+
+            cb(changes);
+        };
+
+        this.root.observeDeep(fn);
+
+        return () => this.root.unobserveDeep(fn);
+    }
+
+    onUpdate(
+        cb: (diff: CrdtDiff<T>, options: DiffOptions) => Nothing
     ): Unsubscribe {
         const fn = (state: Uint8Array, origin: string | undefined) =>
-            next(
+            cb(
                 {
                     timestamp: getNow(),
                     payload: state as CrdtDiffPayload<T>,
@@ -170,9 +199,7 @@ export class Crdt<T> {
             );
         this.doc.on('updateV2', fn);
 
-        return () => {
-            this.doc.off('updateV2', fn);
-        };
+        return () => this.doc.off('updateV2', fn);
     }
 }
 
@@ -189,7 +216,45 @@ type YValue =
 
 const INTERPRET_AS_KEY = '__interpret_as__';
 
-function mapFromYValue(yValue: YValue): unknown {
+export function mapFromYPath(
+    yValue: YValue,
+    path: (string | number)[]
+): (string | number)[] {
+    if (path.length === 0) {
+        return [];
+    }
+
+    if (yValue instanceof YMap) {
+        assert(
+            typeof path[0] === 'string',
+            'mapFromYPath: expected string for YMap prop'
+        );
+        return [path[0], ...mapFromYPath(yValue.get(path[0]), path.slice(1))];
+    }
+
+    if (yValue instanceof YArray) {
+        assert(
+            typeof path[0] === 'number',
+            'mapFromYPath: expected number for YArray index'
+        );
+        assert(
+            path[1] === 'value',
+            'mapFromYPath: expected "value" for YArray index'
+        );
+        const yMap = yValue.get(path[0]);
+        assert(
+            yMap instanceof YMap,
+            'mapFromYPath: expected YMap for YArray index'
+        );
+        return [path[0], ...mapFromYPath(yMap.get('value'), path.slice(2))];
+    }
+
+    throw new AppError(
+        'mapFromYPath: expected YMap or YArray, got ' + yValue?.constructor.name
+    );
+}
+
+export function mapFromYValue(yValue: YValue): unknown {
     if (
         yValue === null ||
         yValue === undefined ||

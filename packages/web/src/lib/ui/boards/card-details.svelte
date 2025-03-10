@@ -28,7 +28,7 @@
 	const fragment = crdt.extractXmlFragment(x => x.text);
 
 	const sdk = getSdk();
-	const unsub = crdt.subscribe('update', diff => {
+	const unsub = crdt.onUpdate(diff => {
 		sdk(x =>
 			x.applyCardDiff({
 				cardId: card.value.id,
@@ -51,7 +51,9 @@
 		<div
 			class="bg-subtle-0 dark:bg-subtle-1 border-divider sticky top-0 z-20 flex items-center border-b px-4 py-1"
 		>
-			<div class="text-xs">{card.value.board.key}–{card.value.counter}</div>
+			<div class="text-xs">
+				{card.value.board.key}–{card.value.counter}
+			</div>
 			<div class="relative ml-auto">
 				<button class="btn--icon" id="ellipsis-button">
 					<EllipsisIcon />
@@ -83,7 +85,11 @@
 		<div class="mx-4 mt-4">
 			<!-- Task Description -->
 			<div class="input mb-2 w-full text-xs leading-relaxed">
-				<Editor class="min-h-[100px]" placeholder="Write here..." {fragment} />
+				<Editor
+					class="min-h-[100px]"
+					placeholder="Write here..."
+					{fragment}
+				/>
 			</div>
 			<hr class="-mx-4 mt-4 mb-4" />
 			<!-- Task Actions -->

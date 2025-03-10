@@ -28,7 +28,7 @@
 	</div>
 	<Scrollable
 		orientation="vertical"
-		viewportClass="h-full max-h-[calc(100vh-7rem)]"
+		viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
 		type="hover"
 		bind:hasTopScroll
 		bind:hasBottomScroll
@@ -39,7 +39,7 @@
 			></div>
 		{/if}
 		<div
-			class="flex flex-col gap-2"
+			class="flex h-full flex-col gap-2"
 			use:dndzone={{
 				items: column.cards,
 				flipDurationMs: 100,

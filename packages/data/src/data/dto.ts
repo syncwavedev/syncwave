@@ -374,3 +374,15 @@ export function zMeDto() {
 }
 
 export interface MeDto extends Static<ReturnType<typeof zMeDto>> {}
+
+export function zBoardViewDtoV2() {
+    return Type.Object({
+        board: zBoard(),
+        columns: Type.Array(zColumn()),
+        cards: Type.Array(zCard()),
+        users: Type.Array(zUser()),
+    });
+}
+
+export interface BoardViewDtoV2
+    extends Static<ReturnType<typeof zBoardViewDtoV2>> {}

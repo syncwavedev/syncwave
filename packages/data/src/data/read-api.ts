@@ -27,6 +27,7 @@ import {
     toUserDto,
     zBoardDto,
     zBoardViewDto,
+    zBoardViewDtoV2,
     zCardViewDto,
     zMeDto,
     zMemberAdminDto,
@@ -36,10 +37,9 @@ import {
 import {EventStoreReader} from './event-store.js';
 import {type ObjectStore, zObjectEnvelope} from './infrastructure.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
-import {type BoardId, zBoard} from './repos/board-repo.js';
+import {type BoardId} from './repos/board-repo.js';
 import {type CardId, zCard} from './repos/card-repo.js';
-import {zColumn} from './repos/column-repo.js';
-import {type UserId, zUser} from './repos/user-repo.js';
+import {type UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
     constructor(
@@ -331,10 +331,7 @@ export function createReadApi() {
             item: Type.Union([
                 Type.Object({
                     type: Type.Literal('snapshot'),
-                    board: zBoard(),
-                    columns: Type.Array(zColumn()),
-                    cards: Type.Array(zCard()),
-                    users: Type.Array(zUser()),
+                    view: zBoardViewDtoV2(),
                 }),
                 Type.Object({
                     type: Type.Literal('event'),
@@ -387,10 +384,12 @@ export function createReadApi() {
 
                 yield {
                     type: 'snapshot' as const,
-                    board,
-                    columns,
-                    cards,
-                    users,
+                    view: {
+                        board,
+                        columns,
+                        cards,
+                        users,
+                    },
                 };
 
                 for await (const event of events) {

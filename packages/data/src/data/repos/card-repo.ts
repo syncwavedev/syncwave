@@ -127,8 +127,12 @@ export class CardRepo {
         return this.rawRepo.getById([id], includeDeleted);
     }
 
-    getByBoardId(boardId: BoardId): Stream<Card> {
-        return this.rawRepo.get(BOARD_ID_COUNTER_INDEX, [boardId]);
+    getByBoardId(boardId: BoardId, includeDeleted = false): Stream<Card> {
+        return this.rawRepo.get(
+            BOARD_ID_COUNTER_INDEX,
+            [boardId],
+            includeDeleted
+        );
     }
 
     async getByBoardIdAndCounter(

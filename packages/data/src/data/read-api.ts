@@ -16,6 +16,7 @@ import {
     type ChangeEvent,
     type Transact,
     userEvents,
+    zChangeEvent,
 } from './data-layer.js';
 import {
     toBoardViewDto,
@@ -35,9 +36,10 @@ import {
 import {EventStoreReader} from './event-store.js';
 import {type ObjectStore, zObjectEnvelope} from './infrastructure.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
-import {type BoardId} from './repos/board-repo.js';
+import {type BoardId, zBoard} from './repos/board-repo.js';
 import {type CardId, zCard} from './repos/card-repo.js';
-import {type UserId} from './repos/user-repo.js';
+import {zColumn} from './repos/column-repo.js';
+import {type UserId, zUser} from './repos/user-repo.js';
 
 export class ReadApiState {
     constructor(
@@ -322,14 +324,91 @@ export function createReadApi() {
                 });
             },
         }),
+        getBoardViewV2: streamer({
+            req: Type.Object({
+                key: Type.String(),
+            }),
+            item: Type.Union([
+                Type.Object({
+                    type: Type.Literal('snapshot'),
+                    board: zBoard(),
+                    columns: Type.Array(zColumn()),
+                    cards: Type.Array(zCard()),
+                    users: Type.Array(zUser()),
+                }),
+                Type.Object({
+                    type: Type.Literal('event'),
+                    event: zChangeEvent(),
+                }),
+            ]),
+            async *stream(st, {key}) {
+                const boardByKey = await st.transact(tx =>
+                    tx.boards.getByKey(key)
+                );
+                if (!boardByKey) {
+                    throw new BusinessError(
+                        `board with key ${key} not found`,
+                        'board_not_found'
+                    );
+                }
+
+                const boardId = boardByKey.id;
+                const events = await st.esReader.subscribe(
+                    boardEvents(boardId)
+                );
+
+                const [board, columns, cards, users] = await st.transact(
+                    async tx => {
+                        return await whenAll([
+                            tx.boards.getById(boardId),
+                            toStream(
+                                tx.columns.getByBoardId(boardId, true)
+                            ).toArray(),
+                            toStream(
+                                tx.cards.getByBoardId(boardId, true)
+                            ).toArray(),
+                            toStream(tx.members.getByBoardId(boardId, true))
+                                .mapParallel(x =>
+                                    tx.users.getById(x.userId, true)
+                                )
+                                .assert(x => x !== undefined, 'user not found')
+                                .toArray(),
+                            tx.ps.ensureBoardMember(boardId, 'reader'),
+                        ]);
+                    }
+                );
+
+                if (!board) {
+                    throw new BusinessError(
+                        `board with key ${key} not found`,
+                        'board_not_found'
+                    );
+                }
+
+                yield {
+                    type: 'snapshot' as const,
+                    board,
+                    columns,
+                    cards,
+                    users,
+                };
+
+                for await (const event of events) {
+                    yield {
+                        type: 'event' as const,
+                        event,
+                    };
+                }
+            },
+        }),
         getBoardView: streamer({
             req: Type.Object({
                 key: Type.String(),
             }),
             item: zBoardViewDto(),
             async *stream(st, {key}) {
-                const board = await log.time('getBoardView get board', () =>
-                    st.transact(tx => tx.boards.getByKey(key.toUpperCase()))
+                const board = await st.transact(tx =>
+                    tx.boards.getByKey(key.toUpperCase())
                 );
                 if (board === undefined) {
                     throw new BusinessError(

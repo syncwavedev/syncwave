@@ -154,8 +154,8 @@ export class MemberRepo {
         );
     }
 
-    getByBoardId(boardId: BoardId): Stream<Member> {
-        return this.rawRepo.get(BOARD_ID_INDEX, [boardId]);
+    getByBoardId(boardId: BoardId, includeDeleted = false): Stream<Member> {
+        return this.rawRepo.get(BOARD_ID_INDEX, [boardId], includeDeleted);
     }
 
     async getByUserIdAndBoardId(

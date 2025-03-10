@@ -154,8 +154,8 @@ export class ColumnRepo {
         return await this.rawRepo.getById([id], includeDeleted);
     }
 
-    getByBoardId(boardId: BoardId): Stream<Column> {
-        return this.rawRepo.get(BOARD_ID, [boardId]);
+    getByBoardId(boardId: BoardId, includeDeleted = false): Stream<Column> {
+        return this.rawRepo.get(BOARD_ID, [boardId], includeDeleted);
     }
 
     async apply(

@@ -18,13 +18,13 @@
 		activeCardId?: string;
 	} = $props();
 
-	let hasBottomScroll = $state(false);
+	let hasBottomScroll = $state(true);
 	let hasTopScroll = $state(false);
 </script>
 
 <div class="flex w-76 flex-shrink-0 flex-col">
 	<div
-		class="text-3xs mb-2 uppercase"
+		class="text-3xs mb-2 font-semibold uppercase"
 		use:dragHandle
 		data-disable-scroll-view-drag="true"
 	>
@@ -37,11 +37,10 @@
 		bind:hasTopScroll
 		bind:hasBottomScroll
 	>
-		{#if hasTopScroll}
-			<div
-				class="from-subtle-1 dark:from-subtle-0 absolute top-0 h-16 w-full bg-gradient-to-b to-transparent"
-			></div>
-		{/if}
+		<div
+			class:invisible={!hasTopScroll}
+			class="from-subtle-1 dark:from-subtle-0 absolute top-0 h-16 w-full bg-gradient-to-b to-transparent"
+		></div>
 		<div
 			class="flex h-full flex-col gap-2"
 			use:dndzone={{
@@ -63,10 +62,9 @@
 				</div>
 			{/each}
 		</div>
-		{#if hasBottomScroll}
-			<div
-				class="from-subtle-1 dark:from-subtle-0 absolute bottom-0 h-16 w-full bg-gradient-to-t to-transparent"
-			></div>
-		{/if}
+		<div
+			class:invisible={!hasBottomScroll}
+			class="from-subtle-1 dark:from-subtle-0 absolute bottom-0 h-16 w-full bg-gradient-to-t to-transparent"
+		></div>
 	</Scrollable>
 </div>

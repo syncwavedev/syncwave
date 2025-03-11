@@ -130,7 +130,7 @@
 		<!-- Fixed Header -->
 		<div class="bg-subtle-1 dark:bg-subtle-0 border-divider border-b px-4">
 			<div class="my-1 flex items-center">
-				<div class="text-xs leading-none">{board.name}</div>
+				<div class="text-xs leading-none font-semibold">{board.name}</div>
 				<button class="btn--icon ml-auto" onclick={createCard}>
 					<PlusIcon />
 				</button>

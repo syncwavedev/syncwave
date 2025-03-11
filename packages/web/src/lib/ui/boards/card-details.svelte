@@ -51,7 +51,7 @@
 		<div
 			class="bg-subtle-0 dark:bg-subtle-1 border-divider sticky top-0 z-20 flex items-center border-b px-4 py-1"
 		>
-			<div class="text-xs">
+			<div class="text-xs font-semibold">
 				{card.value.board.key}–{card.value.counter}
 			</div>
 			<div class="relative ml-auto">

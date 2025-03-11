@@ -4,6 +4,7 @@
 	import Scrollable from '../components/scrollable.svelte';
 	import type {DndCard, DndColumn} from './use-board-view.svelte';
 	import type {CardView} from '$lib/sdk/view.svelte';
+	import PlusIcon from '../components/icons/plus-icon.svelte';
 
 	const {
 		column,
@@ -18,13 +19,20 @@
 	} = $props();
 </script>
 
-<div class="bg-subtle-2 flex w-80 flex-shrink-0 flex-col rounded-md p-2">
-	<div
-		class="text-2xs mb-1 font-medium"
-		use:dragHandle
-		data-disable-scroll-view-drag="true"
-	>
-		{column.column.name}
+<div
+	class="bg-subtle-2 dark:bg-subtle-1 group flex w-80 flex-shrink-0 flex-col rounded-md p-2"
+>
+	<div class="mb-1 flex items-center">
+		<div
+			class="text-2xs font-medium"
+			use:dragHandle
+			data-disable-scroll-view-drag="true"
+		>
+			{column.column.name}
+		</div>
+		<button class="btn--icon invisible ml-auto group-hover:visible">
+			<PlusIcon />
+		</button>
 	</div>
 	<Scrollable
 		orientation="vertical"

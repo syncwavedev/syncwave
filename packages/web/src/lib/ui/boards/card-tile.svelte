@@ -29,7 +29,7 @@
 	data-active={active || undefined}
 	class="
 	bg-subtle-0
-	dark:bg-subtle-1
+	dark:bg-subtle-2
 	hover:bg-subtle-3
 	group
 	border-divider
@@ -50,14 +50,13 @@
 		<span class="text-ink truncate">
 			{preview}
 		</span>
-		<span class="text-2xs text-ink-detail"
-			>#{card.counter} by {card.author.fullName}
-		</span>
-	</div>
-	<div class="">
-		<span class="text-[1.325rem]">
-			<Avatar name={card.author.fullName} />
-		</span>
-		<!-- <button class="btn--icon btn-sm">{{template "user.html" }}</button> -->
+		<div class="flex items-center">
+			<span class="text-2xs text-ink-detail">
+				#{card.counter} by {card.author.fullName}
+			</span>
+			<span class="ml-auto text-[1.325rem]">
+				<Avatar name={card.author.fullName} />
+			</span>
+		</div>
 	</div>
 </div>

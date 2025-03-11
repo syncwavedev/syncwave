@@ -14,7 +14,11 @@ export const load: LayoutLoad = async ({params, data}) => {
 		const boardKey = params.key;
 		const [initialBoard] = await whenAll([
 			sdkOnce(data.serverCookies, x =>
-				x.getBoardView({key: boardKey}).first()
+				x
+					.getBoardViewData({key: boardKey})
+					.filter(x => x.type === 'snapshot')
+					.map(x => x.data)
+					.first()
 			),
 		]);
 

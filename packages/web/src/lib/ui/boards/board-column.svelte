@@ -3,6 +3,8 @@
 	import CardTile from './card-tile.svelte';
 	import {dndzone, dragHandle, type DndEvent} from 'svelte-dnd-action';
 	import Scrollable from '../components/scrollable.svelte';
+	import type {DndCard, DndColumn} from './use-board-view.svelte';
+	import type {CardView} from '$lib/sdk/view.svelte';
 
 	const {
 		column,
@@ -10,9 +12,9 @@
 		handleCardDnd,
 		activeCardId,
 	}: {
-		column: BoardViewColumnDto;
-		onCardClick: (card: BoardViewCardDto) => void;
-		handleCardDnd: (e: CustomEvent<DndEvent<BoardViewCardDto>>) => void;
+		column: DndColumn;
+		onCardClick: (card: CardView) => void;
+		handleCardDnd: (e: CustomEvent<DndEvent<DndCard>>) => void;
 		activeCardId?: string;
 	} = $props();
 
@@ -26,7 +28,7 @@
 		use:dragHandle
 		data-disable-scroll-view-drag="true"
 	>
-		{column.name}
+		{column.column.name}
 	</div>
 	<Scrollable
 		orientation="vertical"
@@ -54,8 +56,8 @@
 			{#each column.cards as card (card.id)}
 				<div data-disable-scroll-view-drag="true">
 					<CardTile
-						{card}
-						onClick={() => onCardClick(card)}
+						card={card.card}
+						onClick={() => onCardClick(card.card)}
 						active={card.id === activeCardId}
 					/>
 				</div>

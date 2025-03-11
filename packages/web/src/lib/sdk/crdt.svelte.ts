@@ -21,15 +21,11 @@ function applyChange(state: unknown, change: ValueChange) {
 }
 
 export function deriveCrdtSnapshot<T>(crdt: Crdt<T>): State<T> {
-	const snapshot = $state({value: crdt.snapshot()});
+	const snapshot = $state({value: crdt.snapshot(true)});
 
 	// todo: fix memory leak
 	crdt.onChange(changes => {
 		changes.forEach(change => {
-			console.log('change', {
-				path: ['value', ...change.path],
-				value: change.value,
-			});
 			applyChange(snapshot, {
 				path: ['value', ...change.path],
 				value: change.value,

@@ -95,8 +95,8 @@ export class Crdt<T> {
         this.root.set(ROOT_VALUE, value);
     }
 
-    snapshot(): T {
-        return mapFromYValue(this.yValue) as T;
+    snapshot(exposeRichtext = false): T {
+        return mapFromYValue(this.yValue, exposeRichtext) as T;
     }
 
     state(): CrdtDiff<T> {
@@ -167,13 +167,35 @@ export class Crdt<T> {
         const fn = (events: Array<YEvent<any>>) => {
             const changes: ValueChange[] = [];
             for (const event of events) {
-                for (const key of event.keys.keys()) {
+                let target = event.target;
+                const path = event.path.slice();
+                while (
+                    !(
+                        target.parent instanceof YMap ||
+                        target.parent instanceof YArray
+                    )
+                ) {
+                    target = target.parent;
+                    path.pop();
+                }
+
+                for (const key of event.changes.keys.keys()) {
                     changes.push({
                         path: mapFromYPath(
-                            event.currentTarget as YValue,
-                            event.path.concat([key])
+                            event.currentTarget as any,
+                            path.concat([key])
                         ).slice(1),
-                        value: mapFromYValue(event.target.get(key)),
+                        value: mapFromYValue(target.get(key), true),
+                    });
+                }
+
+                if (events.keys.length === 0) {
+                    changes.push({
+                        path: mapFromYPath(
+                            event.currentTarget as any,
+                            path
+                        ).slice(1),
+                        value: mapFromYValue(target, true),
                     });
                 }
             }
@@ -254,7 +276,10 @@ export function mapFromYPath(
     );
 }
 
-export function mapFromYValue(yValue: YValue): unknown {
+export function mapFromYValue(
+    yValue: YValue,
+    exposeRichtext: boolean
+): unknown {
     if (
         yValue === null ||
         yValue === undefined ||
@@ -266,7 +291,7 @@ export function mapFromYValue(yValue: YValue): unknown {
     } else if (yValue.constructor === YArray) {
         return [
             ...(yValue as YArray<any>).map(item =>
-                mapFromYValue(item.get('value'))
+                mapFromYValue(item.get('value'), exposeRichtext)
             ),
         ];
     } else if (yValue.constructor === YMap) {
@@ -274,7 +299,7 @@ export function mapFromYValue(yValue: YValue): unknown {
             const result: any = {};
             for (const [key, value] of (yValue as YMap<any>).entries()) {
                 if (key === INTERPRET_AS_KEY) continue;
-                result[key] = mapFromYValue(value);
+                result[key] = mapFromYValue(value, exposeRichtext);
             }
 
             return result;
@@ -282,12 +307,12 @@ export function mapFromYValue(yValue: YValue): unknown {
             return new Map(
                 [...(yValue as YMap<any>).entries()].map(([key, value]) => [
                     key,
-                    mapFromYValue(value),
+                    mapFromYValue(value, exposeRichtext),
                 ])
             );
         }
     } else if (yValue.constructor === YXmlFragment) {
-        return createRichtext();
+        return createRichtext(exposeRichtext ? yValue : undefined);
     } else {
         throw new AppError('cannot map unsupported YValue: ' + yValue);
     }

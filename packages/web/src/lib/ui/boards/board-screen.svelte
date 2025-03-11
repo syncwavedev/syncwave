@@ -8,6 +8,7 @@
 		log,
 		toPosition,
 		type BoardViewCardDto,
+		type BoardViewDataDto,
 		type BoardViewDto,
 		type Card,
 		type Identity,
@@ -27,6 +28,9 @@
 	import {useBoardView} from './use-board-view.svelte';
 	import {dragHandleZone} from 'svelte-dnd-action';
 	import Scrollable from '../components/scrollable.svelte';
+	import {observeBoard} from '$lib/sdk/sdk.svelte';
+	import type {CardView} from '$lib/sdk/view.svelte';
+	import CardDetailsWrapper from './card-details-wrapper.svelte';
 
 	const {
 		boardKey,
@@ -35,23 +39,23 @@
 	}: {
 		children: Snippet;
 		boardKey: string;
-		initialBoard: BoardViewDto;
+		initialBoard: BoardViewDataDto;
 		initialMe: {
 			user: UserDto;
 			identity: Identity;
 		};
 	} = $props();
-	const board = observe(initialBoard, x => x.getBoardView({key: boardKey}));
+	const board = observeBoard(boardKey, initialBoard);
 	const {
 		columns,
 		handleDndConsiderColumns,
 		handleDndFinalizeColumns,
 		createCardHandler,
-	} = useBoardView(board);
+	} = useBoardView({value: board});
 
 	const me = observe(initialMe, x => x.getMe({}));
 
-	let selectedCard = $state<BoardViewCardDto | null>(null);
+	let selectedCard = $state<CardView | null>(null);
 	let boardRef: HTMLElement | null = $state(null);
 
 	$effect(() => {
@@ -74,7 +78,7 @@
 		}
 	});
 
-	function onCardClick(item: BoardViewCardDto) {
+	function onCardClick(item: CardView) {
 		appNavigator.replace({
 			onBack: () => {
 				selectedCard = null;
@@ -86,8 +90,8 @@
 	}
 
 	$effect(() => {
-		if (board.value.deleted) {
-			log.info(`board ${board.value.id} got deleted, redirect to app...`);
+		if (board.deleted) {
+			log.info(`board ${board.id} got deleted, redirect to app...`);
 			goto(getAppRoute());
 		}
 	});
@@ -95,7 +99,7 @@
 	const sdk = getSdk();
 
 	async function createCard() {
-		const firstColumn = board.value.columns[0];
+		const firstColumn = board.columns[0];
 		if (firstColumn === undefined) {
 			alert('Please, create a column first');
 			return;
@@ -105,8 +109,8 @@
 		const cardId = createCardId();
 		const cardCrdt = Crdt.from<Card>({
 			authorId: me.value.user.id,
-			boardId: board.value.id,
-			columnId: board.value.columns[0].id,
+			boardId: board.id,
+			columnId: board.columns[0].id,
 			createdAt: now,
 			deleted: false,
 			id: cardId,
@@ -126,7 +130,7 @@
 		<!-- Fixed Header -->
 		<div class="bg-subtle-1 dark:bg-subtle-0 border-divider border-b px-4">
 			<div class="my-1 flex items-center">
-				<div class="text-xs leading-none">{board.value.name}</div>
+				<div class="text-xs leading-none">{board.name}</div>
 				<button class="btn--icon ml-auto" onclick={createCard}>
 					<PlusIcon />
 				</button>
@@ -143,7 +147,7 @@
 				bind:this={boardRef}
 				class="flex gap-4 p-4 text-xs"
 				use:dragHandleZone={{
-					items: columns,
+					items: columns.value,
 					flipDurationMs: 100,
 					type: 'columns',
 					dropTargetStyle: {},
@@ -151,7 +155,7 @@
 				onconsider={handleDndConsiderColumns}
 				onfinalize={handleDndFinalizeColumns}
 			>
-				{#each columns as column (column.id)}
+				{#each columns.value as column (column.id)}
 					<BoardColumn
 						{column}
 						{onCardClick}
@@ -164,7 +168,7 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetails initialCard={selectedCard} />
+			<CardDetailsWrapper initialCard={selectedCard} />
 		{/key}
 	{/if}
 </main>

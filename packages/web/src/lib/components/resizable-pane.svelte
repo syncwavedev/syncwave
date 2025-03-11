@@ -1,7 +1,5 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte';
-	import Error from '../../routes/+error.svelte';
-	import {browser} from '$app/environment';
 
 	interface Props {
 		freeSide: 'left' | 'right';

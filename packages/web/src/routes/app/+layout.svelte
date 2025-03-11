@@ -1,4 +1,5 @@
 <script lang="ts">
+	import {dev} from '$app/environment';
 	import ErrorCard from '$lib/components/error-card.svelte';
 	import {setMe} from '$lib/utils';
 	import {observe} from '$lib/utils.svelte';
@@ -26,13 +27,17 @@
 
 <main class="bg-subtle-1 dark:bg-subtle-0 flex h-screen w-full">
 	<div class="flex min-h-0 min-w-0 flex-1 flex-col">
-		<svelte:boundary>
-			{#snippet failed(error)}
-				<!-- don't allow reset because it doesn't work for board view -->
-				<ErrorCard {error} />
-			{/snippet}
+		{#if dev}
 			{@render children()}
-		</svelte:boundary>
+		{:else}
+			<svelte:boundary>
+				{#snippet failed(error)}
+					<!-- don't allow reset because it doesn't work for board view -->
+					<ErrorCard {error} />
+				{/snippet}
+				{@render children()}
+			</svelte:boundary>
+		{/if}
 	</div>
 </main>
 

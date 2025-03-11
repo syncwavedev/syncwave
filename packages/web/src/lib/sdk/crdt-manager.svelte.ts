@@ -4,9 +4,9 @@ import {
 	Uuid,
 	type CrdtDiff,
 	type Doc,
+	type Recipe,
 	type Tuple,
 } from 'syncwave-data';
-import type {ChangeEvent} from '../../../../data/dist/esm/src/data/data-layer.js';
 import {deriveCrdtSnapshot} from './crdt.svelte.js';
 import type {State} from './state.js';
 
@@ -19,7 +19,7 @@ export type DocType = 'board' | 'column' | 'card' | 'user';
 class CrdtRegistry {
 	private readonly registry = new Map<Uuid, Crdt<unknown>>();
 
-	apply(id: Uuid, diff: CrdtDiff<Doc<Tuple>>) {
+	apply<T>(id: Uuid, diff: CrdtDiff<T>) {
 		const existing = this.registry.get(id);
 		if (existing !== undefined) {
 			existing.apply(diff);
@@ -37,15 +37,25 @@ class CrdtRegistry {
 }
 
 export function createCrdtManager() {
+	// todo: fix leaks
 	const registry = new CrdtRegistry();
 
 	return {
-		applyEvent(event: ChangeEvent) {
-			registry.apply(event.id, event.diff);
+		applyEvent<T>(id: Uuid, diff: CrdtDiff<T>) {
+			registry.apply(id, diff);
 		},
 		derive<T extends Doc<Tuple>>(id: Uuid, diff: CrdtDiff<T>): State<T> {
 			registry.apply(id, diff);
 			return deriveCrdtSnapshot(registry.get(id) as Crdt<T>);
+		},
+		update<T>(id: Uuid, recipe: Recipe<T>) {
+			const crdt = registry.get(id) as Crdt<T>;
+			const diff = crdt.update(recipe);
+			if (diff) {
+				this.applyEvent(id, diff);
+			}
+
+			return diff;
 		},
 	};
 }

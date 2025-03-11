@@ -1,7 +1,13 @@
-import {BoardViewCrdt} from '$lib/crdt/board-view-crdt';
 import {calculateChange} from '$lib/dnd';
+import {setCardPosition, setColumnPosition} from '$lib/sdk/sdk.svelte';
+import type {State} from '$lib/sdk/state';
+import type {
+	BoardTreeView,
+	CardView,
+	ColumnTreeView,
+	ColumnView,
+} from '$lib/sdk/view.svelte';
 import {getSdk} from '$lib/utils';
-import type {Observable} from '$lib/utils.svelte';
 import {untrack} from 'svelte';
 import {
 	SHADOW_ITEM_MARKER_PROPERTY_NAME,
@@ -11,44 +17,48 @@ import {
 	assert,
 	compareBigFloat,
 	log,
-	type BoardViewCardDto,
-	type BoardViewColumnDto,
-	type BoardViewDto,
+	type CardId,
+	type ColumnId,
 } from 'syncwave-data';
 
-export function useBoardView(remoteBoard: Observable<BoardViewDto>) {
-	// Initialize local CRDT instance
-	const localBoard = new BoardViewCrdt(remoteBoard.value);
+export interface DndCard {
+	id: CardId;
+	card: CardView;
+}
 
+export interface DndColumn {
+	id: ColumnId;
+	column: ColumnView;
+	cards: DndCard[];
+}
+
+export function useBoardView(localBoard: State<BoardTreeView>) {
 	// Reactive state for columns with initial sorting
-	let dndColumns = $state(applyOrder(remoteBoard.value.columns));
+	const dndColumns = $state({value: applyOrder(localBoard.value.columns)});
 
 	// Effect to sync remoteBoard with localBoard and update dndColumns
 	$effect(() => {
-		localBoard.apply(remoteBoard.value);
-		const latestColumns = applyOrder(localBoard.snapshot().columns);
+		const latestColumns = applyOrder(localBoard.value.columns);
 		untrack(() => {
 			// Handle drag-and-drop shadow items
-			const shadowColumn = dndColumns.find(
+			const shadowColumn: DndColumn | undefined = dndColumns.value.find(
 				item => SHADOW_ITEM_MARKER_PROPERTY_NAME in item
-			) as BoardViewColumnDto | undefined;
-			const shadowCard = dndColumns
+			);
+			const shadowCard: DndCard | undefined = dndColumns.value
 				.flatMap(x => x.cards)
-				.find(item => SHADOW_ITEM_MARKER_PROPERTY_NAME in item) as
-				| BoardViewCardDto
-				| undefined;
+				.find(item => SHADOW_ITEM_MARKER_PROPERTY_NAME in item);
 
-			const mapColumn = (column: BoardViewColumnDto) => ({
+			const toShadowColumn = (column: DndColumn): DndColumn => ({
 				...column,
 				cards: column.cards.map(card =>
-					card.pk[0] === shadowCard?.pk[0] ? {...shadowCard, ...card} : card
+					card.id === shadowCard?.id ? {...shadowCard, ...card} : card
 				),
 			});
 
-			dndColumns = latestColumns.map(column =>
+			dndColumns.value = latestColumns.map(column =>
 				column.id === shadowColumn?.id
-					? {...shadowColumn, ...mapColumn(column)}
-					: mapColumn(column)
+					? {...shadowColumn, ...toShadowColumn(column)}
+					: toShadowColumn(column)
 			);
 		});
 	});
@@ -56,73 +66,74 @@ export function useBoardView(remoteBoard: Observable<BoardViewDto>) {
 	const sdk = getSdk();
 
 	// Handler for column drag-and-drop
-	function setColumns(e: CustomEvent<DndEvent<BoardViewColumnDto>>) {
+	function setColumns(e: CustomEvent<DndEvent<DndColumn>>) {
 		const newDndColumns = e.detail.items;
 		const update = calculateChange(
-			localBoard.snapshot().columns,
-			dndColumns,
-			newDndColumns,
+			localBoard.value.columns,
+			dndColumns.value.map(x => x.column),
+			newDndColumns.map(x => x.column),
 			column => column?.boardPosition
 		);
 
 		if (update) {
 			const {target, newPosition} = update;
-			const diff = localBoard.setColumnPosition(target, newPosition);
-			sdk(x => x.applyColumnDiff({columnId: target, diff})).catch(error =>
-				log.error(error, 'failed to send column diff')
-			);
+			const diff = setColumnPosition(target, newPosition);
+			if (diff) {
+				sdk(x => x.applyColumnDiff({columnId: target, diff})).catch(
+					error => log.error(error, 'failed to send column diff')
+				);
+			}
 		}
-		dndColumns = newDndColumns;
+		dndColumns.value = newDndColumns;
 	}
 
 	// Handler for card drag-and-drop within a column
-	function setCards(
-		dndColumn: BoardViewColumnDto,
-		e: CustomEvent<DndEvent<BoardViewCardDto>>
-	) {
+	function setCards(dndColumn: DndColumn, e: CustomEvent<DndEvent<DndCard>>) {
 		assert(dndColumn !== undefined, 'dnd column not found');
-		const localColumn = localBoard
-			.snapshot()
-			.columns.find(x => x.id === dndColumn.id);
+		const localColumn = localBoard.value.columns.find(
+			x => x.id === dndColumn.id
+		);
 		assert(localColumn !== undefined, 'local column not found');
 		const update = calculateChange(
 			localColumn.cards,
-			dndColumn.cards,
-			e.detail.items,
+			dndColumn.cards.map(x => x.card),
+			e.detail.items.map(x => x.card),
 			card => card?.columnPosition
 		);
 
 		if (update) {
 			const {target, newPosition} = update;
-			const diff = localBoard.setCardPosition(
-				target,
-				newPosition,
-				dndColumn.id
-			);
-			sdk(x => x.applyCardDiff({cardId: target, diff})).catch(error =>
-				log.error(error, 'failed to send card diff')
-			);
+			const diff = setCardPosition(target, dndColumn.id, newPosition);
+			if (diff) {
+				sdk(x => x.applyCardDiff({cardId: target, diff})).catch(error =>
+					log.error(error, 'failed to send card diff')
+				);
+			}
 		}
 		dndColumn.cards = e.detail.items;
 	}
 
 	// Sort columns and cards by position
-	function applyOrder(columns: BoardViewColumnDto[]) {
-		const result = [...columns].sort((a, b) =>
-			compareBigFloat(a.boardPosition, b.boardPosition)
-		);
+	function applyOrder(columns: ColumnTreeView[]): DndColumn[] {
+		const result: DndColumn[] = [...columns]
+			.sort((a, b) => compareBigFloat(a.boardPosition, b.boardPosition))
+			.map(
+				(column): DndColumn => ({
+					id: column.id,
+					column,
+					cards: column.cards.map(card => ({id: card.id, card})),
+				})
+			);
 		for (const column of result) {
 			column.cards = [...column.cards].sort((a, b) =>
-				compareBigFloat(a.columnPosition, b.columnPosition)
+				compareBigFloat(a.card.columnPosition, b.card.columnPosition)
 			);
 		}
 		return result;
 	}
 
-	// Factory function to create card handlers per column
-	function createCardHandler(dndColumn: BoardViewColumnDto) {
-		return (e: CustomEvent<DndEvent<BoardViewCardDto>>) =>
-			setCards(dndColumn, e);
+	function createCardHandler(dndColumn: DndColumn) {
+		return (e: CustomEvent<DndEvent<DndCard>>) => setCards(dndColumn, e);
 	}
 
 	// Return reactive state and handlers

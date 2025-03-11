@@ -2,21 +2,22 @@
 	import {Crdt, type BoardViewCardDto} from 'syncwave-data';
 	import {yFragmentToPlaintext} from '$lib/richtext';
 	import Avatar from '../components/avatar.svelte';
+	import type {CardView} from '$lib/sdk/view.svelte';
 
 	const {
 		card,
 		onClick,
 		active,
 	}: {
-		card: BoardViewCardDto;
+		card: CardView;
 		onClick: () => void;
 		active: boolean;
 	} = $props();
 
 	let preview = $derived.by(() => {
-		const crdt = Crdt.load(card.state);
-		const fragment = crdt.extractXmlFragment(x => x.text);
-		const result = yFragmentToPlaintext(fragment).split('\n')[0]?.trim();
+		const result = yFragmentToPlaintext(card.text.__fragment!)
+			.split('\n')[0]
+			?.trim();
 
 		return result || 'Untitled';
 	});
@@ -48,7 +49,8 @@
 	onkeydown={e => e.key === 'Enter' && onClick()}
 >
 	<div class="flex w-full flex-col gap-1 truncate">
-		<span class="text-2xs text-ink-detail">{card.board.key}-{card.counter}</span
+		<span class="text-2xs text-ink-detail"
+			>{card.board.key}-{card.counter}</span
 		>
 		<span class="text-ink truncate">
 			{preview}

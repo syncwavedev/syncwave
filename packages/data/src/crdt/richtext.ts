@@ -12,7 +12,7 @@ const RICHTEXT_MARKER_KEY = '__isRichtextMarker';
 export function createRichtext(fragment?: XmlFragment): Richtext {
     return {
         [RICHTEXT_MARKER_KEY]: true,
-        __fragment: fragment?.clone(),
+        __fragment: fragment,
     } as Richtext;
 }
 

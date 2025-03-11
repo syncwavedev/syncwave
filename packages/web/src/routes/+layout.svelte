@@ -1,5 +1,5 @@
 <script module lang="ts">
-	import {browser} from '$app/environment';
+	import {browser, dev} from '$app/environment';
 	import {CancelledError} from 'syncwave-data';
 
 	if (browser) {
@@ -81,10 +81,13 @@
 <!-- Body-level keydown handler with proper event syntax -->
 <svelte:body on:keydown={handleEscape} />
 
-<!-- Error boundary and children rendering -->
-<svelte:boundary>
-	{#snippet failed(error, reset)}
-		<ErrorCard {error} {reset} />
-	{/snippet}
+{#if dev}
 	{@render children()}
-</svelte:boundary>
+{:else}
+	<svelte:boundary>
+		{#snippet failed(error, reset)}
+			<ErrorCard {error} {reset} />
+		{/snippet}
+		{@render children()}
+	</svelte:boundary>
+{/if}

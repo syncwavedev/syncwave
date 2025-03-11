@@ -85,7 +85,11 @@
 		<div class="mx-4 mt-4">
 			<!-- Task Description -->
 			<div class="input mb-2 w-full text-xs leading-relaxed">
-				<Editor class="min-h-[100px]" placeholder="Write here..." {fragment} />
+				<Editor
+					class="min-h-[100px]"
+					placeholder="Write here..."
+					{fragment}
+				/>
 			</div>
 			<hr class="-mx-4 mt-4 mb-4" />
 			<!-- Task Actions -->

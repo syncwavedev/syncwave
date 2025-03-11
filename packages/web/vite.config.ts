@@ -27,7 +27,7 @@ export default defineConfig({
 			// we need swc to transform async/await for zonejs to work
 			// in dev mode, prod build will be processed by esbuild
 			...swc.vite({tsconfigFile: false}),
-			apply: 'serve',
+			apply: 'build',
 		} as PluginOption,
 	],
 

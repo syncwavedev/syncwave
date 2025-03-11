@@ -93,7 +93,11 @@ export class DocRepo<T extends Doc<Tuple>> {
         });
     }
 
-    get(indexName: string, key: Tuple, includeDeleted?: boolean): Stream<T> {
+    get(
+        indexName: string,
+        key: Tuple,
+        includeDeleted?: boolean
+    ): Stream<CrdtDoc<T>> {
         return context().runChild({span: 'repo.get'}, () => {
             return this.rawRepo.get(indexName, key, includeDeleted);
         });
@@ -241,7 +245,11 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         return Object.assign(snapshot, {state: doc.state()});
     }
 
-    get(indexName: string, key: Tuple, includeDeleted?: boolean): Stream<T> {
+    get(
+        indexName: string,
+        key: Tuple,
+        includeDeleted?: boolean
+    ): Stream<CrdtDoc<T>> {
         const index = this._index(indexName);
         return this._mapToDocs(
             index.get(key),
@@ -455,11 +463,11 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         ids: AsyncIterable<Tuple>,
         message: string,
         includeDeleted?: boolean
-    ): Stream<T> {
+    ): Stream<CrdtDoc<T>> {
         return toStream(ids)
             .mapParallel(id => this.getUpgrade(id))
             .assert(x => x !== undefined, message)
-            .map(doc => doc.snapshot())
+            .map(doc => ({...doc.snapshot(), state: doc.state()}))
             .filter(x => includeDeleted || !x.deleted);
     }
 }

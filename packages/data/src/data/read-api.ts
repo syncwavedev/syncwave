@@ -26,8 +26,8 @@ import {
     toMessageDto,
     toUserDto,
     zBoardDto,
+    zBoardViewDataDto,
     zBoardViewDto,
-    zBoardViewDtoV2,
     zCardViewDto,
     zMeDto,
     zMemberAdminDto,
@@ -324,14 +324,14 @@ export function createReadApi() {
                 });
             },
         }),
-        getBoardViewV2: streamer({
+        getBoardViewData: streamer({
             req: Type.Object({
                 key: Type.String(),
             }),
             item: Type.Union([
                 Type.Object({
                     type: Type.Literal('snapshot'),
-                    view: zBoardViewDtoV2(),
+                    data: zBoardViewDataDto(),
                 }),
                 Type.Object({
                     type: Type.Literal('event'),
@@ -384,11 +384,11 @@ export function createReadApi() {
 
                 yield {
                     type: 'snapshot' as const,
-                    view: {
-                        board,
-                        columns,
-                        cards,
-                        users,
+                    data: {
+                        board: board,
+                        columns: columns,
+                        cards: cards,
+                        users: users,
                     },
                 };
 

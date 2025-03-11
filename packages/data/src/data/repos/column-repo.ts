@@ -6,6 +6,7 @@ import {Stream} from '../../stream.js';
 import {type Brand, unreachable} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import {
+    type CrdtDoc,
     type Doc,
     DocRepo,
     type OnDocChange,
@@ -154,7 +155,10 @@ export class ColumnRepo {
         return await this.rawRepo.getById([id], includeDeleted);
     }
 
-    getByBoardId(boardId: BoardId, includeDeleted = false): Stream<Column> {
+    getByBoardId(
+        boardId: BoardId,
+        includeDeleted = false
+    ): Stream<CrdtDoc<Column>> {
         return this.rawRepo.get(BOARD_ID, [boardId], includeDeleted);
     }
 

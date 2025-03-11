@@ -9,6 +9,7 @@ import {
     CancelledError,
     toError,
 } from './errors.js';
+import {log} from './logger.js';
 import {Stream, toStream} from './stream.js';
 
 export type Brand<T, B> = T & {__brand: () => B | undefined};
@@ -19,6 +20,12 @@ export type Unsubscribe = () => void;
 
 export function assertNever(value: never): never {
     throw new AppError('assertNever failed: ' + value);
+}
+
+export function softNever(value: never, reason: string): void {
+    log.warn(
+        `the app is outdated, softNever (${reason}) got called with: ${JSON.stringify(value)}`
+    );
 }
 
 export type AssertMessage = string | (() => string);

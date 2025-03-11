@@ -21,6 +21,9 @@ export default ts.config(
 				...globals.node,
 			},
 		},
+		rules: {
+			'@typescript-eslint/no-empty-object-type': 'off',
+		},
 	},
 	{
 		files: ['**/*.svelte', '**/*.svelte.ts'],

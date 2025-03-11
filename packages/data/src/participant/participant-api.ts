@@ -100,7 +100,7 @@ export function createParticipantApi() {
         createColumn: proxy('createColumn'),
         createCard: proxy('createCard'),
         getBoardView: proxy('getBoardView'),
-        getBoardViewV2: proxy('getBoardViewV2'),
+        getBoardViewData: proxy('getBoardViewData'),
         deleteBoard: proxy('deleteBoard'),
         deleteColumn: proxy('deleteColumn'),
         deleteCard: proxy('deleteCard'),

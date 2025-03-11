@@ -1,4 +1,5 @@
 import {assert, Crdt, type ValueChange} from 'syncwave-data';
+import type {State} from './state';
 
 function applyChange(state: unknown, change: ValueChange) {
 	assert(change.path.length > 0, 'change path must not be empty');
@@ -19,17 +20,20 @@ function applyChange(state: unknown, change: ValueChange) {
 	}
 }
 
-export function deriveCrdtSnapshot<T>(crdt: Crdt<T>) {
+export function deriveCrdtSnapshot<T>(crdt: Crdt<T>): State<T> {
 	const snapshot = $state({value: crdt.snapshot()});
 
-	$effect(() => {
-		return crdt.onChange(changes => {
-			changes.forEach(change =>
-				applyChange(snapshot, {
-					path: ['value', ...change.path],
-					value: change.value,
-				})
-			);
+	// todo: fix memory leak
+	crdt.onChange(changes => {
+		changes.forEach(change => {
+			console.log('change', {
+				path: ['value', ...change.path],
+				value: change.value,
+			});
+			applyChange(snapshot, {
+				path: ['value', ...change.path],
+				value: change.value,
+			});
 		});
 	});
 

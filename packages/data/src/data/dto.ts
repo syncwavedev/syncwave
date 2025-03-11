@@ -1,6 +1,7 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {zCrdtDiff} from '../crdt/crdt.js';
 import {assert, whenAll} from '../utils.js';
+import {Uuid} from '../uuid.js';
 import {type DataTx} from './data-layer.js';
 import {type AttachmentId, zAttachment} from './repos/attachment-repo.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
@@ -18,6 +19,7 @@ export function zCardDto() {
             column: Type.Union([zColumnDto(), Type.Null()]),
             author: zUserDto(),
             board: zBoardDto(),
+            assignee: Type.Union([zUserDto(), Type.Null()]),
             state: zCrdtDiff<Card>(),
         }),
     ]);
@@ -31,8 +33,11 @@ export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
     const column = card.columnId ? await toColumnDto(tx, card.columnId) : null;
     const author = await toUserDto(tx, card.authorId);
     const board = await toBoardDto(tx, card.boardId);
+    const assignee = card.assigneeId
+        ? await toUserDto(tx, card.assigneeId)
+        : null;
 
-    return {...card, column, board, author};
+    return {...card, column, board, author, assignee};
 }
 
 export function zCardViewDto() {
@@ -65,9 +70,9 @@ export function zBoardViewCardDto() {
     return Type.Composite([
         zCard(),
         Type.Object({
+            state: zCrdtDiff<Card>(),
             column: Type.Union([zColumnDto(), Type.Null()]),
             board: zBoardDto(),
-            state: zCrdtDiff<Card>(),
             author: zUserDto(),
         }),
     ]);
@@ -93,8 +98,8 @@ export function zColumnDto() {
     return Type.Composite([
         zColumn(),
         Type.Object({
-            board: zBoardDto(),
             state: zCrdtDiff<Column>(),
+            board: zBoardDto(),
         }),
     ]);
 }
@@ -116,8 +121,8 @@ export function zBoardViewColumnDto() {
     return Type.Composite([
         zColumn(),
         Type.Object({
-            cards: Type.Array(zBoardViewCardDto()),
             state: zCrdtDiff<Column>(),
+            cards: Type.Array(zBoardViewCardDto()),
         }),
     ]);
 }
@@ -167,8 +172,8 @@ export function zBoardViewDto() {
     return Type.Composite([
         zBoard(),
         Type.Object({
-            columns: Type.Array(zBoardViewColumnDto()),
             state: zCrdtDiff<Board>(),
+            columns: Type.Array(zBoardViewColumnDto()),
         }),
     ]);
 }
@@ -194,9 +199,9 @@ export function zMemberDto() {
     return Type.Composite([
         zMember(),
         Type.Object({
+            state: zCrdtDiff<Member>(),
             user: zUserDto(),
             board: zBoardDto(),
-            state: zCrdtDiff<Member>(),
         }),
     ]);
 }
@@ -314,9 +319,9 @@ export function zMessageWithoutReplyDto() {
     return Type.Composite([
         zMessage(),
         Type.Object({
+            state: zCrdtDiff<Message>(),
             author: zUserDto(),
             card: zCardDto(),
-            state: zCrdtDiff<Message>(),
             attachments: Type.Array(zAttachmentDto()),
         }),
     ]);
@@ -324,6 +329,8 @@ export function zMessageWithoutReplyDto() {
 
 export interface MessageWithoutReplyDto
     extends Static<ReturnType<typeof zMessageWithoutReplyDto>> {}
+
+const x: CardDto = 1 as any;
 
 export async function toMessageWithoutReplyDto(
     tx: DataTx,
@@ -375,14 +382,20 @@ export function zMeDto() {
 
 export interface MeDto extends Static<ReturnType<typeof zMeDto>> {}
 
-export function zBoardViewDtoV2() {
+export function zBoardViewDataDto() {
     return Type.Object({
-        board: zBoard(),
-        columns: Type.Array(zColumn()),
-        cards: Type.Array(zCard()),
-        users: Type.Array(zUser()),
+        board: Type.Object({state: zCrdtDiff<Board>(), id: Uuid<BoardId>()}),
+        columns: Type.Array(
+            Type.Object({state: zCrdtDiff<Column>(), id: Uuid<ColumnId>()})
+        ),
+        cards: Type.Array(
+            Type.Object({state: zCrdtDiff<Card>(), id: Uuid<CardId>()})
+        ),
+        users: Type.Array(
+            Type.Object({state: zCrdtDiff<User>(), id: Uuid<UserId>()})
+        ),
     });
 }
 
-export interface BoardViewDtoV2
-    extends Static<ReturnType<typeof zBoardViewDtoV2>> {}
+export interface BoardViewDataDto
+    extends Static<ReturnType<typeof zBoardViewDataDto>> {}

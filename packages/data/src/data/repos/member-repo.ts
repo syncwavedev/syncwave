@@ -8,6 +8,7 @@ import {Stream} from '../../stream.js';
 import {type Brand, unreachable} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import {
+    type CrdtDoc,
     type Doc,
     DocRepo,
     type OnDocChange,
@@ -154,7 +155,10 @@ export class MemberRepo {
         );
     }
 
-    getByBoardId(boardId: BoardId, includeDeleted = false): Stream<Member> {
+    getByBoardId(
+        boardId: BoardId,
+        includeDeleted = false
+    ): Stream<CrdtDoc<Member>> {
         return this.rawRepo.get(BOARD_ID_INDEX, [boardId], includeDeleted);
     }
 

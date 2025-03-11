@@ -14,7 +14,7 @@ import {
 import {Stream, toStream} from '../stream.js';
 import {getNow, type Timestamp, zTimestamp} from '../timestamp.js';
 import {compareTuple, stringifyTuple, type Tuple} from '../tuple.js';
-import {parseValue, type ToSchema} from '../type.js';
+import {checkValue, type ToSchema} from '../type.js';
 import {type Nothing, pipe, whenAll} from '../utils.js';
 import {type TransitionChecker} from './transition-checker.js';
 
@@ -434,7 +434,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         transitionChecker?: TransitionChecker<T>;
     }): Promise<void> {
         const nextSnapshot = params.next.snapshot();
-        parseValue(this.schema, nextSnapshot);
+        checkValue(this.schema, nextSnapshot);
         await whenAll([
             params
                 .transitionChecker?.(params.prev, nextSnapshot)

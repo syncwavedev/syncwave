@@ -24,12 +24,17 @@ const LogLevelValues: Record<LogLevel, number> = {
 };
 
 export interface Logger {
+    enabled(level: LogLevel): boolean;
+
     setLogLevel(level: LogLevel): void;
     trace(
         ...args: [error: AppError, message: string] | [message: string]
     ): void;
     debug(
-        ...args: [error: AppError, message: string] | [message: string]
+        ...args:
+            | [error: AppError, message: string]
+            | [message: string]
+            | [() => string]
     ): void;
     info(...args: [error: AppError, message: string] | [message: string]): void;
     warn(...args: [error: AppError, message: string] | [message: string]): void;
@@ -42,27 +47,63 @@ export interface Logger {
 
     log(
         level: Level,
-        ...args: [error: AppError, message: string] | [message: string]
+        ...args:
+            | [error: AppError, message: string]
+            | [message: string]
+            | [() => string]
     ): void;
 
     time<T>(name: string, fn: () => Promise<T>): Promise<T>;
 }
 
 abstract class BaseLogger implements Logger {
-    abstract log(
+    protected abstract _log(
         level: Level,
         ...args: [error: AppError, message: string] | [message: string]
     ): void;
 
     abstract setLogLevel(level: LogLevel): void;
 
-    trace(
-        ...args: [error: AppError, message: string] | [message: string]
+    abstract getLogLevel(): LogLevel;
+
+    log(
+        level: Level,
+        ...args:
+            | [error: AppError, message: string]
+            | [message: string]
+            | [() => string]
     ): void {
-        this.log('debug', ...args);
+        if (this.enabled(level)) {
+            if (args[0] instanceof Function) {
+                this._log(level, args[0]());
+            } else {
+                this._log(
+                    level,
+                    ...(args as
+                        | [error: AppError, message: string]
+                        | [message: string])
+                );
+            }
+        }
+    }
+
+    enabled(level: LogLevel): boolean {
+        return LogLevelValues[level] >= LogLevelValues[this.getLogLevel()];
+    }
+
+    trace(
+        ...args:
+            | [error: AppError, message: string]
+            | [message: string]
+            | [() => string]
+    ): void {
+        this.log('trace', ...args);
     }
     debug(
-        ...args: [error: AppError, message: string] | [message: string]
+        ...args:
+            | [error: AppError, message: string]
+            | [message: string]
+            | [() => string]
     ): void {
         this.log('debug', ...args);
     }
@@ -99,11 +140,15 @@ abstract class BaseLogger implements Logger {
 class PinoLogger extends BaseLogger {
     private readonly pino = createPino();
 
+    override getLogLevel(): LogLevel {
+        return this.pino.level as LogLevel;
+    }
+
     setLogLevel(level: LogLevel): void {
         this.pino.level = level;
     }
 
-    log(
+    _log(
         level: Level,
         ...args: [error: AppError, message: string] | [message: string]
     ) {
@@ -143,11 +188,15 @@ class PinoLogger extends BaseLogger {
 class TestLogger extends BaseLogger {
     private level: LogLevel = 'debug';
 
+    override getLogLevel(): LogLevel {
+        return this.level;
+    }
+
     setLogLevel(level: LogLevel): void {
         this.level = level;
     }
 
-    log(
+    _log(
         level: Level,
         ...args: [error: AppError, message: string] | [message: string]
     ) {

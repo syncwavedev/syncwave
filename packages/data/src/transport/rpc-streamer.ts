@@ -20,7 +20,7 @@ import {
     catchConnectionClosed,
     type Connection,
 } from '../transport/transport.js';
-import {parseValue} from '../type.js';
+import {checkValue} from '../type.js';
 import {
     assert,
     assertNever,
@@ -138,10 +138,12 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a handler');
                 }
 
-                const callInfo = `handle_call ${state.serverName}.${req.name}(${stringifyLogPart(req.arg)}) [rid=${ctx.requestId}]`;
+                const callInfo = `handle_call ${state.serverName}.${req.name} [rid=${ctx.requestId}]`;
 
                 try {
-                    log.debug(`${callInfo}...`);
+                    if (log.enabled('debug')) {
+                        log.debug(`${callInfo}...`);
+                    }
 
                     const result = await processor.handle(
                         state.state,
@@ -149,7 +151,9 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         ctx
                     );
 
-                    log.debug(`${callInfo} => ${stringifyLogPart(result)}`);
+                    log.debug(
+                        () => `${callInfo} => ${stringifyLogPart(result)}`
+                    );
 
                     return result;
                 } catch (error) {
@@ -173,7 +177,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
 
                 const callInfo = `handle ${state.serverName}.${name} [sid=${streamId}]`;
 
-                log.debug(`${callInfo}...`);
+                log.debug(() => `${callInfo}...`);
 
                 const [ctx, cancelCtx] = context().createDetached({
                     span: `handle_stream ${name}`,
@@ -196,7 +200,8 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                     .map((value, index) => ({value, index}))
                                     .mapParallel(async ({value, index}) => {
                                         log.debug(
-                                            `${callInfo} => ${stringifyLogPart(value)}`
+                                            () =>
+                                                `${callInfo} => ${stringifyLogPart(value)}`
                                         );
                                         assert(
                                             index === counter,
@@ -225,7 +230,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                     );
                                 }
                             } finally {
-                                log.debug(`${callInfo} finished`);
+                                log.debug(() => `${callInfo} finished`);
 
                                 // no point in sending end if the stream was cancelled by client
                                 if (!state.jobManager.isCancelled(streamId)) {
@@ -502,7 +507,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             context().ensureActive();
 
             try {
-                arg = parseValue(handler.req, arg);
+                arg = checkValue(handler.req, arg);
             } catch (error) {
                 log.error(
                     toError(error),
@@ -523,12 +528,13 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                 return requestCtx
                     .run(async () => {
                         const callInfo = `call ${clientTarget}.${name} [rid=${requestId}]`;
-                        log.debug(`${callInfo}...`);
+                        log.debug(() => `${callInfo}...`);
                         return server
                             .handle({name, arg}, headers)
                             .then(async result => {
                                 log.debug(
-                                    `${callInfo} => ${stringifyLogPart(result)}`
+                                    () =>
+                                        `${callInfo} => ${stringifyLogPart(result)}`
                                 );
                                 return result;
                             })

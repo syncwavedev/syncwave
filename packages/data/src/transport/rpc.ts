@@ -2,7 +2,7 @@ import type {Tracer} from '@opentelemetry/api';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
-import {parseValue, type ToSchema} from '../type.js';
+import {checkValue, type ToSchema} from '../type.js';
 import {assertNever} from '../utils.js';
 import type {MessageHeaders, RpcMessageId} from './rpc-message.js';
 import {launchRpcStreamerServer} from './rpc-streamer.js';
@@ -58,10 +58,10 @@ export function handler<TState, TRequest, TResponse>(
     async function wrapper(state: TState, req: TRequest, info: RequestInfo) {
         const res = await options.handle(
             state,
-            parseValue(options.req, req),
+            checkValue(options.req, req),
             info
         );
-        return parseValue(options.res, res);
+        return checkValue(options.res, res);
     }
 
     return {
@@ -98,10 +98,10 @@ export function streamer<TState, TRequest, TItem>(
     ): AsyncIterable<TItem> {
         for await (const item of options.stream(
             state,
-            parseValue(options.req, req),
+            checkValue(options.req, req),
             ctx
         )) {
-            yield parseValue(options.item, item);
+            yield checkValue(options.item, item);
         }
     }
     return {

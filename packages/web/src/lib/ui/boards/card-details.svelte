@@ -49,9 +49,9 @@
 	<div class="flex-grow overflow-y-auto">
 		<!-- Header with Context Menu -->
 		<div
-			class="bg-subtle-0 dark:bg-subtle-1 border-divider sticky top-0 z-20 flex items-center border-b px-4 py-1"
+			class="bg-subtle-0 dark:bg-subtle-1 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
 		>
-			<div class="text-xs font-semibold">
+			<div class="text-xs font-medium">
 				{card.value.board.key}–{card.value.counter}
 			</div>
 			<div class="relative ml-auto">
@@ -82,14 +82,10 @@
 				<TimesIcon />
 			</button>
 		</div>
-		<div class="mx-4 mt-4">
+		<div class="mx-4 mt-1">
 			<!-- Task Description -->
 			<div class="input mb-2 w-full text-xs leading-relaxed">
-				<Editor
-					class="min-h-[100px]"
-					placeholder="Write here..."
-					{fragment}
-				/>
+				<Editor class="min-h-[100px]" placeholder="Write here..." {fragment} />
 			</div>
 			<hr class="-mx-4 mt-4 mb-4" />
 			<!-- Task Actions -->

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type {BoardViewCardDto, BoardViewColumnDto} from 'syncwave-data';
 	import CardTile from './card-tile.svelte';
 	import {dndzone, dragHandle, type DndEvent} from 'svelte-dnd-action';
 	import Scrollable from '../components/scrollable.svelte';
@@ -17,14 +16,11 @@
 		handleCardDnd: (e: CustomEvent<DndEvent<DndCard>>) => void;
 		activeCardId?: string;
 	} = $props();
-
-	let hasBottomScroll = $state(true);
-	let hasTopScroll = $state(false);
 </script>
 
-<div class="flex w-76 flex-shrink-0 flex-col">
+<div class="bg-subtle-2 flex w-80 flex-shrink-0 flex-col rounded-md p-2">
 	<div
-		class="text-3xs mb-2 font-semibold uppercase"
+		class="text-2xs mb-1 font-medium"
 		use:dragHandle
 		data-disable-scroll-view-drag="true"
 	>
@@ -33,16 +29,10 @@
 	<Scrollable
 		orientation="vertical"
 		viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
-		type="hover"
-		bind:hasTopScroll
-		bind:hasBottomScroll
+		type="scroll"
 	>
 		<div
-			class:invisible={!hasTopScroll}
-			class="from-subtle-1 dark:from-subtle-0 absolute top-0 h-16 w-full bg-gradient-to-b to-transparent"
-		></div>
-		<div
-			class="flex h-full flex-col gap-2"
+			class="flex h-full flex-col gap-1.5"
 			use:dndzone={{
 				items: column.cards,
 				flipDurationMs: 100,
@@ -62,9 +52,5 @@
 				</div>
 			{/each}
 		</div>
-		<div
-			class:invisible={!hasBottomScroll}
-			class="from-subtle-1 dark:from-subtle-0 absolute bottom-0 h-16 w-full bg-gradient-to-t to-transparent"
-		></div>
 	</Scrollable>
 </div>

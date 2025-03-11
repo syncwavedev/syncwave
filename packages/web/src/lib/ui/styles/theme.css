@@ -62,58 +62,62 @@
 	--color-red-950: oklch(23% 0.25 25deg);
 
 	/* Sage Gray */
-	--color-sage-10: oklch(98% 0.003 130deg);
-	--color-sage-30: oklch(96% 0.0031 130deg);
-	--color-sage-40: oklch(95% 0.0031 130deg);
-	--color-sage-50: oklch(94% 0.0032 130deg);
-	--color-sage-70: oklch(92% 0.0033 130deg);
-	--color-sage-100: oklch(90% 0.0034 130deg);
-	--color-sage-150: oklch(86% 0.0035 130deg);
-	--color-sage-200: oklch(82% 0.0036 130deg);
-	--color-sage-250: oklch(78% 0.0037 130deg);
-	--color-sage-300: oklch(74% 0.0038 130deg);
-	--color-sage-350: oklch(70% 0.0039 130deg);
-	--color-sage-400: oklch(66% 0.004 130deg);
-	--color-sage-450: oklch(62% 0.0041 130deg);
-	--color-sage-500: oklch(58% 0.0042 130deg);
-	--color-sage-550: oklch(54% 0.0042 130deg);
-	--color-sage-600: oklch(50% 0.0043 130deg);
-	--color-sage-650: oklch(46% 0.0043 130deg);
-	--color-sage-700: oklch(42% 0.0044 130deg);
-	--color-sage-750: oklch(38% 0.0044 130deg);
-	--color-sage-800: oklch(34% 0.0044 130deg);
-	--color-sage-850: oklch(30% 0.0045 130deg);
-	--color-sage-870: oklch(28% 0.0045 130deg);
-	--color-sage-900: oklch(26% 0.0045 130deg);
-	--color-sage-930: oklch(24% 0.0045 130deg);
-	--color-sage-950: oklch(22% 0.0045 130deg);
+	--color-gray-10: oklch(99% 0 0deg);
+	--color-gray-20: oklch(98% 0 0deg);
+	--color-gray-30: oklch(97% 0 0deg);
+	--color-gray-40: oklch(96% 0 0deg);
+	--color-gray-50: oklch(95% 0 0deg);
+	--color-gray-60: oklch(94% 0 0deg);
+	--color-gray-70: oklch(93% 0 0deg);
+	--color-gray-80: oklch(92% 0 0deg);
+	--color-gray-90: oklch(91% 0 0deg);
+	--color-gray-100: oklch(90% 0 0deg);
+	--color-gray-150: oklch(86% 0 0deg);
+	--color-gray-200: oklch(82% 0 0deg);
+	--color-gray-250: oklch(78% 0 0deg);
+	--color-gray-300: oklch(74% 0 0deg);
+	--color-gray-350: oklch(70% 0 0deg);
+	--color-gray-400: oklch(66% 0 0deg);
+	--color-gray-450: oklch(62% 0 0deg);
+	--color-gray-500: oklch(58% 0 0deg);
+	--color-gray-550: oklch(54% 0 0deg);
+	--color-gray-600: oklch(50% 0 0deg);
+	--color-gray-650: oklch(46% 0 0deg);
+	--color-gray-700: oklch(42% 0 0deg);
+	--color-gray-750: oklch(38% 0 0deg);
+	--color-gray-800: oklch(34% 0 0deg);
+	--color-gray-850: oklch(30% 0 0deg);
+	--color-gray-870: oklch(28% 0 0deg);
+	--color-gray-900: oklch(26% 0 0deg);
+	--color-gray-930: oklch(24% 0 0deg);
+	--color-gray-950: oklch(22% 0 0deg);
 
-	/* Gray */
-	--color-gray-10: oklch(98% 0.0029 250deg);
-	--color-gray-30: oklch(96% 0.003 250deg);
-	--color-gray-40: oklch(95% 0.0031 250deg);
-	--color-gray-50: oklch(94% 0.0032 250deg);
-	--color-gray-70: oklch(92% 0.0033 250deg);
-	--color-gray-100: oklch(90% 0.0034 250deg);
-	--color-gray-150: oklch(86% 0.0035 250deg);
-	--color-gray-200: oklch(82% 0.0036 250deg);
-	--color-gray-250: oklch(78% 0.0037 250deg);
-	--color-gray-300: oklch(74% 0.0038 250deg);
-	--color-gray-350: oklch(70% 0.0039 250deg);
-	--color-gray-400: oklch(66% 0.004 250deg);
-	--color-gray-450: oklch(62% 0.0041 250deg);
-	--color-gray-500: oklch(58% 0.0042 250deg);
-	--color-gray-550: oklch(54% 0.0042 250deg);
-	--color-gray-600: oklch(50% 0.0043 250deg);
-	--color-gray-650: oklch(46% 0.0043 250deg);
-	--color-gray-700: oklch(42% 0.0044 250deg);
-	--color-gray-750: oklch(38% 0.0044 250deg);
-	--color-gray-800: oklch(34% 0.0044 250deg);
-	--color-gray-850: oklch(30% 0.0055 250deg);
-	--color-gray-870: oklch(28% 0.0065 250deg);
-	--color-gray-900: oklch(26% 0.0075 250deg);
-	--color-gray-930: oklch(24% 0.0085 250deg);
-	--color-gray-950: oklch(22% 0.0095 250deg);
+	/* Slate */
+	--color-slate-10: oklch(98% 0.0029 250deg);
+	--color-slate-30: oklch(96% 0.003 250deg);
+	--color-slate-40: oklch(95% 0.0031 250deg);
+	--color-slate-50: oklch(94% 0.0032 250deg);
+	--color-slate-70: oklch(92% 0.0033 250deg);
+	--color-slate-100: oklch(90% 0.0034 250deg);
+	--color-slate-150: oklch(86% 0.0035 250deg);
+	--color-slate-200: oklch(82% 0.0036 250deg);
+	--color-slate-250: oklch(78% 0.0037 250deg);
+	--color-slate-300: oklch(74% 0.0038 250deg);
+	--color-slate-350: oklch(70% 0.0039 250deg);
+	--color-slate-400: oklch(66% 0.004 250deg);
+	--color-slate-450: oklch(62% 0.0041 250deg);
+	--color-slate-500: oklch(58% 0.0042 250deg);
+	--color-slate-550: oklch(54% 0.0042 250deg);
+	--color-slate-600: oklch(50% 0.0043 250deg);
+	--color-slate-650: oklch(46% 0.0043 250deg);
+	--color-slate-700: oklch(42% 0.0044 250deg);
+	--color-slate-750: oklch(38% 0.0044 250deg);
+	--color-slate-800: oklch(34% 0.0044 250deg);
+	--color-slate-850: oklch(30% 0.0055 250deg);
+	--color-slate-870: oklch(28% 0.0065 250deg);
+	--color-slate-900: oklch(26% 0.0075 250deg);
+	--color-slate-930: oklch(24% 0.0085 250deg);
+	--color-slate-950: oklch(22% 0.0095 250deg);
 
 	/* Blue */
 	--color-blue-10: oklch(98% 0.029 245deg);
@@ -153,11 +157,15 @@
 	--color-divider: var(--theme-color-divider);
 	--color-divider-object: var(--theme-color-divider-object);
 
+	--color-scrollbar: var(--theme-color-scrollbar);
+
 	--color-subtle-0: var(--theme-color-subtle-0);
 	--color-subtle-1: var(--theme-color-subtle-1);
 	--color-subtle-2: var(--theme-color-subtle-2);
 	--color-subtle-3: var(--theme-color-subtle-3);
 	--color-subtle-4: var(--theme-color-subtle-4);
+	--color-subtle-5: var(--theme-color-subtle-5);
+	--color-subtle-6: var(--theme-color-subtle-6);
 
 	--color-ink-contrast: var(--theme-color-ink-contrast);
 	--color-ink-danger-contrast: var(--theme-color-ink-danger-contrast);
@@ -171,39 +179,47 @@
 
 @layer base {
 	[data-theme='light'] {
-		--theme-color-ink: var(--color-sage-900);
-		--theme-color-ink-body: var(--color-sage-600);
-		--theme-color-ink-detail: var(--color-sage-450);
-		--theme-color-ink-placeholder: var(--color-sage-350);
+		--theme-color-ink: var(--color-gray-900);
+		--theme-color-ink-body: var(--color-gray-600);
+		--theme-color-ink-detail: var(--color-gray-450);
+		--theme-color-ink-placeholder: var(--color-gray-350);
 		--theme-color-ink-reverse: var(--color-white);
 		--theme-color-ink-danger: var(--color-red-450);
 
-		--theme-color-divider: var(--color-sage-40);
-		--theme-color-divider-object: var(--color-sage-70);
+		--theme-color-divider: var(--color-gray-50);
+		--theme-color-divider-object: var(--color-gray-70);
+
+		--theme-color-scrollbar: var(--color-gray-150);
 
 		--theme-color-subtle-0: var(--color-white);
-		--theme-color-subtle-1: var(--color-sage-10);
-		--theme-color-subtle-2: var(--color-sage-30);
-		--theme-color-subtle-3: var(--color-sage-50);
-		--theme-color-subtle-4: var(--color-sage-70);
+		--theme-color-subtle-1: var(--color-gray-10);
+		--theme-color-subtle-2: var(--color-gray-20);
+		--theme-color-subtle-3: var(--color-gray-30);
+		--theme-color-subtle-4: var(--color-gray-40);
+		--theme-color-subtle-5: var(--color-gray-50);
+		--theme-color-subtle-6: var(--color-gray-60);
 	}
 
 	[data-theme='dark'] {
-		--theme-color-ink: var(--color-gray-50);
-		--theme-color-ink-body: var(--color-gray-300);
+		--theme-color-ink: var(--color-slate-50);
+		--theme-color-ink-body: var(--color-slate-300);
 		--theme-color-ink-reverse: var(--color-black);
-		--theme-color-ink-detail: var(--color-gray-450);
-		--theme-color-ink-placeholder: var(--color-gray-650);
+		--theme-color-ink-detail: var(--color-slate-450);
+		--theme-color-ink-placeholder: var(--color-slate-650);
 		--theme-color-ink-danger: var(--color-red-350);
 
-		--theme-color-divider: var(--color-gray-870);
-		--theme-color-divider-object: var(--color-gray-800);
+		--theme-color-divider: var(--color-slate-870);
+		--theme-color-divider-object: var(--color-slate-800);
 
-		--theme-color-subtle-0: var(--color-gray-950);
-		--theme-color-subtle-1: var(--color-gray-930);
-		--theme-color-subtle-2: var(--color-gray-900);
-		--theme-color-subtle-3: var(--color-gray-850);
-		--theme-color-subtle-4: var(--color-gray-800);
+		--theme-color-scrollbar: var(--color-slate-950);
+
+		--theme-color-subtle-0: var(--color-slate-950);
+		--theme-color-subtle-1: var(--color-slate-930);
+		--theme-color-subtle-2: var(--color-slate-900);
+		--theme-color-subtle-3: var(--color-slate-850);
+		--theme-color-subtle-4: var(--color-slate-800);
+		--theme-color-subtle-5: var(--color-slate-750);
+		--theme-color-subtle-6: var(--color-slate-700);
 	}
 
 	html,

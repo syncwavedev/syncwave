@@ -59,16 +59,19 @@
 {#snippet Scrollbar({orientation}: {orientation: 'vertical' | 'horizontal'})}
 	<ScrollArea.Scrollbar
 		{orientation}
-		class="flex min-h-2 min-w-2 touch-none transition-all duration-50 select-none"
+		class="flex min-h-3 min-w-2 touch-none transition-all duration-50 select-none"
 	>
 		<ScrollArea.Thumb
-			class="bg-subtle-4 relative my-2 ml-2 min-h-2 min-w-2 rounded-full transition-all duration-50"
+			class="bg-scrollbar relative rounded-full transition-all duration-50 {orientation ===
+			'vertical'
+				? 'my-2 h-full min-w-1.75'
+				: 'mx-2 mb-1.25 h-1.5 w-full'}"
 		/>
 	</ScrollArea.Scrollbar>
 {/snippet}
 
 <!-- Scroll area structure -->
-<ScrollArea.Root bind:ref {type} {...restProps}>
+<ScrollArea.Root bind:ref scrollHideDelay={250} {type} {...restProps}>
 	<ScrollArea.Viewport
 		bind:ref={viewportRef}
 		class={viewportClass}

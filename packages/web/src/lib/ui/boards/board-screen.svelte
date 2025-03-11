@@ -7,9 +7,7 @@
 		getNow,
 		log,
 		toPosition,
-		type BoardViewCardDto,
 		type BoardViewDataDto,
-		type BoardViewDto,
 		type Card,
 		type Identity,
 		type UserDto,
@@ -23,7 +21,6 @@
 	import SearchIcon from '../components/icons/search-icon.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import BoardColumn from './board-column.svelte';
-	import CardDetails from './card-details.svelte';
 	import appNavigator from '../app-navigator';
 	import {useBoardView} from './use-board-view.svelte';
 	import {dragHandleZone} from 'svelte-dnd-action';
@@ -128,9 +125,9 @@
 <main class="flex h-screen w-full">
 	<div class="bg-subtle-1 dark:bg-subtle-0 flex min-w-0 grow flex-col">
 		<!-- Fixed Header -->
-		<div class="bg-subtle-1 dark:bg-subtle-0 border-divider border-b px-4">
+		<div class="bg-subtle-1 dark:bg-subtle-0 px-4">
 			<div class="my-1 flex items-center">
-				<div class="text-xs leading-none font-semibold">{board.name}</div>
+				<div class="text-xs leading-none font-medium">{board.name}</div>
 				<button class="btn--icon ml-auto" onclick={createCard}>
 					<PlusIcon />
 				</button>
@@ -142,10 +139,10 @@
 				</button>
 			</div>
 		</div>
-		<Scrollable orientation="horizontal" class="flex-grow">
+		<Scrollable orientation="horizontal" class="flex-grow" type="scroll">
 			<div
 				bind:this={boardRef}
-				class="flex gap-4 p-4 text-xs"
+				class="flex gap-1.5 px-4 pb-2 text-xs"
 				use:dragHandleZone={{
 					items: columns.value,
 					flipDurationMs: 100,

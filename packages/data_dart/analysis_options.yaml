@@ -1,9 +1,0 @@
-include: package:lints/recommended.yaml
-
-analyzer:
-    # lib/participant/dto.dart is generated
-    exclude: [lib/participant/dto.dart]
-    language:
-        strict-casts: true
-        strict-raw-types: true
-        strict-inference: true

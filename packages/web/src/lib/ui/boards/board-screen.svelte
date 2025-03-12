@@ -50,7 +50,7 @@
 						if (columnElement) {
 							columnElement.scrollIntoView({
 								behavior: 'smooth',
-								inline: 'end',
+								inline: 'nearest',
 								block: 'nearest',
 							});
 						}

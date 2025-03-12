@@ -57,7 +57,7 @@ export class AsyncIteratorFactory<T> implements AsyncIterable<T> {
     private closed = false;
 
     constructor(
-        private readonly execute: (channel: ChannelWriter<T>) => () => Nothing
+        private readonly execute: (channel: ChannelWriter<T>) => Unsubscribe
     ) {}
 
     [Symbol.asyncIterator](): AsyncIterator<T, any, any> {
@@ -95,7 +95,7 @@ export class AsyncIteratorFactory<T> implements AsyncIterable<T> {
         try {
             yield* channel;
         } finally {
-            cancel?.();
+            cancel?.('_createIterator finally');
         }
     }
 }

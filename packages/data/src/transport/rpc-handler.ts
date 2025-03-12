@@ -46,9 +46,9 @@ export function launchRpcHandlerServer<T>(
     const cancelCleanup = context().onEnd(cleanup);
 
     function cleanup(reason: unknown) {
-        unsub();
+        unsub(reason);
         jobManager.finishAll(reason);
-        cancelCleanup();
+        cancelCleanup(reason);
     }
 
     const unsub = conn.subscribe({
@@ -200,7 +200,7 @@ async function proxyRequest(
     let unsub: Unsubscribe | undefined = undefined;
 
     function cleanup(reason: unknown) {
-        cancelCleanup();
+        cancelCleanup(reason);
         if (result.state === 'pending') {
             result.reject(toError(reason));
             catchConnectionClosed(
@@ -217,7 +217,7 @@ async function proxyRequest(
                 log.error(error, 'proxyRequest: failed to send cancellation')
             );
         }
-        unsub?.();
+        unsub?.(reason);
     }
 
     unsub = conn.subscribe({

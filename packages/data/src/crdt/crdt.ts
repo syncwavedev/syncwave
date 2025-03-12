@@ -153,7 +153,7 @@ export class Crdt<T> {
                 replayLog(log, locator);
             }
         }, options?.origin);
-        unsub();
+        unsub('update end');
 
         // todo: add tests for returned diff
         return diff;

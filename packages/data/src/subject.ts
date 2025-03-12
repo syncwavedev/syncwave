@@ -39,8 +39,8 @@ export class Subject<T> {
         };
         const cancelCleanup = context().onEnd(() => cleanup());
 
-        return () => {
-            cancelCleanup();
+        return reason => {
+            cancelCleanup(reason);
             cleanup();
         };
     }

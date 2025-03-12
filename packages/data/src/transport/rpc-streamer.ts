@@ -63,9 +63,9 @@ export function launchRpcStreamerServer<T>(
     context().ensureActive();
 
     function cleanup(reason: unknown) {
-        unsub();
+        unsub(reason);
         serverApiState.close(reason);
-        cancelCleanup();
+        cancelCleanup(reason);
     }
 
     const cancelCleanup = context().onEnd(cleanup);
@@ -465,9 +465,9 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
 
     let cancelCleanup: Unsubscribe | undefined = undefined;
     function cleanup(reason: unknown) {
-        unsub();
+        unsub(reason);
         clientApiState.finishAll(reason);
-        cancelCleanup?.();
+        cancelCleanup?.(reason);
         stopRpcHandlerServer(reason);
         conn.close(reason);
     }
@@ -604,8 +604,8 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             log.error(error, 'failed to start streaming');
                         });
 
-                        return () => {
-                            cancelRequestCtxCleanUp();
+                        return (reason: unknown) => {
+                            cancelRequestCtxCleanUp(reason);
                             cancelRequestCtx(
                                 'cancelRequestCtx: stream has no consumers'
                             );

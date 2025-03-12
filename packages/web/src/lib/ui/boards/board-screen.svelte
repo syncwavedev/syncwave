@@ -25,9 +25,9 @@
 	import {useBoardView} from './use-board-view.svelte';
 	import {dragHandleZone} from 'svelte-dnd-action';
 	import Scrollable from '../components/scrollable.svelte';
-	import {observeBoard} from '$lib/sdk/sdk.svelte';
-	import type {CardView} from '$lib/sdk/view.svelte';
-	import CardDetailsWrapper from './card-details-wrapper.svelte';
+	import type {CardView} from '$lib/agent/view.svelte';
+	import CardDetails from './card-details.svelte';
+	import {getAgent} from '$lib/agent/agent';
 
 	const {
 		boardKey,
@@ -42,7 +42,8 @@
 			identity: Identity;
 		};
 	} = $props();
-	const board = observeBoard(boardKey, initialBoard);
+	const agent = getAgent();
+	const board = agent.observeBoard(boardKey, initialBoard);
 	const {
 		columns,
 		handleDndConsiderColumns,
@@ -165,7 +166,7 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetailsWrapper initialCard={selectedCard} />
+			<CardDetails card={selectedCard} />
 		{/key}
 	{/if}
 </main>

@@ -115,12 +115,12 @@ export class PersistentConnection<T> implements Connection<T> {
                 const unsub = conn.subscribe({
                     next: message => this.subject.next(message),
                     throw: async error => {
-                        unsub();
+                        unsub(error);
                         log.error(error, 'error in underlying connection');
                         await reconnect();
                     },
                     close: () => {
-                        unsub();
+                        unsub('PersistentConnection => connection closed');
                         reconnect().catch(error => {
                             log.error(error, 'close => reconnect');
                         });

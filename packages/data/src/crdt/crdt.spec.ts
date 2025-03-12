@@ -255,7 +255,7 @@ describe('Doc', () => {
             });
             expect(b.snapshot()).toEqual({val: 2});
 
-            unsub();
+            unsub('test');
 
             a.update(x => {
                 x.val = 3;
@@ -325,7 +325,7 @@ describe('Doc', () => {
             }
         );
 
-        unsub();
+        unsub('test');
     });
 
     it('should unsubscribe from updates', async () => {
@@ -334,7 +334,7 @@ describe('Doc', () => {
         const callback = vi.fn();
 
         const unsub = crdt.onUpdate(callback);
-        unsub();
+        unsub('test');
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -427,8 +427,8 @@ describe('Doc', () => {
         expect(callback1).toHaveBeenCalled();
         expect(callback2).toHaveBeenCalled();
 
-        unsub1();
-        unsub2();
+        unsub1('test');
+        unsub2('test');
     });
 
     it('should handle updates with complex structures', () => {
@@ -463,7 +463,7 @@ describe('Doc', () => {
         const callback = vi.fn();
 
         const unsub = crdt.onUpdate(callback);
-        unsub();
+        unsub('test');
 
         const diff = createTestDocDiff({key: 'newValue'});
         crdt.apply(diff);
@@ -539,7 +539,7 @@ describe('Doc', () => {
             x.a = 2;
         });
 
-        unsub();
+        unsub('test');
 
         doc.update(x => {
             x.a = 3;

@@ -7,7 +7,7 @@ import {
 	type Column,
 	type User,
 } from 'syncwave-data';
-import type {CrdtDerivator} from './crdt-manager.svelte.js';
+import type {CrdtDerivator} from './crdt-manager.js';
 import type {State} from './state.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

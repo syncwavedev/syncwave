@@ -65,6 +65,6 @@ async function* _getMessageAsyncIterable<T>(connection: Connection<T>) {
     try {
         yield* channel;
     } finally {
-        unsub();
+        unsub('_getMessageAsyncIterable finally');
     }
 }

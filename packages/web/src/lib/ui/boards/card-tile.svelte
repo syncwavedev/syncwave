@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {yFragmentToPlaintext} from '$lib/richtext';
 	import Avatar from '../components/avatar.svelte';
-	import type {CardView} from '$lib/sdk/view.svelte';
+	import type {CardView} from '$lib/agent/view.svelte';
 
 	const {
 		card,

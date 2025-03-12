@@ -1,5 +1,4 @@
 <script lang="ts">
-	import {Crdt, log, type BoardViewCardDto} from 'syncwave-data';
 	import Avatar from '../components/avatar.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import LinkIcon from '../components/icons/link-icon.svelte';
@@ -7,39 +6,15 @@
 	import TimesIcon from '../components/icons/times-icon.svelte';
 	import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
 	import UserIcon from '../components/icons/user-icon.svelte';
-	import {observe} from '$lib/utils.svelte';
-	import {onDestroy} from 'svelte';
-	import {getSdk} from '$lib/utils';
 	import Editor from '$lib/components/editor.svelte';
 	import appNavigator from '../app-navigator';
+	import type {CardView} from '$lib/agent/view.svelte';
 
 	const {
-		initialCard,
+		card,
 	}: {
-		initialCard: BoardViewCardDto;
+		card: CardView;
 	} = $props();
-
-	const card = observe(initialCard, x =>
-		x.getCardView({cardId: initialCard.id})
-	);
-	const crdt = Crdt.load(card.value.state);
-	$effect(() => crdt.apply(card.value.state));
-
-	const fragment = crdt.extractXmlFragment(x => x.text);
-
-	const sdk = getSdk();
-	const unsub = crdt.onUpdate(diff => {
-		sdk(x =>
-			x.applyCardDiff({
-				cardId: card.value.id,
-				diff,
-			})
-		).catch(error => {
-			log.error(error, 'failed to apply card diff');
-		});
-	});
-
-	onDestroy(() => unsub());
 </script>
 
 <div
@@ -52,7 +27,7 @@
 			class="bg-subtle-0 dark:bg-subtle-1 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
 		>
 			<div class="text-xs font-medium">
-				{card.value.board.key}–{card.value.counter}
+				{card.board.key}–{card.counter}
 			</div>
 			<div class="relative ml-auto">
 				<button class="btn--icon" id="ellipsis-button">
@@ -85,7 +60,11 @@
 		<div class="mx-4 mt-1">
 			<!-- Task Description -->
 			<div class="input mb-2 w-full text-xs leading-relaxed">
-				<Editor class="min-h-[100px]" placeholder="Write here..." {fragment} />
+				<Editor
+					class="min-h-[100px]"
+					placeholder="Write here..."
+					fragment={card.text.__fragment!}
+				/>
 			</div>
 			<hr class="-mx-4 mt-4 mb-4" />
 			<!-- Task Actions -->
@@ -95,7 +74,7 @@
 					<span class="text-xs leading-none">Status</span>
 				</div>
 				<div class="input text-xs">
-					<span class="">{card.value.column?.name}</span>
+					<span class="">{card.column?.name}</span>
 				</div>
 				<div class="text-ink-detail flex items-center gap-2">
 					<UserIcon />

@@ -1,13 +1,12 @@
-import {calculateChange} from '$lib/dnd';
-import {setCardPosition, setColumnPosition} from '$lib/sdk/sdk.svelte';
-import type {State} from '$lib/sdk/state';
+import {getAgent} from '$lib/agent/agent';
+import type {State} from '$lib/agent/state';
 import type {
 	BoardTreeView,
 	CardView,
 	ColumnTreeView,
 	ColumnView,
-} from '$lib/sdk/view.svelte';
-import {getSdk} from '$lib/utils';
+} from '$lib/agent/view.svelte';
+import {calculateChange} from '$lib/dnd';
 import {untrack} from 'svelte';
 import {
 	SHADOW_ITEM_MARKER_PROPERTY_NAME,
@@ -16,7 +15,6 @@ import {
 import {
 	assert,
 	compareBigFloat,
-	log,
 	type CardId,
 	type ColumnId,
 } from 'syncwave-data';
@@ -33,6 +31,8 @@ export interface DndColumn {
 }
 
 export function useBoardView(localBoard: State<BoardTreeView>) {
+	const agent = getAgent();
+
 	// Reactive state for columns with initial sorting
 	const dndColumns = $state({value: applyOrder(localBoard.value.columns)});
 
@@ -63,8 +63,6 @@ export function useBoardView(localBoard: State<BoardTreeView>) {
 		});
 	});
 
-	const sdk = getSdk();
-
 	// Handler for column drag-and-drop
 	function setColumns(e: CustomEvent<DndEvent<DndColumn>>) {
 		const newDndColumns = e.detail.items;
@@ -77,12 +75,7 @@ export function useBoardView(localBoard: State<BoardTreeView>) {
 
 		if (update) {
 			const {target, newPosition} = update;
-			const diff = setColumnPosition(target, newPosition);
-			if (diff) {
-				sdk(x => x.applyColumnDiff({columnId: target, diff})).catch(
-					error => log.error(error, 'failed to send column diff')
-				);
-			}
+			agent.setColumnPosition(target, newPosition);
 		}
 		dndColumns.value = newDndColumns;
 	}
@@ -103,12 +96,7 @@ export function useBoardView(localBoard: State<BoardTreeView>) {
 
 		if (update) {
 			const {target, newPosition} = update;
-			const diff = setCardPosition(target, dndColumn.id, newPosition);
-			if (diff) {
-				sdk(x => x.applyCardDiff({cardId: target, diff})).catch(error =>
-					log.error(error, 'failed to send card diff')
-				);
-			}
+			agent.setCardPosition(target, dndColumn.id, newPosition);
 		}
 		dndColumn.cards = e.detail.items;
 	}

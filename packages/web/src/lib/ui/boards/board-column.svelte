@@ -3,7 +3,7 @@
 	import {dndzone, dragHandle, type DndEvent} from 'svelte-dnd-action';
 	import Scrollable from '../components/scrollable.svelte';
 	import type {DndCard, DndColumn} from './use-board-view.svelte';
-	import type {CardView} from '$lib/sdk/view.svelte';
+	import type {CardView} from '$lib/agent/view.svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
 
 	const {

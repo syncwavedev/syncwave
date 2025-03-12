@@ -16,7 +16,7 @@ export type Brand<T, B> = T & {__brand: () => B | undefined};
 
 export type Nothing = void | undefined;
 
-export type Unsubscribe = () => void;
+export type Unsubscribe = (reason: unknown) => void;
 
 export function assertNever(value: never): never {
     throw new AppError('assertNever failed: ' + value);
@@ -77,7 +77,7 @@ export function wait({
     const result = new Deferred<void>();
     const timeoutId = setTimeout(() => {
         result.resolve();
-        cancelCleanup();
+        cancelCleanup('wait timeout');
     }, ms);
 
     const cancelCleanup = context().onEnd(reason => {
@@ -139,7 +139,7 @@ async function* _interval({
             await wait({ms, onCancel: cancelBehavior});
         }
     } finally {
-        cancelCleanup();
+        cancelCleanup('internal finally');
     }
 
     if (cancelBehavior === 'reject') {

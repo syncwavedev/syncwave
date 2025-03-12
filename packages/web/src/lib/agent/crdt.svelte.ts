@@ -1,4 +1,4 @@
-import {assert, Crdt, type ValueChange} from 'syncwave-data';
+import {assert, Crdt, type Unsubscribe, type ValueChange} from 'syncwave-data';
 import type {State} from './state';
 
 function applyChange(state: unknown, change: ValueChange) {
@@ -20,11 +20,10 @@ function applyChange(state: unknown, change: ValueChange) {
 	}
 }
 
-export function deriveCrdtSnapshot<T>(crdt: Crdt<T>): State<T> {
+export function deriveCrdtSnapshot<T>(crdt: Crdt<T>): [State<T>, Unsubscribe] {
 	const snapshot = $state({value: crdt.snapshot(true)});
 
-	// todo: fix memory leak
-	crdt.onChange(changes => {
+	const unsub = crdt.onChange(changes => {
 		changes.forEach(change => {
 			applyChange(snapshot, {
 				path: ['value', ...change.path],
@@ -33,5 +32,5 @@ export function deriveCrdtSnapshot<T>(crdt: Crdt<T>): State<T> {
 		});
 	});
 
-	return snapshot;
+	return [snapshot, unsub];
 }

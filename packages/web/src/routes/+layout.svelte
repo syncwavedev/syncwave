@@ -1,6 +1,6 @@
 <script module lang="ts">
 	import {browser, dev} from '$app/environment';
-	import {CancelledError} from 'syncwave-data';
+	import {CancelledError, MsgpackCodec} from 'syncwave-data';
 
 	if (browser) {
 		window.addEventListener('unhandledrejection', event => {
@@ -30,6 +30,9 @@
 	import {createThemeManager} from '$lib/ui/theme-manager.svelte.js';
 	import {beforeNavigate} from '$app/navigation';
 	import appNavigator from '$lib/ui/app-navigator';
+	import {createAgent} from '$lib/agent/agent';
+	import {appConfig} from '$lib/config';
+	import {WsTransportClient} from '../ws-transport-client';
 
 	// Set up theme context
 	const themeManager = createThemeManager();
@@ -40,7 +43,6 @@
 
 	let {children, data}: LayoutProps = $props();
 
-	// Initialize universal store and auth manager
 	const cookieMap = new Map(
 		data.serverCookies.map(({name, value}) => [name, value])
 	);
@@ -49,14 +51,21 @@
 	const authManager = createAuthManager(universalStore);
 	setAuthManager(authManager);
 
-	// Participant client setup (no export needed since it's set in context)
 	const participantClient = browser
 		? createParticipantClient()
 		: createParticipantClientDummy();
 	setContext(ParticipantClient, participantClient);
 	setUploadManager(new UploadManager(participantClient));
 
-	//navigation
+	createAgent(
+		new WsTransportClient({
+			url: appConfig.serverWsUrl,
+			codec: new MsgpackCodec(),
+		}),
+		authManager.getJwt()
+	);
+
+	// navigation
 	function handleEscape(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
 			const topItem = appNavigator.peek();

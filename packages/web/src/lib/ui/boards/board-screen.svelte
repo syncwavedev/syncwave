@@ -15,7 +15,7 @@
 	import Scrollable from '../components/scrollable.svelte';
 	import type {CardView} from '$lib/agent/view.svelte';
 	import CardDetails from './card-details.svelte';
-	import {getAgent} from '$lib/agent/agent';
+	import {getAgent} from '$lib/agent/agent.svelte';
 	import EditBoardDialog from '$lib/components/edit-board-dialog/edit-board-dialog.svelte';
 
 	const {

@@ -119,7 +119,7 @@ interface EntityBox {
 	observer: EntityObserver;
 }
 
-type EntityState = ChangeEvent extends infer T
+export type EntityState = ChangeEvent extends infer T
 	? T extends BaseChangeEvent<infer TType, infer TId, infer TValue>
 		? BaseEntityState<TType, TId, TValue>
 		: never
@@ -131,11 +131,20 @@ export class CrdtManager implements CrdtDerivator {
 	constructor(private readonly rpc: CoordinatorRpc) {}
 
 	applyChange(event: ChangeEvent) {
-		const entity = this.entities.get(event.id)?.entity;
-		if (entity === undefined) return;
-
-		assert(entity.type === event.type, 'apply: Crdt type mismatch');
-		entity.crdt.apply(event.diff as CrdtDiff<any>);
+		if (event.kind === 'create') {
+			this.load({
+				id: event.id,
+				state: event.diff,
+				type: event.type,
+			} as EntityState);
+		} else if (event.kind === 'update') {
+			const entity = this.entities.get(event.id)?.entity;
+			assert(entity !== undefined, 'apply: Crdt not found');
+			assert(entity.type === event.type, 'apply: Crdt type mismatch');
+			entity.crdt.apply(event.diff as CrdtDiff<any>);
+		} else {
+			assertNever(event.kind);
+		}
 	}
 
 	view(state: EntityState): State<any> {

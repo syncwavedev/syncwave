@@ -1,6 +1,6 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
-import {type CrdtDiff, zCrdtDiff} from '../crdt/crdt.js';
+import {zCrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {type AppTransaction, isolate, type KvStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
@@ -10,6 +10,7 @@ import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type AuthContext} from './auth-context.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
+import type {ChangeOptions} from './doc-repo.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import {HubClient} from './hub.js';
 import {PermissionService} from './permission-service.js';
@@ -67,6 +68,7 @@ export function zBaseChangeEvent<
 >(type: TType) {
     return Type.Object({
         type: Type.Literal(type),
+        kind: Type.Union([Type.Literal('create'), Type.Literal('update')]),
         id: Uuid<TId>(),
         diff: zCrdtDiff<TValue>(),
         ts: zTimestamp(),
@@ -193,49 +195,49 @@ export class DataLayer {
             // clear effect because of transaction retries
             effects = [];
 
-            const users = new UserRepo(isolate(['users'])(tx), (id, diff) =>
-                logUserChange(dataTx, id, diff)
+            const users = new UserRepo(isolate(['users'])(tx), options =>
+                logUserChange(dataTx, options)
             );
             const identities = new IdentityRepo(
                 isolate(['identities'])(tx),
                 users,
-                (pk, diff) => logIdentityChange(dataTx, pk, diff)
+                options => logIdentityChange(dataTx, options)
             );
             const boards = new BoardRepo(
                 isolate(['boards'])(tx),
                 () => dataTx,
-                (pk, diff) => logBoardChange(dataTx, pk, diff)
+                options => logBoardChange(dataTx, options)
             );
             const members = new MemberRepo(
                 isolate(['members'])(tx),
                 users,
                 boards,
-                (pk, diff) => logMemberChange(dataTx, pk, diff)
+                options => logMemberChange(dataTx, options)
             );
             const cards = new CardRepo(
                 isolate(['cards'])(tx),
                 boards,
                 users,
-                (pk, diff) => logCardChange(dataTx, pk, diff)
+                options => logCardChange(dataTx, options)
             );
             const columns = new ColumnRepo(
                 isolate(['columns'])(tx),
                 boards,
                 users,
-                (pk, diff) => logColumnChange(dataTx, pk, diff)
+                options => logColumnChange(dataTx, options)
             );
             const messages = new MessageRepo(
                 isolate(['messages'])(tx),
                 cards,
                 users,
-                (pk, diff) => logMessageChange(dataTx, pk, diff)
+                options => logMessageChange(dataTx, options)
             );
             const attachments = new AttachmentRepo(
                 isolate(['attachments'])(tx),
                 cards,
                 users,
                 boards,
-                (pk, diff) => logAttachmentChange(dataTx, pk, diff)
+                options => logAttachmentChange(dataTx, options)
             );
 
             const dataNode = new AggregateDataNode({
@@ -315,8 +317,7 @@ export function boardEvents(boardId: BoardId) {
 
 async function logIdentityChange(
     tx: DataTx,
-    [id]: [IdentityId],
-    diff: CrdtDiff<Identity>
+    {pk: [id], diff, kind}: ChangeOptions<Identity>
 ) {
     const identity = await tx.identities.getById(id);
     assert(
@@ -327,7 +328,7 @@ async function logIdentityChange(
         .getByUserId(identity.userId, true)
         .toArray();
     const ts = getNow();
-    const event: IdentityChangeEvent = {type: 'identity', id, diff, ts};
+    const event: IdentityChangeEvent = {type: 'identity', id, diff, ts, kind};
     await whenAll([
         tx.esWriter.append(userEvents(identity.userId), event),
         ...members.map(member =>
@@ -336,10 +337,13 @@ async function logIdentityChange(
     ]);
 }
 
-async function logUserChange(tx: DataTx, [id]: [UserId], diff: CrdtDiff<User>) {
+async function logUserChange(
+    tx: DataTx,
+    {pk: [id], diff, kind}: ChangeOptions<User>
+) {
     const members = await tx.members.getByUserId(id, true).toArray();
     const ts = getNow();
-    const event: UserChangeEvent = {type: 'user', id, diff, ts};
+    const event: UserChangeEvent = {type: 'user', id, diff, ts, kind};
     await whenAll([
         tx.esWriter.append(userEvents(id), event),
         ...members.map(member =>
@@ -350,11 +354,10 @@ async function logUserChange(tx: DataTx, [id]: [UserId], diff: CrdtDiff<User>) {
 
 async function logBoardChange(
     tx: DataTx,
-    [id]: [BoardId],
-    diff: CrdtDiff<Board>
+    {pk: [id], diff, kind}: ChangeOptions<Board>
 ) {
     const ts = getNow();
-    const event: BoardChangeEvent = {type: 'board', id, diff, ts};
+    const event: BoardChangeEvent = {type: 'board', id, diff, ts, kind};
     await whenAll([
         tx.esWriter.append(boardEvents(id), event),
         tx.members
@@ -368,43 +371,43 @@ async function logBoardChange(
 
 async function logMemberChange(
     tx: DataTx,
-    [id]: [MemberId],
-    diff: CrdtDiff<Member>
+    {pk: [id], diff, kind}: ChangeOptions<Member>
 ) {
     const member = await tx.members.getById(id, true);
     assert(member !== undefined, `logMemberChange: member ${id} not found`);
     const ts = getNow();
-    const event: MemberChangeEvent = {type: 'member', id, diff, ts};
+    const event: MemberChangeEvent = {type: 'member', id, diff, ts, kind};
     await whenAll([
         tx.esWriter.append(boardEvents(member.boardId), event),
         tx.esWriter.append(userEvents(member.userId), event),
     ]);
 }
 
-async function logCardChange(tx: DataTx, [id]: [CardId], diff: CrdtDiff<Card>) {
+async function logCardChange(
+    tx: DataTx,
+    {pk: [id], diff, kind}: ChangeOptions<Card>
+) {
     const card = await tx.cards.getById(id, true);
     assert(card !== undefined, `logCardChange: card ${id} not found`);
     const ts = getNow();
-    const event: CardChangeEvent = {type: 'card', id, diff, ts};
+    const event: CardChangeEvent = {type: 'card', id, diff, ts, kind};
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }
 
 async function logColumnChange(
     tx: DataTx,
-    [id]: [ColumnId],
-    diff: CrdtDiff<Column>
+    {pk: [id], diff, kind}: ChangeOptions<Column>
 ) {
     const column = await tx.columns.getById(id, true);
     assert(column !== undefined, `logColumnChange: column ${id} not found`);
     const ts = getNow();
-    const event: ColumnChangeEvent = {type: 'column', id, diff, ts};
+    const event: ColumnChangeEvent = {type: 'column', id, diff, ts, kind};
     await tx.esWriter.append(boardEvents(column.boardId), event);
 }
 
 async function logMessageChange(
     tx: DataTx,
-    [id]: [MessageId],
-    diff: CrdtDiff<Message>
+    {pk: [id], diff, kind}: ChangeOptions<Message>
 ) {
     const message = await tx.messages.getById(id, true);
     assert(message !== undefined, `logMessageChange: message ${id} not found`);
@@ -414,14 +417,13 @@ async function logMessageChange(
         `logMessageChange: card ${message.cardId} not found`
     );
     const ts = getNow();
-    const event: MessageChangeEvent = {type: 'message', id, diff, ts};
+    const event: MessageChangeEvent = {type: 'message', id, diff, ts, kind};
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }
 
 async function logAttachmentChange(
     tx: DataTx,
-    [id]: [AttachmentId],
-    diff: CrdtDiff<Attachment>
+    {pk: [id], diff, kind}: ChangeOptions<Attachment>
 ) {
     const attachment = await tx.attachments.getById(id, true);
     assert(
@@ -434,6 +436,12 @@ async function logAttachmentChange(
         `logAttachmentChange: card ${attachment.cardId} not found`
     );
     const ts = getNow();
-    const event: AttachmentChangeEvent = {type: 'attachment', id, diff, ts};
+    const event: AttachmentChangeEvent = {
+        type: 'attachment',
+        id,
+        diff,
+        ts,
+        kind,
+    };
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }

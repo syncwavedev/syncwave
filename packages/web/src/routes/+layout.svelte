@@ -30,7 +30,7 @@
 	import {createThemeManager} from '$lib/ui/theme-manager.svelte.js';
 	import {beforeNavigate} from '$app/navigation';
 	import appNavigator from '$lib/ui/app-navigator';
-	import {createAgent} from '$lib/agent/agent';
+	import {createAgent} from '$lib/agent/agent.svelte';
 	import {appConfig} from '$lib/config';
 	import {WsTransportClient} from '../ws-transport-client';
 

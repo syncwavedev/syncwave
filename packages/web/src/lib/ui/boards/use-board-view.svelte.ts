@@ -1,4 +1,4 @@
-import {getAgent} from '$lib/agent/agent';
+import {getAgent} from '$lib/agent/agent.svelte';
 import type {State} from '$lib/agent/state';
 import type {
 	BoardTreeView,

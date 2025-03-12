@@ -1,9 +1,9 @@
-import {browser} from '$app/environment';
 import type {AuthManager} from '$lib/auth-manager';
 import {getSdk} from '$lib/utils';
 import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	assert,
+	assertNever,
 	context,
 	Crdt,
 	createCardId,
@@ -25,13 +25,15 @@ import {
 	type BoardViewDataDto,
 	type Card,
 	type CardId,
+	type ChangeEvent,
 	type Column,
 	type ColumnId,
 	type CoordinatorRpc,
 	type Placement,
 	type TransportClient,
+	type User,
 } from 'syncwave-data';
-import {CrdtManager} from './crdt-manager';
+import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView} from './view.svelte';
 
@@ -71,7 +73,7 @@ class Agent {
 		);
 
 		const sdk = getSdk();
-		if (browser) {
+		$effect(() => {
 			(async () => {
 				const items = toStream(
 					sdk(x => x.getBoardViewData({key: boardKey}))
@@ -80,7 +82,7 @@ class Agent {
 					if (item.type === 'snapshot') {
 						data.update(item.data, this.crdtManager);
 					} else if (item.type === 'event') {
-						this.crdtManager.applyChange(item.event);
+						this.handleEvent(item.event);
 					} else {
 						softNever(item, 'observeBoard got an unknown event');
 					}
@@ -88,7 +90,7 @@ class Agent {
 			})().catch(error => {
 				log.error(toError(error), 'observeBoard failed');
 			});
-		}
+		});
 
 		return data.view;
 	}
@@ -121,7 +123,7 @@ class Agent {
 		this.activeBoards
 			.filter(x => x.board.id === options.boardId)
 			.forEach(x => {
-				x.addCard(card);
+				x.newCard(card);
 			});
 
 		return card;
@@ -166,6 +168,42 @@ class Agent {
 		this.crdtManager.update<Board>(boardId, x => {
 			x.deleted = true;
 		});
+	}
+
+	private handleEvent(event: ChangeEvent) {
+		if (event.kind === 'create') {
+			const view = this.crdtManager.view({
+				id: event.id,
+				type: event.type,
+				state: event.diff,
+			} as EntityState);
+
+			if (event.type === 'user') {
+				const user = view as State<User>;
+				this.activeBoards.forEach(x => x.newUser(user));
+			} else if (event.type === 'column') {
+				const column = view as State<Column>;
+				this.activeBoards.forEach(x => x.newColumn(column));
+			} else if (event.type === 'card') {
+				const card = view as State<Card>;
+				this.activeBoards.forEach(x => x.newCard(card));
+			} else if (
+				event.type === 'board' ||
+				event.type === 'attachment' ||
+				event.type === 'message' ||
+				event.type === 'identity' ||
+				event.type === 'member'
+			) {
+				// do nothing
+			} else {
+				softNever(event, 'observeBoard got an unknown event');
+			}
+		} else if (event.kind === 'update') {
+			// do nothing, svelte reactivity will take care of it
+			this.crdtManager.applyChange(event);
+		} else {
+			assertNever(event.kind);
+		}
 	}
 }
 

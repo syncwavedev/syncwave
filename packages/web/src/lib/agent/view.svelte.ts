@@ -61,8 +61,31 @@ export class BoardData {
 		);
 	}
 
-	addCard(card: State<Card>) {
+	newCard(card: State<Card>) {
+		if (
+			card.value.boardId !== this.board.id ||
+			this._cardStates.some(x => x.value.id === card.value.id)
+		) {
+			return;
+		}
 		this._cardStates = [...this._cardStates, card];
+	}
+
+	newUser(user: State<User>) {
+		if (this._userStates.some(x => x.value.id === user.value.id)) {
+			return;
+		}
+		this._userStates = [...this._userStates, user];
+	}
+
+	newColumn(column: State<Column>) {
+		if (
+			column.value.boardId !== this.board.id ||
+			this._columnStates.some(x => x.value.id === column.value.id)
+		) {
+			return;
+		}
+		this._columnStates = [...this._columnStates, column];
 	}
 }
 

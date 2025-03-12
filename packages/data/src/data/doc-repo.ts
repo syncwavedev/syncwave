@@ -54,9 +54,14 @@ export type IndexSpec<T> =
 
 export type IndexMap<T> = Record<string, IndexSpec<T>>;
 
+export interface ChangeOptions<T extends Doc<Tuple>> {
+    pk: T['pk'];
+    kind: 'create' | 'update';
+    diff: CrdtDiff<T>;
+}
+
 export type OnDocChange<T extends Doc<Tuple>> = (
-    pk: T['pk'],
-    diff: CrdtDiff<T>
+    options: ChangeOptions<T>
 ) => Promise<void>;
 
 export interface Constraint<T extends Doc<Tuple>> {
@@ -455,7 +460,11 @@ class DocRepoImpl<T extends Doc<Tuple>> {
                     throw new ConstraintError(c.name, result);
                 }
             }),
-            this.onChange(nextSnapshot.pk, params.diff),
+            this.onChange({
+                pk: nextSnapshot.pk,
+                diff: params.diff,
+                kind: params.prev === undefined ? 'create' : 'update',
+            }),
         ]);
     }
 

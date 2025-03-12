@@ -1,5 +1,5 @@
-import {findRequired} from '$lib/crdt/board-list-crdt';
 import {
+	AppError,
 	assert,
 	type Board,
 	type BoardViewDataDto,
@@ -9,6 +9,14 @@ import {
 } from 'syncwave-data';
 import type {CrdtDerivator} from './crdt-manager.js';
 import type {State} from './state.js';
+
+function findRequired<T>(array: T[], predicate: (item: T) => boolean): T {
+	const item = array.find(predicate);
+	if (!item) {
+		throw new AppError('Item not found');
+	}
+	return item;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lateInit(): any {

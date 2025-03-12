@@ -1,12 +1,12 @@
 <script lang="ts">
-	import {createUuidV4, type BoardViewDto} from 'syncwave-data';
 	import EditBoardDialogFrozenMain from './edit-board-dialog-main-frozen.svelte';
 	import EditBoardDialogFrozenColumns from './edit-board-dialog-columns-frozen.svelte';
 	import EditBoardDialogFrozenMembers from './edit-board-dialog-members-frozen.svelte';
 	import {observeAsync, usePageState} from '$lib/utils.svelte';
+	import type {BoardTreeView} from '$lib/agent/view.svelte';
 
 	interface Props {
-		board: BoardViewDto;
+		board: BoardTreeView;
 		onClose: () => void;
 	}
 
@@ -14,10 +14,7 @@
 
 	type Route = 'main' | 'members' | 'columns';
 
-	let route = usePageState<Route>(
-		createUuidV4(), // we use uuid to forget the route on unmount
-		'main'
-	);
+	let route = usePageState<Route>('main');
 
 	const membersPromise = observeAsync(x =>
 		x.getBoardMembers({boardId: board.id})

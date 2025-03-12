@@ -1,15 +1,16 @@
 <script lang="ts">
-	import {createColumnId, toPosition, type BoardViewDto} from 'syncwave-data';
+	import {createColumnId, toPosition} from 'syncwave-data';
 	import ArrowLeftIcon from '../icons/arrow-left-icon.svelte';
 	import TimesIcon from '../icons/times-icon.svelte';
 	import {getSdk} from '$lib/utils';
 	import ColumnList from './column-list.svelte';
 	import ColumnListController from './column-list-controller.svelte';
+	import type {BoardTreeView, BoardView} from '$lib/agent/view.svelte';
 
 	interface Props {
 		onClose: () => void;
 		onBack: () => void;
-		board: BoardViewDto;
+		board: BoardTreeView;
 	}
 
 	let {onClose, onBack, board}: Props = $props();

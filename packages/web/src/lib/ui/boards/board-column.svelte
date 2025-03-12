@@ -5,6 +5,10 @@
 	import type {DndCard, DndColumn} from './use-board-view.svelte';
 	import type {CardView} from '$lib/agent/view.svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
+	import EllipsisIcon from '$lib/components/icons/ellipsis-icon.svelte';
+	import {usePageState} from '$lib/utils.svelte';
+	import EditColumnDialog from '$lib/components/edit-column-dialog/edit-column-dialog.svelte';
+	import {createUuidV4} from 'syncwave-data';
 
 	const {
 		column,
@@ -17,6 +21,8 @@
 		handleCardDnd: (e: CustomEvent<DndEvent<DndCard>>) => void;
 		activeCardId?: string;
 	} = $props();
+
+	const editColumnOpen = usePageState(false);
 </script>
 
 <div
@@ -30,7 +36,18 @@
 		>
 			{column.column.name}
 		</div>
-		<button class="btn--icon invisible ml-auto group-hover:visible">
+		<button
+			onclick={() => editColumnOpen.push(true)}
+			class="btn--icon invisible ml-auto group-hover:visible"
+		>
+			<EllipsisIcon />
+		</button>
+		<EditColumnDialog
+			column={column.column}
+			open={editColumnOpen.value}
+			onClose={() => editColumnOpen.push(false)}
+		/>
+		<button class="btn--icon invisible group-hover:visible">
 			<PlusIcon />
 		</button>
 	</div>

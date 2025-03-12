@@ -1,46 +1,25 @@
 <script lang="ts">
 	import TimesIcon from '../icons/times-icon.svelte';
-	import {Crdt, type BoardViewDto} from 'syncwave-data';
-	import {getSdk} from '$lib/utils';
 	import ChevronIcon from '../icons/chevron-icon.svelte';
 	import TrashIcon from '../icons/trash-icon.svelte';
+	import type {BoardTreeView, BoardView} from '$lib/agent/view.svelte';
+	import {getAgent} from '$lib/agent/agent';
 
 	interface Props {
-		board: BoardViewDto;
+		board: BoardTreeView;
 		onClose: () => void;
 		onMembers: () => void;
 		onColumns: () => void;
 	}
 
-	let {board: remoteBoard, onMembers, onColumns, onClose}: Props = $props();
+	let {board, onMembers, onColumns, onClose}: Props = $props();
 
-	const sdk = getSdk();
-
-	const localBoard = Crdt.load(remoteBoard.state);
-	$effect(() => {
-		localBoard.apply(remoteBoard.state);
-		name = localBoard.snapshot().name;
-	});
-
-	let name = $state(localBoard.snapshot().name);
-
-	async function updateBoardName() {
-		localBoard.update(x => {
-			x.name = name;
-		});
-
-		await sdk(x =>
-			x.applyBoardDiff({
-				boardId: remoteBoard.id,
-				diff: localBoard.state(),
-			})
-		);
-	}
+	const agent = getAgent();
 
 	async function deleteBoard() {
 		if (!confirm(`Are you sure you want to delete ${name} board?`)) return;
 
-		await sdk(x => x.deleteBoard({boardId: remoteBoard.id}));
+		agent.deleteBoard(board.id);
 		onClose();
 	}
 </script>
@@ -57,8 +36,8 @@
 	<input
 		type="text"
 		id="name"
-		bind:value={name}
-		oninput={updateBoardName}
+		value={board.name}
+		oninput={e => agent.setBoardName(board.id, e.currentTarget.value)}
 		class="input input--bordered text-xs"
 		placeholder="Name"
 	/>
@@ -72,7 +51,7 @@
 		id="name"
 		class="input input--bordered cursor-not-allowed text-xs"
 		placeholder="Name"
-		value={remoteBoard.key}
+		value={board.key}
 	/>
 </div>
 <hr />
@@ -80,7 +59,7 @@
 	onclick={onMembers}
 	class="hover:bg-subtle-1 flex w-full cursor-pointer items-center gap-2 p-4"
 >
-	<span class="text-xs">4 Members</span>
+	<span class="text-xs">Members</span>
 	<span class="text-ink-body ml-auto flex items-center gap-1.5">
 		<span class="text-xs">View members</span>
 		<ChevronIcon />
@@ -91,7 +70,7 @@
 	onclick={onColumns}
 	class="hover:bg-subtle-1 flex w-full cursor-pointer items-center gap-2 p-4"
 >
-	<span class="text-xs">6 Columns</span>
+	<span class="text-xs">Columns</span>
 	<span class="text-ink-body ml-auto flex items-center gap-1.5">
 		<span class="text-xs">Edit columns</span>
 		<ChevronIcon />
@@ -100,5 +79,5 @@
 <hr />
 <button onclick={deleteBoard} class="btn--block mx-auto my-2">
 	<TrashIcon />
-	<span class="ml-1.5 text-xs">Delete {name}</span>
+	<span class="ml-1.5 text-xs">Delete {board.name}</span>
 </button>

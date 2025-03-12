@@ -1,17 +1,17 @@
 <script lang="ts">
-	import type {BoardViewColumnDto, BoardViewCardDto} from 'syncwave-data';
 	import EditColumnDialog from './edit-column-dialog/edit-column-dialog.svelte';
 	import {usePageState} from '$lib/utils.svelte';
 	import EllipsisIcon from './icons/ellipsis-icon.svelte';
+	import type {ColumnView} from '$lib/agent/view.svelte';
 
 	interface Props {
-		column: BoardViewColumnDto;
+		column: ColumnView;
 		class?: string;
 	}
 
 	let {column, class: className}: Props = $props();
 
-	const editDialog = usePageState(`column-${column.id}-edit-dialog`, false);
+	const editDialog = usePageState(false);
 </script>
 
 <button onclick={() => editDialog.push(true)} class={`btn--icon ${className}`}>

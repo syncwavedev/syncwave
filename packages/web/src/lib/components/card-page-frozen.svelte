@@ -67,7 +67,7 @@
 		return result;
 	});
 
-	onDestroy(() => unsub());
+	onDestroy(() => unsub('component cleanup'));
 
 	const me = getMe();
 
@@ -83,11 +83,13 @@
 		});
 	}
 
-	$effect(() =>
-		onEscape(CARD_DETAILS_PRIORITY, () => {
+	$effect(() => {
+		const unsub = onEscape(CARD_DETAILS_PRIORITY, () => {
 			goto(getBoardRoute(boardKey));
-		})
-	);
+		});
+
+		return () => unsub('effect cleanup');
+	});
 </script>
 
 <div

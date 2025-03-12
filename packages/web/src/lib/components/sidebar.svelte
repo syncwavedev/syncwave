@@ -6,7 +6,7 @@
 	import PlusIcon from './icons/plus-icon.svelte';
 	import SearchIcon from './icons/search-icon.svelte';
 	import {observe} from '$lib/utils.svelte';
-	import MyMemberListController from './board-list-controller.svelte';
+	import BoardItem from './board-item.svelte';
 
 	let {
 		initialMe,
@@ -32,7 +32,9 @@
 	</div>
 
 	<div class="mt-2 flex flex-col items-start overflow-y-auto text-sm">
-		<MyMemberListController members={myMembers.value} />
+		{#each myMembers.value as myMember (myMember.id)}
+			<BoardItem board={myMember.board} />
+		{/each}
 	</div>
 	<div class="action-bar mt-auto mb-2">
 		<div class="hover-subtle-1 flex h-full items-center rounded-full px-2">

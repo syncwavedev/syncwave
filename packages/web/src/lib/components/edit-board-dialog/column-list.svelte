@@ -1,5 +1,4 @@
 <script lang="ts">
-	import {type BoardViewColumnDto} from 'syncwave-data';
 	import EditBoardDialogColumnsFrozenColumn from './edit-board-dialog-columns-frozen-column.svelte';
 	import {
 		dndzone,
@@ -9,15 +8,16 @@
 	} from 'svelte-dnd-action';
 	import GripIcon from '../icons/grip-icon.svelte';
 	import GripHorizontalIcon from '../icons/grip-horizontal-icon.svelte';
+	import type {DndColumn} from '$lib/ui/boards/use-board-view.svelte';
 
 	const flipDurationMs = 100;
 	export let handleDndConsiderColumns: (
-		e: CustomEvent<DndEvent<BoardViewColumnDto>>
+		e: CustomEvent<DndEvent<DndColumn>>
 	) => void;
 	export let handleDndFinalizeColumns: (
-		e: CustomEvent<DndEvent<BoardViewColumnDto>>
+		e: CustomEvent<DndEvent<DndColumn>>
 	) => void;
-	export let columns: BoardViewColumnDto[];
+	export let columns: DndColumn[];
 </script>
 
 <div
@@ -37,7 +37,7 @@
 			<span use:dragHandle>
 				<GripHorizontalIcon />
 			</span>
-			<EditBoardDialogColumnsFrozenColumn {column} />
+			<EditBoardDialogColumnsFrozenColumn column={column.column} />
 		</div>
 	{/each}
 </div>

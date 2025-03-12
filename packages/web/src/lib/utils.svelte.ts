@@ -7,6 +7,7 @@ import {
 	assert,
 	BusinessError,
 	CancelledError,
+	createUuidV4,
 	Deferred,
 	log,
 	runAll,
@@ -169,7 +170,8 @@ function useStream<T>(
 	}
 }
 
-export function usePageState<T>(id: string, initialValue: T) {
+export function usePageState<T>(initialValue: T) {
+	const id = createUuidV4();
 	const getValue = () =>
 		id in page.state ? (page.state as Record<string, T>)[id] : initialValue;
 

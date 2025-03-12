@@ -1,43 +1,22 @@
 <script lang="ts">
 	import TimesIcon from '../icons/times-icon.svelte';
-	import {Crdt, type BoardViewColumnDto} from 'syncwave-data';
-	import {getSdk} from '$lib/utils';
 	import TrashIcon from '../icons/trash-icon.svelte';
+	import type {ColumnView} from '$lib/agent/view.svelte';
+	import {getAgent} from '$lib/agent/agent';
 
 	interface Props {
-		column: BoardViewColumnDto;
+		column: ColumnView;
 		onClose: () => void;
 	}
 
-	let {column: remoteColumn, onClose}: Props = $props();
+	let {column, onClose}: Props = $props();
 
-	const sdk = getSdk();
-
-	const localColumn = Crdt.load(remoteColumn.state);
-	$effect(() => {
-		localColumn.apply(remoteColumn.state);
-		name = localColumn.snapshot().name;
-	});
-
-	let name = $state(localColumn.snapshot().name);
-
-	async function updateColumnName() {
-		localColumn.update(x => {
-			x.name = name;
-		});
-
-		await sdk(x =>
-			x.applyColumnDiff({
-				columnId: remoteColumn.id,
-				diff: localColumn.state(),
-			})
-		);
-	}
+	const agent = getAgent();
 
 	async function deleteColumn() {
 		if (!confirm(`Are you sure you want to delete ${name} column?`)) return;
 
-		await sdk(x => x.deleteColumn({columnId: remoteColumn.id}));
+		agent.deleteColumn(column.id);
 		onClose();
 	}
 </script>
@@ -55,10 +34,10 @@
 	<input
 		type="text"
 		id="name"
-		bind:value={name}
+		value={column.name}
 		autofocus
 		onkeydown={e => e.key === 'Enter' && onClose()}
-		oninput={updateColumnName}
+		oninput={e => agent.setColumnName(column.id, e.currentTarget.value)}
 		class="input input--bordered text-xs"
 		placeholder="Name"
 	/>

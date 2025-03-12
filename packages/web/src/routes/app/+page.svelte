@@ -10,7 +10,7 @@
 	const auth = getAuthManager();
 	const idInfo = auth.getIdentityInfo();
 
-	const addBoardDialogToggle = usePageState('add-board-dialog', false);
+	const addBoardDialogToggle = usePageState(false);
 </script>
 
 <Dashboard {initialMyMembers} />

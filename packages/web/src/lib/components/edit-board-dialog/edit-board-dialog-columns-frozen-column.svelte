@@ -1,38 +1,26 @@
 <script lang="ts">
-	import {Crdt, type BoardViewColumnDto} from 'syncwave-data';
 	import TrashIcon from '../icons/trash-icon.svelte';
-	import {getSdk} from '$lib/utils';
+	import {ColumnView} from '$lib/agent/view.svelte';
+	import {getAgent} from '$lib/agent/agent';
+	import type {ColumnId} from 'syncwave-data';
 
 	interface Props {
-		column: BoardViewColumnDto;
+		column: ColumnView;
 	}
 
-	let {column: remoteColumn}: Props = $props();
+	let {column}: Props = $props();
 
-	const localColumn = Crdt.load(remoteColumn.state);
-	$effect(() => {
-		localColumn.apply(remoteColumn.state);
-		name = localColumn.snapshot().name;
-	});
+	const agent = getAgent();
 
-	let name = $state(remoteColumn.name);
-
-	const sdk = getSdk();
-	async function deleteColumn() {
-		await sdk(x => x.deleteColumn({columnId: remoteColumn.id}));
-	}
-
-	async function updateColumnName() {
-		localColumn.update(x => {
-			x.name = name;
-		});
-
-		await sdk(x =>
-			x.applyColumnDiff({
-				columnId: remoteColumn.id,
-				diff: localColumn.state(),
-			})
-		);
+	function deleteColumn(columnId: ColumnId) {
+		if (
+			!confirm(
+				`Are you sure you want to delete this column ${column.name}?`
+			)
+		) {
+			return;
+		}
+		agent.deleteColumn(columnId);
 	}
 </script>
 
@@ -40,10 +28,10 @@
 	type="text"
 	class="input text-xs"
 	required
-	bind:value={name}
-	oninput={updateColumnName}
+	value={column.name}
+	oninput={e => agent.setColumnName(column.id, e.currentTarget.value)}
 	placeholder="Column name"
 />
-<button onclick={deleteColumn} class="btn--icon ml-auto">
+<button onclick={() => deleteColumn(column.id)} class="btn--icon ml-auto">
 	<TrashIcon />
 </button>

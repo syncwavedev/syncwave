@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {observe} from '$lib/utils.svelte';
+	import {observe, usePageState} from '$lib/utils.svelte';
 	import {
 		Crdt,
 		createCardId,
@@ -28,6 +28,7 @@
 	import type {CardView} from '$lib/agent/view.svelte';
 	import CardDetails from './card-details.svelte';
 	import {getAgent} from '$lib/agent/agent';
+	import EditBoardDialog from '$lib/components/edit-board-dialog/edit-board-dialog.svelte';
 
 	const {
 		boardKey,
@@ -121,6 +122,8 @@
 
 		await sdk(x => x.createCard({diff: cardCrdt.state()}));
 	}
+
+	const editBoardOpen = usePageState(false);
 </script>
 
 <main class="flex h-screen w-full">
@@ -135,9 +138,17 @@
 				<button class="btn--icon">
 					<SearchIcon />
 				</button>
-				<button class="btn--icon">
+				<button
+					onclick={() => editBoardOpen.push(true)}
+					class="btn--icon"
+				>
 					<EllipsisIcon />
 				</button>
+				<EditBoardDialog
+					{board}
+					open={editBoardOpen.value}
+					onClose={() => editBoardOpen.push(false)}
+				/>
 			</div>
 		</div>
 		<Scrollable orientation="horizontal" class="flex-grow" type="scroll">

@@ -14,6 +14,8 @@ import {
 	toStream,
 	tracerManager,
 	type BigFloat,
+	type Board,
+	type BoardId,
 	type BoardViewDataDto,
 	type Card,
 	type CardId,
@@ -85,6 +87,30 @@ class Agent {
 		this.crdtManager.update<Card>(cardId, x => {
 			x.columnPosition = position;
 			x.columnId = columnId;
+		});
+	}
+
+	setColumnName(columnId: ColumnId, name: string): void {
+		this.crdtManager.update<Column>(columnId, x => {
+			x.name = name;
+		});
+	}
+
+	deleteColumn(columnId: ColumnId): void {
+		this.crdtManager.update<Column>(columnId, x => {
+			x.deleted = true;
+		});
+	}
+
+	setBoardName(boardId: BoardId, name: string): void {
+		this.crdtManager.update<Board>(boardId, x => {
+			x.name = name;
+		});
+	}
+
+	deleteBoard(boardId: BoardId): void {
+		this.crdtManager.update<Board>(boardId, x => {
+			x.deleted = true;
 		});
 	}
 }

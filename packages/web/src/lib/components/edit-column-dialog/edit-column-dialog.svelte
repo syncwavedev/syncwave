@@ -1,10 +1,10 @@
 <script lang="ts">
 	import Dialog from '../dialog.svelte';
-	import {type BoardViewColumnDto} from 'syncwave-data';
 	import EditColumnDialogFrozenContent from './edit-column-dialog-content-frozen.svelte';
+	import type {ColumnView} from '$lib/agent/view.svelte';
 
 	interface Props {
-		column: BoardViewColumnDto;
+		column: ColumnView;
 		open: boolean;
 		onClose: () => void;
 	}

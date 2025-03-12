@@ -1,10 +1,10 @@
 <script lang="ts">
+	import type {BoardTreeView} from '$lib/agent/view.svelte';
 	import Dialog from '../dialog.svelte';
-	import {type BoardViewDto} from 'syncwave-data';
 	import EditBoardDialogFrozenContent from './edit-board-dialog-content-frozen.svelte';
 
 	interface Props {
-		board: BoardViewDto;
+		board: BoardTreeView;
 		open: boolean;
 		onClose: () => void;
 	}

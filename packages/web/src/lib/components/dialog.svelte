@@ -14,10 +14,11 @@
 
 	$effect(() => {
 		if (open) {
-			return onEscape(DIALOG_PRIORITY, onClose);
+			const unsub = onEscape(DIALOG_PRIORITY, onClose);
+			return () => unsub('effect cleanup');
 		}
 
-		return undefined;
+		return;
 	});
 </script>
 

@@ -62,7 +62,10 @@
 		if (sendInProgress) return;
 		try {
 			sendInProgress = true;
-			if (yFragmentToPlaintext(fragment).trim() !== '' || files.length > 0) {
+			if (
+				yFragmentToPlaintext(fragment).trim() !== '' ||
+				files.length > 0
+			) {
 				const createdAt = getNow();
 				const messageId = createMessageId();
 				const attachments = await whenAll(files.map(x => x.attachment));
@@ -129,7 +132,6 @@
 					file={file.file}
 					loading={file.uploading}
 					onRemove={() => {
-						console.log('hello');
 						files = files.filter(f => f !== file);
 					}}
 				/>

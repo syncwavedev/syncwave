@@ -12,20 +12,15 @@ export const load: LayoutLoad = async ({params, data}) => {
 
 	try {
 		const boardKey = params.key;
-		console.log('the data start');
 		const [initialBoard] = await whenAll([
 			sdkOnce(data.serverCookies, x =>
 				x
 					.getBoardViewData({key: boardKey})
-					.tap(x => {
-						console.log('tap', x);
-					})
 					.filter(x => x.type === 'snapshot')
 					.map(x => x.data)
 					.first()
 			),
 		]);
-		console.log('the data end');
 
 		return {
 			initialBoard,

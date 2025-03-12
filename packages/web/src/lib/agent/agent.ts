@@ -121,7 +121,6 @@ class Agent {
 		this.activeBoards
 			.filter(x => x.board.id === options.boardId)
 			.forEach(x => {
-				console.log('addCard');
 				x.addCard(card);
 			});
 

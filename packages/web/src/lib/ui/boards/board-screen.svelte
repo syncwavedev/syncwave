@@ -49,7 +49,7 @@
 						cardElement.scrollIntoView({
 							behavior: 'smooth',
 							block: 'center',
-							inline: 'center',
+							// inline: 'center',
 						});
 					}
 				}
@@ -109,10 +109,7 @@
 				<button class="btn--icon">
 					<SearchIcon />
 				</button>
-				<button
-					onclick={() => editBoardOpen.push(true)}
-					class="btn--icon"
-				>
+				<button onclick={() => editBoardOpen.push(true)} class="btn--icon">
 					<EllipsisIcon />
 				</button>
 				<EditBoardDialog

@@ -24,34 +24,40 @@
 	const editColumnOpen = usePageState(false);
 </script>
 
-<div class="flex w-80 flex-shrink-0 flex-col px-2 py-1">
-	<div class="mb-1 flex items-center">
+<Scrollable
+	orientation="vertical"
+	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
+	type="scroll"
+>
+	<div class="flex w-80 flex-shrink-0 flex-col pb-1">
 		<div
-			class="text-2xs font-medium"
-			use:dragHandle
-			data-disable-scroll-view-drag="true"
+			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 flex items-center px-2 py-1"
 		>
-			{column.column.name}
+			<div
+				class="text-2xs font-medium"
+				use:dragHandle
+				data-disable-scroll-view-drag="true"
+			>
+				{column.column.name}
+			</div>
+			<button
+				onclick={() => editColumnOpen.push(true)}
+				class="btn--icon ml-auto"
+			>
+				<EllipsisIcon />
+			</button>
+			<EditColumnDialog
+				column={column.column}
+				open={editColumnOpen.value}
+				onClose={() => editColumnOpen.push(false)}
+			/>
+			<button class="btn--icon">
+				<PlusIcon />
+			</button>
 		</div>
-		<button onclick={() => editColumnOpen.push(true)} class="btn--icon ml-auto">
-			<EllipsisIcon />
-		</button>
-		<EditColumnDialog
-			column={column.column}
-			open={editColumnOpen.value}
-			onClose={() => editColumnOpen.push(false)}
-		/>
-		<button class="btn--icon">
-			<PlusIcon />
-		</button>
-	</div>
-	<Scrollable
-		orientation="vertical"
-		viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
-		type="scroll"
-	>
+
 		<div
-			class="flex h-full flex-col gap-1.5"
+			class="mx-2 flex h-full flex-col gap-1.5"
 			use:dndzone={{
 				items: column.cards,
 				flipDurationMs: 100,
@@ -71,5 +77,5 @@
 				</div>
 			{/each}
 		</div>
-	</Scrollable>
-</div>
+	</div>
+</Scrollable>

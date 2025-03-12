@@ -340,3 +340,11 @@ export function zBoardViewDataDto() {
 
 export interface BoardViewDataDto
     extends Static<ReturnType<typeof zBoardViewDataDto>> {}
+
+export function zUserDataDto() {
+    return Type.Object({
+        user: Type.Object({state: zCrdtDiff<User>(), id: Uuid<UserId>()}),
+    });
+}
+
+export interface UserDataDto extends Static<ReturnType<typeof zUserDataDto>> {}

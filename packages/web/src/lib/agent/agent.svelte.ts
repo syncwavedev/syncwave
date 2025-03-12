@@ -32,10 +32,11 @@ import {
 	type Placement,
 	type TransportClient,
 	type User,
+	type UserId,
 } from 'syncwave-data';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
-import {BoardData, BoardTreeView} from './view.svelte';
+import {BoardData, BoardTreeView, UserView} from './view.svelte';
 
 class Agent {
 	private crdtManager: CrdtManager;
@@ -82,6 +83,38 @@ class Agent {
 					if (item.type === 'snapshot') {
 						data.update(item.data, this.crdtManager);
 					} else if (item.type === 'event') {
+						// this.handleEvent(item.event);
+					} else {
+						// softNever(item, 'observeBoard got an unknown event');
+					}
+				}
+			})().catch(error => {
+				log.error(toError(error), 'observeBoard failed');
+			});
+		});
+
+		return data.view;
+	}
+
+	observeProfile(initial: User): UserView {
+		const view = new UserView(initial);
+
+		const sdk = getSdk();
+		$effect(() => {
+			(async () => {
+				const items = toStream(
+					sdk(x => x.getProfileData({userId: initial.id}))
+				);
+				for await (const item of items) {
+					if (item.type === 'snapshot') {
+						const user = this.crdtManager.view({
+							id: item.data.user.id,
+							state: item.data.user.state,
+							type: 'user',
+						}).value;
+						console.log('item.data', user);
+						view.update(user);
+					} else if (item.type === 'event') {
 						this.handleEvent(item.event);
 					} else {
 						softNever(item, 'observeBoard got an unknown event');
@@ -92,7 +125,13 @@ class Agent {
 			});
 		});
 
-		return data.view;
+		return view;
+	}
+
+	setProfileFullName(profileId: UserId, fullName: string): void {
+		this.crdtManager.update<User>(profileId, x => {
+			x.fullName = fullName;
+		});
 	}
 
 	createCard(

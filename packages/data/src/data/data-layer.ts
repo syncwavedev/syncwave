@@ -311,6 +311,10 @@ export function userEvents(userId: UserId) {
     return `users-${userId}`;
 }
 
+export function profileEvents(userId: UserId) {
+    return `profiles-${userId}`;
+}
+
 export function boardEvents(boardId: BoardId) {
     return `boards-${boardId}`;
 }
@@ -346,6 +350,7 @@ async function logUserChange(
     const event: UserChangeEvent = {type: 'user', id, diff, ts, kind};
     await whenAll([
         tx.esWriter.append(userEvents(id), event),
+        tx.esWriter.append(profileEvents(id), event),
         ...members.map(member =>
             tx.esWriter.append(boardEvents(member.boardId), event)
         ),

@@ -14,6 +14,7 @@ import type {AuthContext} from './auth-context.js';
 import {
     boardEvents,
     type ChangeEvent,
+    profileEvents,
     type Transact,
     userEvents,
     zChangeEvent,
@@ -31,6 +32,7 @@ import {
     zMemberAdminDto,
     zMemberDto,
     zMessageDto,
+    zUserDataDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {type ObjectStore, zObjectEnvelope} from './infrastructure.js';
@@ -85,6 +87,51 @@ export function createReadApi() {
                         .subscribe(userEvents(userId))
                         .then(x => x.map(() => undefined)),
                 });
+            },
+        }),
+        getProfileData: streamer({
+            req: Type.Object({
+                userId: Uuid<UserId>(),
+            }),
+            item: Type.Union([
+                Type.Object({
+                    type: Type.Literal('snapshot'),
+                    data: zUserDataDto(),
+                }),
+                Type.Object({
+                    type: Type.Literal('event'),
+                    event: zChangeEvent(),
+                }),
+            ]),
+            async *stream(st, {userId}) {
+                const events = await st.esReader.subscribe(
+                    profileEvents(userId)
+                );
+
+                const [user] = await st.transact(async tx => {
+                    return await whenAll([tx.users.getById(userId, true)]);
+                });
+
+                if (!user) {
+                    throw new BusinessError(
+                        `user with id ${userId} not found`,
+                        'user_not_found'
+                    );
+                }
+
+                yield {
+                    type: 'snapshot' as const,
+                    data: {
+                        user,
+                    },
+                };
+
+                for await (const event of events) {
+                    yield {
+                        type: 'event' as const,
+                        event,
+                    };
+                }
             },
         }),
         getMyMembers: streamer({

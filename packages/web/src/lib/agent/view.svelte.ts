@@ -211,18 +211,22 @@ export class CardView implements Card {
 }
 
 export class UserView implements User {
-	private readonly _user: User = lateInit();
+	private _user: State<User> = $state.raw(lateInit());
 
 	constructor(user: User) {
-		this._user = user;
+		this._user = {value: user};
 	}
 
-	deleted = $derived(this._user.deleted);
-	updatedAt = $derived(this._user.updatedAt);
-	createdAt = $derived(this._user.createdAt);
-	id = $derived(this._user.id);
-	pk = $derived(this._user.pk);
-	fullName = $derived(this._user.fullName);
-	version = $derived(this._user.version);
-	avatarKey = $derived(this._user.avatarKey);
+	deleted = $derived(this._user.value.deleted);
+	updatedAt = $derived(this._user.value.updatedAt);
+	createdAt = $derived(this._user.value.createdAt);
+	id = $derived(this._user.value.id);
+	pk = $derived(this._user.value.pk);
+	fullName = $derived(this._user.value.fullName);
+	version = $derived(this._user.value.version);
+	avatarKey = $derived(this._user.value.avatarKey);
+
+	update(user: User) {
+		this._user = {value: user};
+	}
 }

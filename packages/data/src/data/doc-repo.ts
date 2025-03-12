@@ -355,7 +355,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         diff: CrdtDiff<T> | CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
-        const existingDoc = await this.primary.get(pk);
+        const existingDoc = await this.getUpgrade(pk);
 
         let prev: T | undefined;
         let next: Crdt<T>;

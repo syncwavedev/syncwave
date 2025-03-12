@@ -1,6 +1,11 @@
 <script lang="ts">
 	import {usePageState} from '$lib/utils.svelte';
-	import {compareBigFloat, log, type BoardViewDataDto} from 'syncwave-data';
+	import {
+		compareBigFloat,
+		log,
+		type BoardViewDataDto,
+		type User,
+	} from 'syncwave-data';
 
 	import {goto} from '$app/navigation';
 	import {getAppRoute} from '$lib/routes';
@@ -17,13 +22,17 @@
 	import CardDetails from './card-details.svelte';
 	import {getAgent} from '$lib/agent/agent.svelte';
 	import EditBoardDialog from '$lib/components/edit-board-dialog/edit-board-dialog.svelte';
+	import UserIcon from '../components/icons/user-icon.svelte';
+	import EditProfileDialog from '$lib/components/edit-profile-dialog/edit-profile-dialog.svelte';
 
 	const {
 		boardKey,
 		initialBoard,
+		initialMe,
 	}: {
 		boardKey: string;
 		initialBoard: BoardViewDataDto;
+		initialMe: User;
 	} = $props();
 	const agent = getAgent();
 	const board = agent.observeBoard(boardKey, initialBoard);
@@ -46,7 +55,8 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						const columnElement = cardElement.closest('[data-column-id]');
+						const columnElement =
+							cardElement.closest('[data-column-id]');
 						if (columnElement) {
 							columnElement.scrollIntoView({
 								behavior: 'smooth',
@@ -98,11 +108,11 @@
 	}
 
 	const editBoardOpen = usePageState(false);
+	const editMyProfileOpen = usePageState(false);
 </script>
 
 <main class="flex h-screen w-full">
 	<div class="dark:bg-subtle-0 bg-subtle-1 flex min-w-0 grow flex-col">
-		<!-- Fixed Header -->
 		<div class="dark:bg-subtle-0 px-4">
 			<div class="my-1 flex items-center">
 				<div class="text-xs leading-none font-medium">{board.name}</div>
@@ -112,13 +122,27 @@
 				<button class="btn--icon">
 					<SearchIcon />
 				</button>
-				<button onclick={() => editBoardOpen.push(true)} class="btn--icon">
+				<button
+					onclick={() => editBoardOpen.push(true)}
+					class="btn--icon"
+				>
 					<EllipsisIcon />
 				</button>
 				<EditBoardDialog
 					{board}
 					open={editBoardOpen.value}
 					onClose={() => editBoardOpen.push(false)}
+				/>
+				<button
+					onclick={() => editMyProfileOpen.push(true)}
+					class="btn--icon"
+				>
+					<UserIcon />
+				</button>
+				<EditProfileDialog
+					profile={initialMe}
+					open={editMyProfileOpen.value}
+					onClose={() => editMyProfileOpen.push(false)}
 				/>
 			</div>
 		</div>

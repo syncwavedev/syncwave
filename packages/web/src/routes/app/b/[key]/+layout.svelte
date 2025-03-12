@@ -3,9 +3,9 @@
 	import type {LayoutProps} from './$types';
 
 	const {data}: LayoutProps = $props();
-	const {boardKey, initialBoard} = $derived(data);
+	const {boardKey, initialBoard, initialMe} = $derived(data);
 </script>
 
 {#key boardKey}
-	<BoardScreen {boardKey} {initialBoard} />
+	<BoardScreen {boardKey} {initialBoard} initialMe={initialMe.user} />
 {/key}

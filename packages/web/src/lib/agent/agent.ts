@@ -59,11 +59,7 @@ class Agent {
 					if (item.type === 'snapshot') {
 						data.update(item.data, this.crdtManager);
 					} else if (item.type === 'event') {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						this.crdtManager.applyRemoteEvent<any>(
-							item.event.id,
-							item.event.diff
-						);
+						this.crdtManager.applyChange(item.event);
 					} else {
 						softNever(item, 'observeBoard got an unknown event');
 					}

@@ -37,15 +37,19 @@ export class BoardData {
 	private constructor() {}
 
 	update(board: BoardViewDataDto, derivator: CrdtDerivator) {
-		this._boardState = derivator.derive(board.board.id, board.board.state);
+		this._boardState = derivator.derive({
+			state: board.board.state,
+			id: board.board.id,
+			type: 'board',
+		});
 		this._userStates = board.users.map(x =>
-			derivator.derive(x.id, x.state)
+			derivator.derive({id: x.id, type: 'user', state: x.state})
 		);
 		this._columnStates = board.columns.map(x =>
-			derivator.derive(x.id, x.state)
+			derivator.derive({id: x.id, type: 'column', state: x.state})
 		);
 		this._cardStates = board.cards.map(x =>
-			derivator.derive(x.id, x.state)
+			derivator.derive({id: x.id, type: 'card', state: x.state})
 		);
 	}
 }

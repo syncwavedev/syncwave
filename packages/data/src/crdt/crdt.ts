@@ -189,7 +189,7 @@ export class Crdt<T> {
                     });
                 }
 
-                if (events.keys.length === 0) {
+                if (event.keys.size === 0) {
                     changes.push({
                         path: mapFromYPath(
                             event.currentTarget as any,

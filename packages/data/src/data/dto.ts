@@ -117,36 +117,6 @@ export async function toColumnDto(
     return {...column, board};
 }
 
-export function zBoardViewColumnDto() {
-    return Type.Composite([
-        zColumn(),
-        Type.Object({
-            state: zCrdtDiff<Column>(),
-            cards: Type.Array(zBoardViewCardDto()),
-        }),
-    ]);
-}
-
-export interface BoardViewColumnDto
-    extends Static<ReturnType<typeof zBoardViewColumnDto>> {}
-
-export async function toBoardViewColumnDto(
-    tx: DataTx,
-    columnId: ColumnId
-): Promise<BoardViewColumnDto> {
-    const column = await tx.columns.getById(columnId, true);
-    assert(
-        column !== undefined,
-        `toBoardViewColumnDto: column not found: ${columnId}`
-    );
-    const cards = await tx.cards
-        .getByColumnId(column.id)
-        .mapParallel(x => toBoardViewCardDto(tx, x.id))
-        .toArray();
-
-    return {...column, cards};
-}
-
 export function zBoardDto() {
     return Type.Composite([
         zBoard(),
@@ -166,33 +136,6 @@ export async function toBoardDto(
     assert(board !== undefined, `toBoardDto: board not found: ${boardId}`);
 
     return {...board};
-}
-
-export function zBoardViewDto() {
-    return Type.Composite([
-        zBoard(),
-        Type.Object({
-            state: zCrdtDiff<Board>(),
-            columns: Type.Array(zBoardViewColumnDto()),
-        }),
-    ]);
-}
-
-export interface BoardViewDto
-    extends Static<ReturnType<typeof zBoardViewDto>> {}
-
-export async function toBoardViewDto(
-    tx: DataTx,
-    boardId: BoardId
-): Promise<BoardViewDto> {
-    const board = await tx.boards.getById(boardId, true);
-    assert(board !== undefined, `toBoardViewDto: board not found: ${boardId}`);
-    const columns = await tx.columns
-        .getByBoardId(boardId)
-        .mapParallel(x => toBoardViewColumnDto(tx, x.id))
-        .toArray();
-
-    return {...board, columns};
 }
 
 export function zMemberDto() {
@@ -329,8 +272,6 @@ export function zMessageWithoutReplyDto() {
 
 export interface MessageWithoutReplyDto
     extends Static<ReturnType<typeof zMessageWithoutReplyDto>> {}
-
-const x: CardDto = 1 as any;
 
 export async function toMessageWithoutReplyDto(
     tx: DataTx,

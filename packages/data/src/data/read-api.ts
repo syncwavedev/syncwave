@@ -19,7 +19,6 @@ import {
     zChangeEvent,
 } from './data-layer.js';
 import {
-    toBoardViewDto,
     toCardViewDto,
     toMemberAdminDto,
     toMemberDto,
@@ -27,7 +26,6 @@ import {
     toUserDto,
     zBoardDto,
     zBoardViewDataDto,
-    zBoardViewDto,
     zCardViewDto,
     zMeDto,
     zMemberAdminDto,
@@ -398,45 +396,6 @@ export function createReadApi() {
                         event,
                     };
                 }
-            },
-        }),
-        getBoardView: streamer({
-            req: Type.Object({
-                key: Type.String(),
-            }),
-            item: zBoardViewDto(),
-            async *stream(st, {key}) {
-                const board = await st.transact(tx =>
-                    tx.boards.getByKey(key.toUpperCase())
-                );
-                if (board === undefined) {
-                    throw new BusinessError(
-                        `board with key ${key} not found`,
-                        'board_not_found'
-                    );
-                }
-                const boardId = board.id;
-                yield* observable({
-                    async get() {
-                        return await st.transact(async tx => {
-                            const [board] = await whenAll([
-                                tx.boards.getById(boardId, true),
-                                tx.ps.ensureBoardMember(boardId, 'reader'),
-                            ]);
-                            if (board === undefined) {
-                                throw new BusinessError(
-                                    `board with key ${key} not found`,
-                                    'board_not_found'
-                                );
-                            }
-
-                            return toBoardViewDto(tx, board.id);
-                        });
-                    },
-                    update$: st.esReader
-                        .subscribe(boardEvents(boardId))
-                        .then(x => x.map(() => undefined)),
-                });
             },
         }),
     });

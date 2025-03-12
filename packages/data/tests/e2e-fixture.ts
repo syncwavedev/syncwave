@@ -158,19 +158,17 @@ export class E2eFixture {
         });
 
         const overview = await this.client.rpc
-            .getBoardView({key: 'TEST'})
+            .getBoardViewData({key: 'TEST'})
+            .filter(x => x.type === 'snapshot')
+            .map(x => x.data)
             .first();
 
-        const column = assertSingle(
-            overview.columns.filter(x => x.id === columnId),
-            'expected single column'
-        );
         const card = assertSingle(
-            column.cards.filter(x => x.id === cardId),
+            overview.cards.filter(x => x.id === cardId),
             'expected single card'
         );
 
-        return card;
+        return Crdt.load(card.state).snapshot();
     }
 
     close(reason: unknown) {

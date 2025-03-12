@@ -10,7 +10,6 @@ import {
     toPosition,
     toTimestamp,
     type BoardDto,
-    type BoardViewCardDto,
     type Card,
     type Message,
 } from '../src/index.js';
@@ -114,25 +113,14 @@ describe('e2e', () => {
         });
 
         const overview = await subject.client.rpc
-            .getBoardView({key: 'TEST'})
+            .getBoardViewData({key: 'TEST'})
+            .filter(x => x.type === 'snapshot')
+            .map(x => x.data)
             .first();
 
-        const column = assertSingle(overview.columns, 'expected single column');
-        const card = assertSingle(column.cards, 'expected single card');
+        const card = assertSingle(overview.cards, 'expected single card');
 
-        const expectedBoard: BoardDto = {
-            authorId: me.user.id,
-            createdAt: toTimestamp(now),
-            deleted: false,
-            id: boardId,
-            key: 'TEST',
-            name: 'Test board',
-            updatedAt: toTimestamp(now),
-            pk: [boardId],
-            state: expect.any(Object),
-        };
-
-        const expectedCard: BoardViewCardDto = {
+        const expectedCard: Card = {
             authorId: me.user.id,
             boardId,
             columnId,
@@ -146,30 +134,10 @@ describe('e2e', () => {
             counter: 1,
             pk: [cardId],
             updatedAt: toTimestamp(now),
-            text: createRichtext(),
-            author: me.user,
-            state: expect.any(Object),
-            board: expectedBoard,
-            column: {
-                authorId: me.user.id,
-                boardId,
-                boardPosition: {
-                    denominator: expect.any(String),
-                    numerator: expect.any(String),
-                },
-                createdAt: toTimestamp(now),
-                deleted: false,
-                id: columnId,
-                pk: [columnId],
-                name: 'Test column',
-                updatedAt: toTimestamp(now),
-                state: expect.any(Object),
-                board: expectedBoard,
-                version: '4',
-            },
+            text: expect.any(Object),
         };
 
-        expect(card).toEqual(expectedCard);
+        expect(Crdt.load(card.state).snapshot()).toEqual(expectedCard);
     });
 
     it('should reply to messages', async () => {

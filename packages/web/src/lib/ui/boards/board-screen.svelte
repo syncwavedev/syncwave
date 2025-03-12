@@ -46,11 +46,14 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						cardElement.scrollIntoView({
-							behavior: 'smooth',
-							block: 'center',
-							// inline: 'center',
-						});
+						const columnElement = cardElement.closest('[data-column-id]');
+						if (columnElement) {
+							columnElement.scrollIntoView({
+								behavior: 'smooth',
+								inline: 'end',
+								block: 'nearest',
+							});
+						}
 					}
 				}
 			});

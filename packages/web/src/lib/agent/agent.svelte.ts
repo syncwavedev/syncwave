@@ -83,7 +83,7 @@ class Agent {
 					if (item.type === 'snapshot') {
 						data.update(item.data, this.crdtManager);
 					} else if (item.type === 'event') {
-						// this.handleEvent(item.event);
+						this.handleEvent(item.event);
 					} else {
 						// softNever(item, 'observeBoard got an unknown event');
 					}
@@ -112,7 +112,6 @@ class Agent {
 							state: item.data.user.state,
 							type: 'user',
 						}).value;
-						console.log('item.data', user);
 						view.update(user);
 					} else if (item.type === 'event') {
 						this.handleEvent(item.event);

@@ -13,6 +13,7 @@ export * from './data/dto.js';
 export * from './data/infrastructure.js';
 export * from './data/permission-service.js';
 export * from './data/placement.js';
+export * from './data/repos/attachment-repo.js';
 export * from './data/repos/board-repo.js';
 export * from './data/repos/card-repo.js';
 export * from './data/repos/column-repo.js';

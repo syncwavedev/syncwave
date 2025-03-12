@@ -19,7 +19,7 @@ import {deriveCrdtSnapshot} from './crdt.svelte.js';
 import type {State} from './state.js';
 
 export interface CrdtDerivator {
-	derive(diff: EntityState): State<any>;
+	view(state: EntityState): State<any>;
 }
 
 interface BaseEntity<TType extends string, TId extends Uuid, TValue> {
@@ -107,101 +107,84 @@ type Entity = ChangeEvent extends infer T
 		: never
 	: never;
 
+interface EntityBox {
+	entity: Entity;
+	view: State<any>;
+	viewUnsub: Unsubscribe;
+	observerUnsub: Unsubscribe;
+}
+
 type EntityState = ChangeEvent extends infer T
 	? T extends BaseChangeEvent<infer TType, infer TId, infer TValue>
 		? BaseEntityState<TType, TId, TValue>
 		: never
 	: never;
 
-class CrdtRegistry {
-	private readonly entities = new Map<Uuid, Entity>();
-	private readonly observers = new Map<Uuid, Unsubscribe>();
+export class CrdtManager implements CrdtDerivator {
+	private readonly entities = new Map<Uuid, EntityBox>();
 
 	constructor(private readonly rpc: CoordinatorRpc) {}
 
-	applyChangeEvent(event: ChangeEvent) {
-		const entity = this.entities.get(event.id);
+	applyChange(event: ChangeEvent) {
+		const entity = this.entities.get(event.id)?.entity;
 		if (entity === undefined) return;
 
 		assert(entity.type === event.type, 'apply: Crdt type mismatch');
 		entity.crdt.apply(event.diff as CrdtDiff<any>);
 	}
 
-	load({id, type, state}: EntityState) {
-		const entity = this.entities.get(id);
-		if (entity) {
-			assert(entity.type === type, 'load: Crdt type mismatch');
-			entity.crdt.apply(state as CrdtDiff<any>);
-		} else {
-			this.entities.set(id, {
-				crdt: Crdt.load(state as CrdtDiff<any>),
-				id,
-				type,
-			} as Entity);
-		}
-	}
-
-	get(id: Uuid) {
-		const result = this.entities.get(id);
-		assert(result !== undefined, 'Crdt not found');
-
-		if (!this.observers.has(id)) {
-			this.observe(id, result);
-		}
-
-		return result.crdt;
-	}
-
-	private observe(id: Uuid, entity: Entity) {
-		if (this.observers.has(id)) return;
-		const sender = new DiffSender(this.rpc, entity);
-
-		const unsub = entity.crdt.onUpdate(diff => {
-			sender.enqueue(diff);
-		});
-
-		this.observers.set(id, reason => {
-			unsub(reason);
-		});
-	}
-
-	close(reason: unknown) {
-		runAll([...this.observers.values()].map(fn => () => fn(reason)));
-	}
-}
-
-export class CrdtManager {
-	private readonly registry: CrdtRegistry;
-	private readonly snapshots: Unsubscribe[] = [];
-
-	constructor(rpc: CoordinatorRpc) {
-		this.registry = new CrdtRegistry(rpc);
-	}
-
-	applyChange(event: ChangeEvent) {
-		this.registry.applyChangeEvent(event);
-	}
-
-	derive(state: EntityState): State<any> {
-		this.registry.load(state);
-		const [snapshot, unsub] = deriveCrdtSnapshot<any>(
-			this.registry.get(state.id)
-		);
-		this.snapshots.push(unsub);
-		return snapshot;
+	view(state: EntityState): State<any> {
+		return this.load(state).view;
 	}
 
 	update<T>(id: Uuid, recipe: Recipe<T>) {
-		const crdt = this.registry.get(id) as Crdt<T>;
-		const diff = crdt.update(recipe);
+		const crdt = this.entities.get(id)?.entity.crdt;
+		assert(crdt !== undefined, 'Crdt not found');
+		const diff = (crdt as Crdt<T>).update(recipe);
 
 		return diff;
 	}
 
 	close(reason: unknown) {
-		runAll([
-			() => this.registry.close(reason),
-			...this.snapshots.map(fn => () => fn(reason)),
-		]);
+		runAll(
+			[...this.entities.values()].flatMap(entity => [
+				() => entity.viewUnsub(reason),
+				() => entity.observerUnsub(reason),
+			])
+		);
+	}
+
+	private load({id, type, state}: EntityState) {
+		const box = this.entities.get(id);
+		if (box) {
+			assert(box.entity.type === type, 'load: Crdt type mismatch');
+			box.entity.crdt.apply(state as CrdtDiff<any>);
+
+			return box;
+		} else {
+			const crdt = Crdt.load(state as CrdtDiff<any>);
+			const [view, viewUnsub] = deriveCrdtSnapshot(crdt);
+			const entity = {
+				crdt,
+				id,
+				type,
+			} as Entity;
+			const box: EntityBox = {
+				entity,
+				view,
+				viewUnsub,
+				observerUnsub: this.observe(id, entity),
+			};
+			this.entities.set(id, box);
+			return box;
+		}
+	}
+
+	private observe(id: Uuid, entity: Entity): Unsubscribe {
+		const sender = new DiffSender(this.rpc, entity);
+
+		return entity.crdt.onUpdate(diff => {
+			sender.enqueue(diff);
+		});
 	}
 }

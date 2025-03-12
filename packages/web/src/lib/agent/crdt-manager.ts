@@ -3,9 +3,7 @@ import {
 	assert,
 	assertNever,
 	Crdt,
-	log,
 	runAll,
-	toError,
 	Uuid,
 	type BaseChangeEvent,
 	type ChangeEvent,
@@ -25,6 +23,67 @@ interface BaseEntity<TType extends string, TId extends Uuid, TValue> {
 	readonly type: TType;
 	readonly id: TId;
 	readonly crdt: Crdt<TValue>;
+}
+
+class DiffPusher<T> {
+	private queue: CrdtDiff<T>[] = [];
+	private inProgress = false;
+
+	constructor(
+		private readonly rpc: CoordinatorRpc,
+		private readonly entity: Entity
+	) {}
+
+	async enqueue(diff: CrdtDiff<T>) {
+		this.queue.push(diff);
+		if (!this.inProgress) {
+			try {
+				this.inProgress = true;
+				while (this.queue.length > 0) {
+					const batch = Crdt.merge(this.queue);
+					this.queue = [];
+
+					await this.send(batch);
+				}
+			} finally {
+				this.inProgress = false;
+			}
+		}
+	}
+
+	private async send(diff: CrdtDiff<any>) {
+		if (this.entity.type === 'card') {
+			await this.rpc.applyCardDiff({
+				cardId: this.entity.id,
+				diff,
+			});
+		} else if (this.entity.type === 'user') {
+			await this.rpc.applyUserDiff({
+				userId: this.entity.id,
+				diff,
+			});
+		} else if (this.entity.type === 'column') {
+			await this.rpc.applyColumnDiff({
+				columnId: this.entity.id,
+				diff,
+			});
+		} else if (this.entity.type === 'board') {
+			await this.rpc.applyBoardDiff({
+				boardId: this.entity.id,
+				diff,
+			});
+		} else if (this.entity.type === 'attachment') {
+			throw new Error('Attachment diff not supported');
+		} else if (this.entity.type === 'identity') {
+			throw new Error('Identity diff not supported');
+		} else if (this.entity.type === 'member') {
+			throw new Error('Member diff not supported');
+		} else if (this.entity.type === 'message') {
+			throw new Error('Message diff not supported');
+		} else {
+			assertNever(this.entity);
+		}
+	}
 }
 
 interface BaseEntityState<TType extends string, TId extends Uuid, TValue> {
@@ -86,48 +145,15 @@ class CrdtRegistry {
 
 	private observe(id: Uuid, entity: Entity) {
 		if (this.observers.has(id)) return;
+		const pusher = new DiffPusher(this.rpc, entity);
 
 		const unsub = entity.crdt.onUpdate(diff => {
-			this.sendDiff(entity, diff).catch(error => {
-				log.error(toError(error), 'Failed to send diff');
-			});
+			pusher.enqueue(diff);
 		});
 
-		this.observers.set(id, unsub);
-	}
-
-	private async sendDiff(entity: Entity, diff: CrdtDiff<any>) {
-		if (entity.type === 'card') {
-			await this.rpc.applyCardDiff({
-				cardId: entity.id,
-				diff,
-			});
-		} else if (entity.type === 'user') {
-			await this.rpc.applyUserDiff({
-				userId: entity.id,
-				diff,
-			});
-		} else if (entity.type === 'column') {
-			await this.rpc.applyColumnDiff({
-				columnId: entity.id,
-				diff,
-			});
-		} else if (entity.type === 'board') {
-			await this.rpc.applyBoardDiff({
-				boardId: entity.id,
-				diff,
-			});
-		} else if (entity.type === 'attachment') {
-			throw new Error('Attachment diff not supported');
-		} else if (entity.type === 'identity') {
-			throw new Error('Identity diff not supported');
-		} else if (entity.type === 'member') {
-			throw new Error('Member diff not supported');
-		} else if (entity.type === 'message') {
-			throw new Error('Message diff not supported');
-		} else {
-			assertNever(entity);
-		}
+		this.observers.set(id, reason => {
+			unsub(reason);
+		});
 	}
 
 	close(reason: unknown) {

@@ -85,7 +85,7 @@ class Agent {
 					} else if (item.type === 'event') {
 						this.handleEvent(item.event);
 					} else {
-						// softNever(item, 'observeBoard got an unknown event');
+						softNever(item, 'observeBoard got an unknown event');
 					}
 				}
 			})().catch(error => {

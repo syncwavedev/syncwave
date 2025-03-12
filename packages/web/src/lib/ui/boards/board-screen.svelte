@@ -127,9 +127,9 @@
 </script>
 
 <main class="flex h-screen w-full">
-	<div class="bg-subtle-1 dark:bg-subtle-0 flex min-w-0 grow flex-col">
+	<div class="dark:bg-subtle-0 bg-subtle-1 flex min-w-0 grow flex-col">
 		<!-- Fixed Header -->
-		<div class="bg-subtle-1 dark:bg-subtle-0 px-4">
+		<div class="dark:bg-subtle-0 px-4">
 			<div class="my-1 flex items-center">
 				<div class="text-xs leading-none font-medium">{board.name}</div>
 				<button class="btn--icon ml-auto" onclick={createCard}>
@@ -154,7 +154,7 @@
 		<Scrollable orientation="horizontal" class="flex-grow" type="scroll">
 			<div
 				bind:this={boardRef}
-				class="flex gap-1.5 px-4 pb-2 text-xs"
+				class="flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 text-xs"
 				use:dragHandleZone={{
 					items: columns.value,
 					flipDurationMs: 100,

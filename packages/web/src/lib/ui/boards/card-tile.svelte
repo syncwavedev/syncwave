@@ -29,18 +29,19 @@
 	data-active={active || undefined}
 	class="
 	bg-subtle-0
-	dark:bg-subtle-2
-	hover:bg-subtle-3
+	dark:bg-subtle-1
+	hover:border-divider
+	hover:bg-subtle-2
 	group
-	border-divider
 	data-active:border-divider-object
-	data-active:bg-subtle-4
+	data-active:bg-subtle-3
 	flex
 	cursor-pointer
 	items-end
 	gap-1
 	rounded-md
 	border
+	border-transparent
 	p-2
 	"
 	onclick={onClick}

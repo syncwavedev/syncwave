@@ -25,9 +25,7 @@
 	const editColumnOpen = usePageState(false);
 </script>
 
-<div
-	class="bg-subtle-2 dark:bg-subtle-1 group flex w-80 flex-shrink-0 flex-col rounded-md p-2"
->
+<div class="group flex w-80 flex-shrink-0 flex-col px-2 py-1">
 	<div class="mb-1 flex items-center">
 		<div
 			class="text-2xs font-medium"

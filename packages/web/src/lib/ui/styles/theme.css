@@ -112,6 +112,32 @@
 	--color-red-925: oklch(25% 0.009 25deg);
 	--color-red-950: oklch(23% 0.01 25deg);
 
+	/* Blue */
+	--color-blue-20: oklch(97% 0.005 254deg);
+	--color-blue-40: oklch(95.8% 0.005 254deg);
+	--color-blue-60: oklch(94.2% 0.01 254deg);
+	--color-blue-80: oklch(93.2% 0.015 254deg);
+	--color-blue-100: oklch(91% 0.02 254deg);
+	--color-blue-150: oklch(87% 0.025 254deg);
+	--color-blue-200: oklch(83% 0.03 254deg);
+	--color-blue-250: oklch(79% 0.035 254deg);
+	--color-blue-300: oklch(75% 0.045 254deg);
+	--color-blue-350: oklch(71% 0.055 254deg);
+	--color-blue-400: oklch(67% 0.075 254deg);
+	--color-blue-450: oklch(63% 0.095 254deg);
+	--color-blue-500: oklch(59% 0.115 254deg);
+	--color-blue-500: oklch(55% 0.095 254deg);
+	--color-blue-550: oklch(51% 0.075 254deg);
+	--color-blue-650: oklch(47% 0.055 254deg);
+	--color-blue-700: oklch(43% 0.045 254deg);
+	--color-blue-750: oklch(39% 0.035 254deg);
+	--color-blue-800: oklch(35% 0.03 254deg);
+	--color-blue-850: oklch(31% 0.025 254deg);
+	--color-blue-875: oklch(29% 0.02 254deg);
+	--color-blue-900: oklch(27% 0.015 254deg);
+	--color-blue-925: oklch(25% 0.01 254deg);
+	--color-blue-950: oklch(23% 0.01 254deg);
+
 	/* Semantics */
 	--color-ink: var(--theme-color-ink);
 	--color-ink-body: var(--theme-color-ink-body);
@@ -137,6 +163,9 @@
 	--color-object-contrast-highlight: var(
 		--theme-color-object-contrast-highlight
 	);
+
+	--color-subtle-active: var(--theme-color-subtle-active);
+	--color-divider-active: var(--theme-color-divider-active);
 }
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -161,6 +190,9 @@
 		--theme-color-subtle-2: var(--color-gray-40);
 		--theme-color-subtle-3: var(--color-gray-60);
 		--theme-color-subtle-4: var(--color-gray-80);
+
+		--theme-color-subtle-active: var(--color-blue-80);
+		--theme-color-divider-active: var(--color-blue-250);
 	}
 
 	[data-theme='dark'] {
@@ -181,6 +213,9 @@
 		--theme-color-subtle-2: var(--color-slate-900);
 		--theme-color-subtle-3: var(--color-slate-875);
 		--theme-color-subtle-4: var(--color-slate-850);
+
+		--theme-color-subtle-active: var(--color-blue-850);
+		--theme-color-divider-active: var(--color-blue-550);
 	}
 
 	html,

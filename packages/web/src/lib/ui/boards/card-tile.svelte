@@ -33,8 +33,8 @@
 	hover:border-divider
 	hover:bg-subtle-2
 	group
-	data-active:border-divider-object
-	data-active:bg-subtle-3
+	data-active:border-divider-active
+	data-active:bg-subtle-active
 	flex
 	cursor-pointer
 	items-end

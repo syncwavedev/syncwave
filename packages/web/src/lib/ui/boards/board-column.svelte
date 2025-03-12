@@ -8,7 +8,6 @@
 	import EllipsisIcon from '$lib/components/icons/ellipsis-icon.svelte';
 	import {usePageState} from '$lib/utils.svelte';
 	import EditColumnDialog from '$lib/components/edit-column-dialog/edit-column-dialog.svelte';
-	import {createUuidV4} from 'syncwave-data';
 
 	const {
 		column,
@@ -25,7 +24,7 @@
 	const editColumnOpen = usePageState(false);
 </script>
 
-<div class="group flex w-80 flex-shrink-0 flex-col px-2 py-1">
+<div class="flex w-80 flex-shrink-0 flex-col px-2 py-1">
 	<div class="mb-1 flex items-center">
 		<div
 			class="text-2xs font-medium"
@@ -34,10 +33,7 @@
 		>
 			{column.column.name}
 		</div>
-		<button
-			onclick={() => editColumnOpen.push(true)}
-			class="btn--icon invisible ml-auto group-hover:visible"
-		>
+		<button onclick={() => editColumnOpen.push(true)} class="btn--icon ml-auto">
 			<EllipsisIcon />
 		</button>
 		<EditColumnDialog
@@ -45,7 +41,7 @@
 			open={editColumnOpen.value}
 			onClose={() => editColumnOpen.push(false)}
 		/>
-		<button class="btn--icon invisible group-hover:visible">
+		<button class="btn--icon">
 			<PlusIcon />
 		</button>
 	</div>

@@ -16,7 +16,7 @@
 	import {goto} from '$app/navigation';
 	import {getAppRoute} from '$lib/routes';
 	import {getSdk} from '$lib/utils';
-	import {tick, type Snippet} from 'svelte';
+	import {tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
 	import SearchIcon from '../components/icons/search-icon.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
@@ -35,7 +35,6 @@
 		initialBoard,
 		initialMe,
 	}: {
-		children: Snippet;
 		boardKey: string;
 		initialBoard: BoardViewDataDto;
 		initialMe: {
@@ -138,10 +137,7 @@
 				<button class="btn--icon">
 					<SearchIcon />
 				</button>
-				<button
-					onclick={() => editBoardOpen.push(true)}
-					class="btn--icon"
-				>
+				<button onclick={() => editBoardOpen.push(true)} class="btn--icon">
 					<EllipsisIcon />
 				</button>
 				<EditBoardDialog

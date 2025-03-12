@@ -119,10 +119,15 @@
 				/>
 			</div>
 		</div>
-		<Scrollable orientation="horizontal" class="flex-grow" type="scroll">
+		<Scrollable
+			orientation="horizontal"
+			class="flex-grow"
+			type="scroll"
+			draggable={true}
+		>
 			<div
 				bind:this={boardRef}
-				class="flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 text-xs"
+				class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 text-xs"
 				use:dragHandleZone={{
 					items: columns.value,
 					flipDurationMs: 100,

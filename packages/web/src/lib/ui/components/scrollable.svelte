@@ -12,6 +12,7 @@
 		hasRight = $bindable(false),
 		type = 'always',
 		viewportClass,
+		draggable,
 		children,
 		...restProps
 	}: {
@@ -24,6 +25,7 @@
 		viewportClass?: string;
 		children: Snippet;
 		type?: ScrollAreaType;
+		draggable?: boolean;
 		[key: string]: unknown;
 	} = $props();
 
@@ -49,6 +51,60 @@
 		}
 	}
 
+	let startX = 0;
+	let startY = 0;
+	let scrollLeft = 0;
+	let scrollTop = 0;
+
+	function checkAllowScrollViewDrag(node: EventTarget | null) {
+		if (!(node instanceof HTMLElement)) {
+			return true;
+		}
+		if (node.dataset.disableScrollViewDrag === 'true') {
+			return false;
+		}
+		return checkAllowScrollViewDrag(node.parentElement);
+	}
+
+	function handlePointerDown(event: PointerEvent) {
+		if (!draggable || !viewportRef) return;
+		if (
+			event.target !== viewportRef &&
+			!checkAllowScrollViewDrag(event.target)
+		) {
+			return;
+		}
+
+		event.preventDefault();
+		startX = event.clientX;
+		startY = event.clientY;
+		scrollLeft = viewportRef.scrollLeft;
+		scrollTop = viewportRef.scrollTop;
+
+		viewportRef.setPointerCapture(event.pointerId);
+		viewportRef.addEventListener('pointermove', handlePointerMove);
+		viewportRef.addEventListener('pointerup', handlePointerUp);
+		viewportRef.addEventListener('pointercancel', handlePointerUp);
+	}
+
+	function handlePointerMove(event: PointerEvent) {
+		const dx = event.clientX - startX;
+		const dy = event.clientY - startY;
+		if (ref) {
+			(ref.firstElementChild as HTMLElement).scrollLeft = scrollLeft - dx;
+			(ref.firstElementChild as HTMLElement).scrollTop = scrollTop - dy;
+		}
+	}
+
+	function handlePointerUp(event: PointerEvent) {
+		if (!viewportRef) return;
+
+		viewportRef.releasePointerCapture(event.pointerId);
+		viewportRef.removeEventListener('pointermove', handlePointerMove);
+		viewportRef.removeEventListener('pointerup', handlePointerUp);
+		viewportRef.removeEventListener('pointercancel', handlePointerUp);
+	}
+
 	// Effect to update bindings on content or size changes
 	$effect(() => {
 		handleScroll();
@@ -64,8 +120,8 @@
 		<ScrollArea.Thumb
 			class="bg-scrollbar relative rounded-full transition-all duration-50 {orientation ===
 			'vertical'
-				? 'my-2 h-full min-w-1.75'
-				: 'mx-2 mb-1.25 h-1.5 w-full'}"
+				? 'h-full min-w-1.75'
+				: 'mb-1.25 h-1.5'}"
 		/>
 	</ScrollArea.Scrollbar>
 {/snippet}
@@ -76,6 +132,7 @@
 		bind:ref={viewportRef}
 		class={viewportClass}
 		onscroll={handleScroll}
+		onpointerdown={handlePointerDown}
 	>
 		{@render children?.()}
 	</ScrollArea.Viewport>

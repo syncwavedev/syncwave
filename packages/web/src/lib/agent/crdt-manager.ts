@@ -107,11 +107,16 @@ type Entity = ChangeEvent extends infer T
 		: never
 	: never;
 
+interface EntityObserver {
+	sender: DiffSender<any>;
+	close: Unsubscribe;
+}
+
 interface EntityBox {
 	entity: Entity;
 	view: State<any>;
 	viewUnsub: Unsubscribe;
-	observerUnsub: Unsubscribe;
+	observer: EntityObserver;
 }
 
 type EntityState = ChangeEvent extends infer T
@@ -137,6 +142,16 @@ export class CrdtManager implements CrdtDerivator {
 		return this.load(state).view;
 	}
 
+	create(entity: EntityState) {
+		const existing = this.entities.get(entity.id);
+		assert(existing === undefined, 'create: Crdt already exists');
+		const box = this.load(entity);
+
+		box.observer.sender.enqueue(box.entity.crdt.state());
+
+		return box;
+	}
+
 	update<T>(id: Uuid, recipe: Recipe<T>) {
 		const crdt = this.entities.get(id)?.entity.crdt;
 		assert(crdt !== undefined, 'Crdt not found');
@@ -149,7 +164,7 @@ export class CrdtManager implements CrdtDerivator {
 		runAll(
 			[...this.entities.values()].flatMap(entity => [
 				() => entity.viewUnsub(reason),
-				() => entity.observerUnsub(reason),
+				() => entity.observer.close(reason),
 			])
 		);
 	}
@@ -173,18 +188,24 @@ export class CrdtManager implements CrdtDerivator {
 				entity,
 				view,
 				viewUnsub,
-				observerUnsub: this.observe(id, entity),
+				observer: this.observe(entity),
 			};
 			this.entities.set(id, box);
 			return box;
 		}
 	}
 
-	private observe(id: Uuid, entity: Entity): Unsubscribe {
+	private observe(entity: Entity): {
+		sender: DiffSender<any>;
+		close: Unsubscribe;
+	} {
 		const sender = new DiffSender(this.rpc, entity);
 
-		return entity.crdt.onUpdate(diff => {
-			sender.enqueue(diff);
-		});
+		return {
+			sender,
+			close: entity.crdt.onUpdate(diff => {
+				sender.enqueue(diff);
+			}),
+		};
 	}
 }

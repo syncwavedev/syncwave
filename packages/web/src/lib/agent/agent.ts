@@ -1,16 +1,22 @@
 import {browser} from '$app/environment';
+import type {AuthManager} from '$lib/auth-manager';
 import {getSdk} from '$lib/utils';
-import {getContext, setContext} from 'svelte';
+import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	assert,
 	context,
+	Crdt,
+	createCardId,
 	createCoordinatorApi,
+	createRichtext,
 	createRpcClient,
+	getNow,
 	log,
 	PersistentConnection,
 	RpcConnection,
 	softNever,
 	toError,
+	toPosition,
 	toStream,
 	tracerManager,
 	type BigFloat,
@@ -22,16 +28,24 @@ import {
 	type Column,
 	type ColumnId,
 	type CoordinatorRpc,
+	type Placement,
 	type TransportClient,
 } from 'syncwave-data';
 import {CrdtManager} from './crdt-manager';
+import type {State} from './state';
 import {BoardData, BoardTreeView} from './view.svelte';
 
 class Agent {
 	private crdtManager: CrdtManager;
 	private readonly connection: RpcConnection;
 	public readonly rpc: CoordinatorRpc;
-	constructor(client: TransportClient<unknown>, jwt: string | undefined) {
+
+	private activeBoards: BoardData[] = [];
+
+	constructor(
+		client: TransportClient<unknown>,
+		private readonly authManager: AuthManager
+	) {
 		this.connection = new RpcConnection(new PersistentConnection(client));
 
 		this.rpc = createRpcClient(
@@ -39,7 +53,7 @@ class Agent {
 			this.connection,
 			() => ({
 				...context().extract(),
-				auth: jwt,
+				auth: this.authManager.getJwt(),
 			}),
 			'server',
 			tracerManager.get('part')
@@ -49,6 +63,12 @@ class Agent {
 
 	observeBoard(boardKey: string, initial: BoardViewDataDto): BoardTreeView {
 		const data = BoardData.create(initial, this.crdtManager);
+
+		this.activeBoards.push(data);
+		onDestroy(
+			() =>
+				(this.activeBoards = this.activeBoards.filter(x => x !== data))
+		);
 
 		const sdk = getSdk();
 		if (browser) {
@@ -71,6 +91,41 @@ class Agent {
 		}
 
 		return data.view;
+	}
+
+	createCard(
+		options: Pick<Card, 'boardId' | 'columnId'> & {placement: Placement}
+	): State<Card> {
+		const me = this.authManager.ensureAuthorized();
+		const now = getNow();
+		const cardId = createCardId();
+		const cardCrdt = Crdt.from<Card>({
+			authorId: me.userId,
+			boardId: options.boardId,
+			columnId: options.columnId,
+			createdAt: now,
+			deleted: false,
+			id: cardId,
+			columnPosition: toPosition(options.placement),
+			counter: 0,
+			pk: [cardId],
+			updatedAt: now,
+			text: createRichtext(),
+		});
+		const card = this.crdtManager.create({
+			id: cardId,
+			state: cardCrdt.state(),
+			type: 'card',
+		}).view;
+
+		this.activeBoards
+			.filter(x => x.board.id === options.boardId)
+			.forEach(x => {
+				console.log('addCard');
+				x.addCard(card);
+			});
+
+		return card;
 	}
 
 	setColumnPosition(columnId: ColumnId, position: BigFloat): void {
@@ -117,12 +172,12 @@ class Agent {
 
 export function createAgent(
 	client: TransportClient<unknown>,
-	jwt: string | undefined
+	authManager: AuthManager
 ) {
 	const existingAgent = getContext(Agent);
 	assert(existingAgent === undefined, 'Syncwave agent already exists');
 
-	const agent = new Agent(client, jwt);
+	const agent = new Agent(client, authManager);
 	setContext(Agent, agent);
 }
 

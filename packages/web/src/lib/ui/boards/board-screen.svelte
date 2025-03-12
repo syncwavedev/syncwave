@@ -1,21 +1,9 @@
 <script lang="ts">
-	import {observe, usePageState} from '$lib/utils.svelte';
-	import {
-		Crdt,
-		createCardId,
-		createRichtext,
-		getNow,
-		log,
-		toPosition,
-		type BoardViewDataDto,
-		type Card,
-		type Identity,
-		type UserDto,
-	} from 'syncwave-data';
+	import {usePageState} from '$lib/utils.svelte';
+	import {compareBigFloat, log, type BoardViewDataDto} from 'syncwave-data';
 
 	import {goto} from '$app/navigation';
 	import {getAppRoute} from '$lib/routes';
-	import {getSdk} from '$lib/utils';
 	import {tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
 	import SearchIcon from '../components/icons/search-icon.svelte';
@@ -33,14 +21,9 @@
 	const {
 		boardKey,
 		initialBoard,
-		initialMe,
 	}: {
 		boardKey: string;
 		initialBoard: BoardViewDataDto;
-		initialMe: {
-			user: UserDto;
-			identity: Identity;
-		};
 	} = $props();
 	const agent = getAgent();
 	const board = agent.observeBoard(boardKey, initialBoard);
@@ -50,8 +33,6 @@
 		handleDndFinalizeColumns,
 		createCardHandler,
 	} = useBoardView({value: board});
-
-	const me = observe(initialMe, x => x.getMe({}));
 
 	let selectedCard = $state<CardView | null>(null);
 	let boardRef: HTMLElement | null = $state(null);
@@ -94,8 +75,6 @@
 		}
 	});
 
-	const sdk = getSdk();
-
 	async function createCard() {
 		const firstColumn = board.columns[0];
 		if (firstColumn === undefined) {
@@ -103,23 +82,16 @@
 			return;
 		}
 
-		const now = getNow();
-		const cardId = createCardId();
-		const cardCrdt = Crdt.from<Card>({
-			authorId: me.value.user.id,
+		agent.createCard({
 			boardId: board.id,
-			columnId: board.columns[0].id,
-			createdAt: now,
-			deleted: false,
-			id: cardId,
-			columnPosition: toPosition({next: undefined, prev: undefined}),
-			counter: 0,
-			pk: [cardId],
-			updatedAt: now,
-			text: createRichtext(),
+			columnId: firstColumn.id,
+			placement: {
+				prev: undefined,
+				next: [...firstColumn.cards].sort((a, b) =>
+					compareBigFloat(a.columnPosition, b.columnPosition)
+				)[0]?.columnPosition,
+			},
 		});
-
-		await sdk(x => x.createCard({diff: cardCrdt.state()}));
 	}
 
 	const editBoardOpen = usePageState(false);
@@ -137,7 +109,10 @@
 				<button class="btn--icon">
 					<SearchIcon />
 				</button>
-				<button onclick={() => editBoardOpen.push(true)} class="btn--icon">
+				<button
+					onclick={() => editBoardOpen.push(true)}
+					class="btn--icon"
+				>
 					<EllipsisIcon />
 				</button>
 				<EditBoardDialog

@@ -1,5 +1,5 @@
 export const RPC_CALL_TIMEOUT_MS = 5_000;
-export const MAX_LOOKAHEAD_COUNT = 32;
+export const MAX_LOOKAHEAD_COUNT = 124;
 export const PULL_WAIT_MS = 1000;
 export const RECONNECT_WAIT_MS = 1_000;
 export const ENVIRONMENT: 'prod' | 'dev' | 'test' =

@@ -420,7 +420,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     }
 
     private async getUpgrade(pk: Tuple): Promise<Crdt<T> | undefined> {
-        const doc = await (this.primary as Transaction<Tuple, Crdt<T>>).get(pk);
+        const doc = await this.primary.get(pk);
 
         // ignore diff, because getUpgrade is a readonly operation
         doc?.update(this.upgrade);

@@ -98,7 +98,6 @@ export function createParticipantApi() {
         getCardView: proxy('getCardView'),
         getCardViewByKey: proxy('getCardViewByKey'),
         createColumn: proxy('createColumn'),
-        createCard: proxy('createCard'),
         getBoardViewData: proxy('getBoardViewData'),
         deleteBoard: proxy('deleteBoard'),
         deleteColumn: proxy('deleteColumn'),

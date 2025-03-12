@@ -108,7 +108,8 @@ describe('e2e', () => {
             text: createRichtext(),
         });
 
-        await subject.client.rpc.createCard({
+        await subject.client.rpc.applyCardDiff({
+            cardId,
             diff: cardCrdt.state(),
         });
 

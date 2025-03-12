@@ -1,4 +1,4 @@
-import {type JwtPayload, type UserId} from 'syncwave-data';
+import {assert, type JwtPayload, type UserId} from 'syncwave-data';
 import type {UniversalStore} from './universal-store.js';
 
 function parseJwt(token: string): unknown {
@@ -31,6 +31,12 @@ export class AuthManager {
 
 	getJwt() {
 		return this.store.get(JWT_KEY);
+	}
+
+	ensureAuthorized() {
+		const identity = this.getIdentityInfo();
+		assert(identity !== undefined, 'user is not authorized');
+		return identity;
 	}
 
 	getIdentityInfo(): IdentityInfo | undefined {

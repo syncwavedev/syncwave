@@ -153,7 +153,8 @@ export class E2eFixture {
             text: createRichtext(),
         });
 
-        await this.client.rpc.createCard({
+        await this.client.rpc.applyCardDiff({
+            cardId,
             diff: cardCrdt.state(),
         });
 

@@ -60,6 +60,10 @@ export class BoardData {
 			derivator.view({id: x.id, type: 'card', state: x.state})
 		);
 	}
+
+	addCard(card: State<Card>) {
+		this._cardStates = [...this._cardStates, card];
+	}
 }
 
 export class BoardView implements Board {

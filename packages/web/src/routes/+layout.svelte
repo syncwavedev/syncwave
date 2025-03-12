@@ -62,7 +62,7 @@
 			url: appConfig.serverWsUrl,
 			codec: new MsgpackCodec(),
 		}),
-		authManager.getJwt()
+		authManager
 	);
 
 	// navigation

@@ -12,12 +12,10 @@ import {Uuid} from '../../uuid.js';
 import type {DataTx} from '../data-layer.js';
 import {
     toAttachmentDto,
-    toCardDto,
     toColumnDto,
     toMemberDto,
     toMessageDto,
     zAttachmentDto,
-    zCardDto,
     zColumnDto,
     zMemberDto,
     zMessageDto,
@@ -73,46 +71,74 @@ export class WriteApiState {
 
 export function createWriteApi() {
     return createApi<WriteApiState>()({
-        createCard: handler({
+        applyCardDiff: handler({
             req: Type.Object({
+                cardId: Uuid<CardId>(),
                 diff: zCrdtDiff<Card>(),
             }),
-            res: zCardDto(),
-            handle: async (st, {diff}) => {
-                const crdt = Crdt.load(diff);
-                const card = crdt.snapshot();
+            res: Type.Object({}),
+            handle: async (st, {cardId, diff}) => {
+                const existingCard = await st.tx.cards.getById(cardId, true);
+                if (existingCard) {
+                    await whenAll([
+                        st.ps.ensureCardMember(cardId, 'writer'),
+                        (async () => {
+                            const {before, after} = await st.tx.cards.apply(
+                                cardId,
+                                diff,
+                                writable({
+                                    text: true,
+                                    columnId: true,
+                                    columnPosition: true,
+                                    deleted: true,
+                                    updatedAt: true,
+                                })
+                            );
+                            if (before?.columnId !== after.columnId) {
+                                await st.ps.ensureColumnMember(
+                                    after.columnId,
+                                    'writer'
+                                );
+                            }
+                        })(),
+                    ]);
+                    return {};
+                } else {
+                    const crdt = Crdt.load(diff);
+                    const card = crdt.snapshot();
 
-                const meId = st.ps.ensureAuthenticated();
-                await st.ps.ensureBoardMember(card.boardId, 'writer');
-                await st.ps.ensureColumnMember(card.columnId, 'writer');
+                    const meId = st.ps.ensureAuthenticated();
+                    await st.ps.ensureBoardMember(card.boardId, 'writer');
+                    await st.ps.ensureColumnMember(card.columnId, 'writer');
 
-                const counter = await st.tx.boards.incrementBoardCounter(
-                    card.boardId
-                );
+                    const counter = await st.tx.boards.incrementBoardCounter(
+                        card.boardId
+                    );
 
-                crdt.update(draft => {
-                    draft.counter = counter;
-                });
+                    crdt.update(draft => {
+                        draft.counter = counter;
+                    });
 
-                const {after} = await st.tx.cards.apply(
-                    card.id,
-                    crdt.state(),
-                    creatable<Card>({
-                        id: card.id,
-                        pk: [card.id],
-                        authorId: meId,
-                        boardId: card.boardId,
-                        columnId: card.columnId,
-                        counter,
-                        columnPosition: card.columnPosition,
-                        createdAt: expectTimestamp(),
-                        deleted: expectBoolean(),
-                        updatedAt: expectTimestamp(),
-                        text: createRichtext(),
-                    })
-                );
+                    const {after} = await st.tx.cards.apply(
+                        card.id,
+                        crdt.state(),
+                        creatable<Card>({
+                            id: card.id,
+                            pk: [card.id],
+                            authorId: meId,
+                            boardId: card.boardId,
+                            columnId: card.columnId,
+                            counter,
+                            columnPosition: card.columnPosition,
+                            createdAt: expectTimestamp(),
+                            deleted: expectBoolean(),
+                            updatedAt: expectTimestamp(),
+                            text: createRichtext(),
+                        })
+                    );
 
-                return toCardDto(st.tx, after.id);
+                    return {};
+                }
             },
         }),
         createAttachment: handler({
@@ -485,38 +511,6 @@ export function createWriteApi() {
                     st.tx.boards.apply(boardId, diff, writable({name: true})),
                 ]);
                 return {x: null};
-            },
-        }),
-        applyCardDiff: handler({
-            req: Type.Object({
-                cardId: Uuid<CardId>(),
-                diff: zCrdtDiff<Card>(),
-            }),
-            res: Type.Object({}),
-            handle: async (st, {cardId, diff}) => {
-                await whenAll([
-                    st.ps.ensureCardMember(cardId, 'writer'),
-                    (async () => {
-                        const {before, after} = await st.tx.cards.apply(
-                            cardId,
-                            diff,
-                            writable({
-                                text: true,
-                                columnId: true,
-                                columnPosition: true,
-                                deleted: true,
-                                updatedAt: true,
-                            })
-                        );
-                        if (before?.columnId !== after.columnId) {
-                            await st.ps.ensureColumnMember(
-                                after.columnId,
-                                'writer'
-                            );
-                        }
-                    })(),
-                ]);
-                return {};
             },
         }),
         applyMemberDiff: handler({

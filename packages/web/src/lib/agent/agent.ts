@@ -26,7 +26,6 @@ import {CrdtManager} from './crdt-manager';
 import {BoardData, BoardTreeView} from './view.svelte';
 
 class Agent {
-	// todo: fix leaks
 	private crdtManager: CrdtManager;
 	private readonly connection: RpcConnection;
 	public readonly rpc: CoordinatorRpc;

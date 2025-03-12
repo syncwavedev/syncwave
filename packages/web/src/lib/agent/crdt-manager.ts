@@ -3,8 +3,11 @@ import {
 	assert,
 	assertNever,
 	Crdt,
+	log,
 	runAll,
+	toError,
 	Uuid,
+	wait,
 	type BaseChangeEvent,
 	type ChangeEvent,
 	type CoordinatorRpc,
@@ -25,7 +28,7 @@ interface BaseEntity<TType extends string, TId extends Uuid, TValue> {
 	readonly crdt: Crdt<TValue>;
 }
 
-class DiffPusher<T> {
+class DiffSender<T> {
 	private queue: CrdtDiff<T>[] = [];
 	private inProgress = false;
 
@@ -40,10 +43,16 @@ class DiffPusher<T> {
 			try {
 				this.inProgress = true;
 				while (this.queue.length > 0) {
-					const batch = Crdt.merge(this.queue);
+					const batch = this.queue.slice();
 					this.queue = [];
+					try {
+						await this.send(Crdt.merge(batch));
+					} catch (error) {
+						this.queue.push(...batch);
 
-					await this.send(batch);
+						log.error(toError(error), 'CrdtManager: send error');
+						await wait({ms: 1000, onCancel: 'reject'});
+					}
 				}
 			} finally {
 				this.inProgress = false;
@@ -145,10 +154,10 @@ class CrdtRegistry {
 
 	private observe(id: Uuid, entity: Entity) {
 		if (this.observers.has(id)) return;
-		const pusher = new DiffPusher(this.rpc, entity);
+		const sender = new DiffSender(this.rpc, entity);
 
 		const unsub = entity.crdt.onUpdate(diff => {
-			pusher.enqueue(diff);
+			sender.enqueue(diff);
 		});
 
 		this.observers.set(id, reason => {

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+	AppError,
 	assert,
 	assertNever,
 	Crdt,
@@ -31,6 +32,9 @@ interface BaseEntity<TType extends string, TId extends Uuid, TValue> {
 class DiffSender<T> {
 	private queue: CrdtDiff<T>[] = [];
 	private inProgress = false;
+	private state: {type: 'open'} | {type: 'closed'; cause: unknown} = {
+		type: 'open',
+	};
 
 	constructor(
 		private readonly rpc: CoordinatorRpc,
@@ -38,6 +42,12 @@ class DiffSender<T> {
 	) {}
 
 	async enqueue(diff: CrdtDiff<T>) {
+		if (this.state.type !== 'open') {
+			throw new AppError('CrdtManager: closed', {
+				cause: this.state.cause,
+			});
+		}
+
 		this.queue.push(diff);
 		if (!this.inProgress) {
 			try {
@@ -58,6 +68,11 @@ class DiffSender<T> {
 				this.inProgress = false;
 			}
 		}
+	}
+
+	close(reason: unknown): void {
+		this.state = {type: 'closed', cause: reason};
+		this.queue = [];
 	}
 
 	private async send(diff: CrdtDiff<any>) {
@@ -174,6 +189,7 @@ export class CrdtManager implements CrdtDerivator {
 			[...this.entities.values()].flatMap(entity => [
 				() => entity.viewUnsub(reason),
 				() => entity.observer.close(reason),
+				() => entity.observer.sender.close(reason),
 			])
 		);
 	}

@@ -64,6 +64,12 @@ class Agent {
 		this.crdtManager = new CrdtManager(this.rpc);
 	}
 
+	close(reason: unknown) {
+		this.rpc.close(reason);
+		this.crdtManager.close(reason);
+		this.connection.close(reason);
+	}
+
 	observeBoard(boardKey: string, initial: BoardViewDataDto): BoardTreeView {
 		const data = BoardData.create(initial, this.crdtManager);
 
@@ -254,6 +260,7 @@ export function createAgent(
 
 	const agent = new Agent(client, authManager);
 	setContext(Agent, agent);
+	onDestroy(() => agent.close('agent.close: component destroyed'));
 }
 
 export function getAgent() {

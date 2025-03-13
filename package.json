@@ -13,9 +13,9 @@
         "bootstrap": "npm install && npm install --workspaces && npm run build",
         "test": "npm test --workspaces",
         "build": "npm run build --workspaces",
-        "dev": "run-p -l srv web dat",
+        "dev": "run-p -l srv app dat",
         "srv": "npm run dev --workspace=syncwave-server",
-        "web": "npm run dev --workspace=syncwave-web",
+        "app": "npm run dev --workspace=syncwave-app",
         "dat": "npm run dev --workspace=syncwave-data"
     },
     "devDependencies": {

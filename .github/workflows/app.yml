@@ -2,9 +2,9 @@ on:
   push:
     branches: [main]
     paths:
-      - packages/web/**
+      - packages/app/**
       - packages/data/**
-      - .github/workflows/web.yml
+      - .github/workflows/app.yml
       - tsconfig.json
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
         required: true
         default: 'prod'
 
-name: web
+name: app
 concurrency: ${{ github.workflow }}_${{ github.event.inputs.STAGE || 'dev' }}
 
 permissions:
@@ -64,12 +64,12 @@ jobs:
       - uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/syncwavedev/syncwave-web:${{ steps.config.outputs.TAG }}
+          tags: ghcr.io/syncwavedev/syncwave-app:${{ steps.config.outputs.TAG }}
           context: '.'
-          file: ./packages/web/Dockerfile
+          file: ./packages/app/Dockerfile
           build-args: STAGE=${{ steps.config.outputs.STAGE }}
-          cache-from: type=registry,ref=ghcr.io/syncwavedev/syncwave-web:cache
-          cache-to: type=registry,mode=max,ref=ghcr.io/syncwavedev/syncwave-web:cache
+          cache-from: type=registry,ref=ghcr.io/syncwavedev/syncwave-app:cache
+          cache-to: type=registry,mode=max,ref=ghcr.io/syncwavedev/syncwave-app:cache
 
       - name: Deploy containers
         if: success()
@@ -83,15 +83,15 @@ jobs:
           script: |
             docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-            docker pull ghcr.io/syncwavedev/syncwave-web:${{ steps.config.outputs.TAG }}
+            docker pull ghcr.io/syncwavedev/syncwave-app:${{ steps.config.outputs.TAG }}
 
-            docker stop syncwave-web-${{ steps.config.outputs.STAGE }} || true
-            docker rm syncwave-web-${{ steps.config.outputs.STAGE }} || true
+            docker stop syncwave-app-${{ steps.config.outputs.STAGE }} || true
+            docker rm syncwave-app-${{ steps.config.outputs.STAGE }} || true
             docker run \
-              --name syncwave-web-${{ steps.config.outputs.STAGE }} \
+              --name syncwave-app-${{ steps.config.outputs.STAGE }} \
               -p ${{ steps.config.outputs.PORT }}:3000 \
               -e NODE_ENV=production \
               -e PUBLIC_STATE=${{ steps.config.outputs.STAGE }} \
               -d \
               --restart unless-stopped \
-              ghcr.io/syncwavedev/syncwave-web:${{ steps.config.outputs.TAG }}
+              ghcr.io/syncwavedev/syncwave-app:${{ steps.config.outputs.TAG }}

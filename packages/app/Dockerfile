@@ -24,8 +24,8 @@ RUN npm i
 WORKDIR /app/packages/data
 RUN npm run build
 
-# Build the web
-WORKDIR /app/packages/web
+# Build the app
+WORKDIR /app/packages/app
 
 ARG STAGE
 RUN if [ -z "$STAGE" ]; then \

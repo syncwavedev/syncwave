@@ -262,8 +262,7 @@ class Agent {
 				softNever(event, 'observeBoard got an unknown event');
 			}
 		} else if (event.kind === 'update') {
-			// do nothing, svelte reactivity will take care of it
-			this.crdtManager.applyChange(event);
+			this.crdtManager.applyRemoteChange(event);
 		} else {
 			assertNever(event.kind);
 		}

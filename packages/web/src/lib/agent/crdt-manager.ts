@@ -172,12 +172,14 @@ export type EntityState = ChangeEvent extends infer T
 		: never
 	: never;
 
+const REMOTE_ORIGIN = {origin: 'remote'};
+
 export class CrdtManager implements CrdtDerivator {
 	private readonly entities = new Map<Uuid, EntityBox>();
 
 	constructor(private readonly rpc: CoordinatorRpc) {}
 
-	applyChange(event: ChangeEvent) {
+	applyRemoteChange(event: ChangeEvent) {
 		if (event.kind === 'create') {
 			this.load({
 				id: event.id,
@@ -188,7 +190,9 @@ export class CrdtManager implements CrdtDerivator {
 			const entity = this.entities.get(event.id)?.entity;
 			assert(entity !== undefined, 'apply: Crdt not found');
 			assert(entity.type === event.type, 'apply: Crdt type mismatch');
-			entity.crdt.apply(event.diff as CrdtDiff<any>);
+			entity.crdt.apply(event.diff as CrdtDiff<any>, {
+				origin: REMOTE_ORIGIN,
+			});
 		} else {
 			assertNever(event.kind);
 		}
@@ -270,8 +274,10 @@ export class CrdtManager implements CrdtDerivator {
 
 		return {
 			sender,
-			close: entity.crdt.onUpdate(diff => {
-				sender.enqueue(diff);
+			close: entity.crdt.onUpdate((diff, {origin}) => {
+				if (origin !== REMOTE_ORIGIN) {
+					sender.enqueue(diff);
+				}
 			}),
 		};
 	}

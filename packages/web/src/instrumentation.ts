@@ -32,6 +32,5 @@ function createTracer(name: string, register = false) {
 }
 
 (globalThis as unknown as {tracers: Record<string, Tracer>}).tracers = {
-	view: createTracer('view', true),
-	part: createTracer('part'),
+	agent: createTracer('agent', true),
 };

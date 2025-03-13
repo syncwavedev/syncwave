@@ -1,8 +1,9 @@
 <script lang="ts">
-	import {getSdk} from '$lib/utils.js';
+	import {getRpc} from '$lib/utils.js';
 	import {appConfig} from '../../lib/config';
 	import AuthFooter from './auth-footer.svelte';
 	import {goto} from '$app/navigation';
+	import {getAgent} from '$lib/agent/agent.svelte';
 
 	const googleSignInUrl = (() => {
 		const authState = {redirectUrl: '/'};
@@ -36,7 +37,7 @@
 			? 'Please enter your email to log in'
 			: "We're excited to have you! Enter your email to sign up.";
 
-	const sdk = getSdk();
+	const agent = getAgent();
 
 	let email = $state('');
 	let error: 'cooldown' | undefined = $state();
@@ -47,7 +48,7 @@
 		isLoading = true;
 		error = undefined;
 		try {
-			const result = await sdk(rpc => rpc.sendSignInEmail({email}));
+			const result = await agent.sendSignInEmail(email);
 			if (result.type === 'success') {
 				goto(
 					`/auth/log-in/code?redirectUrl=${encodeURIComponent(redirectUrl)}&email=${encodeURIComponent(email)}`

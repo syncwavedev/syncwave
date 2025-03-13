@@ -3,23 +3,19 @@ import {
 	AppError,
 	CancelledError,
 	context,
-	drop,
+	CoordinatorClient,
+	CoordinatorClientDummy,
 	getReadableError,
 	log,
-	MemTransportClient,
-	MemTransportServer,
 	MsgpackCodec,
-	ParticipantClient,
-	ParticipantClientDummy,
-	ParticipantServer,
 	PersistentConnection,
 	runAll,
 	toStream,
 	tracerManager,
 	unimplemented,
+	type CoordinatorRpc,
 	type MeDto,
 	type Nothing,
-	type ParticipantRpc,
 	type Unsubscribe,
 } from 'syncwave-data';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
@@ -34,10 +30,10 @@ import {UploadManager} from './upload-manager.svelte';
 
 TimeAgo.addDefaultLocale(en);
 
-export function getSdk() {
-	const client = getContext<ParticipantClient>(ParticipantClient);
+export function getRpc() {
+	const client = getContext<CoordinatorClient>(CoordinatorClient);
 	if (!client) {
-		throw new Error('context ParticipantClient is not available');
+		throw new Error('context CoordinatorClient is not available');
 	}
 	const [componentCtx, cancelComponentCtx] = context().createChild({
 		span: 'getSdk',
@@ -48,7 +44,7 @@ export function getSdk() {
 		);
 	});
 	return <R extends AsyncIterable<unknown> | Promise<unknown>>(
-		fn: (rpc: ParticipantRpc) => R
+		fn: (rpc: CoordinatorRpc) => R
 	) => {
 		const [requestCtx, cancelRequestCtx] = componentCtx.createChild(
 			{
@@ -126,73 +122,65 @@ export function createAuthManager(store: UniversalStore) {
 	return authManager;
 }
 
-export function createParticipantClientDummy(): ParticipantClient {
-	return new ParticipantClientDummy() as ParticipantClient;
+export function createCoordinatorClientDummy(): CoordinatorClient {
+	return new CoordinatorClientDummy() as CoordinatorClient;
 }
 
-export function createParticipantClient() {
+export function createCoordinatorClient() {
 	const authManager = getAuthManager();
 	const jwt = authManager.getJwt();
 
-	const partTransportServer = new MemTransportServer(new MsgpackCodec());
-	const part = new ParticipantServer({
-		client: new WsTransportClient({
-			url: appConfig.serverWsUrl,
-			codec: new MsgpackCodec(),
-		}),
-		server: partTransportServer,
-	});
-
-	drop(part.launch());
-
-	const participant = new ParticipantClient(
+	const coordinator = new CoordinatorClient(
 		new PersistentConnection(
-			new MemTransportClient(partTransportServer, new MsgpackCodec())
+			new WsTransportClient({
+				url: appConfig.serverWsUrl,
+				codec: new MsgpackCodec(),
+			})
 		),
 		jwt,
-		tracerManager.get('view')
+		tracerManager.get('agent')
 	);
 
-	return participant;
+	return coordinator;
 }
 
-export async function createDirectParticipantClient(
+export async function createDirectCoordinatorClient(
 	serverCookies: CookieEntry[]
 ) {
 	const authManager = createAuthManager(
 		new UniversalStore(new Map(serverCookies.map(x => [x.name, x.value])))
 	);
 	const jwt = authManager.getJwt();
-	const participant = new ParticipantClient(
+	const coordinator = new CoordinatorClient(
 		await new WsTransportClient({
 			url: appConfig.serverWsUrl,
 			codec: new MsgpackCodec(),
 		}).connect(),
 		jwt,
-		tracerManager.get('view')
+		tracerManager.get('agent')
 	);
 
-	return participant;
+	return coordinator;
 }
 
-export async function sdkOnce<T>(
+export async function useRpc<T>(
 	cookies: CookieEntry[],
-	fn: (rpc: ParticipantRpc) => Promise<T>
+	fn: (rpc: CoordinatorRpc) => Promise<T>
 ): Promise<T> {
-	const [ctx, cancelCtx] = context().createChild({span: 'sdkOnce'}, true);
+	const [ctx, cancelCtx] = context().createChild({span: 'useRpc'}, true);
 	try {
-		let participant: ParticipantClient | undefined = undefined;
+		let coordinator: CoordinatorClient | undefined = undefined;
 		try {
 			return await ctx.run(async () => {
-				participant = await createDirectParticipantClient(cookies);
-				return await fn(participant.rpc);
+				coordinator = await createDirectCoordinatorClient(cookies);
+				return await fn(coordinator.rpc);
 			});
 		} finally {
 			// eslint-disable-next-line @typescript-eslint/no-extra-non-null-assertion
-			participant!?.close('end of sdkOnce');
+			coordinator!?.close('end of useRpc');
 		}
 	} finally {
-		cancelCtx(new AppError('end of sdkOnce'));
+		cancelCtx(new AppError('end of useRpc'));
 	}
 }
 

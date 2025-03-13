@@ -14,11 +14,11 @@ import {
 	toError,
 	toStream,
 	wait,
+	type CoordinatorRpc,
 	type Nothing,
-	type ParticipantRpc,
 	type Stream,
 } from 'syncwave-data';
-import {getSdk} from './utils';
+import {getRpc} from './utils';
 
 // observable is wrapped in $state, so it can be used in templates directly
 export interface Observable<T> extends Readable<T> {
@@ -86,7 +86,7 @@ function createObservable<T>(initialValue: T): ObservableController<T> {
 }
 
 export async function observeAsync<T>(
-	fn: (rpc: ParticipantRpc) => AsyncIterable<T>
+	fn: (rpc: CoordinatorRpc) => AsyncIterable<T>
 ): Promise<Observable<T>> {
 	const result = new Deferred<Observable<T>>();
 	let controller: ObservableController<T> | undefined = undefined;
@@ -111,7 +111,7 @@ export async function observeAsync<T>(
 
 export function observe<T>(
 	initialValue: T,
-	fn: (rpc: ParticipantRpc) => Stream<T>
+	fn: (rpc: CoordinatorRpc) => Stream<T>
 ): Observable<T> {
 	const controller = createObservable(initialValue);
 
@@ -121,11 +121,11 @@ export function observe<T>(
 }
 
 function useStream<T>(
-	fn: (rpc: ParticipantRpc) => AsyncIterable<T>,
+	fn: (rpc: CoordinatorRpc) => AsyncIterable<T>,
 	onNext: (value: T) => void,
 	onDone: () => void
 ) {
-	const sdk = getSdk();
+	const rpc = getRpc();
 
 	if (browser) {
 		let cancelled = false;
@@ -133,7 +133,7 @@ function useStream<T>(
 			try {
 				while (!cancelled) {
 					try {
-						const value$ = sdk(x => {
+						const value$ = rpc(x => {
 							return toStream(fn(x));
 						});
 

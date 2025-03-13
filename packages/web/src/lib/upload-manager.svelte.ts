@@ -2,7 +2,7 @@ import {
 	type AttachmentDto,
 	type BoardId,
 	type CardId,
-	type ParticipantClient,
+	type CoordinatorClient,
 } from 'syncwave-data';
 
 export interface UploadRequest {
@@ -12,7 +12,7 @@ export interface UploadRequest {
 }
 
 export class UploadManager {
-	constructor(private readonly client: ParticipantClient) {}
+	constructor(private readonly client: CoordinatorClient) {}
 
 	async upload({files, cardId}: UploadRequest): Promise<AttachmentDto[]> {
 		const result: AttachmentDto[] = [];

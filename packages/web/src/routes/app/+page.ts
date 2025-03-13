@@ -1,10 +1,10 @@
 import {getBoardRoute} from '$lib/routes';
-import {sdkOnce} from '$lib/utils';
+import {useRpc} from '$lib/utils';
 import {redirect} from '@sveltejs/kit';
 import type {PageLoad} from './$types';
 
 export const load: PageLoad = async ({data: {cookies}}) => {
-	const myMembers = await sdkOnce(cookies, x => x.getMyMembers({}).first());
+	const myMembers = await useRpc(cookies, x => x.getMyMembers({}).first());
 
 	if (myMembers.length === 0) {
 		return {};

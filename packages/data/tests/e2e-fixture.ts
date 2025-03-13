@@ -1,5 +1,6 @@
 import {trace} from '@opentelemetry/api';
 import {MsgpackCodec} from '../src/codec.js';
+import {CoordinatorClient} from '../src/coordinator/coordinator-client.js';
 import {
     CoordinatorServer,
     Crdt,
@@ -11,8 +12,6 @@ import {
     MemObjectStore,
     MemTransportClient,
     MemTransportServer,
-    ParticipantClient,
-    ParticipantServer,
     toPosition,
     toTimestamp,
     TupleStore,
@@ -61,26 +60,13 @@ export class E2eFixture {
 
         drop(coordinator.launch());
 
-        const participantTransportClient = new MemTransportClient(
+        const coordinatorTransportClient = new MemTransportClient(
             coordinatorTransportServer,
             new MsgpackCodec()
         );
-        const participantTransportServer = new MemTransportServer(
-            new MsgpackCodec()
-        );
-        const participant = new ParticipantServer({
-            client: participantTransportClient,
-            server: participantTransportServer,
-        });
 
-        drop(participant.launch());
-
-        const clientTransportClient = new MemTransportClient(
-            participantTransportServer,
-            new MsgpackCodec()
-        );
-        const client = new ParticipantClient(
-            await clientTransportClient.connect(),
+        const client = new CoordinatorClient(
+            await coordinatorTransportClient.connect(),
             undefined,
             trace.getTracer('e2e')
         );
@@ -89,7 +75,7 @@ export class E2eFixture {
     }
 
     constructor(
-        public readonly client: ParticipantClient,
+        public readonly client: CoordinatorClient,
         public readonly outbox: readonly EmailMessage[]
     ) {}
 

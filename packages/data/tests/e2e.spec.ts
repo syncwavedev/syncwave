@@ -31,12 +31,6 @@ describe('e2e', () => {
         vi.useRealTimers();
     });
 
-    it('should echo message back', async () => {
-        const result = await subject.client.rpc.echo({msg: 'hello'});
-
-        expect(result).toEqual({msg: 'hello'});
-    });
-
     it('should get me', async () => {
         const result = await subject.client.rpc.getMe({}).first();
 

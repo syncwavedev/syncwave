@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {getSdk, getAuthManager, showErrorToast} from '$lib/utils.js';
+	import {getRpc, getAuthManager, showErrorToast} from '$lib/utils.js';
 	import {appConfig} from '$lib/config';
 	import AuthHeader from '../../auth-header.svelte';
 	import AuthFooter from '../../auth-footer.svelte';
@@ -24,7 +24,7 @@
 		return `${rootUrl}?${new URLSearchParams(options).toString()}`;
 	})();
 
-	const sdk = getSdk();
+	const rpc = getRpc();
 
 	let code = $state('');
 	let {data} = $props();
@@ -36,29 +36,24 @@
 
 	$effect(() => {
 		if (!email) {
-			showErrorToast();
+			showErrorToast('Email is required to verify your account.');
 			goto(
 				`/auth/log-in?redirectUrl=${encodeURIComponent(redirectUrl ?? '/')}`
 			);
 		}
 	});
 
-	const store = getAuthManager();
+	const authManager = getAuthManager();
 	async function signIn() {
 		isLoading = true;
 		error = undefined;
 		try {
-			const result = await sdk(x =>
+			const result = await rpc(x =>
 				x.verifySignInCode({email: email ?? '', code})
 			);
 			if (result.type === 'success') {
-				store.logIn(result.token);
-
-				if (redirectUrl) {
-					goto(redirectUrl);
-				} else {
-					showErrorToast();
-				}
+				authManager.logIn(result.token);
+				window.location.href = redirectUrl || '/';
 			} else {
 				error = result.type;
 			}

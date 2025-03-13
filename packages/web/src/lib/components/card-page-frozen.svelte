@@ -9,7 +9,7 @@
 	import SystemMessage from '$lib/components/system-message.svelte';
 	import UserMessage from '$lib/components/user-message.svelte';
 	import {getBoardRoute} from '$lib/routes';
-	import {CARD_DETAILS_PRIORITY, getMe, getSdk, onEscape} from '$lib/utils';
+	import {CARD_DETAILS_PRIORITY, getMe, getRpc, onEscape} from '$lib/utils';
 	import {observe} from '$lib/utils.svelte';
 	import {onDestroy} from 'svelte';
 	import {
@@ -39,9 +39,9 @@
 
 	const fragment = crdt.extractXmlFragment(x => x.text);
 
-	const sdk = getSdk();
+	const rpc = getRpc();
 	const unsub = crdt.onUpdate(diff => {
-		sdk(x =>
+		rpc(x =>
 			x.applyCardDiff({
 				cardId: card.value.id,
 				diff,

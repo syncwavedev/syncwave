@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {getMe, getSdk, getUploadManager, showErrorToast} from '$lib/utils';
+	import {getMe, getRpc, getUploadManager, showErrorToast} from '$lib/utils';
 	import {
 		Crdt,
 		createMessageId,
@@ -43,7 +43,7 @@
 		return () => doc.off('updateV2', listener);
 	});
 
-	const sdk = getSdk();
+	const rpc = getRpc();
 
 	interface FileState {
 		file: File;
@@ -86,7 +86,7 @@
 
 				reset();
 
-				await sdk(x => x.createMessage({diff: message.state()}));
+				await rpc(x => x.createMessage({diff: message.state()}));
 			} else {
 				reset();
 			}

@@ -2,7 +2,7 @@
 	import {createColumnId, toPosition} from 'syncwave-data';
 	import ArrowLeftIcon from '../icons/arrow-left-icon.svelte';
 	import TimesIcon from '../icons/times-icon.svelte';
-	import {getSdk} from '$lib/utils';
+	import {getRpc} from '$lib/utils';
 	import ColumnList from './column-list.svelte';
 	import ColumnListController from './column-list-controller.svelte';
 	import type {BoardTreeView, BoardView} from '$lib/agent/view.svelte';
@@ -17,11 +17,11 @@
 
 	let newColumnName = $state('');
 
-	const sdk = getSdk();
+	const rpc = getRpc();
 	async function addColumn(e: Event) {
 		e.preventDefault();
 
-		await sdk(x =>
+		await rpc(x =>
 			x.createColumn({
 				boardId: board.id,
 				name: newColumnName,

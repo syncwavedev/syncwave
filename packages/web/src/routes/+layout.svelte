@@ -15,11 +15,11 @@
 	import '../lib/ui/styles/main.css';
 	import {onDestroy, setContext} from 'svelte';
 	import {type LayoutProps} from './$types';
-	import {ParticipantClient} from 'syncwave-data';
+	import {CoordinatorClient} from 'syncwave-data';
 	import {
 		createAuthManager,
-		createParticipantClient,
-		createParticipantClientDummy,
+		createCoordinatorClient,
+		createCoordinatorClientDummy,
 		setAuthManager,
 		setUniversalStore,
 		setUploadManager,
@@ -51,11 +51,11 @@
 	const authManager = createAuthManager(universalStore);
 	setAuthManager(authManager);
 
-	const participantClient = browser
-		? createParticipantClient()
-		: createParticipantClientDummy();
-	setContext(ParticipantClient, participantClient);
-	setUploadManager(new UploadManager(participantClient));
+	const coordinatorClient = browser
+		? createCoordinatorClient()
+		: createCoordinatorClientDummy();
+	setContext(CoordinatorClient, coordinatorClient);
+	setUploadManager(new UploadManager(coordinatorClient));
 
 	createAgent(
 		new WsTransportClient({
@@ -83,7 +83,7 @@
 
 	// Cleanup on component destruction
 	onDestroy(() => {
-		participantClient.close('layout destroyed');
+		coordinatorClient.close('layout destroyed');
 	});
 </script>
 

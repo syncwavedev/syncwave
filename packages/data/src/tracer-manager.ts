@@ -8,7 +8,7 @@ import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 import {ENVIRONMENT} from './constants.js';
 import {AppError} from './errors.js';
 
-export type TracerName = 'view' | 'part' | 'coord' | 'hub';
+export type TracerName = 'agent' | 'coord' | 'hub';
 
 class TracerManager {
     get(name: TracerName) {

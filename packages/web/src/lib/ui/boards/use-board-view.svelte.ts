@@ -31,8 +31,6 @@ export interface DndColumn {
 }
 
 export function useBoardView(localBoard: State<BoardTreeView>) {
-	const agent = getAgent();
-
 	// Reactive state for columns with initial sorting
 	const dndColumns = $state({value: applyOrder(localBoard.value.columns)});
 
@@ -62,6 +60,8 @@ export function useBoardView(localBoard: State<BoardTreeView>) {
 			);
 		});
 	});
+
+	const agent = getAgent();
 
 	// Handler for column drag-and-drop
 	function setColumns(e: CustomEvent<DndEvent<DndColumn>>) {
@@ -124,7 +124,6 @@ export function useBoardView(localBoard: State<BoardTreeView>) {
 		return (e: CustomEvent<DndEvent<DndCard>>) => setCards(dndColumn, e);
 	}
 
-	// Return reactive state and handlers
 	return {
 		columns: dndColumns,
 		handleDndConsiderColumns: setColumns,

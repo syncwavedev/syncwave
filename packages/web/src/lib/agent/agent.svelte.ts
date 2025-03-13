@@ -1,5 +1,5 @@
 import type {AuthManager} from '$lib/auth-manager';
-import {getSdk} from '$lib/utils';
+import {getRpc} from '$lib/utils';
 import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	assert,
@@ -59,9 +59,13 @@ class Agent {
 				auth: this.authManager.getJwt(),
 			}),
 			'server',
-			tracerManager.get('part')
+			tracerManager.get('agent')
 		);
 		this.crdtManager = new CrdtManager(this.rpc);
+	}
+
+	async sendSignInEmail(email: string) {
+		return await this.rpc.sendSignInEmail({email});
 	}
 
 	close(reason: unknown) {
@@ -79,11 +83,11 @@ class Agent {
 				(this.activeBoards = this.activeBoards.filter(x => x !== data))
 		);
 
-		const sdk = getSdk();
+		const rpc = getRpc();
 		$effect(() => {
 			(async () => {
 				const items = toStream(
-					sdk(x => x.getBoardViewData({key: boardKey}))
+					rpc(x => x.getBoardViewData({key: boardKey}))
 				);
 				for await (const item of items) {
 					if (item.type === 'snapshot') {
@@ -105,11 +109,11 @@ class Agent {
 	observeProfile(initial: User): UserView {
 		const view = new UserView(initial);
 
-		const sdk = getSdk();
+		const rpc = getRpc();
 		$effect(() => {
 			(async () => {
 				const items = toStream(
-					sdk(x => x.getProfileData({userId: initial.id}))
+					rpc(x => x.getProfileData({userId: initial.id}))
 				);
 				for await (const item of items) {
 					if (item.type === 'snapshot') {

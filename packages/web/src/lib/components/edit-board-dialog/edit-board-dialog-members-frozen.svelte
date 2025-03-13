@@ -10,7 +10,7 @@
 		type MemberAdminDto,
 		type MemberId,
 	} from 'syncwave-data';
-	import {getMe, getSdk, markErrorAsHandled} from '$lib/utils';
+	import {getMe, getRpc, markErrorAsHandled} from '$lib/utils';
 	import ScrollArea from '../scroll-area.svelte';
 
 	interface Props {
@@ -24,12 +24,12 @@
 
 	let email = $state('');
 
-	const sdk = getSdk();
+	const rpc = getRpc();
 	async function addMember(e: Event) {
 		e.preventDefault();
 
 		try {
-			await sdk(x => x.createMember({boardId, email, role: 'writer'}));
+			await rpc(x => x.createMember({boardId, email, role: 'writer'}));
 			email = '';
 		} catch (error) {
 			if (error instanceof BusinessError) {
@@ -47,7 +47,7 @@
 		if (!confirm('Are you sure you want to remove this member?')) return;
 
 		try {
-			await sdk(x => x.deleteMember({memberId}));
+			await rpc(x => x.deleteMember({memberId}));
 		} catch (error) {
 			if (error instanceof BusinessError) {
 				if (error.code === 'last_owner') {

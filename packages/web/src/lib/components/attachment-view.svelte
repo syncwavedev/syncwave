@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Loading from '$lib/components/loading.svelte';
-	import {getSdk} from '$lib/utils';
+	import {getRpc} from '$lib/utils';
 	import {log, toError, type AttachmentDto} from 'syncwave-data';
 
 	interface Props {
@@ -12,10 +12,10 @@
 	let imageUrl: string | undefined = $state(undefined);
 	let isImage = attachment.metadata.contentType.startsWith('image/');
 
-	const sdk = getSdk();
+	const rpc = getRpc();
 	$effect(() => {
 		if (isImage) {
-			sdk(x => x.getAttachmentObject({attachmentId: attachment.id}))
+			rpc(x => x.getAttachmentObject({attachmentId: attachment.id}))
 				.then(({data, metadata}) => {
 					imageUrl = URL.createObjectURL(
 						new Blob([data], {type: metadata.contentType})

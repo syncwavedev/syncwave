@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {getSdk} from '$lib/utils';
+	import {getRpc} from '$lib/utils';
 	import {BusinessError, createBoardId, log, toError} from 'syncwave-data';
 	import AddBoardDialogSettings from './add-board-dialog-board-settings.svelte';
 	import AddBoardDialogMemberList from './add-board-dialog-member-list.svelte';
@@ -24,11 +24,11 @@
 	let key = $state('');
 	let members = $state<string[]>([]);
 
-	const sdk = getSdk();
+	const rpc = getRpc();
 
 	async function createBoard() {
 		try {
-			await sdk(x =>
+			await rpc(x =>
 				x.createBoard({boardId: createBoardId(), key, name, members})
 			);
 			onClose();

@@ -4,14 +4,14 @@ import {AppError} from '../errors.js';
 import {RpcConnection} from '../transport/rpc-transport.js';
 import {createRpcClient} from '../transport/rpc.js';
 import type {Connection} from '../transport/transport.js';
-import {createParticipantApi, type ParticipantRpc} from './participant-api.js';
+import {createCoordinatorApi, type CoordinatorRpc} from './coordinator-api.js';
 
-export class ParticipantClientDummy {
-    get rpc(): ParticipantRpc {
+export class CoordinatorClientDummy {
+    get rpc(): CoordinatorRpc {
         return new Proxy({} as any, {
             get: (_, name) => {
                 throw new AppError(
-                    'ParticipantClientDummy get rpc field ' + String(name)
+                    'CoordinatorClientDummy get rpc field ' + String(name)
                 );
             },
         });
@@ -24,9 +24,9 @@ export class ParticipantClientDummy {
     }
 }
 
-export class ParticipantClient {
+export class CoordinatorClient {
     private readonly connection: RpcConnection;
-    public readonly rpc: ParticipantRpc;
+    public readonly rpc: CoordinatorRpc;
 
     constructor(
         connection: Connection<unknown>,
@@ -35,13 +35,13 @@ export class ParticipantClient {
     ) {
         this.connection = new RpcConnection(connection);
         this.rpc = createRpcClient(
-            createParticipantApi(),
+            createCoordinatorApi(),
             this.connection,
             () => ({
                 ...context().extract(),
                 auth: this.authToken,
             }),
-            'part',
+            'agent',
             tracer
         );
     }

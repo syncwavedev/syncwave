@@ -8,13 +8,18 @@
 	import UserIcon from '../components/icons/user-icon.svelte';
 	import Editor from '$lib/components/editor.svelte';
 	import appNavigator from '../app-navigator';
-	import type {CardView} from '$lib/agent/view.svelte';
+	import type {BoardTreeView, CardView} from '$lib/agent/view.svelte';
+	import {getAgent} from '$lib/agent/agent.svelte';
 
 	const {
 		card,
+		board,
 	}: {
 		card: CardView;
+		board: BoardTreeView;
 	} = $props();
+
+	const agent = getAgent();
 </script>
 
 <div
@@ -84,6 +89,14 @@
 					<span><Avatar name="U" /></span>
 					<span class="ml-1.5 text-xs">Unknown</span>
 				</div>
+				{#if card.isDraft}
+					<button
+						class="btn--block"
+						onclick={() => agent.commitCardDraft(board, card.id)}
+					>
+						Commit
+					</button>
+				{/if}
 			</div>
 		</div>
 	</div>

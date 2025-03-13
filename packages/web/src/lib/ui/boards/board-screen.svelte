@@ -95,8 +95,7 @@
 			return;
 		}
 
-		agent.createCard({
-			boardId: board.id,
+		agent.createCardDraft(board, {
 			columnId: firstColumn.id,
 			placement: {
 				prev: undefined,
@@ -177,7 +176,7 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetails card={selectedCard} />
+			<CardDetails {board} card={selectedCard} />
 		{/key}
 	{/if}
 </main>

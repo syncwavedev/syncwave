@@ -30,7 +30,7 @@ export interface Card extends Doc<[CardId]> {
     readonly authorId: UserId;
     readonly boardId: BoardId;
     assigneeId?: UserId;
-    counter: number;
+    counter: number | null;
     text: Richtext;
     columnPosition: BigFloat;
     columnId: ColumnId;
@@ -48,7 +48,7 @@ export function zCard() {
             id: Uuid<CardId>(),
             authorId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
-            counter: Type.Number(),
+            counter: Type.Union([Type.Number(), Type.Null()]),
             assigneeId: Type.Optional(Uuid<UserId>()),
             text: zRichtext(),
             columnPosition: zBigFloat(),

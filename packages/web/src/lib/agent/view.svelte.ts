@@ -49,15 +49,31 @@ export class BoardData {
 			state: board.board.state,
 			id: board.board.id,
 			type: 'board',
+			isDraft: false,
 		});
 		this._userStates = board.users.map(x =>
-			derivator.view({id: x.id, type: 'user', state: x.state})
+			derivator.view({
+				id: x.id,
+				type: 'user',
+				state: x.state,
+				isDraft: false,
+			})
 		);
 		this._columnStates = board.columns.map(x =>
-			derivator.view({id: x.id, type: 'column', state: x.state})
+			derivator.view({
+				id: x.id,
+				type: 'column',
+				state: x.state,
+				isDraft: false,
+			})
 		);
 		this._cardStates = board.cards.map(x =>
-			derivator.view({id: x.id, type: 'card', state: x.state})
+			derivator.view({
+				id: x.id,
+				type: 'card',
+				state: x.state,
+				isDraft: false,
+			})
 		);
 	}
 
@@ -171,6 +187,7 @@ export class CardView implements Card {
 		this._data = data;
 	}
 
+	isDraft = $derived(this._card.counter === null);
 	authorId = $derived(this._card.authorId);
 	deleted = $derived(this._card.deleted);
 	updatedAt = $derived(this._card.updatedAt);

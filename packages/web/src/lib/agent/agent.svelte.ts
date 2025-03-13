@@ -36,7 +36,7 @@ import {
 } from 'syncwave-data';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
-import {BoardData, BoardTreeView, UserView} from './view.svelte';
+import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
 
 class Agent {
 	private crdtManager: CrdtManager;
@@ -117,6 +117,7 @@ class Agent {
 							id: item.data.user.id,
 							state: item.data.user.state,
 							type: 'user',
+							isDraft: false,
 						}).value;
 						view.update(user);
 					} else if (item.type === 'event') {
@@ -139,38 +140,56 @@ class Agent {
 		});
 	}
 
-	createCard(
-		options: Pick<Card, 'boardId' | 'columnId'> & {placement: Placement}
-	): State<Card> {
+	createCardDraft(
+		board: BoardTreeView,
+		options: {columnId: ColumnId; placement: Placement}
+	): CardView {
 		const me = this.authManager.ensureAuthorized();
 		const now = getNow();
 		const cardId = createCardId();
 		const cardCrdt = Crdt.from<Card>({
 			authorId: me.userId,
-			boardId: options.boardId,
+			boardId: board.id,
 			columnId: options.columnId,
 			createdAt: now,
 			deleted: false,
 			id: cardId,
 			columnPosition: toPosition(options.placement),
-			counter: 0,
+			counter: null,
 			pk: [cardId],
 			updatedAt: now,
 			text: createRichtext(),
 		});
-		const card = this.crdtManager.create({
+		const card = this.crdtManager.createDraft({
 			id: cardId,
 			state: cardCrdt.state(),
 			type: 'card',
+			isDraft: true,
 		}).view;
 
 		this.activeBoards
-			.filter(x => x.board.id === options.boardId)
+			.filter(x => x.board.id === board.id)
 			.forEach(x => {
 				x.newCard(card);
 			});
 
-		return card;
+		const view = board.columns.flatMap(x =>
+			x.cards.filter(x => x.id === cardId)
+		)[0];
+		assert(view !== undefined, 'expected card to be created');
+
+		return view;
+	}
+
+	commitCardDraft(board: BoardTreeView, cardId: CardId) {
+		const maxCounter = Math.max(
+			0,
+			...board.columns.flatMap(x => x.cards.map(x => x.counter ?? 0))
+		);
+		this.crdtManager.update<Card>(cardId, x => {
+			x.counter = maxCounter + 1;
+		});
+		this.crdtManager.commit(cardId);
 	}
 
 	setColumnPosition(columnId: ColumnId, position: BigFloat): void {

@@ -27,28 +27,51 @@ interface BaseEntity<TType extends string, TId extends Uuid, TValue> {
 	readonly type: TType;
 	readonly id: TId;
 	readonly crdt: Crdt<TValue>;
+	// note: there is no unused draft cleanup logic right now
+	isDraft: boolean;
 }
 
 class DiffSender<T> {
 	private queue: CrdtDiff<T>[] = [];
 	private inProgress = false;
-	private state: {type: 'open'} | {type: 'closed'; cause: unknown} = {
-		type: 'open',
-	};
+	private state:
+		| {type: 'idle'}
+		| {type: 'running'}
+		| {type: 'closed'; cause: unknown};
 
 	constructor(
 		private readonly rpc: CoordinatorRpc,
 		private readonly entity: Entity
-	) {}
+	) {
+		if (this.entity.isDraft) {
+			this.state = {type: 'idle'};
+		} else {
+			this.state = {type: 'running'};
+		}
+	}
+
+	async start() {
+		this.ensureOpen();
+		this.state = {type: 'running'};
+		if (this.queue.length > 0) {
+			await this.processQueue();
+		}
+	}
 
 	async enqueue(diff: CrdtDiff<T>) {
-		if (this.state.type !== 'open') {
-			throw new AppError('CrdtManager: closed', {
-				cause: this.state.cause,
-			});
+		this.ensureOpen();
+		this.queue.push(diff);
+
+		await this.processQueue();
+	}
+
+	private async processQueue() {
+		this.ensureOpen();
+
+		if (this.state.type !== 'running') {
+			return;
 		}
 
-		this.queue.push(diff);
 		if (!this.inProgress) {
 			try {
 				this.inProgress = true;
@@ -73,6 +96,14 @@ class DiffSender<T> {
 	close(reason: unknown): void {
 		this.state = {type: 'closed', cause: reason};
 		this.queue = [];
+	}
+
+	private ensureOpen() {
+		if (this.state.type === 'closed') {
+			throw new AppError('CrdtManager: closed', {
+				cause: this.state.cause,
+			});
+		}
 	}
 
 	private async send(diff: CrdtDiff<any>) {
@@ -114,6 +145,7 @@ interface BaseEntityState<TType extends string, TId extends Uuid, TValue> {
 	readonly type: TType;
 	readonly id: TId;
 	readonly state: CrdtDiff<TValue>;
+	readonly isDraft: boolean;
 }
 
 type Entity = ChangeEvent extends infer T
@@ -166,7 +198,7 @@ export class CrdtManager implements CrdtDerivator {
 		return this.load(state).view;
 	}
 
-	create(entity: EntityState) {
+	createDraft(entity: EntityState) {
 		const existing = this.entities.get(entity.id);
 		assert(existing === undefined, 'create: Crdt already exists');
 		const box = this.load(entity);
@@ -174,6 +206,18 @@ export class CrdtManager implements CrdtDerivator {
 		box.observer.sender.enqueue(box.entity.crdt.state());
 
 		return box;
+	}
+
+	commit(id: Uuid): void {
+		const box = this.entities.get(id);
+		assert(box !== undefined, 'commit: Crdt not found');
+		if (box.entity.isDraft === false) {
+			log.warn('commit: Crdt already committed, id = ' + id);
+		}
+		box.entity.isDraft = false;
+		box.observer.sender.start().catch(error => {
+			log.error(toError(error), 'CrdtManager: commit error');
+		});
 	}
 
 	update<T>(id: Uuid, recipe: Recipe<T>) {
@@ -194,7 +238,7 @@ export class CrdtManager implements CrdtDerivator {
 		);
 	}
 
-	private load({id, type, state}: EntityState) {
+	private load({id, type, state, isDraft}: EntityState) {
 		const box = this.entities.get(id);
 		if (box) {
 			assert(box.entity.type === type, 'load: Crdt type mismatch');
@@ -208,6 +252,7 @@ export class CrdtManager implements CrdtDerivator {
 				crdt,
 				id,
 				type,
+				isDraft,
 			} as Entity;
 			const box: EntityBox = {
 				entity,
@@ -220,10 +265,7 @@ export class CrdtManager implements CrdtDerivator {
 		}
 	}
 
-	private observe(entity: Entity): {
-		sender: DiffSender<any>;
-		close: Unsubscribe;
-	} {
+	private observe(entity: Entity): EntityObserver {
 		const sender = new DiffSender(this.rpc, entity);
 
 		return {

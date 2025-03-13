@@ -53,7 +53,10 @@
 		</span>
 		<div class="flex items-center">
 			<span class="text-2xs text-ink-detail">
-				#{card.counter} by {card.author.fullName}
+				{#if card.counter}
+					#{card.counter}
+				{/if}
+				by {card.author.fullName}
 			</span>
 			<span class="ml-auto text-[1.325rem]">
 				<Avatar name={card.author.fullName} />

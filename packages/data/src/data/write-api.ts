@@ -1,15 +1,15 @@
 import {Type} from '@sinclair/typebox';
-import {encodeBase64, zBase64} from '../../base64.js';
-import {toBigFloat, zBigFloat} from '../../big-float.js';
-import {getIdentity} from '../../coordinator/auth-api.js';
-import {Crdt, zCrdtDiff} from '../../crdt/crdt.js';
-import {createRichtext} from '../../crdt/richtext.js';
-import {BusinessError} from '../../errors.js';
-import {getNow} from '../../timestamp.js';
-import {createApi, handler, type InferRpcClient} from '../../transport/rpc.js';
-import {whenAll} from '../../utils.js';
-import {Uuid} from '../../uuid.js';
-import type {DataTx} from '../data-layer.js';
+import {encodeBase64, zBase64} from '../base64.js';
+import {toBigFloat, zBigFloat} from '../big-float.js';
+import {getIdentity} from '../coordinator/auth-api.js';
+import {Crdt, zCrdtDiff} from '../crdt/crdt.js';
+import {createRichtext} from '../crdt/richtext.js';
+import {BusinessError} from '../errors.js';
+import {getNow} from '../timestamp.js';
+import {createApi, handler, type InferRpcClient} from '../transport/rpc.js';
+import {whenAll} from '../utils.js';
+import {Uuid} from '../uuid.js';
+import type {DataTx} from './data-layer.js';
 import {
     toAttachmentDto,
     toColumnDto,
@@ -19,33 +19,33 @@ import {
     zColumnDto,
     zMemberDto,
     zMessageDto,
-} from '../dto.js';
+} from './dto.js';
 import {
     createObjectKey,
     type CryptoService,
     type EmailService,
     type ObjectMetadata,
     type ObjectStore,
-} from '../infrastructure.js';
-import {PermissionService} from '../permission-service.js';
-import {createAttachmentId} from '../repos/attachment-repo.js';
-import {type Board, type BoardId, zBoard} from '../repos/board-repo.js';
-import {type Card, type CardId} from '../repos/card-repo.js';
-import {type Column, type ColumnId} from '../repos/column-repo.js';
+} from './infrastructure.js';
+import {PermissionService} from './permission-service.js';
+import {createAttachmentId} from './repos/attachment-repo.js';
+import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
+import {type Card, type CardId} from './repos/card-repo.js';
+import {type Column, type ColumnId} from './repos/column-repo.js';
 import {
     createMemberId,
     type Member,
     type MemberId,
     zMemberRole,
-} from '../repos/member-repo.js';
-import {type Message, type MessageId} from '../repos/message-repo.js';
-import {type User, type UserId} from '../repos/user-repo.js';
+} from './repos/member-repo.js';
+import {type Message, type MessageId} from './repos/message-repo.js';
+import {type User, type UserId} from './repos/user-repo.js';
 import {
     creatable,
     expectBoolean,
     expectTimestamp,
     writable,
-} from '../transition-checker.js';
+} from './transition-checker.js';
 
 export class WriteApiState {
     constructor(

@@ -36,6 +36,10 @@ export default defineConfig({
 		esbuildOptions,
 	},
 
+	build: {
+		sourcemap: true,
+	},
+
 	esbuild: esbuildOptions,
 
 	test: {

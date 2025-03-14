@@ -1,8 +1,6 @@
-import {Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
 import {anonAuthContext, AuthContextParser} from '../data/auth-context.js';
 import {DataLayer} from '../data/data-layer.js';
-import {HubClient, HubServer} from '../data/hub.js';
 import type {
     CryptoService,
     EmailService,
@@ -16,6 +14,7 @@ import {
     MemTransportClient,
     MemTransportServer,
 } from '../transport/mem-transport.js';
+import {RpcHubClient, RpcHubServer} from '../transport/rpc-hub.js';
 import type {RpcMessage} from '../transport/rpc-message.js';
 import {RpcServer} from '../transport/rpc.js';
 import type {TransportServer} from '../transport/transport.js';
@@ -44,11 +43,9 @@ export class CoordinatorServer {
         const hubMemTransportServer = new MemTransportServer(
             new MsgpackCodec()
         );
-        const hubMessageSchema = Type.Object({});
         const hubAuthSecret = 'hub-auth-secret';
-        const hubServer = new HubServer(
+        const hubServer = new RpcHubServer(
             hubMemTransportServer,
-            hubMessageSchema,
             hubAuthSecret,
             'hub'
         );
@@ -57,9 +54,8 @@ export class CoordinatorServer {
             log.error(error, 'HubServer failed to launch');
         });
 
-        const hubClient = new HubClient(
+        const hubClient = new RpcHubClient(
             new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
-            hubMessageSchema,
             hubAuthSecret,
             'hub',
             tracerManager.get('coord')

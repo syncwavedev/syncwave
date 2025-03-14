@@ -22,7 +22,7 @@ export * from './data/repos/identity-repo.js';
 export * from './data/repos/member-repo.js';
 export * from './data/repos/message-repo.js';
 export * from './data/repos/user-repo.js';
-export * from './data/write-api/write-api.js';
+export * from './data/write-api.js';
 export * from './deferred.js';
 export * from './errors.js';
 export * from './kv/instrumented-kv-store.js';

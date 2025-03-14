@@ -10,6 +10,7 @@
 		EditorContent,
 	} from 'svelte-tiptap';
 	import {Collaboration} from '@tiptap/extension-collaboration';
+	import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
 	import Placeholder from '@tiptap/extension-placeholder';
 	import {XmlFragment} from 'yjs';
 	import {Extension} from '@tiptap/core';
@@ -47,6 +48,13 @@
 				Collaboration.configure({
 					fragment,
 				}),
+				// CollaborationCursor.configure({
+				// 	provider,
+				// 	user: {
+				// 		name: 'Some Name',
+				// 		color: '#f783ac',
+				// 	},
+				// }),
 				Placeholder.configure({
 					placeholder,
 				}),

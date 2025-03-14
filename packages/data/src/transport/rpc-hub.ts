@@ -6,8 +6,10 @@ import {AppError} from '../errors.js';
 import {log} from '../logger.js';
 import {type Observer, Subject} from '../subject.js';
 import {tracerManager} from '../tracer-manager.js';
-import {PersistentConnection} from '../transport/persistent-connection.js';
-import {type RpcMessage} from '../transport/rpc-message.js';
+import {pipe, runAll} from '../utils.js';
+import type {Hub} from './hub.js';
+import {PersistentConnection} from './persistent-connection.js';
+import {type RpcMessage} from './rpc-message.js';
 import {
     applyMiddleware,
     createApi,
@@ -16,24 +18,21 @@ import {
     type InferRpcClient,
     RpcServer,
     streamer,
-} from '../transport/rpc.js';
-import type {TransportClient, TransportServer} from '../transport/transport.js';
-import type {ToSchema} from '../type.js';
-import {pipe, runAll} from '../utils.js';
+} from './rpc.js';
+import type {TransportClient, TransportServer} from './transport.js';
 
-export class HubClient<T> {
-    private readonly server: HubServerRpc<T>;
+export class RpcHubClient implements Hub {
+    private readonly server: RpcHubServerRpc;
 
     constructor(
         transportClient: TransportClient<unknown>,
-        schema: ToSchema<T>,
         authSecret: string,
         hubUser: string,
         tracer: Tracer
     ) {
         const conn = new PersistentConnection(transportClient);
         this.server = createRpcClient(
-            createHubServerApi(schema),
+            createRpcHubServerApi(),
             conn,
             () => ({
                 auth: authSecret,
@@ -44,20 +43,16 @@ export class HubClient<T> {
         );
     }
 
-    async publish(topic: string, message: T) {
-        await this.server.publish({topic, message});
+    async emit(topic: string) {
+        await this.server.emit({topic});
     }
 
-    async throw(topic: string, error: string) {
-        await this.server.throw({topic, error});
-    }
-
-    async subscribe(topic: string): Promise<Cursor<T>> {
+    async subscribe(topic: string): Promise<Cursor<void>> {
         const [init, updates] = this.server
             .subscribe({topic})
             .partition(x => x.type === 'init');
         await init.first();
-        return updates.map(x => x.item);
+        return updates.map(() => {});
     }
 
     close(reason: unknown) {
@@ -65,19 +60,18 @@ export class HubClient<T> {
     }
 }
 
-export class HubServer<T> {
-    private readonly rpcServer: RpcServer<HubServerRpcState<T>>;
+export class RpcHubServer {
+    private readonly rpcServer: RpcServer<RpcHubServerRpcState>;
 
     constructor(
         transport: TransportServer<RpcMessage>,
-        schema: ToSchema<T>,
         authSecret: string,
         serverName: string
     ) {
         this.rpcServer = new RpcServer(
             transport,
-            createHubServerApi(schema),
-            new HubServerRpcState<T>(authSecret, new SubjectManager()),
+            createRpcHubServerApi(),
+            new RpcHubServerRpcState(authSecret, new SubjectManager()),
             serverName,
             tracerManager.get('hub')
         );
@@ -142,40 +136,28 @@ class SubjectManager<T> {
     }
 }
 
-class HubServerRpcState<T> {
+class RpcHubServerRpcState {
     constructor(
         readonly authSecret: string,
-        readonly subjects: SubjectManager<T>
+        readonly subjects: SubjectManager<void>
     ) {}
     close(reason: unknown): void {
         this.subjects.closeAll(reason);
     }
 }
 
-function createHubServerApi<T>(zMessage: ToSchema<T>) {
+function createRpcHubServerApi() {
     return pipe(
-        createApi<HubServerRpcState<T>>()({
-            publish: handler({
+        createApi<RpcHubServerRpcState>()({
+            emit: handler({
                 req: Type.Object({
                     topic: Type.String(),
-                    message: zMessage,
                 }),
                 res: Type.Object({}),
-                handle: async (state, {topic, message}) => {
-                    state.subjects.next(topic, message!).catch(error => {
-                        log.error(error, 'HubServer.publish');
+                handle: async (state, {topic}) => {
+                    state.subjects.next(topic).catch(error => {
+                        log.error(error, 'HubServer.emit');
                     });
-                    return {};
-                },
-            }),
-            throw: handler({
-                req: Type.Object({topic: Type.String(), error: Type.String()}),
-                res: Type.Object({}),
-                handle: async (state, {topic, error}) => {
-                    await state.subjects.throw(
-                        topic,
-                        new AppError('EventHubServerApi.throw', {cause: error})
-                    );
                     return {};
                 },
             }),
@@ -183,22 +165,19 @@ function createHubServerApi<T>(zMessage: ToSchema<T>) {
                 req: Type.Object({topic: Type.String()}),
                 item: Type.Union([
                     Type.Object({type: Type.Literal('init')}),
-                    Type.Object({type: Type.Literal('item'), item: zMessage}),
+                    Type.Object({type: Type.Literal('event')}),
                 ]),
                 async *stream({subjects}, {topic}) {
                     const message$ = subjects.value$(topic).toCursor();
                     yield {type: 'init' as const};
-                    yield* message$.map(item => ({
-                        type: 'item' as const,
-                        item,
-                    }));
+                    yield* message$.map(() => ({type: 'event' as const}));
                 },
             }),
         }),
         api =>
             applyMiddleware(
                 api,
-                async (next, state: HubServerRpcState<T>, {headers}) => {
+                async (next, state: RpcHubServerRpcState, {headers}) => {
                     if (headers.auth !== state.authSecret) {
                         throw new AppError(
                             `HubServer: authentication failed: ${state.authSecret} !== ${headers.auth}`
@@ -211,4 +190,4 @@ function createHubServerApi<T>(zMessage: ToSchema<T>) {
     );
 }
 
-type HubServerRpc<T> = InferRpcClient<ReturnType<typeof createHubServerApi<T>>>;
+type RpcHubServerRpc = InferRpcClient<ReturnType<typeof createRpcHubServerApi>>;

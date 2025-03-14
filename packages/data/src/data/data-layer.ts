@@ -5,6 +5,7 @@ import {CollectionManager} from '../kv/collection-manager.js';
 import {type AppTransaction, isolate, type KvStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
 import {getNow, zTimestamp} from '../timestamp.js';
+import type {Hub} from '../transport/hub.js';
 import type {Tuple} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
@@ -12,7 +13,6 @@ import {type AuthContext} from './auth-context.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import type {ChangeOptions} from './doc-repo.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
-import {HubClient} from './hub.js';
 import {PermissionService} from './permission-service.js';
 import {
     type Attachment,
@@ -163,7 +163,7 @@ export class DataLayer {
 
     constructor(
         private readonly kv: KvStore<Tuple, Uint8Array>,
-        private readonly hub: HubClient<{}>,
+        private readonly hub: Hub,
         private readonly jwtSecret: string
     ) {
         this.esReader = new EventStoreReader(

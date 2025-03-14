@@ -2,6 +2,7 @@ import {Channel as AsyncChannel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cursor, toCursor} from './cursor.js';
+import {Deferred} from './deferred.js';
 import {AppError, CancelledError, toError} from './errors.js';
 import {log} from './logger.js';
 import {assert, type Nothing, type Unsubscribe, whenAll} from './utils.js';
@@ -171,6 +172,62 @@ export class Stream<T> implements AsyncIterable<T> {
 
     [Symbol.asyncIterator](): AsyncIterator<T> {
         return this.source[Symbol.asyncIterator]();
+    }
+
+    conflateLatest(): Stream<T> {
+        return toStream(this._conflateLatest());
+    }
+
+    private async *_conflateLatest() {
+        let eventSignal = new Deferred<IteratorResult<T>>();
+        let running = true;
+
+        const resolve = (result: IteratorResult<T>) => {
+            eventSignal.resolve(result);
+
+            eventSignal = new Deferred();
+            eventSignal.resolve(result);
+        };
+
+        const reject = (error: AppError) => {
+            eventSignal.reject(error);
+
+            eventSignal = new Deferred();
+            eventSignal.reject(error);
+        };
+
+        (async () => {
+            try {
+                for await (const value of this) {
+                    if (!running) return;
+
+                    resolve({done: false, value});
+                }
+            } catch (error) {
+                reject(toError(error));
+            } finally {
+                resolve({done: true, value: undefined});
+            }
+        })().catch(error => {
+            reject(error);
+        });
+
+        try {
+            while (true) {
+                const eventPromise = eventSignal.promise;
+                if (eventSignal.state !== 'pending') {
+                    eventSignal = new Deferred();
+                }
+                const event = await eventPromise;
+
+                if (event.done === true) {
+                    return;
+                }
+                yield event.value;
+            }
+        } finally {
+            running = false;
+        }
     }
 
     drop(count: number) {

@@ -162,7 +162,7 @@ export function createAwarenessApi() {
                     interval({ms: PULL_INTERVAL_MS, onCancel: 'reject'}).map(
                         () => undefined
                     ),
-                ]);
+                ]).conflateLatest();
 
                 try {
                     let prevItem: unknown = undefined;

@@ -1,5 +1,3 @@
-import type {AuthManager} from '$lib/auth-manager';
-import {getRpc} from '$lib/utils';
 import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	assert,
@@ -34,6 +32,8 @@ import {
 	type User,
 	type UserId,
 } from 'syncwave-data';
+import type {AuthManager} from '../auth-manager';
+import {getRpc} from '../utils';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
@@ -79,16 +79,13 @@ class Agent {
 
 		this.activeBoards.push(data);
 		onDestroy(
-			() =>
-				(this.activeBoards = this.activeBoards.filter(x => x !== data))
+			() => (this.activeBoards = this.activeBoards.filter(x => x !== data))
 		);
 
 		const rpc = getRpc();
 		$effect(() => {
 			(async () => {
-				const items = toStream(
-					rpc(x => x.getBoardViewData({key: boardKey}))
-				);
+				const items = toStream(rpc(x => x.getBoardViewData({key: boardKey})));
 				for await (const item of items) {
 					if (item.type === 'snapshot') {
 						data.update(item.data, this.crdtManager);

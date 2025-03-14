@@ -1,6 +1,7 @@
 import type {Entry} from './kv/kv-store.js';
 import {getNow} from './timestamp.js';
 import {assert, equals} from './utils.js';
+import {createUuidV4} from './uuid.js';
 
 interface AwarenessUpdate {
     added: number[];
@@ -62,7 +63,7 @@ export class Awareness {
         this.init(clientId);
 
         this.checkInterval = setInterval(
-            () => this.periodicCheck.bind(this),
+            this.periodicCheck.bind(this),
             Math.ceil(OUTDATED_TIMEOUT / 10)
         );
     }
@@ -165,8 +166,8 @@ export class Awareness {
             local.state !== null &&
             now - local.lastUpdated >= OUTDATED_TIMEOUT / 2
         ) {
-            // renew local
-            this.setLocalState(this.getLocalState());
+            // renew local: force server to send the changed state to all peers
+            this.setLocalStateField('__trigger', createUuidV4());
         }
 
         this.states.forEach((meta, clientId) => {

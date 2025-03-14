@@ -82,7 +82,12 @@ export function createCoordinatorApi() {
     const adaptedAwarenessApi = mapApiState(
         createAwarenessApi(),
         (state: CoordinatorApiState) => {
-            return new AwarenessApiState(state.transact, state.hub, state.auth);
+            return new AwarenessApiState(
+                state.transact,
+                state.hub,
+                state.auth,
+                state.esReader
+            );
         }
     );
 

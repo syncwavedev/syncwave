@@ -36,7 +36,11 @@ import {
 	type User,
 	type UserId,
 } from 'syncwave-data';
-import {Awareness} from '../../../../data/dist/esm/src/awareness';
+import {
+	Awareness,
+	type AwarenessState,
+} from '../../../../data/dist/esm/src/awareness';
+import {BatchProcessor} from './batch-processor';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
@@ -113,22 +117,31 @@ class Agent {
 			destroySignal.resolve();
 		});
 
+		const awarenessSender = new BatchProcessor<AwarenessState>(
+			{type: 'running'},
+			async (states: AwarenessState[]) => {
+				await rpc(x =>
+					x.updateBoardAwarenessState({
+						clientId: awareness.clientId,
+						boardId: initial.board.id,
+						state: states.at(-1) ?? null,
+					})
+				);
+			}
+		);
+
 		async function startAwarenessPull() {
 			const handleUpdate = (_: unknown, origin: unknown) => {
 				if (origin !== 'local') return;
 
-				rpc(x =>
-					x.updateBoardAwarenessState({
-						clientId: awareness.clientId,
-						boardId: initial.board.id,
-						state: awareness.getLocalState(),
-					})
-				).catch(error => {
-					log.error(
-						toError(error),
-						'failed to update awareness state'
-					);
-				});
+				awarenessSender
+					.enqueue(awareness.getLocalState())
+					.catch(error => {
+						log.error(
+							toError(error),
+							'failed to enqueue awareness state'
+						);
+					});
 			};
 
 			awareness.on('update', handleUpdate);

@@ -11,15 +11,18 @@
 	import type {BoardTreeView, CardView} from '$lib/agent/view.svelte';
 	import {getAgent} from '$lib/agent/agent.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
+	import type {User} from 'syncwave-data';
 
 	const {
 		card,
 		board,
 		awareness,
+		me,
 	}: {
 		card: CardView;
 		board: BoardTreeView;
 		awareness: Awareness;
+		me: User;
 	} = $props();
 
 	const agent = getAgent();
@@ -73,6 +76,7 @@
 					placeholder="Write here..."
 					fragment={card.text.__fragment!}
 					{awareness}
+					{me}
 				/>
 			</div>
 			<hr class="-mx-4 mt-4 mb-4" />

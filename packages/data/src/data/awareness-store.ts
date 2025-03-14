@@ -4,11 +4,13 @@ import {AppError} from '../errors.js';
 import {
     isolate,
     withCodec,
+    withPacker,
     type AppTransaction,
-    type Entry,
+    type Transaction,
 } from '../kv/kv-store.js';
 import {toStream} from '../stream.js';
-import {pipe, whenAll} from '../utils.js';
+import {NumberPacker} from '../tuple.js';
+import {assert, pipe, whenAll} from '../utils.js';
 import {type UserId} from './repos/user-repo.js';
 
 export class AwarenessStore {
@@ -44,7 +46,7 @@ export class AwarenessStore {
     }
 
     private room(room: string): AwarenessRoom {
-        return new AwarenessRoom(this.rooms, room);
+        return new AwarenessRoom(isolate([room])(this.rooms));
     }
 }
 
@@ -76,38 +78,46 @@ export class AwarenessOwnershipError extends AppError {
     }
 }
 
+export interface AwarenessStateEntry {
+    clientId: number;
+    userId: UserId;
+    state: AwarenessState;
+}
+
 class AwarenessRoom {
-    private readonly states: AppTransaction<AwarenessState>;
-    private readonly owners: AppTransaction<UserId>;
-    constructor(tx: AppTransaction, room: string) {
+    private readonly states: Transaction<number, AwarenessState>;
+    private readonly owners: Transaction<number, UserId>;
+    constructor(tx: AppTransaction) {
         this.states = pipe(
             tx,
-            isolate(['states']),
+            isolate(['states_1']),
+            withPacker(new NumberPacker()),
             withCodec<AwarenessState>(new MsgpackCodec())
         );
         this.owners = pipe(
             tx,
-            isolate([room, 'owners']),
-            withCodec<UserId>(new MsgpackCodec())
+            isolate(['owners_1']),
+            withPacker(new NumberPacker()),
+            withCodec(new MsgpackCodec())
         );
     }
     async create(userId: UserId, clientId: number, state: AwarenessState) {
         await whenAll([
-            this.states.put([clientId], {userId, state}),
-            this.owners.get([clientId]).then(async existing => {
+            this.states.put(clientId, state),
+            this.owners.get(clientId).then(async existing => {
                 if (existing) {
                     throw new AwarenessConflictError(clientId);
                 }
 
-                await this.owners.put([clientId], userId);
+                await this.owners.put(clientId, userId);
             }),
         ]);
     }
 
     async update(userId: UserId, clientId: number, state: AwarenessState) {
         await whenAll([
-            this.states.put([clientId], state),
-            this.owners.get([clientId]).then(ownerId => {
+            this.states.put(clientId, state),
+            this.owners.get(clientId).then(ownerId => {
                 if (ownerId !== userId) {
                     throw new AwarenessOwnershipError({
                         clientId,
@@ -121,18 +131,30 @@ class AwarenessRoom {
 
     async offline(clientId: number) {
         await whenAll([
-            this.states.delete([clientId]),
-            this.owners.delete([clientId]),
+            this.states.delete(clientId),
+            this.owners.delete(clientId),
         ]);
     }
 
-    async getAll(): Promise<Array<Entry<number, AwarenessState>>> {
-        const states = await toStream(this.states.query({gte: []})).toArray();
-        return states.map(
-            ({key, value}): Entry<number, AwarenessState> => ({
-                key: key[0] as number,
-                value: value,
-            })
-        );
+    async getAll(): Promise<AwarenessStateEntry[]> {
+        const [owners, states] = await whenAll([
+            toStream(this.owners.query({gte: 0})).toArray(),
+            toStream(this.states.query({gte: 0})).toArray(),
+        ]);
+
+        return states.map(({key: clientId, value}): AwarenessStateEntry => {
+            const ownerId = owners.find(o => o.key === clientId)?.value;
+
+            assert(
+                ownerId !== undefined,
+                'AwarenessStore.getAll: meta not found for client ' + clientId
+            );
+
+            return {
+                clientId,
+                state: value,
+                userId: ownerId,
+            };
+        });
     }
 }

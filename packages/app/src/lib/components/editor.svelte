@@ -15,6 +15,7 @@
 	import {XmlFragment} from 'yjs';
 	import {Extension} from '@tiptap/core';
 	import type {Awareness} from '../../../../data/dist/esm/src/awareness';
+	import {hashString, type User, type UserId} from 'syncwave-data';
 
 	let editor = $state() as Readable<Editor>;
 
@@ -22,6 +23,7 @@
 		fragment: XmlFragment;
 		awareness: Awareness;
 		placeholder: string;
+		me: User;
 		class?: string;
 		onEnter?: () => void;
 	}
@@ -30,6 +32,7 @@
 		fragment,
 		awareness,
 		placeholder,
+		me,
 		class: className,
 		onEnter,
 	}: Props = $props();
@@ -44,6 +47,32 @@
 			};
 		},
 	});
+
+	const colors = [
+		'#958DF1',
+		'#F98181',
+		'#FBBC88',
+		'#FAF594',
+		'#70CFF8',
+		'#94FADB',
+		'#B9F18D',
+		'#C3E2C2',
+		'#EAECCC',
+		'#AFC8AD',
+		'#EEC759',
+		'#9BB8CD',
+		'#FF90BC',
+		'#FFC0D9',
+		'#DC8686',
+		'#7ED7C1',
+		'#F3EEEA',
+		'#89B9AD',
+		'#D0BFFF',
+		'#FFF8C9',
+		'#CBFFA9',
+		'#9BABB8',
+		'#E3F4F4',
+	];
 
 	export function clear() {
 		get(editor).commands.clearContent();
@@ -62,8 +91,8 @@
 						awareness,
 					},
 					user: {
-						name: 'Cyndi Lauper',
-						color: '#f783ac',
+						name: me.fullName,
+						color: colors[hashString(me.id) % colors.length],
 					},
 				}),
 				Placeholder.configure({
@@ -151,13 +180,18 @@
 				border-right: 1px solid #0d0d0d;
 				margin-left: -1px;
 				margin-right: -1px;
-				pointer-events: none;
 				position: relative;
 				word-break: normal;
+
+				&:hover .collaboration-cursor__label {
+					visibility: visible;
+				}
 			}
 
 			/* Render the username above the caret */
 			.collaboration-cursor__label {
+				/* visibility: hidden; */
+				pointer-events: none;
 				border-radius: 3px 3px 3px 0;
 				color: #0d0d0d;
 				font-size: 12px;

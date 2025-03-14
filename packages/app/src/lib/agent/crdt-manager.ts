@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-	AppError,
 	assert,
 	assertNever,
 	Crdt,
@@ -8,7 +7,6 @@ import {
 	runAll,
 	toError,
 	Uuid,
-	wait,
 	type BaseChangeEvent,
 	type ChangeEvent,
 	type CoordinatorRpc,
@@ -16,6 +14,7 @@ import {
 	type Recipe,
 	type Unsubscribe,
 } from 'syncwave-data';
+import {BatchProcessor} from './batch-processor.js';
 import {deriveCrdtSnapshot} from './crdt.svelte.js';
 import type {State} from './state.js';
 
@@ -32,78 +31,32 @@ interface BaseEntity<TType extends string, TId extends Uuid, TValue> {
 }
 
 class DiffSender<T> {
-	private queue: CrdtDiff<T>[] = [];
-	private inProgress = false;
-	private state:
-		| {type: 'idle'}
-		| {type: 'running'}
-		| {type: 'closed'; cause: unknown};
+	private readonly batchProcessor: BatchProcessor<CrdtDiff<T>>;
 
 	constructor(
 		private readonly rpc: CoordinatorRpc,
 		private readonly entity: Entity
 	) {
-		if (this.entity.isDraft) {
-			this.state = {type: 'idle'};
-		} else {
-			this.state = {type: 'running'};
-		}
+		this.batchProcessor = new BatchProcessor(
+			this.entity.isDraft ? {type: 'idle'} : {type: 'running'},
+			this.process.bind(this)
+		);
 	}
 
 	async start() {
-		this.ensureOpen();
-		this.state = {type: 'running'};
-		if (this.queue.length > 0) {
-			await this.processQueue();
-		}
+		this.batchProcessor.start();
 	}
 
 	async enqueue(diff: CrdtDiff<T>) {
-		this.ensureOpen();
-		this.queue.push(diff);
-
-		await this.processQueue();
+		this.batchProcessor.enqueue(diff);
 	}
 
-	private async processQueue() {
-		this.ensureOpen();
-
-		if (this.state.type !== 'running') {
-			return;
-		}
-
-		if (!this.inProgress) {
-			try {
-				this.inProgress = true;
-				while (this.queue.length > 0) {
-					const batch = this.queue.slice();
-					this.queue = [];
-					try {
-						await this.send(Crdt.merge(batch));
-					} catch (error) {
-						this.queue.push(...batch);
-
-						log.error(toError(error), 'CrdtManager: send error');
-						await wait({ms: 1000, onCancel: 'reject'});
-					}
-				}
-			} finally {
-				this.inProgress = false;
-			}
-		}
+	private async process(batch: Array<CrdtDiff<T>>) {
+		await this.send(Crdt.merge(batch));
 	}
 
 	close(reason: unknown): void {
-		this.state = {type: 'closed', cause: reason};
-		this.queue = [];
-	}
-
-	private ensureOpen() {
-		if (this.state.type === 'closed') {
-			throw new AppError('CrdtManager: closed', {
-				cause: this.state.cause,
-			});
-		}
+		this.batchProcessor.close(reason);
 	}
 
 	private async send(diff: CrdtDiff<any>) {

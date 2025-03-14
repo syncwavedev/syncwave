@@ -12,14 +12,15 @@ import {
     streamer,
     type InferRpcClient,
 } from '../transport/rpc.js';
-import {equals, interval, whenAll} from '../utils.js';
+import {assert, equals, interval, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {AuthContext} from './auth-context.js';
 import {
     AwarenessConflictError,
     AwarenessOwnershipError,
 } from './awareness-store.js';
-import {type Transact} from './data-layer.js';
+import {boardEvents, type ChangeEvent, type Transact} from './data-layer.js';
+import type {EventStoreReader} from './event-store.js';
 import type {BoardId} from './repos/board-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
@@ -30,8 +31,9 @@ function boardAwarenessRoom(boardId: BoardId) {
 export class AwarenessApiState {
     constructor(
         public readonly transact: Transact,
-        readonly hub: Hub,
-        public readonly auth: AuthContext
+        public readonly hub: Hub,
+        public readonly auth: AuthContext,
+        public readonly esReader: EventStoreReader<ChangeEvent>
     ) {}
 
     ensureAuthenticated(): UserId {
@@ -152,8 +154,11 @@ export function createAwarenessApi() {
                 await st.createState(board.id, clientId, state);
 
                 const updates = Stream.merge([
-                    await st.hub.subscribe(boardAwarenessRoom(board.id)),
-                    toStream([undefined]),
+                    await st.esReader.subscribe(boardEvents(board.id)),
+                    (await st.hub.subscribe(boardAwarenessRoom(board.id))).map(
+                        () => undefined
+                    ),
+                    toStream([undefined]), // initial trigger to start immediately
                     interval({ms: PULL_INTERVAL_MS, onCancel: 'reject'}).map(
                         () => undefined
                     ),
@@ -162,20 +167,40 @@ export function createAwarenessApi() {
                 try {
                     let prevItem: unknown = undefined;
                     for await (const _ of updates) {
-                        const states = await st.transact(async tx => {
-                            const [result] = await whenAll([
-                                tx.awareness.getAll(board.id),
+                        const nextItem = await st.transact(async tx => {
+                            const [states] = await whenAll([
+                                tx.awareness.getAll(
+                                    boardAwarenessRoom(board.id)
+                                ),
                                 tx.ps.ensureBoardMember(board.id, 'reader'),
                             ]);
-                            return result;
-                        });
 
-                        const nextItem = {
-                            states: states.map(({key, value}) => ({
-                                clientId: key,
-                                state: value,
-                            })),
-                        };
+                            return {
+                                states: await whenAll(
+                                    states.map(
+                                        async ({clientId, userId, state}) => ({
+                                            clientId,
+                                            state: {
+                                                ...state,
+                                                user: {
+                                                    ...(state?.user ?? {}),
+                                                    name: await tx.users
+                                                        .getById(userId, true)
+                                                        .then(user => {
+                                                            assert(
+                                                                user !==
+                                                                    undefined,
+                                                                `user with id ${userId} not found`
+                                                            );
+                                                            return user.fullName;
+                                                        }),
+                                                },
+                                            },
+                                        })
+                                    )
+                                ),
+                            };
+                        });
 
                         if (!equals(prevItem, nextItem)) {
                             yield nextItem;

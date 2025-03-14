@@ -176,7 +176,12 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetails {board} {awareness} card={selectedCard} />
+			<CardDetails
+				me={initialMe}
+				{board}
+				{awareness}
+				card={selectedCard}
+			/>
 		{/key}
 	{/if}
 </main>

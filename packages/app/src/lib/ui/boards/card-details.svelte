@@ -10,13 +10,16 @@
 	import appNavigator from '../app-navigator';
 	import type {BoardTreeView, CardView} from '$lib/agent/view.svelte';
 	import {getAgent} from '$lib/agent/agent.svelte';
+	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
 
 	const {
 		card,
 		board,
+		awareness,
 	}: {
 		card: CardView;
 		board: BoardTreeView;
+		awareness: Awareness;
 	} = $props();
 
 	const agent = getAgent();
@@ -69,6 +72,7 @@
 					class="min-h-[100px]"
 					placeholder="Write here..."
 					fragment={card.text.__fragment!}
+					{awareness}
 				/>
 			</div>
 			<hr class="-mx-4 mt-4 mb-4" />

@@ -35,7 +35,7 @@
 		initialMe: User;
 	} = $props();
 	const agent = getAgent();
-	const board = agent.observeBoard(boardKey, initialBoard);
+	const [board, awareness] = agent.observeBoard(initialBoard);
 	const {
 		columns,
 		handleDndConsiderColumns,
@@ -176,7 +176,7 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetails {board} card={selectedCard} />
+			<CardDetails {board} {awareness} card={selectedCard} />
 		{/key}
 	{/if}
 </main>

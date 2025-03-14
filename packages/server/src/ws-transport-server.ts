@@ -56,6 +56,7 @@ export class WsTransportServer<T> implements TransportServer<T> {
         if (this.wss) {
             this.wss.close();
         }
+        this.opt.server.close();
     }
 }
 

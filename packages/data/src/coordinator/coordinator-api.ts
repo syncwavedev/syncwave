@@ -1,4 +1,5 @@
 import {type AuthContext, AuthContextParser} from '../data/auth-context.js';
+import {AwarenessApiState, createAwarenessApi} from '../data/awareness-api.js';
 import {
     type ChangeEvent,
     type Config,
@@ -15,6 +16,7 @@ import type {
 import {createReadApi, ReadApiState} from '../data/read-api.js';
 import {createWriteApi, WriteApiState} from '../data/write-api.js';
 import {log} from '../logger.js';
+import type {Hub} from '../transport/hub.js';
 import {
     type Api,
     applyMiddleware,
@@ -30,6 +32,7 @@ export interface CoordinatorApiState {
     crypto: CryptoService;
     emailService: EmailService;
     esReader: EventStoreReader<ChangeEvent>;
+    hub: Hub;
     transact: Transact;
     objectStore: ObjectStore;
 }
@@ -39,6 +42,7 @@ export interface CoordinatorApiInputState {
     config: Config;
     authContextParser: AuthContextParser;
     jwt: JwtService;
+    hub: Hub;
     emailService: EmailService;
     crypto: CryptoService;
     objectStore: ObjectStore;
@@ -75,6 +79,13 @@ export function createCoordinatorApi() {
         }
     );
 
+    const adaptedAwarenessApi = mapApiState(
+        createAwarenessApi(),
+        (state: CoordinatorApiState) => {
+            return new AwarenessApiState(state.transact, state.hub, state.auth);
+        }
+    );
+
     const adaptedAuthApi = applyMiddleware<
         AuthApiState,
         CoordinatorApiState,
@@ -98,6 +109,7 @@ export function createCoordinatorApi() {
         ...adaptedReadApi,
         ...adaptedWriteApi,
         ...adaptedAuthApi,
+        ...adaptedAwarenessApi,
     } satisfies Api<CoordinatorApiState>;
 
     const timeLoggerApi = applyMiddleware<
@@ -127,6 +139,7 @@ export function createCoordinatorApi() {
                 authContextParser,
                 objectStore,
                 jwt,
+                hub,
                 emailService,
                 crypto,
                 config,
@@ -142,6 +155,7 @@ export function createCoordinatorApi() {
                 auth,
                 jwt,
                 objectStore,
+                hub,
                 crypto,
                 emailService,
                 esReader: dataLayer.esReader,

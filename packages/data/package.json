@@ -62,6 +62,7 @@
         "fdb-tuple": "^1.0.0",
         "functional-red-black-tree": "^1.0.1",
         "ix": "^7.0.0",
+        "lib0": "^0.2.99",
         "lru-cache": "^11.0.2",
         "msgpackr": "^1.11.2",
         "nanoid": "^5.0.9",

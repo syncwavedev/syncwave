@@ -10,6 +10,7 @@ import type {Tuple} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type AuthContext} from './auth-context.js';
+import {AwarenessStore} from './awareness-store.js';
 import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import type {ChangeOptions} from './doc-repo.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
@@ -40,6 +41,7 @@ export interface Config {
 }
 
 export interface DataTx {
+    readonly awareness: AwarenessStore;
     readonly users: UserRepo;
     readonly members: MemberRepo;
     readonly boards: BoardRepo;
@@ -263,7 +265,10 @@ export class DataLayer {
                 scheduleEffect
             );
 
+            const awareness = new AwarenessStore(isolate(['awareness'])(tx));
+
             const dataTx: DataTx = {
+                awareness,
                 boards,
                 cards,
                 columns,

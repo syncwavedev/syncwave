@@ -76,14 +76,17 @@ export class CoordinatorServer {
                 jwt: this.options.jwt,
                 crypto: this.options.crypto,
                 emailService: this.options.email,
+                hub: hubClient,
                 config: {
                     jwtSecret: this.options.jwtSecret,
                 },
                 objectStore: this.options.objectStore,
                 close: reason => {
-                    hubServer.close(reason);
-                    hubClient.close(reason);
-                    this.dataLayer.close(reason);
+                    // todo: support async close
+                    setTimeout(() => {
+                        this.dataLayer.close(reason);
+                        hubServer.close(reason);
+                    }, 800); // give some time to finish pending requests
                 },
             },
             'server',

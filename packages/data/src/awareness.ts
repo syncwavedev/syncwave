@@ -1,3 +1,4 @@
+import type {Entry} from './kv/kv-store.js';
 import {getNow} from './timestamp.js';
 import {assert, equals} from './utils.js';
 
@@ -57,13 +58,18 @@ export class Awareness {
     private readonly states = new Map<number, MetaAwarenessState>();
     private readonly checkInterval: NodeJS.Timeout;
 
-    constructor(public readonly clientId: number) {
-        this.states.set(clientId, {lastUpdated: getNow(), state: {}});
+    constructor(public clientId: number) {
+        this.init(clientId);
 
         this.checkInterval = setInterval(
             () => this.periodicCheck.bind(this),
             Math.ceil(OUTDATED_TIMEOUT / 10)
         );
+    }
+
+    init(clientId: number) {
+        this.clientId = clientId;
+        this.setLocalState({});
     }
 
     destroy(): void {
@@ -72,13 +78,19 @@ export class Awareness {
         this.handlers = [];
     }
 
-    applyRemote(clientId: number, state: AwarenessState, origin: unknown) {
-        assert(
-            clientId !== this.clientId,
-            'Awareness.apply: clientId must not be equal to local clientId'
+    applyRemote(entries: Array<Entry<number, AwarenessState>>) {
+        const remoteIds = new Set(entries.map(e => e.key));
+        const removed = [...this.states.keys()].filter(
+            id => !remoteIds.has(id)
         );
 
-        this.setState(clientId, state, origin);
+        for (const removedId of removed) {
+            this.setState(removedId, null, 'remote');
+        }
+
+        for (const {key: clientId, value: state} of entries) {
+            this.setState(clientId, state, 'remote');
+        }
     }
 
     setLocalState(state: AwarenessState): void {
@@ -94,18 +106,15 @@ export class Awareness {
             typeof field === 'string',
             'Awareness.setLocalStateField: field must be a string'
         );
-        this.states.set(this.clientId, {
-            lastUpdated: getNow(),
-            state: {
-                ...this.getLocalState(),
-                [field]: value,
-            },
+        this.setLocalState({
+            ...this.getLocalState(),
+            [field]: value,
         });
     }
 
     on(
         event: 'update' | 'change',
-        handle: (update: AwarenessUpdate) => void
+        handle: (update: AwarenessUpdate, origin: unknown) => void
     ): void {
         assert(
             event === 'update' || event === 'change',
@@ -115,17 +124,22 @@ export class Awareness {
         this.handlers.push({event, handle});
     }
 
-    off(event: 'update' | 'change', handler: AwarenessHandler): void {
+    off(
+        event: 'update' | 'change',
+        handler: (update: AwarenessUpdate, origin: unknown) => void
+    ): void {
         assert(
             event === 'update' || event === 'change',
             'Awareness.off: invalid event type: ' + event
         );
 
-        this.handlers = this.handlers.filter(h => h !== handler);
+        this.handlers = this.handlers.filter(x => x.handle !== handler);
     }
 
-    getStates() {
-        return this.states;
+    getStates(): Map<number, AwarenessState> {
+        return new Map(
+            [...this.states.entries()].map(([key, value]) => [key, value.state])
+        );
     }
 
     private setState(clientId: number, state: AwarenessState, origin: unknown) {

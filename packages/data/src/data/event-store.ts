@@ -1,7 +1,4 @@
-import {
-    EVENT_STORE_MAX_PULL_COUNT,
-    EVENT_STORE_PULL_INTERVAL_MS,
-} from '../constants.js';
+import {EVENT_STORE_MAX_PULL_COUNT, PULL_INTERVAL_MS} from '../constants.js';
 import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
 import {CancelledError, toError} from '../errors.js';
@@ -67,7 +64,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             toStream(selfTrigger),
             hubEvent$.map(() => undefined),
             interval({
-                ms: EVENT_STORE_PULL_INTERVAL_MS,
+                ms: PULL_INTERVAL_MS,
                 onCancel: 'reject',
             }).map(() => undefined),
         ])

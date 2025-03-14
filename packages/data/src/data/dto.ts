@@ -325,7 +325,11 @@ export interface MeDto extends Static<ReturnType<typeof zMeDto>> {}
 
 export function zBoardViewDataDto() {
     return Type.Object({
-        board: Type.Object({state: zCrdtDiff<Board>(), id: Uuid<BoardId>()}),
+        board: Type.Object({
+            state: zCrdtDiff<Board>(),
+            key: Type.String(),
+            id: Uuid<BoardId>(),
+        }),
         columns: Type.Array(
             Type.Object({state: zCrdtDiff<Column>(), id: Uuid<ColumnId>()})
         ),

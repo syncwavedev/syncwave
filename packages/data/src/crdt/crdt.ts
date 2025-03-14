@@ -1,4 +1,5 @@
 import {Type} from '@sinclair/typebox';
+import {uint53 as createUint53} from 'lib0/random.js';
 import {
     applyUpdateV2,
     encodeStateAsUpdateV2,
@@ -54,9 +55,16 @@ export interface DiffOptions {
     readonly origin?: any;
 }
 
+// by default Yjs uses uint32 for clientID
+// we use uint53 to reduce probability of a collision
+export function createClientId() {
+    return createUint53();
+}
+
 export class Crdt<T> {
     static from<T>(value: T): Crdt<T> {
         const doc = new YDoc({gc: true});
+        doc.clientID = createClientId();
         const rootMap = doc.getMap<YValue>(ROOT_KEY);
         rootMap.set(ROOT_VALUE, mapToYValue(value));
 
@@ -65,6 +73,7 @@ export class Crdt<T> {
 
     static load<T>(diff: CrdtDiff<T>): Crdt<T> {
         const doc = new YDoc({gc: true});
+        doc.clientID = createClientId();
         applyUpdateV2(doc, diff.payload);
 
         return new Crdt(doc);
@@ -93,6 +102,10 @@ export class Crdt<T> {
 
     private set yValue(value: YValue) {
         this.root.set(ROOT_VALUE, value);
+    }
+
+    get clientId(): number {
+        return this.doc.clientID;
     }
 
     snapshot(exposeRichtext = false): T {

@@ -239,11 +239,9 @@ async function launch() {
     async function shutdown() {
         log.info('shutting down...');
         coordinator.close('shutdown');
-        log.info('coordinator is closed');
-        httpServer.close();
 
         // eslint-disable-next-line n/no-process-exit
-        process.exit(0);
+        setTimeout(() => process.exit(0), 1000).unref();
     }
 
     context().onEnd(() => {

@@ -277,8 +277,8 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
     }
 
     close(reason: unknown) {
-        this.state.close(reason);
         this.transport.close(reason);
+        this.state.close(reason);
     }
 
     private handleConnection(conn: RpcConnection): void {

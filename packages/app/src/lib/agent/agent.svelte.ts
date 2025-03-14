@@ -7,9 +7,11 @@ import {
 	context,
 	Crdt,
 	createCardId,
+	createClientId,
 	createCoordinatorApi,
 	createRichtext,
 	createRpcClient,
+	Deferred,
 	getNow,
 	log,
 	PersistentConnection,
@@ -34,6 +36,7 @@ import {
 	type User,
 	type UserId,
 } from 'syncwave-data';
+import {Awareness} from '../../../../data/dist/esm/src/awareness';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
@@ -74,7 +77,7 @@ class Agent {
 		this.connection.close(reason);
 	}
 
-	observeBoard(boardKey: string, initial: BoardViewDataDto): BoardTreeView {
+	observeBoard(initial: BoardViewDataDto): [BoardTreeView, Awareness] {
 		const data = BoardData.create(initial, this.crdtManager);
 
 		this.activeBoards.push(data);
@@ -87,7 +90,7 @@ class Agent {
 		$effect(() => {
 			(async () => {
 				const items = toStream(
-					rpc(x => x.getBoardViewData({key: boardKey}))
+					rpc(x => x.getBoardViewData({key: initial.board.key}))
 				);
 				for await (const item of items) {
 					if (item.type === 'snapshot') {
@@ -103,7 +106,77 @@ class Agent {
 			});
 		});
 
-		return data.view;
+		const awareness = new Awareness(createClientId());
+
+		const destroySignal = new Deferred<void>();
+		onDestroy(() => {
+			destroySignal.resolve();
+		});
+
+		async function startAwarenessPull() {
+			const handleUpdate = (_: unknown, origin: unknown) => {
+				if (origin !== 'local') return;
+
+				rpc(x =>
+					x.updateBoardAwarenessState({
+						clientId: awareness.clientId,
+						boardId: initial.board.id,
+						state: awareness.getLocalState(),
+					})
+				).catch(error => {
+					log.error(
+						toError(error),
+						'failed to update awareness state'
+					);
+				});
+			};
+
+			awareness.on('update', handleUpdate);
+			destroySignal.promise.then(() => {
+				awareness.off('update', handleUpdate);
+			});
+
+			await rpc(x =>
+				x.updateBoardAwarenessState({
+					clientId: awareness.clientId,
+					boardId: initial.board.id,
+					state: awareness.getLocalState(),
+				})
+			);
+		}
+
+		$effect(() => {
+			(async () => {
+				const updates = rpc(x =>
+					x.joinBoardAwareness({
+						boardId: initial.board.id,
+						state: awareness.getLocalState(),
+						clientId: awareness.clientId,
+					})
+				);
+
+				let initialized = false;
+				for await (const update of updates) {
+					awareness.applyRemote(
+						update.states.map(({clientId, state}) => ({
+							key: clientId,
+							value: state,
+						}))
+					);
+
+					if (!initialized) {
+						initialized = true;
+						startAwarenessPull().catch(error => {
+							log.error(toError(error), 'awareness pull failed');
+						});
+					}
+				}
+			})().catch(error => {
+				log.error(toError(error), 'observeBoard awareness failed');
+			});
+		});
+
+		return [data.view, awareness];
 	}
 
 	observeProfile(initial: User): UserView {

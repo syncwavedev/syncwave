@@ -29,15 +29,15 @@
 	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
 	type="scroll"
 >
-	<div class="flex w-80 flex-shrink-0 flex-col pb-1" data-column-id={column.id}>
+	<div
+		class="flex w-80 flex-shrink-0 flex-col pb-1"
+		data-column-id={column.id}
+	>
 		<div
 			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 flex items-center px-2 py-1"
+			data-disable-scroll-view-drag="true"
 		>
-			<div
-				class="text-2xs font-medium"
-				use:dragHandle
-				data-disable-scroll-view-drag="true"
-			>
+			<div class="text-2xs font-medium" use:dragHandle>
 				{column.column.name}
 			</div>
 			<button

@@ -34,7 +34,7 @@
 		data-column-id={column.id}
 	>
 		<div
-			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 flex items-center px-2 py-1"
+			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 flex min-h-10 items-center px-2 py-1"
 			data-disable-scroll-view-drag="true"
 		>
 			<div class="text-2xs font-medium" use:dragHandle>
@@ -52,7 +52,7 @@
 				onClose={() => editColumnOpen.push(false)}
 			/>
 			<button class="btn--icon">
-				<PlusIcon class="pointer-events-none" />
+				<PlusIcon />
 			</button>
 		</div>
 

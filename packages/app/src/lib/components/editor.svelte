@@ -204,6 +204,7 @@
 				top: -1.4em;
 				user-select: none;
 				white-space: nowrap;
+				z-index: 100;
 			}
 		}
 	}

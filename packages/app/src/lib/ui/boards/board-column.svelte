@@ -44,7 +44,7 @@
 				onclick={() => editColumnOpen.push(true)}
 				class="btn--icon ml-auto"
 			>
-				<EllipsisIcon />
+				<EllipsisIcon class="pointer-events-none" />
 			</button>
 			<EditColumnDialog
 				column={column.column}
@@ -52,7 +52,7 @@
 				onClose={() => editColumnOpen.push(false)}
 			/>
 			<button class="btn--icon">
-				<PlusIcon />
+				<PlusIcon class="pointer-events-none" />
 			</button>
 		</div>
 

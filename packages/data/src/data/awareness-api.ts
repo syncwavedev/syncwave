@@ -1,5 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import type {AwarenessState} from '../awareness.js';
+import {BatchProcessor} from '../batch-processor.js';
 import {PULL_INTERVAL_MS} from '../constants.js';
 import {context} from '../context.js';
 import {BusinessError, toError} from '../errors.js';
@@ -29,6 +30,8 @@ function boardAwarenessRoom(boardId: BoardId) {
 }
 
 export class AwarenessApiState {
+    private batchProcessors = new Map<string, BatchProcessor<AwarenessState>>();
+
     constructor(
         public readonly transact: Transact,
         public readonly hub: Hub,
@@ -84,12 +87,30 @@ export class AwarenessApiState {
     ) {
         await this.transact(async tx => {
             try {
-                await tx.awareness.put(
-                    boardAwarenessRoom(boardId),
-                    this.ensureAuthenticated(),
-                    clientId,
-                    state
-                );
+                const batchKey = boardId + clientId;
+                let batchProcessor = this.batchProcessors.get(batchKey);
+                if (batchProcessor === undefined) {
+                    batchProcessor = new BatchProcessor(
+                        {type: 'running'},
+                        async batch => {
+                            const latestState = batch.at(-1);
+                            assert(
+                                latestState !== undefined,
+                                'awareness latest state now found'
+                            );
+                            await tx.awareness.put(
+                                boardAwarenessRoom(boardId),
+                                this.ensureAuthenticated(),
+                                clientId,
+                                latestState
+                            );
+                        },
+                        () => this.batchProcessors.delete(batchKey)
+                    );
+                    this.batchProcessors.set(batchKey, batchProcessor);
+                }
+
+                await batchProcessor.enqueue(state);
             } catch (error) {
                 if (error instanceof AwarenessOwnershipError) {
                     throw new BusinessError(
@@ -175,31 +196,7 @@ export function createAwarenessApi() {
                                 tx.ps.ensureBoardMember(board.id, 'reader'),
                             ]);
 
-                            return {
-                                states: await whenAll(
-                                    states.map(
-                                        async ({clientId, userId, state}) => ({
-                                            clientId,
-                                            state: {
-                                                ...state,
-                                                user: {
-                                                    ...(state?.user ?? {}),
-                                                    name: await tx.users
-                                                        .getById(userId, true)
-                                                        .then(user => {
-                                                            assert(
-                                                                user !==
-                                                                    undefined,
-                                                                `user with id ${userId} not found`
-                                                            );
-                                                            return user.fullName;
-                                                        }),
-                                                },
-                                            },
-                                        })
-                                    )
-                                ),
-                            };
+                            return {states};
                         });
 
                         if (!equals(prevItem, nextItem)) {
@@ -228,21 +225,13 @@ export function createAwarenessApi() {
             }),
             res: Type.Object({}),
             async handle(st, {boardId, clientId, state}) {
-                const board = await st.transact(async tx => {
+                await st.transact(async tx => {
                     const [result] = await whenAll([
-                        tx.boards.getById(boardId),
                         tx.ps.ensureBoardMember(boardId, 'reader'),
+                        st.updateState(boardId, clientId, state),
                     ]);
                     return result;
                 });
-                if (board === undefined) {
-                    throw new BusinessError(
-                        `board with id ${boardId} not found`,
-                        'board_not_found'
-                    );
-                }
-
-                await st.updateState(board.id, clientId, state);
 
                 return {};
             },

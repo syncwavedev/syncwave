@@ -4,6 +4,8 @@ import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	assert,
 	assertNever,
+	Awareness,
+	BatchProcessor,
 	context,
 	Crdt,
 	createCardId,
@@ -21,6 +23,7 @@ import {
 	toPosition,
 	toStream,
 	tracerManager,
+	type AwarenessState,
 	type BigFloat,
 	type Board,
 	type BoardId,
@@ -36,11 +39,6 @@ import {
 	type User,
 	type UserId,
 } from 'syncwave-data';
-import {
-	Awareness,
-	type AwarenessState,
-} from '../../../../data/dist/esm/src/awareness';
-import {BatchProcessor} from './batch-processor';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
@@ -119,14 +117,22 @@ class Agent {
 
 		const awarenessSender = new BatchProcessor<AwarenessState>(
 			{type: 'running'},
-			async (states: AwarenessState[]) => {
-				await rpc(x =>
+			(states: AwarenessState[]) => {
+				// don't wait for result to allow sending multiple updates concurrently
+				rpc(x =>
 					x.updateBoardAwarenessState({
 						clientId: awareness.clientId,
 						boardId: initial.board.id,
 						state: states.at(-1) ?? null,
 					})
-				);
+				).catch(error => {
+					log.error(
+						toError(error),
+						'failed to enqueue awareness state'
+					);
+				});
+
+				return Promise.resolve();
 			}
 		);
 

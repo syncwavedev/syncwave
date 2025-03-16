@@ -2,6 +2,7 @@
 import {
 	assert,
 	assertNever,
+	BatchProcessor,
 	Crdt,
 	log,
 	runAll,
@@ -14,7 +15,6 @@ import {
 	type Recipe,
 	type Unsubscribe,
 } from 'syncwave-data';
-import {BatchProcessor} from './batch-processor.js';
 import {deriveCrdtSnapshot} from './crdt.svelte.js';
 import type {State} from './state.js';
 

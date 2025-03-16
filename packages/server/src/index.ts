@@ -2,11 +2,13 @@ import 'dotenv/config';
 import './instrumentation.js';
 
 import Router from '@koa/router';
+import cluster from 'cluster';
 import {createHash, randomBytes} from 'crypto';
 import {createServer} from 'http';
 import jwt from 'jsonwebtoken';
 import Koa from 'koa';
 import helmet from 'koa-helmet';
+import {cpus} from 'os';
 import {
     AppError,
     assertDefined,
@@ -52,7 +54,7 @@ const GOOGLE_CLIENT_SECRET = assertDefined(process.env.GOOGLE_CLIENT_SECRET);
 
 const PORT = ENVIRONMENT === 'prod' ? 80 : 4567;
 
-const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
+const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, numCPUs} = (() => {
     const GOOGLE_CALLBACK_PATH = '/callbacks/google';
     if (STAGE === 'dev') {
         return {
@@ -60,6 +62,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
             APP_URL: 'https://dev.syncwave.dev',
             GOOGLE_REDIRECT_URL:
                 'https://api-dev.syncwave.dev' + GOOGLE_CALLBACK_PATH,
+            numCPUs: cpus().length,
         };
     } else if (STAGE === 'prod') {
         return {
@@ -67,12 +70,14 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL} = (() => {
             APP_URL: 'https://syncwave.dev',
             GOOGLE_REDIRECT_URL:
                 'https://api.syncwave.dev' + GOOGLE_CALLBACK_PATH,
+            numCPUs: cpus().length,
         };
     } else if (STAGE === 'local') {
         return {
             LOG_LEVEL: 'info' as const,
             APP_URL: 'http://localhost:5173',
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
+            numCPUs: 1,
         };
     } else {
         throw new AppError(`unknown STAGE: ${STAGE}`);
@@ -371,15 +376,21 @@ process.on('unhandledRejection', reason => {
 
 log.info('launching coordinator...');
 
-serverCtx
-    .run(async () => {
-        try {
-            await launch();
-            log.info(`coordinator is running on port ${PORT}`);
-        } catch (err) {
-            log.error(toError(err), 'failed to launch coordinator');
-        }
-    })
-    .catch(error => {
-        log.error(error, 'error during launch');
-    });
+if (cluster.isPrimary) {
+    for (let i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+} else {
+    serverCtx
+        .run(async () => {
+            try {
+                await launch();
+                log.info(`coordinator is running on port ${PORT}`);
+            } catch (err) {
+                log.error(toError(err), 'failed to launch coordinator');
+            }
+        })
+        .catch(error => {
+            log.error(error, 'error during launch');
+        });
+}

@@ -75,6 +75,7 @@
 		"idb": "^8.0.2",
 		"isomorphic-ws": "^5.0.0",
 		"javascript-time-ago": "^2.5.11",
+		"regexparam": "^3.0.0",
 		"svelte-dnd-action": "^0.9.57",
 		"svelte-tiptap": "^2.1.0",
 		"syncwave-data": "*",

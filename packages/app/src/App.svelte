@@ -10,7 +10,8 @@
 
 <script lang="ts">
 	import './lib/ui/styles/main.css';
-	import {onDestroy, setContext} from 'svelte';
+	import {setContext} from 'svelte';
+	import type {Component} from 'svelte';
 	import LoginScreen from './lib/ui/login/login-screen.svelte';
 	import {CoordinatorClient} from 'syncwave-data';
 	import {
@@ -21,13 +22,14 @@
 	import ErrorCard from './lib/components/error-card.svelte';
 	import {UploadManager} from './lib/upload-manager.svelte';
 	import {createThemeManager} from './lib/ui/theme-manager.svelte.js';
-	import appNavigator from './lib/ui/app-navigator';
+	import appNavigator from './lib/app-navigator';
 	import {createAgent} from './lib/agent/agent.svelte';
 	import {appConfig} from './lib/config';
 	import {WsTransportClient} from './ws-transport-client';
 	import {AuthManager} from './auth-manager';
+	import router from './lib/router';
+	import CheckScreen from './lib/ui/login/check-screen.svelte';
 
-	// Set up theme context
 	const themeManager = createThemeManager();
 	setContext('theme', {
 		getTheme: themeManager.getTheme,
@@ -58,8 +60,26 @@
 		}
 	}
 
-	onDestroy(() => {
-		coordinatorClient.close('layout destroyed');
+	let Page = $state<Component>(CheckScreen);
+
+	$effect(() => {
+		router.on('/', () => {
+			Page = CheckScreen;
+
+			if (!authManager.getIdentityInfo()) {
+				router.route('/login', {replace: true});
+			}
+		});
+		router.on('/login', () => {
+			Page = LoginScreen;
+		});
+
+		router.listen();
+
+		return () => {
+			router.unlisten();
+			coordinatorClient.close('layout destroyed');
+		};
 	});
 </script>
 
@@ -70,6 +90,6 @@
 		{#snippet failed(error, reset)}
 			<ErrorCard {error} {reset} />
 		{/snippet}
-		<LoginScreen />
+		<Page />
 	</svelte:boundary>
 </main>

@@ -282,7 +282,6 @@ describe('DocStore with MemKVStore', () => {
     it('should retrieve documents by a non-unique index', async () => {
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
-        // Insert multiple docs
         await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({
                 tx,
@@ -317,7 +316,6 @@ describe('DocStore with MemKVStore', () => {
             });
         });
 
-        // Use the "byName" index
         const docsNamedDana = await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({
                 tx,
@@ -334,13 +332,11 @@ describe('DocStore with MemKVStore', () => {
             return results;
         });
 
-        // Should have found two docs with name = 'Dana'
         expect(docsNamedDana.length).toBe(2);
         expect(new Set(docsNamedDana.map(d => d.name))).toEqual(
             new Set(['Dana'])
         );
 
-        // Check byAge index for age=25
         const docsAge25 = await store.transact(async tx => {
             const repo = new DocRepo<MyDoc>({
                 tx,
@@ -356,7 +352,7 @@ describe('DocStore with MemKVStore', () => {
             }
             return results;
         });
-        expect(docsAge25.length).toBe(2); // one named Dana, one named Eli
+        expect(docsAge25.length).toBe(2);
     });
 
     it('should retrieve documents by querying an index (range condition)', async () => {
@@ -411,11 +407,6 @@ describe('DocStore with MemKVStore', () => {
                 updatedAt: now,
             });
         });
-
-        // Suppose we want to find docs whose "byAge" index is >= 15 and <= 25
-        // Condition in the store is typed for Condition<IndexKey>, which is basically Uint8Array-based,
-        // but we have helpers that pass raw numbers (due to withValueCodec, etc).
-        // So let's see how to do a range query:
         const ageGte15: Condition<Tuple> = {gte: [15]};
 
         const docsBetween15And25 = await store.transact(async tx => {
@@ -428,18 +419,11 @@ describe('DocStore with MemKVStore', () => {
             });
 
             const results: MyDoc[] = [];
-            // We can handle one side of the range first (e.g., ">= 15")
             const doc$ = repo.query('byAge', ageGte15);
             for await (const d of doc$) {
-                // Then manually filter to "<= 25"
-                // Typically you'd do a combined condition, but the Condition type above
-                // suggests using either {gt, gte} or {lt, lte} in a single call.
-                // You can do multiple queries or chain logic as needed.
-
                 if (d.age <= 25) {
                     results.push(d);
                 } else {
-                    // Because we are iterating in ascending order, once we exceed 25, we can break
                     break;
                 }
             }
@@ -455,7 +439,6 @@ describe('DocStore with MemKVStore', () => {
     it('should retrieve a single doc via getUnique (and throw if multiple docs exist)', async () => {
         const onChange: OnDocChange<MyDoc> = vi.fn();
 
-        // Insert some docs
         let repo: DocRepo<MyDoc>;
         await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({
@@ -483,9 +466,6 @@ describe('DocStore with MemKVStore', () => {
             });
         });
 
-        // getUnique on 'byName' with 'Zed'
-        // Because 'byName' is not unique in our example,
-        // we should get an error if more than one doc matches.
         await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({
                 tx,
@@ -498,11 +478,6 @@ describe('DocStore with MemKVStore', () => {
                 repo.getUnique('byName', ['Zed'])
             ).rejects.toThrowError(/contains multiple docs/);
         });
-
-        // If we query an index that only has a single doc, that should succeed
-        // E.g. if we had a "unique" index on some other field, or if there's only one doc
-        // with the same name.
-        // For demonstration, let's remove one of the "Zed" docs, then getUnique will succeed.
 
         let firstZedId: Tuple | undefined;
         await store.transact(async tx => {
@@ -518,14 +493,12 @@ describe('DocStore with MemKVStore', () => {
             for await (const zedDoc of zedDoc$) {
                 zedEntries.push(zedDoc);
             }
-            // Let's delete one of them
             firstZedId = zedEntries[0].pk;
             await repo.update(firstZedId, doc => {
                 doc.name = 'Andrei';
             });
         });
 
-        // Now only one 'Zed' doc remains, getUnique works
         const uniqueZedDoc = await store.transact(async tx => {
             repo = new DocRepo<MyDoc>({
                 tx,
@@ -562,7 +535,6 @@ describe('DocStore with MemKVStore', () => {
     it('should call onChange callback with the correct diffs on create and update', async () => {
         const onChange = vi.fn<Parameters<OnDocChange<MyDoc>>>();
 
-        // 1) CREATE
         const createdDoc: MyDoc = {
             pk: [createUuid()],
             name: 'Alpha',
@@ -582,15 +554,14 @@ describe('DocStore with MemKVStore', () => {
             await repo.create(createdDoc);
         });
 
-        // Expect onChange called with (id, diff) where `prev` is undefined, `next` is the doc
-        // The CrdtDiff for a new doc basically has all fields in "added" or "modified".
         expect(onChange).toHaveBeenCalledTimes(1);
         let call = onChange.mock.calls[0];
-        expect(call[0]).toEqual(createdDoc.pk); // id
-        // call[1] is the diff. We can do a minimal check or more thorough.
-        // For a brand-new doc, we expect the entire doc to be added.
+        expect(call[0]).toEqual({
+            pk: createdDoc.pk,
+            kind: 'create',
+            diff: expect.any(Object),
+        }); // id
 
-        // 2) UPDATE
         onChange.mockClear();
 
         await store.transact(async tx => {
@@ -608,10 +579,10 @@ describe('DocStore with MemKVStore', () => {
 
         expect(onChange).toHaveBeenCalledTimes(1);
         call = onChange.mock.calls[0];
-        expect(call[0]).toEqual(createdDoc.pk);
-        // call[1] is the diff.
-        // For an age change, the diff should indicate old=1, new=2 for that field, etc.
+        expect(call[0]).toEqual({
+            pk: createdDoc.pk,
+            kind: 'update',
+            diff: expect.any(Object),
+        });
     });
 });
-
-// todo: add updateChecker tests

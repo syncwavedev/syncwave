@@ -12,8 +12,11 @@ import {
     MemObjectStore,
     MemTransportClient,
     MemTransportServer,
+    RpcHubClient,
+    RpcHubServer,
     toPosition,
     toTimestamp,
+    tracerManager,
     TupleStore,
     type BoardId,
     type Card,
@@ -25,6 +28,29 @@ import {
 } from '../src/index.js';
 import {log} from '../src/logger.js';
 import {assert, assertSingle, drop} from '../src/utils.js';
+
+function createRpcHub() {
+    const hubMemTransportServer = new MemTransportServer(new MsgpackCodec());
+    const hubAuthSecret = 'hub-auth-secret';
+    const hubServer = new RpcHubServer(
+        hubMemTransportServer,
+        hubAuthSecret,
+        'hub'
+    );
+
+    hubServer.launch().catch(error => {
+        log.error(error, 'HubServer failed to launch');
+    });
+
+    const hubClient = new RpcHubClient(
+        new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
+        hubAuthSecret,
+        'hub',
+        tracerManager.get('coord')
+    );
+
+    return hubClient;
+}
 
 export class E2eFixture {
     static async start() {
@@ -56,6 +82,7 @@ export class E2eFixture {
             email,
             jwtSecret,
             objectStore: new MemObjectStore(),
+            hub: createRpcHub(),
         });
 
         drop(coordinator.launch());

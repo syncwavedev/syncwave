@@ -1,6 +1,7 @@
 import {
 	AppError,
 	assert,
+	Awareness,
 	type Board,
 	type BoardViewDataDto,
 	type Card,
@@ -36,13 +37,17 @@ export class BoardData {
 
 	view = new BoardTreeView(this);
 
-	static create(data: BoardViewDataDto, derivator: CrdtDerivator) {
-		const result = new BoardData();
+	static create(
+		awareness: Awareness,
+		data: BoardViewDataDto,
+		derivator: CrdtDerivator
+	) {
+		const result = new BoardData(awareness);
 		result.update(data, derivator);
 		return result;
 	}
 
-	private constructor() {}
+	private constructor(private readonly awareness: Awareness) {}
 
 	update(board: BoardViewDataDto, derivator: CrdtDerivator) {
 		this._boardState = derivator.view({

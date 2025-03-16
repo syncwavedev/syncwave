@@ -24,18 +24,17 @@
 	import EditBoardDialog from '$lib/components/edit-board-dialog/edit-board-dialog.svelte';
 	import UserIcon from '../components/icons/user-icon.svelte';
 	import EditProfileDialog from '$lib/components/edit-profile-dialog/edit-profile-dialog.svelte';
+	import {observeAwareness} from '$lib/agent/awareness.svelte';
 
 	const {
-		boardKey,
 		initialBoard,
 		initialMe,
 	}: {
-		boardKey: string;
 		initialBoard: BoardViewDataDto;
 		initialMe: User;
 	} = $props();
 	const agent = getAgent();
-	const [board, awareness] = agent.observeBoard(initialBoard);
+	const [board, awareness] = agent.observeBoard(initialBoard, initialMe);
 	const {
 		columns,
 		handleDndConsiderColumns,
@@ -68,6 +67,10 @@
 				}
 			});
 		}
+	});
+
+	$effect(() => {
+		awareness.setLocalStateField('selectedCardId', selectedCard?.id);
 	});
 
 	function onCardClick(item: CardView) {
@@ -108,6 +111,13 @@
 
 	const editBoardOpen = usePageState(false);
 	const editMyProfileOpen = usePageState(false);
+
+	const awarenessStates = observeAwareness(awareness);
+	const onlineMembers = $derived.by(() => {
+		return [...awarenessStates.values()]
+			.filter(state => initialMe.id !== state?.userId)
+			.map(state => (state?.user as any).name);
+	});
 </script>
 
 <main class="flex h-screen w-full">
@@ -115,6 +125,11 @@
 		<div class="dark:bg-subtle-0 px-4">
 			<div class="my-1 flex items-center">
 				<div class="text-xs leading-none font-medium">{board.name}</div>
+				{#if onlineMembers.length > 0}
+					<div class="text-2xs text-ink-detail ml-auto">
+						online: {onlineMembers.join(', ')}
+					</div>
+				{/if}
 				<button class="btn--icon ml-auto" onclick={createCard}>
 					<PlusIcon />
 				</button>
@@ -165,6 +180,8 @@
 			>
 				{#each columns.value as column (column.id)}
 					<BoardColumn
+						{initialMe}
+						{awareness}
 						{column}
 						{onCardClick}
 						handleCardDnd={createCardHandler(column)}

@@ -7,5 +7,5 @@
 </script>
 
 {#key boardKey}
-	<BoardScreen {boardKey} {initialBoard} initialMe={initialMe.user} />
+	<BoardScreen {initialBoard} initialMe={initialMe.user} />
 {/key}

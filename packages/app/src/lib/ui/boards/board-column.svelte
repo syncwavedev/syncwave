@@ -8,17 +8,22 @@
 	import EllipsisIcon from '$lib/components/icons/ellipsis-icon.svelte';
 	import {usePageState} from '$lib/utils.svelte';
 	import EditColumnDialog from '$lib/components/edit-column-dialog/edit-column-dialog.svelte';
+	import type {Awareness, User} from 'syncwave-data';
 
 	const {
 		column,
 		onCardClick,
 		handleCardDnd,
 		activeCardId,
+		awareness,
+		initialMe,
 	}: {
 		column: DndColumn;
 		onCardClick: (card: CardView) => void;
 		handleCardDnd: (e: CustomEvent<DndEvent<DndCard>>) => void;
 		activeCardId?: string;
+		awareness: Awareness;
+		initialMe: User;
 	} = $props();
 
 	const editColumnOpen = usePageState(false);
@@ -70,6 +75,8 @@
 			{#each column.cards as card (card.id)}
 				<div data-disable-scroll-view-drag="true">
 					<CardTile
+						{initialMe}
+						{awareness}
 						card={card.card}
 						onClick={() => onCardClick(card.card)}
 						active={card.id === activeCardId}

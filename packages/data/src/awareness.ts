@@ -3,7 +3,7 @@ import {getNow} from './timestamp.js';
 import {assert, equals} from './utils.js';
 import {createUuidV4} from './uuid.js';
 
-interface AwarenessUpdate {
+export interface AwarenessUpdate {
     added: number[];
     updated: number[];
     removed: number[];

@@ -79,8 +79,16 @@ class Agent {
 		this.connection.close(reason);
 	}
 
-	observeBoard(initial: BoardViewDataDto): [BoardTreeView, Awareness] {
-		const data = BoardData.create(initial, this.crdtManager);
+	observeBoard(
+		initialBoard: BoardViewDataDto,
+		initialMe: User
+	): [BoardTreeView, Awareness] {
+		const awareness = new Awareness(createClientId());
+		const data = BoardData.create(
+			awareness,
+			initialBoard,
+			this.crdtManager
+		);
 
 		this.activeBoards.push(data);
 		onDestroy(
@@ -92,7 +100,7 @@ class Agent {
 		$effect(() => {
 			(async () => {
 				const items = toStream(
-					rpc(x => x.getBoardViewData({key: initial.board.key}))
+					rpc(x => x.getBoardViewData({key: initialBoard.board.key}))
 				);
 				for await (const item of items) {
 					if (item.type === 'snapshot') {
@@ -107,8 +115,10 @@ class Agent {
 				log.error(toError(error), 'observeBoard failed');
 			});
 		});
-
-		const awareness = new Awareness(createClientId());
+		awareness.setLocalState({
+			user: {name: initialMe.fullName},
+			userId: initialMe.id,
+		});
 
 		const destroySignal = new Deferred<void>();
 		onDestroy(() => {
@@ -122,7 +132,7 @@ class Agent {
 				rpc(x =>
 					x.updateBoardAwarenessState({
 						clientId: awareness.clientId,
-						boardId: initial.board.id,
+						boardId: initialBoard.board.id,
 						state: states.at(-1) ?? null,
 					})
 				).catch(error => {
@@ -158,7 +168,7 @@ class Agent {
 			await rpc(x =>
 				x.updateBoardAwarenessState({
 					clientId: awareness.clientId,
-					boardId: initial.board.id,
+					boardId: initialBoard.board.id,
 					state: awareness.getLocalState(),
 				})
 			);
@@ -168,7 +178,7 @@ class Agent {
 			(async () => {
 				const updates = rpc(x =>
 					x.joinBoardAwareness({
-						boardId: initial.board.id,
+						boardId: initialBoard.board.id,
 						state: awareness.getLocalState(),
 						clientId: awareness.clientId,
 					})

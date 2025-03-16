@@ -54,7 +54,7 @@ const GOOGLE_CLIENT_SECRET = assertDefined(process.env.GOOGLE_CLIENT_SECRET);
 
 const PORT = ENVIRONMENT === 'prod' ? 80 : 4567;
 
-const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, numCPUs} = (() => {
+const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, cpuCount} = (() => {
     const GOOGLE_CALLBACK_PATH = '/callbacks/google';
     if (STAGE === 'dev') {
         return {
@@ -62,7 +62,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, numCPUs} = (() => {
             APP_URL: 'https://dev.syncwave.dev',
             GOOGLE_REDIRECT_URL:
                 'https://api-dev.syncwave.dev' + GOOGLE_CALLBACK_PATH,
-            numCPUs: cpus().length,
+            cpuCount: cpus().length,
         };
     } else if (STAGE === 'prod') {
         return {
@@ -70,14 +70,14 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, numCPUs} = (() => {
             APP_URL: 'https://syncwave.dev',
             GOOGLE_REDIRECT_URL:
                 'https://api.syncwave.dev' + GOOGLE_CALLBACK_PATH,
-            numCPUs: cpus().length,
+            cpuCount: cpus().length,
         };
     } else if (STAGE === 'local') {
         return {
             LOG_LEVEL: 'info' as const,
             APP_URL: 'http://localhost:5173',
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
-            numCPUs: 1,
+            cpuCount: 1,
         };
     } else {
         throw new AppError(`unknown STAGE: ${STAGE}`);
@@ -377,8 +377,24 @@ process.on('unhandledRejection', reason => {
 log.info('launching coordinator...');
 
 if (cluster.isPrimary) {
-    for (let i = 0; i < numCPUs; i++) {
-        cluster.fork();
+    for (let i = 0; i < cpuCount; i++) {
+        log.info(`Master process ${process.pid} is running`);
+
+        const spawnWorker = () => {
+            const worker = cluster.fork();
+            log.info(`Spawned worker ${worker.process.pid}`);
+
+            worker.on('exit', (code, signal) => {
+                log.error(
+                    `Worker ${worker.process.pid} died (code: ${code}, signal: ${signal}). Restarting...`
+                );
+                spawnWorker();
+            });
+        };
+
+        for (let i = 0; i < cpuCount; i++) {
+            spawnWorker();
+        }
     }
 } else {
     serverCtx

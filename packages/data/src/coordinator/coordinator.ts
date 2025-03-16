@@ -1,4 +1,3 @@
-import {MsgpackCodec} from '../codec.js';
 import {anonAuthContext, AuthContextParser} from '../data/auth-context.js';
 import {DataLayer} from '../data/data-layer.js';
 import type {
@@ -8,13 +7,8 @@ import type {
     ObjectStore,
 } from '../data/infrastructure.js';
 import type {KvStore} from '../kv/kv-store.js';
-import {log} from '../logger.js';
 import {tracerManager} from '../tracer-manager.js';
-import {
-    MemTransportClient,
-    MemTransportServer,
-} from '../transport/mem-transport.js';
-import {RpcHubClient, RpcHubServer} from '../transport/rpc-hub.js';
+import type {Hub} from '../transport/hub.js';
 import type {RpcMessage} from '../transport/rpc-message.js';
 import {RpcServer} from '../transport/rpc.js';
 import type {TransportServer} from '../transport/transport.js';
@@ -33,6 +27,7 @@ export interface CoordinatorServerOptions {
     email: EmailService;
     jwtSecret: string;
     objectStore: ObjectStore;
+    hub: Hub;
 }
 
 export class CoordinatorServer {
@@ -40,30 +35,9 @@ export class CoordinatorServer {
     private readonly rpcServer: RpcServer<CoordinatorApiInputState>;
 
     constructor(private readonly options: CoordinatorServerOptions) {
-        const hubMemTransportServer = new MemTransportServer(
-            new MsgpackCodec()
-        );
-        const hubAuthSecret = 'hub-auth-secret';
-        const hubServer = new RpcHubServer(
-            hubMemTransportServer,
-            hubAuthSecret,
-            'hub'
-        );
-
-        hubServer.launch().catch(error => {
-            log.error(error, 'HubServer failed to launch');
-        });
-
-        const hubClient = new RpcHubClient(
-            new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
-            hubAuthSecret,
-            'hub',
-            tracerManager.get('coord')
-        );
-
         this.dataLayer = new DataLayer(
             this.options.kv,
-            hubClient,
+            this.options.hub,
             this.options.jwtSecret
         );
         const authContextParser = new AuthContextParser(4, this.options.jwt);
@@ -76,7 +50,7 @@ export class CoordinatorServer {
                 jwt: this.options.jwt,
                 crypto: this.options.crypto,
                 emailService: this.options.email,
-                hub: hubClient,
+                hub: this.options.hub,
                 config: {
                     jwtSecret: this.options.jwtSecret,
                 },
@@ -85,7 +59,7 @@ export class CoordinatorServer {
                     // todo: support async close
                     setTimeout(() => {
                         this.dataLayer.close(reason);
-                        hubServer.close(reason);
+                        this.options.hub.close(reason);
                     }, 800); // give some time to finish pending requests
                 },
             },

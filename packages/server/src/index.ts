@@ -27,11 +27,17 @@ import {
     type KvStore,
     KvStoreIsolator,
     log,
+    MemTransportClient,
+    MemTransportServer,
     MsgpackCodec,
+    RpcHubClient,
+    RpcHubServer,
     toError,
     toStream,
+    tracerManager,
     TupleStore,
 } from 'syncwave-data';
+import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
 import type {Tuple} from '../../data/dist/esm/src/tuple.js';
 import {FsObjectStore} from './fs-object-store.js';
 import {SesEmailService} from './ses-email-service.js';
@@ -113,11 +119,14 @@ const jwtService: JwtService = {
         }),
 };
 
-async function getKVStore(): Promise<KvStore<Tuple, Uint8Array>> {
-    const store = await (async () => {
+async function getKVStore(): Promise<{
+    store: KvStore<Tuple, Uint8Array>;
+    hub: Hub;
+}> {
+    const {store, hub} = await (async () => {
         if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
             log.info('using PostgreSQL as primary store');
-            return await import('./postgres-kv-store.js').then(
+            const store = await import('./postgres-kv-store.js').then(
                 x =>
                     new x.PostgresUint8KvStore({
                         connectionString:
@@ -127,21 +136,34 @@ async function getKVStore(): Promise<KvStore<Tuple, Uint8Array>> {
                         connectionTimeoutMillis: 2000,
                     })
             );
+
+            return {
+                store,
+                hub: createRpcHub(),
+            };
         } else {
             log.info(
-                `using FoundationDB as a primary store (${`./fdb/fdb.${STAGE}.cluster`}`
+                `using FoundationDB as a primary store (./fdb/fdb.${STAGE}.cluster)`
             );
-            const fdbStore = await import('./fdb-kv-store.js').then(
-                x =>
-                    new x.FoundationDBUint8KvStore(`./fdb/fdb.${STAGE}.cluster`)
-            );
-            return fdbStore;
+            const fdbStore = await import('./fdb-kv-store.js').then(x => {
+                return new x.FoundationDBUint8KvStore({
+                    clusterFilePath: `./fdb/fdb.${STAGE}.cluster`,
+                    topicPrefix: '/hub/topics/',
+                });
+            });
+            return {
+                store: fdbStore,
+                hub: fdbStore,
+            };
         }
     })();
 
-    return new InstrumentedKvStore(
-        new KvStoreIsolator(new TupleStore(store), ['sw', STAGE])
-    );
+    return {
+        store: new InstrumentedKvStore(
+            new KvStoreIsolator(new TupleStore(store), ['sw', STAGE])
+        ),
+        hub,
+    };
 }
 
 async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
@@ -186,10 +208,33 @@ async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
     }
 }
 
+function createRpcHub() {
+    const hubMemTransportServer = new MemTransportServer(new MsgpackCodec());
+    const hubAuthSecret = 'hub-auth-secret';
+    const hubServer = new RpcHubServer(
+        hubMemTransportServer,
+        hubAuthSecret,
+        'hub'
+    );
+
+    hubServer.launch().catch(error => {
+        log.error(error, 'HubServer failed to launch');
+    });
+
+    const hubClient = new RpcHubClient(
+        new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
+        hubAuthSecret,
+        'hub',
+        tracerManager.get('coord')
+    );
+
+    return hubClient;
+}
+
 async function launch() {
-    const kvStore = await getKVStore();
+    const {store, hub} = await getKVStore();
     log.info('Upgrading KV store...');
-    await upgradeKVStore(kvStore);
+    await upgradeKVStore(store);
     log.info('Successfully upgraded KV store');
 
     const router = new Router();
@@ -226,7 +271,7 @@ async function launch() {
                 server: httpServer,
             })
         ),
-        kv: kvStore,
+        kv: store,
         jwt: jwtService,
         crypto,
         email: new InstrumentedEmailService(new SesEmailService(AWS_REGION)),
@@ -234,6 +279,7 @@ async function launch() {
         objectStore: await FsObjectStore.create({
             basePath: './dev-object-store',
         }),
+        hub,
     });
 
     async function shutdown() {

@@ -1,20 +1,23 @@
 import * as fdb from 'foundationdb';
 import {
     type Condition,
+    createUuidV4,
+    Cursor,
+    encodeString,
     type Entry,
     type GtCondition,
     type GteCondition,
     type LtCondition,
     type LteCondition,
     mapCondition,
+    toCursor,
     toStream,
     type Uint8KvStore,
     type Uint8Transaction,
 } from 'syncwave-data';
+import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
 
 fdb.setAPIVersion(620, 620);
-
-const MAGIC_BYTE = 174;
 
 // todo: use context
 export class FoundationDBUint8Transaction implements Uint8Transaction {
@@ -82,11 +85,44 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
     }
 }
 
-export class FoundationDBUint8KvStore implements Uint8KvStore {
+export interface FoundationDBUint8KvStoreOptions {
+    clusterFilePath: string;
+    topicPrefix: string;
+}
+
+export class FoundationDBUint8KvStore implements Uint8KvStore, Hub {
     private readonly db: fdb.Database;
 
-    constructor(clusterFilePath?: string) {
-        this.db = fdb.open(clusterFilePath);
+    constructor(private readonly options: FoundationDBUint8KvStoreOptions) {
+        this.db = fdb.open(options.clusterFilePath);
+    }
+
+    async emit(topic: string): Promise<void> {
+        await this.db.doTn(async tx => {
+            tx.set(this.toTopicKey(topic), Buffer.from(createUuidV4()));
+        });
+    }
+
+    async subscribe(topic: string): Promise<Cursor<void>> {
+        const key = this.toTopicKey(topic);
+        let watch = await this.db.doTn(async tn => tn.watch(key));
+
+        const db = this.db;
+        return toCursor({
+            async *[Symbol.asyncIterator]() {
+                try {
+                    while (true) {
+                        const changed = await watch.promise;
+                        watch = await db.doTn(async tn => tn.watch(key));
+                        if (changed) {
+                            yield undefined;
+                        }
+                    }
+                } finally {
+                    watch.cancel();
+                }
+            },
+        });
     }
 
     async snapshot<TResult>(
@@ -107,5 +143,9 @@ export class FoundationDBUint8KvStore implements Uint8KvStore {
 
     async close(): Promise<void> {
         this.db.close();
+    }
+
+    private toTopicKey(topic: string) {
+        return Buffer.from(encodeString(`${this.options.topicPrefix}${topic}`));
     }
 }

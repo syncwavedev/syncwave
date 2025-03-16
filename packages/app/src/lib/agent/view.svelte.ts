@@ -1,13 +1,17 @@
+import type {SvelteMap} from 'svelte/reactivity';
 import {
 	AppError,
 	assert,
 	Awareness,
+	uniqBy,
+	type AwarenessState,
 	type Board,
 	type BoardViewDataDto,
 	type Card,
 	type Column,
 	type User,
 } from 'syncwave-data';
+import {observeAwareness} from './awareness.svelte.js';
 import type {CrdtDerivator} from './crdt-manager.js';
 import type {State} from './state.js';
 
@@ -26,28 +30,39 @@ function lateInit(): any {
 
 export class BoardData {
 	private _boardState: State<Board> = $state.raw(lateInit());
+	private _meState: State<User> = $state.raw(lateInit());
 	private _userStates: Array<State<User>> = $state.raw(lateInit());
 	private _columnStates: Array<State<Column>> = $state.raw(lateInit());
 	private _cardStates: Array<State<Card>> = $state.raw(lateInit());
 
+	me: User = $derived(this._meState.value);
 	board: Board = $derived(this._boardState.value);
 	users: User[] = $derived(this._userStates.map(x => x.value));
 	columns: Column[] = $derived(this._columnStates.map(x => x.value));
 	cards: Card[] = $derived(this._cardStates.map(x => x.value));
 
+	awareness: SvelteMap<number, AwarenessState> = $state(lateInit());
+
 	view = new BoardTreeView(this);
 
 	static create(
 		awareness: Awareness,
+		me: State<User>,
 		data: BoardViewDataDto,
 		derivator: CrdtDerivator
 	) {
-		const result = new BoardData(awareness);
+		const result = new BoardData(awareness, me);
 		result.update(data, derivator);
 		return result;
 	}
 
-	private constructor(private readonly awareness: Awareness) {}
+	private constructor(
+		public rawAwareness: Awareness,
+		me: State<User>
+	) {
+		this.awareness = observeAwareness(rawAwareness);
+		this._meState = me;
+	}
 
 	update(board: BoardViewDataDto, derivator: CrdtDerivator) {
 		this._boardState = derivator.view({
@@ -121,6 +136,11 @@ export class BoardView implements Board {
 	name = $derived(this._data.board.name);
 	id = $derived(this._data.board.id);
 	pk = $derived(this._data.board.pk);
+	onlineMembers = $derived(
+		[...this._data.awareness.values()]
+			.filter(state => this._data.me.id !== state?.userId)
+			.map(state => (state?.user as {name: string}).name)
+	);
 
 	author = $derived.by(() => {
 		const author = findRequired(
@@ -205,6 +225,38 @@ export class CardView implements Card {
 	counter = $derived(this._card.counter);
 	text = $derived(this._card.text);
 	assigneeId = $derived(this._card.assigneeId);
+	hoverUsers = $derived.by(() => {
+		return uniqBy(
+			[...this._data.awareness.values()]
+				.filter(
+					state =>
+						state?.hoverCardId === this.id &&
+						this._data.me.id !== state?.userId
+				)
+				.map(state =>
+					this._data.users.find(x => x.id === state?.userId)
+				)
+				// awareness might be ahead of the board data, so ignore unknown users
+				.filter(x => x !== undefined),
+			x => x.id
+		);
+	});
+	viewerUsers = $derived.by(() => {
+		return uniqBy(
+			[...this._data.awareness.values()]
+				.filter(
+					state =>
+						state?.selectedCardId === this.id &&
+						this._data.me.id !== state?.userId
+				)
+				.map(state =>
+					this._data.users.find(x => x.id === state?.userId)
+				)
+				// awareness might be ahead of the board data, so ignore unknown users
+				.filter(x => x !== undefined),
+			x => x.id
+		);
+	});
 
 	author = $derived.by(() => {
 		const author = findRequired(

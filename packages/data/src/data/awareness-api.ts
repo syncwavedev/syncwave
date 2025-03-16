@@ -1,5 +1,5 @@
 import {Type} from '@sinclair/typebox';
-import type {AwarenessState} from '../awareness.js';
+import {zAwarenessState, type AwarenessState} from '../awareness.js';
 import {BatchProcessor} from '../batch-processor.js';
 import {PULL_INTERVAL_MS} from '../constants.js';
 import {context} from '../context.js';
@@ -136,13 +136,6 @@ export class AwarenessApiState {
             });
         });
     }
-}
-
-export function zAwarenessState() {
-    return Type.Union([
-        Type.Record(Type.String(), Type.Unknown()),
-        Type.Null(),
-    ]);
 }
 
 export function createAwarenessApi() {

@@ -34,6 +34,7 @@ import {
 	type Column,
 	type ColumnId,
 	type CoordinatorRpc,
+	type CrdtDoc,
 	type Placement,
 	type TransportClient,
 	type User,
@@ -79,13 +80,34 @@ class Agent {
 		this.connection.close(reason);
 	}
 
+	handleCardMouseEnter(boardId: BoardId, cardId: CardId) {
+		const board = this.activeBoards.find(x => x.board.id === boardId);
+		assert(board !== undefined, 'board not found');
+		board.rawAwareness.setLocalStateField('hoverCardId', cardId);
+	}
+
+	handleCardMouseLeave(boardId: BoardId, cardId: CardId) {
+		const board = this.activeBoards.find(x => x.board.id === boardId);
+		assert(board !== undefined, 'board not found');
+		if (board.rawAwareness.getLocalState()?.hoverCardId === cardId) {
+			board.rawAwareness.setLocalStateField('hoverCardId', undefined);
+		}
+	}
+
 	observeBoard(
 		initialBoard: BoardViewDataDto,
-		initialMe: User
+		initialMe: CrdtDoc<User>
 	): [BoardTreeView, Awareness] {
 		const awareness = new Awareness(createClientId());
+		const me = this.crdtManager.view({
+			id: initialMe.id,
+			isDraft: false,
+			state: initialMe.state,
+			type: 'user',
+		});
 		const data = BoardData.create(
 			awareness,
+			me,
 			initialBoard,
 			this.crdtManager
 		);
@@ -128,12 +150,18 @@ class Agent {
 		const awarenessSender = new BatchProcessor<AwarenessState>(
 			{type: 'running'},
 			(states: AwarenessState[]) => {
+				const latestState = states.at(-1);
+				assert(
+					latestState !== undefined,
+					'awareness latest state not found'
+				);
+
 				// don't wait for result to allow sending multiple updates concurrently
 				rpc(x =>
 					x.updateBoardAwarenessState({
 						clientId: awareness.clientId,
 						boardId: initialBoard.board.id,
-						state: states.at(-1) ?? null,
+						state: latestState,
 					})
 				).catch(error => {
 					log.error(

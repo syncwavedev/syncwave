@@ -1,7 +1,9 @@
+import {Type, type Static} from '@sinclair/typebox';
+import {type UserId} from './data/repos/user-repo.js';
 import type {Entry} from './kv/kv-store.js';
 import {getNow} from './timestamp.js';
 import {assert, equals} from './utils.js';
-import {createUuidV4} from './uuid.js';
+import {createUuidV4, Uuid} from './uuid.js';
 
 export interface AwarenessUpdate {
     added: number[];
@@ -14,7 +16,23 @@ interface AwarenessHandler {
     handle: (update: AwarenessUpdate, origin: unknown) => void;
 }
 
-export type AwarenessState = Record<string, unknown> | null;
+export function zAwarenessState() {
+    return Type.Object({
+        user: Type.Optional(
+            Type.Object({
+                name: Type.String(),
+                color: Type.Optional(Type.String()),
+            })
+        ),
+        userId: Type.Optional(Uuid<UserId>()),
+        selectedCardId: Type.Optional(Type.String()),
+        hoverCardId: Type.Optional(Type.String()),
+        __trigger: Type.Optional(Type.String()),
+    });
+}
+
+export interface AwarenessState
+    extends Static<ReturnType<typeof zAwarenessState>> {}
 
 interface MetaAwarenessState {
     lastUpdated: number;
@@ -23,8 +41,8 @@ interface MetaAwarenessState {
 
 function toEvent(
     clientId: number,
-    prevState: AwarenessState,
-    nextState: AwarenessState
+    prevState: AwarenessState | null,
+    nextState: AwarenessState | null
 ) {
     const added: number[] = [];
     const updated: number[] = [];
@@ -94,15 +112,18 @@ export class Awareness {
         }
     }
 
-    setLocalState(state: AwarenessState): void {
+    setLocalState(state: AwarenessState | null): void {
         this.setState(this.clientId, state, 'local');
     }
 
     getLocalState(): AwarenessState {
-        return this.states.get(this.clientId)?.state ?? null;
+        return this.states.get(this.clientId)?.state ?? {};
     }
 
-    setLocalStateField(field: string, value: unknown): void {
+    setLocalStateField<K extends keyof AwarenessState>(
+        field: K,
+        value: AwarenessState[K]
+    ): void {
         assert(
             typeof field === 'string',
             'Awareness.setLocalStateField: field must be a string'
@@ -143,7 +164,11 @@ export class Awareness {
         );
     }
 
-    private setState(clientId: number, state: AwarenessState, origin: unknown) {
+    private setState(
+        clientId: number,
+        state: AwarenessState | null,
+        origin: unknown
+    ) {
         const prevState = this.states.get(clientId)?.state ?? null;
         if (state === null) {
             this.states.delete(clientId);

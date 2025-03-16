@@ -472,3 +472,11 @@ export function hashString(s: string) {
     }
     return hash;
 }
+
+export function uniqBy<K, V>(items: V[], cb: (item: V) => K) {
+    const result = new Map<K, V>();
+    for (const item of items) {
+        result.set(cb(item), item);
+    }
+    return [...result.values()];
+}

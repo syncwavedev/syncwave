@@ -15,7 +15,7 @@
 	import {XmlFragment} from 'yjs';
 	import {Extension} from '@tiptap/core';
 	import type {Awareness} from '../../../../data/dist/esm/src/awareness';
-	import {hashString, type User, type UserId} from 'syncwave-data';
+	import {hashString, type User} from 'syncwave-data';
 
 	let editor = $state() as Readable<Editor>;
 
@@ -87,9 +87,7 @@
 					fragment,
 				}),
 				CollaborationCursor.configure({
-					provider: {
-						awareness,
-					},
+					provider: {awareness},
 					user: {
 						name: me.fullName,
 						color: colors[hashString(me.id) % colors.length],

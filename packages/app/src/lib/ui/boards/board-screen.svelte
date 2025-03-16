@@ -4,6 +4,7 @@
 		compareBigFloat,
 		log,
 		type BoardViewDataDto,
+		type CrdtDoc,
 		type User,
 	} from 'syncwave-data';
 
@@ -24,14 +25,13 @@
 	import EditBoardDialog from '$lib/components/edit-board-dialog/edit-board-dialog.svelte';
 	import UserIcon from '../components/icons/user-icon.svelte';
 	import EditProfileDialog from '$lib/components/edit-profile-dialog/edit-profile-dialog.svelte';
-	import {observeAwareness} from '$lib/agent/awareness.svelte';
 
 	const {
 		initialBoard,
 		initialMe,
 	}: {
 		initialBoard: BoardViewDataDto;
-		initialMe: User;
+		initialMe: CrdtDoc<User>;
 	} = $props();
 	const agent = getAgent();
 	const [board, awareness] = agent.observeBoard(initialBoard, initialMe);
@@ -111,13 +111,6 @@
 
 	const editBoardOpen = usePageState(false);
 	const editMyProfileOpen = usePageState(false);
-
-	const awarenessStates = observeAwareness(awareness);
-	const onlineMembers = $derived.by(() => {
-		return [...awarenessStates.values()]
-			.filter(state => initialMe.id !== state?.userId)
-			.map(state => (state?.user as any).name);
-	});
 </script>
 
 <main class="flex h-screen w-full">
@@ -125,9 +118,9 @@
 		<div class="dark:bg-subtle-0 px-4">
 			<div class="my-1 flex items-center">
 				<div class="text-xs leading-none font-medium">{board.name}</div>
-				{#if onlineMembers.length > 0}
+				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
-						online: {onlineMembers.join(', ')}
+						online: {board.onlineMembers.join(', ')}
 					</div>
 				{/if}
 				<button class="btn--icon ml-auto" onclick={createCard}>
@@ -180,8 +173,6 @@
 			>
 				{#each columns.value as column (column.id)}
 					<BoardColumn
-						{initialMe}
-						{awareness}
 						{column}
 						{onCardClick}
 						handleCardDnd={createCardHandler(column)}

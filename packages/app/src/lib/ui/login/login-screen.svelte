@@ -92,7 +92,7 @@
 				<!-- Google Sign-In Button -->
 				<button
 					onclick={() => (window.location.href = googleSignInUrl)}
-					class="bg-gray-80 w-full rounded-lg p-2"
+					class="bg-subtle-1 w-full rounded-lg p-2"
 					type="button"
 					disabled={isLoading}
 					aria-label="Continue with Google"
@@ -136,7 +136,7 @@
 					</div>
 					<button
 						type="submit"
-						class="bg-accent-primary hover:bg-accent-primary-hover flex w-full items-center justify-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-white transition-colors disabled:opacity-50"
+						class="bg-subtle-3 p-2"
 						disabled={isLoading}
 						aria-label="Continue with Email"
 					>
@@ -184,7 +184,7 @@
 				</div>
 				<button
 					type="submit"
-					class="bg-accent-primary hover:bg-accent-primary-hover flex w-full items-center justify-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-white transition-colors disabled:opacity-50"
+					class="bg-subtle-3 p-2"
 					disabled={isLoading}
 					aria-label="Verify code"
 				>

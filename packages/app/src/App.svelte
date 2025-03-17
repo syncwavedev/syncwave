@@ -12,7 +12,6 @@
 	import './lib/ui/styles/main.css';
 	import {setContext} from 'svelte';
 	import type {Component} from 'svelte';
-	import LoginScreen from './lib/ui/login/login-screen.svelte';
 	import {CoordinatorClient} from 'syncwave-data';
 	import {
 		createCoordinatorClient,
@@ -23,13 +22,15 @@
 	import {UploadManager} from './lib/upload-manager.svelte';
 	import {createThemeManager} from './lib/ui/theme-manager.svelte.js';
 	import appNavigator from './lib/app-navigator';
-	import {createAgent, getAgent} from './lib/agent/agent.svelte';
+	import {createAgent} from './lib/agent/agent.svelte';
 	import {appConfig} from './lib/config';
 	import {WsTransportClient} from './ws-transport-client';
 	import {AuthManager} from './auth-manager';
 	import router from './lib/router';
 	import CheckScreen from './lib/ui/login/check-screen.svelte';
-	import BoardPage from './pages/board-page.svelte';
+	import BoardPage from './pages/board.svelte';
+	import LoginCallback from './pages/login-callback.svelte';
+	import LoginPage from './pages/login.svelte';
 
 	const themeManager = createThemeManager();
 	setContext('theme', {
@@ -74,9 +75,12 @@
 			}
 		});
 		router.on('/login', () => {
-			Page = LoginScreen;
+			Page = LoginPage;
 		});
-		router.on('/board/:key', params => {
+		router.on('/login/callback/google', () => {
+			Page = LoginCallback;
+		});
+		router.on('/b/:key', params => {
 			Page = BoardPage;
 			pageProps = {key: params.key ?? ''};
 		});

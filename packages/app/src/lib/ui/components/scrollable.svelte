@@ -114,8 +114,9 @@
 <!-- Scrollbar snippet for reusability -->
 {#snippet Scrollbar({orientation}: {orientation: 'vertical' | 'horizontal'})}
 	<ScrollArea.Scrollbar
+		forceMount
 		{orientation}
-		class="flex min-h-3 min-w-2 touch-none transition-all duration-50 select-none"
+		class="flex min-h-3 min-w-2 touch-none transition-all duration-100 select-none data-[state=hidden]:opacity-0 data-[state=visible]:opacity-100"
 	>
 		<ScrollArea.Thumb
 			class="bg-scrollbar relative rounded-full transition-all duration-50 {orientation ===

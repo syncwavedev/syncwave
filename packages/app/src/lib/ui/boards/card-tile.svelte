@@ -59,7 +59,7 @@
 			{preview}
 		</span>
 		<div class="flex items-center">
-			<span class="text-2xs text-ink-detail">
+			<span class="text-2xs text-ink-detail mr-auto">
 				{#if card.counter}
 					#{card.counter}
 				{/if}
@@ -70,11 +70,13 @@
 				{#if card.viewerUsers.length > 0}
 					viewers {card.viewerUsers.map(x => x.fullName).join(', ')}
 				{/if}
-				{#if todoStats.total > 0}
-					{todoStats.checked} / {todoStats.total}
-				{/if}
 			</span>
-			<span class="ml-auto text-[1.325rem]">
+			{#if todoStats.total > 0}
+				<span class="text-2xs text-ink-detail ml-auto">
+					{todoStats.checked} / {todoStats.total}
+				</span>
+			{/if}
+			<span class="ml-2 text-[1.325rem]">
 				<Avatar name={card.author.fullName} />
 			</span>
 		</div>

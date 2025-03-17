@@ -26,15 +26,11 @@ import {
     type KvStore,
     KvStoreIsolator,
     log,
-    MemTransportClient,
-    MemTransportServer,
+    MemHub,
     MsgpackCodec,
     MvccAdapter,
-    RpcHubClient,
-    RpcHubServer,
     toError,
     toStream,
-    tracerManager,
     TupleStore,
 } from 'syncwave-data';
 import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
@@ -143,7 +139,7 @@ async function getKvStore(): Promise<{
 
                 return {
                     store,
-                    hub: createRpcHub(),
+                    hub: new MemHub(),
                 };
             } else {
                 log.info('using Sqlite as primary store');
@@ -157,7 +153,7 @@ async function getKvStore(): Promise<{
 
                 return {
                     store: new MvccAdapter(store),
-                    hub: createRpcHub(),
+                    hub: new MemHub(),
                 };
             }
         } else {
@@ -223,29 +219,6 @@ async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
             await tx.put(versionKey, encodeNumber(2));
         });
     }
-}
-
-function createRpcHub() {
-    const hubMemTransportServer = new MemTransportServer(new MsgpackCodec());
-    const hubAuthSecret = 'hub-auth-secret';
-    const hubServer = new RpcHubServer(
-        hubMemTransportServer,
-        hubAuthSecret,
-        'hub'
-    );
-
-    hubServer.launch().catch(error => {
-        log.error(error, 'HubServer failed to launch');
-    });
-
-    const hubClient = new RpcHubClient(
-        new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
-        hubAuthSecret,
-        'hub',
-        tracerManager.get('coord')
-    );
-
-    return hubClient;
 }
 
 async function launch() {

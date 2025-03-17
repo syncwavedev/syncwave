@@ -1,4 +1,3 @@
-import type {Tracer} from '@opentelemetry/api';
 import {Type} from '@sinclair/typebox';
 import {type Cancel, Context, context} from '../context.js';
 import {
@@ -57,8 +56,7 @@ export function launchRpcStreamerServer<T>(
     api: StreamerApi<T>,
     state: T,
     conn: RpcConnection,
-    serverName: string,
-    tracer: Tracer
+    serverName: string
 ) {
     context().ensureActive();
 
@@ -87,14 +85,12 @@ export function launchRpcStreamerServer<T>(
         createRpcHandlerClient(createRpcStreamerClientApi(), conn, () => ({
             ...context().extract(),
         })),
-        serverName,
-        tracer
+        serverName
     );
     launchRpcHandlerServer(
         createRpcStreamerServerApi(api),
         serverApiState,
-        conn,
-        tracer
+        conn
     );
 }
 
@@ -113,8 +109,7 @@ class RpcStreamerServerApiState<T> {
     constructor(
         public readonly state: T,
         public readonly client: RpcStreamerClientRpc,
-        public readonly serverName: string,
-        public readonly tracer: Tracer
+        public readonly serverName: string
     ) {}
 
     close(reason: unknown) {
@@ -444,8 +439,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     api: TApi,
     conn: Connection<unknown>,
     getHeaders: () => MessageHeaders,
-    clientTarget: string,
-    tracer: Tracer
+    clientTarget: string
 ): InferRpcClient<TApi> {
     context().ensureActive();
 
@@ -459,8 +453,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     const stopRpcHandlerServer = launchRpcHandlerServer(
         createRpcStreamerClientApi(),
         clientApiState,
-        new RpcConnection(conn),
-        tracer
+        new RpcConnection(conn)
     );
 
     let cancelCleanup: Unsubscribe | undefined = undefined;

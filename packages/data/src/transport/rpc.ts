@@ -1,4 +1,3 @@
-import type {Tracer} from '@opentelemetry/api';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
@@ -266,8 +265,7 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
         transport: TransportServer<unknown>,
         private readonly api: Api<TState>,
         private readonly state: TState,
-        private readonly serverName: string,
-        private readonly tracer: Tracer
+        private readonly serverName: string
     ) {
         this.transport = new RpcTransportServer(transport);
     }
@@ -282,13 +280,7 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
     }
 
     private handleConnection(conn: RpcConnection): void {
-        launchRpcStreamerServer(
-            this.api,
-            this.state,
-            conn,
-            this.serverName,
-            this.tracer
-        );
+        launchRpcStreamerServer(this.api, this.state, conn, this.serverName);
     }
 }
 

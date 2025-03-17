@@ -1,4 +1,3 @@
-import type {Tracer} from '@opentelemetry/api';
 import {context} from '../context.js';
 import {AppError} from '../errors.js';
 import {RpcConnection} from '../transport/rpc-transport.js';
@@ -30,8 +29,7 @@ export class CoordinatorClient {
 
     constructor(
         connection: Connection<unknown>,
-        private authToken: string | undefined,
-        tracer: Tracer
+        private authToken: string | undefined
     ) {
         this.connection = new RpcConnection(connection);
         this.rpc = createRpcClient(
@@ -41,8 +39,7 @@ export class CoordinatorClient {
                 ...context().extract(),
                 auth: this.authToken,
             }),
-            'agent',
-            tracer
+            'coord'
         );
     }
 

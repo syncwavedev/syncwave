@@ -99,7 +99,9 @@ export class SqliteRwStore implements Uint8KvStore {
     }
 
     async transact<R>(fn: (tx: Uint8Transaction) => Promise<R>): Promise<R> {
-        return await this._transact(fn);
+        return await this.mutex.run(async () => {
+            return await this._transact(fn);
+        });
     }
 
     private async _transact<R>(

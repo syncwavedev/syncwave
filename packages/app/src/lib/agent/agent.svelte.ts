@@ -22,7 +22,6 @@ import {
 	toError,
 	toPosition,
 	toStream,
-	tracerManager,
 	whenAll,
 	type AwarenessState,
 	type BigFloat,
@@ -65,8 +64,7 @@ class Agent {
 				...context().extract(),
 				auth: this.authManager.getJwt(),
 			}),
-			'server',
-			tracerManager.get('agent')
+			'server'
 		);
 		this.crdtManager = new CrdtManager(this.rpc);
 	}

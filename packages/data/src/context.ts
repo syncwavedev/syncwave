@@ -81,7 +81,7 @@ export class Context {
         },
         links: [],
         parent: undefined,
-        tracer: trace.getTracer('syncwave-data'),
+        tracer: trace.getTracer('syncwave'),
     });
 
     private readonly span: Span;
@@ -90,8 +90,7 @@ export class Context {
 
     public static restore(
         options: ContextOptions,
-        carrier: ContextCarrier,
-        tracer: Tracer
+        carrier: ContextCarrier
     ): [Context, Cancel] {
         const otCtx = getOtSpanContext(context().span);
 
@@ -99,7 +98,7 @@ export class Context {
         const ctx = new Context({
             options,
             parent: extractedCtx,
-            tracer,
+            tracer: trace.getTracer('syncwave'),
             links: [context().span.spanContext()],
         });
         return [ctx, reason => ctx.end(reason)];

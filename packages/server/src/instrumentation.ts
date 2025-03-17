@@ -16,23 +16,11 @@ const exporter = new BatchSpanProcessor(
     })
 );
 
-function createTracer(name: string, register = false) {
-    const provider = new BasicTracerProvider({
-        resource: new Resource({
-            [ATTR_SERVICE_NAME]: name,
-        }),
-        spanProcessors: [exporter],
-        sampler: new AlwaysOnSampler(),
-    });
-    if (register) {
-        provider.register();
-    }
-
-    return provider.getTracer('syncwave');
-}
-
-(globalThis as any).tracers = {
-    coord: createTracer('coord', true),
-    hub: createTracer('hub'),
-    agent: createTracer('agent'),
-};
+const provider = new BasicTracerProvider({
+    resource: new Resource({
+        [ATTR_SERVICE_NAME]: 'server',
+    }),
+    spanProcessors: [exporter],
+    sampler: new AlwaysOnSampler(),
+});
+provider.register();

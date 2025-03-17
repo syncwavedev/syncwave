@@ -7,7 +7,6 @@ import type {
     ObjectStore,
 } from '../data/infrastructure.js';
 import type {KvStore} from '../kv/kv-store.js';
-import {tracerManager} from '../tracer-manager.js';
 import type {Hub} from '../transport/hub.js';
 import type {RpcMessage} from '../transport/rpc-message.js';
 import {RpcServer} from '../transport/rpc.js';
@@ -63,8 +62,7 @@ export class CoordinatorServer {
                     }, 800); // give some time to finish pending requests
                 },
             },
-            'server',
-            tracerManager.get('coord')
+            'server'
         );
     }
 

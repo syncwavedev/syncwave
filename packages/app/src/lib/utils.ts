@@ -11,7 +11,6 @@ import {
 	PersistentConnection,
 	runAll,
 	toStream,
-	tracerManager,
 	unimplemented,
 	type CoordinatorRpc,
 	type MeDto,
@@ -36,7 +35,7 @@ export function getRpc() {
 		throw new Error('context CoordinatorClient is not available');
 	}
 	const [componentCtx, cancelComponentCtx] = context().createChild({
-		span: 'getSdk',
+		span: 'getRpc',
 	});
 	onDestroy(() => {
 		cancelComponentCtx(
@@ -48,7 +47,7 @@ export function getRpc() {
 	) => {
 		const [requestCtx, cancelRequestCtx] = componentCtx.createChild(
 			{
-				span: 'getSdk request',
+				span: 'getRpc request',
 			},
 			true
 		);
@@ -137,8 +136,7 @@ export function createCoordinatorClient() {
 				codec: new MsgpackCodec(),
 			})
 		),
-		jwt,
-		tracerManager.get('agent')
+		jwt
 	);
 
 	return coordinator;
@@ -156,8 +154,7 @@ export async function createDirectCoordinatorClient(
 			url: appConfig.serverWsUrl,
 			codec: new MsgpackCodec(),
 		}).connect(),
-		jwt,
-		tracerManager.get('agent')
+		jwt
 	);
 
 	return coordinator;

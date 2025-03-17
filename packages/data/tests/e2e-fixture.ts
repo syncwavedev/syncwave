@@ -1,4 +1,3 @@
-import {trace} from '@opentelemetry/api';
 import {MsgpackCodec} from '../src/codec.js';
 import {CoordinatorClient} from '../src/coordinator/coordinator-client.js';
 import {
@@ -8,15 +7,13 @@ import {
     createCardId,
     createColumnId,
     createRichtext,
+    MemHub,
     MemMvccStore,
     MemObjectStore,
     MemTransportClient,
     MemTransportServer,
-    RpcHubClient,
-    RpcHubServer,
     toPosition,
     toTimestamp,
-    tracerManager,
     TupleStore,
     type BoardId,
     type Card,
@@ -28,29 +25,6 @@ import {
 } from '../src/index.js';
 import {log} from '../src/logger.js';
 import {assert, assertSingle, drop} from '../src/utils.js';
-
-function createRpcHub() {
-    const hubMemTransportServer = new MemTransportServer(new MsgpackCodec());
-    const hubAuthSecret = 'hub-auth-secret';
-    const hubServer = new RpcHubServer(
-        hubMemTransportServer,
-        hubAuthSecret,
-        'hub'
-    );
-
-    hubServer.launch().catch(error => {
-        log.error(error, 'HubServer failed to launch');
-    });
-
-    const hubClient = new RpcHubClient(
-        new MemTransportClient(hubMemTransportServer, new MsgpackCodec()),
-        hubAuthSecret,
-        'hub',
-        tracerManager.get('coord')
-    );
-
-    return hubClient;
-}
 
 export class E2eFixture {
     static async start() {
@@ -82,7 +56,7 @@ export class E2eFixture {
             email,
             jwtSecret,
             objectStore: new MemObjectStore(),
-            hub: createRpcHub(),
+            hub: new MemHub(),
         });
 
         drop(coordinator.launch());
@@ -94,8 +68,7 @@ export class E2eFixture {
 
         const client = new CoordinatorClient(
             await coordinatorTransportClient.connect(),
-            undefined,
-            trace.getTracer('e2e')
+            undefined
         );
 
         return new E2eFixture(client, outbox);

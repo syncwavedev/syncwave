@@ -1,4 +1,3 @@
-import type {Tracer} from '@opentelemetry/api';
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
 import {type Cancel, Context, context} from '../context.js';
 import {Deferred} from '../deferred.js';
@@ -36,8 +35,7 @@ export type HandlerApi<TState> = Record<string, Handler<TState, any, any>>;
 export function launchRpcHandlerServer<T>(
     api: HandlerApi<T>,
     state: T,
-    conn: RpcConnection,
-    tracer: Tracer
+    conn: RpcConnection
 ): Cancel {
     context().ensureActive();
 
@@ -58,8 +56,7 @@ export function launchRpcHandlerServer<T>(
                     {
                         span: `raw_handle ${msg.payload.name}`,
                     },
-                    msg.headers,
-                    tracer
+                    msg.headers
                 );
                 await jobManager.start(
                     msg.id,

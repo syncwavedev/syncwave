@@ -469,6 +469,11 @@ export function createWriteApi() {
                             users: st.tx.users,
                         });
 
+                        // user trying to add themselves as a member
+                        if (identity.userId === userId) {
+                            return;
+                        }
+
                         await st.tx.members.create({
                             boardId: board.id,
                             createdAt: now,

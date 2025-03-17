@@ -7,9 +7,9 @@ describeKVStore(
         new PostgresUint8KvStore({
             connectionString:
                 'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_test',
-            max: 20, // maximum number of clients in the pool
-            idleTimeoutMillis: 30000, // idle time before a client is closed
-            connectionTimeoutMillis: 2000, // time to wait for a connection before throwing an error
+            max: 20,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 2000,
         }),
     async store => {
         await store.transact(async tx => {

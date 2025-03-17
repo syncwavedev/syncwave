@@ -58,7 +58,7 @@
 		</div>
 
 		<div
-			class="mx-2 flex h-full flex-col gap-1.5"
+			class="mx-2 flex h-full min-h-10 flex-col gap-1.5"
 			use:dndzone={{
 				items: column.cards,
 				flipDurationMs: 100,

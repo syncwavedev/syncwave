@@ -29,6 +29,7 @@ import {
     MemTransportClient,
     MemTransportServer,
     MsgpackCodec,
+    MvccAdapter,
     RpcHubClient,
     RpcHubServer,
     toError,
@@ -51,7 +52,7 @@ const GOOGLE_CLIENT_SECRET = assertDefined(process.env.GOOGLE_CLIENT_SECRET);
 
 const PORT = ENVIRONMENT === 'prod' ? 80 : 4567;
 
-const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, cpuCount} = (() => {
+const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, workersCount} = (() => {
     const GOOGLE_CALLBACK_PATH = '/callbacks/google';
     if (STAGE === 'dev') {
         return {
@@ -59,7 +60,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, cpuCount} = (() => {
             APP_URL: 'https://dev.syncwave.dev',
             GOOGLE_REDIRECT_URL:
                 'https://api-dev.syncwave.dev' + GOOGLE_CALLBACK_PATH,
-            cpuCount: cpus().length,
+            workersCount: cpus().length,
         };
     } else if (STAGE === 'prod') {
         return {
@@ -67,14 +68,14 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, cpuCount} = (() => {
             APP_URL: 'https://syncwave.dev',
             GOOGLE_REDIRECT_URL:
                 'https://api.syncwave.dev' + GOOGLE_CALLBACK_PATH,
-            cpuCount: cpus().length,
+            workersCount: cpus().length,
         };
     } else if (STAGE === 'local') {
         return {
             LOG_LEVEL: 'info' as const,
             APP_URL: 'http://localhost:5173',
             GOOGLE_REDIRECT_URL: 'http://localhost:4567' + GOOGLE_CALLBACK_PATH,
-            cpuCount: 1,
+            workersCount: 1,
         };
     } else {
         throw new AppError(`unknown STAGE: ${STAGE}`);
@@ -127,22 +128,38 @@ async function getKvStore(): Promise<{
 }> {
     const {store, hub} = await (async () => {
         if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
-            log.info('using PostgreSQL as primary store');
-            const store = await import('./postgres-kv-store.js').then(
-                x =>
-                    new x.PostgresUint8KvStore({
-                        connectionString:
-                            'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_dev',
-                        max: 20,
-                        idleTimeoutMillis: 30000,
-                        connectionTimeoutMillis: 2000,
-                    })
-            );
+            if (false as any) {
+                log.info('using PostgreSQL as primary store');
+                const store = await import('./postgres-kv-store.js').then(
+                    x =>
+                        new x.PostgresUint8KvStore({
+                            connectionString:
+                                'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_dev',
+                            max: 20,
+                            idleTimeoutMillis: 30000,
+                            connectionTimeoutMillis: 2000,
+                        })
+                );
 
-            return {
-                store,
-                hub: createRpcHub(),
-            };
+                return {
+                    store,
+                    hub: createRpcHub(),
+                };
+            } else {
+                log.info('using Sqlite as primary store');
+                const store = await import('./sqlite-store.js').then(
+                    x =>
+                        new x.SqliteRwStore({
+                            dbFilePath: './dev.sqlite',
+                            concurrentReadLimit: 4,
+                        })
+                );
+
+                return {
+                    store: new MvccAdapter(store),
+                    hub: createRpcHub(),
+                };
+            }
         } else {
             log.info(
                 `using FoundationDB as a primary store (./fdb/fdb.${STAGE}.cluster)`
@@ -369,8 +386,8 @@ process.on('unhandledRejection', reason => {
 
 log.info('launching coordinator...');
 
-if (cluster.isPrimary) {
-    for (let i = 0; i < cpuCount; i++) {
+if (cluster.isPrimary && workersCount > 1) {
+    for (let i = 0; i < workersCount; i++) {
         log.info(`Master process ${process.pid} is running`);
 
         const spawnWorker = () => {
@@ -385,7 +402,7 @@ if (cluster.isPrimary) {
             });
         };
 
-        for (let i = 0; i < cpuCount; i++) {
+        for (let i = 0; i < workersCount; i++) {
             spawnWorker();
         }
     }

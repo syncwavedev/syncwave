@@ -7,7 +7,6 @@ import {
     type AppTransaction,
     type Condition,
     isolate,
-    queryStartsWith,
     type Transaction,
     withCodec,
 } from '../kv/kv-store.js';
@@ -116,30 +115,6 @@ export class DocRepo<T extends Doc<Tuple>> {
         return await context().runChild({span: 'repo.get'}, async () => {
             return await this.rawRepo.getUnique(indexName, key, includeDeleted);
         });
-    }
-
-    unsafe_getAll(prefix: Tuple = []): Stream<T> {
-        return context().runChild({span: 'repo.unsafe_getAll'}, () => {
-            return this.rawRepo.unsafe_getAll(prefix);
-        });
-    }
-
-    async unsafe_deleteAll() {
-        return await context().runChild(
-            {span: 'repo.unsafe_deleteAll'},
-            async () => {
-                return await this.rawRepo.unsafe_deleteAll();
-            }
-        );
-    }
-
-    async unsafe_delete(pk: Tuple) {
-        return await context().runChild(
-            {span: 'repo.unsafe_delete'},
-            async () => {
-                return await this.rawRepo.unsafe_delete(pk);
-            }
-        );
     }
 
     query(
@@ -279,32 +254,6 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         } else {
             return undefined;
         }
-    }
-
-    unsafe_getAll(prefix: Tuple = []): Stream<T> {
-        return toStream(queryStartsWith(this.primaryKeyRaw, prefix)).map(x =>
-            x.value.snapshot()
-        );
-    }
-
-    async unsafe_deleteAll() {
-        for await (const {pk} of this.unsafe_getAll(undefined)) {
-            await this.unsafe_delete(pk);
-        }
-    }
-
-    async unsafe_delete(pk: Tuple) {
-        const doc = await this.primary.get(pk);
-        if (!doc) {
-            throw new AppError('doc not found: ' + pk);
-        }
-        const prev = doc.snapshot();
-        const next = undefined;
-
-        await whenAll([
-            this.primary.delete(pk),
-            ...[...this.indexes.values()].map(x => x.sync(prev, next)),
-        ]);
     }
 
     query(

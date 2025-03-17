@@ -1,5 +1,5 @@
 import {SendEmailCommand, SESClient} from '@aws-sdk/client-ses';
-import type {EmailMessage, EmailService} from 'syncwave-data';
+import {log, type EmailMessage, type EmailService} from 'syncwave-data';
 
 export class SesEmailService implements EmailService {
     private readonly ses: SESClient;
@@ -11,6 +11,8 @@ export class SesEmailService implements EmailService {
     }
 
     async send({html, recipient, subject, text}: EmailMessage): Promise<void> {
+        log.info(`Sending email to ${recipient} with subject: ${subject}`);
+
         await this.ses.send(
             new SendEmailCommand({
                 Destination: {

@@ -21,9 +21,6 @@ import {
     encodeNumber,
     ENVIRONMENT,
     getGoogleUser,
-    InstrumentedEmailService,
-    InstrumentedKvStore,
-    InstrumentedTransportServer,
     type JwtPayload,
     type JwtService,
     type KvStore,
@@ -124,7 +121,7 @@ const jwtService: JwtService = {
         }),
 };
 
-async function getKVStore(): Promise<{
+async function getKvStore(): Promise<{
     store: KvStore<Tuple, Uint8Array>;
     hub: Hub;
 }> {
@@ -164,9 +161,7 @@ async function getKVStore(): Promise<{
     })();
 
     return {
-        store: new InstrumentedKvStore(
-            new KvStoreIsolator(new TupleStore(store), ['sw', STAGE])
-        ),
+        store: new KvStoreIsolator(new TupleStore(store), ['sw', STAGE]),
         hub,
     };
 }
@@ -237,7 +232,7 @@ function createRpcHub() {
 }
 
 async function launch() {
-    const {store, hub} = await getKVStore();
+    const {store, hub} = await getKvStore();
     log.info('Upgrading KV store...');
     await upgradeKVStore(store);
     log.info('Successfully upgraded KV store');
@@ -270,16 +265,14 @@ async function launch() {
     const httpServer = createServer(app.callback());
 
     const coordinator = new CoordinatorServer({
-        transport: new InstrumentedTransportServer(
-            new WsTransportServer({
-                codec: new MsgpackCodec(),
-                server: httpServer,
-            })
-        ),
+        transport: new WsTransportServer({
+            codec: new MsgpackCodec(),
+            server: httpServer,
+        }),
         kv: store,
         jwt: jwtService,
         crypto,
-        email: new InstrumentedEmailService(new SesEmailService(AWS_REGION)),
+        email: new SesEmailService(AWS_REGION),
         jwtSecret: JWT_SECRET,
         objectStore: await FsObjectStore.create({
             basePath: './dev-object-store',

@@ -11,7 +11,6 @@ import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type AuthContext} from './auth-context.js';
 import {AwarenessStore} from './awareness-store.js';
-import {AggregateDataNode, DataNode, RepoDataNode} from './data-node.js';
 import type {ChangeOptions} from './doc-repo.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import {PermissionService} from './permission-service.js';
@@ -52,7 +51,6 @@ export interface DataTx {
     readonly identities: IdentityRepo;
     readonly config: Config;
     readonly tx: AppTransaction;
-    readonly dataNode: DataNode;
     readonly events: CollectionManager<ChangeEvent>;
     readonly ps: PermissionService;
     readonly esWriter: EventStoreWriter<ChangeEvent>;
@@ -242,15 +240,6 @@ export class DataLayer {
                 options => logAttachmentChange(dataTx, options)
             );
 
-            const dataNode = new AggregateDataNode({
-                identities: new RepoDataNode(identities.rawRepo),
-                users: new RepoDataNode(users.rawRepo),
-                boards: new RepoDataNode(boards.rawRepo),
-                cards: new RepoDataNode(cards.rawRepo),
-                columns: new RepoDataNode(columns.rawRepo),
-                members: new RepoDataNode(members.rawRepo),
-            });
-
             const events = new CollectionManager<ChangeEvent>(
                 isolate(['events'])(tx),
                 new MsgpackCodec()
@@ -284,7 +273,6 @@ export class DataLayer {
                     jwtSecret: this.jwtSecret,
                 },
                 tx: tx,
-                dataNode,
                 scheduleEffect,
             };
 

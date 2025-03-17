@@ -105,6 +105,13 @@
 						Commit
 					</button>
 				{/if}
+				<button
+					class="btn--block"
+					onclick={() =>
+						agent.setCardColumn(card.id, board.columns[0].id)}
+				>
+					To {board.columns[0].name}
+				</button>
 			</div>
 		</div>
 	</div>

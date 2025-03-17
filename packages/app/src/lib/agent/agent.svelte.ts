@@ -343,6 +343,12 @@ class Agent {
 		});
 	}
 
+	setCardColumn(cardId: CardId, columnId: ColumnId): void {
+		this.crdtManager.update<Card>(cardId, x => {
+			x.columnId = columnId;
+		});
+	}
+
 	setColumnName(columnId: ColumnId, name: string): void {
 		this.crdtManager.update<Column>(columnId, x => {
 			x.name = name;

@@ -178,8 +178,6 @@ class Agent {
 			const handleUpdate = (_: unknown, origin: unknown) => {
 				if (origin !== 'local') return;
 
-				console.log(awareness.clientId, awareness.debug());
-
 				awarenessSender
 					.enqueue(awareness.getLocalState())
 					.catch(error => {

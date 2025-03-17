@@ -1,7 +1,7 @@
 <script lang="ts">
 	import TrashIcon from '../icons/trash-icon.svelte';
-	import {ColumnView} from '$lib/agent/view.svelte';
-	import {getAgent} from '$lib/agent/agent.svelte';
+	import {ColumnView} from '../../agent/view.svelte';
+	import {getAgent} from '../../agent/agent.svelte';
 	import type {ColumnId} from 'syncwave-data';
 
 	interface Props {
@@ -14,9 +14,7 @@
 
 	function deleteColumn(columnId: ColumnId) {
 		if (
-			!confirm(
-				`Are you sure you want to delete this column ${column.name}?`
-			)
+			!confirm(`Are you sure you want to delete this column ${column.name}?`)
 		) {
 			return;
 		}

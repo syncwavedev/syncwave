@@ -2,10 +2,9 @@
 	import {createColumnId, toPosition} from 'syncwave-data';
 	import ArrowLeftIcon from '../icons/arrow-left-icon.svelte';
 	import TimesIcon from '../icons/times-icon.svelte';
-	import {getRpc} from '$lib/utils';
-	import ColumnList from './column-list.svelte';
+	import {getRpc} from '../../utils';
 	import ColumnListController from './column-list-controller.svelte';
-	import type {BoardTreeView, BoardView} from '$lib/agent/view.svelte';
+	import type {BoardTreeView} from '../../agent/view.svelte';
 
 	interface Props {
 		onClose: () => void;

@@ -114,12 +114,7 @@ export function createCoordinatorClient() {
 				codec: new MsgpackCodec(),
 			})
 		),
-<<<<<<< HEAD
-		jwt
-=======
-		jwt ?? undefined,
-		tracerManager.get('agent')
->>>>>>> 5e56a78 (Fix)
+		jwt ?? undefined
 	);
 
 	return coordinator;
@@ -133,12 +128,7 @@ export async function createDirectCoordinatorClient() {
 			url: appConfig.serverWsUrl,
 			codec: new MsgpackCodec(),
 		}).connect(),
-<<<<<<< HEAD
-		jwt
-=======
-		jwt ?? undefined,
-		tracerManager.get('agent')
->>>>>>> 5e56a78 (Fix)
+		jwt ?? undefined
 	);
 
 	return coordinator;

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Dialog from '../dialog.svelte';
 	import EditColumnDialogFrozenContent from './edit-column-dialog-content-frozen.svelte';
-	import type {ColumnView} from '$lib/agent/view.svelte';
+	import type {ColumnView} from '../../agent/view.svelte';
 
 	interface Props {
 		column: ColumnView;

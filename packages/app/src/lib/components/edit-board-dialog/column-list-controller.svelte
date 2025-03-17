@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ColumnList from './column-list.svelte';
-	import {useBoardView} from '$lib/ui/boards/use-board-view.svelte';
-	import {BoardTreeView} from '$lib/agent/view.svelte';
+	import {useBoardView} from '../../ui/boards/use-board-view.svelte';
+	import {BoardTreeView} from '../../agent/view.svelte';
 
 	let {board}: {board: BoardTreeView} = $props();
 

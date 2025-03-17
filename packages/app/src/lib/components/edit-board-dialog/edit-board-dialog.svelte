@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type {BoardTreeView} from '$lib/agent/view.svelte';
+	import type {BoardTreeView} from '../../agent/view.svelte';
 	import Dialog from '../dialog.svelte';
 	import EditBoardDialogFrozenContent from './edit-board-dialog-content-frozen.svelte';
 

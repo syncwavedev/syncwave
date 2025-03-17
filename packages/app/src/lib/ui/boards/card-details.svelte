@@ -6,10 +6,10 @@
 	import TimesIcon from '../components/icons/times-icon.svelte';
 	import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
 	import UserIcon from '../components/icons/user-icon.svelte';
-	import Editor from '$lib/components/editor.svelte';
-	import appNavigator from '../app-navigator';
-	import type {BoardTreeView, CardView} from '$lib/agent/view.svelte';
-	import {getAgent} from '$lib/agent/agent.svelte';
+	import Editor from '../../components/editor.svelte';
+	import appNavigator from '../../app-navigator';
+	import type {BoardTreeView, CardView} from '../../agent/view.svelte';
+	import {getAgent} from '../../agent/agent.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
 	import type {User} from 'syncwave-data';
 
@@ -107,8 +107,7 @@
 				{/if}
 				<button
 					class="btn--block"
-					onclick={() =>
-						agent.setCardColumn(card.id, board.columns[0].id)}
+					onclick={() => agent.setCardColumn(card.id, board.columns[0].id)}
 				>
 					To {board.columns[0].name}
 				</button>

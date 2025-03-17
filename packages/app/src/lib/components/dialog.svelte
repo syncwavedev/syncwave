@@ -2,7 +2,6 @@
 	import type {Snippet} from 'svelte';
 	import ScrollArea from './scroll-area.svelte';
 	import {Portal} from 'bits-ui';
-	import {DIALOG_PRIORITY, onEscape} from '$lib/utils';
 
 	interface Props {
 		open: boolean;
@@ -11,15 +10,6 @@
 	}
 
 	let {open, onClose, children}: Props = $props();
-
-	$effect(() => {
-		if (open) {
-			const unsub = onEscape(DIALOG_PRIORITY, onClose);
-			return () => unsub('effect cleanup');
-		}
-
-		return;
-	});
 </script>
 
 {#if open}

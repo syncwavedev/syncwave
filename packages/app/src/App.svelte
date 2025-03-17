@@ -23,12 +23,13 @@
 	import {UploadManager} from './lib/upload-manager.svelte';
 	import {createThemeManager} from './lib/ui/theme-manager.svelte.js';
 	import appNavigator from './lib/app-navigator';
-	import {createAgent} from './lib/agent/agent.svelte';
+	import {createAgent, getAgent} from './lib/agent/agent.svelte';
 	import {appConfig} from './lib/config';
 	import {WsTransportClient} from './ws-transport-client';
 	import {AuthManager} from './auth-manager';
 	import router from './lib/router';
 	import CheckScreen from './lib/ui/login/check-screen.svelte';
+	import BoardPage from './pages/board-page.svelte';
 
 	const themeManager = createThemeManager();
 	setContext('theme', {
@@ -60,7 +61,9 @@
 		}
 	}
 
-	let Page = $state<Component>(CheckScreen);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let Page = $state<Component<any>>(CheckScreen);
+	let pageProps = $state<Record<string, string>>({});
 
 	$effect(() => {
 		router.on('/', () => {
@@ -72,6 +75,10 @@
 		});
 		router.on('/login', () => {
 			Page = LoginScreen;
+		});
+		router.on('/board/:key', params => {
+			Page = BoardPage;
+			pageProps = {key: params.key ?? ''};
 		});
 
 		router.listen();
@@ -90,6 +97,6 @@
 		{#snippet failed(error, reset)}
 			<ErrorCard {error} {reset} />
 		{/snippet}
-		<Page />
+		<Page {...pageProps} />
 	</svelte:boundary>
 </main>

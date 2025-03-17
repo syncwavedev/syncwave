@@ -2,7 +2,7 @@
 	import Dialog from '../dialog.svelte';
 	import EditProfileDialogFrozenContent from './edit-profile-dialog-content-frozen.svelte';
 	import type {User} from 'syncwave-data';
-	import {getAgent} from '$lib/agent/agent.svelte';
+	import {getAgent} from '../../agent/agent.svelte';
 
 	interface Props {
 		open: boolean;

@@ -123,40 +123,7 @@ async function getKvStore(): Promise<{
     hub: Hub;
 }> {
     const {store, hub} = await (async () => {
-        if (STAGE === 'local' && !FORCE_FOUNDATIONDB) {
-            if (false as any) {
-                log.info('using PostgreSQL as primary store');
-                const store = await import('./postgres-kv-store.js').then(
-                    x =>
-                        new x.PostgresUint8KvStore({
-                            connectionString:
-                                'postgres://postgres:123456Qq@127.0.0.1:5440/syncwave_dev',
-                            max: 20,
-                            idleTimeoutMillis: 30000,
-                            connectionTimeoutMillis: 2000,
-                        })
-                );
-
-                return {
-                    store,
-                    hub: new MemHub(),
-                };
-            } else {
-                log.info('using Sqlite as primary store');
-                const store = await import('./sqlite-store.js').then(
-                    x =>
-                        new x.SqliteRwStore({
-                            dbFilePath: './dev.sqlite',
-                            concurrentReadLimit: 4,
-                        })
-                );
-
-                return {
-                    store: new MvccAdapter(store),
-                    hub: new MemHub(),
-                };
-            }
-        } else {
+        if (STAGE !== 'local' || FORCE_FOUNDATIONDB) {
             log.info(
                 `using FoundationDB as a primary store (./fdb/fdb.${STAGE}.cluster)`
             );
@@ -169,6 +136,20 @@ async function getKvStore(): Promise<{
             return {
                 store: fdbStore,
                 hub: fdbStore,
+            };
+        } else {
+            log.info('using Sqlite as primary store');
+            const store = await import('./sqlite-store.js').then(
+                x =>
+                    new x.SqliteRwStore({
+                        dbFilePath: './dev.sqlite',
+                        concurrentReadLimit: 4,
+                    })
+            );
+
+            return {
+                store: new MvccAdapter(store),
+                hub: new MemHub(),
             };
         }
     })();

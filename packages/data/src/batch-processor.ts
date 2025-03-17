@@ -52,7 +52,7 @@ export class BatchProcessor<T> {
                     } catch (error) {
                         this.queue.push(...batch);
 
-                        log.error(toError(error), 'CrdtManager: send error');
+                        log.error(toError(error), 'BatchProcessor: send error');
                         await wait({ms: 1000, onCancel: 'reject'});
                     }
                 }
@@ -71,7 +71,7 @@ export class BatchProcessor<T> {
 
     private ensureOpen() {
         if (this.state.type === 'closed') {
-            throw new AppError('CrdtManager: closed', {
+            throw new AppError('BatchProcessor: closed', {
                 cause: this.state.cause,
             });
         }

@@ -1,12 +1,3 @@
-import {getAgent} from '$lib/agent/agent.svelte';
-import type {State} from '$lib/agent/state';
-import type {
-	BoardTreeView,
-	CardView,
-	ColumnTreeView,
-	ColumnView,
-} from '$lib/agent/view.svelte';
-import {calculateChange} from '$lib/dnd';
 import {untrack} from 'svelte';
 import {
 	SHADOW_ITEM_MARKER_PROPERTY_NAME,
@@ -18,6 +9,15 @@ import {
 	type CardId,
 	type ColumnId,
 } from 'syncwave-data';
+import {getAgent} from '../../agent/agent.svelte';
+import type {State} from '../../agent/state';
+import type {
+	BoardTreeView,
+	CardView,
+	ColumnTreeView,
+	ColumnView,
+} from '../../agent/view.svelte';
+import {calculateChange} from '../../dnd';
 
 export interface DndCard {
 	id: CardId;

@@ -1,6 +1,3 @@
-import {browser} from '$app/environment';
-import {goto, pushState} from '$app/navigation';
-import {page} from '$app/state';
 import {onDestroy} from 'svelte';
 import type {Readable, Subscriber} from 'svelte/store';
 import {
@@ -127,53 +124,50 @@ function useStream<T>(
 ) {
 	const rpc = getRpc();
 
-	if (browser) {
-		let cancelled = false;
-		(async function retry() {
-			try {
-				while (!cancelled) {
-					try {
-						const value$ = rpc(x => {
-							return toStream(fn(x));
-						});
+	let cancelled = false;
+	(async function retry() {
+		try {
+			while (!cancelled) {
+				try {
+					const value$ = rpc(x => {
+						return toStream(fn(x));
+					});
 
-						for await (const value of value$) {
-							if (cancelled) {
-								break;
-							}
-							onNext(value);
+					for await (const value of value$) {
+						if (cancelled) {
+							break;
 						}
-					} catch (e) {
-						if (!cancelled) {
-							log.error(toError(e), 'observable failed');
-						}
-						if (e instanceof CancelledError) return;
-						if (e instanceof BusinessError) {
-							if (e.code === 'forbidden') {
-								log.error('Access denied');
-								goto('/app');
-							}
-							return;
-						}
+						onNext(value);
 					}
-
-					await wait({ms: 1000, onCancel: 'resolve'});
+				} catch (e) {
+					if (!cancelled) {
+						log.error(toError(e), 'observable failed');
+					}
+					if (e instanceof CancelledError) return;
+					if (e instanceof BusinessError) {
+						if (e.code === 'forbidden') {
+							log.error('Access denied');
+							// goto('/app');
+						}
+						return;
+					}
 				}
-			} finally {
-				onDone();
-			}
-		})();
 
-		onDestroy(() => {
-			cancelled = true;
-		});
-	}
+				await wait({ms: 1000, onCancel: 'resolve'});
+			}
+		} finally {
+			onDone();
+		}
+	})();
+
+	onDestroy(() => {
+		cancelled = true;
+	});
 }
 
 export function usePageState<T>(initialValue: T) {
 	const id = createUuidV4();
-	const getValue = () =>
-		id in page.state ? (page.state as Record<string, T>)[id] : initialValue;
+	const getValue = () => initialValue;
 
 	$effect(() => {
 		result.value = getValue();
@@ -183,7 +177,7 @@ export function usePageState<T>(initialValue: T) {
 		value: getValue(),
 		// note: browser might skip history entry if it was added after pressing escape button
 		push: (value: T) => {
-			setTimeout(() => pushState('', {...page.state, [id]: value}), 0);
+			setTimeout(() => pushState('', {[id]: value}), 0);
 		},
 		pop: () => {
 			history.back();

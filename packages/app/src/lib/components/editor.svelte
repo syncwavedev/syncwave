@@ -159,6 +159,72 @@
 				margin-top: 0;
 			}
 
+			pre {
+				background: var(--black);
+				border-radius: 0.5rem;
+				color: var(--white);
+				font-family: 'JetBrainsMono', monospace;
+				margin: 1.5rem 0;
+				padding: 0.75rem 1rem;
+
+				code {
+					background: none;
+					color: inherit;
+					font-size: 0.8rem;
+					padding: 0;
+				}
+			}
+
+			/* list style */
+			ul,
+			ol {
+				padding: 0 1rem;
+				margin: 1.25rem 1rem 1.25rem 0.4rem;
+
+				li p {
+					margin-top: 0.25em;
+					margin-bottom: 0.25em;
+				}
+			}
+
+			ul {
+				list-style: disc;
+			}
+
+			ol {
+				list-style: decimal;
+			}
+
+			/* Task list specific styles */
+			ul[data-type='taskList'] {
+				list-style: none;
+				margin-left: 0;
+				padding: 0;
+
+				li {
+					align-items: flex-start;
+					display: flex;
+
+					> label {
+						flex: 0 0 auto;
+						margin-right: 0.5rem;
+						user-select: none;
+					}
+
+					> div {
+						flex: 1 1 auto;
+					}
+				}
+
+				input[type='checkbox'] {
+					cursor: pointer;
+				}
+
+				ul[data-type='taskList'] {
+					margin: 0;
+				}
+			}
+
 			/* Placeholder (at the top) */
 			p.is-editor-empty:first-child::before {
 				color: var(--gray-4);
@@ -175,6 +241,7 @@
 			a {
 				color: var(--color-blue-500);
 				text-decoration: underline;
+				cursor: pointer;
 			}
 
 			/* Give a remote user a caret */
@@ -185,15 +252,10 @@
 				margin-right: -1px;
 				position: relative;
 				word-break: normal;
-
-				&:hover .collaboration-cursor__label {
-					visibility: visible;
-				}
 			}
 
 			/* Render the username above the caret */
 			.collaboration-cursor__label {
-				/* visibility: hidden; */
 				pointer-events: none;
 				border-radius: 3px 3px 3px 0;
 				color: #0d0d0d;

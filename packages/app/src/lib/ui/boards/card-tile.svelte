@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {yFragmentToPlaintext} from '$lib/richtext';
+	import {yFragmentToPlaintext, yFragmentToTaskList} from '$lib/richtext';
 	import Avatar from '../components/avatar.svelte';
 	import type {CardView} from '$lib/agent/view.svelte';
 	import {getAgent} from '$lib/agent/agent.svelte';
@@ -21,6 +21,8 @@
 
 		return result || 'Untitled';
 	});
+
+	let todoStats = $derived(yFragmentToTaskList(card.text.__fragment!));
 
 	const agent = getAgent();
 </script>
@@ -67,6 +69,9 @@
 				{/if}
 				{#if card.viewerUsers.length > 0}
 					viewers {card.viewerUsers.map(x => x.fullName).join(', ')}
+				{/if}
+				{#if todoStats.total > 0}
+					{todoStats.checked} / {todoStats.total}
 				{/if}
 			</span>
 			<span class="ml-auto text-[1.325rem]">

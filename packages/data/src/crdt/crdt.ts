@@ -192,17 +192,7 @@ export class Crdt<T> {
                     path.pop();
                 }
 
-                for (const key of event.changes.keys.keys()) {
-                    changes.push({
-                        path: mapFromYPath(
-                            event.currentTarget as any,
-                            path.concat([key])
-                        ).slice(1),
-                        value: mapFromYValue(target.get(key), true),
-                    });
-                }
-
-                if (event.keys.size === 0) {
+                if (target instanceof YXmlFragment) {
                     changes.push({
                         path: mapFromYPath(
                             event.currentTarget as any,
@@ -210,6 +200,16 @@ export class Crdt<T> {
                         ).slice(1),
                         value: mapFromYValue(target, true),
                     });
+                } else {
+                    for (const key of event.changes.keys.keys()) {
+                        changes.push({
+                            path: mapFromYPath(
+                                event.currentTarget as any,
+                                path.concat([key])
+                            ).slice(1),
+                            value: mapFromYValue(target.get(key), true),
+                        });
+                    }
                 }
             }
 

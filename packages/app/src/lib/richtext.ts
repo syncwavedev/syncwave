@@ -6,6 +6,7 @@ import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
 import Italic from '@tiptap/extension-italic';
+import Link from '@tiptap/extension-link';
 import Paragraph from '@tiptap/extension-paragraph';
 import Strike from '@tiptap/extension-strike';
 import Text from '@tiptap/extension-text';
@@ -26,6 +27,7 @@ export const tiptapExtensions = [
 	Underline,
 	HardBreak,
 	History,
+	Link,
 ];
 
 export function yFragmentToJSON(fragment: XmlFragment) {

@@ -172,6 +172,11 @@
 				word-break: break-all;
 			}
 
+			a {
+				color: var(--color-blue-500);
+				text-decoration: underline;
+			}
+
 			/* Give a remote user a caret */
 			.collaboration-cursor__caret {
 				border-left: 1px solid #0d0d0d;

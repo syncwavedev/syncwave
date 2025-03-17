@@ -133,7 +133,7 @@ export class SqliteRwStore implements Uint8KvStore {
         unreachable();
     }
 
-    async close(reason: unknown): Promise<void> {
+    async close(): Promise<void> {
         this.db.close();
     }
 }

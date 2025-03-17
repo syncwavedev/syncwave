@@ -23,6 +23,7 @@ import {
 	toPosition,
 	toStream,
 	tracerManager,
+	whenAll,
 	type AwarenessState,
 	type BigFloat,
 	type Board,
@@ -92,6 +93,27 @@ class Agent {
 		if (board.rawAwareness.getLocalState()?.hoverCardId === cardId) {
 			board.rawAwareness.setLocalStateField('hoverCardId', undefined);
 		}
+	}
+
+	async observeBoardAsync(key: string) {
+		const rpc = getRpc();
+		const [board, me] = await whenAll([
+			rpc(x =>
+				x
+					.getBoardViewData({key})
+					.filter(x => x.type === 'snapshot')
+					.map(x => x.data)
+					.first()
+			),
+			rpc(x =>
+				x
+					.getMe({})
+					.map(x => x.user)
+					.first()
+			),
+		]);
+
+		return this.observeBoard(board, me);
 	}
 
 	observeBoard(
@@ -234,6 +256,26 @@ class Agent {
 		});
 
 		return [data.view, awareness];
+	}
+
+	async observeProfileAsync(userId: UserId) {
+		const rpc = getRpc();
+		const {user} = await rpc(x =>
+			x
+				.getProfileData({userId})
+				.filter(x => x.type === 'snapshot')
+				.map(x => x.data)
+				.first()
+		);
+
+		return this.observeProfile(
+			this.crdtManager.view({
+				id: user.id,
+				isDraft: false,
+				state: user.state,
+				type: 'user',
+			}).value
+		);
 	}
 
 	observeProfile(initial: User): UserView {

@@ -84,19 +84,15 @@
 	};
 </script>
 
-<div
-	class="dark:bg-subtle-0 bg-subtle-1 flex min-h-screen flex-col items-center justify-center"
->
-	<div
-		class="bg-subtle-0 dark:bg-subtle-1 w-full max-w-md rounded-lg p-8 shadow-lg"
-	>
+<div class="bg-subtle-1 flex min-h-screen flex-col items-center justify-center">
+	<div class="bg-subtle-0 border-divider w-full max-w-md rounded-lg border p-6">
+		<h1 class="mb-4 text-center text-xl font-extrabold">Sign in to Syncwave</h1>
 		{#if !showCodeInput}
-			<h1 class="mb-6 text-center text-2xl font-semibold">Welcome back</h1>
-			<div class="space-y-6">
+			<div class="space-y-4">
 				<!-- Google Sign-In Button -->
 				<button
 					onclick={() => (window.location.href = googleSignInUrl)}
-					class="bg-subtle-2 hover:bg-subtle-3 flex w-full items-center justify-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors"
+					class="bg-gray-80 w-full rounded-lg p-2"
 					type="button"
 					disabled={isLoading}
 					aria-label="Continue with Google"
@@ -114,9 +110,7 @@
 						<span class="border-subtle-3 w-full border-t"></span>
 					</div>
 					<div class="relative flex justify-center text-xs uppercase">
-						<span class="bg-subtle-0 dark:bg-subtle-1 text-ink-detail px-2"
-							>or</span
-						>
+						<span class="text-ink-detail bg-subtle-0 px-2">or</span>
 					</div>
 				</div>
 
@@ -130,7 +124,7 @@
 							placeholder="Email address"
 							required
 							bind:value={email}
-							class="dark:bg-subtle-2 border-subtle-3 focus:ring-accent-primary w-full rounded-lg border px-4 py-3 text-sm focus:ring-2 focus:outline-none disabled:opacity-50"
+							class="input bg-subtle-0 border-divider rounded-lg border p-2"
 							autocapitalize="none"
 							autocomplete="email"
 							autocorrect="off"
@@ -180,7 +174,6 @@
 						bind:value={code}
 						onpaste={onPaste}
 						class="dark:bg-subtle-2 border-subtle-3 focus:ring-accent-primary w-full rounded-lg border px-4 py-3 text-center text-sm tracking-widest focus:ring-2 focus:outline-none disabled:opacity-50"
-						pattern="\d{6}"
 						maxlength="6"
 						inputmode="numeric"
 						autocomplete="one-time-code"

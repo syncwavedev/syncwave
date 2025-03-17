@@ -1,9 +1,11 @@
 {
-    "extends": "../../tsconfig.json",
-    "compilerOptions": {
-        "rootDir": ".",
-        "outDir": "./dist/esm",
-        "lib": ["es2022"]
-    },
-    "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist/esm",
+    "lib": ["es2022"],
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
 }

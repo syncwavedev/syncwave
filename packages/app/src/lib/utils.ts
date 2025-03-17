@@ -18,10 +18,9 @@ import {
 	type Unsubscribe,
 } from 'syncwave-data';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
+import {AuthManager} from '../auth-manager';
 import {WsTransportClient} from '../ws-transport-client';
-import {AuthManager} from './auth-manager';
 import {appConfig} from './config';
-import {UniversalStore} from './universal-store';
 
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
@@ -38,9 +37,7 @@ export function getRpc() {
 		span: 'getRpc',
 	});
 	onDestroy(() => {
-		cancelComponentCtx(
-			new CancelledError('component destroyed', undefined)
-		);
+		cancelComponentCtx(new CancelledError('component destroyed', undefined));
 	});
 	return <R extends AsyncIterable<unknown> | Promise<unknown>>(
 		fn: (rpc: CoordinatorRpc) => R
@@ -74,19 +71,6 @@ export function setAuthManager(authManager: AuthManager) {
 	setContext(AuthManager, authManager);
 }
 
-export function setUniversalStore(store: UniversalStore) {
-	setContext(UniversalStore, store);
-}
-
-export function getUniversalStore() {
-	const result = getContext<UniversalStore>(UniversalStore);
-	if (!result) {
-		throw new Error('context UniversalStore is not available');
-	}
-
-	return result;
-}
-
 export function setUploadManager(store: UploadManager) {
 	setContext(UploadManager, store);
 }
@@ -115,12 +99,6 @@ export interface CookieEntry {
 	value: string;
 }
 
-export function createAuthManager(store: UniversalStore) {
-	const authManager = new AuthManager(store);
-
-	return authManager;
-}
-
 export function createCoordinatorClientDummy(): CoordinatorClient {
 	return new CoordinatorClientDummy() as CoordinatorClient;
 }
@@ -136,25 +114,21 @@ export function createCoordinatorClient() {
 				codec: new MsgpackCodec(),
 			})
 		),
-		jwt
+		jwt ?? undefined
 	);
 
 	return coordinator;
 }
 
-export async function createDirectCoordinatorClient(
-	serverCookies: CookieEntry[]
-) {
-	const authManager = createAuthManager(
-		new UniversalStore(new Map(serverCookies.map(x => [x.name, x.value])))
-	);
+export async function createDirectCoordinatorClient() {
+	const authManager = new AuthManager();
 	const jwt = authManager.getJwt();
 	const coordinator = new CoordinatorClient(
 		await new WsTransportClient({
 			url: appConfig.serverWsUrl,
 			codec: new MsgpackCodec(),
 		}).connect(),
-		jwt
+		jwt ?? undefined
 	);
 
 	return coordinator;
@@ -169,7 +143,7 @@ export async function useRpc<T>(
 		let coordinator: CoordinatorClient | undefined = undefined;
 		try {
 			return await ctx.run(async () => {
-				coordinator = await createDirectCoordinatorClient(cookies);
+				coordinator = await createDirectCoordinatorClient();
 				return await fn(coordinator.rpc);
 			});
 		} finally {
@@ -215,9 +189,7 @@ export function getMe() {
 export function fireEscape() {
 	const highestPriority = escapeHandlers[0]?.priority;
 	runAll(
-		escapeHandlers
-			.filter(x => x.priority === highestPriority)
-			.map(x => x.cb)
+		escapeHandlers.filter(x => x.priority === highestPriority).map(x => x.cb)
 	);
 }
 

@@ -1,10 +1,8 @@
-import {sveltekit} from '@sveltejs/kit/vite';
+import {svelte} from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
-import type {PluginOption} from 'vite';
 import checker from 'vite-plugin-checker';
 import {nodePolyfills} from 'vite-plugin-node-polyfills';
 import {defineConfig} from 'vitest/config';
-// import swc from 'unplugin-swc';
 
 const esbuildOptions = {
 	supported: {
@@ -16,12 +14,12 @@ const esbuildOptions = {
 export default defineConfig({
 	clearScreen: false,
 	plugins: [
-		tailwindcss() as PluginOption,
-		sveltekit() as PluginOption,
+		tailwindcss(),
+		svelte(),
 		nodePolyfills({
 			// because of fdb-tuple package
 			include: ['buffer'],
-		}) as PluginOption,
+		}),
 		checker({typescript: true}),
 		// {
 		// 	// we need swc to transform async/await for zonejs to work

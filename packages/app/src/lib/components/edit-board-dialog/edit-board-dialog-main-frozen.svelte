@@ -2,8 +2,8 @@
 	import TimesIcon from '../icons/times-icon.svelte';
 	import ChevronIcon from '../icons/chevron-icon.svelte';
 	import TrashIcon from '../icons/trash-icon.svelte';
-	import type {BoardTreeView, BoardView} from '$lib/agent/view.svelte';
-	import {getAgent} from '$lib/agent/agent.svelte';
+	import type {BoardTreeView} from '../../agent/view.svelte';
+	import {getAgent} from '../../agent/agent.svelte';
 
 	interface Props {
 		board: BoardTreeView;

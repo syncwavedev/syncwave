@@ -1,33 +1,34 @@
 {
-    "name": "syncwave",
-    "workspaces": [
-        "packages/*"
-    ],
-    "type": "module",
-    "engine": {
-        "node": ">=20.0.0"
-    },
-    "scripts": {
-        "start": "tsx ./scripts/playground.ts | pino-pretty --config .pino-prettyrc",
-        "insomnia": "tsx --import ./packages/server/src/instrumentation.ts ./scripts/insomnia.ts | pino-pretty --config .pino-prettyrc",
-        "bootstrap": "npm install && npm install --workspaces && npm run build",
-        "test": "npm test --workspaces",
-        "build": "npm run build --workspaces",
-        "dev": "run-p -l srv app dat",
-        "srv": "npm run dev --workspace=syncwave-server",
-        "app": "npm run dev --workspace=syncwave-app",
-        "dat": "npm run dev --workspace=syncwave-data"
-    },
-    "devDependencies": {
-        "editorconfig": "^2.0.0",
-        "gts": "^5.3.1",
-        "npm-run-all": "^4.1.5",
-        "prettier": "^3.3.2",
-        "prettier-plugin-organize-imports": "^3.2.3",
-        "rimraf": "^6.0.1",
-        "tsx": "^4.15.6",
-        "typescript": "^5.8.0",
-        "vitest": "^2.0.5"
-    },
-    "dependencies": {}
+  "name": "syncwave",
+  "workspaces": [
+    "packages/*"
+  ],
+  "type": "module",
+  "engine": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "tsx ./scripts/playground.ts | pino-pretty --config .pino-prettyrc",
+    "insomnia": "tsx --import ./packages/server/src/instrumentation.ts ./scripts/insomnia.ts | pino-pretty --config .pino-prettyrc",
+    "bootstrap": "npm install && npm install --workspaces && npm run build",
+    "test": "npm test --workspaces",
+    "build": "npm run build --workspaces",
+    "dev": "run-p -l srv app dat",
+    "srv": "npm run dev --workspace=syncwave-server",
+    "app": "npm run dev --workspace=syncwave-app",
+    "dat": "npm run dev --workspace=syncwave-data"
+  },
+  "devDependencies": {
+    "@tsconfig/svelte": "^5.0.4",
+    "editorconfig": "^2.0.0",
+    "gts": "^5.3.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.5.3",
+    "prettier-plugin-organize-imports": "^3.2.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.15.6",
+    "typescript": "^5.8.0",
+    "vite": "^6.2.1",
+    "vitest": "^2.0.5"
+  }
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import TimesIcon from '../icons/times-icon.svelte';
-	import {getAgent} from '$lib/agent/agent.svelte';
+	import {getAgent} from '../../agent/agent.svelte';
 	import type {User} from 'syncwave-data';
 
 	interface Props {
@@ -29,8 +29,7 @@
 		value={profile.fullName}
 		autofocus
 		onkeydown={e => e.key === 'Enter' && onClose()}
-		oninput={e =>
-			agent.setProfileFullName(profile.id, e.currentTarget.value)}
+		oninput={e => agent.setProfileFullName(profile.id, e.currentTarget.value)}
 		class="input input--bordered text-xs"
 		placeholder="Name"
 	/>

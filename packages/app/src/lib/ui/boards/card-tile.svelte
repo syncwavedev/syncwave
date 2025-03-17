@@ -1,8 +1,8 @@
 <script lang="ts">
-	import {yFragmentToPlaintext, yFragmentToTaskList} from '$lib/richtext';
+	import {yFragmentToPlaintext, yFragmentToTaskList} from '../../richtext';
 	import Avatar from '../components/avatar.svelte';
-	import type {CardView} from '$lib/agent/view.svelte';
-	import {getAgent} from '$lib/agent/agent.svelte';
+	import type {CardView} from '../../agent/view.svelte';
+	import {getAgent} from '../../agent/agent.svelte';
 
 	const {
 		card,

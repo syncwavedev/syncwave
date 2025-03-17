@@ -1,40 +1,35 @@
 <script lang="ts">
-	import {usePageState} from '$lib/utils.svelte';
-	import {
-		compareBigFloat,
-		log,
-		type BoardViewDataDto,
-		type CrdtDoc,
-		type User,
-	} from 'syncwave-data';
+	import {compareBigFloat, log, type Awareness, type User} from 'syncwave-data';
 
-	import {goto} from '$app/navigation';
-	import {getAppRoute} from '$lib/routes';
 	import {tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
 	import SearchIcon from '../components/icons/search-icon.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import BoardColumn from './board-column.svelte';
-	import appNavigator from '../app-navigator';
+	import appNavigator from '../../app-navigator';
 	import {useBoardView} from './use-board-view.svelte';
 	import {dragHandleZone} from 'svelte-dnd-action';
 	import Scrollable from '../components/scrollable.svelte';
-	import type {CardView} from '$lib/agent/view.svelte';
+	import type {BoardTreeView, CardView} from '../../agent/view.svelte';
 	import CardDetails from './card-details.svelte';
-	import {getAgent} from '$lib/agent/agent.svelte';
-	import EditBoardDialog from '$lib/components/edit-board-dialog/edit-board-dialog.svelte';
+	import {getAgent} from '../../agent/agent.svelte';
+	import EditBoardDialog from '../../components/edit-board-dialog/edit-board-dialog.svelte';
 	import UserIcon from '../components/icons/user-icon.svelte';
-	import EditProfileDialog from '$lib/components/edit-profile-dialog/edit-profile-dialog.svelte';
+	import EditProfileDialog from '../../components/edit-profile-dialog/edit-profile-dialog.svelte';
+	import router from '../../router';
 
 	const {
-		initialBoard,
-		initialMe,
+		board,
+		awareness,
+		me,
 	}: {
-		initialBoard: BoardViewDataDto;
-		initialMe: CrdtDoc<User>;
+		board: BoardTreeView;
+		awareness: Awareness;
+		me: User;
 	} = $props();
+
 	const agent = getAgent();
-	const [board, awareness] = agent.observeBoard(initialBoard, initialMe);
+
 	const {
 		columns,
 		handleDndConsiderColumns,
@@ -54,8 +49,7 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						const columnElement =
-							cardElement.closest('[data-column-id]');
+						const columnElement = cardElement.closest('[data-column-id]');
 						if (columnElement) {
 							columnElement.scrollIntoView({
 								behavior: 'smooth',
@@ -87,7 +81,7 @@
 	$effect(() => {
 		if (board.deleted) {
 			log.info(`board ${board.id} got deleted, redirect to app...`);
-			goto(getAppRoute());
+			router.route('/');
 		}
 	});
 
@@ -109,8 +103,30 @@
 		});
 	}
 
-	const editBoardOpen = usePageState(false);
-	const editMyProfileOpen = usePageState(false);
+	let editBoardOpen = $state(false);
+	let editMyProfileOpen = $state(false);
+
+	function editBoard() {
+		editBoardOpen = true;
+
+		appNavigator.push({
+			onBack: () => {
+				editBoardOpen = false;
+			},
+			onEscape: true,
+		});
+	}
+
+	function editMyProfile() {
+		editMyProfileOpen = true;
+
+		appNavigator.push({
+			onBack: () => {
+				editMyProfileOpen = false;
+			},
+			onEscape: true,
+		});
+	}
 </script>
 
 <main class="flex h-screen w-full">
@@ -120,9 +136,7 @@
 				<div class="text-xs leading-none font-medium">{board.name}</div>
 				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
-						online: {board.onlineMembers
-							.map(x => x.fullName)
-							.join(', ')}
+						online: {board.onlineMembers.map(x => x.fullName).join(', ')}
 					</div>
 				{/if}
 				<button class="btn--icon ml-auto" onclick={createCard}>
@@ -131,27 +145,25 @@
 				<button class="btn--icon">
 					<SearchIcon />
 				</button>
-				<button
-					onclick={() => editBoardOpen.push(true)}
-					class="btn--icon"
-				>
+				<button onclick={editBoard} class="btn--icon">
 					<EllipsisIcon />
 				</button>
 				<EditBoardDialog
 					{board}
-					open={editBoardOpen.value}
-					onClose={() => editBoardOpen.push(false)}
+					open={editBoardOpen}
+					onClose={() => {
+						editBoardOpen = false;
+					}}
 				/>
-				<button
-					onclick={() => editMyProfileOpen.push(true)}
-					class="btn--icon"
-				>
+				<button onclick={editMyProfile} class="btn--icon">
 					<UserIcon />
 				</button>
 				<EditProfileDialog
-					profile={initialMe}
-					open={editMyProfileOpen.value}
-					onClose={() => editMyProfileOpen.push(false)}
+					profile={me}
+					open={editMyProfileOpen}
+					onClose={() => {
+						editMyProfileOpen = false;
+					}}
 				/>
 			</div>
 		</div>
@@ -186,12 +198,7 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetails
-				me={initialMe}
-				{board}
-				{awareness}
-				card={selectedCard}
-			/>
+			<CardDetails {me} {board} {awareness} card={selectedCard} />
 		{/key}
 	{/if}
 </main>

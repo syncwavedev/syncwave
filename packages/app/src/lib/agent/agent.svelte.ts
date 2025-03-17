@@ -1,5 +1,3 @@
-import type {AuthManager} from '$lib/auth-manager';
-import {getRpc} from '$lib/utils';
 import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	assert,
@@ -40,6 +38,10 @@ import {
 	type User,
 	type UserId,
 } from 'syncwave-data';
+
+import type {AuthManager} from '../../auth-manager';
+
+import {getRpc} from '../utils';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
@@ -62,7 +64,7 @@ class Agent {
 			this.connection,
 			() => ({
 				...context().extract(),
-				auth: this.authManager.getJwt(),
+				auth: this.authManager.getJwt() ?? undefined,
 			}),
 			'server'
 		);
@@ -134,8 +136,7 @@ class Agent {
 
 		this.activeBoards.push(data);
 		onDestroy(
-			() =>
-				(this.activeBoards = this.activeBoards.filter(x => x !== data))
+			() => (this.activeBoards = this.activeBoards.filter(x => x !== data))
 		);
 
 		const rpc = getRpc();
@@ -144,6 +145,7 @@ class Agent {
 				const items = toStream(
 					rpc(x => x.getBoardViewData({key: initialBoard.board.key}))
 				);
+
 				for await (const item of items) {
 					if (item.type === 'snapshot') {
 						data.update(item.data, this.crdtManager);
@@ -171,10 +173,7 @@ class Agent {
 			{type: 'running'},
 			(states: AwarenessState[]) => {
 				const latestState = states.at(-1);
-				assert(
-					latestState !== undefined,
-					'awareness latest state not found'
-				);
+				assert(latestState !== undefined, 'awareness latest state not found');
 
 				// don't wait for result to allow sending multiple updates concurrently
 				rpc(x =>
@@ -184,10 +183,7 @@ class Agent {
 						state: latestState,
 					})
 				).catch(error => {
-					log.error(
-						toError(error),
-						'failed to enqueue awareness state'
-					);
+					log.error(toError(error), 'failed to enqueue awareness state');
 				});
 
 				return Promise.resolve();
@@ -198,14 +194,9 @@ class Agent {
 			const handleUpdate = (_: unknown, origin: unknown) => {
 				if (origin !== 'local') return;
 
-				awarenessSender
-					.enqueue(awareness.getLocalState())
-					.catch(error => {
-						log.error(
-							toError(error),
-							'failed to enqueue awareness state'
-						);
-					});
+				awarenessSender.enqueue(awareness.getLocalState()).catch(error => {
+					log.error(toError(error), 'failed to enqueue awareness state');
+				});
 			};
 
 			awareness.on('update', handleUpdate);

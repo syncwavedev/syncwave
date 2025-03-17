@@ -3,6 +3,7 @@ import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type Richtext, zRichtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
+import {getNow} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import {
@@ -35,6 +36,8 @@ export interface Message extends Doc<[MessageId]> {
 }
 
 const CARD_ID_INDEX = 'card_id';
+const BOARD_ID_INDEX = 'board_id';
+const AUTHOR_ID_INDEX = 'author_id';
 
 export function zMessage() {
     return Type.Composite([
@@ -65,7 +68,13 @@ export class MessageRepo {
             onChange,
             indexes: {
                 [CARD_ID_INDEX]: {
-                    key: x => [x.cardId],
+                    key: x => [x.cardId, x.createdAt],
+                },
+                [BOARD_ID_INDEX]: {
+                    key: x => [x.cardId, x.createdAt],
+                },
+                [AUTHOR_ID_INDEX]: {
+                    key: x => [x.authorId, x.createdAt],
                 },
             },
             schema: zMessage(),
@@ -116,8 +125,13 @@ export class MessageRepo {
         return await this.rawRepo.apply([id], diff, checker);
     }
 
-    create(user: Omit<Message, 'pk'>): Promise<Message> {
-        return this.rawRepo.create({pk: [user.id], ...user});
+    create(message: Omit<Message, 'pk'>): Promise<Message> {
+        return this.rawRepo.create({
+            pk: [message.id],
+            ...message,
+            createdAt: getNow(),
+            updatedAt: getNow(),
+        });
     }
 
     update(

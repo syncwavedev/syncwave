@@ -39,6 +39,8 @@ export interface Attachment extends Doc<[AttachmentId]> {
 
 const CARD_ID_INDEX = 'card_id';
 const BOARD_ID_INDEX = 'board_id';
+const AUTHOR_ID_INDEX = 'author_id';
+const OBJECT_KEY_INDEX = 'object_key';
 
 export function zAttachment() {
     return Type.Composite([
@@ -69,10 +71,16 @@ export class AttachmentRepo {
             onChange,
             indexes: {
                 [CARD_ID_INDEX]: {
-                    key: x => [x.cardId],
+                    key: x => [x.cardId, x.createdAt],
                 },
                 [BOARD_ID_INDEX]: {
-                    key: x => [x.boardId],
+                    key: x => [x.boardId, x.createdAt],
+                },
+                [AUTHOR_ID_INDEX]: {
+                    key: x => [x.authorId, x.createdAt],
+                },
+                [OBJECT_KEY_INDEX]: {
+                    key: x => [x.objectKey, x.createdAt],
                 },
             },
             schema: zAttachment(),

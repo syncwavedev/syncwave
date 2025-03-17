@@ -32,6 +32,7 @@ export interface Board extends Doc<[BoardId]> {
 }
 
 const BOARD_KEY_INDEX = 'key';
+const AUTHOR_ID_INDEX = 'author_id';
 
 export function zBoard() {
     return Type.Composite([
@@ -63,6 +64,10 @@ export class BoardRepo {
                     key: x => [x.key],
                     unique: true,
                     include: x => x.key !== undefined,
+                },
+                [AUTHOR_ID_INDEX]: {
+                    key: x => [x.authorId, x.createdAt],
+                    include: x => x.authorId !== undefined,
                 },
             },
             schema: zBoard(),

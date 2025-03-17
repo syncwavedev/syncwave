@@ -38,6 +38,8 @@ export interface Card extends Doc<[CardId]> {
 
 const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
 const COLUMN_ID_INDEX = 'column_id';
+const AUTHOR_ID_INDEX = 'author_id';
+const ASSIGNEE_ID_INDEX = 'assignee_id';
 
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
@@ -77,6 +79,12 @@ export class CardRepo {
                 [COLUMN_ID_INDEX]: {
                     key: x => [x.columnId],
                 },
+                [AUTHOR_ID_INDEX]: {
+                    key: x => [x.authorId, x.createdAt],
+                },
+                [ASSIGNEE_ID_INDEX]: {
+                    key: x => [x.assigneeId ?? null, x.createdAt],
+                },
             },
             schema: zCard(),
             constraints: [
@@ -106,7 +114,7 @@ export class CardRepo {
                 {
                     name: 'card.assigneeId fk',
                     verify: async card => {
-                        if (card.assigneeId === undefined) {
+                        if (!card.assigneeId) {
                             return;
                         }
 

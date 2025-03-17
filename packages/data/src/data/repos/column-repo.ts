@@ -64,7 +64,8 @@ export interface ColumnV4 extends Doc<[ColumnId]> {
 export interface Column extends ColumnV4 {}
 type StoredColumn = ColumnV1 | ColumnV2 | ColumnV3 | ColumnV4;
 
-const BOARD_ID = 'boardId';
+const BOARD_ID_INDEX = 'boardId';
+const AUTHOR_ID_INDEX = 'author_id';
 
 export function zColumn() {
     return Type.Composite([
@@ -93,7 +94,8 @@ export class ColumnRepo {
             tx: isolate(['d'])(tx),
             onChange,
             indexes: {
-                [BOARD_ID]: x => [x.boardId],
+                [BOARD_ID_INDEX]: x => [x.boardId],
+                [AUTHOR_ID_INDEX]: x => [x.authorId, x.createdAt],
             },
             schema: zColumn(),
             upgrade: function upgradeColumn(column: StoredColumn) {
@@ -159,7 +161,7 @@ export class ColumnRepo {
         boardId: BoardId,
         includeDeleted = false
     ): Stream<CrdtDoc<Column>> {
-        return this.rawRepo.get(BOARD_ID, [boardId], includeDeleted);
+        return this.rawRepo.get(BOARD_ID_INDEX, [boardId], includeDeleted);
     }
 
     async apply(

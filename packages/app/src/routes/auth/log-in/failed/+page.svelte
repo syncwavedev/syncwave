@@ -1,4 +1,4 @@
-<div class="flex min-h-screen items-center justify-center">
+<!-- <div class="flex min-h-screen items-center justify-center">
 	<div class="w-full max-w-md rounded-lg bg-white p-6 text-center">
 		<h1 class="text-2xl font-semibold">Unable to log you in</h1>
 		<p class="mt-4 text-gray-700">
@@ -11,4 +11,4 @@
 			<a href="/">Go to Home</a>
 		</div>
 	</div>
-</div>
+</div> -->

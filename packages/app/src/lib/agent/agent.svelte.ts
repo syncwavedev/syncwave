@@ -39,7 +39,8 @@ import {
 	type UserId,
 } from 'syncwave-data';
 
-import type {AuthManager} from '../auth-manager';
+import type {AuthManager} from '../../auth-manager';
+
 import {getRpc} from '../utils';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
@@ -63,7 +64,7 @@ class Agent {
 			this.connection,
 			() => ({
 				...context().extract(),
-				auth: this.authManager.getJwt(),
+				auth: this.authManager.getJwt() ?? undefined,
 			}),
 			'server'
 		);

@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import {getRpc} from '$lib/utils.js';
 	import {appConfig} from '../../lib/config';
 	import AuthFooter from './auth-footer.svelte';
@@ -121,4 +121,4 @@
 	</button>
 </div>
 
-<AuthFooter />
+<AuthFooter /> -->

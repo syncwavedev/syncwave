@@ -1,5 +1,5 @@
 interface ImportMetaEnv {
-	readonly PUBLIC_STAGE: string;
+	readonly VITE_PUBLIC_STAGE: string;
 	// more env variables...
 }
 

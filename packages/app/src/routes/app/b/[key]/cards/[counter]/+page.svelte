@@ -1,4 +1,4 @@
-<script>
+<!-- <script>
 	import CardPageFrozen from '$lib/components/card-page-frozen.svelte';
 	import ResizablePane from '$lib/components/resizable-pane.svelte';
 	import {getUniversalStore} from '$lib/utils';
@@ -23,4 +23,4 @@
 	>
 		<CardPageFrozen {boardKey} {counter} {initialCard} />
 	</ResizablePane>
-{/key}
+{/key} -->

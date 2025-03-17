@@ -4,7 +4,6 @@ import {
 	assert,
 	BusinessError,
 	CancelledError,
-	createUuidV4,
 	Deferred,
 	log,
 	runAll,
@@ -163,26 +162,4 @@ function useStream<T>(
 	onDestroy(() => {
 		cancelled = true;
 	});
-}
-
-export function usePageState<T>(initialValue: T) {
-	const id = createUuidV4();
-	const getValue = () => initialValue;
-
-	$effect(() => {
-		result.value = getValue();
-	});
-
-	const result = $state({
-		value: getValue(),
-		// note: browser might skip history entry if it was added after pressing escape button
-		push: (value: T) => {
-			setTimeout(() => pushState('', {[id]: value}), 0);
-		},
-		pop: () => {
-			history.back();
-		},
-	});
-
-	return result;
 }

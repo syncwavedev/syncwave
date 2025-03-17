@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import type {PageProps} from './$types';
 	import {unimplemented} from 'syncwave-data';
 	import {goto} from '$app/navigation';
@@ -20,4 +20,4 @@
 		goto(`/auth/log-in?redirectUrl=${encodeURIComponent(redirectUrl ?? '/')}`);
 		showErrorToast();
 	}
-</script>
+</script> -->

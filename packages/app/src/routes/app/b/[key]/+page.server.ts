@@ -1,7 +1,7 @@
-import type {PageServerLoad} from './$types';
+// import type {PageServerLoad} from './$types';
 
-export const load: PageServerLoad = ({cookies}) => {
-	return {
-		serverCookies: cookies.getAll(),
-	};
-};
+// export const load: PageServerLoad = ({cookies}) => {
+// 	return {
+// 		serverCookies: cookies.getAll(),
+// 	};
+// };

@@ -1,5 +1,5 @@
-<script lang="ts">
-	import {getRpc, getAuthManager, showErrorToast} from '$lib/utils.js';
+<!-- <script lang="ts">
+	import {getRpc, getAuthManager, showErrorToast} from './app//utils.js';
 	import {appConfig} from '$lib/config';
 	import AuthHeader from '../../auth-header.svelte';
 	import AuthFooter from '../../auth-footer.svelte';
@@ -83,9 +83,7 @@
 		class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]"
 	>
 		<div class="flex flex-col space-y-2 text-center">
-			<h1 class="text-2xl font-semibold tracking-tight">
-				Check your email
-			</h1>
+			<h1 class="text-2xl font-semibold tracking-tight">Check your email</h1>
 			<p class="text-muted-foreground text-sm">
 				Enter the code sent to {email}
 			</p>
@@ -118,8 +116,7 @@
 		{#if error === 'code_expired'}
 			<div>
 				<div>
-					Oops! The code for '{email}' has expired. Please request a
-					new one.
+					Oops! The code for '{email}' has expired. Please request a new one.
 				</div>
 			</div>
 		{/if}
@@ -133,12 +130,11 @@
 		{#if error === 'cooldown'}
 			<div>
 				<div>
-					Oops! Too many attempts. Please wait a few hours before
-					trying again.
+					Oops! Too many attempts. Please wait a few hours before trying again.
 				</div>
 			</div>
 		{/if}
 
 		<AuthFooter />
 	</div>
-</div>
+</div> -->

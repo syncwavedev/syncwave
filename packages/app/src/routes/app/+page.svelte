@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import AddBoardDialog from '$lib/components/add-board-dialog/add-board-dialog.svelte';
 	import Dashboard from '$lib/components/dashboard.svelte';
 	import {getAuthManager} from '$lib/utils';
@@ -33,4 +33,4 @@
 <AddBoardDialog
 	open={addBoardDialogToggle.value}
 	onClose={() => addBoardDialogToggle.push(false)}
-/>
+/> -->

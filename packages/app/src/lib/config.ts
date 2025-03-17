@@ -1,4 +1,4 @@
-const PUBLIC_STAGE = import.meta.env.PUBLIC_STAGE;
+const PUBLIC_STAGE = import.meta.env.VITE_PUBLIC_STAGE;
 
 export interface AppConfig {
 	googleClientId: string;

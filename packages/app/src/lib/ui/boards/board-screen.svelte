@@ -120,7 +120,9 @@
 				<div class="text-xs leading-none font-medium">{board.name}</div>
 				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
-						online: {board.onlineMembers.join(', ')}
+						online: {board.onlineMembers
+							.map(x => x.fullName)
+							.join(', ')}
 					</div>
 				{/if}
 				<button class="btn--icon ml-auto" onclick={createCard}>

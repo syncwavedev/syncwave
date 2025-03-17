@@ -137,9 +137,16 @@ export class BoardView implements Board {
 	id = $derived(this._data.board.id);
 	pk = $derived(this._data.board.pk);
 	onlineMembers = $derived(
-		[...this._data.awareness.values()]
-			.filter(state => this._data.me.id !== state?.userId)
-			.map(state => (state?.user as {name: string}).name)
+		uniqBy(
+			[...this._data.awareness.values()]
+				.map(state =>
+					this._data.users.find(x => x.id === state?.userId)
+				)
+				// awareness might be ahead of the board data, so ignore unknown users
+				.filter(x => x !== undefined)
+				.filter(x => x.id !== this._data.me.id),
+			x => x.id
+		)
 	);
 
 	author = $derived.by(() => {

@@ -8,7 +8,9 @@
 	},
 	"scripts": {
 		"dev": "NODE_OPTIONS='--enable-source-maps' vite dev | pino-pretty --config ../../.pino-prettyrc",
-		"dev:remote": "PUBLIC_STAGE=dev NODE_OPTIONS='--enable-source-maps' vite dev | pino-pretty --config ../../.pino-prettyrc",
+		"dev:remote": "npm run dev:remote:dev",
+		"dev:remote:dev": "PUBLIC_STAGE=dev NODE_OPTIONS='--enable-source-maps' vite dev | pino-pretty --config ../../.pino-prettyrc",
+		"dev:remote:prod": "PUBLIC_STAGE=prod NODE_OPTIONS='--enable-source-maps' vite dev | pino-pretty --config ../../.pino-prettyrc",
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

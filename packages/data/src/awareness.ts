@@ -77,6 +77,23 @@ export class Awareness {
     private readonly states = new Map<number, MetaAwarenessState>();
     private readonly checkInterval: NodeJS.Timeout;
 
+    // yjs awareness compatibility
+    get clientID() {
+        return this.clientId;
+    }
+
+    debug() {
+        return new Map(
+            [...this.states.entries()].map(([key, value]) => [
+                key,
+                {
+                    ts: new Date(value.lastUpdated),
+                    state: value.state,
+                },
+            ])
+        );
+    }
+
     constructor(public clientId: number) {
         this.init(clientId);
 
@@ -201,6 +218,7 @@ export class Awareness {
                 OUTDATED_TIMEOUT <= now - meta.lastUpdated &&
                 this.states.has(clientId)
             ) {
+                console.log('timeout', clientId);
                 this.setState(clientId, null, 'timeout');
             }
         });

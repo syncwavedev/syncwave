@@ -1,5 +1,6 @@
-import 'dotenv/config';
 import './instrumentation.js';
+
+import 'dotenv/config';
 
 import Router from '@koa/router';
 import cluster from 'cluster';
@@ -9,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import Koa from 'koa';
 import helmet from 'koa-helmet';
 import {cpus} from 'os';
+import {AggregatorRegistry, collectDefaultMetrics} from 'prom-client';
 import {
     AppError,
     assertDefined,
@@ -19,8 +21,8 @@ import {
     decodeNumber,
     Deferred,
     encodeNumber,
-    ENVIRONMENT,
     getGoogleUser,
+    getReadableError,
     type JwtPayload,
     type JwtService,
     type KvStore,
@@ -39,6 +41,8 @@ import {FsObjectStore} from './fs-object-store.js';
 import {SesEmailService} from './ses-email-service.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
+collectDefaultMetrics();
+
 const FORCE_FOUNDATIONDB = process.env.FORCE_FOUNDATIONDB === 'true';
 const STAGE = assertDefined(process.env.STAGE);
 const AWS_REGION = assertDefined(process.env.AWS_DEFAULT_REGION);
@@ -46,7 +50,8 @@ const JWT_SECRET = assertDefined(process.env.JWT_SECRET);
 const GOOGLE_CLIENT_ID = assertDefined(process.env.GOOGLE_CLIENT_ID);
 const GOOGLE_CLIENT_SECRET = assertDefined(process.env.GOOGLE_CLIENT_SECRET);
 
-const PORT = ENVIRONMENT === 'prod' ? 80 : 4567;
+const APP_PORT = 4567;
+const METRICS_PORT = 5678;
 
 const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, workersCount} = (() => {
     const GOOGLE_CALLBACK_PATH = '/callbacks/google';
@@ -202,13 +207,55 @@ async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
     }
 }
 
-async function launch() {
+async function launchApp() {
     const {store, hub} = await getKvStore();
     log.info('Upgrading KV store...');
     await upgradeKVStore(store);
     log.info('Successfully upgraded KV store');
 
-    const router = new Router();
+    const app = new Koa();
+    const appRouter = new Router();
+    setupAppRouter(() => coordinator, appRouter);
+    app.use(appRouter.routes()).use(appRouter.allowedMethods());
+    app.use(helmet.default());
+
+    const appHttpServer = createServer(app.callback());
+
+    const coordinator = new CoordinatorServer({
+        transport: new WsTransportServer({
+            codec: new MsgpackCodec(),
+            server: appHttpServer,
+        }),
+        kv: store,
+        jwt: jwtService,
+        crypto,
+        email: new SesEmailService(AWS_REGION),
+        jwtSecret: JWT_SECRET,
+        objectStore: await FsObjectStore.create({
+            basePath: './dev-object-store',
+        }),
+        hub,
+    });
+
+    async function shutdown() {
+        log.info('shutting down app...');
+        coordinator.close('shutdown');
+    }
+
+    context().onEnd(() => {
+        shutdown().catch(error => {
+            log.error(toError(error), 'failed to shutdown');
+        });
+    });
+
+    const appServerStarted = new Deferred<void>();
+    appHttpServer.listen(APP_PORT, () => appServerStarted.resolve());
+    await coordinator.launch();
+
+    await appServerStarted.promise;
+}
+
+function setupAppRouter(coordinator: () => CoordinatorServer, router: Router) {
     router.use(async (ctx, next) => {
         await context().runChild(
             {
@@ -227,52 +274,7 @@ async function launch() {
             }
         );
     });
-    setupRouter(() => coordinator, router);
 
-    const app = new Koa();
-    app.use(router.routes()).use(router.allowedMethods());
-    app.use(helmet.default());
-
-    const httpServer = createServer(app.callback());
-
-    const coordinator = new CoordinatorServer({
-        transport: new WsTransportServer({
-            codec: new MsgpackCodec(),
-            server: httpServer,
-        }),
-        kv: store,
-        jwt: jwtService,
-        crypto,
-        email: new SesEmailService(AWS_REGION),
-        jwtSecret: JWT_SECRET,
-        objectStore: await FsObjectStore.create({
-            basePath: './dev-object-store',
-        }),
-        hub,
-    });
-
-    async function shutdown() {
-        log.info('shutting down...');
-        coordinator.close('shutdown');
-
-        // eslint-disable-next-line n/no-process-exit
-        setTimeout(() => process.exit(0), 1000).unref();
-    }
-
-    context().onEnd(() => {
-        shutdown().catch(error => {
-            log.error(toError(error), 'failed to shutdown');
-        });
-    });
-
-    const serverStarted = new Deferred<void>();
-    httpServer.listen(PORT, () => serverStarted.resolve());
-    await coordinator.launch();
-
-    return await serverStarted.promise;
-}
-
-function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
     router.get('/status', async ctx => {
         ctx.body = await coordinator().status();
     });
@@ -321,6 +323,50 @@ function setupRouter(coordinator: () => CoordinatorServer, router: Router) {
     });
 }
 
+async function launchMetrics() {
+    const metricsApp = new Koa();
+    const metricsRouter = new Router();
+    setupMetricsRouter(metricsRouter);
+    metricsApp.use(metricsRouter.routes()).use(metricsRouter.allowedMethods());
+    metricsApp.use(helmet.default());
+
+    const metricsHttpServer = createServer(metricsApp.callback());
+
+    async function shutdown() {
+        log.info('shutting down metrics server...');
+        metricsHttpServer.close();
+    }
+
+    context().onEnd(() => {
+        shutdown().catch(error => {
+            log.error(toError(error), 'failed to shutdown');
+        });
+    });
+
+    const metricsServerStarted = new Deferred<void>();
+    metricsHttpServer.listen(METRICS_PORT, () =>
+        metricsServerStarted.resolve()
+    );
+
+    await metricsServerStarted.promise;
+}
+
+const aggregatorRegistry = new AggregatorRegistry();
+
+function setupMetricsRouter(router: Router) {
+    router.get('/metrics', async ctx => {
+        try {
+            const metrics = await aggregatorRegistry.clusterMetrics();
+            ctx.set('Content-Type', aggregatorRegistry.contentType);
+            ctx.body = metrics;
+        } catch (ex) {
+            log.error(toError(ex), 'failed to get metrics');
+            ctx.status = 500;
+            ctx.body = getReadableError(ex);
+        }
+    });
+}
+
 log.setLogLevel(LOG_LEVEL);
 
 const [serverCtx, cancelServerCtx] = context().createChild({
@@ -340,7 +386,22 @@ process.on('unhandledRejection', reason => {
 
 log.info('launching coordinator...');
 
-if (cluster.isPrimary && workersCount > 1) {
+if (cluster.isPrimary) {
+    serverCtx
+        .run(async () => {
+            try {
+                await launchMetrics();
+                log.info(`metrics server is running on port ${METRICS_PORT}`);
+            } catch (err) {
+                log.error(toError(err), 'failed to launch coordinator');
+            }
+        })
+        .catch(error => {
+            log.error(error, 'error during launch');
+        });
+}
+
+if (cluster.isPrimary) {
     for (let i = 0; i < workersCount; i++) {
         log.info(`Master process ${process.pid} is running`);
 
@@ -364,8 +425,8 @@ if (cluster.isPrimary && workersCount > 1) {
     serverCtx
         .run(async () => {
             try {
-                await launch();
-                log.info(`coordinator is running on port ${PORT}`);
+                await launchApp();
+                log.info(`coordinator is running on port ${APP_PORT}`);
             } catch (err) {
                 log.error(toError(err), 'failed to launch coordinator');
             }

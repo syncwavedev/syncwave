@@ -34,35 +34,37 @@ jobs:
         id: config
         run: |
           if [ -z "${{ github.event.inputs.STAGE }}" ]; then
-          STAGE=dev
+            STAGE=dev
           else
-          STAGE=${{ github.event.inputs.STAGE }}
+            STAGE=${{ github.event.inputs.STAGE }}
           fi
 
           echo "STAGE=$STAGE" >> $GITHUB_OUTPUT
           echo "TAG=${{ github.run_number }}-${{ github.run_attempt }}-$STAGE" >> $GITHUB_OUTPUT
 
           if [ "dev" == "$STAGE" ]; then
-          echo "PORT=7202" >> $GITHUB_OUTPUT
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET_DEV }}" >> $GITHUB_OUTPUT
-          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
-          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_DEV }}" >> $GITHUB_OUTPUT
+            echo "APP_PORT=7202" >> $GITHUB_OUTPUT
+            echo "METRICS_PORT=7212" >> $GITHUB_OUTPUT
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET_DEV }}" >> $GITHUB_OUTPUT
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_DEV }}" >> $GITHUB_OUTPUT
 
-          echo "AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> $GITHUB_OUTPUT
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+            echo "AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> $GITHUB_OUTPUT
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
           elif [ "prod" == "$STAGE" ]; then
-          echo "PORT=7201" >> $GITHUB_OUTPUT
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}" >> $GITHUB_OUTPUT
-          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PROD }}" >> $GITHUB_OUTPUT
-          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}" >> $GITHUB_OUTPUT
+            echo "APP_PORT=7201" >> $GITHUB_OUTPUT
+            echo "METRICS_PORT=7211" >> $GITHUB_OUTPUT
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}" >> $GITHUB_OUTPUT
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}" >> $GITHUB_OUTPUT
 
-          echo "AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> $GITHUB_OUTPUT
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+            echo "AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> $GITHUB_OUTPUT
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
           else
-          echo "Unknown STAGE: $STAGE"
-          exit 1
+            echo "Unknown STAGE: $STAGE"
+            exit 1
           fi
 
       - name: Setup docker
@@ -101,17 +103,18 @@ jobs:
             docker stop syncwave-server-${{ steps.config.outputs.STAGE }} || true
             docker rm syncwave-server-${{ steps.config.outputs.STAGE }} || true
             docker run \
-            --name syncwave-server-${{ steps.config.outputs.STAGE }} \
-            -p ${{ steps.config.outputs.PORT }}:80 \
-            -e NODE_ENV=production \
-            -e STAGE=${{ steps.config.outputs.STAGE }} \
-            -e JWT_SECRET=${{ steps.config.outputs.JWT_SECRET }} \
-            -e GOOGLE_CLIENT_ID=${{ steps.config.outputs.GOOGLE_CLIENT_ID }} \
-            -e GOOGLE_CLIENT_SECRET=${{ steps.config.outputs.GOOGLE_CLIENT_SECRET }} \
-            -e AWS_DEFAULT_REGION=${{ steps.config.outputs.AWS_DEFAULT_REGION }} \
-            -e AWS_ACCESS_KEY_ID=${{ steps.config.outputs.AWS_ACCESS_KEY_ID }} \
-            -e AWS_SECRET_ACCESS_KEY=${{ steps.config.outputs.AWS_SECRET_ACCESS_KEY }} \
-            -d \
-            --network phoenix \
-            --restart unless-stopped \
-            ghcr.io/syncwavedev/syncwave-server:${{ steps.config.outputs.TAG }}
+              --name syncwave-server-${{ steps.config.outputs.STAGE }} \
+              -p ${{ steps.config.outputs.APP_PORT }}:4567 \
+              -p ${{ steps.config.outputs.METRICS_PORT }}:5678 \
+              -e NODE_ENV=production \
+              -e STAGE=${{ steps.config.outputs.STAGE }} \
+              -e JWT_SECRET=${{ steps.config.outputs.JWT_SECRET }} \
+              -e GOOGLE_CLIENT_ID=${{ steps.config.outputs.GOOGLE_CLIENT_ID }} \
+              -e GOOGLE_CLIENT_SECRET=${{ steps.config.outputs.GOOGLE_CLIENT_SECRET }} \
+              -e AWS_DEFAULT_REGION=${{ steps.config.outputs.AWS_DEFAULT_REGION }} \
+              -e AWS_ACCESS_KEY_ID=${{ steps.config.outputs.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ steps.config.outputs.AWS_SECRET_ACCESS_KEY }} \
+              -d \
+              --network phoenix \
+              --restart unless-stopped \
+              ghcr.io/syncwavedev/syncwave-server:${{ steps.config.outputs.TAG }}

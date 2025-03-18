@@ -24,6 +24,7 @@ WORKDIR /app/packages/server
 RUN npm run build
 
 EXPOSE 4567
+EXPOSE 5678
 
 ENV NODE_ENV=production
 ENV NODE_OPTIONS='--enable-source-maps'

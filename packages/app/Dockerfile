@@ -27,7 +27,7 @@ RUN if [ -z "$STAGE" ]; then \
     echo "Error: STAGE argument is required."; \
     exit 1; \
     fi
-ENV PUBLIC_STAGE=$STAGE
+ENV VITE_PUBLIC_STAGE=$STAGE
 
 RUN npm run build
 

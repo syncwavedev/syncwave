@@ -42,7 +42,7 @@ import {
 import type {AuthManager} from '../../auth-manager';
 
 import {getRpc, type Rpc} from '../utils';
-import {getComponentContext, setComponentContext} from './component-context';
+import {setComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
@@ -260,7 +260,7 @@ class Agent {
 	}
 
 	async observeProfileAsync(userId: UserId) {
-		const ctx = getComponentContext();
+		const ctx = setComponentContext();
 		const rpc = getRpc();
 		const {user} = await rpc(x =>
 			x
@@ -271,7 +271,7 @@ class Agent {
 		);
 
 		return ctx.run(() =>
-			this.observeProfile(
+			this._observeProfile(
 				this.crdtManager.view({
 					id: user.id,
 					isDraft: false,
@@ -283,7 +283,13 @@ class Agent {
 		);
 	}
 
-	private observeProfile(initial: User, rpc: Rpc): UserView {
+	observeProfile(initial: User) {
+		const ctx = setComponentContext();
+		const rpc = getRpc();
+		return ctx.run(() => this._observeProfile(initial, rpc));
+	}
+
+	private _observeProfile(initial: User, rpc: Rpc): UserView {
 		const view = new UserView(initial);
 
 		(async () => {

@@ -81,7 +81,7 @@
 <div
 	class="bg-gradient-to-b from-subtle-0 to-subtle-1 flex min-h-screen flex-col items-center"
 >
-	<div class="w-full max-w-xs text-center mt-[20vh]">
+	<div class="w-full max-w-2xs text-center mt-[30vh]">
 		{#if !showCodeInput}
 			<h1 class="mb-8 font-extrabold text-2xl">Sign in to Syncwave</h1>
 			<div class="space-y-8">

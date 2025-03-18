@@ -44,7 +44,7 @@ jobs:
 
           if [ "dev" == "$STAGE" ]; then
             echo "APP_PORT=7202" >> $GITHUB_OUTPUT
-            echo "METRICS_PORT=7212" >> $GITHUB_OUTPUT
+            echo "METRICS_PORT=7204" >> $GITHUB_OUTPUT
             echo "JWT_SECRET=${{ secrets.JWT_SECRET_DEV }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_DEV }}" >> $GITHUB_OUTPUT
@@ -54,7 +54,7 @@ jobs:
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
           elif [ "prod" == "$STAGE" ]; then
             echo "APP_PORT=7201" >> $GITHUB_OUTPUT
-            echo "METRICS_PORT=7211" >> $GITHUB_OUTPUT
+            echo "METRICS_PORT=7203" >> $GITHUB_OUTPUT
             echo "JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PROD }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}" >> $GITHUB_OUTPUT

@@ -164,7 +164,9 @@ export class BoardView implements Board {
 
 export class BoardTreeView extends BoardView {
 	columns = $derived(
-		this._data.columns.map(x => new ColumnTreeView(x, this._data))
+		this._data.columns
+			.filter(x => !x.deleted)
+			.map(x => new ColumnTreeView(x, this._data))
 	);
 }
 
@@ -204,6 +206,7 @@ export class ColumnTreeView extends ColumnView {
 	cards = $derived(
 		this._data.cards
 			.filter(x => x.columnId === this.id)
+			.filter(x => !x.deleted)
 			.map(x => new CardView(x, this._data))
 	);
 }

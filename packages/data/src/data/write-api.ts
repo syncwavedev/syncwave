@@ -553,6 +553,7 @@ export function createWriteApi() {
                         writable({
                             boardPosition: true,
                             name: true,
+                            deleted: true,
                         })
                     ),
                 ]);

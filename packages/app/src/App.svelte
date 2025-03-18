@@ -32,6 +32,7 @@
 	import LoginCallback from './pages/login-callback.svelte';
 	import LoginPage from './pages/login.svelte';
 	import BoardHistoryManager from './lib/board-history-manager';
+	import Loading from './lib/ui/components/loading.svelte';
 
 	const themeManager = createThemeManager();
 	setContext('theme', {
@@ -69,7 +70,7 @@
 
 	onMount(() => {
 		router.on('/', () => {
-			Page = CheckScreen;
+			Page = Loading;
 
 			if (!authManager.getIdentityInfo()) {
 				router.route('/login', {replace: true});

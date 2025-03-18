@@ -2,6 +2,7 @@
 	import {getAgent} from '../lib/agent/agent.svelte';
 	import boardHistoryManager from '../lib/board-history-manager';
 	import BoardScreen from '../lib/ui/boards/board-screen.svelte';
+	import Loading from '../lib/ui/components/loading.svelte';
 	import {getAuthManager} from '../lib/utils';
 
 	const {key}: {key: string} = $props();
@@ -18,8 +19,7 @@
 </script>
 
 {#await Promise.all( [agent.observeBoardAsync(key), agent.observeProfileAsync(userId)] )}
-	<!-- promise is pending -->
-	<p>waiting for the promise to resolve...</p>
+	<Loading />
 {:then [[board, awareness], me]}
 	<BoardScreen {board} {awareness} {me} />
 {/await}

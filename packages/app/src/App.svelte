@@ -31,6 +31,7 @@
 	import BoardPage from './pages/board.svelte';
 	import LoginCallback from './pages/login-callback.svelte';
 	import LoginPage from './pages/login.svelte';
+	import BoardHistoryManager from './lib/board-history-manager';
 
 	const themeManager = createThemeManager();
 	setContext('theme', {
@@ -72,6 +73,12 @@
 
 			if (!authManager.getIdentityInfo()) {
 				router.route('/login', {replace: true});
+				return;
+			}
+
+			const lastBoardKey = BoardHistoryManager.last();
+			if (lastBoardKey) {
+				router.route(`/b/${lastBoardKey}`, {replace: true});
 			}
 		});
 		router.on('/login', () => {

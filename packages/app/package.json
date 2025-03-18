@@ -9,6 +9,7 @@
 	"scripts": {
 		"dev": "NODE_OPTIONS='--enable-source-maps' vite dev | pino-pretty --config ../../.pino-prettyrc",
 		"build": "vite build",
+		"serve": "serve",
 		"preview": "vite preview",
 		"check": "svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
@@ -40,7 +41,6 @@
 		"svelte-check": "^4.1.5",
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.26.1",
-		"unplugin-swc": "^1.5.1",
 		"vite-bundle-visualizer": "^1.2.1",
 		"vite-plugin-babel": "^1.3.0",
 		"vite-plugin-checker": "^0.9.0",
@@ -80,6 +80,7 @@
 		"isomorphic-ws": "^5.0.0",
 		"javascript-time-ago": "^2.5.11",
 		"regexparam": "^3.0.0",
+		"serve": "^14.2.4",
 		"svelte-dnd-action": "^0.9.57",
 		"svelte-tiptap": "^2.1.0",
 		"syncwave-data": "*",

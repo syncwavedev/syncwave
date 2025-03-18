@@ -40,4 +40,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV NODE_OPTIONS='--enable-source-maps'
 
-CMD ["node", "build/index.js"]
+CMD ["npm", "run", "serve"]

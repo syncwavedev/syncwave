@@ -21,19 +21,15 @@ export default defineConfig({
 			// because of fdb-tuple package
 			include: ['buffer'],
 		}),
-		checker({typescript: true}),
+		{
+			...checker({typescript: true}),
+			apply: 'serve',
+		},
 		{
 			...babel(),
 			apply: 'serve',
 			enforce: 'post',
 		},
-		// {
-		// 	// we need swc to transform async/await for zonejs to work
-		// 	// in dev mode, prod build will be processed by esbuild
-		// 	...swc.vite({tsconfigFile: false}),
-		// 	apply: 'serve',
-		// 	// enforce: 'post',
-		// },
 	],
 
 	optimizeDeps: {

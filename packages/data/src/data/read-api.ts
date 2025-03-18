@@ -385,7 +385,7 @@ export function createReadApi() {
             ]),
             async *stream(st, {key}) {
                 const boardByKey = await st.transact(tx =>
-                    tx.boards.getByKey(key)
+                    tx.boards.getByKey(key.toUpperCase())
                 );
                 if (!boardByKey) {
                     throw new BusinessError(

@@ -10,7 +10,7 @@
 
 <script lang="ts">
 	import './lib/ui/styles/main.css';
-	import {setContext} from 'svelte';
+	import {onMount, setContext} from 'svelte';
 	import type {Component} from 'svelte';
 	import {CoordinatorClient} from 'syncwave-data';
 	import {
@@ -66,7 +66,7 @@
 	let Page = $state<Component<any>>(CheckScreen);
 	let pageProps = $state<Record<string, string>>({});
 
-	$effect(() => {
+	onMount(() => {
 		router.on('/', () => {
 			Page = CheckScreen;
 
@@ -86,11 +86,6 @@
 		});
 
 		router.listen();
-
-		return () => {
-			router.unlisten();
-			coordinatorClient.close('layout destroyed');
-		};
 	});
 </script>
 

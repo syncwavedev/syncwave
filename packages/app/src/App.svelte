@@ -97,10 +97,14 @@
 <svelte:body on:keydown={handleEscape} />
 
 <main>
-	<svelte:boundary>
-		{#snippet failed(error, reset)}
-			<ErrorCard {error} {reset} />
-		{/snippet}
+	{#if appConfig.stage === 'local' || appConfig.stage === 'dev'}
 		<Page {...pageProps} />
-	</svelte:boundary>
+	{:else}
+		<svelte:boundary>
+			{#snippet failed(error, reset)}
+				<ErrorCard {error} {reset} />
+			{/snippet}
+			<Page {...pageProps} />
+		</svelte:boundary>
+	{/if}
 </main>

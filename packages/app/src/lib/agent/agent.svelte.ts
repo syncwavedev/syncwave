@@ -41,7 +41,8 @@ import {
 
 import type {AuthManager} from '../../auth-manager';
 
-import {getRpc} from '../utils';
+import {getRpc, type Rpc} from '../utils';
+import {setComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
@@ -96,6 +97,8 @@ class Agent {
 	}
 
 	async observeBoardAsync(key: string) {
+		const ctx = setComponentContext();
+
 		const rpc = getRpc();
 		const [board, me] = await whenAll([
 			rpc(x =>
@@ -113,12 +116,15 @@ class Agent {
 			),
 		]);
 
-		return this.observeBoard(board, me);
+		return ctx.run(() => {
+			return this.observeBoard(board, me, rpc);
+		});
 	}
 
-	observeBoard(
+	private observeBoard(
 		initialBoard: BoardViewDataDto,
-		initialMe: CrdtDoc<User>
+		initialMe: CrdtDoc<User>,
+		rpc: Rpc
 	): [BoardTreeView, Awareness] {
 		const awareness = new Awareness(createClientId());
 		const me = this.crdtManager.view({
@@ -135,29 +141,26 @@ class Agent {
 		);
 
 		this.activeBoards.push(data);
-		onDestroy(
-			() => (this.activeBoards = this.activeBoards.filter(x => x !== data))
-		);
+		context().onEnd(() => {
+			this.activeBoards = this.activeBoards.filter(x => x !== data);
+		});
 
-		const rpc = getRpc();
-		$effect(() => {
-			(async () => {
-				const items = toStream(
-					rpc(x => x.getBoardViewData({key: initialBoard.board.key}))
-				);
+		(async () => {
+			const items = toStream(
+				rpc(x => x.getBoardViewData({key: initialBoard.board.key}))
+			);
 
-				for await (const item of items) {
-					if (item.type === 'snapshot') {
-						data.update(item.data, this.crdtManager);
-					} else if (item.type === 'event') {
-						this.handleEvent(item.event);
-					} else {
-						softNever(item, 'observeBoard got an unknown event');
-					}
+			for await (const item of items) {
+				if (item.type === 'snapshot') {
+					data.update(item.data, this.crdtManager);
+				} else if (item.type === 'event') {
+					this.handleEvent(item.event);
+				} else {
+					softNever(item, 'observeBoard got an unknown event');
 				}
-			})().catch(error => {
-				log.error(toError(error), 'observeBoard failed');
-			});
+			}
+		})().catch(error => {
+			log.error(toError(error), 'observeBoard failed');
 		});
 		awareness.setLocalState({
 			user: {name: initialMe.fullName},
@@ -165,7 +168,7 @@ class Agent {
 		});
 
 		const destroySignal = new Deferred<void>();
-		onDestroy(() => {
+		context().onEnd(() => {
 			destroySignal.resolve();
 		});
 
@@ -173,7 +176,10 @@ class Agent {
 			{type: 'running'},
 			(states: AwarenessState[]) => {
 				const latestState = states.at(-1);
-				assert(latestState !== undefined, 'awareness latest state not found');
+				assert(
+					latestState !== undefined,
+					'awareness latest state not found'
+				);
 
 				// don't wait for result to allow sending multiple updates concurrently
 				rpc(x =>
@@ -183,7 +189,10 @@ class Agent {
 						state: latestState,
 					})
 				).catch(error => {
-					log.error(toError(error), 'failed to enqueue awareness state');
+					log.error(
+						toError(error),
+						'failed to enqueue awareness state'
+					);
 				});
 
 				return Promise.resolve();
@@ -194,9 +203,14 @@ class Agent {
 			const handleUpdate = (_: unknown, origin: unknown) => {
 				if (origin !== 'local') return;
 
-				awarenessSender.enqueue(awareness.getLocalState()).catch(error => {
-					log.error(toError(error), 'failed to enqueue awareness state');
-				});
+				awarenessSender
+					.enqueue(awareness.getLocalState())
+					.catch(error => {
+						log.error(
+							toError(error),
+							'failed to enqueue awareness state'
+						);
+					});
 			};
 
 			awareness.on('update', handleUpdate);
@@ -213,35 +227,33 @@ class Agent {
 			);
 		}
 
-		$effect(() => {
-			(async () => {
-				const updates = rpc(x =>
-					x.joinBoardAwareness({
-						boardId: initialBoard.board.id,
-						state: awareness.getLocalState(),
-						clientId: awareness.clientId,
-					})
+		(async () => {
+			const updates = rpc(x =>
+				x.joinBoardAwareness({
+					boardId: initialBoard.board.id,
+					state: awareness.getLocalState(),
+					clientId: awareness.clientId,
+				})
+			);
+
+			let initialized = false;
+			for await (const update of updates) {
+				awareness.applyRemote(
+					update.states.map(({clientId, state}) => ({
+						key: clientId,
+						value: state,
+					}))
 				);
 
-				let initialized = false;
-				for await (const update of updates) {
-					awareness.applyRemote(
-						update.states.map(({clientId, state}) => ({
-							key: clientId,
-							value: state,
-						}))
-					);
-
-					if (!initialized) {
-						initialized = true;
-						startAwarenessPull().catch(error => {
-							log.error(toError(error), 'awareness pull failed');
-						});
-					}
+				if (!initialized) {
+					initialized = true;
+					startAwarenessPull().catch(error => {
+						log.error(toError(error), 'awareness pull failed');
+					});
 				}
-			})().catch(error => {
-				log.error(toError(error), 'observeBoard awareness failed');
-			});
+			}
+		})().catch(error => {
+			log.error(toError(error), 'observeBoard awareness failed');
 		});
 
 		return [data.view, awareness];
@@ -263,37 +275,35 @@ class Agent {
 				isDraft: false,
 				state: user.state,
 				type: 'user',
-			}).value
+			}).value,
+			rpc
 		);
 	}
 
-	observeProfile(initial: User): UserView {
+	observeProfile(initial: User, rpc: Rpc): UserView {
 		const view = new UserView(initial);
 
-		const rpc = getRpc();
-		$effect(() => {
-			(async () => {
-				const items = toStream(
-					rpc(x => x.getProfileData({userId: initial.id}))
-				);
-				for await (const item of items) {
-					if (item.type === 'snapshot') {
-						const user = this.crdtManager.view({
-							id: item.data.user.id,
-							state: item.data.user.state,
-							type: 'user',
-							isDraft: false,
-						}).value;
-						view.update(user);
-					} else if (item.type === 'event') {
-						this.handleEvent(item.event);
-					} else {
-						softNever(item, 'observeBoard got an unknown event');
-					}
+		(async () => {
+			const items = toStream(
+				rpc(x => x.getProfileData({userId: initial.id}))
+			);
+			for await (const item of items) {
+				if (item.type === 'snapshot') {
+					const user = this.crdtManager.view({
+						id: item.data.user.id,
+						state: item.data.user.state,
+						type: 'user',
+						isDraft: false,
+					}).value;
+					view.update(user);
+				} else if (item.type === 'event') {
+					this.handleEvent(item.event);
+				} else {
+					softNever(item, 'observeBoard got an unknown event');
 				}
-			})().catch(error => {
-				log.error(toError(error), 'observeBoard failed');
-			});
+			}
+		})().catch(error => {
+			log.error(toError(error), 'observeBoard failed');
 		});
 
 		return view;

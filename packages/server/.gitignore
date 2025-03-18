@@ -1,5 +1,7 @@
 test.sqlite
 dev.sqlite
+test.sqlite-journal
+dev.sqlite-journal
 /.env
 !/.env.example
 /dev-object-store

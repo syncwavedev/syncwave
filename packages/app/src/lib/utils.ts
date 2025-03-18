@@ -28,7 +28,11 @@ import {UploadManager} from './upload-manager.svelte';
 
 TimeAgo.addDefaultLocale(en);
 
-export function getRpc() {
+export type Rpc = <R extends AsyncIterable<unknown> | Promise<unknown>>(
+	fn: (rpc: CoordinatorRpc) => R
+) => R;
+
+export function getRpc(): Rpc {
 	const client = getContext<CoordinatorClient>(CoordinatorClient);
 	if (!client) {
 		throw new Error('context CoordinatorClient is not available');
@@ -37,7 +41,9 @@ export function getRpc() {
 		span: 'getRpc',
 	});
 	onDestroy(() => {
-		cancelComponentCtx(new CancelledError('component destroyed', undefined));
+		cancelComponentCtx(
+			new CancelledError('component destroyed', undefined)
+		);
 	});
 	return <R extends AsyncIterable<unknown> | Promise<unknown>>(
 		fn: (rpc: CoordinatorRpc) => R
@@ -189,7 +195,9 @@ export function getMe() {
 export function fireEscape() {
 	const highestPriority = escapeHandlers[0]?.priority;
 	runAll(
-		escapeHandlers.filter(x => x.priority === highestPriority).map(x => x.cb)
+		escapeHandlers
+			.filter(x => x.priority === highestPriority)
+			.map(x => x.cb)
 	);
 }
 

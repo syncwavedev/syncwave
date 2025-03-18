@@ -27,12 +27,12 @@
 	import {WsTransportClient} from './ws-transport-client';
 	import {AuthManager} from './auth-manager';
 	import router from './lib/router';
-	import CheckScreen from './lib/ui/login/check-screen.svelte';
 	import BoardPage from './pages/board.svelte';
 	import LoginCallback from './pages/login-callback.svelte';
 	import LoginPage from './pages/login.svelte';
 	import BoardHistoryManager from './lib/board-history-manager';
 	import Loading from './lib/ui/components/loading.svelte';
+	import LoginFailed from './pages/login-failed.svelte';
 
 	const themeManager = createThemeManager();
 	setContext('theme', {
@@ -65,7 +65,7 @@
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let Page = $state<Component<any>>(CheckScreen);
+	let Page = $state<Component<any>>(Loading);
 	let pageProps = $state<Record<string, string>>({});
 
 	onMount(() => {
@@ -84,6 +84,9 @@
 		});
 		router.on('/login', () => {
 			Page = LoginPage;
+		});
+		router.on('/login/failed', () => {
+			Page = LoginFailed;
 		});
 		router.on('/login/callback/google', () => {
 			Page = LoginCallback;

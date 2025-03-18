@@ -2,6 +2,7 @@
 	import {getAgent} from '../../agent/agent.svelte';
 	import {appConfig} from '../../config.js';
 	import {getRpc, getAuthManager} from '../../utils.js';
+	import Envelope from '../components/icons/envelope.svelte';
 	import PinInput from '../components/pin-input.svelte';
 
 	const googleSignInUrl = (() => {
@@ -151,10 +152,11 @@
 					</div>
 					<button
 						type="submit"
-						class="btn--normal w-full"
+						class="btn--normal w-full gap-2"
 						disabled={isLoading}
 						aria-label="Continue with email"
 					>
+						<Envelope />
 						Continue with email
 					</button>
 					{#if error}

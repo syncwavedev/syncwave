@@ -1,4 +1,5 @@
 import './hooks';
+import './lib/ui/styles/main.css';
 
 import {mount} from 'svelte';
 import App from './App.svelte';

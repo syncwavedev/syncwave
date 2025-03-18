@@ -61,6 +61,7 @@
 	--color-gray-950: oklch(23% 0 0deg);
 
 	/* Slate */
+	--color-slate-10: oklch(99% 0.004 250deg);
 	--color-slate-20: oklch(97.4% 0.004 250deg);
 	--color-slate-40: oklch(95.8% 0.004 250deg);
 	--color-slate-60: oklch(94.2% 0.004 250deg);

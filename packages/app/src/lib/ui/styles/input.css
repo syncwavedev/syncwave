@@ -3,5 +3,5 @@
 }
 
 .input--bordered {
-	@apply border-divider-object bg-subtle-1 h-[2.6em] rounded-md border px-2;
+	@apply border-divider-object bg-subtle-1 dark:bg-subtle-0 h-[2.6em] rounded-md border px-2;
 }

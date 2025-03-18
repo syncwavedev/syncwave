@@ -2,6 +2,7 @@
 	import {getAgent} from '../../agent/agent.svelte';
 	import {appConfig} from '../../config.js';
 	import {getRpc, getAuthManager} from '../../utils.js';
+	import PinInput from '../components/pin-input.svelte';
 
 	const googleSignInUrl = (() => {
 		const authState = {redirectUrl: '/'};
@@ -48,8 +49,7 @@
 		}
 	}
 
-	async function onCodeSubmit(e: Event) {
-		e.preventDefault();
+	async function onCodeSubmit() {
 		if (isLoading) return;
 		isLoading = true;
 		error = undefined;
@@ -69,12 +69,6 @@
 		}
 	}
 
-	function onPaste() {
-		if (code.length === 6 && /^\d{6}$/.test(code)) {
-			void onCodeSubmit(new Event('submit'));
-		}
-	}
-
 	const errorMessage: Record<string, string | undefined> = {
 		cooldown: 'Too many attempts. Please try again later.',
 		invalid_code: 'That code doesn’t seem right. Please try again.',
@@ -84,35 +78,56 @@
 	};
 </script>
 
-<div class="bg-subtle-1 flex min-h-screen flex-col items-center justify-center">
-	<div class="bg-subtle-0 border-divider w-full max-w-md rounded-lg border p-6">
-		<h1 class="mb-4 text-center text-xl font-extrabold">Sign in to Syncwave</h1>
+<div
+	class="bg-gradient-to-b from-subtle-0 to-subtle-1 flex min-h-screen flex-col items-center"
+>
+	<div class="w-full max-w-xs text-center mt-[20vh]">
 		{#if !showCodeInput}
-			<div class="space-y-4">
+			<h1 class="mb-8 font-extrabold text-2xl">Sign in to Syncwave</h1>
+			<div class="space-y-8">
 				<!-- Google Sign-In Button -->
 				<button
 					onclick={() => (window.location.href = googleSignInUrl)}
-					class="bg-subtle-1 w-full rounded-lg p-2"
+					class="btn--normal w-full gap-2"
 					type="button"
 					disabled={isLoading}
 					aria-label="Continue with Google"
 				>
-					{#if isLoading}
-						<span class="inline-block animate-spin">↻</span>
-					{:else}
-						Continue with Google
-					{/if}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						xmlns:xlink="http://www.w3.org/1999/xlink"
+						width="16px"
+						height="16px"
+						viewBox="-3 0 262 262"
+						version="1.1"
+					>
+						<g>
+							<path
+								d="M255.878,133.451 C255.878,122.717 255.007,114.884 253.122,106.761 L130.55,106.761 L130.55,155.209 L202.497,155.209 C201.047,167.249 193.214,185.381 175.807,197.565 L175.563,199.187 L214.318,229.21 L217.003,229.478 C241.662,206.704 255.878,173.196 255.878,133.451"
+								fill="#4285F4"
+							>
+							</path>
+							<path
+								d="M130.55,261.1 C165.798,261.1 195.389,249.495 217.003,229.478 L175.807,197.565 C164.783,205.253 149.987,210.62 130.55,210.62 C96.027,210.62 66.726,187.847 56.281,156.37 L54.75,156.5 L14.452,187.687 L13.925,189.152 C35.393,231.798 79.49,261.1 130.55,261.1"
+								fill="#34A853"
+							>
+							</path>
+							<path
+								d="M56.281,156.37 C53.525,148.247 51.93,139.543 51.93,130.55 C51.93,121.556 53.525,112.853 56.136,104.73 L56.063,103 L15.26,71.312 L13.925,71.947 C5.077,89.644 0,109.517 0,130.55 C0,151.583 5.077,171.455 13.925,189.152 L56.281,156.37"
+								fill="#FBBC05"
+							>
+							</path>
+							<path
+								d="M130.55,50.479 C155.064,50.479 171.6,61.068 181.029,69.917 L217.873,33.943 C195.245,12.91 165.798,0 130.55,0 C79.49,0 35.393,29.301 13.925,71.947 L56.136,104.73 C66.726,73.253 96.027,50.479 130.55,50.479"
+								fill="#EB4335"
+							>
+							</path>
+						</g>
+					</svg>
+					Continue with Google
 				</button>
 
-				<!-- Separator -->
-				<div class="relative">
-					<div class="absolute inset-0 flex items-center">
-						<span class="border-subtle-3 w-full border-t"></span>
-					</div>
-					<div class="relative flex justify-center text-xs uppercase">
-						<span class="text-ink-detail bg-subtle-0 px-2">or</span>
-					</div>
-				</div>
+				<hr />
 
 				<!-- Email Form -->
 				<form onsubmit={onEmailSubmit} class="space-y-4">
@@ -124,7 +139,7 @@
 							placeholder="Email address"
 							required
 							bind:value={email}
-							class="input bg-subtle-0 border-divider rounded-lg border p-2"
+							class="input input--bordered"
 							autocapitalize="none"
 							autocomplete="email"
 							autocorrect="off"
@@ -136,15 +151,11 @@
 					</div>
 					<button
 						type="submit"
-						class="bg-subtle-3 p-2"
+						class="btn--normal w-full"
 						disabled={isLoading}
-						aria-label="Continue with Email"
+						aria-label="Continue with email"
 					>
-						{#if isLoading}
-							<span class="inline-block animate-spin">↻</span>
-						{:else}
-							Continue with Email
-						{/if}
+						Continue with email
 					</button>
 					{#if error}
 						<div id="email-error">
@@ -156,43 +167,27 @@
 				</form>
 			</div>
 		{:else}
-			<div class="flex flex-col space-y-2 text-center">
-				<h1 class="text-2xl font-semibold tracking-tight">Check your email</h1>
-				<p class="text-muted-foreground text-sm">
-					Enter the 6-digit code sent to <span class="font-medium">{email}</span
-					>
-				</p>
-			</div>
-			<form onsubmit={onCodeSubmit} class="mt-6 space-y-6">
-				<div>
+			<h1 class="mb-1 font-bold text-2xl">Check your email</h1>
+			<p class="text-ink-detail text-sm mb-6">
+				Enter the 6-digit code sent to <span class="font-medium">{email}</span>
+			</p>
+			<form onsubmit={onCodeSubmit} class="space-y-6">
+				<div class="mx-auto">
 					<label for="code-input" class="sr-only">Verification code</label>
-					<input
-						id="code-input"
-						type="text"
-						placeholder="XXXXXX"
-						required
+					<PinInput
 						bind:value={code}
-						onpaste={onPaste}
-						class="dark:bg-subtle-2 border-subtle-3 focus:ring-accent-primary w-full rounded-lg border px-4 py-3 text-center text-sm tracking-widest focus:ring-2 focus:outline-none disabled:opacity-50"
-						maxlength="6"
-						inputmode="numeric"
-						autocomplete="one-time-code"
-						autocorrect="off"
+						onComplete={onCodeSubmit}
+						autoFocus
 						disabled={isLoading}
-						aria-describedby={error ? 'code-error' : undefined}
 					/>
 				</div>
 				<button
 					type="submit"
-					class="bg-subtle-3 p-2"
+					class="btn--normal mx-auto"
 					disabled={isLoading}
 					aria-label="Verify code"
 				>
-					{#if isLoading}
-						<span class="inline-block animate-spin">↻</span>
-					{:else}
-						Verify
-					{/if}
+					Verify code and continue
 				</button>
 				{#if error}
 					<div id="email-error">

@@ -9,7 +9,6 @@
 </script>
 
 <script lang="ts">
-	import './lib/ui/styles/main.css';
 	import {onMount, setContext} from 'svelte';
 	import type {Component} from 'svelte';
 	import {CoordinatorClient} from 'syncwave-data';

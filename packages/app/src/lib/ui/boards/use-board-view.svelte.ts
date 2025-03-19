@@ -27,15 +27,12 @@ export interface DndColumn {
 	cards: DndCard[];
 }
 
-export function useBoardView(localBoard: State<BoardTreeView>) {
-	// Reactive state for columns with initial sorting
-	const dndColumns = $state({value: applyOrder(localBoard.value.columns)});
+export function useBoardView(board: State<BoardTreeView>) {
+	const dndColumns = $state({value: applyOrder(board.value.columns)});
 
-	// Effect to sync remoteBoard with localBoard and update dndColumns
 	$effect(() => {
-		const latestColumns = applyOrder(localBoard.value.columns);
+		const latestColumns = applyOrder(board.value.columns);
 		untrack(() => {
-			// Handle drag-and-drop shadow items
 			const shadowColumn: DndColumn | undefined = dndColumns.value.find(
 				item => SHADOW_ITEM_MARKER_PROPERTY_NAME in item
 			);
@@ -60,11 +57,10 @@ export function useBoardView(localBoard: State<BoardTreeView>) {
 
 	const agent = getAgent();
 
-	// Handler for column drag-and-drop
 	function setColumns(e: CustomEvent<DndEvent<DndColumn>>) {
 		const newDndColumns = e.detail.items;
 		const update = calculateChange(
-			localBoard.value.columns,
+			board.value.columns,
 			dndColumns.value.map(x => x.column),
 			newDndColumns.map(x => x.column),
 			column => column?.boardPosition
@@ -77,10 +73,9 @@ export function useBoardView(localBoard: State<BoardTreeView>) {
 		dndColumns.value = newDndColumns;
 	}
 
-	// Handler for card drag-and-drop within a column
 	function setCards(dndColumn: DndColumn, e: CustomEvent<DndEvent<DndCard>>) {
 		assert(dndColumn !== undefined, 'dnd column not found');
-		const localColumn = localBoard.value.columns.find(
+		const localColumn = board.value.columns.find(
 			x => x.id === dndColumn.id
 		);
 		assert(localColumn !== undefined, 'local column not found');
@@ -98,7 +93,6 @@ export function useBoardView(localBoard: State<BoardTreeView>) {
 		dndColumn.cards = e.detail.items;
 	}
 
-	// Sort columns and cards by position
 	function applyOrder(columns: ColumnTreeView[]): DndColumn[] {
 		const result: DndColumn[] = [...columns]
 			.sort((a, b) => compareBigFloat(a.boardPosition, b.boardPosition))

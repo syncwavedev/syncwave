@@ -1,14 +1,11 @@
 import {untrack} from 'svelte';
 import {
-	SHADOW_ITEM_MARKER_PROPERTY_NAME,
-	type DndEvent,
-} from 'svelte-dnd-action';
-import {
 	assert,
 	compareBigFloat,
 	type CardId,
 	type ColumnId,
 } from 'syncwave-data';
+import {SHADOW_ITEM_MARKER_PROPERTY_NAME, type DndEvent} from 'syncwave-dnd';
 import {getAgent} from '../../agent/agent.svelte';
 import type {State} from '../../agent/state';
 import type {

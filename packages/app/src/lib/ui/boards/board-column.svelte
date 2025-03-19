@@ -1,6 +1,6 @@
 <script lang="ts">
 	import CardTile from './card-tile.svelte';
-	import {dndzone, dragHandle, type DndEvent} from 'svelte-dnd-action';
+	import {dndzone, dragHandle, type DndEvent} from 'syncwave-dnd';
 	import Scrollable from '../components/scrollable.svelte';
 	import type {DndCard, DndColumn} from './use-board-view.svelte';
 	import type {CardView} from '../../agent/view.svelte';
@@ -40,7 +40,10 @@
 	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
 	type="scroll"
 >
-	<div class="flex w-80 flex-shrink-0 flex-col pb-1" data-column-id={column.id}>
+	<div
+		class="flex w-80 flex-shrink-0 flex-col pb-1"
+		data-column-id={column.id}
+	>
 		<div
 			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 flex min-h-10 items-center px-2 py-1"
 			data-disable-scroll-view-drag="true"

@@ -8,6 +8,7 @@
 	import EllipsisIcon from '../../components/icons/ellipsis-icon.svelte';
 	import EditColumnDialog from '../../components/edit-column-dialog/edit-column-dialog.svelte';
 	import appNavigator from '../../app-navigator';
+	import {flip} from 'svelte/animate';
 
 	const {
 		column,
@@ -76,7 +77,10 @@
 			onfinalize={handleCardDnd}
 		>
 			{#each column.cards as card (card.id)}
-				<div data-disable-scroll-view-drag="true">
+				<div
+					animate:flip={{duration: 100}}
+					data-disable-scroll-view-drag="true"
+				>
 					<CardTile
 						card={card.card}
 						onClick={() => onCardClick(card.card)}

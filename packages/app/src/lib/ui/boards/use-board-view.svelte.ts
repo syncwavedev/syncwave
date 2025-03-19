@@ -2,6 +2,7 @@ import {untrack} from 'svelte';
 import {
 	assert,
 	compareBigFloat,
+	zip,
 	type CardId,
 	type ColumnId,
 } from 'syncwave-data';
@@ -32,6 +33,24 @@ export function useBoardView(board: State<BoardTreeView>) {
 
 	$effect(() => {
 		const latestColumns = applyOrder(board.value.columns);
+		if (
+			untrack(() => {
+				return (
+					latestColumns.length === dndColumns.value.length &&
+					zip(latestColumns, dndColumns.value).every(
+						([a, b]) =>
+							a.id === b.id &&
+							a.cards.length === b.cards.length &&
+							zip(a.cards, b.cards).every(
+								([a, b]) =>
+									a.id === b.id && a.card.id === b.card.id
+							)
+					)
+				);
+			})
+		) {
+			return;
+		}
 		untrack(() => {
 			const shadowColumn: DndColumn | undefined = dndColumns.value.find(
 				item => SHADOW_ITEM_MARKER_PROPERTY_NAME in item

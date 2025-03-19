@@ -22,6 +22,7 @@
 	import UserIcon from '../components/icons/user-icon.svelte';
 	import EditProfileDialog from '../../components/edit-profile-dialog/edit-profile-dialog.svelte';
 	import router from '../../router';
+	import {flip} from 'svelte/animate';
 
 	const {
 		board,
@@ -194,12 +195,14 @@
 				onfinalize={handleDndFinalizeColumns}
 			>
 				{#each columns.value as column (column.id)}
-					<BoardColumn
-						{column}
-						{onCardClick}
-						handleCardDnd={createCardHandler(column)}
-						activeCardId={selectedCard?.id}
-					/>
+					<div animate:flip={{duration: 100}}>
+						<BoardColumn
+							{column}
+							{onCardClick}
+							handleCardDnd={createCardHandler(column)}
+							activeCardId={selectedCard?.id}
+						/>
+					</div>
 				{/each}
 			</div>
 		</Scrollable>

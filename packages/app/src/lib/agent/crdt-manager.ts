@@ -37,10 +37,10 @@ class DiffSender<T> {
 		private readonly rpc: CoordinatorRpc,
 		private readonly entity: Entity
 	) {
-		this.batchProcessor = new BatchProcessor(
-			this.entity.isDraft ? {type: 'idle'} : {type: 'running'},
-			this.process.bind(this)
-		);
+		this.batchProcessor = new BatchProcessor({
+			state: this.entity.isDraft ? {type: 'idle'} : {type: 'running'},
+			process: this.process.bind(this),
+		});
 	}
 
 	async start() {

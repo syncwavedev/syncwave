@@ -172,9 +172,9 @@ class Agent {
 			destroySignal.resolve();
 		});
 
-		const awarenessSender = new BatchProcessor<AwarenessState>(
-			{type: 'running'},
-			(states: AwarenessState[]) => {
+		const awarenessSender = new BatchProcessor<AwarenessState>({
+			state: {type: 'running'},
+			process: (states: AwarenessState[]) => {
 				const latestState = states.at(-1);
 				assert(
 					latestState !== undefined,
@@ -196,8 +196,8 @@ class Agent {
 				});
 
 				return Promise.resolve();
-			}
-		);
+			},
+		});
 
 		async function startAwarenessPull() {
 			const handleUpdate = (_: unknown, origin: unknown) => {

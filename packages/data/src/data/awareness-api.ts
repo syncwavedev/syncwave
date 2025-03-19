@@ -90,9 +90,9 @@ export class AwarenessApiState {
                 const batchKey = boardId + clientId;
                 let batchProcessor = this.batchProcessors.get(batchKey);
                 if (batchProcessor === undefined) {
-                    batchProcessor = new BatchProcessor(
-                        {type: 'running'},
-                        async batch => {
+                    batchProcessor = new BatchProcessor({
+                        state: {type: 'running'},
+                        process: async batch => {
                             const latestState = batch.at(-1);
                             assert(
                                 latestState !== undefined,
@@ -105,8 +105,10 @@ export class AwarenessApiState {
                                 latestState
                             );
                         },
-                        () => this.batchProcessors.delete(batchKey)
-                    );
+                        doneCallback: () =>
+                            this.batchProcessors.delete(batchKey),
+                        retries: 0,
+                    });
                     this.batchProcessors.set(batchKey, batchProcessor);
                 }
 

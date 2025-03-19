@@ -1,19 +1,32 @@
 import {AppError, toError} from './errors.js';
 import {log} from './logger.js';
-import {wait} from './utils.js';
+import {assert, wait} from './utils.js';
+
+export type BatchProcessorState =
+    | {type: 'idle'}
+    | {type: 'running'}
+    | {type: 'closed'; cause: unknown};
+
+export interface BatchProcessorOptions<T> {
+    readonly state: BatchProcessorState;
+    readonly process: (batch: T[]) => Promise<void>;
+    readonly doneCallback?: () => void;
+    readonly retries?: number;
+}
 
 export class BatchProcessor<T> {
     private queue: T[] = [];
     private inProgress = false;
 
-    constructor(
-        private state:
-            | {type: 'idle'}
-            | {type: 'running'}
-            | {type: 'closed'; cause: unknown},
-        private readonly process: (batch: T[]) => Promise<void>,
-        private readonly doneCallback?: () => void
-    ) {}
+    state: BatchProcessorState;
+
+    constructor(private readonly options: BatchProcessorOptions<T>) {
+        this.state = options.state;
+        assert(
+            options.retries === undefined || options.retries >= 0,
+            'retries must be >= 0'
+        );
+    }
 
     async start() {
         this.ensureOpen();
@@ -44,20 +57,27 @@ export class BatchProcessor<T> {
         if (!this.inProgress) {
             try {
                 this.inProgress = true;
+                let attempt = 0;
                 while (this.queue.length > 0) {
                     const batch = this.queue.slice();
                     this.queue = [];
                     try {
-                        await this.process(batch);
+                        await this.options.process(batch);
+                        attempt = 0;
                     } catch (error) {
+                        if (attempt === this.options.retries) {
+                            throw error;
+                        }
                         this.queue.push(...batch);
 
                         log.error(toError(error), 'BatchProcessor: send error');
                         await wait({ms: 1000, onCancel: 'reject'});
+
+                        attempt++;
                     }
                 }
 
-                this.doneCallback?.();
+                this.options.doneCallback?.();
             } finally {
                 this.inProgress = false;
             }

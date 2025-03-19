@@ -1,7 +1,6 @@
 import {svelte} from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import babel from 'vite-plugin-babel';
-import checker from 'vite-plugin-checker';
 import {nodePolyfills} from 'vite-plugin-node-polyfills';
 import {defineConfig} from 'vitest/config';
 
@@ -21,10 +20,6 @@ export default defineConfig({
 			// because of fdb-tuple package
 			include: ['buffer'],
 		}),
-		{
-			...checker({typescript: true}),
-			apply: 'serve',
-		},
 		{
 			...babel(),
 			apply: 'serve',

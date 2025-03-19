@@ -3,7 +3,12 @@
 	import {onMount} from 'svelte';
 	import cx from 'clsx';
 	import {get, type Readable} from 'svelte/store';
-	import {BubbleMenu, createEditor, Editor, EditorContent} from 'svelte-tiptap';
+	import {
+		BubbleMenu,
+		createEditor,
+		Editor,
+		EditorContent,
+	} from 'svelte-tiptap';
 	import {Collaboration} from '@tiptap/extension-collaboration';
 	import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
 	import Placeholder from '@tiptap/extension-placeholder';
@@ -174,7 +179,7 @@
 			ul,
 			ol {
 				padding: 0 1rem;
-				margin: 1.25rem 1rem 1.25rem 0.4rem;
+				margin: 0em 1rem 0rem 0rem;
 
 				li p {
 					margin-top: 0.25em;
@@ -197,7 +202,7 @@
 				padding: 0;
 
 				li {
-					align-items: flex-start;
+					align-items: center;
 					display: flex;
 
 					> label {
@@ -247,10 +252,15 @@
 				margin-right: -1px;
 				position: relative;
 				word-break: normal;
+
+				&:hover .collaboration-cursor__label {
+					visibility: visible;
+				}
 			}
 
 			/* Render the username above the caret */
 			.collaboration-cursor__label {
+				visibility: hidden;
 				pointer-events: none;
 				border-radius: 3px 3px 3px 0;
 				color: #0d0d0d;

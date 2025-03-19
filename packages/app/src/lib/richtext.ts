@@ -36,9 +36,9 @@ export const tiptapExtensions = [
 	Link,
 	BulletList,
 	OrderedList,
-	ListItem,
+	ListItem.extend({content: 'paragraph'}),
 	TaskList,
-	TaskItem,
+	TaskItem.extend({content: 'paragraph'}),
 ];
 
 export function yFragmentToJSON(fragment: XmlFragment) {

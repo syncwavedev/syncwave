@@ -46,7 +46,7 @@
 	gap-1
 	rounded-md
 	border
-	border-transparent
+	border-divider
 	p-2
 	"
 	onclick={onClick}

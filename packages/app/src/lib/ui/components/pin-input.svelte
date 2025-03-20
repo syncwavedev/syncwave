@@ -54,7 +54,7 @@
 {#snippet Cell(cell: CellProps)}
 	<PinInput.Cell
 		{cell}
-		class="relative h-[2.6em] w-[2em] flex items-center justify-center transition-all duration-75 border-divider border-y border-r first:rounded-l-md first:border-l last:rounded-r-md group-focus-within/pininput:border-divider-object group-hover/pininput:border-divider-object outline-0 data-active:outline-1 data-active:outline-text-ink"
+		class="bg-subtle-0 relative h-[2.6em] w-[2em] flex items-center justify-center transition-all duration-75 border-divider border-y border-r first:rounded-l-md first:border-l last:rounded-r-md group-focus-within/pininput:border-divider-object group-hover/pininput:border-divider-object outline-0 data-active:outline-1 data-active:outline-text-ink"
 	>
 		{#if cell.char !== null}
 			<div>

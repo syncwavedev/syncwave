@@ -19,5 +19,5 @@
 }
 
 .btn--normal {
-	@apply bg-subtle-3 hover:bg-subtle-4 border-divider-object flex h-[2.6em] cursor-pointer items-center justify-center rounded-md border px-[0.5em];
+	@apply bg-subtle-0 hover:bg-subtle-2 dark:bg-subtle-3 dark:hover:bg-subtle-4 border-divider-object flex h-[2.6em] cursor-pointer items-center justify-center rounded-md border px-[0.5em];
 }

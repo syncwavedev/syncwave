@@ -35,9 +35,13 @@
 	--text-9xl--line-height: 0.95;
 
 	/* Gray */
+	--color-gray-10: oklch(98.2% 0 0deg);
 	--color-gray-20: oklch(97.4% 0 0deg);
+	--color-gray-30: oklch(96.6% 0 0deg);
 	--color-gray-40: oklch(95.8% 0 0deg);
+	--color-gray-50: oklch(95% 0 0deg);
 	--color-gray-60: oklch(94.2% 0 0deg);
+	--color-gray-70: oklch(93.4% 0 0deg);
 	--color-gray-80: oklch(92.6% 0 0deg);
 	--color-gray-100: oklch(91% 0 0deg);
 	--color-gray-150: oklch(87% 0 0deg);
@@ -187,10 +191,10 @@
 		--theme-color-scrollbar: var(--color-gray-350);
 
 		--theme-color-subtle-0: var(--color-white);
-		--theme-color-subtle-1: var(--color-gray-20);
-		--theme-color-subtle-2: var(--color-gray-40);
-		--theme-color-subtle-3: var(--color-gray-60);
-		--theme-color-subtle-4: var(--color-gray-80);
+		--theme-color-subtle-1: var(--color-gray-10);
+		--theme-color-subtle-2: var(--color-gray-30);
+		--theme-color-subtle-3: var(--color-gray-50);
+		--theme-color-subtle-4: var(--color-gray-70);
 
 		--theme-color-subtle-active: var(--color-blue-80);
 		--theme-color-divider-active: var(--color-blue-250);

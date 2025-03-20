@@ -1,9 +1,9 @@
 <script lang="ts">
 	import {getAgent} from '../../agent/agent.svelte';
+	import appNavigator from '../../app-navigator';
 	import {appConfig} from '../../config.js';
 	import {getRpc, getAuthManager} from '../../utils.js';
 	import Envelope from '../components/icons/envelope.svelte';
-	import PinInput from '../components/pin-input.svelte';
 
 	const googleSignInUrl = (() => {
 		const authState = {redirectUrl: '/'};
@@ -38,6 +38,13 @@
 		try {
 			const result = await agent.sendSignInEmail(email.trim());
 			if (result.type === 'success') {
+				appNavigator.push({
+					onEscape: false,
+					onBack: () => {
+						email = '';
+						showCodeInput = false;
+					},
+				});
 				showCodeInput = true;
 			} else {
 				error = result.type;
@@ -80,11 +87,15 @@
 </script>
 
 <div
-	class="bg-gradient-to-b from-subtle-0 to-subtle-1 flex min-h-screen flex-col items-center"
+	class="bg-gradient-to-b from-subtle-0 to-subtle-1 flex min-h-screen flex-col"
 >
-	<div class="w-full max-w-2xs text-center mt-[30vh]">
+	<h1 class="ml-4 mt-2 font-semibold">Syncwave</h1>
+	<div class="w-full max-w-2xs text-center mt-[23vh] mx-auto">
 		{#if !showCodeInput}
-			<h1 class="mb-8 font-extrabold text-2xl">Sign in to Syncwave</h1>
+			<h1 class="mb-1 font-extrabold text-2xl">Let's get started!</h1>
+			<p class="text-ink-detail mb-8 text-xs">
+				Please enter your email to log in or sign up, or continue with Google.
+			</p>
 			<div class="space-y-8">
 				<!-- Google Sign-In Button -->
 				<button
@@ -169,23 +180,30 @@
 				</form>
 			</div>
 		{:else}
-			<h1 class="mb-1 font-bold text-2xl">Check your email</h1>
-			<p class="text-ink-detail text-sm mb-6">
+			<h1 class="mb-1 font-extrabold text-2xl">Check your email</h1>
+			<p class="text-ink-detail text-xs mb-6">
 				Enter the 6-digit code sent to <span class="font-medium">{email}</span>
 			</p>
 			<form onsubmit={onCodeSubmit} class="space-y-6">
 				<div class="mx-auto">
 					<label for="code-input" class="sr-only">Verification code</label>
-					<PinInput
+					<!-- svelte-ignore a11y_autofocus -->
+					<input
+						type="text"
+						inputMode="numeric"
+						pattern="[0-9]*"
+						maxlength={6}
+						id="code-input"
 						bind:value={code}
-						onComplete={onCodeSubmit}
+						class="input input--bordered w-full text-center"
 						autoFocus
 						disabled={isLoading}
+						placeholder="••••••"
 					/>
 				</div>
 				<button
 					type="submit"
-					class="btn--normal mx-auto"
+					class="btn--normal w-full"
 					disabled={isLoading}
 					aria-label="Verify code"
 				>
@@ -200,5 +218,14 @@
 				{/if}
 			</form>
 		{/if}
+		<div class="mt-8 mx-auto text-ink-detail text-center text-xs">
+			By continuing, you acknowledge and accept our <a
+				href="/terms"
+				class="text-primary hover:underline">Terms of Service</a
+			>
+			and
+			<a href="/privacy" class="text-primary hover:underline">Privacy Policy</a
+			>.
+		</div>
 	</div>
 </div>

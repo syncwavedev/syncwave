@@ -82,15 +82,6 @@ export class Agent {
 		this.connection.close(reason);
 	}
 
-	recordDragSettled(cardId: CardId) {
-		const now = getNow();
-		this.activeBoards.forEach(x => x.cardDragSettledAt.set(cardId, now));
-	}
-
-	markAsDragDone(cardId: CardId) {
-		this.activeBoards.forEach(x => x.cardDragSettledAt.delete(cardId));
-	}
-
 	handleCardMouseEnter(boardId: BoardId, cardId: CardId) {
 		const board = this.activeBoards.find(x => x.board.id === boardId);
 		assert(board !== undefined, 'board not found');
@@ -391,17 +382,50 @@ export class Agent {
 		});
 	}
 
-	setCardPosition(
-		cardId: CardId,
-		columnId: ColumnId,
-		position: BigFloat
-	): void {
+	finalizeCardPosition(cardId: CardId): void {
+		const board = this.activeBoards.find(
+			x =>
+				x.considerCardPosition.has(cardId) &&
+				x.considerColumnId.has(cardId)
+		);
+		assert(board !== undefined, 'finalize card position: board not found');
+		const columnId = board.considerColumnId.get(cardId);
+		assert(
+			columnId !== undefined,
+			'finalize card position: columnId not found'
+		);
+		const position = board.considerCardPosition.get(cardId);
+		assert(
+			position !== undefined,
+			'finalize card position: position not found'
+		);
+
 		this.crdtManager.update<Card>(cardId, x => {
 			x.columnPosition = position;
 			x.columnId = columnId;
 		});
 
-		this.recordDragSettled(cardId);
+		this.activeBoards.forEach(x => {
+			x.cardDragSettledAt.delete(cardId);
+			x.considerCardPosition.delete(cardId);
+			x.considerColumnId.delete(cardId);
+		});
+	}
+
+	considerCardPosition(
+		cardId: CardId,
+		columnId: ColumnId,
+		position: BigFloat
+	) {
+		this.activeBoards.forEach(board =>
+			board.considerColumnId.set(cardId, columnId)
+		);
+		this.activeBoards.forEach(board =>
+			board.considerCardPosition.set(cardId, position)
+		);
+
+		const now = getNow();
+		this.activeBoards.forEach(x => x.cardDragSettledAt.set(cardId, now));
 	}
 
 	setCardColumn(cardId: CardId, columnId: ColumnId): void {

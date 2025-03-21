@@ -168,7 +168,11 @@ export class DndBoardContext {
 		};
 		document.body.appendChild(draggable.element);
 
-		this.agent.recordDragSettled(card.card.value.id);
+		this.agent.considerCardPosition(
+			card.card.value.id,
+			card.card.value.columnId,
+			card.card.value.columnPosition
+		);
 
 		draggable.element.style.position = 'absolute';
 		draggable.element.style.pointerEvents = 'none';
@@ -327,7 +331,7 @@ export class DndBoardContext {
 			}
 
 			if (card) {
-				this.agent.markAsDragDone(card.card.value.id);
+				this.agent.finalizeCardPosition(card.card.value.id);
 			}
 
 			return;
@@ -352,7 +356,7 @@ export class DndBoardContext {
 				document.body.removeChild(draggable.element);
 			}
 
-			this.agent.markAsDragDone(card.card.value.id);
+			this.agent.finalizeCardPosition(card.card.value.id);
 		}, DND_TRANSITION_DURATION_MS);
 	}
 
@@ -470,7 +474,7 @@ export class DndBoardContext {
 				prev: prev?.card.value.columnPosition,
 				next: next?.card.value.columnPosition,
 			});
-			this.agent.setCardPosition(
+			this.agent.considerCardPosition(
 				card.card.value.id,
 				targetColumn.column.value.id,
 				newCardPosition

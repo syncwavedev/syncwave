@@ -6,11 +6,13 @@ import {
 	compareBigFloat,
 	uniqBy,
 	type AwarenessState,
+	type BigFloat,
 	type Board,
 	type BoardViewDataDto,
 	type Card,
 	type CardId,
 	type Column,
+	type ColumnId,
 	type Timestamp,
 	type User,
 } from 'syncwave-data';
@@ -39,6 +41,8 @@ export class BoardData {
 	private _cardStates: Array<State<Card>> = $state.raw(lateInit());
 
 	readonly cardDragSettledAt = $state(new SvelteMap<CardId, Timestamp>());
+	readonly considerCardPosition = $state(new SvelteMap<CardId, BigFloat>());
+	readonly considerColumnId = $state(new SvelteMap<CardId, ColumnId>());
 
 	me: User = $derived(this._meState.value);
 	board: Board = $derived(this._boardState.value);
@@ -211,9 +215,9 @@ export class ColumnView implements Column {
 export class ColumnTreeView extends ColumnView {
 	cards = $derived(
 		this._data.cards
+			.map(x => new CardView(x, this._data))
 			.filter(x => x.columnId === this.id)
 			.filter(x => !x.deleted)
-			.map(x => new CardView(x, this._data))
 			.sort((a, b) => compareBigFloat(a.columnPosition, b.columnPosition))
 	);
 }
@@ -243,9 +247,23 @@ export class CardView implements Card {
 	createdAt = $derived(this._card.createdAt);
 	id = $derived(this._card.id);
 	pk = $derived(this._card.pk);
-	columnId = $derived(this._card.columnId);
 	boardId = $derived(this._card.boardId);
-	columnPosition = $derived(this._card.columnPosition);
+	columnId = $derived.by(() => {
+		const dndColumnId = this._data.considerColumnId.get(this.id);
+		if (dndColumnId) {
+			return dndColumnId;
+		}
+
+		return this._card.columnId;
+	});
+	columnPosition = $derived.by(() => {
+		const dndPosition = this._data.considerCardPosition.get(this.id);
+		if (dndPosition) {
+			return dndPosition;
+		}
+
+		return this._card.columnPosition;
+	});
 	counter = $derived(this._card.counter);
 	text = $derived(this._card.text);
 	assigneeId = $derived(this._card.assigneeId);

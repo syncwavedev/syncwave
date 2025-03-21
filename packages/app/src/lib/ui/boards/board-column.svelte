@@ -73,7 +73,7 @@
 		data-column-id={column.id}
 	>
 		<div
-			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 flex min-h-10 items-center px-2 py-1"
+			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 z-1 flex min-h-10 items-center px-2 py-1"
 			data-disable-scroll-view-drag="true"
 		>
 			<div class="text-2xs font-medium">

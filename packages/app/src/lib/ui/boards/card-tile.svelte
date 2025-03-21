@@ -66,7 +66,6 @@
 	$effect(() => {
 		if (card.dndLastChangeAt === undefined) return;
 		showDndPlaceholder = false;
-		console.log(card.dndLastChangeAt);
 		const timeoutId = setTimeout(
 			() => {
 				showDndPlaceholder = true;

@@ -480,3 +480,76 @@ export function uniqBy<K, V>(items: V[], cb: (item: V) => K) {
     }
     return [...result.values()];
 }
+
+export interface ClipOptions {
+    value: number;
+    min?: number;
+    max?: number;
+}
+
+export function clip({value, min, max}: ClipOptions) {
+    if (min !== undefined && value < min) {
+        return min;
+    }
+
+    if (max !== undefined && value > max) {
+        return max;
+    }
+
+    return value;
+}
+
+export function debounce<F extends (...args: any[]) => void>(
+    fn: F,
+    delay: number
+): (...args: Parameters<F>) => void {
+    let timer: ReturnType<typeof setTimeout>;
+
+    return (...args: Parameters<F>) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            fn(...args);
+        }, delay);
+    };
+}
+
+export function throttle<F extends (...args: any[]) => void>(
+    fn: F,
+    delay: number,
+    options: {leading?: boolean; trailing?: boolean} = {
+        leading: true,
+        trailing: true,
+    }
+): (...args: Parameters<F>) => void {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let lastCallTime = 0;
+    let lastArgs: Parameters<F> | null = null;
+
+    const {leading = true, trailing = true} = options;
+
+    const invoke = (args: Parameters<F>) => {
+        lastCallTime = Date.now();
+        fn(...args);
+    };
+
+    return (...args: Parameters<F>) => {
+        const now = Date.now();
+        if (!lastCallTime && !leading) lastCallTime = now;
+
+        const remaining = delay - (now - lastCallTime);
+        lastArgs = args;
+
+        if (remaining <= 0 || remaining > delay) {
+            if (timeout) {
+                clearTimeout(timeout);
+                timeout = null;
+            }
+            invoke(args);
+        } else if (!timeout && trailing) {
+            timeout = setTimeout(() => {
+                timeout = null;
+                if (trailing && lastArgs) invoke(lastArgs);
+            }, remaining);
+        }
+    };
+}

@@ -1,7 +1,9 @@
 import {getContext, onDestroy, setContext} from 'svelte';
 import {
+	clip,
 	compareBigFloat,
 	EventEmitter,
+	log,
 	runAll,
 	toPosition,
 	type CardId,
@@ -197,12 +199,12 @@ export class DndBoardContext {
 				draggable.element.style.left = `${startDraggableX + deltaX}px`;
 				draggable.element.style.top = `${startDraggableY + deltaY}px`;
 
-				this.handlePlacement(draggable, card);
+				this.handlePlacement(draggable, card.card.value.id);
 			}
 		);
 
 		const cancelScrollListener = this.scrollEmitter.subscribe(() => {
-			this.handlePlacement(draggable, card);
+			this.handlePlacement(draggable, card.card.value.id);
 		});
 
 		const cancelAutoscroll = this.monitorAutoscroll(draggable);
@@ -331,6 +333,9 @@ export class DndBoardContext {
 			return;
 		}
 
+		// find final placement
+		this.handlePlacement(draggable, cardId);
+
 		const draggableRect = draggable.element.getBoundingClientRect();
 
 		const transition = `transform ${DND_TRANSITION_DURATION_MS}ms ease`;
@@ -351,41 +356,43 @@ export class DndBoardContext {
 		}, DND_TRANSITION_DURATION_MS);
 	}
 
-	private handlePlacement(draggable: Draggable, card: DndCardContext) {
+	private getClosestColumn(draggable: Draggable) {
 		const draggableRect = draggable.element.getBoundingClientRect();
-		const draggableCenterX =
-			draggableRect.left + draggable.element.clientWidth / 2;
-		const draggableCenterY =
-			draggableRect.top + draggable.element.clientHeight / 2;
+		const boardRect = this.scrollable.getBoundingClientRect();
+		const draggableCenterX = clip({
+			value: draggableRect.left + draggable.element.clientWidth / 2,
+			min: boardRect.x,
+			max: boardRect.x + boardRect.width,
+		});
 
-		const targetColumn =
-			this.columns
-				.filter(x => x.container.isConnected)
-				.find(column => {
-					const rect = column.scrollable.getBoundingClientRect();
-					return (
-						draggableCenterX >= rect.left &&
-						draggableCenterX <= rect.right &&
-						draggableCenterY >= rect.top &&
-						draggableCenterY <= rect.bottom
-					);
-				}) ??
-			this.columns.find(
-				x => x.column.value.id === card.card.value.columnId
-			);
+		return this.columns
+			.filter(x => x.container.isConnected)
+			.map(column => {
+				const rect = column.scrollable.getBoundingClientRect();
+				return {
+					column,
+					distance: Math.abs(
+						rect.x + rect.width / 2 - draggableCenterX
+					),
+				};
+			})
+			.sort((a, b) => a.distance - b.distance)
+			.at(0)?.column;
+	}
 
+	private handlePlacement(draggable: Draggable, cardId: CardId) {
+		const targetColumn = this.getClosestColumn(draggable);
 		if (!targetColumn) {
+			log.warn('No target column for DnD found');
 			return;
 		}
 
-		this.handleCardPlacement(targetColumn, card, draggable);
-	}
+		const card = this.cards.find(x => x.card.value.id === cardId);
+		if (!card) {
+			log.warn('No card for DnD found');
+			return;
+		}
 
-	private handleCardPlacement(
-		targetColumn: DndColumnContext,
-		card: DndCardContext,
-		draggable: Draggable
-	) {
 		const draggableRect = draggable.element.getBoundingClientRect();
 		const draggableCenterY =
 			draggableRect.top + draggable.element.clientHeight / 2;

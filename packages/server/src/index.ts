@@ -284,7 +284,7 @@ function setupAppRouter(coordinator: () => CoordinatorServer, router: Router) {
             const {code, state} = ctx.query;
 
             if (typeof code !== 'string') {
-                return ctx.redirect(`${APP_URL}/auth/log-in/failed`);
+                return ctx.redirect(`${APP_URL}/login/failed`);
             }
 
             const result = await getGoogleUser(code, {
@@ -293,14 +293,14 @@ function setupAppRouter(coordinator: () => CoordinatorServer, router: Router) {
                 redirectUri: GOOGLE_REDIRECT_URL,
             });
             if (result.type === 'error') {
-                return ctx.redirect(`${APP_URL}/auth/log-in/failed`);
+                return ctx.redirect(`${APP_URL}/login/failed`);
             }
 
             if (!result.user.verified_email || !result.user.email) {
                 log.warn(
                     `Google user has unverified email: ${result.user.email}`
                 );
-                return ctx.redirect(`${APP_URL}/auth/log-in/failed`);
+                return ctx.redirect(`${APP_URL}/login/failed`);
             }
 
             const jwtToken = await coordinator().issueJwtByUserEmail({
@@ -314,11 +314,11 @@ function setupAppRouter(coordinator: () => CoordinatorServer, router: Router) {
             );
 
             return ctx.redirect(
-                `${APP_URL}/auth/log-in/callback/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
+                `${APP_URL}/login/callback/google/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
             );
         } catch (error) {
             log.error(toError(error), 'failed to handle google callback');
-            return ctx.redirect(`${APP_URL}/auth/log-in/failed`);
+            return ctx.redirect(`${APP_URL}/login/failed`);
         }
     });
 }

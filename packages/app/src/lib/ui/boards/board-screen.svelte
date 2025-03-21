@@ -134,15 +134,11 @@
 	});
 
 	$effect(() => {
-		if (columnsContainerRef) {
-			dndContext.container = columnsContainerRef;
+		if (columnsContainerRef && viewportRef) {
+			return dndContext.registerBoard(columnsContainerRef, viewportRef);
 		}
-	});
 
-	$effect(() => {
-		if (viewportRef) {
-			dndContext.scrollable = viewportRef;
-		}
+		return undefined;
 	});
 </script>
 

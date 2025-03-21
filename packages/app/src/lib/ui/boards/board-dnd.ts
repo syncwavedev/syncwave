@@ -1,6 +1,7 @@
 import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	compareBigFloat,
+	EventEmitter,
 	runAll,
 	toPosition,
 	type BigFloat,
@@ -52,7 +53,23 @@ export class DndBoardContext {
 	private cards: DndCardContext[] = [];
 	public cleanups: Cleanup[] = [];
 
+	private scrollEmitter = new EventEmitter<void>();
+
 	constructor(private readonly options: DndBoardContextOptions) {}
+
+	registerBoard(container: HTMLDivElement, scrollable: HTMLDivElement) {
+		this.container = container;
+		this.scrollable = scrollable;
+
+		const scrollListener = () => this.scrollEmitter.emit();
+		this.addListener(this, this.scrollable, 'scroll', scrollListener, {
+			passive: true,
+		});
+
+		return () => {
+			this.destroy();
+		};
+	}
 
 	registerCard(card: DndCardContext): Cleanup {
 		this.cards.push(card);
@@ -69,6 +86,10 @@ export class DndBoardContext {
 
 	registerColumn(column: DndColumnContext) {
 		this.columns.push(column);
+		const scrollListener = () => this.scrollEmitter.emit();
+		this.addListener(column, column.scrollable, 'scroll', scrollListener, {
+			passive: true,
+		});
 
 		return () => {
 			this.columns = this.columns.filter(x => x !== column);
@@ -81,7 +102,12 @@ export class DndBoardContext {
 			this.cleanups
 				.concat(this.cards.flatMap(x => x.cleanups))
 				.concat(this.columns.flatMap(x => x.cleanups))
+				.concat([() => this.scrollEmitter.close()])
 		);
+
+		this.cards = [];
+		this.columns = [];
+		this.cleanups = [];
 	}
 
 	private startDrag(downEvent: PointerEvent, card: DndCardContext) {
@@ -120,9 +146,14 @@ export class DndBoardContext {
 			}
 		);
 
+		const cancelScrollListener = this.scrollEmitter.subscribe(() => {
+			this.handlePlacement(draggable, card);
+		});
+
 		const cleanup = () => {
 			cancelPointerUp();
 			cancelPointerMove();
+			cancelScrollListener('startDrag cleanup');
 
 			delete card.container.dataset.dndPlaceholder;
 
@@ -252,10 +283,11 @@ export class DndBoardContext {
 		cleanupContext: CleanupContext,
 		element: HTMLElement,
 		event: K,
-		handler: (event: HTMLElementEventMap[K], cleanup: Cleanup) => void
+		handler: (event: HTMLElementEventMap[K], cleanup: Cleanup) => void,
+		options?: {passive?: boolean; capture?: boolean}
 	) {
 		const cleanup = () => {
-			element.removeEventListener(event, wrapper);
+			element.removeEventListener(event, wrapper, options);
 			cleanupContext.cleanups = cleanupContext.cleanups.filter(
 				x => x !== wrapper
 			);
@@ -267,7 +299,7 @@ export class DndBoardContext {
 
 		cleanupContext.cleanups.push(cleanup);
 
-		element.addEventListener(event, wrapper);
+		element.addEventListener(event, wrapper, options);
 
 		return cleanup;
 	}

@@ -28,6 +28,7 @@ export * from './data/repos/user-repo.js';
 export * from './data/write-api.js';
 export * from './deferred.js';
 export * from './errors.js';
+export * from './event-emitter.js';
 export * from './kv/instrumented-kv-store.js';
 export * from './kv/kv-store-isolator.js';
 export * from './kv/kv-store-mapper.js';

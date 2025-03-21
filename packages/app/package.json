@@ -80,7 +80,7 @@
 		"javascript-time-ago": "^2.5.11",
 		"regexparam": "^3.0.0",
 		"serve": "^14.2.4",
-		"syncwave-dnd": "^0.9.106",
+		"svelte-dnd-action": "^0.9.60",
 		"svelte-tiptap": "^2.1.0",
 		"syncwave-data": "*",
 		"tailwindcss": "^4.0.12",

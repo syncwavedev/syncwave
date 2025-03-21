@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type {MemberDto} from 'syncwave-data';
-	import {dndzone, type DndEvent} from 'syncwave-dnd';
+	import {dndzone, type DndEvent} from 'svelte-dnd-action';
 	import BoardItem from './board-item.svelte';
 
 	const flipDurationMs = 100;

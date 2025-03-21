@@ -1,6 +1,6 @@
 <script lang="ts">
 	import EditBoardDialogColumnsFrozenColumn from './edit-board-dialog-columns-frozen-column.svelte';
-	import {dragHandleZone, dragHandle, type DndEvent} from 'syncwave-dnd';
+	import {dragHandleZone, dragHandle, type DndEvent} from 'svelte-dnd-action';
 	import GripHorizontalIcon from '../icons/grip-horizontal-icon.svelte';
 	import type {DndColumn} from '../../ui/boards/use-board-view.svelte';
 

@@ -46,6 +46,12 @@ export interface DndBoardContextOptions {
 	) => void;
 }
 
+interface Draggable {
+	element: HTMLElement;
+	targetX: number;
+	targetY: number;
+}
+
 export class DndBoardContext {
 	container: HTMLDivElement = lateInit();
 	scrollable: HTMLDivElement = lateInit();
@@ -109,37 +115,45 @@ export class DndBoardContext {
 		this.columns = [];
 		this.cleanups = [];
 	}
+
 	private startDrag(downEvent: PointerEvent, card: DndCardContext) {
-		const draggable = card.container.cloneNode(true) as HTMLDivElement;
-		document.body.appendChild(draggable);
+		const draggable: Draggable = {
+			element: card.container.cloneNode(true) as HTMLDivElement,
+			targetX: card.container.getBoundingClientRect().left,
+			targetY: card.container.getBoundingClientRect().top,
+		};
+		document.body.appendChild(draggable.element);
 
 		card.container.dataset.dndPlaceholder = 'true';
 
-		draggable.style.position = 'absolute';
-		draggable.style.pointerEvents = 'none';
-		draggable.style.zIndex = '1000';
-		draggable.style.userSelect = 'none';
-		draggable.style.width = `${card.container.clientWidth}px`;
-		draggable.style.height = `${card.container.clientHeight}px`;
-		draggable.style.top = `${card.container.getBoundingClientRect().top}px`;
-		draggable.style.left = `${card.container.getBoundingClientRect().left}px`;
+		draggable.element.style.position = 'absolute';
+		draggable.element.style.pointerEvents = 'none';
+		draggable.element.style.zIndex = '1000';
+		draggable.element.style.userSelect = 'none';
+		draggable.element.style.width = `${card.container.clientWidth}px`;
+		draggable.element.style.height = `${card.container.clientHeight}px`;
 
-		draggable.setPointerCapture(downEvent.pointerId);
+		const startDraggableX = card.container.getBoundingClientRect().left;
+		const startDraggableY = card.container.getBoundingClientRect().top;
 
-		const startX = downEvent.pageX;
-		const startY = downEvent.pageY;
+		draggable.element.style.left = `${startDraggableX}px`;
+		draggable.element.style.top = `${startDraggableY}px`;
+
+		draggable.element.setPointerCapture(downEvent.pointerId);
+
+		const startPointerX = downEvent.pageX;
+		const startPointerY = downEvent.pageY;
 
 		const cancelPointerMove = this.addListener(
 			this,
-			draggable,
+			draggable.element,
 			'pointermove',
 			moveEvent => {
-				const deltaX = moveEvent.pageX - startX;
-				const deltaY = moveEvent.pageY - startY;
-				draggable.style.setProperty(
-					'transform',
-					`translate(${deltaX}px, ${deltaY}px)`
-				);
+				const deltaX = moveEvent.pageX - startPointerX;
+				const deltaY = moveEvent.pageY - startPointerY;
+
+				draggable.element.style.left = `${startDraggableX + deltaX}px`;
+				draggable.element.style.top = `${startDraggableY + deltaY}px`;
 
 				this.handlePlacement(draggable, card);
 			}
@@ -149,30 +163,30 @@ export class DndBoardContext {
 			this.handlePlacement(draggable, card);
 		});
 
+		let cleanedUp = false;
 		const cleanup = () => {
+			if (cleanedUp) return;
+			cleanedUp = true;
+
 			cancelPointerUp();
 			cancelPointerMove();
 			cancelScrollListener('startDrag cleanup');
 			cancelPointerCancel();
 			globalListeners.forEach(cancel => cancel());
 
-			delete card.container.dataset.dndPlaceholder;
-
-			if (draggable.isConnected) {
-				draggable.releasePointerCapture(downEvent.pointerId);
-				document.body.removeChild(draggable);
-			}
+			draggable.element.releasePointerCapture(downEvent.pointerId);
+			this.handleDrop(card.card.value.id, draggable);
 		};
 
 		const cancelPointerUp = this.addListener(
 			this,
-			draggable,
+			draggable.element,
 			'pointerup',
 			cleanup
 		);
 		const cancelPointerCancel = this.addListener(
 			this,
-			draggable,
+			draggable.element,
 			'pointercancel',
 			cleanup
 		);
@@ -200,10 +214,43 @@ export class DndBoardContext {
 		});
 	}
 
-	private handlePlacement(draggable: HTMLDivElement, card: DndCardContext) {
-		const draggableRect = draggable.getBoundingClientRect();
-		const draggableCenterX = draggableRect.left + draggable.clientWidth / 2;
-		const draggableCenterY = draggableRect.top + draggable.clientHeight / 2;
+	private handleDrop(cardId: CardId, draggable: Draggable) {
+		const card = this.cards.find(x => x.card.value.id === cardId);
+		if (!card || !card.container.isConnected) {
+			if (draggable.element.isConnected) {
+				document.body.removeChild(draggable.element);
+			}
+
+			delete card?.container.dataset.dndPlaceholder;
+
+			return;
+		}
+
+		const TRANSITION_DURATION_MS = 300;
+
+		const draggableRect = draggable.element.getBoundingClientRect();
+
+		const transition = `transform ${TRANSITION_DURATION_MS}ms ease`;
+		draggable.element.style.transition = draggable.element.style.transition
+			? draggable.element.style.transition + ',' + transition
+			: transition;
+		draggable.element.style.transform = `translate(${draggable.targetX - draggableRect.x}px, ${draggable.targetY - draggableRect.y}px)`;
+
+		setTimeout(() => {
+			if (draggable.element.isConnected) {
+				document.body.removeChild(draggable.element);
+			}
+
+			delete card.container.dataset.dndPlaceholder;
+		}, TRANSITION_DURATION_MS);
+	}
+
+	private handlePlacement(draggable: Draggable, card: DndCardContext) {
+		const draggableRect = draggable.element.getBoundingClientRect();
+		const draggableCenterX =
+			draggableRect.left + draggable.element.clientWidth / 2;
+		const draggableCenterY =
+			draggableRect.top + draggable.element.clientHeight / 2;
 
 		const targetColumn = this.columns
 			.filter(x => x.container.isConnected)
@@ -217,22 +264,23 @@ export class DndBoardContext {
 				);
 			});
 
-		if (targetColumn) {
-			this.handleCardPlacement(
-				targetColumn,
-				card,
-				draggableRect.height,
-				draggableCenterY
-			);
+		if (!targetColumn) {
+			return;
 		}
+
+		this.handleCardPlacement(targetColumn, card, draggable);
 	}
 
 	private handleCardPlacement(
 		targetColumn: DndColumnContext,
 		card: DndCardContext,
-		cardHeight: number,
-		draggableCenterY: number
+		draggable: Draggable
 	) {
+		const draggableRect = draggable.element.getBoundingClientRect();
+		const draggableCenterY =
+			draggableRect.top + draggable.element.clientHeight / 2;
+		const cardHeight = card.container.clientHeight;
+
 		const columnCards = this.cards
 			.filter(
 				x =>
@@ -263,7 +311,8 @@ export class DndBoardContext {
 		const GAP = 6; // 6px
 
 		let offsetTop = targetColumn.container.getBoundingClientRect().top;
-		for (const [index, neighbor] of columnCards.entries()) {
+		const offsetLeft = targetColumn.container.getBoundingClientRect().left;
+		for (const neighbor of columnCards) {
 			const neighborRectNative =
 				neighbor.container.getBoundingClientRect();
 			const neighborRect = {
@@ -273,10 +322,7 @@ export class DndBoardContext {
 				top: offsetTop,
 			};
 			const combinedHeight = neighborRect.height + GAP + cardHeight;
-			const combinedTop =
-				oldIndexInTargetColumn > index || oldIndexInTargetColumn === -1
-					? neighborRect.top
-					: neighborRect.top - cardHeight - GAP;
+			const combinedTop = offsetTop;
 			const combinedCenterY = combinedTop + combinedHeight / 2;
 
 			if (draggableCenterY <= combinedCenterY) {
@@ -286,14 +332,18 @@ export class DndBoardContext {
 			}
 
 			prev = neighbor;
-			offsetTop += GAP + neighborRect.height;
+			if (neighbor.card.value.id !== card.card.value.id) {
+				offsetTop += GAP + neighborRect.height;
+			}
 		}
 
 		if (
 			(oldIndexInTargetColumn === -1 ||
 				(prev?.card.value.id !== card.card.value.id &&
 					next?.card.value.id !== card.card.value.id)) &&
-			(oldPrev?.card.value.id !== prev?.card.value.id ||
+			(oldPrev === undefined ||
+				oldPrev?.card.value.id !== prev?.card.value.id ||
+				oldNext === undefined ||
 				oldNext?.card.value.id !== next?.card.value.id)
 		) {
 			const newCardPosition = toPosition({
@@ -305,6 +355,9 @@ export class DndBoardContext {
 				targetColumn.column.value.id,
 				newCardPosition
 			);
+
+			draggable.targetX = offsetLeft;
+			draggable.targetY = offsetTop;
 		}
 	}
 

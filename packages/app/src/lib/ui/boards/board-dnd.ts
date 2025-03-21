@@ -66,8 +66,32 @@ export class DndBoardContext {
 	public cleanups: Cleanup[] = [];
 
 	private scrollEmitter = new EventEmitter<void>();
+	private cancelDragEmitter = new EventEmitter<void>();
 
-	constructor(private readonly options: DndBoardContextOptions) {}
+	constructor(private readonly options: DndBoardContextOptions) {
+		// global listeners to cover potential interruptions
+		const globalEvents = [
+			'contextmenu',
+			'blur',
+			'visibilitychange',
+			'pointerleave',
+			'pointerup',
+			'pointercancel',
+		];
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		globalEvents.forEach((eventName: any) => {
+			const cancelListener = this.addListener(
+				this,
+				document,
+				eventName,
+				() => {
+					this.cancelDragEmitter.emit();
+				}
+			);
+			this.cleanups.push(cancelListener);
+		});
+	}
 
 	registerBoard(container: HTMLDivElement, scrollable: HTMLDivElement) {
 		this.container = container;
@@ -86,8 +110,27 @@ export class DndBoardContext {
 	registerCard(card: DndCardContext): Cleanup {
 		this.cards.push(card);
 
-		this.addListener(card, card.container, 'pointerdown', e => {
-			this.startDrag(e, card);
+		this.addListener(card, card.container, 'pointerdown', downEvent => {
+			const cleanupDown = () => {
+				cancelPointerMoveListener();
+				cancelDragSub('registerCard pointerdown cleanup');
+			};
+
+			const cancelDragSub = this.cancelDragEmitter.subscribe(() => {
+				cleanupDown();
+			});
+
+			const cancelPointerMoveListener = this.addListener(
+				card,
+				card.container,
+				'pointermove',
+				moveEvent => {
+					if (downEvent.pointerId !== moveEvent.pointerId) return;
+
+					cleanupDown();
+					this.startDrag(moveEvent, card);
+				}
+			);
 		});
 
 		return () => {
@@ -192,11 +235,15 @@ export class DndBoardContext {
 			cancelPointerMove();
 			cancelScrollListener('startDrag cleanup');
 			cancelPointerCancel();
-			globalListeners.forEach(cancel => cancel());
+			cancelDragSub('startDrag cleanup');
 
 			draggable.element.releasePointerCapture(downEvent.pointerId);
 			this.handleDrop(card.card.value.id, draggable);
 		};
+
+		const cancelDragSub = this.cancelDragEmitter.subscribe(() => {
+			cleanup();
+		});
 
 		const cancelPointerUp = this.addListener(
 			this,
@@ -210,28 +257,6 @@ export class DndBoardContext {
 			'pointercancel',
 			cleanup
 		);
-
-		// global listeners to cover potential interruptions
-		const globalEvents = [
-			'contextmenu',
-			'blur',
-			'visibilitychange',
-			'pointerleave',
-		];
-		const globalListeners: Array<() => void> = [];
-
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		globalEvents.forEach((eventName: any) => {
-			const cancelListener = this.addListener(
-				this,
-				document,
-				eventName,
-				() => {
-					cleanup();
-				}
-			);
-			globalListeners.push(cancelListener);
-		});
 	}
 
 	private monitorAutoscroll(draggable: Draggable) {

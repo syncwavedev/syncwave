@@ -39,25 +39,27 @@
 	let boardRef: HTMLElement | null = $state(null);
 
 	$effect(() => {
-		tick().then(() => {
-			if (boardRef && selectedCard) {
-				const cardElement = boardRef.querySelector(
-					`[data-card-id="${selectedCard.id}"]`
-				) as HTMLElement;
+		if (boardRef && selectedCard) {
+			tick().then(() => {
+				if (boardRef && selectedCard) {
+					const cardElement = boardRef.querySelector(
+						`[data-card-id="${selectedCard.id}"]`
+					) as HTMLElement;
 
-				if (cardElement) {
-					const columnElement =
-						cardElement.closest('[data-column-id]');
-					if (columnElement) {
-						columnElement.scrollIntoView({
-							behavior: 'smooth',
-							inline: 'nearest',
-							block: 'nearest',
-						});
+					if (cardElement) {
+						const columnElement =
+							cardElement.closest('[data-column-id]');
+						if (columnElement) {
+							columnElement.scrollIntoView({
+								behavior: 'smooth',
+								inline: 'nearest',
+								block: 'nearest',
+							});
+						}
 					}
 				}
-			}
-		});
+			});
+		}
 	});
 
 	$effect(() => {

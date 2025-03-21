@@ -38,11 +38,9 @@
 		try {
 			// const result = await agent.sendSignInEmail(email.trim());
 			// if (result.type === 'success') {
-			router.navigate({
-				onBack: () => {
-					email = '';
-					showCodeInput = false;
-				},
+			router.action(() => {
+				email = '';
+				showCodeInput = false;
 			});
 			showCodeInput = true;
 			// } else {

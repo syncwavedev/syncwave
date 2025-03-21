@@ -1,23 +1,20 @@
 import * as regexparam from 'regexparam';
 
-// Define the NavigatorItem interface
-interface NavigatorItem {
-	onBack?: () => void;
+interface NavItem {
 	uri?: string;
 	replace?: boolean;
 	shallow?: boolean;
+	onEscape?: boolean;
+	onBack?: () => void;
 }
 
-// Interface for registered routes
 interface Route {
 	pattern: RegExp;
 	keys: string[];
 	handler: (params: Record<string, string | undefined>) => void;
 }
 
-// Interface for history state (no navigatorItem)
 interface RouterState {
-	historyLength: number;
 	shallow?: boolean;
 	id: number;
 }
@@ -28,9 +25,8 @@ class Router {
 	private routes: Route[] = [];
 	private currentUri: string | null = null;
 	private rgx: RegExp;
-	private currentHistoryLength: number = 0;
 	private id: number = Date.now();
-	private navigations: NavigatorItem[] = []; // Navigation stack
+	private navigations: NavItem[] = [];
 
 	constructor(base: string = '', on404?: (uri: string) => void) {
 		this.base = '/' + (base || '').replace(/^\/|\/$/g, '');
@@ -39,6 +35,8 @@ class Router {
 			this.base === '/'
 				? /^\/+/
 				: new RegExp('^\\' + this.base + '(?=\\/|$)\\/?', 'i');
+
+		this.listen();
 	}
 
 	/** Formats a URI by ensuring it starts with '/' and respects the base path. */
@@ -48,39 +46,54 @@ class Router {
 		return this.rgx.test(uri) ? uri.replace(this.rgx, '/') : uri;
 	}
 
-	/** Navigates to a URI using the provided NavigatorItem. */
-	public navigate(item: NavigatorItem): void {
-		const {uri, replace = false, shallow = false} = item;
-		const formattedUri = this.format(uri || location.pathname);
+	public route(
+		uri: string,
+		options: {
+			replace?: boolean;
+			shallow?: boolean;
+			onEscape?: boolean;
+			onBack?: () => void;
+		} = {}
+	): void {
+		const {
+			replace = false,
+			shallow = false,
+			onEscape = false,
+			onBack,
+		} = options;
 
-		if (formattedUri) {
-			const method = replace ? 'replaceState' : 'pushState';
-			if (method === 'pushState') {
-				this.navigations.push(item);
-				this.currentHistoryLength += 1;
-			} else {
-				if (this.navigations.length > 0) {
-					this.navigations[this.navigations.length - 1] = item;
-				} else {
-					this.navigations.push(item);
-				}
-			}
+		// Prepend base if URI starts with '/' but doesn't match the base
+		if (uri[0] === '/' && !this.rgx.test(uri)) {
+			uri = this.base + uri;
+		}
 
-			const state: RouterState = {
-				historyLength: this.currentHistoryLength,
-				shallow,
-				id: this.id,
-			};
+		this.id = Date.now();
+		const state: RouterState = {
+			id: this.id,
+			shallow,
+		};
 
-			history[method](state, '', formattedUri);
+		this.navigations.push({uri, replace, shallow, onEscape, onBack});
 
-			if (!shallow && uri) {
-				this.run(formattedUri);
-			}
+		if (uri === this.currentUri || replace) {
+			history.replaceState(state, '', uri);
+		} else {
+			history.pushState(state, '', uri);
 		}
 	}
 
-	/** Registers a route with a pattern and handler. */
+	public action(onBack: () => void, onEscape?: boolean): void {
+		this.id = Date.now();
+		const state: RouterState = {
+			id: this.id,
+			shallow: true,
+		};
+
+		this.navigations.push({onBack, onEscape});
+
+		history.pushState(state, '', `#${this.id}`);
+	}
+
 	public on(
 		pattern: string,
 		handler: (params: Record<string, string | undefined>) => void
@@ -90,7 +103,6 @@ class Router {
 		return this;
 	}
 
-	/** Matches a URI to a route and runs its handler. */
 	public run(uri?: string): this {
 		const formattedUri = this.format(uri || location.pathname);
 		if (formattedUri) {
@@ -116,37 +128,26 @@ class Router {
 		return this;
 	}
 
-	/** Handles navigation events like popstate. */
 	private runOnEvent = (e: Event): void => {
 		if (e.type === 'popstate') {
 			const newState = (e as PopStateEvent).state as RouterState | null;
 
-			if (!newState || newState.id !== this.id) {
-				history.replaceState(
-					{historyLength: this.currentHistoryLength, id: this.id},
-					''
-				);
-				this.run();
-				return;
-			}
+			if (newState && typeof newState.id === 'number') {
+				const direction = newState.id < this.id ? 'back' : 'forward';
+				this.id = newState.id;
 
-			const direction =
-				newState.historyLength < this.currentHistoryLength ? 'back' : 'forward';
-			this.currentHistoryLength = newState.historyLength;
-
-			console.log('Direction:', direction);
-			console.log('Current history length:', this.currentHistoryLength);
-			console.log('New state:', newState);
-
-			if (direction === 'back' && this.navigations.length > 0) {
-				const item = this.navigations.pop();
-				if (item?.onBack) {
-					item.onBack();
-					return;
+				if (direction === 'back') {
+					const item = this.navigations.pop();
+					if (item && item.onBack) {
+						item.onBack();
+						return;
+					}
 				}
 			}
+
 			this.run();
 		} else {
+			// For pushstate/replacestate, run only if not shallow
 			const state = (e as {state?: RouterState}).state;
 			if (!state?.shallow) {
 				this.run();
@@ -158,7 +159,7 @@ class Router {
 	private handleKeydown = (e: KeyboardEvent): void => {
 		if (e.key === 'Escape' && this.navigations.length > 0) {
 			const topItem = this.navigations[this.navigations.length - 1];
-			if (topItem.onBack) {
+			if (topItem.onEscape && topItem.onBack) {
 				e.preventDefault();
 				history.back();
 			}
@@ -181,15 +182,12 @@ class Router {
 		if (!href || href[0] === '#') return;
 
 		e.preventDefault();
-		const navigatorItem: NavigatorItem = {
-			uri: href,
-			replace: target.hasAttribute('data-replace'),
-			shallow: target.hasAttribute('data-shallow'),
-		};
-		this.navigate(navigatorItem);
+
+		const replace = target.hasAttribute('data-replace');
+		const shallow = target.hasAttribute('data-shallow');
+		this.route(href, {replace, shallow});
 	};
 
-	/** Starts listening to navigation events. */
 	public listen(): this {
 		this.wrapHistoryMethod('push');
 		this.wrapHistoryMethod('replace');
@@ -201,8 +199,7 @@ class Router {
 		this.run();
 
 		if (!history.state) {
-			this.currentHistoryLength = 1;
-			history.replaceState({historyLength: 1, id: this.id}, '');
+			history.replaceState({id: this.id}, '');
 		}
 		return this;
 	}

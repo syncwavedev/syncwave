@@ -63,13 +63,13 @@
 			Page = Loading;
 
 			if (!authManager.getIdentityInfo()) {
-				router.navigate({uri: '/login', replace: true});
+				router.route('/login', {replace: true});
 				return;
 			}
 
 			const lastBoardKey = BoardHistoryManager.last();
 			if (lastBoardKey) {
-				router.navigate({uri: `/b/${lastBoardKey}`, replace: true});
+				router.route(`/b/${lastBoardKey}`, {replace: true});
 			}
 		});
 		router.on('/login', () => {
@@ -84,6 +84,10 @@
 		router.on('/b/:key', params => {
 			Page = BoardPage;
 			pageProps = {key: params.key ?? ''};
+		});
+		router.on('/b/:key/c/:counter', params => {
+			Page = BoardPage;
+			pageProps = {key: params.key ?? '', counter: params.counter ?? ''};
 		});
 		router.on('/testbed', () => {
 			Page = Testbed;

@@ -17,9 +17,9 @@
 	if (redirectUrl) {
 		window.location.href = redirectUrl;
 	} else {
-		router.navigate({
-			uri: `/auth/log-in?redirectUrl=${encodeURIComponent(redirectUrl ?? '/')}`,
-		});
+		router.route(
+			`/auth/log-in?redirectUrl=${encodeURIComponent(redirectUrl ?? '/')}`
+		);
 		console.error('Redirect URL not provided');
 	}
 </script>

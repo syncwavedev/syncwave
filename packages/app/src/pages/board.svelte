@@ -5,7 +5,7 @@
 	import Loading from '../lib/ui/components/loading.svelte';
 	import {getAuthManager} from '../lib/utils';
 
-	const {key}: {key: string} = $props();
+	const {key}: {key: string; counter?: string} = $props();
 
 	const agent = getAgent();
 	const authManager = getAuthManager();

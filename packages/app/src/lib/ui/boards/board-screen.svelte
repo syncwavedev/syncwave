@@ -6,7 +6,6 @@
 	import SearchIcon from '../components/icons/search-icon.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import BoardColumn from './board-column.svelte';
-	import appNavigator from '../../app-navigator';
 	import Scrollable from '../components/scrollable.svelte';
 	import type {BoardTreeView, CardView} from '../../agent/view.svelte';
 	import CardDetails from './card-details.svelte';
@@ -61,7 +60,9 @@
 	});
 
 	function onCardClick(item: CardView) {
-		appNavigator.replace({
+		router.route(`/b/${board.key}/c/${item.counter}`, {
+			replace: selectedCard !== null,
+			shallow: true,
 			onBack: () => {
 				selectedCard = null;
 			},
@@ -74,7 +75,7 @@
 	$effect(() => {
 		if (board.deleted) {
 			log.info(`board ${board.id} got deleted, redirect to app...`);
-			router.navigate({uri: '/'});
+			router.route('/');
 		}
 	});
 
@@ -102,23 +103,17 @@
 	function editBoard() {
 		editBoardOpen = true;
 
-		appNavigator.push({
-			onBack: () => {
-				editBoardOpen = false;
-			},
-			onEscape: true,
-		});
+		router.action(() => {
+			editBoardOpen = false;
+		}, true);
 	}
 
 	function editMyProfile() {
 		editMyProfileOpen = true;
 
-		appNavigator.push({
-			onBack: () => {
-				editMyProfileOpen = false;
-			},
-			onEscape: true,
-		});
+		router.action(() => {
+			editMyProfileOpen = false;
+		}, true);
 	}
 
 	let columnsContainerRef: HTMLDivElement | null = $state(null);

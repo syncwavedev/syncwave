@@ -7,7 +7,6 @@
 	import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
 	import UserIcon from '../components/icons/user-icon.svelte';
 	import Editor from '../../components/editor.svelte';
-	import appNavigator from '../../app-navigator';
 	import type {BoardTreeView, CardView} from '../../agent/view.svelte';
 	import {getAgent} from '../../agent/agent.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
@@ -64,7 +63,7 @@
 					</ul>
 				</div>
 			</div>
-			<button class="btn--icon" onclick={appNavigator.back}>
+			<button class="btn--icon" onclick={history.back}>
 				<TimesIcon />
 			</button>
 		</div>

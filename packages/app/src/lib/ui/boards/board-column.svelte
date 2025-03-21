@@ -79,6 +79,7 @@
 			{#each column.cards as card (card.id)}
 				<div
 					animate:flip={{duration: 100}}
+					class="text-xs"
 					data-disable-scroll-view-drag="true"
 				>
 					<CardTile

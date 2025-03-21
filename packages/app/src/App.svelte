@@ -32,6 +32,7 @@
 	import BoardHistoryManager from './lib/board-history-manager';
 	import Loading from './lib/ui/components/loading.svelte';
 	import LoginFailed from './pages/login-failed.svelte';
+	import Testbed from './pages/testbed.svelte';
 
 	const themeManager = createThemeManager();
 	setContext('theme', {
@@ -93,6 +94,9 @@
 		router.on('/b/:key', params => {
 			Page = BoardPage;
 			pageProps = {key: params.key ?? ''};
+		});
+		router.on('/testbed', () => {
+			Page = Testbed;
 		});
 
 		router.listen();

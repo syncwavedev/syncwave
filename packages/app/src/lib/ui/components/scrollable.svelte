@@ -6,6 +6,7 @@
 	let {
 		orientation = 'vertical',
 		ref = $bindable(null),
+		viewportRef = $bindable(null),
 		hasTopScroll = $bindable(false),
 		hasBottomScroll = $bindable(false),
 		hasLeft = $bindable(false),
@@ -18,6 +19,7 @@
 	}: {
 		orientation?: 'vertical' | 'horizontal' | 'both';
 		ref?: HTMLDivElement | null;
+		viewportRef?: HTMLDivElement | null;
 		hasTopScroll?: boolean;
 		hasBottomScroll?: boolean;
 		hasLeft?: boolean;
@@ -28,8 +30,6 @@
 		draggable?: boolean;
 		[key: string]: unknown;
 	} = $props();
-
-	let viewportRef: HTMLDivElement | null = $state(null);
 
 	// Handle scroll updates for all orientations
 	function handleScroll() {
@@ -111,7 +111,6 @@
 	});
 </script>
 
-<!-- Scrollbar snippet for reusability -->
 {#snippet Scrollbar({orientation}: {orientation: 'vertical' | 'horizontal'})}
 	<ScrollArea.Scrollbar
 		forceMount
@@ -127,7 +126,6 @@
 	</ScrollArea.Scrollbar>
 {/snippet}
 
-<!-- Scroll area structure -->
 <ScrollArea.Root bind:ref scrollHideDelay={250} {type} {...restProps}>
 	<ScrollArea.Viewport
 		bind:ref={viewportRef}

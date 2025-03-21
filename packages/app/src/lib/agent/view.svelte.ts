@@ -3,6 +3,7 @@ import {
 	AppError,
 	assert,
 	Awareness,
+	compareBigFloat,
 	uniqBy,
 	type AwarenessState,
 	type Board,
@@ -167,6 +168,7 @@ export class BoardTreeView extends BoardView {
 		this._data.columns
 			.filter(x => !x.deleted)
 			.map(x => new ColumnTreeView(x, this._data))
+			.sort((a, b) => compareBigFloat(a.boardPosition, b.boardPosition))
 	);
 }
 
@@ -208,6 +210,7 @@ export class ColumnTreeView extends ColumnView {
 			.filter(x => x.columnId === this.id)
 			.filter(x => !x.deleted)
 			.map(x => new CardView(x, this._data))
+			.sort((a, b) => compareBigFloat(a.columnPosition, b.columnPosition))
 	);
 }
 

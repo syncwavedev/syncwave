@@ -180,7 +180,7 @@
 			orientation="horizontal"
 			class="flex-grow"
 			type="scroll"
-			draggable={true}
+			draggable
 		>
 			<div
 				bind:this={boardRef}

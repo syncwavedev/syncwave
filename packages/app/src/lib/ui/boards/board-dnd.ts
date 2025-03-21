@@ -66,7 +66,7 @@ export class DndBoardContext {
 	public cleanups: Cleanup[] = [];
 
 	private scrollEmitter = new EventEmitter<void>();
-	private cancelDragEmitter = new EventEmitter<void>();
+	private cancelDragEmitter = new EventEmitter<{pointerId?: number}>();
 
 	constructor(private readonly options: DndBoardContextOptions) {
 		// global listeners to cover potential interruptions
@@ -85,8 +85,8 @@ export class DndBoardContext {
 				this,
 				document,
 				eventName,
-				() => {
-					this.cancelDragEmitter.emit();
+				e => {
+					this.cancelDragEmitter.emit({pointerId: e.pointerId});
 				}
 			);
 			this.cleanups.push(cancelListener);
@@ -116,8 +116,13 @@ export class DndBoardContext {
 				cancelDragSub('registerCard pointerdown cleanup');
 			};
 
-			const cancelDragSub = this.cancelDragEmitter.subscribe(() => {
-				cleanupDown();
+			const cancelDragSub = this.cancelDragEmitter.subscribe(e => {
+				if (
+					e.pointerId !== undefined ||
+					e.pointerId === downEvent.pointerId
+				) {
+					cleanupDown();
+				}
 			});
 
 			const cancelPointerMoveListener = this.addListener(

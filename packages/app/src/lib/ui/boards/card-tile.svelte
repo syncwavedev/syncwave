@@ -1,9 +1,5 @@
 <script lang="ts">
-	import {
-		yFragmentToPlaintext,
-		yFragmentToPlaintextAndTaskList,
-		yFragmentToTaskList,
-	} from '../../richtext';
+	import {yFragmentToPlaintextAndTaskList} from '../../richtext';
 	import Avatar from '../components/avatar.svelte';
 	import type {CardView} from '../../agent/view.svelte';
 	import {getAgent} from '../../agent/agent.svelte';
@@ -130,9 +126,7 @@
 						hovers {card.hoverUsers.map(x => x.fullName).join(', ')}
 					{/if}
 					{#if card.viewerUsers.length > 0}
-						viewers {card.viewerUsers
-							.map(x => x.fullName)
-							.join(', ')}
+						viewers {card.viewerUsers.map(x => x.fullName).join(', ')}
 					{/if}
 				</span>
 				{#if todoStats.total > 0}

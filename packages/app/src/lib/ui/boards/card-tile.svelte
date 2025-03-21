@@ -1,5 +1,9 @@
 <script lang="ts">
-	import {yFragmentToPlaintext, yFragmentToTaskList} from '../../richtext';
+	import {
+		yFragmentToPlaintext,
+		yFragmentToPlaintextAndTaskList,
+		yFragmentToTaskList,
+	} from '../../richtext';
 	import Avatar from '../components/avatar.svelte';
 	import type {CardView} from '../../agent/view.svelte';
 	import {getAgent} from '../../agent/agent.svelte';
@@ -15,15 +19,19 @@
 		active: boolean;
 	} = $props();
 
-	let preview = $derived.by(() => {
-		const result = yFragmentToPlaintext(card.text.__fragment!)
-			.split('\n')[0]
-			?.trim();
+	let {preview, todoStats} = $derived.by(() => {
+		const {text, checked, total} = yFragmentToPlaintextAndTaskList(
+			card.text.__fragment!
+		);
 
-		return result || 'Untitled';
+		return {
+			preview: text.split('\n')[0]?.trim() || 'Untitled',
+			todoStats: {
+				checked,
+				total,
+			},
+		};
 	});
-
-	let todoStats = $derived(yFragmentToTaskList(card.text.__fragment!));
 
 	const agent = getAgent();
 

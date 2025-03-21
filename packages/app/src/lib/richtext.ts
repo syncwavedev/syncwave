@@ -41,6 +41,8 @@ export const tiptapExtensions = [
 	TaskItem.extend({content: 'paragraph'}),
 ];
 
+const tiptapSchema = getSchema(tiptapExtensions);
+
 export function yFragmentToJSON(fragment: XmlFragment) {
 	return yXmlFragmentToProsemirrorJSON(fragment);
 }
@@ -51,17 +53,23 @@ export function yFragmentToHtml(fragment: XmlFragment) {
 }
 
 export function yFragmentToPlaintext(fragment: XmlFragment) {
-	const schema = getSchema(tiptapExtensions);
 	const prosemirrorJSON = yFragmentToJSON(fragment);
-	const node = schema.nodeFromJSON(prosemirrorJSON);
+	const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
 	return node.textBetween(0, node.content.size, '\n', '\n');
 }
 
 export function yFragmentToTaskList(fragment: XmlFragment) {
-	const schema = getSchema(tiptapExtensions);
 	const prosemirrorJSON = yFragmentToJSON(fragment);
-	const node = schema.nodeFromJSON(prosemirrorJSON);
+	const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
 	return prosemirrorNodeToTaskList(node);
+}
+
+export function yFragmentToPlaintextAndTaskList(fragment: XmlFragment) {
+	const prosemirrorJSON = yFragmentToJSON(fragment);
+	const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
+	const text = node.textBetween(0, node.content.size, '\n', '\n');
+	const {checked, total} = prosemirrorNodeToTaskList(node);
+	return {text, checked, total};
 }
 
 export interface TodoStats {

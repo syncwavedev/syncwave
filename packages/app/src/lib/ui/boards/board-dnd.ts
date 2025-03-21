@@ -337,14 +337,16 @@ export class DndBoardContext {
 			}
 		}
 
+		const columnChanged = oldIndexInTargetColumn === -1;
+		const selfPrevAnchor = prev?.card.value.id === card.card.value.id;
+		const selfNextAnchor = next?.card.value.id === card.card.value.id;
+		const prevChanged = oldPrev?.card.value.id !== prev?.card.value.id;
+		const nextChanged = oldNext?.card.value.id !== next?.card.value.id;
+
 		if (
-			(oldIndexInTargetColumn === -1 ||
-				(prev?.card.value.id !== card.card.value.id &&
-					next?.card.value.id !== card.card.value.id)) &&
-			(oldPrev === undefined ||
-				oldPrev?.card.value.id !== prev?.card.value.id ||
-				oldNext === undefined ||
-				oldNext?.card.value.id !== next?.card.value.id)
+			(columnChanged || prevChanged || nextChanged) &&
+			!selfPrevAnchor &&
+			!selfNextAnchor
 		) {
 			const newCardPosition = toPosition({
 				prev: prev?.card.value.columnPosition,

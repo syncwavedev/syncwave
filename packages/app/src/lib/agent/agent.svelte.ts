@@ -47,7 +47,7 @@ import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
 
-class Agent {
+export class Agent {
 	private crdtManager: CrdtManager;
 	private readonly connection: RpcConnection;
 	public readonly rpc: CoordinatorRpc;
@@ -80,6 +80,15 @@ class Agent {
 		this.rpc.close(reason);
 		this.crdtManager.close(reason);
 		this.connection.close(reason);
+	}
+
+	recordDragSettled(cardId: CardId) {
+		const now = getNow();
+		this.activeBoards.forEach(x => x.cardDragSettledAt.set(cardId, now));
+	}
+
+	markAsDragDone(cardId: CardId) {
+		this.activeBoards.forEach(x => x.cardDragSettledAt.delete(cardId));
 	}
 
 	handleCardMouseEnter(boardId: BoardId, cardId: CardId) {
@@ -391,6 +400,8 @@ class Agent {
 			x.columnPosition = position;
 			x.columnId = columnId;
 		});
+
+		this.recordDragSettled(cardId);
 	}
 
 	setCardColumn(cardId: CardId, columnId: ColumnId): void {

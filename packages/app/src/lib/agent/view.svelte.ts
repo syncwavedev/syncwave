@@ -1,4 +1,4 @@
-import type {SvelteMap} from 'svelte/reactivity';
+import {SvelteMap} from 'svelte/reactivity';
 import {
 	AppError,
 	assert,
@@ -9,7 +9,9 @@ import {
 	type Board,
 	type BoardViewDataDto,
 	type Card,
+	type CardId,
 	type Column,
+	type Timestamp,
 	type User,
 } from 'syncwave-data';
 import {observeAwareness} from './awareness.svelte.js';
@@ -35,6 +37,8 @@ export class BoardData {
 	private _userStates: Array<State<User>> = $state.raw(lateInit());
 	private _columnStates: Array<State<Column>> = $state.raw(lateInit());
 	private _cardStates: Array<State<Card>> = $state.raw(lateInit());
+
+	readonly cardDragSettledAt = $state(new SvelteMap<CardId, Timestamp>());
 
 	me: User = $derived(this._meState.value);
 	board: Board = $derived(this._boardState.value);
@@ -224,6 +228,13 @@ export class CardView implements Card {
 		this._card = card;
 		this._data = data;
 	}
+
+	dndLastChangeAt = $derived.by(() =>
+		this._data.cardDragSettledAt.get(this.id)
+	);
+	dndInProgress = $derived.by(
+		() => this._data.cardDragSettledAt.get(this.id) !== undefined
+	);
 
 	isDraft = $derived(this._card.counter === null);
 	authorId = $derived(this._card.authorId);

@@ -4,11 +4,10 @@ import {
 	EventEmitter,
 	runAll,
 	toPosition,
-	type BigFloat,
-	type BoardId,
 	type CardId,
 	type ColumnId,
 } from 'syncwave-data';
+import type {Agent} from '../../agent/agent.svelte.js';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
 export const DND_TRANSITION_DURATION_MS = 300;
@@ -39,15 +38,6 @@ export interface DndColumnContext extends CleanupContext {
 	scrollable: HTMLDivElement;
 }
 
-export interface DndBoardContextOptions {
-	readonly boardId: BoardId;
-	readonly setCardPosition: (
-		cardId: CardId,
-		columnId: ColumnId,
-		position: BigFloat
-	) => void;
-}
-
 interface Draggable {
 	element: HTMLElement;
 	targetX: number;
@@ -68,7 +58,7 @@ export class DndBoardContext {
 	private scrollEmitter = new EventEmitter<void>();
 	private cancelDragEmitter = new EventEmitter<{pointerId?: number}>();
 
-	constructor(private readonly options: DndBoardContextOptions) {
+	constructor(private readonly agent: Agent) {
 		// global listeners to cover potential interruptions
 		const globalEvents = [
 			'contextmenu',
@@ -189,7 +179,7 @@ export class DndBoardContext {
 		};
 		document.body.appendChild(draggable.element);
 
-		card.container.dataset.dndPlaceholder = 'true';
+		this.agent.recordDragSettled(card.card.value.id);
 
 		draggable.element.style.position = 'absolute';
 		draggable.element.style.pointerEvents = 'none';
@@ -295,7 +285,6 @@ export class DndBoardContext {
 					draggableRect.right >
 						boardRect.right - AUTOSCROLL_THRESHOLD_X
 				) {
-					console.log('scroll right');
 					scroller.direction = 'right';
 					scroller.target = this.scrollable;
 				} else {
@@ -348,7 +337,9 @@ export class DndBoardContext {
 				document.body.removeChild(draggable.element);
 			}
 
-			delete card?.container.dataset.dndPlaceholder;
+			if (card) {
+				this.agent.markAsDragDone(card.card.value.id);
+			}
 
 			return;
 		}
@@ -379,7 +370,7 @@ export class DndBoardContext {
 				document.body.removeChild(draggable.element);
 			}
 
-			delete card.container.dataset.dndPlaceholder;
+			this.agent.markAsDragDone(card.card.value.id);
 		}, DND_TRANSITION_DURATION_MS);
 	}
 
@@ -435,6 +426,7 @@ export class DndBoardContext {
 		const oldIndexInTargetColumn = columnCards.findIndex(
 			x => x.card.value.id === card.card.value.id
 		);
+
 		let oldPrev: DndCardContext | undefined = undefined;
 		let oldNext: DndCardContext | undefined = undefined;
 		if (oldIndexInTargetColumn !== -1) {
@@ -490,7 +482,7 @@ export class DndBoardContext {
 				prev: prev?.card.value.columnPosition,
 				next: next?.card.value.columnPosition,
 			});
-			this.options.setCardPosition(
+			this.agent.setCardPosition(
 				card.card.value.id,
 				targetColumn.column.value.id,
 				newCardPosition
@@ -538,15 +530,13 @@ export class DndBoardContext {
 
 const DND_CONTEXT = Symbol('DndContext');
 
-export function createDndContext(
-	options: DndBoardContextOptions
-): DndBoardContext {
+export function createDndContext(agent: Agent): DndBoardContext {
 	const existingContext = getContext(DND_CONTEXT);
 	if (existingContext) {
 		throw new Error('DndContext already exists');
 	}
 
-	const context = new DndBoardContext(options);
+	const context = new DndBoardContext(agent);
 	setContext(DND_CONTEXT, context);
 
 	onDestroy(() => {

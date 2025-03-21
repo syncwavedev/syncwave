@@ -130,10 +130,7 @@
 	let columnsContainerRef: HTMLDivElement | null = $state(null);
 	let viewportRef: HTMLDivElement | null = $state(null);
 
-	const dndContext = createDndContext({
-		boardId: board.id,
-		setCardPosition: agent.setCardPosition.bind(agent),
-	});
+	const dndContext = createDndContext(agent);
 
 	$effect(() => {
 		if (columnsContainerRef && viewportRef) {

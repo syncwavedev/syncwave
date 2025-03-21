@@ -7,7 +7,12 @@
 	import Avatar from '../components/avatar.svelte';
 	import type {CardView} from '../../agent/view.svelte';
 	import {getAgent} from '../../agent/agent.svelte';
-	import {getDndBoardContext, type Ref} from './board-dnd';
+	import {
+		DND_TRANSITION_DURATION_MS,
+		getDndBoardContext,
+		type Ref,
+	} from './board-dnd';
+	import {getNow} from 'syncwave-data';
 
 	const {
 		card,
@@ -53,9 +58,35 @@
 
 		return undefined;
 	});
+
+	const SETTLED_MS = DND_TRANSITION_DURATION_MS / 2;
+	let showDndPlaceholder = $state(
+		!!card.dndLastChangeAt && getNow() - card.dndLastChangeAt < SETTLED_MS
+	);
+	$effect(() => {
+		if (card.dndLastChangeAt === undefined) return;
+		showDndPlaceholder = false;
+		console.log(card.dndLastChangeAt);
+		const timeoutId = setTimeout(
+			() => {
+				showDndPlaceholder = true;
+			},
+			Math.max(0, card.dndLastChangeAt + SETTLED_MS - getNow())
+		);
+
+		return () => {
+			showDndPlaceholder = false;
+			clearTimeout(timeoutId);
+		};
+	});
 </script>
 
-<div class="card-container" bind:this={containerRef}>
+<div
+	class="card-container relative"
+	bind:this={containerRef}
+	data-is-dnd-in-progress={card.dndInProgress}
+	data-dnd-settled={showDndPlaceholder}
+>
 	<div
 		data-card-id={card.id}
 		role="button"
@@ -120,17 +151,24 @@
 </div>
 
 <style>
-	:global {
-		.card-container[data-dnd-placeholder='true'] {
-			> .overlay {
-				position: absolute;
-				inset: 5px;
-			}
+	.card-container[data-is-dnd-in-progress='true'] {
+		> .overlay {
+			position: absolute;
+			inset: 5px;
+			border-radius: 5px;
+			border: 1px solid #ccc;
+			background-color: #eee;
+			opacity: 0;
+		}
 
-			> .content {
-				opacity: 0;
-				pointer-events: none;
-			}
+		&[data-dnd-settled='true'] > .overlay {
+			transition: opacity 0.5s;
+			opacity: 0.5;
+		}
+
+		> .content {
+			opacity: 0;
+			pointer-events: none;
 		}
 	}
 </style>

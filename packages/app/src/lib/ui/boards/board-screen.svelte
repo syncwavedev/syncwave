@@ -21,7 +21,7 @@
 	import EditProfileDialog from '../../components/edit-profile-dialog/edit-profile-dialog.svelte';
 	import router from '../../router';
 	import {flip} from 'svelte/animate';
-	import {createDndContext} from './board-dnd';
+	import {createDndContext, DND_TRANSITION_DURATION_MS} from './board-dnd';
 
 	const {
 		board,
@@ -195,7 +195,7 @@
 				class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 text-xs"
 			>
 				{#each board.columns as column (column.id)}
-					<div animate:flip={{duration: 300}}>
+					<div animate:flip={{duration: DND_TRANSITION_DURATION_MS}}>
 						<BoardColumn
 							{column}
 							{onCardClick}

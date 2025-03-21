@@ -1,3 +1,7 @@
 @import './theme.css';
 @import './button.css';
 @import './input.css';
+
+body {
+	overflow: hidden;
+}

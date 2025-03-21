@@ -11,6 +11,8 @@ import {
 } from 'syncwave-data';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
+export const DND_TRANSITION_DURATION_MS = 100;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lateInit(): any {
 	return undefined;
@@ -50,6 +52,10 @@ interface Draggable {
 	element: HTMLElement;
 	targetX: number;
 	targetY: number;
+	startColumnId: ColumnId;
+	targetColumnId: ColumnId;
+	startBoardScrollX: number;
+	startColumnScrollY: Map<ColumnId, number>;
 }
 
 export class DndBoardContext {
@@ -121,6 +127,17 @@ export class DndBoardContext {
 			element: card.container.cloneNode(true) as HTMLDivElement,
 			targetX: card.container.getBoundingClientRect().left,
 			targetY: card.container.getBoundingClientRect().top,
+			startColumnId: card.card.value.columnId,
+			targetColumnId: card.card.value.columnId,
+			startBoardScrollX: this.scrollable.scrollLeft,
+			startColumnScrollY: new Map<ColumnId, number>(
+				this.columns.map(column => {
+					return [
+						column.column.value.id,
+						column.scrollable.scrollTop,
+					];
+				})
+			),
 		};
 		document.body.appendChild(draggable.element);
 
@@ -218,7 +235,7 @@ export class DndBoardContext {
 	}
 
 	private monitorAutoscroll(draggable: Draggable) {
-		const AUTOSCROLL_THRESHOLD_X = 30;
+		const AUTOSCROLL_THRESHOLD_X = -50;
 		const AUTOSCROLL_THRESHOLD_Y = 100;
 
 		const scroller = new Scroller(this.scrollable);
@@ -306,15 +323,26 @@ export class DndBoardContext {
 			return;
 		}
 
-		const TRANSITION_DURATION_MS = 300;
-
 		const draggableRect = draggable.element.getBoundingClientRect();
 
-		const transition = `transform ${TRANSITION_DURATION_MS}ms ease`;
+		const transition = `transform ${DND_TRANSITION_DURATION_MS}ms ease`;
 		draggable.element.style.transition = draggable.element.style.transition
 			? draggable.element.style.transition + ',' + transition
 			: transition;
-		draggable.element.style.transform = `translate(${draggable.targetX - draggableRect.x}px, ${draggable.targetY - draggableRect.y}px)`;
+		const animateToX =
+			draggable.targetX -
+			draggableRect.x +
+			draggable.startBoardScrollX -
+			this.scrollable.scrollLeft;
+		const animateToY =
+			draggable.targetY -
+			draggableRect.y +
+			draggable.startColumnScrollY.get(draggable.startColumnId)! -
+			this.columns.find(
+				x => x.column.value.id === draggable.targetColumnId
+			)!.scrollable.scrollTop;
+
+		draggable.element.style.transform = `translate(${animateToX}px, ${animateToY}px)`;
 
 		setTimeout(() => {
 			if (draggable.element.isConnected) {
@@ -322,7 +350,7 @@ export class DndBoardContext {
 			}
 
 			delete card.container.dataset.dndPlaceholder;
-		}, TRANSITION_DURATION_MS);
+		}, DND_TRANSITION_DURATION_MS);
 	}
 
 	private handlePlacement(draggable: Draggable, card: DndCardContext) {
@@ -440,6 +468,12 @@ export class DndBoardContext {
 
 			draggable.targetX = offsetLeft;
 			draggable.targetY = offsetTop;
+			draggable.startBoardScrollX = this.scrollable.scrollLeft;
+			draggable.startColumnScrollY.set(
+				targetColumn.column.value.id,
+				targetColumn.scrollable.scrollTop
+			);
+			draggable.targetColumnId = targetColumn.column.value.id;
 		}
 	}
 

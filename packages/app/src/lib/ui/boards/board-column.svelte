@@ -11,7 +11,11 @@
 	import EditColumnDialog from '../../components/edit-column-dialog/edit-column-dialog.svelte';
 	import appNavigator from '../../app-navigator';
 	import {flip} from 'svelte/animate';
-	import {getDndBoardContext, type Ref} from './board-dnd';
+	import {
+		DND_TRANSITION_DURATION_MS,
+		getDndBoardContext,
+		type Ref,
+	} from './board-dnd';
 
 	const {
 		column,
@@ -94,7 +98,7 @@
 		>
 			{#each column.cards as card (card.id)}
 				<div
-					animate:flip={{duration: 300}}
+					animate:flip={{duration: DND_TRANSITION_DURATION_MS}}
 					class="text-xs"
 					data-disable-scroll-view-drag="true"
 				>

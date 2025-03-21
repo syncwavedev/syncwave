@@ -163,11 +163,14 @@ export class DndBoardContext {
 			this.handlePlacement(draggable, card);
 		});
 
+		const cancelAutoscroll = this.monitorAutoscroll(draggable);
+
 		let cleanedUp = false;
 		const cleanup = () => {
 			if (cleanedUp) return;
 			cleanedUp = true;
 
+			cancelAutoscroll();
 			cancelPointerUp();
 			cancelPointerMove();
 			cancelScrollListener('startDrag cleanup');
@@ -212,6 +215,83 @@ export class DndBoardContext {
 			);
 			globalListeners.push(cancelListener);
 		});
+	}
+
+	private monitorAutoscroll(draggable: Draggable) {
+		const AUTOSCROLL_THRESHOLD_X = 30;
+		const AUTOSCROLL_THRESHOLD_Y = 100;
+
+		const scroller = new Scroller(this.scrollable);
+
+		const cancelPointerMoveListener = this.addListener(
+			this,
+			document,
+			'pointermove',
+			() => {
+				const draggableRect = draggable.element.getBoundingClientRect();
+				const draggableCenterX =
+					draggableRect.left + draggable.element.clientWidth / 2;
+
+				scroller.direction = 'none';
+
+				const boardRect = this.scrollable.getBoundingClientRect();
+				if (
+					this.scrollable.scrollLeft > 0 &&
+					draggableRect.left < boardRect.left + AUTOSCROLL_THRESHOLD_X
+				) {
+					scroller.direction = 'left';
+					scroller.target = this.scrollable;
+				} else if (
+					this.scrollable.scrollLeft <
+						this.scrollable.clientWidth +
+							this.scrollable.scrollWidth &&
+					draggableRect.right >
+						boardRect.right - AUTOSCROLL_THRESHOLD_X
+				) {
+					console.log('scroll right');
+					scroller.direction = 'right';
+					scroller.target = this.scrollable;
+				} else {
+					const column = this.columns.find(column => {
+						const rect = column.scrollable.getBoundingClientRect();
+						return (
+							draggableCenterX >= rect.left &&
+							draggableCenterX <= rect.right
+						);
+					});
+
+					if (!column) {
+						return;
+					}
+
+					const draggableCenterY =
+						draggableRect.top + draggable.element.clientHeight / 2;
+
+					if (
+						draggableCenterY <
+						column.scrollable.getBoundingClientRect().top +
+							AUTOSCROLL_THRESHOLD_Y
+					) {
+						scroller.direction = 'up';
+						scroller.target = column.scrollable;
+					} else if (
+						draggableCenterY >
+						column.scrollable.getBoundingClientRect().bottom -
+							AUTOSCROLL_THRESHOLD_Y
+					) {
+						scroller.direction = 'down';
+						scroller.target = column.scrollable;
+					}
+				}
+			}
+		);
+
+		const cleanup = () => {
+			cancelPointerMoveListener();
+			scroller.destroy();
+		};
+
+		return cleanup;
 	}
 
 	private handleDrop(cardId: CardId, draggable: Draggable) {
@@ -418,4 +498,53 @@ export function getDndBoardContext(): DndBoardContext {
 		throw new Error('DndContext not found');
 	}
 	return context as DndBoardContext;
+}
+
+class Scroller {
+	private isCancelled = false;
+	public direction: 'left' | 'right' | 'up' | 'down' | 'none' = 'none';
+	private lastTick = performance.now() - 1000 / 60;
+
+	constructor(public target: HTMLElement) {
+		this.tick();
+	}
+
+	tick() {
+		const now = performance.now();
+		const scale = (now - this.lastTick) / 1000;
+		this.lastTick = now;
+
+		if (this.isCancelled) return;
+
+		let dx = 0;
+		let dy = 0;
+
+		if (this.direction === 'none') {
+			// do nothing
+		} else if (this.direction === 'up') {
+			dy = -1;
+		} else if (this.direction === 'down') {
+			dy = 1;
+		} else if (this.direction === 'left') {
+			dx = -1;
+		} else if (this.direction === 'right') {
+			dx = 1;
+		}
+
+		if (dx || dy) {
+			const SPEED = 500; // px / second
+			const adjustment = SPEED * scale;
+
+			this.target.scrollBy({
+				left: dx * adjustment,
+				top: dy * adjustment,
+			});
+		}
+
+		requestAnimationFrame(() => this.tick());
+	}
+
+	destroy() {
+		this.isCancelled = true;
+	}
 }

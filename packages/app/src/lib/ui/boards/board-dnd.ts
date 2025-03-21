@@ -11,7 +11,7 @@ import {
 } from 'syncwave-data';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
-export const DND_TRANSITION_DURATION_MS = 100;
+export const DND_TRANSITION_DURATION_MS = 300;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lateInit(): any {

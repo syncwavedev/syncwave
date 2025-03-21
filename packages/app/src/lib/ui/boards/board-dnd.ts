@@ -109,7 +109,6 @@ export class DndBoardContext {
 		this.columns = [];
 		this.cleanups = [];
 	}
-
 	private startDrag(downEvent: PointerEvent, card: DndCardContext) {
 		const draggable = card.container.cloneNode(true) as HTMLDivElement;
 		document.body.appendChild(draggable);
@@ -154,6 +153,8 @@ export class DndBoardContext {
 			cancelPointerUp();
 			cancelPointerMove();
 			cancelScrollListener('startDrag cleanup');
+			cancelPointerCancel();
+			globalListeners.forEach(cancel => cancel());
 
 			delete card.container.dataset.dndPlaceholder;
 
@@ -169,6 +170,34 @@ export class DndBoardContext {
 			'pointerup',
 			cleanup
 		);
+		const cancelPointerCancel = this.addListener(
+			this,
+			draggable,
+			'pointercancel',
+			cleanup
+		);
+
+		// global listeners to cover potential interruptions
+		const globalEvents = [
+			'contextmenu',
+			'blur',
+			'visibilitychange',
+			'pointerleave',
+		];
+		const globalListeners: Array<() => void> = [];
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		globalEvents.forEach((eventName: any) => {
+			const cancelListener = this.addListener(
+				this,
+				document,
+				eventName,
+				() => {
+					cleanup();
+				}
+			);
+			globalListeners.push(cancelListener);
+		});
 	}
 
 	private handlePlacement(draggable: HTMLDivElement, card: DndCardContext) {
@@ -279,9 +308,11 @@ export class DndBoardContext {
 		}
 	}
 
-	private addListener<K extends keyof HTMLElementEventMap>(
+	private addListener<
+		K extends keyof HTMLElementEventMap & keyof DocumentEventMap,
+	>(
 		cleanupContext: CleanupContext,
-		element: HTMLElement,
+		element: HTMLElement | Document,
 		event: K,
 		handler: (event: HTMLElementEventMap[K], cleanup: Cleanup) => void,
 		options?: {passive?: boolean; capture?: boolean}
@@ -293,7 +324,8 @@ export class DndBoardContext {
 			);
 		};
 
-		const wrapper = (e: HTMLElementEventMap[K]) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const wrapper = (e: any) => {
 			handler(e, cleanup);
 		};
 

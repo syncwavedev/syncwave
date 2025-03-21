@@ -20,7 +20,6 @@
 	import ErrorCard from './lib/components/error-card.svelte';
 	import {UploadManager} from './lib/upload-manager.svelte';
 	import {createThemeManager} from './lib/ui/theme-manager.svelte.js';
-	import appNavigator from './lib/app-navigator';
 	import {createAgent} from './lib/agent/agent.svelte';
 	import {appConfig} from './lib/config';
 	import {WsTransportClient} from './ws-transport-client';
@@ -55,15 +54,6 @@
 		authManager
 	);
 
-	function handleEscape(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			const topItem = appNavigator.peek();
-			if (topItem && topItem.onEscape) {
-				appNavigator.back();
-			}
-		}
-	}
-
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let Page = $state<Component<any>>(Loading);
 	let pageProps = $state<Record<string, string>>({});
@@ -73,13 +63,13 @@
 			Page = Loading;
 
 			if (!authManager.getIdentityInfo()) {
-				router.route('/login', {replace: true});
+				router.navigate({uri: '/login', replace: true});
 				return;
 			}
 
 			const lastBoardKey = BoardHistoryManager.last();
 			if (lastBoardKey) {
-				router.route(`/b/${lastBoardKey}`, {replace: true});
+				router.navigate({uri: `/b/${lastBoardKey}`, replace: true});
 			}
 		});
 		router.on('/login', () => {
@@ -102,8 +92,6 @@
 		router.listen();
 	});
 </script>
-
-<svelte:body on:keydown={handleEscape} />
 
 <main>
 	{#if appConfig.stage === 'local' || appConfig.stage === 'dev'}

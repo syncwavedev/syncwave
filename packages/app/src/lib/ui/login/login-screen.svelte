@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {getAgent} from '../../agent/agent.svelte';
-	import appNavigator from '../../app-navigator';
 	import {appConfig} from '../../config.js';
+	import router from '../../router';
 	import {getRpc, getAuthManager} from '../../utils.js';
 	import Envelope from '../components/icons/envelope.svelte';
 
@@ -9,7 +9,7 @@
 		const authState = {redirectUrl: '/'};
 		const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
 		const options = {
-			redirect_uri: `${appConfig.apiUrl}/callbacks/google`,
+			redirect_uri: `${appConfig.apiUrl}/callback/google`,
 			client_id: appConfig.googleClientId,
 			access_type: 'offline',
 			response_type: 'code',
@@ -36,19 +36,18 @@
 		isLoading = true;
 		error = undefined;
 		try {
-			const result = await agent.sendSignInEmail(email.trim());
-			if (result.type === 'success') {
-				appNavigator.push({
-					onEscape: false,
-					onBack: () => {
-						email = '';
-						showCodeInput = false;
-					},
-				});
-				showCodeInput = true;
-			} else {
-				error = result.type;
-			}
+			// const result = await agent.sendSignInEmail(email.trim());
+			// if (result.type === 'success') {
+			router.navigate({
+				onBack: () => {
+					email = '';
+					showCodeInput = false;
+				},
+			});
+			showCodeInput = true;
+			// } else {
+			// 	error = result.type;
+			// }
 		} catch (err) {
 			console.error('Failed to send sign-in email:', err);
 			error = 'unknown_error';

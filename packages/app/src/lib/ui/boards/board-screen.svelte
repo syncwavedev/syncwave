@@ -1,10 +1,5 @@
 <script lang="ts">
-	import {
-		compareBigFloat,
-		log,
-		type Awareness,
-		type User,
-	} from 'syncwave-data';
+	import {compareBigFloat, log, type Awareness, type User} from 'syncwave-data';
 
 	import {tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
@@ -47,8 +42,7 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						const columnElement =
-							cardElement.closest('[data-column-id]');
+						const columnElement = cardElement.closest('[data-column-id]');
 						if (columnElement) {
 							columnElement.scrollIntoView({
 								behavior: 'smooth',
@@ -80,7 +74,7 @@
 	$effect(() => {
 		if (board.deleted) {
 			log.info(`board ${board.id} got deleted, redirect to app...`);
-			router.route('/');
+			router.navigate({uri: '/'});
 		}
 	});
 
@@ -148,9 +142,7 @@
 				<div class="text-xs leading-none font-medium">{board.name}</div>
 				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
-						online: {board.onlineMembers
-							.map(x => x.fullName)
-							.join(', ')}
+						online: {board.onlineMembers.map(x => x.fullName).join(', ')}
 					</div>
 				{/if}
 				<button class="btn--icon ml-auto" onclick={createCard}>

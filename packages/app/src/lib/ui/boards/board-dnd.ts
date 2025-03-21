@@ -8,7 +8,7 @@ import {
 	type CardId,
 	type ColumnId,
 } from 'syncwave-data';
-import type {CardView, ColumnView} from '../../agent/view.svelte';
+import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lateInit(): any {
@@ -89,8 +89,6 @@ export class DndBoardContext {
 		document.body.appendChild(draggable);
 
 		card.container.dataset.dndPlaceholder = 'true';
-
-		console.log('set', card.container);
 
 		draggable.style.position = 'absolute';
 		draggable.style.pointerEvents = 'none';

@@ -11,7 +11,6 @@
 	const authManager = getAuthManager();
 	const userId = authManager.getIdentityInfo()?.userId;
 	if (!userId) {
-		console.log('authManager.getIdentityInfo', authManager.getIdentityInfo());
 		throw new Error('User ID not found');
 	}
 

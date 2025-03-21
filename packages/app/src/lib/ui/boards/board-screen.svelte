@@ -12,8 +12,6 @@
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import BoardColumn from './board-column.svelte';
 	import appNavigator from '../../app-navigator';
-	import {useBoardView} from './use-board-view.svelte';
-	import {dragHandleZone} from 'syncwave-dnd';
 	import Scrollable from '../components/scrollable.svelte';
 	import type {BoardTreeView, CardView} from '../../agent/view.svelte';
 	import CardDetails from './card-details.svelte';
@@ -23,6 +21,7 @@
 	import EditProfileDialog from '../../components/edit-profile-dialog/edit-profile-dialog.svelte';
 	import router from '../../router';
 	import {flip} from 'svelte/animate';
+	import {createDndContext} from './board-dnd';
 
 	const {
 		board,
@@ -36,38 +35,29 @@
 
 	const agent = getAgent();
 
-	const {
-		columns,
-		handleDndConsiderColumns,
-		handleDndFinalizeColumns,
-		createCardHandler,
-	} = useBoardView({value: board});
-
 	let selectedCard = $state<CardView | null>(null);
 	let boardRef: HTMLElement | null = $state(null);
 
 	$effect(() => {
-		if (selectedCard && boardRef) {
-			tick().then(() => {
-				if (boardRef && selectedCard) {
-					const cardElement = boardRef.querySelector(
-						`[data-card-id="${selectedCard.id}"]`
-					) as HTMLElement;
+		tick().then(() => {
+			if (boardRef && selectedCard) {
+				const cardElement = boardRef.querySelector(
+					`[data-card-id="${selectedCard.id}"]`
+				) as HTMLElement;
 
-					if (cardElement) {
-						const columnElement =
-							cardElement.closest('[data-column-id]');
-						if (columnElement) {
-							columnElement.scrollIntoView({
-								behavior: 'smooth',
-								inline: 'nearest',
-								block: 'nearest',
-							});
-						}
+				if (cardElement) {
+					const columnElement =
+						cardElement.closest('[data-column-id]');
+					if (columnElement) {
+						columnElement.scrollIntoView({
+							behavior: 'smooth',
+							inline: 'nearest',
+							block: 'nearest',
+						});
 					}
 				}
-			});
-		}
+			}
+		});
 	});
 
 	$effect(() => {
@@ -134,6 +124,26 @@
 			onEscape: true,
 		});
 	}
+
+	let columnsContainerRef: HTMLDivElement | null = $state(null);
+	let viewportRef: HTMLDivElement | null = $state(null);
+
+	const dndContext = createDndContext({
+		boardId: board.id,
+		setCardPosition: agent.setCardPosition.bind(agent),
+	});
+
+	$effect(() => {
+		if (columnsContainerRef) {
+			dndContext.container = columnsContainerRef;
+		}
+	});
+
+	$effect(() => {
+		if (viewportRef) {
+			dndContext.scrollable = viewportRef;
+		}
+	});
 </script>
 
 <main class="flex h-screen w-full">
@@ -181,25 +191,18 @@
 			class="flex-grow"
 			type="scroll"
 			draggable
+			bind:viewportRef
 		>
 			<div
 				bind:this={boardRef}
+				bind:this={columnsContainerRef}
 				class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 text-xs"
-				use:dragHandleZone={{
-					items: columns.value,
-					flipDurationMs: 100,
-					type: 'columns',
-					dropTargetStyle: {},
-				}}
-				onconsider={handleDndConsiderColumns}
-				onfinalize={handleDndFinalizeColumns}
 			>
-				{#each columns.value as column (column.id)}
-					<div animate:flip={{duration: 100}}>
+				{#each board.columns as column (column.id)}
+					<div animate:flip={{duration: 300}}>
 						<BoardColumn
 							{column}
 							{onCardClick}
-							handleCardDnd={createCardHandler(column)}
 							activeCardId={selectedCard?.id}
 						/>
 					</div>

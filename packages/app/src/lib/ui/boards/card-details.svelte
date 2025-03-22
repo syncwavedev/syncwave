@@ -96,14 +96,6 @@
 					<span><Avatar name="U" /></span>
 					<span class="ml-1.5 text-xs">Unknown</span>
 				</div>
-				{#if card.isDraft}
-					<button
-						class="btn--block"
-						onclick={() => agent.commitCardDraft(board, card.id)}
-					>
-						Commit
-					</button>
-				{/if}
 				<button
 					class="btn--block"
 					onclick={() => agent.setCardColumn(card.id, board.columns[0].id)}

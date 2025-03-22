@@ -26,7 +26,9 @@
 		);
 
 		return {
-			preview: text.split('\n')[0]?.trim() || 'Untitled',
+			preview: card.isDraft
+				? 'Empty draft card'
+				: text.split('\n')[0]?.trim() || 'Untitled',
 			todoStats: {
 				checked,
 				total,
@@ -106,7 +108,8 @@
         select-none
         text-xs
         content
-	"
+    "
+		class:border-dashed={card.isDraft}
 		onclick={onClick}
 		onmouseenter={() => agent.handleCardMouseEnter(card.boardId, card.id)}
 		onmouseleave={() => agent.handleCardMouseLeave(card.boardId, card.id)}
@@ -116,28 +119,30 @@
 			<span class="text-ink truncate">
 				{preview}
 			</span>
-			<div class="flex items-center">
-				<span class="text-2xs text-ink-detail mr-auto">
-					{#if card.counter}
-						#{card.counter}
-					{/if}
-					by {card.author.fullName}
-					{#if card.hoverUsers.length > 0}
-						hovers {card.hoverUsers.map(x => x.fullName).join(', ')}
-					{/if}
-					{#if card.viewerUsers.length > 0}
-						viewers {card.viewerUsers.map(x => x.fullName).join(', ')}
-					{/if}
-				</span>
-				{#if todoStats.total > 0}
-					<span class="text-2xs text-ink-detail ml-auto">
-						{todoStats.checked} / {todoStats.total}
+			{#if !card.isDraft}
+				<div class="flex items-center">
+					<span class="text-2xs text-ink-detail mr-auto">
+						{#if card.counter}
+							#{card.counter}
+						{/if}
+						by {card.author.fullName}
+						{#if card.hoverUsers.length > 0}
+							hovers {card.hoverUsers.map(x => x.fullName).join(', ')}
+						{/if}
+						{#if card.viewerUsers.length > 0}
+							viewers {card.viewerUsers.map(x => x.fullName).join(', ')}
+						{/if}
 					</span>
-				{/if}
-				<span class="ml-2 text-[1.325rem]">
-					<Avatar name={card.author.fullName} />
-				</span>
-			</div>
+					{#if todoStats.total > 0}
+						<span class="text-2xs text-ink-detail ml-auto">
+							{todoStats.checked} / {todoStats.total}
+						</span>
+					{/if}
+					<span class="ml-2 text-[1.325rem]">
+						<Avatar name={card.author.fullName} />
+					</span>
+				</div>
+			{/if}
 		</div>
 	</div>
 	<div class="overlay"></div>

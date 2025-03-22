@@ -16,6 +16,7 @@
 	import router from '../../router';
 	import {flip} from 'svelte/animate';
 	import {createDndContext, DND_TRANSITION_DURATION_MS} from './board-dnd';
+	import {yFragmentToPlaintextAndTaskList} from '../../richtext';
 
 	const {
 		board,
@@ -43,6 +44,7 @@
 		if (selectedCard) {
 			router.action(() => {
 				selectedCard = null;
+				router.route(`/b/${board.key}`, {replace: true, shallow: true});
 			}, true);
 		}
 	});
@@ -103,7 +105,7 @@
 			return;
 		}
 
-		agent.createCardDraft(board, {
+		selectedCard = agent.createCardDraft(board, {
 			columnId: firstColumn.id,
 			placement: {
 				prev: undefined,
@@ -112,7 +114,34 @@
 				)[0]?.columnPosition,
 			},
 		});
+
+		router.action(() => {
+			if (selectedCard?.isDraft) {
+				// todo: delete card
+				console.warn('delete card');
+			}
+			selectedCard = null;
+		}, true);
 	}
+
+	$effect(() => {
+		if (selectedCard?.isDraft) {
+			const {text} = yFragmentToPlaintextAndTaskList(
+				selectedCard.text.__fragment!
+			);
+			if (text.length > 0) {
+				agent.commitCardDraft(board, selectedCard.id);
+				router.route(`/b/${board.key}/c/${selectedCard.counter}`, {
+					replace: true,
+					shallow: true,
+					onBack: () => {
+						selectedCard = null;
+					},
+					onEscape: true,
+				});
+			}
+		}
+	});
 
 	let editBoardOpen = $state(false);
 	let editMyProfileOpen = $state(false);

@@ -73,7 +73,13 @@ class Router {
 			shallow,
 		};
 
-		this.navigations.push({uri, replace, shallow, onEscape, onBack});
+		const navItem = {uri, replace, shallow, onEscape, onBack};
+
+		if (replace && this.navigations.length > 0) {
+			this.navigations[this.navigations.length - 1] = navItem;
+		} else {
+			this.navigations.push(navItem);
+		}
 
 		if (uri === this.currentUri || replace) {
 			history.replaceState(state, '', uri);

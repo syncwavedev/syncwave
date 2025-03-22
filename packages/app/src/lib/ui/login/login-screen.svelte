@@ -63,9 +63,7 @@
 			console.log(result);
 			if (result.type === 'success' && result.token) {
 				authManager.logIn(result.token);
-				console.log('login successful');
 				window.location.href = '/';
-				console.log('redirecting to home page');
 			} else {
 				error = result.type;
 			}

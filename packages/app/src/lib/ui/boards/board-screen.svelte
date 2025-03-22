@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {compareBigFloat, log, type Awareness, type User} from 'syncwave-data';
 
-	import {tick} from 'svelte';
+	import {onMount, tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
 	import SearchIcon from '../components/icons/search-icon.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
@@ -21,15 +21,32 @@
 		board,
 		awareness,
 		me,
+		counter,
 	}: {
 		board: BoardTreeView;
 		awareness: Awareness;
 		me: User;
+		counter?: number;
 	} = $props();
 
 	const agent = getAgent();
 
-	let selectedCard = $state<CardView | null>(null);
+	let selectedCard = $state<CardView | null>(
+		counter
+			? (board.columns
+					.flatMap(column => column.cards)
+					.find(card => card.counter === counter) ?? null)
+			: null
+	);
+
+	onMount(() => {
+		if (selectedCard) {
+			router.action(() => {
+				selectedCard = null;
+			}, true);
+		}
+	});
+
 	let boardRef: HTMLElement | null = $state(null);
 
 	$effect(() => {

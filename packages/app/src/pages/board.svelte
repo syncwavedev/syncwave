@@ -5,7 +5,7 @@
 	import Loading from '../lib/ui/components/loading.svelte';
 	import {getAuthManager} from '../lib/utils';
 
-	const {key}: {key: string; counter?: string} = $props();
+	const {key, counter}: {key: string; counter?: string} = $props();
 
 	const agent = getAgent();
 	const authManager = getAuthManager();
@@ -20,5 +20,10 @@
 {#await Promise.all( [agent.observeBoardAsync(key), agent.observeProfileAsync(userId)] )}
 	<Loading />
 {:then [[board, awareness], me]}
-	<BoardScreen {board} {awareness} {me} />
+	<BoardScreen
+		{board}
+		{awareness}
+		{me}
+		counter={counter ? parseInt(counter) : undefined}
+	/>
 {/await}

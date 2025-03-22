@@ -121,6 +121,15 @@ export class DndBoardContext {
 				moveEvent => {
 					if (downEvent.pointerId !== moveEvent.pointerId) return;
 
+					if (
+						Math.sqrt(
+							Math.pow(downEvent.pageX - moveEvent.pageX, 2) +
+								Math.pow(downEvent.pageY - moveEvent.pageY, 2)
+						) < 10
+					) {
+						return;
+					}
+
 					cleanupDown();
 					this.startDrag(moveEvent, card);
 				}

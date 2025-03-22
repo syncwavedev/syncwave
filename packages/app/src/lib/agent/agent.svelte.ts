@@ -446,6 +446,12 @@ export class Agent {
 		});
 	}
 
+	deleteCard(cardId: CardId): void {
+		this.crdtManager.update<Card>(cardId, x => {
+			x.deleted = true;
+		});
+	}
+
 	setBoardName(boardId: BoardId, name: string): void {
 		this.crdtManager.update<Board>(boardId, x => {
 			x.name = name;

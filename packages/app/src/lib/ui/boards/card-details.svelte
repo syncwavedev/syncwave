@@ -63,7 +63,7 @@
 					</ul>
 				</div>
 			</div>
-			<button class="btn--icon" onclick={history.back}>
+			<button class="btn--icon" onclick={() => history.back()}>
 				<TimesIcon />
 			</button>
 		</div>

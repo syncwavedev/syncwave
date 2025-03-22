@@ -36,16 +36,16 @@
 		isLoading = true;
 		error = undefined;
 		try {
-			// const result = await agent.sendSignInEmail(email.trim());
-			// if (result.type === 'success') {
-			router.action(() => {
-				email = '';
-				showCodeInput = false;
-			});
-			showCodeInput = true;
-			// } else {
-			// 	error = result.type;
-			// }
+			const result = await agent.sendSignInEmail(email.trim());
+			if (result.type === 'success') {
+				router.action(() => {
+					email = '';
+					showCodeInput = false;
+				});
+				showCodeInput = true;
+			} else {
+				error = result.type;
+			}
 		} catch (err) {
 			console.error('Failed to send sign-in email:', err);
 			error = 'unknown_error';
@@ -60,9 +60,12 @@
 		error = undefined;
 		try {
 			const result = await rpc(x => x.verifySignInCode({email, code}));
+			console.log(result);
 			if (result.type === 'success' && result.token) {
 				authManager.logIn(result.token);
+				console.log('login successful');
 				window.location.href = '/';
+				console.log('redirecting to home page');
 			} else {
 				error = result.type;
 			}

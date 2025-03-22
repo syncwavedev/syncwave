@@ -121,14 +121,11 @@ export class DndBoardContext {
 				moveEvent => {
 					if (downEvent.pointerId !== moveEvent.pointerId) return;
 
-					if (
-						Math.sqrt(
-							Math.pow(downEvent.pageX - moveEvent.pageX, 2) +
-								Math.pow(downEvent.pageY - moveEvent.pageY, 2)
-						) < 10
-					) {
-						return;
-					}
+					const distance = Math.sqrt(
+						Math.pow(downEvent.pageX - moveEvent.pageX, 2) +
+							Math.pow(downEvent.pageY - moveEvent.pageY, 2)
+					);
+					if (distance < 10) return;
 
 					cleanupDown();
 					this.startDrag(moveEvent, card);
@@ -176,6 +173,7 @@ export class DndBoardContext {
 			targetColumnId: card.card.value.columnId,
 		};
 		document.body.appendChild(draggable.element);
+		document.body.style.setProperty('user-select', 'none');
 
 		this.agent.considerCardPosition(
 			card.card.value.id,
@@ -226,6 +224,8 @@ export class DndBoardContext {
 		const cleanup = () => {
 			if (cleanedUp) return;
 			cleanedUp = true;
+
+			document.body.style.removeProperty('user-select');
 
 			cancelAutoscroll();
 			cancelPointerUp();

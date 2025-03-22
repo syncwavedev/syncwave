@@ -173,7 +173,7 @@ export class DndBoardContext {
 			targetColumnId: card.card.value.columnId,
 		};
 		document.body.appendChild(draggable.element);
-		document.body.style.setProperty('user-select', 'none');
+		document.body.classList.add('select-none');
 
 		this.agent.considerCardPosition(
 			card.card.value.id,
@@ -225,7 +225,7 @@ export class DndBoardContext {
 			if (cleanedUp) return;
 			cleanedUp = true;
 
-			document.body.style.removeProperty('user-select');
+			document.body.classList.remove('select-none');
 
 			cancelAutoscroll();
 			cancelPointerUp();

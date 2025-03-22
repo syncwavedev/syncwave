@@ -1,36 +1,33 @@
 <!doctype html>
 <html lang="en" data-theme="light">
-	<head>
-		<meta charset="UTF-8" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-		/>
-		<title>Syncwave</title>
-		<script>
-			(function () {
-				try {
-					let theme = localStorage.getItem('theme');
-					if (theme === 'system' || !theme) {
-						const prefersLight = window.matchMedia(
-							'(prefers-color-scheme: light)'
-						).matches;
-						theme = prefersLight ? 'light' : 'dark';
-					}
-					document.documentElement.setAttribute('data-theme', theme);
-				} catch (e) {
-					console.error('Failed to set theme:', e);
-				}
-			})();
-		</script>
-		<script
-			defer
-			data-domain="syncwave.dev"
-			src="https://plausible.bridgex.dev/js/script.js"
-		></script>
-	</head>
-	<body class="no-select">
-		<div id="app"></div>
-		<script type="module" src="/src/main.ts"></script>
-	</body>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Syncwave</title>
+    <script>
+        (function () {
+            try {
+                let theme = localStorage.getItem('theme');
+                if (theme === 'system' || !theme) {
+                    const prefersLight = window.matchMedia(
+                        '(prefers-color-scheme: light)'
+                    ).matches;
+                    theme = prefersLight ? 'light' : 'dark';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                console.error('Failed to set theme:', e);
+            }
+        })();
+    </script>
+    <script defer data-domain="syncwave.dev" src="https://plausible.bridgex.dev/js/script.js"></script>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

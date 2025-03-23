@@ -1,5 +1,9 @@
 # Changelog
 
+## Next
+
+-
+
 ## 2025-03-23
 
 - Board online members, card hover, viewer awareness.

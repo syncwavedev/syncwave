@@ -61,7 +61,7 @@ const {APP_URL, GOOGLE_REDIRECT_URL, LOG_LEVEL, workersCount} = (() => {
             APP_URL: 'https://dev.syncwave.dev',
             GOOGLE_REDIRECT_URL:
                 'https://api-dev.syncwave.dev' + GOOGLE_CALLBACK_PATH,
-            workersCount: cpus().length,
+            workersCount: 1,
         };
     } else if (STAGE === 'prod') {
         return {

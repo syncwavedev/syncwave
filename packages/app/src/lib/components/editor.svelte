@@ -28,6 +28,10 @@
 		onEnter?: () => void;
 	}
 
+	export function focus() {
+		get(editor).commands.focus();
+	}
+
 	let {
 		fragment,
 		awareness,

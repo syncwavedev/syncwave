@@ -19,22 +19,13 @@ export class AwarenessStore {
         this.rooms = pipe(tx, isolate(['rooms']));
     }
 
-    async create(
-        room: string,
-        userId: UserId,
-        clientId: number,
-        state: AwarenessState
-    ): Promise<void> {
-        await this.room(room).create(userId, clientId, state);
-    }
-
     async put(
         room: string,
         userId: UserId,
         clientId: number,
         state: AwarenessState
     ) {
-        await this.room(room).update(userId, clientId, state);
+        await this.room(room).put(userId, clientId, state);
     }
 
     async offline(room: string, clientId: number) {
@@ -101,24 +92,14 @@ class AwarenessRoom {
             withCodec(new MsgpackCodec())
         );
     }
-    async create(userId: UserId, clientId: number, state: AwarenessState) {
+
+    async put(userId: UserId, clientId: number, state: AwarenessState) {
         await whenAll([
             this.states.put(clientId, state),
-            this.owners.get(clientId).then(async existing => {
-                if (existing) {
-                    throw new AwarenessConflictError(clientId);
-                }
-
-                await this.owners.put(clientId, userId);
-            }),
-        ]);
-    }
-
-    async update(userId: UserId, clientId: number, state: AwarenessState) {
-        await whenAll([
-            this.states.put(clientId, state),
-            this.owners.get(clientId).then(ownerId => {
-                if (ownerId !== userId) {
+            this.owners.get(clientId).then(async ownerId => {
+                if (ownerId === undefined) {
+                    await this.owners.put(clientId, userId);
+                } else if (ownerId !== userId) {
                     throw new AwarenessOwnershipError({
                         clientId,
                         userId,

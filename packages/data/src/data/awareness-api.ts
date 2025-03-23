@@ -16,10 +16,7 @@ import {
 import {assert, equals, interval, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {AuthContext} from './auth-context.js';
-import {
-    AwarenessConflictError,
-    AwarenessOwnershipError,
-} from './awareness-store.js';
+import {AwarenessOwnershipError} from './awareness-store.js';
 import {boardEvents, type ChangeEvent, type Transact} from './data-layer.js';
 import type {EventStoreReader} from './event-store.js';
 import type {BoardId} from './repos/board-repo.js';
@@ -50,41 +47,7 @@ export class AwarenessApiState {
         return this.auth.userId;
     }
 
-    async createState(
-        boardId: BoardId,
-        clientId: number,
-        state: AwarenessState
-    ) {
-        await this.transact(async tx => {
-            try {
-                await tx.awareness.create(
-                    boardAwarenessRoom(boardId),
-                    this.ensureAuthenticated(),
-                    clientId,
-                    state
-                );
-            } catch (error) {
-                if (error instanceof AwarenessConflictError) {
-                    throw new BusinessError(
-                        `awareness client ${clientId} already exists`,
-                        'forbidden'
-                    );
-                }
-
-                throw error;
-            }
-
-            tx.scheduleEffect(async () => {
-                await this.hub.emit(boardAwarenessRoom(boardId));
-            });
-        });
-    }
-
-    async updateState(
-        boardId: BoardId,
-        clientId: number,
-        state: AwarenessState
-    ) {
+    async putState(boardId: BoardId, clientId: number, state: AwarenessState) {
         await this.transact(async tx => {
             try {
                 const batchKey = boardId + clientId;
@@ -167,7 +130,7 @@ export function createAwarenessApi() {
                     );
                 }
 
-                await st.createState(board.id, clientId, state);
+                await st.putState(board.id, clientId, state);
 
                 const updates = Stream.merge([
                     await st.esReader.subscribe(boardEvents(board.id)),
@@ -223,7 +186,7 @@ export function createAwarenessApi() {
                 await st.transact(async tx => {
                     const [result] = await whenAll([
                         tx.ps.ensureBoardMember(boardId, 'reader'),
-                        st.updateState(boardId, clientId, state),
+                        st.putState(boardId, clientId, state),
                     ]);
                     return result;
                 });

@@ -20,11 +20,13 @@
 	const {
 		column,
 		onCardClick,
+		onCreateCard,
 		activeCardId,
 	}: {
 		column: ColumnTreeView;
 		onCardClick: (card: CardView) => void;
 		activeCardId?: string;
+		onCreateCard: () => void;
 	} = $props();
 
 	let editColumnOpen = $state(false);
@@ -65,10 +67,7 @@
 	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
 	type="scroll"
 >
-	<div
-		class="flex w-80 flex-shrink-0 flex-col pb-1"
-		data-column-id={column.id}
-	>
+	<div class="flex w-80 flex-shrink-0 flex-col pb-1" data-column-id={column.id}>
 		<div
 			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 z-1 flex min-h-10 items-center px-2 py-1"
 			data-disable-scroll-view-drag="true"
@@ -84,7 +83,7 @@
 				open={editColumnOpen}
 				onClose={() => (editColumnOpen = false)}
 			/>
-			<button class="btn--icon">
+			<button class="btn--icon" onclick={onCreateCard}>
 				<PlusIcon />
 			</button>
 		</div>

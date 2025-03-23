@@ -11,6 +11,7 @@
 	import {getAgent} from '../../agent/agent.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
 	import type {User} from 'syncwave-data';
+	import {onMount} from 'svelte';
 
 	const {
 		card,
@@ -25,6 +26,12 @@
 	} = $props();
 
 	const agent = getAgent();
+
+	onMount(() => {
+		if (card.isDraft) {
+			// todo: focus editor
+		}
+	});
 </script>
 
 <div

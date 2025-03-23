@@ -1,5 +1,11 @@
 <script lang="ts">
-	import {compareBigFloat, log, type Awareness, type User} from 'syncwave-data';
+	import {
+		compareBigFloat,
+		log,
+		type Awareness,
+		type ColumnId,
+		type User,
+	} from 'syncwave-data';
 
 	import {onMount, tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
@@ -7,7 +13,11 @@
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import BoardColumn from './board-column.svelte';
 	import Scrollable from '../components/scrollable.svelte';
-	import type {BoardTreeView, CardView} from '../../agent/view.svelte';
+	import type {
+		BoardTreeView,
+		CardView,
+		ColumnTreeView,
+	} from '../../agent/view.svelte';
 	import CardDetails from './card-details.svelte';
 	import {getAgent} from '../../agent/agent.svelte';
 	import EditBoardDialog from '../../components/edit-board-dialog/edit-board-dialog.svelte';
@@ -49,6 +59,35 @@
 		}
 	});
 
+	function selectCard(card: CardView | null) {
+		if (selectedCard?.id === card?.id) {
+			return;
+		}
+
+		if (selectedCard?.isDraft) {
+			agent.deleteCard(selectedCard.id);
+		}
+
+		const replace = selectedCard !== null;
+		selectedCard = card;
+
+		if (card) {
+			router.route(`/b/${board.key}/c/${card.counter}`, {
+				replace,
+				shallow: true,
+				onBack: () => {
+					selectCard(null);
+				},
+				onEscape: true,
+			});
+		} else {
+			router.route(`/b/${board.key}`, {
+				replace: true,
+				shallow: true,
+			});
+		}
+	}
+
 	let boardRef: HTMLElement | null = $state(null);
 
 	$effect(() => {
@@ -78,19 +117,6 @@
 		awareness.setLocalStateField('selectedCardId', selectedCard?.id);
 	});
 
-	function onCardClick(item: CardView) {
-		router.route(`/b/${board.key}/c/${item.counter}`, {
-			replace: selectedCard !== null,
-			shallow: true,
-			onBack: () => {
-				selectedCard = null;
-			},
-			onEscape: true,
-		});
-
-		selectedCard = item;
-	}
-
 	$effect(() => {
 		if (board.deleted) {
 			log.info(`board ${board.id} got deleted, redirect to app...`);
@@ -98,30 +124,28 @@
 		}
 	});
 
-	async function createCard() {
-		const firstColumn = board.columns[0];
-		if (firstColumn === undefined) {
-			alert('Please, create a column first');
-			return;
+	async function createCard(column?: ColumnTreeView) {
+		if (!column) {
+			const firstColumn = board.columns[0];
+			if (!firstColumn) {
+				alert('Please, create a column first');
+				return;
+			}
+
+			column = firstColumn;
 		}
 
-		selectedCard = agent.createCardDraft(board, {
-			columnId: firstColumn.id,
+		const draft = agent.createCardDraft(board, {
+			columnId: column.id,
 			placement: {
 				prev: undefined,
-				next: [...firstColumn.cards].sort((a, b) =>
+				next: [...column.cards].sort((a, b) =>
 					compareBigFloat(a.columnPosition, b.columnPosition)
 				)[0]?.columnPosition,
 			},
 		});
 
-		router.action(() => {
-			if (selectedCard?.isDraft) {
-				// todo: delete card
-				console.warn('delete card');
-			}
-			selectedCard = null;
-		}, true);
+		selectCard(draft);
 	}
 
 	$effect(() => {
@@ -186,7 +210,7 @@
 						online: {board.onlineMembers.map(x => x.fullName).join(', ')}
 					</div>
 				{/if}
-				<button class="btn--icon ml-auto" onclick={createCard}>
+				<button class="btn--icon ml-auto" onclick={() => createCard(undefined)}>
 					<PlusIcon />
 				</button>
 				<button class="btn--icon">
@@ -230,8 +254,9 @@
 					<div animate:flip={{duration: DND_TRANSITION_DURATION_MS}}>
 						<BoardColumn
 							{column}
-							{onCardClick}
+							onCardClick={selectCard}
 							activeCardId={selectedCard?.id}
+							onCreateCard={() => createCard(column)}
 						/>
 					</div>
 				{/each}

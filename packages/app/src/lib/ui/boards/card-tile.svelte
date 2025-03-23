@@ -92,7 +92,7 @@
 		class="
         bg-subtle-0
         dark:bg-subtle-1
-        hover:border-divider
+        hover:border-divider-object
         hover:bg-subtle-2
         group
         data-active:border-divider-active
@@ -116,7 +116,7 @@
 		onkeydown={e => e.key === 'Enter' && onClick()}
 	>
 		<div class="flex w-full flex-col gap-1 truncate">
-			<span class="text-ink truncate">
+			<span class="truncate" data-active={active || undefined}>
 				{preview}
 			</span>
 			{#if !card.isDraft}

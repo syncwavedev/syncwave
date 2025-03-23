@@ -11,7 +11,7 @@
 	import {getAgent} from '../../agent/agent.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
 	import type {User} from 'syncwave-data';
-	import {onMount} from 'svelte';
+	import {onMount, tick} from 'svelte';
 
 	const {
 		card,
@@ -27,10 +27,14 @@
 
 	const agent = getAgent();
 
+	let editor: Editor | null = $state(null);
+
 	onMount(() => {
-		if (card.isDraft) {
-			// todo: focus editor
-		}
+		tick().then(() => {
+			if (card.isDraft && editor) {
+				editor.focus();
+			}
+		});
 	});
 </script>
 
@@ -78,6 +82,7 @@
 			<!-- Task Description -->
 			<div class="input mb-2 w-full text-xs leading-relaxed">
 				<Editor
+					bind:this={editor}
 					class="min-h-[100px]"
 					placeholder="Write here..."
 					fragment={card.text.__fragment!}

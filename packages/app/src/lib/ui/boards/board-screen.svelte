@@ -71,7 +71,7 @@
 		const replace = selectedCard !== null;
 		selectedCard = card;
 
-		if (card) {
+		if (card && !card.isDraft) {
 			router.route(`/b/${board.key}/c/${card.counter}`, {
 				replace,
 				shallow: true,

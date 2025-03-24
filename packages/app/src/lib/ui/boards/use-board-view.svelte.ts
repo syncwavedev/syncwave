@@ -110,7 +110,8 @@ export function useBoardView(board: State<BoardTreeView>) {
 
 		if (update) {
 			const {target, newPosition} = update;
-			agent.setCardPosition(target, dndColumn.id, newPosition);
+			agent.considerCardPosition(target, dndColumn.id, newPosition);
+			agent.finalizeCardPosition(target);
 		}
 		dndColumn.cards = e.detail.items;
 	}

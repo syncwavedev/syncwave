@@ -16,10 +16,10 @@ export function toPosition(placement: {prev?: number; next?: number}): number {
         const middle = (placement.prev + placement.next) / 2;
         return middle + jitter;
     } else if (placement.next) {
-        return placement.next - (Math.abs(placement.next) / 2 + rand);
+        return placement.next - rand - 1;
     } else if (placement.prev) {
-        return placement.prev + (Math.abs(placement.prev) / 2 + rand);
+        return placement.prev + rand + 1;
     } else {
-        return rand * 1_000_000_000_000_000;
+        return rand;
     }
 }

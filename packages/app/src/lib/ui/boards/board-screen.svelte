@@ -1,11 +1,5 @@
 <script lang="ts">
-	import {
-		compareNumbers,
-		log,
-		type Awareness,
-		type ColumnId,
-		type User,
-	} from 'syncwave-data';
+	import {compareNumbers, log, type Awareness, type User} from 'syncwave-data';
 
 	import {onMount, tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';

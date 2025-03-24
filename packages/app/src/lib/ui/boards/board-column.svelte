@@ -9,12 +9,7 @@
 	import PlusIcon from '../components/icons/plus-icon.svelte';
 	import EllipsisIcon from '../../components/icons/ellipsis-icon.svelte';
 	import EditColumnDialog from '../../components/edit-column-dialog/edit-column-dialog.svelte';
-	import {flip} from 'svelte/animate';
-	import {
-		DND_TRANSITION_DURATION_MS,
-		getDndBoardContext,
-		type Ref,
-	} from './board-dnd';
+	import {getDndBoardContext, type Ref} from './board-dnd';
 	import router from '../../router';
 	import ListAnimator from '../components/list-animator.svelte';
 
@@ -68,10 +63,7 @@
 	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
 	type="scroll"
 >
-	<div
-		class="flex w-80 flex-shrink-0 flex-col pb-1"
-		data-column-id={column.id}
-	>
+	<div class="flex w-80 flex-shrink-0 flex-col pb-1" data-column-id={column.id}>
 		<div
 			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 z-1 flex min-h-10 items-center px-2 py-1"
 			data-disable-scroll-view-drag="true"

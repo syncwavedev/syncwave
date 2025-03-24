@@ -71,7 +71,14 @@
 		const replace = selectedCard !== null;
 		selectedCard = card;
 
-		if (card && !card.isDraft) {
+		if (card?.isDraft) {
+			router.action(() => {
+				selectCard(null);
+			}, true);
+			return;
+		}
+
+		if (card) {
 			router.route(`/b/${board.key}/c/${card.counter}`, {
 				replace,
 				shallow: true,
@@ -99,8 +106,7 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						const columnElement =
-							cardElement.closest('[data-column-id]');
+						const columnElement = cardElement.closest('[data-column-id]');
 						if (columnElement) {
 							columnElement.scrollIntoView({
 								behavior: 'smooth',
@@ -136,6 +142,11 @@
 			column = firstColumn;
 		}
 
+		if (selectedCard?.isDraft) {
+			agent.setCardColumn(selectedCard.id, column.id);
+			return;
+		}
+
 		const draft = agent.createCardDraft(board, {
 			columnId: column.id,
 			placement: {
@@ -160,7 +171,7 @@
 					replace: true,
 					shallow: true,
 					onBack: () => {
-						selectedCard = null;
+						selectCard(null);
 					},
 					onEscape: true,
 				});
@@ -208,15 +219,10 @@
 				<div class="text-xs leading-none font-medium">{board.name}</div>
 				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
-						online: {board.onlineMembers
-							.map(x => x.fullName)
-							.join(', ')}
+						online: {board.onlineMembers.map(x => x.fullName).join(', ')}
 					</div>
 				{/if}
-				<button
-					class="btn--icon ml-auto"
-					onclick={() => createCard(undefined)}
-				>
+				<button class="btn--icon ml-auto" onclick={() => createCard(undefined)}>
 					<PlusIcon />
 				</button>
 				<button class="btn--icon">

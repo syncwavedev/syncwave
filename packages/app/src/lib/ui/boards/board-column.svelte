@@ -16,6 +16,7 @@
 		type Ref,
 	} from './board-dnd';
 	import router from '../../router';
+	import ListAnimator from '../components/list-animator.svelte';
 
 	const {
 		column,
@@ -95,19 +96,17 @@
 			class="mx-2 flex h-full min-h-10 flex-col gap-1.5"
 			bind:this={cardsContainerRef}
 		>
-			{#each column.cards as card (card.id)}
-				<div
-					animate:flip={{duration: DND_TRANSITION_DURATION_MS}}
-					class="text-xs"
-					data-disable-scroll-view-drag="true"
-				>
-					<CardTile
-						{card}
-						onClick={() => onCardClick(card)}
-						active={card.id === activeCardId}
-					/>
-				</div>
-			{/each}
+			<ListAnimator items={column.cards} gap={6} key={item => item.id}>
+				{#snippet renderItem(card)}
+					<div class="text-xs" data-disable-scroll-view-drag="true">
+						<CardTile
+							{card}
+							onClick={() => onCardClick(card)}
+							active={card.id === activeCardId}
+						/>
+					</div>
+				{/snippet}
+			</ListAnimator>
 		</div>
 	</div>
 </Scrollable>

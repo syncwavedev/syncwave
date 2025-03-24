@@ -1,6 +1,5 @@
 import {Type} from '@sinclair/typebox';
 import {encodeBase64, zBase64} from '../base64.js';
-import {toBigFloat, zBigFloat} from '../big-float.js';
 import {getIdentity} from '../coordinator/auth-api.js';
 import {Crdt, zCrdtDiff} from '../crdt/crdt.js';
 import {createRichtext} from '../crdt/richtext.js';
@@ -89,7 +88,7 @@ export function createWriteApi() {
                                 writable({
                                     text: true,
                                     columnId: true,
-                                    columnPosition: true,
+                                    position: true,
                                     deleted: true,
                                     updatedAt: true,
                                 })
@@ -119,7 +118,7 @@ export function createWriteApi() {
                         draft.counter = counter;
                     });
 
-                    const {after} = await st.tx.cards.apply(
+                    await st.tx.cards.apply(
                         card.id,
                         crdt.state(),
                         creatable<Card>({
@@ -129,7 +128,7 @@ export function createWriteApi() {
                             boardId: card.boardId,
                             columnId: card.columnId,
                             counter,
-                            columnPosition: card.columnPosition,
+                            position: card.position,
                             createdAt: expectTimestamp(),
                             deleted: expectBoolean(),
                             updatedAt: expectTimestamp(),
@@ -318,7 +317,7 @@ export function createWriteApi() {
                         role,
                         version: '2',
                         // todo: add to the beginning of the user list
-                        position: toBigFloat(Math.random()),
+                        position: Math.random(),
                     });
                 }
 
@@ -369,10 +368,10 @@ export function createWriteApi() {
                 columnId: Uuid<ColumnId>(),
                 boardId: Uuid<BoardId>(),
                 name: Type.String(),
-                boardPosition: zBigFloat(),
+                position: Type.Number(),
             }),
             res: zColumnDto(),
-            handle: async (st, {boardId, columnId, name, boardPosition}) => {
+            handle: async (st, {boardId, columnId, name, position}) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureBoardMember(boardId, 'writer');
                 const now = getNow();
@@ -385,7 +384,7 @@ export function createWriteApi() {
                     updatedAt: now,
                     deleted: false,
                     name: name,
-                    boardPosition,
+                    position,
                     version: '4',
                 });
 
@@ -457,7 +456,7 @@ export function createWriteApi() {
                         deleted: false,
                         role: 'owner',
                         // todo: add to the beginning of the user list
-                        position: toBigFloat(Math.random()),
+                        position: Math.random(),
                         version: '2',
                     }),
                     ...req.members.map(async member => {
@@ -479,7 +478,7 @@ export function createWriteApi() {
                             createdAt: now,
                             deleted: false,
                             id: createMemberId(),
-                            position: toBigFloat(Math.random()),
+                            position: Math.random(),
                             role: 'writer',
                             updatedAt: now,
                             userId: identity.userId,
@@ -551,7 +550,7 @@ export function createWriteApi() {
                         columnId,
                         diff,
                         writable({
-                            boardPosition: true,
+                            position: true,
                             name: true,
                             deleted: true,
                         })

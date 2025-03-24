@@ -5,7 +5,7 @@ import {
 } from 'svelte-dnd-action';
 import {
 	assert,
-	compareBigFloat,
+	compareNumbers,
 	zip,
 	type CardId,
 	type ColumnId,
@@ -85,7 +85,7 @@ export function useBoardView(board: State<BoardTreeView>) {
 			board.value.columns,
 			dndColumns.value.map(x => x.column),
 			newDndColumns.map(x => x.column),
-			column => column?.boardPosition
+			column => column?.position
 		);
 
 		if (update) {
@@ -105,7 +105,7 @@ export function useBoardView(board: State<BoardTreeView>) {
 			localColumn.cards,
 			dndColumn.cards.map(x => x.card),
 			e.detail.items.map(x => x.card),
-			card => card?.columnPosition
+			card => card?.position
 		);
 
 		if (update) {
@@ -118,7 +118,7 @@ export function useBoardView(board: State<BoardTreeView>) {
 
 	function applyOrder(columns: ColumnTreeView[]): DndColumn[] {
 		const result: DndColumn[] = [...columns]
-			.sort((a, b) => compareBigFloat(a.boardPosition, b.boardPosition))
+			.sort((a, b) => compareNumbers(a.position, b.position))
 			.map(
 				(column): DndColumn => ({
 					id: column.id,
@@ -128,7 +128,7 @@ export function useBoardView(board: State<BoardTreeView>) {
 			);
 		for (const column of result) {
 			column.cards = [...column.cards].sort((a, b) =>
-				compareBigFloat(a.card.columnPosition, b.card.columnPosition)
+				compareNumbers(a.card.position, b.card.position)
 			);
 		}
 		return result;

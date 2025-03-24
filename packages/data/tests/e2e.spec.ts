@@ -82,7 +82,7 @@ describe('e2e', () => {
         const columnId = createColumnId();
         await subject.client.rpc.createColumn({
             boardId,
-            boardPosition: toPosition({next: undefined, prev: undefined}),
+            position: toPosition({next: undefined, prev: undefined}),
             columnId,
             name: 'Test column',
         });
@@ -95,7 +95,7 @@ describe('e2e', () => {
             createdAt: toTimestamp(now),
             deleted: false,
             id: cardId,
-            columnPosition: toPosition({next: undefined, prev: undefined}),
+            position: toPosition({next: undefined, prev: undefined}),
             counter: 0,
             pk: [cardId],
             updatedAt: toTimestamp(now),
@@ -122,10 +122,7 @@ describe('e2e', () => {
             createdAt: toTimestamp(now),
             deleted: false,
             id: cardId,
-            columnPosition: {
-                denominator: expect.any(String),
-                numerator: expect.any(String),
-            },
+            position: expect.any(Number),
             counter: 1,
             pk: [cardId],
             updatedAt: toTimestamp(now),

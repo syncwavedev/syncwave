@@ -1,5 +1,4 @@
 import {Type} from '@sinclair/typebox';
-import {type BigFloat, zBigFloat} from '../../big-float.js';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type Richtext, zRichtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
@@ -32,8 +31,8 @@ export interface Card extends Doc<[CardId]> {
     assigneeId?: UserId;
     counter: number | null;
     text: Richtext;
-    columnPosition: BigFloat;
     columnId: ColumnId;
+    position: number;
 }
 
 const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
@@ -53,8 +52,8 @@ export function zCard() {
             counter: Type.Union([Type.Number(), Type.Null()]),
             assigneeId: Type.Optional(Uuid<UserId>()),
             text: zRichtext(),
-            columnPosition: zBigFloat(),
             columnId: Uuid<ColumnId>(),
+            position: Type.Number(),
         }),
     ]);
 }
@@ -129,6 +128,11 @@ export class CardRepo {
                     },
                 },
             ],
+            upgrade: doc => {
+                if (doc.position === undefined) {
+                    doc.position = Math.random();
+                }
+            },
         });
     }
 

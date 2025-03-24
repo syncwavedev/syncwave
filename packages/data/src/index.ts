@@ -1,7 +1,6 @@
 export * from './auth/google.js';
 export * from './awareness.js';
 export * from './batch-processor.js';
-export * from './big-float.js';
 export * from './codec.js';
 export * from './constants.js';
 export * from './context.js';

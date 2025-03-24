@@ -38,7 +38,7 @@ import {EventStoreReader} from './event-store.js';
 import {type ObjectStore, zObjectEnvelope} from './infrastructure.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
 import {type BoardId} from './repos/board-repo.js';
-import {type CardId, zCard} from './repos/card-repo.js';
+import {type CardId} from './repos/card-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
@@ -163,27 +163,6 @@ export function createReadApi() {
                                 log.debug('getMyBoards finish updates');
                             })
                         ),
-                });
-            },
-        }),
-        getBoardCards: streamer({
-            req: Type.Object({boardId: Uuid<BoardId>()}),
-            item: Type.Array(zCard()),
-            async *stream(st, {boardId}) {
-                yield* observable({
-                    async get() {
-                        return await st.transact(async tx => {
-                            const [cards] = await whenAll([
-                                tx.cards.getByBoardId(boardId).toArray(),
-                                tx.ps.ensureBoardMember(boardId, 'reader'),
-                            ]);
-
-                            return cards;
-                        });
-                    },
-                    update$: st.esReader
-                        .subscribe(boardEvents(boardId))
-                        .then(x => x.map(() => undefined)),
                 });
             },
         }),

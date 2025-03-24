@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		compareBigFloat,
+		compareNumbers,
 		log,
 		type Awareness,
 		type ColumnId,
@@ -99,7 +99,8 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						const columnElement = cardElement.closest('[data-column-id]');
+						const columnElement =
+							cardElement.closest('[data-column-id]');
 						if (columnElement) {
 							columnElement.scrollIntoView({
 								behavior: 'smooth',
@@ -140,8 +141,8 @@
 			placement: {
 				prev: undefined,
 				next: [...column.cards].sort((a, b) =>
-					compareBigFloat(a.columnPosition, b.columnPosition)
-				)[0]?.columnPosition,
+					compareNumbers(a.position, b.position)
+				)[0]?.position,
 			},
 		});
 
@@ -207,10 +208,15 @@
 				<div class="text-xs leading-none font-medium">{board.name}</div>
 				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
-						online: {board.onlineMembers.map(x => x.fullName).join(', ')}
+						online: {board.onlineMembers
+							.map(x => x.fullName)
+							.join(', ')}
 					</div>
 				{/if}
-				<button class="btn--icon ml-auto" onclick={() => createCard(undefined)}>
+				<button
+					class="btn--icon ml-auto"
+					onclick={() => createCard(undefined)}
+				>
 					<PlusIcon />
 				</button>
 				<button class="btn--icon">

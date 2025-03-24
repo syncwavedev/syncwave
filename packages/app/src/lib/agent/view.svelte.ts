@@ -3,10 +3,9 @@ import {
 	AppError,
 	assert,
 	Awareness,
-	compareBigFloat,
+	compareNumbers,
 	uniqBy,
 	type AwarenessState,
-	type BigFloat,
 	type Board,
 	type BoardViewDataDto,
 	type Card,
@@ -41,7 +40,7 @@ export class BoardData {
 	private _cardStates: Array<State<Card>> = $state.raw(lateInit());
 
 	readonly cardDragSettledAt = $state(new SvelteMap<CardId, Timestamp>());
-	readonly considerCardPosition = $state(new SvelteMap<CardId, BigFloat>());
+	readonly considerCardPosition = $state(new SvelteMap<CardId, number>());
 	readonly considerColumnId = $state(new SvelteMap<CardId, ColumnId>());
 
 	me: User = $derived(this._meState.value);
@@ -176,7 +175,7 @@ export class BoardTreeView extends BoardView {
 		this._data.columns
 			.filter(x => !x.deleted)
 			.map(x => new ColumnTreeView(x, this._data))
-			.sort((a, b) => compareBigFloat(a.boardPosition, b.boardPosition))
+			.sort((a, b) => compareNumbers(a.position, b.position))
 	);
 }
 
@@ -199,7 +198,7 @@ export class ColumnView implements Column {
 	id = $derived(this._column.id);
 	pk = $derived(this._column.pk);
 	boardId = $derived(this._column.boardId);
-	boardPosition = $derived(this._column.boardPosition);
+	position = $derived(this._column.position);
 	version = $derived(this._column.version);
 
 	board = $derived(new BoardView(this._data));
@@ -218,7 +217,7 @@ export class ColumnTreeView extends ColumnView {
 			.map(x => new CardView(x, this._data))
 			.filter(x => x.columnId === this.id)
 			.filter(x => !x.deleted)
-			.sort((a, b) => compareBigFloat(a.columnPosition, b.columnPosition))
+			.sort((a, b) => compareNumbers(a.position, b.position))
 	);
 }
 
@@ -256,13 +255,13 @@ export class CardView implements Card {
 
 		return this._card.columnId;
 	});
-	columnPosition = $derived.by(() => {
+	position = $derived.by(() => {
 		const dndPosition = this._data.considerCardPosition.get(this.id);
 		if (dndPosition) {
 			return dndPosition;
 		}
 
-		return this._card.columnPosition;
+		return this._card.position;
 	});
 	counter = $derived(this._card.counter);
 	text = $derived(this._card.text);

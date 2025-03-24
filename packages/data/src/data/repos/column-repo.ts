@@ -1,5 +1,4 @@
 import {Type} from '@sinclair/typebox';
-import {type BigFloat, toBigFloat, zBigFloat} from '../../big-float.js';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
@@ -38,7 +37,6 @@ export interface ColumnV2 extends Doc<[ColumnId]> {
     readonly boardId: BoardId;
     title: string;
     deleted: boolean;
-    boardPosition: BigFloat;
 }
 
 export interface ColumnV3 extends Doc<[ColumnId]> {
@@ -48,7 +46,6 @@ export interface ColumnV3 extends Doc<[ColumnId]> {
     readonly boardId: BoardId;
     title: string;
     deleted: boolean;
-    boardPosition: BigFloat;
 }
 
 export interface ColumnV4 extends Doc<[ColumnId]> {
@@ -58,7 +55,7 @@ export interface ColumnV4 extends Doc<[ColumnId]> {
     readonly boardId: BoardId;
     name: string;
     deleted: boolean;
-    boardPosition: BigFloat;
+    position: number;
 }
 
 export interface Column extends ColumnV4 {}
@@ -76,7 +73,7 @@ export function zColumn() {
             boardId: Uuid<BoardId>(),
             name: Type.String(),
             version: Type.Literal('4'),
-            boardPosition: zBigFloat(),
+            position: Type.Number(),
         }),
     ]);
 }
@@ -99,6 +96,10 @@ export class ColumnRepo {
             },
             schema: zColumn(),
             upgrade: function upgradeColumn(column: StoredColumn) {
+                if ((column as any).position === undefined) {
+                    (column as any).position = Math.random();
+                }
+
                 if ('version' in column) {
                     if (typeof column.version === 'number') {
                         (column as any).version = '3';
@@ -119,7 +120,7 @@ export class ColumnRepo {
                     }
                 } else {
                     (column as any).version = 2;
-                    (column as any).boardPosition = toBigFloat(Math.random());
+                    (column as any).boardPosition = Math.random();
 
                     upgradeColumn(column);
                 }

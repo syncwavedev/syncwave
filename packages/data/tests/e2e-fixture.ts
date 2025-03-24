@@ -118,7 +118,7 @@ export class E2eFixture {
         const columnId = createColumnId();
         await this.client.rpc.createColumn({
             boardId,
-            boardPosition: toPosition({next: undefined, prev: undefined}),
+            position: toPosition({next: undefined, prev: undefined}),
             columnId,
             name: 'Test column',
         });
@@ -132,7 +132,7 @@ export class E2eFixture {
             createdAt: toTimestamp(now),
             deleted: false,
             id: cardId,
-            columnPosition: toPosition({next: undefined, prev: undefined}),
+            position: toPosition({next: undefined, prev: undefined}),
             counter: 0,
             pk: [cardId],
             updatedAt: toTimestamp(now),

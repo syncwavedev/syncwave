@@ -22,7 +22,6 @@ import {
 	toStream,
 	whenAll,
 	type AwarenessState,
-	type BigFloat,
 	type Board,
 	type BoardId,
 	type BoardViewDataDto,
@@ -338,7 +337,7 @@ export class Agent {
 			createdAt: now,
 			deleted: false,
 			id: cardId,
-			columnPosition: toPosition(options.placement),
+			position: toPosition(options.placement),
 			counter: null,
 			pk: [cardId],
 			updatedAt: now,
@@ -376,9 +375,9 @@ export class Agent {
 		this.crdtManager.commit(cardId);
 	}
 
-	setColumnPosition(columnId: ColumnId, position: BigFloat): void {
+	setColumnPosition(columnId: ColumnId, position: number): void {
 		this.crdtManager.update<Column>(columnId, x => {
-			x.boardPosition = position;
+			x.position = position;
 		});
 	}
 
@@ -401,7 +400,7 @@ export class Agent {
 		);
 
 		this.crdtManager.update<Card>(cardId, x => {
-			x.columnPosition = position;
+			x.position = position;
 			x.columnId = columnId;
 		});
 
@@ -412,11 +411,7 @@ export class Agent {
 		});
 	}
 
-	considerCardPosition(
-		cardId: CardId,
-		columnId: ColumnId,
-		position: BigFloat
-	) {
+	considerCardPosition(cardId: CardId, columnId: ColumnId, position: number) {
 		this.activeBoards.forEach(board =>
 			board.considerColumnId.set(cardId, columnId)
 		);

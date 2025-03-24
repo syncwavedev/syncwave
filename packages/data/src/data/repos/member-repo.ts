@@ -1,5 +1,4 @@
 import {Type} from '@sinclair/typebox';
-import {type BigFloat, toBigFloat, zBigFloat} from '../../big-float.js';
 import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
@@ -58,7 +57,7 @@ export interface MemberV2 extends Doc<[MemberId]> {
     readonly boardId: BoardId;
     readonly version: '2';
     role: MemberRole;
-    position: BigFloat;
+    position: number;
 }
 
 export interface Member extends MemberV2 {}
@@ -76,7 +75,7 @@ export function zMember() {
             boardId: Uuid<BoardId>(),
             role: zMemberRole(),
             version: Type.Literal('2'),
-            position: zBigFloat(),
+            position: Type.Number(),
         }),
     ]);
 }
@@ -102,6 +101,9 @@ export class MemberRepo {
             },
             schema: zMember(),
             upgrade: function upgrade(doc: StoredMember): void {
+                if (typeof (doc as any).position !== 'number') {
+                    (doc as any).position = Math.random();
+                }
                 if ('version' in doc) {
                     if (doc.version === '2') {
                         // latest version
@@ -110,7 +112,7 @@ export class MemberRepo {
                     }
                 } else {
                     (doc as any).version = '2';
-                    (doc as any).position = toBigFloat(Math.random());
+                    (doc as any).position = Math.random();
 
                     upgrade(doc);
                 }

@@ -1,7 +1,7 @@
 import {getContext, onDestroy, setContext} from 'svelte';
 import {
 	clip,
-	compareBigFloat,
+	compareNumbers,
 	EventEmitter,
 	log,
 	runAll,
@@ -178,7 +178,7 @@ export class DndBoardContext {
 		this.agent.considerCardPosition(
 			card.card.value.id,
 			card.card.value.columnId,
-			card.card.value.columnPosition
+			card.card.value.position
 		);
 
 		draggable.element.style.position = 'absolute';
@@ -418,10 +418,7 @@ export class DndBoardContext {
 					x.container.isConnected
 			)
 			.sort((a, b) =>
-				compareBigFloat(
-					a.card.value.columnPosition,
-					b.card.value.columnPosition
-				)
+				compareNumbers(a.card.value.position, b.card.value.position)
 			);
 
 		const oldIndexInTargetColumn = columnCards.findIndex(
@@ -480,8 +477,8 @@ export class DndBoardContext {
 			!selfNextAnchor
 		) {
 			const newCardPosition = toPosition({
-				prev: prev?.card.value.columnPosition,
-				next: next?.card.value.columnPosition,
+				prev: prev?.card.value.position,
+				next: next?.card.value.position,
 			});
 			this.agent.considerCardPosition(
 				card.card.value.id,

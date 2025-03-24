@@ -48,7 +48,11 @@
 			class="bg-subtle-0 dark:bg-subtle-1 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
 		>
 			<div class="text-xs font-medium">
-				{card.board.key}–{card.counter}
+				{#if card.isDraft}
+					New card
+				{:else}
+					{card.board.key}–{card.counter}
+				{/if}
 			</div>
 			<div class="relative ml-auto">
 				<button class="btn--icon" id="ellipsis-button">

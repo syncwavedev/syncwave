@@ -2,7 +2,8 @@
 
 ## Next
 
--
+- Fix Google auth
+- Board DnD performance and animation improvements
 
 ## 2025-03-23
 

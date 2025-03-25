@@ -350,12 +350,12 @@ export class DndBoardContext {
 		// find final placement
 		this.handlePlacement(draggable, cardId);
 
-		const draggableRect = draggable.element.getBoundingClientRect();
-
 		const transition = `transform ${DND_TRANSITION_DURATION_MS}ms ease`;
 		draggable.element.style.transition = draggable.element.style.transition
 			? draggable.element.style.transition + ',' + transition
 			: transition;
+
+		const draggableRect = draggable.element.getBoundingClientRect();
 		const animateToX = draggable.targetX - draggableRect.x;
 		const animateToY = draggable.targetY - draggableRect.y;
 
@@ -436,19 +436,14 @@ export class DndBoardContext {
 		let prev: DndCardContext | undefined = undefined;
 		let next: DndCardContext | undefined = undefined;
 
+		console.log('top:', targetColumn.container.getBoundingClientRect().top);
+		console.debug('height', targetColumn.container.offsetHeight);
 		let offsetTop = targetColumn.container.getBoundingClientRect().top;
-		const offsetLeft = targetColumn.container.getBoundingClientRect().left;
 		for (const neighbor of columnCards) {
 			const neighborRectNative =
 				neighbor.container.getBoundingClientRect();
-			const neighborRect = {
-				height: neighborRectNative.height,
-				width: neighborRectNative.width,
-				left: neighborRectNative.left,
-				top: offsetTop,
-			};
 			const combinedHeight =
-				neighborRect.height + DND_CARD_GAP + cardHeight;
+				neighborRectNative.height + DND_CARD_GAP + cardHeight;
 			const combinedTop = offsetTop;
 			const combinedCenterY = combinedTop + combinedHeight / 2;
 
@@ -460,9 +455,12 @@ export class DndBoardContext {
 
 			prev = neighbor;
 			if (neighbor.card.value.id !== card.card.value.id) {
-				offsetTop += DND_CARD_GAP + neighborRect.height;
+				offsetTop += DND_CARD_GAP + neighborRectNative.height;
 			}
 		}
+
+		draggable.targetX = targetColumn.container.getBoundingClientRect().left;
+		draggable.targetY = offsetTop;
 
 		const columnChanged = oldIndexInTargetColumn === -1;
 		const selfPrevAnchor = prev?.card.value.id === card.card.value.id;
@@ -485,9 +483,6 @@ export class DndBoardContext {
 				newCardPosition
 			);
 		}
-
-		draggable.targetX = offsetLeft;
-		draggable.targetY = offsetTop;
 	}
 
 	private addListener<
@@ -556,7 +551,7 @@ class Scroller {
 
 	tick() {
 		const now = performance.now();
-		const scale = (now - this.lastTick) / 1000;
+		const elapsedSeconds = (now - this.lastTick) / 1000;
 		this.lastTick = now;
 
 		if (this.isCancelled) return;
@@ -577,12 +572,14 @@ class Scroller {
 		}
 
 		if (dx || dy) {
-			const SPEED = 500; // px / second
-			const adjustment = SPEED * scale;
+			// px / second
+			const SPEED = 500;
+			const adjustment = SPEED * elapsedSeconds;
 
-			this.target.scrollBy({
-				left: dx * adjustment,
-				top: dy * adjustment,
+			// 2025-03-25: we con't use scrollBy, because Safari will report incorrect DOMRect.top for cards inside the scrollable
+			this.target.scrollTo({
+				left: dx * adjustment + this.target.scrollLeft,
+				top: dy * adjustment + this.target.scrollTop,
 			});
 		}
 

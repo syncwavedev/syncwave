@@ -2,6 +2,7 @@
 @import './button.css';
 @import './input.css';
 
+html,
 body {
 	overflow: hidden;
 }

@@ -208,8 +208,24 @@ export class DndBoardContext {
 				const deltaX = moveEvent.pageX - startPointerX;
 				const deltaY = moveEvent.pageY - startPointerY;
 
-				draggable.element.style.left = `${startDraggableX + deltaX}px`;
-				draggable.element.style.top = `${startDraggableY + deltaY}px`;
+				const gap = 1;
+				const nextX = clip({
+					value: startDraggableX + deltaX,
+					min: gap,
+					max:
+						window.innerWidth - draggable.element.clientWidth - gap,
+				});
+				const nextY = clip({
+					value: startDraggableY + deltaY,
+					min: gap,
+					max:
+						window.innerHeight -
+						draggable.element.clientHeight -
+						gap,
+				});
+
+				draggable.element.style.left = `${nextX}px`;
+				draggable.element.style.top = `${nextY}px`;
 
 				this.handlePlacement(draggable, card.card.value.id);
 			}

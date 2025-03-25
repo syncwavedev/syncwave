@@ -113,7 +113,7 @@ export class DndBoardContext {
 
 			const cancelPointerMoveListener = this.addListener(
 				card,
-				card.container,
+				this.container,
 				'pointermove',
 				moveEvent => {
 					if (downEvent.pointerId !== moveEvent.pointerId) return;

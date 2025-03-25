@@ -4,7 +4,7 @@
 	import type {CardView} from '../../agent/view.svelte';
 	import {getAgent} from '../../agent/agent.svelte';
 	import {
-		DND_TRANSITION_DURATION_MS,
+		DND_REORDER_DURATION_MS,
 		getDndBoardContext,
 		type Ref,
 	} from './board-dnd';
@@ -57,22 +57,22 @@
 		return undefined;
 	});
 
-	const SETTLED_MS = DND_TRANSITION_DURATION_MS / 2;
-	let showDndPlaceholder = $state(
+	const SETTLED_MS = DND_REORDER_DURATION_MS / 2;
+	let isDndSettled = $state(
 		!!card.dndLastChangeAt && getNow() - card.dndLastChangeAt < SETTLED_MS
 	);
 	$effect(() => {
 		if (card.dndLastChangeAt === undefined) return;
-		showDndPlaceholder = false;
+		isDndSettled = false;
 		const timeoutId = setTimeout(
 			() => {
-				showDndPlaceholder = true;
+				isDndSettled = true;
 			},
 			Math.max(0, card.dndLastChangeAt + SETTLED_MS - getNow())
 		);
 
 		return () => {
-			showDndPlaceholder = false;
+			isDndSettled = false;
 			clearTimeout(timeoutId);
 		};
 	});
@@ -82,7 +82,8 @@
 	class="card-container relative"
 	bind:this={containerRef}
 	data-is-dnd-in-progress={card.dndInProgress}
-	data-dnd-settled={showDndPlaceholder}
+	data-dnd-settled={isDndSettled}
+	data-disable-scroll-view-drag="true"
 >
 	<div
 		data-card-id={card.id}
@@ -90,25 +91,25 @@
 		tabindex="0"
 		data-active={active || undefined}
 		class="
-        bg-subtle-0
-        dark:bg-subtle-1
-        hover:border-divider-object
-        hover:bg-subtle-2
-        group
-        data-active:border-divider-active
-        data-active:bg-subtle-active
-        flex
-        cursor-pointer
-        items-end
-        gap-1
-        rounded-md
-        border
-        border-divider
-        p-2
-        select-none
-        text-xs
-        content
-    "
+            bg-subtle-0
+            dark:bg-subtle-1
+            hover:border-divider-object
+            hover:bg-subtle-2
+            group
+            data-active:border-divider-active
+            data-active:bg-subtle-active
+            flex
+            cursor-pointer
+            items-end
+            gap-1
+            rounded-md
+            border
+            border-divider
+            p-2
+            select-none
+            text-xs
+            content
+        "
 		class:border-dashed={card.isDraft}
 		onclick={onClick}
 		onmouseenter={() => agent.handleCardMouseEnter(card.boardId, card.id)}

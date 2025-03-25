@@ -12,14 +12,9 @@ import {
 import type {Agent} from '../../agent/agent.svelte.js';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
-export const DND_TRANSITION_DURATION_MS = 400;
-export const DND_DROP_DURATION_MS = DND_TRANSITION_DURATION_MS / 2;
+export const DND_REORDER_DURATION_MS = 400;
+export const DND_DROP_DURATION_MS = DND_REORDER_DURATION_MS / 2;
 export const DND_CARD_GAP = 6;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function lateInit(): any {
-	return undefined;
-}
 
 type Cleanup = () => void;
 
@@ -50,8 +45,8 @@ interface Draggable {
 }
 
 export class DndBoardContext {
-	container: HTMLDivElement = lateInit();
-	scrollable: HTMLDivElement = lateInit();
+	container!: HTMLDivElement;
+	scrollable!: HTMLDivElement;
 	private columns: DndColumnContext[] = [];
 	private cards: DndCardContext[] = [];
 	public cleanups: Cleanup[] = [];
@@ -453,8 +448,6 @@ export class DndBoardContext {
 		let prev: DndCardContext | undefined = undefined;
 		let next: DndCardContext | undefined = undefined;
 
-		console.log('top:', targetColumn.container.getBoundingClientRect().top);
-		console.debug('height', targetColumn.container.offsetHeight);
 		let offsetTop = targetColumn.container.getBoundingClientRect().top;
 		for (const neighbor of columnCards) {
 			const neighborRectNative =
@@ -563,15 +556,19 @@ class Scroller {
 	private lastTick = performance.now() - 1000 / 60;
 
 	constructor(public target: HTMLElement) {
-		this.tick();
+		const animation = () => {
+			if (this.isCancelled) return;
+			this.tick();
+			requestAnimationFrame(() => animation());
+		};
+		animation();
 	}
 
 	tick() {
+		console.log('spinning');
 		const now = performance.now();
 		const elapsedSeconds = (now - this.lastTick) / 1000;
 		this.lastTick = now;
-
-		if (this.isCancelled) return;
 
 		let dx = 0;
 		let dy = 0;
@@ -588,19 +585,17 @@ class Scroller {
 			dx = 1;
 		}
 
-		if (dx || dy) {
-			// px / second
-			const SPEED = 500;
-			const adjustment = SPEED * elapsedSeconds;
+		if (dx === 0 && dy === 0) return;
 
-			// 2025-03-25: we con't use scrollBy, because Safari will report incorrect DOMRect.top for cards inside the scrollable
-			this.target.scrollTo({
-				left: dx * adjustment + this.target.scrollLeft,
-				top: dy * adjustment + this.target.scrollTop,
-			});
-		}
+		// px / second
+		const SPEED = 500;
+		const adjustment = SPEED * elapsedSeconds;
 
-		requestAnimationFrame(() => this.tick());
+		// 2025-03-25: we con't use scrollBy, because Safari will report incorrect DOMRect.top for cards inside the scrollable
+		this.target.scrollTo({
+			left: dx * adjustment + this.target.scrollLeft,
+			top: dy * adjustment + this.target.scrollTop,
+		});
 	}
 
 	destroy() {

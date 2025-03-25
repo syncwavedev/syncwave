@@ -1,5 +1,10 @@
 <script lang="ts">
-	import {compareNumbers, log, type Awareness, type User} from 'syncwave-data';
+	import {
+		compareNumbers,
+		log,
+		type Awareness,
+		type User,
+	} from 'syncwave-data';
 
 	import {onMount, tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
@@ -19,7 +24,7 @@
 	import EditProfileDialog from '../../components/edit-profile-dialog/edit-profile-dialog.svelte';
 	import router from '../../router';
 	import {flip} from 'svelte/animate';
-	import {createDndContext, DND_TRANSITION_DURATION_MS} from './board-dnd';
+	import {createDndContext, DND_REORDER_DURATION_MS} from './board-dnd';
 	import {yFragmentToPlaintextAndTaskList} from '../../richtext';
 
 	const {
@@ -100,7 +105,8 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						const columnElement = cardElement.closest('[data-column-id]');
+						const columnElement =
+							cardElement.closest('[data-column-id]');
 						if (columnElement) {
 							columnElement.scrollIntoView({
 								behavior: 'smooth',
@@ -213,10 +219,15 @@
 				<div class="text-xs leading-none font-medium">{board.name}</div>
 				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
-						online: {board.onlineMembers.map(x => x.fullName).join(', ')}
+						online: {board.onlineMembers
+							.map(x => x.fullName)
+							.join(', ')}
 					</div>
 				{/if}
-				<button class="btn--icon ml-auto" onclick={() => createCard(undefined)}>
+				<button
+					class="btn--icon ml-auto"
+					onclick={() => createCard(undefined)}
+				>
 					<PlusIcon />
 				</button>
 				<button class="btn--icon">
@@ -257,7 +268,7 @@
 				class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 text-xs"
 			>
 				{#each board.columns as column (column.id)}
-					<div animate:flip={{duration: DND_TRANSITION_DURATION_MS}}>
+					<div animate:flip={{duration: DND_REORDER_DURATION_MS}}>
 						<BoardColumn
 							{column}
 							onCardClick={selectCard}

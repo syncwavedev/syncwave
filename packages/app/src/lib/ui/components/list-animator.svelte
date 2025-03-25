@@ -1,7 +1,7 @@
 <script lang="ts" generics="T">
 	import {untrack, type Snippet} from 'svelte';
 	import {sineOut} from 'svelte/easing';
-	import {DND_TRANSITION_DURATION_MS} from '../boards/board-dnd';
+	import {DND_REORDER_DURATION_MS} from '../boards/board-dnd';
 
 	type Key = string;
 
@@ -68,7 +68,7 @@
 
 			const now = performance.now();
 			const t = sineOut(
-				Math.min(1, (now - animationStart) / DND_TRANSITION_DURATION_MS)
+				Math.min(1, (now - animationStart) / DND_REORDER_DURATION_MS)
 			);
 
 			for (const item of items) {

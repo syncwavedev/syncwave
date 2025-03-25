@@ -60,7 +60,6 @@
 		error = undefined;
 		try {
 			const result = await rpc(x => x.verifySignInCode({email, code}));
-			console.log(result);
 			if (result.type === 'success' && result.token) {
 				authManager.logIn(result.token);
 				window.location.href = '/';

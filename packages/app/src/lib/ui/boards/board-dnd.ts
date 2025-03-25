@@ -12,8 +12,8 @@ import {
 import type {Agent} from '../../agent/agent.svelte.js';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
-export const DND_REORDER_DURATION_MS = 400;
-export const DND_DROP_DURATION_MS = DND_REORDER_DURATION_MS / 2;
+export const DND_REORDER_DURATION_MS = 500;
+export const DND_DROP_DURATION_MS = 150;
 export const DND_CARD_GAP = 6;
 
 type Cleanup = () => void;

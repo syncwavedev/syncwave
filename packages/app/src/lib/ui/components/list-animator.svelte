@@ -17,11 +17,8 @@
 
 	let shadow: T[] = $state([]);
 
-	let animationStart = $state(performance.now());
-
 	$effect(() => {
 		const itemKeys = new Set(items.map(key));
-		animationStart = performance.now();
 
 		untrack(() => {
 			const shadowKeys = new Set(shadow.map(key));
@@ -67,9 +64,11 @@
 			container.style.height = `${containerHeight}px`;
 
 			const now = performance.now();
-			const t = sineOut(
-				Math.min(1, (now - animationStart) / DND_REORDER_DURATION_MS)
-			);
+
+			function setY(element: HTMLElement, y: number) {
+				element.style.transform = `translateY(${y}px)`;
+				element.dataset.currentY = y.toString();
+			}
 
 			for (const item of items) {
 				const k = key(item);
@@ -77,28 +76,40 @@
 
 				if (!element) return;
 
-				const currentY = parseInt(
-					element.dataset.currentY ?? targetY.toString(),
-					10
-				);
-				const nextY = currentY + (targetY - currentY) * t;
+				if (element.dataset.targetY !== targetY.toString()) {
+					element.dataset.targetY = targetY.toString();
+					const deadline = now + DND_REORDER_DURATION_MS;
+					element.dataset.deadline = deadline.toString();
+				}
 
-				if (element.dataset.currentY !== nextY.toString()) {
-					element.style.transform = `translateY(${nextY}px)`;
-					element.dataset.currentY = nextY.toString();
+				// freshman
+				if (element.dataset.currentY === undefined) {
+					setY(element, targetY);
+				}
+
+				const currentY = parseInt(element.dataset.currentY!, 10);
+
+				if (targetY === currentY) {
+				} else {
+					const deadline = parseInt(element.dataset.deadline!, 10);
+					const progress =
+						1 - (deadline - now) / DND_REORDER_DURATION_MS;
+
+					const t = sineOut(Math.min(1, progress));
+					setY(element, currentY + (targetY - currentY) * t);
 				}
 
 				targetY += gap + element.offsetHeight;
 			}
 		}
 
-		function loop() {
+		function animate() {
 			if (cancelled) return;
 			tick();
-			requestAnimationFrame(loop);
+			requestAnimationFrame(animate);
 		}
 
-		requestAnimationFrame(loop);
+		requestAnimationFrame(animate);
 
 		return () => (cancelled = true);
 	});

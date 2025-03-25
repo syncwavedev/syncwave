@@ -12,7 +12,7 @@ import {
 import type {Agent} from '../../agent/agent.svelte.js';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
-export const DND_TRANSITION_DURATION_MS = 300;
+export const DND_TRANSITION_DURATION_MS = 200;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lateInit(): any {

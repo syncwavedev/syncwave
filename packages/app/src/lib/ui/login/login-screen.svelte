@@ -9,7 +9,7 @@
 		const authState = {redirectUrl: '/'};
 		const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
 		const options = {
-			redirect_uri: `${appConfig.apiUrl}/callback/google`,
+			redirect_uri: `${appConfig.apiUrl}/callbacks/google`,
 			client_id: appConfig.googleClientId,
 			access_type: 'offline',
 			response_type: 'code',
@@ -92,7 +92,8 @@
 		{#if !showCodeInput}
 			<h1 class="mb-1 font-extrabold text-2xl">Let's get started!</h1>
 			<p class="text-ink-detail mb-8 text-xs">
-				Please enter your email to log in or sign up, or continue with Google.
+				Please enter your email to log in or sign up, or continue with
+				Google.
 			</p>
 			<div class="space-y-8">
 				<!-- Google Sign-In Button -->
@@ -142,7 +143,9 @@
 				<!-- Email Form -->
 				<form onsubmit={onEmailSubmit} class="space-y-4">
 					<div>
-						<label for="email-input" class="sr-only">Email address</label>
+						<label for="email-input" class="sr-only"
+							>Email address</label
+						>
 						<input
 							id="email-input"
 							type="email"
@@ -180,11 +183,15 @@
 		{:else}
 			<h1 class="mb-1 font-extrabold text-2xl">Check your email</h1>
 			<p class="text-ink-detail text-xs mb-6">
-				Enter the 6-digit code sent to <span class="font-medium">{email}</span>
+				Enter the 6-digit code sent to <span class="font-medium"
+					>{email}</span
+				>
 			</p>
 			<form onsubmit={onCodeSubmit} class="space-y-6">
 				<div class="mx-auto">
-					<label for="code-input" class="sr-only">Verification code</label>
+					<label for="code-input" class="sr-only"
+						>Verification code</label
+					>
 					<!-- svelte-ignore a11y_autofocus -->
 					<input
 						type="text"
@@ -222,7 +229,8 @@
 				class="text-primary hover:underline">Terms of Service</a
 			>
 			and
-			<a href="/privacy" class="text-primary hover:underline">Privacy Policy</a
+			<a href="/privacy" class="text-primary hover:underline"
+				>Privacy Policy</a
 			>.
 		</div>
 	</div>

@@ -54,7 +54,8 @@
 		}
 	}
 
-	async function onCodeSubmit() {
+	async function onCodeSubmit(e: Event) {
+		e.preventDefault();
 		if (isLoading) return;
 		isLoading = true;
 		error = undefined;

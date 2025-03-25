@@ -7,6 +7,10 @@ export class SesEmailService implements EmailService {
     constructor(region: string) {
         this.ses = new SESClient({
             region,
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+            },
         });
     }
 

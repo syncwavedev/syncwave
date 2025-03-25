@@ -11,15 +11,9 @@
 		const store = getAuthManager();
 		store.logIn(token);
 	} else {
+		// todo: add error message
 		unimplemented();
 	}
 
-	if (redirectUrl) {
-		window.location.href = redirectUrl;
-	} else {
-		router.route(
-			`/auth/log-in?redirectUrl=${encodeURIComponent(redirectUrl ?? '/')}`
-		);
-		console.error('Redirect URL not provided');
-	}
+	window.location.href = redirectUrl || '/';
 </script>

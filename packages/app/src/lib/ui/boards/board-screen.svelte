@@ -108,10 +108,16 @@
 						const columnElement =
 							cardElement.closest('[data-column-id]');
 						if (columnElement) {
-							columnElement.scrollIntoView({
-								behavior: 'smooth',
-								inline: 'nearest',
-								block: 'nearest',
+							// requestAnimationFrame makes it work in Safari when pointer down => small move => pointer up
+							// it registers like a click (as it should), but Safari doesn't scroll smoothly to the element
+							// in that case for some reason (draggable scrollable and board dnd has nothing to do with it
+							// because it's reproducible even without dnd and draggable scrollable)
+							requestAnimationFrame(() => {
+								columnElement.scrollIntoView({
+									behavior: 'smooth',
+									inline: 'nearest',
+									block: 'nearest',
+								});
 							});
 						}
 					}

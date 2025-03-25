@@ -12,7 +12,8 @@ import {
 import type {Agent} from '../../agent/agent.svelte.js';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
-export const DND_TRANSITION_DURATION_MS = 300;
+export const DND_TRANSITION_DURATION_MS = 400;
+export const DND_DROP_DURATION_MS = DND_TRANSITION_DURATION_MS / 2;
 export const DND_CARD_GAP = 6;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -366,7 +367,7 @@ export class DndBoardContext {
 		// find final placement
 		this.handlePlacement(draggable, cardId);
 
-		const transition = `transform ${DND_TRANSITION_DURATION_MS}ms ease`;
+		const transition = `transform ${DND_DROP_DURATION_MS}ms ease`;
 		draggable.element.style.transition = draggable.element.style.transition
 			? draggable.element.style.transition + ',' + transition
 			: transition;
@@ -383,7 +384,7 @@ export class DndBoardContext {
 			}
 
 			this.agent.finalizeCardPosition(card.card.value.id);
-		}, DND_TRANSITION_DURATION_MS);
+		}, DND_DROP_DURATION_MS);
 	}
 
 	private getClosestColumn(draggable: Draggable) {

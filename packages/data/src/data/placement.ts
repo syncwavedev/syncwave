@@ -11,7 +11,7 @@ export function zPlacement() {
 export type Placement = Static<ReturnType<typeof zPlacement>>;
 export function toPosition(placement: {prev?: number; next?: number}): number {
     let result: number;
-    const rand = Math.random();
+    const rand = Math.max(Math.random(), 1e-18);
     if (placement.prev && placement.next) {
         const middle = (placement.prev + placement.next) / 2;
         const diff = Math.abs(placement.next - placement.prev);

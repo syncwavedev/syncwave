@@ -12,7 +12,8 @@ import {
 import type {Agent} from '../../agent/agent.svelte.js';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
-export const DND_TRANSITION_DURATION_MS = 200;
+export const DND_TRANSITION_DURATION_MS = 300;
+export const DND_CARD_GAP = 6;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lateInit(): any {
@@ -435,9 +436,6 @@ export class DndBoardContext {
 		let prev: DndCardContext | undefined = undefined;
 		let next: DndCardContext | undefined = undefined;
 
-		// todo: use parameter
-		const GAP = 6; // 6px
-
 		let offsetTop = targetColumn.container.getBoundingClientRect().top;
 		const offsetLeft = targetColumn.container.getBoundingClientRect().left;
 		for (const neighbor of columnCards) {
@@ -449,7 +447,8 @@ export class DndBoardContext {
 				left: neighborRectNative.left,
 				top: offsetTop,
 			};
-			const combinedHeight = neighborRect.height + GAP + cardHeight;
+			const combinedHeight =
+				neighborRect.height + DND_CARD_GAP + cardHeight;
 			const combinedTop = offsetTop;
 			const combinedCenterY = combinedTop + combinedHeight / 2;
 
@@ -461,7 +460,7 @@ export class DndBoardContext {
 
 			prev = neighbor;
 			if (neighbor.card.value.id !== card.card.value.id) {
-				offsetTop += GAP + neighborRect.height;
+				offsetTop += DND_CARD_GAP + neighborRect.height;
 			}
 		}
 

@@ -1,6 +1,6 @@
 <script lang="ts" generics="T">
 	import {untrack, type Snippet} from 'svelte';
-	import {clip} from 'syncwave-data';
+	import {sineOut} from 'svelte/easing';
 	import {DND_TRANSITION_DURATION_MS} from '../boards/board-dnd';
 
 	type Key = string;
@@ -17,11 +17,11 @@
 
 	let shadow: T[] = $state([]);
 
-	let deadline = $state(performance.now());
+	let animationStart = $state(performance.now());
 
 	$effect(() => {
 		const itemKeys = new Set(items.map(key));
-		deadline = performance.now() + DND_TRANSITION_DURATION_MS;
+		animationStart = performance.now();
 
 		untrack(() => {
 			const shadowKeys = new Set(shadow.map(key));
@@ -46,13 +46,8 @@
 
 	$effect(() => {
 		let cancelled = false;
-		let lastTick = performance.now();
 
 		function tick() {
-			const now = performance.now();
-			const elapsed = now - lastTick;
-			lastTick = now;
-
 			if (!container) return;
 
 			const elementMap = new Map<Key, HTMLElement>();
@@ -64,12 +59,17 @@
 				const key = element.dataset.key!;
 				elementMap.set(key, element);
 
-				containerHeight += element.offsetHeight + i === 0 ? 0 : gap;
+				containerHeight += element.offsetHeight + (i === 0 ? 0 : gap);
 			}
 
 			let targetY = 0;
 
 			container.style.height = `${containerHeight}px`;
+
+			const now = performance.now();
+			const t = sineOut(
+				Math.min(1, (now - animationStart) / DND_TRANSITION_DURATION_MS)
+			);
 
 			for (const item of items) {
 				const k = key(item);
@@ -81,15 +81,12 @@
 					element.dataset.currentY ?? targetY.toString(),
 					10
 				);
+				const nextY = currentY + (targetY - currentY) * t;
 
-				const timeLeft = deadline - now;
-				const nextY =
-					timeLeft > elapsed
-						? currentY + (targetY - currentY) / (timeLeft / elapsed)
-						: targetY;
-
-				element.style.transform = `translateY(${nextY}px)`;
-				element.dataset.currentY = nextY.toString();
+				if (element.dataset.currentY !== nextY.toString()) {
+					element.style.transform = `translateY(${nextY}px)`;
+					element.dataset.currentY = nextY.toString();
+				}
 
 				targetY += gap + element.offsetHeight;
 			}

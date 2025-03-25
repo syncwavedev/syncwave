@@ -565,7 +565,6 @@ class Scroller {
 	}
 
 	tick() {
-		console.log('spinning');
 		const now = performance.now();
 		const elapsedSeconds = (now - this.lastTick) / 1000;
 		this.lastTick = now;

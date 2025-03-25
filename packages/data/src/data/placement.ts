@@ -25,7 +25,7 @@ export function toPosition(placement: {prev?: number; next?: number}): number {
         result = rand;
     }
 
-    assert(Number.isNaN(result) === false, 'Placement result is NaN');
+    assert(Number.isFinite(result), "Placement result is't finite");
     assert(
         result !== placement.prev && result !== placement.next,
         'Placement result is equal to prev or next'

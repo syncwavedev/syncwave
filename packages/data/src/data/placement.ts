@@ -25,10 +25,15 @@ export function toPosition(placement: {prev?: number; next?: number}): number {
         result = rand;
     }
 
-    assert(Number.isFinite(result), "Placement result is't finite");
+    assert(Number.isFinite(result), "Placement result is't finite: " + result);
+    assert(result !== 0, 'Placement result is 0');
     assert(
-        result !== placement.prev && result !== placement.next,
-        'Placement result is equal to prev or next'
+        result !== placement.prev,
+        'Placement result is equal to prev: ' + result
+    );
+    assert(
+        result !== placement.next,
+        'Placement result is equal to next: ' + result
     );
 
     return result;

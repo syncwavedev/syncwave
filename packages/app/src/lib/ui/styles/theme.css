@@ -35,7 +35,7 @@
 	--text-9xl--line-height: 0.95;
 
 	/* Gray */
-	--color-gray-10: oklch(99.2% 0.002 130deg);
+	--color-gray-10: oklch(98.46% 0.002 130deg);
 	--color-gray-20: oklch(97.4% 0.002 130deg);
 	--color-gray-30: oklch(96.6% 0.002 130deg);
 	--color-gray-40: oklch(95.8% 0.002 130deg);
@@ -77,18 +77,19 @@
 	--color-slate-300: oklch(75% 0.004 250deg);
 	--color-slate-350: oklch(71% 0.004 250deg);
 	--color-slate-400: oklch(67% 0.004 250deg);
-	--color-slate-450: oklch(63% 0.005 250deg);
-	--color-slate-500: oklch(59% 0.005 250deg);
-	--color-slate-500: oklch(55% 0.005 250deg);
-	--color-slate-550: oklch(51% 0.005 250deg);
-	--color-slate-650: oklch(47% 0.006 250deg);
-	--color-slate-700: oklch(43% 0.006 250deg);
-	--color-slate-750: oklch(39% 0.007 250deg);
-	--color-slate-800: oklch(35% 0.007 250deg);
+	--color-slate-450: oklch(63% 0.004 250deg);
+	--color-slate-500: oklch(59% 0.004 250deg);
+	--color-slate-500: oklch(55% 0.004 250deg);
+	--color-slate-550: oklch(51% 0.004 250deg);
+	--color-slate-650: oklch(47% 0.004 250deg);
+	--color-slate-700: oklch(43% 0.004 250deg);
+	--color-slate-750: oklch(39% 0.006 250deg);
+	--color-slate-775: oklch(37% 0.006 250deg);
+	--color-slate-800: oklch(35% 0.006 250deg);
+	--color-slate-825: oklch(33% 0.006 250deg);
 	--color-slate-850: oklch(31% 0.008 250deg);
 	--color-slate-875: oklch(29% 0.008 250deg);
 	--color-slate-900: oklch(27% 0.009 250deg);
-	--color-slate-925: oklch(25% 0.009 250deg);
 	--color-slate-950: oklch(23% 0.01 250deg);
 
 	/* Red */
@@ -208,16 +209,16 @@
 		--theme-color-ink-placeholder: var(--color-slate-650);
 		--theme-color-ink-danger: var(--color-red-350);
 
-		--theme-color-divider: var(--color-slate-850);
-		--theme-color-divider-object: var(--color-slate-800);
+		--theme-color-divider: var(--color-slate-800);
+		--theme-color-divider-object: var(--color-slate-750);
 
 		--theme-color-scrollbar: var(--color-slate-450);
 
-		--theme-color-subtle-0: var(--color-slate-950);
-		--theme-color-subtle-1: var(--color-slate-925);
-		--theme-color-subtle-2: var(--color-slate-900);
-		--theme-color-subtle-3: var(--color-slate-875);
-		--theme-color-subtle-4: var(--color-slate-850);
+		--theme-color-subtle-0: var(--color-slate-900);
+		--theme-color-subtle-1: var(--color-slate-875);
+		--theme-color-subtle-2: var(--color-slate-850);
+		--theme-color-subtle-3: var(--color-slate-825);
+		--theme-color-subtle-4: var(--color-slate-800);
 
 		--theme-color-subtle-active: var(--color-blue-850);
 		--theme-color-divider-active: var(--color-blue-550);

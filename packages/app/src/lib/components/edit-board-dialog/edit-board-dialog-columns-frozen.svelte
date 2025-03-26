@@ -25,8 +25,8 @@
 				boardId: board.id,
 				name: newColumnName,
 				columnId: createColumnId(),
-				boardPosition: toPosition({
-					prev: board.columns.at(-1)?.boardPosition,
+				position: toPosition({
+					prev: board.columns.at(-1)?.position,
 					next: undefined,
 				}),
 			})

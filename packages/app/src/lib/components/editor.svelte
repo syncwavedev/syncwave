@@ -235,8 +235,7 @@
 						vertical-align: middle;
 
 						input[type='checkbox'] {
-							padding-bottom: 10px;
-							display: block;
+							margin-bottom: 10px;
 						}
 					}
 

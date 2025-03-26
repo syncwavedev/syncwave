@@ -3,7 +3,12 @@
 	import {onMount} from 'svelte';
 	import cx from 'clsx';
 	import {get, type Readable} from 'svelte/store';
-	import {BubbleMenu, createEditor, Editor, EditorContent} from 'svelte-tiptap';
+	import {
+		BubbleMenu,
+		createEditor,
+		Editor,
+		EditorContent,
+	} from 'svelte-tiptap';
 	import {Collaboration} from '@tiptap/extension-collaboration';
 	import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
 	import Placeholder from '@tiptap/extension-placeholder';
@@ -108,6 +113,10 @@
 		get(editor).chain().focus().toggleItalic().run();
 	};
 
+	const toggleStrike = () => {
+		get(editor).chain().focus().toggleStrike().run();
+	};
+
 	const isActive = (name: string, attrs = {}) =>
 		get(editor).isActive(name, attrs);
 </script>
@@ -132,6 +141,15 @@
 				onclick={toggleItalic}
 			>
 				italic
+			</button>
+			<button
+				class={cx('bg-black px-2 text-white/90 hover:text-white', {
+					'text-white!': isActive('strike'),
+				})}
+				type="button"
+				onclick={toggleStrike}
+			>
+				strikethrough
 			</button>
 		</div>
 	</BubbleMenu>

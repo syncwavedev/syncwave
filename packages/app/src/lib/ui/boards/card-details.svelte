@@ -34,13 +34,13 @@
 </script>
 
 <div
-	class="border-divider bg-subtle-0 dark:bg-subtle-1 z-10 flex w-124 min-w-84 flex-shrink-0 flex-col border-l"
+	class="border-divider bg-subtle-1 dark:bg-subtle-0 z-10 flex w-124 min-w-84 flex-shrink-0 flex-col border-l"
 >
 	<!-- Scrollable Content Section -->
 	<div class="flex-grow overflow-y-auto">
 		<!-- Header with Context Menu -->
 		<div
-			class="bg-subtle-0 dark:bg-subtle-1 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
+			class="bg-subtle-1 dark:bg-subtle-0 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
 		>
 			<div class="text-xs flex items-baseline gap-1">
 				{#if card.isDraft}

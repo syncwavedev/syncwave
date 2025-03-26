@@ -104,13 +104,14 @@
         items-end
         gap-1
         rounded-md
-        border-[0.5px]
         border-divider
         p-2
         select-none
         text-xs
         content
     "
+		class:border-[0.5px]={!card.isDraft}
+		class:border-[1px]={card.isDraft}
 		class:border-dashed={card.isDraft}
 		onclick={onClick}
 		onmouseenter={() => agent.handleCardMouseEnter(card.boardId, card.id)}

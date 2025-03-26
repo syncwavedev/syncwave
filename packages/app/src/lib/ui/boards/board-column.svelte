@@ -60,7 +60,7 @@
 <Scrollable
 	bind:viewportRef
 	orientation="vertical"
-	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
+	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-2.5rem)]"
 	type="scroll"
 >
 	<div class="flex w-80 flex-shrink-0 flex-col pb-1" data-column-id={column.id}>
@@ -85,7 +85,7 @@
 		</div>
 
 		<div
-			class="mx-2 flex h-full min-h-10 flex-col gap-1"
+			class="mx-2 flex h-full min-h-10 flex-col gap-1.5"
 			bind:this={cardsContainerRef}
 		>
 			<ListAnimator

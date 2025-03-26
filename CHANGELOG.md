@@ -3,6 +3,9 @@
 ## Next
 
 - Fix Google auth
+- Fix auth code enter form
+- Fix Safari DnD drop animation after autoscroll
+- Fix scroll into view in Safari
 - Board DnD performance and animation improvements
 
 ## 2025-03-23

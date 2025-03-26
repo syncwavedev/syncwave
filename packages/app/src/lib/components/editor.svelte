@@ -195,8 +195,13 @@
 			/* list style */
 			ul,
 			ol {
-				padding: 0 1rem;
-				margin: 0em 1rem 0rem 0rem;
+				margin: 0;
+				padding-left: 1.5rem; /* Adjust as needed */
+				list-style-position: outside;
+
+				li {
+					list-style-position: outside;
+				}
 
 				li p {
 					margin-top: 0.25em;
@@ -224,21 +229,20 @@
 
 					> label {
 						flex: 0 0 auto;
+						align-items: center;
 						margin-right: 0.5rem;
 						user-select: none;
+						vertical-align: middle;
+
+						input[type='checkbox'] {
+							padding-bottom: 10px;
+							display: block;
+						}
 					}
 
 					> div {
 						flex: 1 1 auto;
 					}
-				}
-
-				input[type='checkbox'] {
-					cursor: pointer;
-				}
-
-				ul[data-type='taskList'] {
-					margin: 0;
 				}
 			}
 
@@ -290,6 +294,7 @@
 				position: absolute;
 				top: -1.4em;
 				user-select: none;
+				-webkit-user-select: none;
 				white-space: nowrap;
 				z-index: 100;
 			}

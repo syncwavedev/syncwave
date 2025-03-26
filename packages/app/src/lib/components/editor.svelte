@@ -3,12 +3,7 @@
 	import {onMount} from 'svelte';
 	import cx from 'clsx';
 	import {get, type Readable} from 'svelte/store';
-	import {
-		BubbleMenu,
-		createEditor,
-		Editor,
-		EditorContent,
-	} from 'svelte-tiptap';
+	import {BubbleMenu, createEditor, Editor, EditorContent} from 'svelte-tiptap';
 	import {Collaboration} from '@tiptap/extension-collaboration';
 	import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
 	import Placeholder from '@tiptap/extension-placeholder';
@@ -147,7 +142,7 @@
 <style>
 	:global {
 		.tiptap p.is-editor-empty:first-child::before {
-			color: #adb5bd;
+			color: var(--color-ink-placeholder);
 			content: attr(data-placeholder);
 			float: left;
 			height: 0;
@@ -231,7 +226,7 @@
 
 			/* Placeholder (at the top) */
 			p.is-editor-empty:first-child::before {
-				color: var(--gray-4);
+				color: var(--color-ink-placeholder);
 				content: attr(data-placeholder);
 				float: left;
 				height: 0;

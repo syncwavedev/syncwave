@@ -12,6 +12,7 @@
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
 	import type {User} from 'syncwave-data';
 	import {onMount, tick} from 'svelte';
+	import HashtagIcon from '../components/icons/hashtag-icon.svelte';
 
 	const {
 		card,
@@ -47,11 +48,12 @@
 		<div
 			class="bg-subtle-0 dark:bg-subtle-1 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
 		>
-			<div class="text-xs font-medium">
+			<div class="text-xs flex items-baseline gap-1">
 				{#if card.isDraft}
 					New card
 				{:else}
-					{card.board.key}–{card.counter}
+					<span><HashtagIcon /></span>
+					<span>{card.counter}</span>
 				{/if}
 			</div>
 			<div class="relative ml-auto">
@@ -84,41 +86,35 @@
 		</div>
 		<div class="mx-4 mt-1">
 			<!-- Task Description -->
-			<div class="input mb-2 w-full text-xs leading-relaxed">
+			<div class="input w-full text-xs leading-relaxed">
 				<Editor
 					bind:this={editor}
-					class="min-h-[100px]"
 					placeholder="Write here..."
 					fragment={card.text.__fragment!}
 					{awareness}
 					{me}
 				/>
 			</div>
-			<hr class="-mx-4 mt-4 mb-4" />
+			<hr class="-mx-4 mt-3 mb-1" />
 			<!-- Task Actions -->
-			<div class="grid grid-cols-[min-content_1fr] gap-x-6 gap-y-4">
-				<div class="text-ink-detail flex items-center gap-2">
+			<div class="flex gap-1.5 text-xs">
+				<button class="btn--flat">
 					<CircleDashedIcon />
-					<span class="text-xs leading-none">Status</span>
-				</div>
-				<div class="input text-xs">
 					<span class="">{card.column?.name}</span>
-				</div>
-				<div class="text-ink-detail flex items-center gap-2">
+				</button>
+
+				<button class="btn--flat">
 					<UserIcon />
-					<span class="text-xs leading-none">Assignee</span>
-				</div>
-				<div class="flex items-center">
-					<span><Avatar name="U" /></span>
-					<span class="ml-1.5 text-xs">Unknown</span>
-				</div>
-				<button
+					<span>Assignee</span>
+				</button>
+				<!-- <button
 					class="btn--block"
 					onclick={() => agent.setCardColumn(card.id, board.columns[0].id)}
 				>
 					To {board.columns[0].name}
-				</button>
+				</button> -->
 			</div>
+			<hr class="-mx-4 mt-1 mb-2" />
 		</div>
 	</div>
 </div>

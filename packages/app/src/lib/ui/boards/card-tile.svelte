@@ -9,6 +9,7 @@
 		type Ref,
 	} from './board-dnd';
 	import {getNow} from 'syncwave-data';
+	import HashtagIcon from '../../components/icons/hashtag-icon.svelte';
 
 	const {
 		card,
@@ -91,25 +92,25 @@
 		tabindex="0"
 		data-active={active || undefined}
 		class="
-            bg-subtle-0
-            dark:bg-subtle-1
-            hover:border-divider-object
-            hover:bg-subtle-2
-            group
-            data-active:border-divider-active
-            data-active:bg-subtle-active
-            flex
-            cursor-pointer
-            items-end
-            gap-1
-            rounded-md
-            border
-            border-divider
-            p-2
-            select-none
-            text-xs
-            content
-        "
+        bg-subtle-0
+        dark:bg-subtle-1
+        hover:border-divider-object
+        hover:bg-subtle-2
+        group
+        data-active:border-divider-active
+        data-active:bg-subtle-active
+        flex
+        cursor-pointer
+        items-end
+        gap-1
+        rounded-md
+        border-[0.5px]
+        border-divider
+        p-2
+        select-none
+        text-xs
+        content
+    "
 		class:border-dashed={card.isDraft}
 		onclick={onClick}
 		onmouseenter={() => agent.handleCardMouseEnter(card.boardId, card.id)}
@@ -124,18 +125,14 @@
 				<div class="flex items-center">
 					<span class="text-2xs text-ink-detail mr-auto">
 						{#if card.counter}
-							#{card.counter}
+							<HashtagIcon />{card.counter}
 						{/if}
 						by {card.author.fullName}
 						{#if card.hoverUsers.length > 0}
-							hovers {card.hoverUsers
-								.map(x => x.fullName)
-								.join(', ')}
+							hovers {card.hoverUsers.map(x => x.fullName).join(', ')}
 						{/if}
 						{#if card.viewerUsers.length > 0}
-							viewers {card.viewerUsers
-								.map(x => x.fullName)
-								.join(', ')}
+							viewers {card.viewerUsers.map(x => x.fullName).join(', ')}
 						{/if}
 					</span>
 					{#if todoStats.total > 0}

@@ -21,3 +21,8 @@
 .btn--normal {
 	@apply bg-subtle-0 hover:bg-subtle-2 dark:bg-subtle-3 dark:hover:bg-subtle-4 border-divider-object flex h-[2.6em] cursor-pointer items-center justify-center rounded-md border px-[0.5em];
 }
+
+.btn--flat {
+	@apply h-[2em] px-[0.4em] rounded-md gap-1.5 flex items-center leading-none text-ink-body cursor-pointer
+	hover:bg-subtle-1 hover:text-ink dark:hover:bg-subtle-2;
+}

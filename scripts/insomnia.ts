@@ -3,16 +3,13 @@
 /* eslint-disable */
 import 'dotenv/config';
 
-import {trace} from '@opentelemetry/api';
-
+import {WsTransportClient} from '../packages/app/src/ws-transport-client.js';
 import {MsgpackCodec} from '../packages/data/src/codec.js';
 import {
     CoordinatorClient,
     createColumnId,
     PersistentConnection,
-    toBigFloat,
 } from '../packages/data/src/index.js';
-import {WsTransportClient} from '../packages/web/src/ws-transport-client.js';
 
 const client = new CoordinatorClient(
     new PersistentConnection(
@@ -21,8 +18,7 @@ const client = new CoordinatorClient(
             url: 'ws://127.0.0.1:4567',
         })
     ),
-    process.env.JWT_TOKEN,
-    trace.getTracer('insomnia')
+    process.env.JWT_TOKEN
 );
 
 async function main() {
@@ -36,7 +32,7 @@ async function main() {
             boardId: member.boardId,
             columnId,
             name,
-            boardPosition: toBigFloat(Math.random()),
+            position: Math.random(),
         });
     }
 }

@@ -82,13 +82,13 @@ export class Agent {
 	}
 
 	handleCardMouseEnter(boardId: BoardId, cardId: CardId) {
-		const board = this.activeBoards.find(x => x.board.id === boardId);
+		const board = this.activeBoards.find(x => x.boardView.id === boardId);
 		assert(board !== undefined, 'board not found');
 		board.rawAwareness.setLocalStateField('hoverCardId', cardId);
 	}
 
 	handleCardMouseLeave(boardId: BoardId, cardId: CardId) {
-		const board = this.activeBoards.find(x => x.board.id === boardId);
+		const board = this.activeBoards.find(x => x.boardView.id === boardId);
 		assert(board !== undefined, 'board not found');
 		if (board.rawAwareness.getLocalState()?.hoverCardId === cardId) {
 			board.rawAwareness.setLocalStateField('hoverCardId', undefined);
@@ -255,7 +255,7 @@ export class Agent {
 			log.error(toError(error), 'observeBoard awareness failed');
 		});
 
-		return [data.view, awareness];
+		return [data.boardTreeView, awareness];
 	}
 
 	async observeProfileAsync(userId: UserId) {
@@ -351,7 +351,7 @@ export class Agent {
 		}).view;
 
 		this.activeBoards
-			.filter(x => x.board.id === board.id)
+			.filter(x => x.boardView.id === board.id)
 			.forEach(x => {
 				x.newCard(card);
 			});

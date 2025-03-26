@@ -39,19 +39,33 @@ export class BoardData {
 	private _columnStates: Array<State<Column>> = $state.raw(lateInit());
 	private _cardStates: Array<State<Card>> = $state.raw(lateInit());
 
-	readonly cardDragSettledAt = $state(new SvelteMap<CardId, Timestamp>());
-	readonly considerCardPosition = $state(new SvelteMap<CardId, number>());
-	readonly considerColumnId = $state(new SvelteMap<CardId, ColumnId>());
+	readonly cardDragSettledAt = new SvelteMap<CardId, Timestamp>();
+	readonly considerCardPosition = new SvelteMap<CardId, number>();
+	readonly considerColumnId = new SvelteMap<CardId, ColumnId>();
 
-	me: User = $derived(this._meState.value);
-	board: Board = $derived(this._boardState.value);
-	users: User[] = $derived(this._userStates.map(x => x.value));
-	columns: Column[] = $derived(this._columnStates.map(x => x.value));
-	cards: Card[] = $derived(this._cardStates.map(x => x.value));
+	private me: User = $derived(this._meState.value);
+	private board: Board = $derived(this._boardState.value);
+	private users: User[] = $derived(this._userStates.map(x => x.value));
+	private columns: Column[] = $derived(this._columnStates.map(x => x.value));
+	private cards: Card[] = $derived(this._cardStates.map(x => x.value));
+
+	cardViews: CardView[] = $derived(
+		this.cards.map(x => new CardView(x, this))
+	);
+	columnViews: ColumnView[] = $derived(
+		this.columns.map(x => new ColumnView(x, this))
+	);
+	columnTreeViews: ColumnTreeView[] = $derived(
+		this.columns.map(x => new ColumnTreeView(x, this))
+	);
+	boardView: BoardView = $derived(new BoardView(this.board, this));
+	boardTreeView: BoardTreeView = $derived(
+		new BoardTreeView(this.board, this)
+	);
+	userViews: UserView[] = $derived(this.users.map(x => new UserView(x)));
+	meView: UserView = $derived(new UserView(this.me));
 
 	awareness: SvelteMap<number, AwarenessState> = $state(lateInit());
-
-	view = new BoardTreeView(this);
 
 	static create(
 		awareness: Awareness,
@@ -134,57 +148,60 @@ export class BoardData {
 }
 
 export class BoardView implements Board {
-	protected readonly _data: BoardData = lateInit();
+	protected readonly _data!: BoardData;
+	protected readonly _board!: Board;
 
-	authorId = $derived(this._data.board.authorId);
-	deleted = $derived(this._data.board.deleted);
-	updatedAt = $derived(this._data.board.updatedAt);
-	createdAt = $derived(this._data.board.createdAt);
-	key = $derived(this._data.board.key);
-	name = $derived(this._data.board.name);
-	id = $derived(this._data.board.id);
-	pk = $derived(this._data.board.pk);
+	authorId = $derived(this._board.authorId);
+	deleted = $derived(this._board.deleted);
+	updatedAt = $derived(this._board.updatedAt);
+	createdAt = $derived(this._board.createdAt);
+	key = $derived(this._board.key);
+	name = $derived(this._board.name);
+	id = $derived(this._board.id);
+	pk = $derived(this._board.pk);
 	onlineMembers = $derived(
 		uniqBy(
 			[...this._data.awareness.values()]
 				.map(state =>
-					this._data.users.find(x => x.id === state?.userId)
+					this._data.userViews.find(x => x.id === state?.userId)
 				)
 				// awareness might be ahead of the board data, so ignore unknown users
 				.filter(x => x !== undefined)
-				.filter(x => x.id !== this._data.me.id),
+				.filter(x => x.id !== this._data.meView.id),
 			x => x.id
 		)
 	);
 
 	author = $derived.by(() => {
-		const author = findRequired(
-			this._data.users,
-			x => x.id === this._data.board.authorId
+		return findRequired(
+			this._data.userViews,
+			x => x.id === this._board.authorId
 		);
-		return new UserView(author);
 	});
 
-	constructor(board: BoardData) {
-		this._data = board;
+	constructor(board: Board, data: BoardData) {
+		this._board = board;
+		this._data = data;
 	}
 }
 
 export class BoardTreeView extends BoardView {
 	columns = $derived(
-		this._data.columns
+		this._data.columnTreeViews
 			.filter(x => !x.deleted)
-			.map(x => new ColumnTreeView(x, this._data))
 			.sort((a, b) => compareNumbers(a.position, b.position))
 	);
 }
 
 export class ColumnView implements Column {
-	protected readonly _column: Column = lateInit();
-	protected readonly _data: BoardData = lateInit();
+	protected readonly _column!: Column;
+	protected readonly _data!: BoardData;
 
 	constructor(column: Column, data: BoardData) {
-		assert(column.boardId === data.board.id, 'column.boardId === data.id');
+		assert(
+			column.boardId === data.boardView.id,
+			'column.boardId === data.id'
+		);
 
 		this._column = column;
 		this._data = data;
@@ -201,20 +218,18 @@ export class ColumnView implements Column {
 	position = $derived(this._column.position);
 	version = $derived(this._column.version);
 
-	board = $derived(new BoardView(this._data));
+	board = $derived(this._data.boardView);
 	author = $derived.by(() => {
-		const author = findRequired(
-			this._data.users,
+		return findRequired(
+			this._data.userViews,
 			x => x.id === this._column.authorId
 		);
-		return new UserView(author);
 	});
 }
 
 export class ColumnTreeView extends ColumnView {
 	cards = $derived(
-		this._data.cards
-			.map(x => new CardView(x, this._data))
+		this._data.cardViews
 			.filter(x => x.columnId === this.id)
 			.filter(x => !x.deleted)
 			.sort((a, b) => compareNumbers(a.position, b.position))
@@ -226,7 +241,7 @@ export class CardView implements Card {
 	private readonly _data: BoardData = lateInit();
 
 	constructor(card: Card, data: BoardData) {
-		assert(card.boardId === data.board.id, 'card.boardId === data.id');
+		assert(card.boardId === data.boardView.id, 'card.boardId === data.id');
 
 		this._card = card;
 		this._data = data;
@@ -272,10 +287,10 @@ export class CardView implements Card {
 				.filter(
 					state =>
 						state?.hoverCardId === this.id &&
-						this._data.me.id !== state?.userId
+						this._data.meView.id !== state?.userId
 				)
 				.map(state =>
-					this._data.users.find(x => x.id === state?.userId)
+					this._data.userViews.find(x => x.id === state?.userId)
 				)
 				// awareness might be ahead of the board data, so ignore unknown users
 				.filter(x => x !== undefined),
@@ -288,10 +303,10 @@ export class CardView implements Card {
 				.filter(
 					state =>
 						state?.selectedCardId === this.id &&
-						this._data.me.id !== state?.userId
+						this._data.meView.id !== state?.userId
 				)
 				.map(state =>
-					this._data.users.find(x => x.id === state?.userId)
+					this._data.userViews.find(x => x.id === state?.userId)
 				)
 				// awareness might be ahead of the board data, so ignore unknown users
 				.filter(x => x !== undefined),
@@ -300,28 +315,25 @@ export class CardView implements Card {
 	});
 
 	author = $derived.by(() => {
-		const author = findRequired(
-			this._data.users,
+		return findRequired(
+			this._data.userViews,
 			x => x.id === this._card.authorId
 		);
-		return new UserView(author);
 	});
-	board = $derived(new BoardView(this._data));
+	board = $derived(this._data.boardView);
 	assignee = $derived.by(() => {
 		if (!this._card.assigneeId) return undefined;
 
-		const assignee = findRequired(
-			this._data.users,
+		return findRequired(
+			this._data.userViews,
 			x => x.id === this._card.assigneeId
 		);
-		return new UserView(assignee);
 	});
 	column = $derived.by(() => {
-		const column = findRequired(
-			this._data.columns,
+		return findRequired(
+			this._data.columnViews,
 			x => x.id === this._card.columnId
 		);
-		return new ColumnView(column, this._data);
 	});
 }
 

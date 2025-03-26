@@ -63,10 +63,7 @@
 	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-8rem)]"
 	type="scroll"
 >
-	<div
-		class="flex w-80 flex-shrink-0 flex-col pb-1"
-		data-column-id={column.id}
-	>
+	<div class="flex w-80 flex-shrink-0 flex-col pb-1" data-column-id={column.id}>
 		<div
 			class="dark:bg-subtle-0 bg-subtle-1 sticky top-0 z-1 flex min-h-10 items-center px-2 py-1"
 			data-disable-scroll-view-drag="true"
@@ -88,7 +85,7 @@
 		</div>
 
 		<div
-			class="mx-2 flex h-full min-h-10 flex-col gap-1.5"
+			class="mx-2 flex h-full min-h-10 flex-col gap-1"
 			bind:this={cardsContainerRef}
 		>
 			<ListAnimator

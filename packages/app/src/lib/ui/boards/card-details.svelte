@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Avatar from '../components/avatar.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import LinkIcon from '../components/icons/link-icon.svelte';
 	import TrashIcon from '../components/icons/trash-icon.svelte';
@@ -7,8 +6,7 @@
 	import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
 	import UserIcon from '../components/icons/user-icon.svelte';
 	import Editor from '../../components/editor.svelte';
-	import type {BoardTreeView, CardView} from '../../agent/view.svelte';
-	import {getAgent} from '../../agent/agent.svelte';
+	import type {CardView} from '../../agent/view.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
 	import type {User} from 'syncwave-data';
 	import {onMount, tick} from 'svelte';
@@ -16,17 +14,13 @@
 
 	const {
 		card,
-		board,
 		awareness,
 		me,
 	}: {
 		card: CardView;
-		board: BoardTreeView;
 		awareness: Awareness;
 		me: User;
 	} = $props();
-
-	const agent = getAgent();
 
 	let editor: Editor | null = $state(null);
 

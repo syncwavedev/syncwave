@@ -386,7 +386,7 @@ process.on('unhandledRejection', reason => {
 
 log.info('launching coordinator...');
 
-if (cluster.isPrimary) {
+if (cluster.isPrimary && STAGE !== 'local') {
     serverCtx
         .run(async () => {
             try {
@@ -399,9 +399,7 @@ if (cluster.isPrimary) {
         .catch(error => {
             log.error(error, 'error during launch');
         });
-}
 
-if (cluster.isPrimary) {
     for (let i = 0; i < workersCount; i++) {
         log.info(`Master process ${process.pid} is running`);
 

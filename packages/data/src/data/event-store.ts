@@ -68,7 +68,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                 onCancel: 'reject',
             }).map(() => undefined),
         ])
-            .conflateLatest()
+            .conflate()
             .while(() => context().isActive)
             .flatMap(async () => {
                 try {

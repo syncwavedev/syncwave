@@ -174,7 +174,7 @@ export class Stream<T> implements AsyncIterable<T> {
         return this.source[Symbol.asyncIterator]();
     }
 
-    conflateLatest(): Stream<T> {
+    conflate(): Stream<T> {
         return toStream(this._conflateLatest());
     }
 

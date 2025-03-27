@@ -1,12 +1,18 @@
 # Changelog
 
-## Next
+## 2025-03-27
 
+- Fix scroll with thumb
+
+## 2025-03-26
+
+- Board DnD performance and animation improvements
 - Fix Google auth
 - Fix auth code enter form
 - Fix Safari DnD drop animation after autoscroll
 - Fix scroll into view in Safari
-- Board DnD performance and animation improvements
+- Fix richtext bullet, ordered, and task list styles
+- Fix column creation
 
 ## 2025-03-23
 

@@ -2,6 +2,7 @@
 
 ## 2025-03-27
 
+- Fix MVCC Adapter GC
 - Fix scroll with thumb
 
 ## 2025-03-26

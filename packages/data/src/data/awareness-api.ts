@@ -48,14 +48,14 @@ export class AwarenessApiState {
     }
 
     async putState(boardId: BoardId, clientId: number, state: AwarenessState) {
-        await this.transact(async tx => {
-            try {
-                const batchKey = boardId + clientId;
-                let batchProcessor = this.batchProcessors.get(batchKey);
-                if (batchProcessor === undefined) {
-                    batchProcessor = new BatchProcessor({
-                        state: {type: 'running'},
-                        process: async batch => {
+        const batchKey = boardId + clientId;
+        let batchProcessor = this.batchProcessors.get(batchKey);
+        if (batchProcessor === undefined) {
+            batchProcessor = new BatchProcessor({
+                state: {type: 'running'},
+                process: async batch => {
+                    await this.transact(async tx => {
+                        try {
                             const latestState = batch.at(-1);
                             assert(
                                 latestState !== undefined,
@@ -67,30 +67,29 @@ export class AwarenessApiState {
                                 clientId,
                                 latestState
                             );
-                        },
-                        doneCallback: () =>
-                            this.batchProcessors.delete(batchKey),
-                        retries: 0,
+                        } catch (error) {
+                            if (error instanceof AwarenessOwnershipError) {
+                                throw new BusinessError(
+                                    `awareness client ${clientId} is owned by another user ${error.ownerId}, user ${this.auth.userId} is not allowed to update it`,
+                                    'forbidden'
+                                );
+                            }
+
+                            throw error;
+                        }
+
+                        tx.scheduleEffect(async () => {
+                            await this.hub.emit(boardAwarenessRoom(boardId));
+                        });
                     });
-                    this.batchProcessors.set(batchKey, batchProcessor);
-                }
-
-                await batchProcessor.enqueue(state);
-            } catch (error) {
-                if (error instanceof AwarenessOwnershipError) {
-                    throw new BusinessError(
-                        `awareness client ${clientId} is owned by another user ${error.ownerId}, user ${this.auth.userId} is not allowed to update it`,
-                        'forbidden'
-                    );
-                }
-
-                throw error;
-            }
-
-            tx.scheduleEffect(async () => {
-                await this.hub.emit(boardAwarenessRoom(boardId));
+                },
+                doneCallback: () => this.batchProcessors.delete(batchKey),
+                retries: 0,
             });
-        });
+            this.batchProcessors.set(batchKey, batchProcessor);
+        }
+
+        await batchProcessor.enqueue(state);
     }
 
     async offline(boardId: BoardId, clientId: number) {

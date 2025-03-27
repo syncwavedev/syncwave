@@ -557,3 +557,7 @@ export function throttle<F extends (...args: any[]) => void>(
 export function compareNumbers(a: number, b: number): number {
     return a - b;
 }
+
+export function nextTick() {
+    return new Promise<void>(resolve => setTimeout(resolve, 0));
+}

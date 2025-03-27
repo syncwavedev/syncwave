@@ -188,10 +188,7 @@ export class Agent {
 						state: latestState,
 					})
 				).catch(error => {
-					log.error(
-						toError(error),
-						'failed to enqueue awareness state'
-					);
+					log.error(toError(error), 'failed to send awareness state');
 				});
 
 				return Promise.resolve();
@@ -207,7 +204,7 @@ export class Agent {
 					.catch(error => {
 						log.error(
 							toError(error),
-							'failed to enqueue awareness state'
+							'failed to enqueue local awareness'
 						);
 					});
 			};

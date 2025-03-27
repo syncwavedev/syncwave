@@ -50,37 +50,39 @@ export class BatchProcessor<T> {
     private async processQueue() {
         this.ensureOpen();
 
-        if (this.state.type !== 'running') {
+        if (
+            this.state.type !== 'running' ||
+            this.inProgress ||
+            this.queue.length === 0
+        ) {
             return;
         }
 
-        if (!this.inProgress) {
-            try {
-                this.inProgress = true;
-                let attempt = 0;
-                while (this.queue.length > 0) {
-                    const batch = this.queue.slice();
-                    this.queue = [];
-                    try {
-                        await this.options.process(batch);
-                        attempt = 0;
-                    } catch (error) {
-                        if (attempt === this.options.retries) {
-                            throw error;
-                        }
-                        this.queue.push(...batch);
-
-                        log.error(toError(error), 'BatchProcessor: send error');
-                        await wait({ms: 1000, onCancel: 'reject'});
-
-                        attempt++;
+        try {
+            this.inProgress = true;
+            let attempt = 0;
+            while (this.queue.length > 0) {
+                const batch = this.queue.slice();
+                this.queue = [];
+                try {
+                    await this.options.process(batch);
+                    attempt = 0;
+                } catch (error) {
+                    if (attempt === this.options.retries) {
+                        throw error;
                     }
-                }
+                    this.queue.push(...batch);
 
-                this.options.doneCallback?.();
-            } finally {
-                this.inProgress = false;
+                    log.error(toError(error), 'BatchProcessor: send error');
+                    await wait({ms: 1000, onCancel: 'reject'});
+
+                    attempt++;
+                }
             }
+
+            this.options.doneCallback?.();
+        } finally {
+            this.inProgress = false;
         }
     }
 

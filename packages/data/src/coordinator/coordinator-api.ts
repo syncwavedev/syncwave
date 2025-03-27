@@ -99,7 +99,7 @@ export function createCoordinatorApi() {
         await state.transact(async tx => {
             await next({
                 crypto: state.crypto,
-                cx: tx,
+                tx,
                 emailService: state.emailService,
                 jwt: state.jwt,
                 scheduleEffect: tx.scheduleEffect,

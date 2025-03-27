@@ -80,9 +80,12 @@ export class WsConnection<T> implements Connection<T> {
                     if (error) {
                         if (
                             typeof error === 'object' &&
-                            'message' in error &&
-                            typeof error.message === 'string' &&
-                            error.message.includes('WebSocket is not open')
+                            (('message' in error &&
+                                typeof error.message === 'string' &&
+                                error.message.includes(
+                                    'WebSocket is not open'
+                                )) ||
+                                ('code' in error && error.code === 'EPIPE'))
                         ) {
                             resolve(
                                 this.subject.throw(
@@ -90,11 +93,7 @@ export class WsConnection<T> implements Connection<T> {
                                 )
                             );
                         } else {
-                            const err = new AppError(
-                                'got message: ' + JSON.stringify(message),
-                                {cause: toError(error)}
-                            );
-                            resolve(this.subject.throw(err));
+                            resolve(this.subject.throw(toError(error)));
                         }
                     }
                     resolve();

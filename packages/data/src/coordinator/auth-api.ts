@@ -22,7 +22,7 @@ import {addHours, getNow} from './../timestamp.js';
 import {type VerifySignInCodeResponse} from './coordinator.js';
 
 export interface AuthApiState {
-    cx: DataTx;
+    tx: DataTx;
     jwt: JwtService;
     crypto: CryptoService;
     emailService: EmailService;
@@ -47,7 +47,7 @@ export function createAuthApi() {
                 Type.Object({type: Type.Literal('cooldown')}),
             ]),
             handle: async (
-                {cx: {identities, users}, crypto, scheduleEffect, emailService},
+                {tx: {identities, users}, crypto, scheduleEffect, emailService},
                 {email}
             ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
                 const verificationCode = await createVerificationCode(crypto);
@@ -113,7 +113,7 @@ export function createAuthApi() {
                 Type.Object({type: Type.Literal('cooldown')}),
             ]),
             handle: async (
-                {cx: {identities, config}, crypto, jwt},
+                {tx: {identities, config}, crypto, jwt},
                 {email, code}
             ): Promise<VerifySignInCodeResponse> => {
                 const identity = await identities.getByEmail(email);

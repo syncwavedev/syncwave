@@ -79,8 +79,8 @@
 	--color-slate-400: oklch(67% 0.004 250deg);
 	--color-slate-450: oklch(63% 0.004 250deg);
 	--color-slate-500: oklch(59% 0.004 250deg);
-	--color-slate-500: oklch(55% 0.004 250deg);
-	--color-slate-550: oklch(51% 0.004 250deg);
+	--color-slate-550: oklch(55% 0.004 250deg);
+	--color-slate-600: oklch(51% 0.004 250deg);
 	--color-slate-650: oklch(47% 0.004 250deg);
 	--color-slate-700: oklch(43% 0.004 250deg);
 	--color-slate-750: oklch(39% 0.006 250deg);
@@ -119,30 +119,27 @@
 	--color-red-950: oklch(23% 0.01 25deg);
 
 	/* Blue */
-	--color-blue-20: oklch(97% 0.005 254deg);
-	--color-blue-40: oklch(95.8% 0.005 254deg);
-	--color-blue-60: oklch(94.2% 0.01 254deg);
-	--color-blue-80: oklch(93.2% 0.015 254deg);
-	--color-blue-100: oklch(91% 0.02 254deg);
-	--color-blue-150: oklch(87% 0.025 254deg);
-	--color-blue-200: oklch(83% 0.03 254deg);
-	--color-blue-250: oklch(79% 0.035 254deg);
-	--color-blue-300: oklch(75% 0.045 254deg);
-	--color-blue-350: oklch(71% 0.055 254deg);
-	--color-blue-400: oklch(67% 0.075 254deg);
-	--color-blue-450: oklch(63% 0.095 254deg);
-	--color-blue-500: oklch(59% 0.115 254deg);
-	--color-blue-500: oklch(55% 0.095 254deg);
-	--color-blue-550: oklch(51% 0.075 254deg);
-	--color-blue-650: oklch(47% 0.055 254deg);
-	--color-blue-700: oklch(43% 0.045 254deg);
-	--color-blue-750: oklch(39% 0.035 254deg);
-	--color-blue-800: oklch(35% 0.03 254deg);
-	--color-blue-850: oklch(31% 0.025 254deg);
-	--color-blue-875: oklch(29% 0.02 254deg);
-	--color-blue-900: oklch(27% 0.015 254deg);
-	--color-blue-925: oklch(25% 0.01 254deg);
-	--color-blue-950: oklch(23% 0.01 254deg);
+	--color-blue-10: oklch(98% 0.003 255deg);
+	--color-blue-20: oklch(96.5% 0.007 255deg);
+	--color-blue-50: oklch(94.5% 0.013 255deg);
+	--color-blue-100: oklch(92% 0.022 255deg);
+	--color-blue-150: oklch(88% 0.034 255deg);
+	--color-blue-200: oklch(84% 0.053 255deg);
+	--color-blue-250: oklch(80% 0.067 255deg);
+	--color-blue-300: oklch(76% 0.086 255deg);
+	--color-blue-350: oklch(72% 0.101 255deg);
+	--color-blue-400: oklch(68% 0.115 255deg);
+	--color-blue-450: oklch(64% 0.125 255deg);
+	--color-blue-500: oklch(60% 0.134 255deg);
+	--color-blue-550: oklch(56% 0.144 255deg);
+	--color-blue-600: oklch(52% 0.122 255deg);
+	--color-blue-650: oklch(48% 0.106 255deg);
+	--color-blue-700: oklch(44% 0.091 255deg);
+	--color-blue-750: oklch(40% 0.076 255deg);
+	--color-blue-800: oklch(36% 0.061 255deg);
+	--color-blue-850: oklch(32% 0.045 255deg);
+	--color-blue-900: oklch(28% 0.03 255deg);
+	--color-blue-950: oklch(24% 0.014 255deg);
 
 	/* Semantics */
 	--color-ink: var(--theme-color-ink);
@@ -186,7 +183,7 @@
 		--theme-color-ink-reverse: var(--color-white);
 		--theme-color-ink-danger: var(--color-red-450);
 
-		--theme-color-divider: var(--color-gray-70);
+		--theme-color-divider: var(--color-gray-80);
 		--theme-color-divider-object: var(--color-gray-100);
 
 		--theme-color-scrollbar: var(--color-gray-350);
@@ -197,7 +194,7 @@
 		--theme-color-subtle-3: var(--color-gray-50);
 		--theme-color-subtle-4: var(--color-gray-70);
 
-		--theme-color-subtle-active: var(--color-blue-80);
+		--theme-color-subtle-active: var(--color-blue-100);
 		--theme-color-divider-active: var(--color-blue-250);
 	}
 
@@ -221,12 +218,12 @@
 		--theme-color-subtle-4: var(--color-slate-800);
 
 		--theme-color-subtle-active: var(--color-blue-850);
-		--theme-color-divider-active: var(--color-blue-550);
+		--theme-color-divider-active: var(--color-blue-700);
 	}
 
 	html,
 	body {
-		@apply text-ink bg-subtle-0 overscroll-none font-sans antialiased;
+		@apply text-ink bg-subtle-0 overscroll-none font-sans antialiased select-none;
 	}
 
 	hr {

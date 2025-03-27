@@ -11,6 +11,7 @@
 	import type {User} from 'syncwave-data';
 	import {onMount, tick} from 'svelte';
 	import HashtagIcon from '../components/icons/hashtag-icon.svelte';
+	import DropdownMenu from '../components/dropdown-menu.svelte';
 
 	const {
 		card,
@@ -51,9 +52,22 @@
 				{/if}
 			</div>
 			<div class="relative ml-auto">
-				<button class="btn--icon" id="ellipsis-button">
-					<EllipsisIcon />
-				</button>
+				<DropdownMenu
+					items={[
+						{
+							icon: LinkIcon,
+							text: 'Copy Card Link',
+						},
+						{
+							icon: TrashIcon,
+							text: 'Delete',
+						},
+					]}
+				>
+					<button class="btn--icon" id="ellipsis-button">
+						<EllipsisIcon />
+					</button>
+				</DropdownMenu>
 				<div
 					id="context-menu"
 					class="bg-subtle-2 border-divider-object absolute right-0 hidden w-46 rounded-lg border p-1"
@@ -91,15 +105,15 @@
 			</div>
 			<hr class="-mx-4 mt-3 mb-1" />
 			<!-- Task Actions -->
-			<div class="flex gap-1.5 text-xs">
-				<button class="btn--flat">
+			<div class="flex gap-1">
+				<button class="btn--flat text-sm">
 					<CircleDashedIcon />
-					<span class="">{card.column?.name}</span>
+					<span class="text-xs">{card.column?.name}</span>
 				</button>
 
-				<button class="btn--flat">
+				<button class="btn--flat text-sm">
 					<UserIcon />
-					<span>Assignee</span>
+					<span class="text-xs">Assignee</span>
 				</button>
 				<!-- <button
 					class="btn--block"

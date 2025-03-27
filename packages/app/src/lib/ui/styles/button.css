@@ -23,6 +23,6 @@
 }
 
 .btn--flat {
-	@apply h-[2.2em] px-[0.4em] rounded-md gap-1.5 flex items-center leading-none text-ink-body cursor-pointer
-	hover:bg-subtle-2 hover:text-ink dark:hover:bg-subtle-2;
+	@apply h-[2em] px-[0.6em] rounded-md gap-1.5 flex items-center leading-none text-ink-body cursor-pointer
+	hover:bg-subtle-2 hover:text-ink hover:dark:bg-subtle-2;
 }

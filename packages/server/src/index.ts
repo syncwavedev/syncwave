@@ -37,11 +37,14 @@ import {
 } from 'syncwave-data';
 import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
 import type {Tuple} from '../../data/dist/esm/src/tuple.js';
+import {eventLoopMonitor} from './event-loop-monitor.js';
 import {FsObjectStore} from './fs-object-store.js';
 import {SesEmailService} from './ses-email-service.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
 collectDefaultMetrics();
+
+eventLoopMonitor.enable();
 
 const FORCE_FOUNDATIONDB = process.env.FORCE_FOUNDATIONDB === 'true';
 const STAGE = assertDefined(process.env.STAGE);

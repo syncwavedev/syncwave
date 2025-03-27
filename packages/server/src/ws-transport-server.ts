@@ -115,7 +115,11 @@ export class WsConnection<T> implements Connection<T> {
     }
 
     private ensureOpen() {
-        if (!this.subject.open) {
+        if (
+            !this.subject.open ||
+            this.ws.readyState === this.ws.CLOSED ||
+            this.ws.readyState === this.ws.CLOSING
+        ) {
             throw new ConnectionClosedError('ws already closed');
         }
     }

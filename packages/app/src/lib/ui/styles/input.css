@@ -1,5 +1,5 @@
 .input {
-	@apply placeholder:text-ink-placeholder w-full flex-grow focus-visible:outline-none;
+	@apply placeholder:text-ink-placeholder flex-grow focus-visible:outline-none;
 }
 
 .input--bordered {

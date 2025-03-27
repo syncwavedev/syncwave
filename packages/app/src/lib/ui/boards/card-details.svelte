@@ -92,19 +92,24 @@
 				<TimesIcon />
 			</button>
 		</div>
-		<div class="mx-4 mt-1">
-			<!-- Task Description -->
-			<div class="input w-full text-xs leading-relaxed">
+		<!-- Task Description -->
+		<div class="mx-2">
+			<div
+				class="input w-full text-xs leading-relaxed focus-within:bg-subtle-3 py-1 px-2 rounded-sm transition-colors duration-150"
+			>
 				<Editor
 					bind:this={editor}
 					placeholder="Write here..."
 					fragment={card.text.__fragment!}
+					class="min-h-15"
 					{awareness}
 					{me}
 				/>
 			</div>
-			<hr class="-mx-4 mt-3 mb-1" />
-			<!-- Task Actions -->
+		</div>
+		<hr class="mt-2 mb-1" />
+		<!-- Task Actions -->
+		<div class="mx-4">
 			<div class="flex gap-1">
 				<button class="btn--flat text-sm">
 					<CircleDashedIcon />

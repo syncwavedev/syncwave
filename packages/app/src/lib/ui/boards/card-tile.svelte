@@ -27,9 +27,7 @@
 		);
 
 		return {
-			preview: card.isDraft
-				? 'Empty draft card'
-				: text.split('\n')[0]?.trim() || 'Untitled',
+			preview: text.split('\n')[0]?.trim() || 'Untitled',
 			todoStats: {
 				checked,
 				total,
@@ -104,14 +102,13 @@
         items-end
         gap-1
         rounded-md
-        border-divider
+        border-divider-subtle
         p-2
         select-none
         text-xs
         content
+        border
     "
-		class:border-[0.5px]={!card.isDraft}
-		class:border-[1px]={card.isDraft}
 		class:border-dashed={card.isDraft}
 		onclick={onClick}
 		onmouseenter={() => agent.handleCardMouseEnter(card.boardId, card.id)}
@@ -119,8 +116,14 @@
 		onkeydown={e => e.key === 'Enter' && onClick()}
 	>
 		<div class="flex w-full flex-col gap-1 truncate">
-			<span class="truncate" data-active={active || undefined}>
-				{preview}
+			<span
+				class="truncate"
+				class:h-6={card.isDraft}
+				data-active={active || undefined}
+			>
+				{#if !card.isDraft}
+					{preview}
+				{/if}
 			</span>
 			{#if !card.isDraft}
 				<div class="flex items-center">

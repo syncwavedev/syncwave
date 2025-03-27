@@ -12,7 +12,11 @@ export interface Handler<TState, TRequest, TResponse> {
     type: 'handler';
     req: ToSchema<TRequest>;
     res: ToSchema<TResponse>;
-    handle(state: TState, req: TRequest, ctx: RequestInfo): Promise<TResponse>;
+    handle(
+        state: TState,
+        req: TRequest,
+        ctx: RequestContext
+    ): Promise<TResponse>;
 }
 
 export interface Streamer<TState, TRequest, TItem> {
@@ -22,7 +26,7 @@ export interface Streamer<TState, TRequest, TItem> {
     stream(
         state: TState,
         req: TRequest,
-        ctx: RequestInfo
+        ctx: RequestContext
     ): AsyncIterable<TItem>;
 }
 
@@ -36,9 +40,9 @@ export type HandlerRequestSchema<T extends Handler<any, any, any>> =
 export type HandlerResponseSchema<T extends Handler<any, any, any>> =
     T extends Handler<any, any, infer R> ? R : never;
 
-export interface RequestInfo {
-    headers: MessageHeaders;
+export interface RequestContext {
     requestId: RpcMessageId;
+    headers: MessageHeaders;
 }
 
 export interface HandlerOptions<TState, TRequest, TResponse> {
@@ -47,14 +51,14 @@ export interface HandlerOptions<TState, TRequest, TResponse> {
     handle: (
         state: TState,
         req: TRequest,
-        ctx: RequestInfo
+        ctx: RequestContext
     ) => Promise<TResponse>;
 }
 
 export function handler<TState, TRequest, TResponse>(
     options: HandlerOptions<TState, TRequest, TResponse>
 ): Handler<TState, TRequest, TResponse> {
-    async function wrapper(state: TState, req: TRequest, info: RequestInfo) {
+    async function wrapper(state: TState, req: TRequest, info: RequestContext) {
         const res = await options.handle(
             state,
             checkValue(options.req, req),
@@ -83,7 +87,7 @@ export interface StreamerOptions<TState, TRequest, TItem> {
     stream: (
         state: TState,
         req: TRequest,
-        ctx: RequestInfo
+        ctx: RequestContext
     ) => AsyncIterable<TItem>;
 }
 
@@ -93,7 +97,7 @@ export function streamer<TState, TRequest, TItem>(
     async function* wrapper(
         state: TState,
         req: TRequest,
-        ctx: RequestInfo
+        ctx: RequestContext
     ): AsyncIterable<TItem> {
         for await (const item of options.stream(
             state,
@@ -139,7 +143,13 @@ export function mapApiState<
     api: TApi,
     map: (state: TStatePublic) => TStatePrivate | Promise<TStatePrivate>
 ): MapApiState<TApi, TStatePublic> {
-    return applyMiddleware(api, async (next, state) => await next(map(state)));
+    let mappedState: {value: TStatePrivate} | undefined = undefined;
+    return applyMiddleware(api, async (next, state) => {
+        if (mappedState === undefined) {
+            mappedState = {value: await map(state)};
+        }
+        return next(mappedState.value);
+    });
 }
 
 export function decorateApi<
@@ -170,7 +180,7 @@ export function applyMiddleware<
     middleware: (
         next: (state: TStatePrivate) => Promise<void>,
         state: TStatePublic,
-        headers: RequestInfo,
+        headers: RequestContext,
         processor: Processor<TStatePrivate, any, any>,
         processorName: string,
         arg: unknown
@@ -182,7 +192,7 @@ export function applyMiddleware<
             async function work(
                 state: TStatePublic,
                 req: unknown,
-                headers: RequestInfo
+                headers: RequestContext
             ) {
                 const signal = new Deferred<any>();
                 await middleware(

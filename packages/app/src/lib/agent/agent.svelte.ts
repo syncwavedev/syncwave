@@ -173,6 +173,9 @@ export class Agent {
 
 		const awarenessSender = new BatchProcessor<AwarenessState>({
 			state: {type: 'running'},
+			// delay to batch async bursts of awareness updates
+			// in particular it helps for tiptap initial focus with awareness
+			enqueueDelay: 10,
 			process: (states: AwarenessState[]) => {
 				const latestState = states.at(-1);
 				assert(

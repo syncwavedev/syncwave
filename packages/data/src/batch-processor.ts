@@ -12,6 +12,7 @@ export interface BatchProcessorOptions<T> {
     readonly process: (batch: T[]) => Promise<void>;
     readonly doneCallback?: () => void;
     readonly retries?: number;
+    readonly enqueueDelay: number;
 }
 
 export class BatchProcessor<T> {
@@ -40,9 +41,11 @@ export class BatchProcessor<T> {
         this.ensureOpen();
         this.queue.push(item);
 
-        // small delay to batch async bursts
-        // in particular it helps for tiptap initial focus with awareness
-        await new Promise(resolve => setTimeout(resolve, 10));
+        if (this.options.enqueueDelay > 0) {
+            await new Promise(resolve =>
+                setTimeout(resolve, this.options.enqueueDelay)
+            );
+        }
 
         await this.processQueue();
     }

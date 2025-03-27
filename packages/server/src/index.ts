@@ -147,16 +147,22 @@ async function getKvStore(): Promise<{
             };
         } else {
             log.info('using Sqlite as primary store');
-            const store = await import('./sqlite-store.js').then(
+            const sqliteStore = await import('./sqlite-store.js').then(
                 x =>
                     new x.SqliteRwStore({
                         dbFilePath: './dev.sqlite',
                         concurrentReadLimit: 4,
                     })
             );
+            const store = new MvccAdapter(sqliteStore);
+
+            const storeStats = await store.stats();
+            log.info(
+                `SQLite MVCC stats: ${JSON.stringify(storeStats, null, 2)}`
+            );
 
             return {
-                store: new MvccAdapter(store),
+                store,
                 hub: new MemHub(),
             };
         }

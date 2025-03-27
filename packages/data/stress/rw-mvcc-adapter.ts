@@ -223,6 +223,7 @@ interface StressTestState {
     transactions: Array<[DualTxController<number, number>, Promise<void>]>;
     snapshots: Array<[DualSnapController<number, number>, Promise<void>]>;
     controller: DualKvStoreController<number, number>;
+    mvccAdapter: MvccAdapter;
     subject: KvStore<number, number>;
     target: KvStore<number, number>;
     options: StressTestOptions;
@@ -350,8 +351,13 @@ async function stressRound(state: StressTestState) {
 
 function createStressState(options: StressTestOptions): StressTestState {
     // retry on conflict is disabled because tx/snap controllers don't support it
+
+    const mvccAdapter = new MvccAdapter(new MemRwStore(), {
+        conflictRetryCount: 0,
+        syncGc: true,
+    });
     const subject = new KvStoreMapper(
-        new MvccAdapter(new MemRwStore(), {conflictRetryCount: 0}),
+        mvccAdapter,
         new NumberCodec(),
         new NumberCodec()
     );
@@ -364,6 +370,7 @@ function createStressState(options: StressTestOptions): StressTestState {
     const state: StressTestState = {
         options,
         subject,
+        mvccAdapter,
         target,
         transactions: [],
         snapshots: [],
@@ -459,18 +466,17 @@ if (process.argv[2] === 'prof') {
     let reportTime = performance.now();
 
     let fastestSeed = 0;
-    let fastestSeedScore = 1000;
+    let fastestSeedScore = Number.MAX_SAFE_INTEGER;
     for (let seed = 0; ; seed += 1) {
         const state = getState(variant, seed);
 
-        for (
-            let round = 0;
-            round < fastestSeedScore && round < state.options.maxRounds;
-            round++
-        ) {
+        for (let round = 0; round < fastestSeedScore; round++) {
             if (performance.now() - reportTime > 10_000) {
                 reportTime = performance.now();
                 log.info(`seed=${seed}, round=${round}...`);
+                log.info(
+                    `stats: ${JSON.stringify(await state.mvccAdapter.stats(), null, 2)}`
+                );
             }
 
             try {

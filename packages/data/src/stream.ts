@@ -230,6 +230,26 @@ export class Stream<T> implements AsyncIterable<T> {
         }
     }
 
+    async count() {
+        let result = 0;
+        for await (const _ of this) {
+            result += 1;
+        }
+
+        return result;
+    }
+
+    async reduce<R>(
+        reducer: (accumulator: R, value: T) => R | Promise<R>,
+        initialValue: R
+    ): Promise<R> {
+        let result = initialValue;
+        for await (const item of this) {
+            result = await reducer(result, item);
+        }
+        return result;
+    }
+
     drop(count: number) {
         return toStream(this._drop(count));
     }

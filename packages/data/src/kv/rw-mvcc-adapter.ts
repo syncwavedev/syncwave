@@ -44,6 +44,9 @@ import {
 import {TupleStore} from './tuple-store.js';
 
 export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
+    retrievedCount = 0;
+    returnedCount = 0;
+
     constructor(
         private readonly adapter: MvccAdapter,
         private readonly readVersion: number,
@@ -59,6 +62,8 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
             } of snapshot.query({
                 lte: [key, this.readVersion, true],
             })) {
+                this.retrievedCount += 1;
+
                 const cmpResult = compareUint8Array(entryKey, key);
                 assert(cmpResult <= 0, 'Invalid key: must be lte');
 
@@ -75,6 +80,7 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                     return undefined;
                 }
 
+                this.returnedCount += 1;
                 return value;
             }
 
@@ -99,11 +105,10 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
         while (true) {
             const entries = await this.adapter._read(
                 this.key,
-                async ({data: snapshot}) => {
-                    return await toStream(snapshot.query(cond))
+                async ({data: snapshot}) =>
+                    await toStream(snapshot.query(cond))
                         .take(this.adapter.options.queryBatchSize)
-                        .toArray();
-                }
+                        .toArray()
             );
 
             if (entries.length === 0) break;
@@ -120,6 +125,8 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                 key: [key, version, deleted],
                 value,
             } of entries) {
+                this.retrievedCount += 1;
+
                 if (version > this.readVersion) {
                     continue;
                 }
@@ -149,6 +156,7 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                         compareUint8Array(key, lastObservedEntry.key) !== 0
                     ) {
                         if (lastObservedEntry.value) {
+                            this.returnedCount += 1;
                             yield {
                                 key: lastObservedEntry.key,
                                 value: lastObservedEntry.value,
@@ -161,6 +169,7 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                         compareUint8Array(key, lastObservedEntry.key) !== 0
                     ) {
                         if (!deleted) {
+                            this.returnedCount += 1;
                             yield {key, value};
                         }
                     }
@@ -174,6 +183,7 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
         }
 
         if (forward && lastObservedEntry?.value) {
+            this.returnedCount += 1;
             yield {
                 key: lastObservedEntry.key,
                 value: lastObservedEntry.value,
@@ -215,22 +225,23 @@ export interface MvccAdapterGcOptions {
 export interface MvccAdapterOptions {
     readonly conflictRetryCount: number;
     readonly queryBatchSize: number;
+    readonly syncGc: boolean;
 }
 
 // the perfect scan size should be small to prevent long GC pauses
 // and big enough to make GC efficient
-const PERFECT_SCAN_SIZE = 128;
+const PERFECT_GC_SCAN_SIZE = 128;
 // we wanna have multiple offsets to prevent concurrent GCs scanning the same key range
-const GC_OFFSETS = 128;
+const GC_OFFSETS = 8;
 // abort snapshots that are 5s old and 128 read versions behind
 const STALE_SNAPSHOT_AGE_MS = 5 * 1000;
-const STALE_SNAPSHOT_VERSIONS_BEHIND = 128;
+const STALE_SNAPSHOT_VERSIONS_BEHIND = 32;
 
 export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
     private readonly store: KvStore<Tuple, Uint8Array>;
     public readonly options: MvccAdapterOptions;
     // always start with GC in case if adapter is recreated frequently
-    private writtenCount = PERFECT_SCAN_SIZE;
+    private writtenCount = PERFECT_GC_SCAN_SIZE;
     private gcScanOffsetKey = Math.trunc(Math.random() * GC_OFFSETS);
 
     constructor(
@@ -239,7 +250,8 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
     ) {
         this.options = {
             conflictRetryCount: Number.MAX_SAFE_INTEGER,
-            queryBatchSize: 100,
+            queryBatchSize: 32,
+            syncGc: false,
             ...options,
         };
         this.store = new TupleStore(store);
@@ -259,7 +271,13 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             );
             const tx = new MvccSnapshotAdapter(this, readVersion, snapKey);
 
-            return await fn(tx);
+            const result = await fn(tx);
+
+            log.debug(
+                `snapshot stats: retrieved = ${tx.retrievedCount}, returned = ${tx.returnedCount}`
+            );
+
+            return result;
         } finally {
             if (options.autoFree) {
                 this.endSnapshotLease(snapKey);
@@ -290,11 +308,16 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                 await this.commit(tx, snapKey, attempt);
 
                 this.writtenCount += tx.writeSet.length;
-                if (this.writtenCount >= PERFECT_SCAN_SIZE) {
+                if (this.writtenCount >= PERFECT_GC_SCAN_SIZE) {
+                    const gcScanSize = this.writtenCount;
                     this.writtenCount = 0;
-                    this.gc(this.writtenCount).catch(error => {
+                    const gcPromise = this.gc(gcScanSize).catch(error => {
                         log.error(toError(error), 'Failed to run GC');
                     });
+
+                    if (this.options.syncGc) {
+                        await gcPromise;
+                    }
                 }
 
                 return result;
@@ -335,6 +358,108 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
         }
     }
 
+    private isSnapshotStale(versionsBehind: number, transactionAge: number) {
+        return (
+            versionsBehind > STALE_SNAPSHOT_VERSIONS_BEHIND &&
+            transactionAge > STALE_SNAPSHOT_AGE_MS
+        );
+    }
+
+    /**
+     * Warning: scans all the data
+     */
+    async stats() {
+        return await this._read(undefined, async suite => {
+            const readVersion = (await suite.version.get([])) ?? 0;
+            const now = getNow();
+
+            let activeTransactions = 0;
+            let oldestReadVersionInUse = toMvccVersion(Number.MAX_SAFE_INTEGER);
+            let staleTransactions = 0;
+            let sumVersionsBehind = 0;
+            let sumTransactionAge = 0;
+
+            for await (const {
+                key: [txReadVersion],
+                value,
+            } of suite.activeTransactions.query({
+                gte: [toMvccVersion(0), Uuid.min],
+            })) {
+                const txTimestamp = value;
+                activeTransactions++;
+
+                if (txReadVersion < oldestReadVersionInUse) {
+                    oldestReadVersionInUse = txReadVersion;
+                }
+
+                const transactionAge = now - txTimestamp;
+                sumTransactionAge += transactionAge;
+
+                const versionsBehind = readVersion - txReadVersion;
+                sumVersionsBehind += versionsBehind;
+                if (this.isSnapshotStale(versionsBehind, transactionAge)) {
+                    staleTransactions++;
+                }
+            }
+
+            const averageActiveTransactionVersionsBehind =
+                activeTransactions > 0
+                    ? sumVersionsBehind / activeTransactions
+                    : 0;
+            const averageActiveTransactionAge =
+                activeTransactions > 0
+                    ? sumTransactionAge / activeTransactions
+                    : 0;
+
+            let totalKeys = 0;
+            let staleKeys = 0;
+            let totalTombstones = 0;
+            let staleTombstones = 0;
+
+            for await (const {
+                key: [, version, deleted],
+            } of suite.data.query({
+                gte: [] as unknown as DataKey,
+            })) {
+                totalKeys++;
+                if (version < oldestReadVersionInUse) {
+                    staleKeys++;
+                    if (deleted) {
+                        staleTombstones++;
+                    }
+                }
+                if (deleted) {
+                    totalTombstones++;
+                }
+            }
+
+            const commitSets = await toStream(
+                suite.log.query({gte: [] as unknown as LogKey})
+            ).count();
+            const gcOffsets = await toStream(
+                suite.gcScanOffset.query({gte: 0})
+            ).count();
+
+            return {
+                staleTransactions,
+                staleKeys,
+                staleTombstones,
+                averageActiveTransactionVersionsBehind,
+                averageActiveTransactionAge,
+
+                readVersion,
+                oldestReadVersionInUse,
+                gcOffsets,
+                activeTransactions,
+                commitSets,
+                totalKeys,
+                observableKeys: totalKeys - staleKeys,
+                totalTombstones,
+                observableTombstones: totalTombstones - staleTombstones,
+            };
+        });
+    }
+
     private async gc(writtenCount: number) {
         const [activeSnapshots, version] = await this._read(
             undefined,
@@ -355,8 +480,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
         const [staleSnaps, freshSnaps] = partition(
             activeSnapshots,
             ({key: [readVersion], value: ts}) =>
-                now - ts > STALE_SNAPSHOT_AGE_MS &&
-                version - readVersion > STALE_SNAPSHOT_VERSIONS_BEHIND
+                this.isSnapshotStale(version - readVersion, now - ts)
         );
 
         if (staleSnaps.length > 0) {
@@ -388,24 +512,50 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             }
         );
 
-        const [nextGcScanOffset, staleData] = await this._read(
+        const [nextGcScanOffset, staleKeys] = await this._read(
             undefined,
             async suite => {
-                const entries = await toStream(
-                    suite.data.query({gt: gcScanOffset})
+                const keys = await toStream(
+                    suite.data.query({gte: gcScanOffset})
                 )
                     .map(x => x.key)
                     .take(writtenCount * 2) // multiply to stay ahead of the garbage
                     .toArray();
 
-                if (entries.length === 0) {
+                if (keys.length < PERFECT_GC_SCAN_SIZE) {
                     return [MIN_DATA_KEY, []];
                 }
 
-                return [
-                    entries[entries.length - 1],
-                    entries.filter(([, , deleted]) => deleted),
-                ];
+                const staleKeys: DataKey[] = [];
+                let [prevKey] = keys[0];
+                for (let i = 1; i < keys.length - 1; i += 1) {
+                    const [currentKey, , currentIsDeleted] = keys[i];
+                    const [nextKey, nextVersion] = keys[i + 1];
+
+                    const nextIsVisibleToAllTransactions =
+                        nextVersion < oldestReadVersionInUse;
+
+                    const nextIsTheSame = () =>
+                        compareUint8Array(currentKey, nextKey) === 0;
+                    const prevIsDifferent = () =>
+                        compareUint8Array(prevKey, currentKey) !== 0;
+
+                    const nextOverridesCurrent =
+                        nextIsVisibleToAllTransactions && nextIsTheSame();
+                    const currentTombstoneOverridesNothing =
+                        currentIsDeleted && prevIsDifferent();
+
+                    if (
+                        nextOverridesCurrent ||
+                        currentTombstoneOverridesNothing
+                    ) {
+                        staleKeys.push(keys[i]);
+                    } else {
+                        prevKey = currentKey;
+                    }
+                }
+
+                return [keys[keys.length - 1], staleKeys];
             }
         );
 
@@ -416,9 +566,9 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             );
         });
 
-        if (staleData.length > 0) {
+        if (staleKeys.length > 0) {
             await this._write(undefined, async suite => {
-                await whenAll(staleData.map(key => suite.data.delete(key)));
+                await whenAll(staleKeys.map(key => suite.data.delete(key)));
             });
         }
 

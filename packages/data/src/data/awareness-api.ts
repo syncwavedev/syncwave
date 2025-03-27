@@ -53,6 +53,7 @@ export class AwarenessApiState {
         if (batchProcessor === undefined) {
             batchProcessor = new BatchProcessor({
                 state: {type: 'running'},
+                enqueueDelay: 0,
                 process: async batch => {
                     await this.transact(async tx => {
                         try {

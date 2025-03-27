@@ -87,6 +87,7 @@ export class Context {
     private readonly span: Span;
     readonly traceId: TraceId;
     readonly spanId: string;
+    readonly spanName: string;
 
     public static restore(
         options: ContextOptions,
@@ -124,6 +125,7 @@ export class Context {
         const spanCtx = this.span.spanContext();
         this.traceId = spanCtx.traceId as TraceId;
         this.spanId = spanCtx.spanId;
+        this.spanName = params.options.span;
     }
 
     private endCallbacks: Array<(reason: unknown) => Promise<void> | void> = [];

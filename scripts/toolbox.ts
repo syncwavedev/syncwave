@@ -7,7 +7,6 @@ import {WsTransportClient} from '../packages/app/src/ws-transport-client.js';
 import {MsgpackCodec} from '../packages/data/src/codec.js';
 import {
     CoordinatorClient,
-    createColumnId,
     PersistentConnection,
 } from '../packages/data/src/index.js';
 
@@ -21,20 +20,25 @@ const client = new CoordinatorClient(
     process.env.JWT_TOKEN
 );
 
+async function getMyBoard() {
+    const members = await client.rpc.getMyMembers({}).first();
+
+    console.log(members.map(x => x.board.name).join('\n'));
+}
+
+async function createMember() {
+    const members = await client.rpc.getMyMembers({}).first();
+    const boardId = members[0].board.id;
+
+    await client.rpc.createMember({
+        boardId,
+        email: 'tilyupo@gmail.com',
+        role: 'admin',
+    });
+}
+
 async function main() {
-    const [member] = await client.rpc.getMyMembers({}).first();
-
-    let columnId = createColumnId();
-
-    for (const name of ['todo', 'doing', 'done']) {
-        columnId = createColumnId();
-        await client.rpc.createColumn({
-            boardId: member.boardId,
-            columnId,
-            name,
-            position: Math.random(),
-        });
-    }
+    await getMyBoard();
 }
 
 main().finally(() => {

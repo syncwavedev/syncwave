@@ -6,6 +6,7 @@ import {Stream} from '../../stream.js';
 import {getNow} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
+import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type Doc,
     DocRepo,
@@ -57,15 +58,17 @@ export function zMessage() {
 export class MessageRepo {
     public readonly rawRepo: DocRepo<Message>;
 
-    constructor(
-        tx: AppTransaction,
-        cardRepo: CardRepo,
-        userRepo: UserRepo,
-        onChange: OnDocChange<Message>
-    ) {
+    constructor(params: {
+        tx: AppTransaction;
+        cardRepo: CardRepo;
+        userRepo: UserRepo;
+        onChange: OnDocChange<Message>;
+        scheduleTrigger: DataTriggerScheduler;
+    }) {
         this.rawRepo = new DocRepo<Message>({
-            tx: isolate(['d'])(tx),
-            onChange,
+            tx: isolate(['d'])(params.tx),
+            onChange: params.onChange,
+            scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [CARD_ID_INDEX]: {
                     key: x => [x.cardId, x.createdAt],
@@ -82,7 +85,7 @@ export class MessageRepo {
                 {
                     name: 'message.authorId fk',
                     verify: async message => {
-                        const user = await userRepo.getById(
+                        const user = await params.userRepo.getById(
                             message.authorId,
                             true
                         );
@@ -95,7 +98,7 @@ export class MessageRepo {
                 {
                     name: 'message.cardId fk',
                     verify: async message => {
-                        const card = await cardRepo.getById(
+                        const card = await params.cardRepo.getById(
                             message.cardId,
                             true
                         );

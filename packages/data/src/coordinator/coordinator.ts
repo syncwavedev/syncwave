@@ -37,7 +37,8 @@ export class CoordinatorServer {
         this.dataLayer = new DataLayer(
             this.options.kv,
             this.options.hub,
-            this.options.jwtSecret
+            this.options.jwtSecret,
+            this.options.crypto
         );
         const authContextParser = new AuthContextParser(4, this.options.jwt);
         this.rpcServer = new RpcServer(
@@ -88,13 +89,14 @@ export class CoordinatorServer {
     }): Promise<string> {
         return await this.dataLayer.transact(
             {identityId: undefined, superadmin: false, userId: undefined},
-            async dataCx => {
+            async tx => {
                 const identity = await getIdentity({
-                    identities: dataCx.identities,
-                    users: dataCx.users,
+                    identities: tx.identities,
+                    users: tx.users,
                     email: params.email,
                     crypto: this.options.crypto,
                     fullName: params.fullName,
+                    boardService: tx.boardService,
                 });
 
                 return signJwtToken(

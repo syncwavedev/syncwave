@@ -73,6 +73,7 @@ export interface DocStoreOptions<T extends Doc<Tuple>> {
     indexes: IndexMap<T>;
     schema: ToSchema<T>;
     onChange: OnDocChange<T>;
+    scheduleTrigger: (effect: () => Promise<void>) => void;
     constraints: readonly Constraint<T>[];
     upgrade?: Recipe<any>;
 }
@@ -170,6 +171,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     private readonly constraints: readonly Constraint<T>[];
     // todo: add tests
     private readonly upgrade: Recipe<any>;
+    private readonly scheduleTrigger: (check: () => Promise<void>) => void;
 
     constructor(options: DocStoreOptions<T>) {
         this.upgrade = options.upgrade ?? (() => {});
@@ -206,6 +208,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         this.onChange = options.onChange;
         this.schema = options.schema;
         this.constraints = options.constraints;
+        this.scheduleTrigger = options.scheduleTrigger;
     }
 
     async getById(
@@ -403,18 +406,21 @@ class DocRepoImpl<T extends Doc<Tuple>> {
             ...[...this.indexes.values()].map(x =>
                 x.sync(params.prev, nextSnapshot)
             ),
-            ...this.constraints.map(async c => {
-                const result = await c.verify(nextSnapshot);
-                if (result) {
-                    throw new ConstraintError(c.name, result);
-                }
-            }),
             this.onChange({
                 pk: nextSnapshot.pk,
                 diff: params.diff,
                 kind: params.prev === undefined ? 'create' : 'update',
             }),
         ]);
+
+        this.constraints.forEach(c =>
+            this.scheduleTrigger(async () => {
+                const result = await c.verify(nextSnapshot);
+                if (result) {
+                    throw new ConstraintError(c.name, result);
+                }
+            })
+        );
     }
 
     private _mapToDocs(

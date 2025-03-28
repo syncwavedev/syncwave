@@ -4,6 +4,7 @@ import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand, unreachable} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
+import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
     type Doc,
@@ -81,15 +82,17 @@ export function zColumn() {
 export class ColumnRepo {
     public readonly rawRepo: DocRepo<Column>;
 
-    constructor(
-        tx: AppTransaction,
-        boardRepo: BoardRepo,
-        userRepo: UserRepo,
-        onChange: OnDocChange<Column>
-    ) {
+    constructor(params: {
+        tx: AppTransaction;
+        boardRepo: BoardRepo;
+        userRepo: UserRepo;
+        onChange: OnDocChange<Column>;
+        scheduleTrigger: DataTriggerScheduler;
+    }) {
         this.rawRepo = new DocRepo<Column>({
-            tx: isolate(['d'])(tx),
-            onChange,
+            tx: isolate(['d'])(params.tx),
+            onChange: params.onChange,
+            scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [BOARD_ID_INDEX]: x => [x.boardId],
                 [AUTHOR_ID_INDEX]: x => [x.authorId, x.createdAt],
@@ -129,7 +132,7 @@ export class ColumnRepo {
                 {
                     name: 'column.authorId fk',
                     verify: async column => {
-                        const user = await userRepo.getById(
+                        const user = await params.userRepo.getById(
                             column.authorId,
                             true
                         );
@@ -143,7 +146,9 @@ export class ColumnRepo {
                 {
                     name: 'column.boardId fk',
                     verify: async column => {
-                        const board = await boardRepo.getById(column.boardId);
+                        const board = await params.boardRepo.getById(
+                            column.boardId
+                        );
                         if (board === undefined) {
                             return `board not found: ${column.boardId}`;
                         }

@@ -7,7 +7,7 @@ import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Registry} from '../../kv/registry.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
-import {type DataTx} from '../data-layer.js';
+import {type DataTriggerScheduler} from '../data-layer.js';
 import {
     type Doc,
     DocRepo,
@@ -16,7 +16,7 @@ import {
     zDoc,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
-import type {UserId} from './user-repo.js';
+import type {UserId, UserRepo} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
 
@@ -51,14 +51,16 @@ export class BoardRepo {
     public readonly rawRepo: DocRepo<Board>;
     protected readonly counters: Registry<Counter>;
 
-    constructor(
-        tx: AppTransaction,
-        dataTx: () => DataTx,
-        onChange: OnDocChange<Board>
-    ) {
+    constructor(params: {
+        tx: AppTransaction;
+        users: UserRepo;
+        onChange: OnDocChange<Board>;
+        scheduleTrigger: DataTriggerScheduler;
+    }) {
         this.rawRepo = new DocRepo<Board>({
-            tx: isolate(['d'])(tx),
-            onChange,
+            tx: isolate(['d'])(params.tx),
+            onChange: params.onChange,
+            scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [BOARD_KEY_INDEX]: {
                     key: x => [x.key],
@@ -75,7 +77,7 @@ export class BoardRepo {
                 {
                     name: 'board.ownerId fk',
                     verify: async board => {
-                        const user = await dataTx().users.getById(
+                        const user = await params.users.getById(
                             board.authorId,
                             true
                         );
@@ -89,7 +91,7 @@ export class BoardRepo {
             ],
         });
         this.counters = new Registry(
-            isolate(['c'])(tx),
+            isolate(['c'])(params.tx),
             counterTxn => new Counter(counterTxn, 0)
         );
     }

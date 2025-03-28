@@ -7,12 +7,14 @@ import {log} from '../logger.js';
 import {getNow, zTimestamp} from '../timestamp.js';
 import type {Hub} from '../transport/hub.js';
 import type {Tuple} from '../tuple.js';
-import {assert, whenAll} from '../utils.js';
+import {assert, type Brand, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type AuthContext} from './auth-context.js';
 import {AwarenessStore} from './awareness-store.js';
+import {BoardService} from './board-service.js';
 import type {ChangeOptions} from './doc-repo.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
+import type {CryptoService} from './infrastructure.js';
 import {PermissionService} from './permission-service.js';
 import {
     type Attachment,
@@ -54,6 +56,7 @@ export interface DataTx {
     readonly events: CollectionManager<ChangeEvent>;
     readonly ps: PermissionService;
     readonly esWriter: EventStoreWriter<ChangeEvent>;
+    readonly boardService: BoardService;
     // effects are not guaranteed to run because process might die after transaction is commited
     //
     // use topics with a pull loop where possible or hubs that combine strong
@@ -151,8 +154,15 @@ export function zChangeEvent() {
 
 export type ChangeEvent = Static<ReturnType<typeof zChangeEvent>>;
 
-export type DataEffect = () => Promise<void>;
-export type DataEffectScheduler = (effect: DataEffect) => void;
+export type AsyncCallback = () => Promise<void>;
+export type DataEffectScheduler = Brand<
+    (effect: AsyncCallback) => void,
+    'data_effect'
+>;
+export type DataTriggerScheduler = Brand<
+    (callback: AsyncCallback) => void,
+    'data_trigger'
+>;
 
 export type Transact = <T>(fn: (tx: DataTx) => Promise<T>) => Promise<T>;
 
@@ -164,7 +174,8 @@ export class DataLayer {
     constructor(
         private readonly kv: KvStore<Tuple, Uint8Array>,
         private readonly hub: Hub,
-        private readonly jwtSecret: string
+        private readonly jwtSecret: string,
+        private readonly crypto: CryptoService
     ) {
         this.esReader = new EventStoreReader(
             fn =>
@@ -190,62 +201,76 @@ export class DataLayer {
         auth: AuthContext,
         fn: (tx: DataTx) => Promise<T>
     ): Promise<T> {
-        let effects: DataEffect[] = [];
+        let effects: AsyncCallback[] = [];
         const result = await this.kv.transact(async tx => {
             // clear effect because of transaction retries
             effects = [];
+            let triggers: AsyncCallback[] = [];
 
-            const users = new UserRepo(isolate(['users'])(tx), options =>
-                logUserChange(dataTx, options)
-            );
-            const identities = new IdentityRepo(
-                isolate(['identities'])(tx),
+            const scheduleTrigger = ((effect: AsyncCallback) =>
+                triggers.push(effect)) as unknown as DataTriggerScheduler;
+
+            const users = new UserRepo({
+                tx: isolate(['users'])(tx),
+                onChange: options => logUserChange(dataTx, options),
+                scheduleTrigger,
+            });
+            const identities = new IdentityRepo({
+                tx: isolate(['identities'])(tx),
+                userRepo: users,
+                onChange: options => logIdentityChange(dataTx, options),
+                scheduleTrigger,
+            });
+            const boards = new BoardRepo({
+                tx: isolate(['boards'])(tx),
                 users,
-                options => logIdentityChange(dataTx, options)
-            );
-            const boards = new BoardRepo(
-                isolate(['boards'])(tx),
-                () => dataTx,
-                options => logBoardChange(dataTx, options)
-            );
-            const members = new MemberRepo(
-                isolate(['members'])(tx),
-                users,
-                boards,
-                options => logMemberChange(dataTx, options)
-            );
-            const cards = new CardRepo(
-                isolate(['cards'])(tx),
-                boards,
-                users,
-                options => logCardChange(dataTx, options)
-            );
-            const columns = new ColumnRepo(
-                isolate(['columns'])(tx),
-                boards,
-                users,
-                options => logColumnChange(dataTx, options)
-            );
-            const messages = new MessageRepo(
-                isolate(['messages'])(tx),
-                cards,
-                users,
-                options => logMessageChange(dataTx, options)
-            );
-            const attachments = new AttachmentRepo(
-                isolate(['attachments'])(tx),
-                cards,
-                users,
-                boards,
-                options => logAttachmentChange(dataTx, options)
-            );
+                onChange: options => logBoardChange(dataTx, options),
+                scheduleTrigger,
+            });
+            const members = new MemberRepo({
+                tx: isolate(['members'])(tx),
+                userRepo: users,
+                boardRepo: boards,
+                onChange: options => logMemberChange(dataTx, options),
+                scheduleTrigger,
+            });
+            const cards = new CardRepo({
+                tx: isolate(['cards'])(tx),
+                boardRepo: boards,
+                userRepo: users,
+                onChange: options => logCardChange(dataTx, options),
+                scheduleTrigger,
+            });
+            const columns = new ColumnRepo({
+                tx: isolate(['columns'])(tx),
+                boardRepo: boards,
+                userRepo: users,
+                onChange: options => logColumnChange(dataTx, options),
+                scheduleTrigger,
+            });
+            const messages = new MessageRepo({
+                tx: isolate(['messages'])(tx),
+                cardRepo: cards,
+                userRepo: users,
+                onChange: options => logMessageChange(dataTx, options),
+                scheduleTrigger,
+            });
+            const attachments = new AttachmentRepo({
+                tx: isolate(['attachments'])(tx),
+                cardRepo: cards,
+                userRepo: users,
+                boardRepo: boards,
+                onChange: options => logAttachmentChange(dataTx, options),
+                scheduleTrigger,
+            });
 
             const events = new CollectionManager<ChangeEvent>(
                 isolate(['events'])(tx),
                 new MsgpackCodec()
             );
 
-            const scheduleEffect = (effect: DataEffect) => effects.push(effect);
+            const scheduleEffect = ((effect: AsyncCallback) =>
+                effects.push(effect)) as unknown as DataEffectScheduler;
 
             const esWriter = new EventStoreWriter(
                 events,
@@ -256,7 +281,16 @@ export class DataLayer {
 
             const awareness = new AwarenessStore(isolate(['awareness'])(tx));
 
+            const boardService = new BoardService({
+                boards,
+                crypto: this.crypto,
+                identities,
+                members,
+                users,
+            });
+
             const dataTx: DataTx = {
+                boardService,
                 awareness,
                 boards,
                 cards,
@@ -277,6 +311,21 @@ export class DataLayer {
             };
 
             const result = await fn(dataTx);
+
+            while (triggers.length > 0) {
+                log.debug(`running ${triggers.length} triggers...`);
+
+                const triggersSnapshot = triggers;
+                triggers = [];
+
+                await whenAll(triggersSnapshot.map(trigger => trigger()));
+
+                log.debug('triggers executed');
+
+                if (triggers.length > 0) {
+                    log.info('trigger recursion detected');
+                }
+            }
 
             return result;
         });

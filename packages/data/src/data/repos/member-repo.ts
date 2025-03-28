@@ -6,6 +6,7 @@ import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand, unreachable} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
+import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
     type Doc,
@@ -83,15 +84,17 @@ export function zMember() {
 export class MemberRepo {
     public readonly rawRepo: DocRepo<Member>;
 
-    constructor(
-        tx: AppTransaction,
-        userRepo: UserRepo,
-        boardRepo: BoardRepo,
-        onChange: OnDocChange<Member>
-    ) {
+    constructor(params: {
+        tx: AppTransaction;
+        userRepo: UserRepo;
+        boardRepo: BoardRepo;
+        onChange: OnDocChange<Member>;
+        scheduleTrigger: DataTriggerScheduler;
+    }) {
         this.rawRepo = new DocRepo<Member>({
-            tx: isolate(['d'])(tx),
-            onChange,
+            tx: isolate(['d'])(params.tx),
+            scheduleTrigger: params.scheduleTrigger,
+            onChange: params.onChange,
             indexes: {
                 [USER_ID_BOARD_ID_INDEX]: {
                     key: x => [x.userId, x.boardId],
@@ -121,7 +124,7 @@ export class MemberRepo {
                 {
                     name: 'member.userId fk',
                     verify: async member => {
-                        const user = await userRepo.getById(
+                        const user = await params.userRepo.getById(
                             member.userId,
                             true
                         );
@@ -134,7 +137,9 @@ export class MemberRepo {
                 {
                     name: 'member.boardId fk',
                     verify: async member => {
-                        const board = await boardRepo.getById(member.boardId);
+                        const board = await params.boardRepo.getById(
+                            member.boardId
+                        );
                         if (board === undefined) {
                             return `board not found: ${member.boardId}`;
                         }

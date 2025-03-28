@@ -1,4 +1,5 @@
 import {Type} from '@sinclair/typebox';
+import type {BoardService} from '../data/board-service.js';
 import type {DataEffectScheduler, DataTx} from '../data/data-layer.js';
 import type {
     CryptoService,
@@ -14,6 +15,8 @@ import {
 import {createUserId, UserRepo, type UserId} from '../data/repos/user-repo.js';
 import {AppError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
+import {whenAll} from '../utils.js';
+import {createUuidV4} from '../uuid.js';
 import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_HOURS,
@@ -26,6 +29,7 @@ export interface AuthApiState {
     jwt: JwtService;
     crypto: CryptoService;
     emailService: EmailService;
+    boardService: BoardService;
     scheduleEffect: DataEffectScheduler;
 }
 
@@ -47,7 +51,13 @@ export function createAuthApi() {
                 Type.Object({type: Type.Literal('cooldown')}),
             ]),
             handle: async (
-                {tx: {identities, users}, crypto, scheduleEffect, emailService},
+                {
+                    tx: {identities, users},
+                    crypto,
+                    boardService,
+                    scheduleEffect,
+                    emailService,
+                },
                 {email}
             ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
                 const verificationCode = await createVerificationCode(crypto);
@@ -58,6 +68,7 @@ export function createAuthApi() {
                     email,
                     crypto,
                     fullName: undefined,
+                    boardService,
                 });
 
                 if (await needsCooldown(identity)) {
@@ -212,12 +223,15 @@ export async function signJwtToken(
     );
 }
 
+export const DEFAULT_BOARD_NAME = 'My First Board';
+
 export async function getIdentity(params: {
     identities: IdentityRepo;
     users: UserRepo;
     email: string;
     crypto: CryptoService;
     fullName: string | undefined;
+    boardService: BoardService;
 }): Promise<Identity> {
     const existingIdentity = await params.identities.getByEmail(params.email);
     if (existingIdentity) {
@@ -227,24 +241,34 @@ export async function getIdentity(params: {
     const now = getNow();
     const userId = createUserId();
 
-    await params.users.create({
-        id: userId,
-        createdAt: now,
-        updatedAt: now,
-        deleted: false,
-        fullName: params.fullName ?? 'Anonymous',
-        version: '4',
-    });
+    const [identity] = await whenAll([
+        params.identities.create({
+            id: createIdentityId(),
+            createdAt: now,
+            updatedAt: now,
+            email: params.email,
+            userId,
+            verificationCode: await createVerificationCode(params.crypto),
+            authActivityLog: [],
+            deleted: false,
+        }),
+        params.users.create({
+            id: userId,
+            createdAt: now,
+            updatedAt: now,
+            deleted: false,
+            fullName: params.fullName ?? 'Anonymous',
+            version: '4',
+        }),
+    ]);
 
-    const identity = await params.identities.create({
-        id: createIdentityId(),
-        createdAt: now,
-        updatedAt: now,
-        email: params.email,
-        userId,
-        verificationCode: await createVerificationCode(params.crypto),
-        authActivityLog: [],
-        deleted: false,
+    // we can't call createBoard in parallel to identity creation, because createBoard fetches
+    // author info from the identity. we need to ensure that the identity is created first.
+    await params.boardService.createBoard({
+        authorId: userId,
+        name: DEFAULT_BOARD_NAME,
+        key: createUuidV4(),
+        members: [],
     });
 
     return identity;

@@ -6,6 +6,7 @@ import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {type Timestamp, zTimestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
+import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type Doc,
     DocRepo,
@@ -68,13 +69,15 @@ export function zIdentity() {
 export class IdentityRepo {
     public readonly rawRepo: DocRepo<Identity>;
 
-    constructor(
-        tx: AppTransaction,
-        userRepo: UserRepo,
-        onChange: OnDocChange<Identity>
-    ) {
+    constructor(params: {
+        tx: AppTransaction;
+        userRepo: UserRepo;
+        onChange: OnDocChange<Identity>;
+        scheduleTrigger: DataTriggerScheduler;
+    }) {
         this.rawRepo = new DocRepo<Identity>({
-            tx: isolate(['d'])(tx),
+            tx: isolate(['d'])(params.tx),
+            scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [EMAIL_INDEX]: {
                     key: x => [x.email],
@@ -86,13 +89,13 @@ export class IdentityRepo {
                     unique: true,
                 },
             },
-            onChange,
+            onChange: params.onChange,
             schema: zIdentity(),
             constraints: [
                 {
                     name: 'identity.userId fk',
                     verify: async identity => {
-                        const user = await userRepo.getById(
+                        const user = await params.userRepo.getById(
                             identity.userId,
                             true
                         );

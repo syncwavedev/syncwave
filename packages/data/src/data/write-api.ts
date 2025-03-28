@@ -274,6 +274,7 @@ export function createWriteApi() {
                     fullName: undefined,
                     identities: st.tx.identities,
                     users: st.tx.users,
+                    boardService: st.tx.boardService,
                 });
 
                 if (!identity) {
@@ -432,62 +433,13 @@ export function createWriteApi() {
             }),
             res: zBoard(),
             handle: async (st, req) => {
-                const now = getNow();
-
-                const userId = st.ps.ensureAuthenticated();
-
-                const board = await st.tx.boards.create({
-                    id: req.boardId,
-                    createdAt: now,
-                    updatedAt: now,
-                    deleted: false,
+                return await st.tx.boardService.createBoard({
+                    authorId: st.ps.ensureAuthenticated(),
                     name: req.name,
-                    authorId: userId,
-                    key: req.key.toUpperCase(),
+                    key: req.key,
+                    members: req.members,
+                    boardId: req.boardId,
                 });
-
-                await whenAll([
-                    st.tx.members.create({
-                        id: createMemberId(),
-                        boardId: board.id,
-                        createdAt: now,
-                        updatedAt: now,
-                        userId: userId,
-                        deleted: false,
-                        role: 'owner',
-                        // todo: add to the beginning of the user list
-                        position: Math.random(),
-                        version: '2',
-                    }),
-                    ...req.members.map(async member => {
-                        const identity = await getIdentity({
-                            identities: st.tx.identities,
-                            crypto: st.crypto,
-                            email: member,
-                            fullName: undefined,
-                            users: st.tx.users,
-                        });
-
-                        // user trying to add themselves as a member
-                        if (identity.userId === userId) {
-                            return;
-                        }
-
-                        await st.tx.members.create({
-                            boardId: board.id,
-                            createdAt: now,
-                            deleted: false,
-                            id: createMemberId(),
-                            position: Math.random(),
-                            role: 'writer',
-                            updatedAt: now,
-                            userId: identity.userId,
-                            version: '2',
-                        });
-                    }),
-                ]);
-
-                return board;
             },
         }),
         deleteBoard: handler({

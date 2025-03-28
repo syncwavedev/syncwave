@@ -4,6 +4,7 @@ import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
+import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type Doc,
     DocRepo,
@@ -59,16 +60,18 @@ export function zAttachment() {
 export class AttachmentRepo {
     public readonly rawRepo: DocRepo<Attachment>;
 
-    constructor(
-        tx: AppTransaction,
-        cardRepo: CardRepo,
-        userRepo: UserRepo,
-        boardRepo: BoardRepo,
-        onChange: OnDocChange<Attachment>
-    ) {
+    constructor(params: {
+        tx: AppTransaction;
+        cardRepo: CardRepo;
+        userRepo: UserRepo;
+        boardRepo: BoardRepo;
+        onChange: OnDocChange<Attachment>;
+        scheduleTrigger: DataTriggerScheduler;
+    }) {
         this.rawRepo = new DocRepo<Attachment>({
-            tx: isolate(['d'])(tx),
-            onChange,
+            tx: isolate(['d'])(params.tx),
+            onChange: params.onChange,
+            scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [CARD_ID_INDEX]: {
                     key: x => [x.cardId, x.createdAt],
@@ -88,7 +91,7 @@ export class AttachmentRepo {
                 {
                     name: 'message.authorId fk',
                     verify: async message => {
-                        const user = await userRepo.getById(
+                        const user = await params.userRepo.getById(
                             message.authorId,
                             true
                         );
@@ -101,7 +104,7 @@ export class AttachmentRepo {
                 {
                     name: 'message.cardId fk',
                     verify: async message => {
-                        const card = await cardRepo.getById(
+                        const card = await params.cardRepo.getById(
                             message.cardId,
                             true
                         );
@@ -114,7 +117,7 @@ export class AttachmentRepo {
                 {
                     name: 'message.boardId fk',
                     verify: async message => {
-                        const board = await boardRepo.getById(
+                        const board = await params.boardRepo.getById(
                             message.boardId,
                             true
                         );

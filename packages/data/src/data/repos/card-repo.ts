@@ -5,6 +5,7 @@ import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
+import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
     type Doc,
@@ -61,15 +62,17 @@ export function zCard() {
 export class CardRepo {
     public readonly rawRepo: DocRepo<Card>;
 
-    constructor(
-        tx: AppTransaction,
-        boardRepo: BoardRepo,
-        userRepo: UserRepo,
-        onChange: OnDocChange<Card>
-    ) {
+    constructor(params: {
+        tx: AppTransaction;
+        boardRepo: BoardRepo;
+        userRepo: UserRepo;
+        onChange: OnDocChange<Card>;
+        scheduleTrigger: DataTriggerScheduler;
+    }) {
         this.rawRepo = new DocRepo<Card>({
-            tx: isolate(['d'])(tx),
-            onChange,
+            tx: isolate(['d'])(params.tx),
+            onChange: params.onChange,
+            scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [BOARD_ID_COUNTER_INDEX]: {
                     key: x => [x.boardId, x.counter],
@@ -90,7 +93,7 @@ export class CardRepo {
                 {
                     name: 'card.authorId fk',
                     verify: async card => {
-                        const user = await userRepo.getById(
+                        const user = await params.userRepo.getById(
                             card.authorId,
                             true
                         );
@@ -103,7 +106,9 @@ export class CardRepo {
                 {
                     name: 'card.boardId fk',
                     verify: async card => {
-                        const board = await boardRepo.getById(card.boardId);
+                        const board = await params.boardRepo.getById(
+                            card.boardId
+                        );
                         if (board === undefined) {
                             return `board not found: ${card.boardId}`;
                         }
@@ -117,7 +122,7 @@ export class CardRepo {
                             return;
                         }
 
-                        const user = await userRepo.getById(
+                        const user = await params.userRepo.getById(
                             card.assigneeId,
                             true
                         );

@@ -3,6 +3,7 @@ import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {assertNever, type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
+import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type Doc,
     DocRepo,
@@ -61,13 +62,18 @@ export function zUser() {
 export class UserRepo {
     public readonly rawRepo: DocRepo<User>;
 
-    constructor(tx: AppTransaction, onChange: OnDocChange<User>) {
+    constructor(params: {
+        tx: AppTransaction;
+        onChange: OnDocChange<User>;
+        scheduleTrigger: DataTriggerScheduler;
+    }) {
         this.rawRepo = new DocRepo<User>({
-            tx: isolate(['d'])(tx),
-            onChange,
+            tx: isolate(['d'])(params.tx),
+            onChange: params.onChange,
             indexes: {},
             schema: zUser(),
             constraints: [],
+            scheduleTrigger: params.scheduleTrigger,
             upgrade: function upgradeUser(user: StoredUser) {
                 if ('version' in user) {
                     if (user.version === 2) {

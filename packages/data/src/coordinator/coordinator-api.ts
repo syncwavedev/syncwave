@@ -103,6 +103,7 @@ export function createCoordinatorApi() {
                 emailService: state.emailService,
                 jwt: state.jwt,
                 scheduleEffect: tx.scheduleEffect,
+                boardService: tx.boardService,
             });
         });
     });

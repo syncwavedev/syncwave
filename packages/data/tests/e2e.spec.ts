@@ -1,4 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {DEFAULT_BOARD_NAME} from '../src/coordinator/auth-api.js';
 import {createRichtext} from '../src/crdt/richtext.js';
 import {
     assertSingle,
@@ -35,6 +36,14 @@ describe('e2e', () => {
         const result = await subject.client.rpc.getMe({}).first();
 
         expect(result.user.fullName).toEqual('Anonymous');
+    });
+
+    it('should create a default board', async () => {
+        const result = await subject.client.rpc.getMyMembers({}).first();
+        expect(result).toHaveLength(1);
+        const member = result[0];
+        expect(member.board).toBeDefined();
+        expect(member.board.name).toEqual(DEFAULT_BOARD_NAME);
     });
 
     it('should create a new board', async () => {

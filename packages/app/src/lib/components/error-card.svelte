@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {log, toError} from 'syncwave-data';
+	import {log, toError} from 'syncwave';
 
 	interface Props {
 		error: unknown;

@@ -1,5 +1,5 @@
 <script module lang="ts">
-	import {CancelledError, MsgpackCodec} from 'syncwave-data';
+	import {CancelledError, MsgpackCodec} from 'syncwave';
 
 	window.addEventListener('unhandledrejection', event => {
 		if (event.reason instanceof CancelledError) {
@@ -11,7 +11,7 @@
 <script lang="ts">
 	import {onMount, setContext} from 'svelte';
 	import type {Component} from 'svelte';
-	import {CoordinatorClient} from 'syncwave-data';
+	import {CoordinatorClient} from 'syncwave';
 	import {
 		createCoordinatorClient,
 		setAuthManager,

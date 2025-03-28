@@ -14,7 +14,7 @@ import {
     toStream,
     type Uint8KvStore,
     type Uint8Transaction,
-} from 'syncwave-data';
+} from 'syncwave';
 import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
 
 fdb.setAPIVersion(620, 620);

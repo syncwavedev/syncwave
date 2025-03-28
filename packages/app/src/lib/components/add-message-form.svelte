@@ -10,7 +10,7 @@
 		type BoardId,
 		type CardId,
 		type Message,
-	} from 'syncwave-data';
+	} from 'syncwave';
 	import ArrowUpIcon from './icons/arrow-up-icon.svelte';
 	import AttachIcon from './icons/attach-icon.svelte';
 	import Editor from './editor.svelte';

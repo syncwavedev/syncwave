@@ -1,4 +1,4 @@
-import {assert, type JwtPayload, type UserId} from 'syncwave-data';
+import {assert, type JwtPayload, type UserId} from 'syncwave';
 
 function parseJwt(token: string): unknown {
 	const base64Url = token.split('.')[1];

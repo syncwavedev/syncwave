@@ -8,7 +8,7 @@ import {
 	toPosition,
 	type CardId,
 	type ColumnId,
-} from 'syncwave-data';
+} from 'syncwave';
 import type {Agent} from '../../agent/agent.svelte.js';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
@@ -67,9 +67,14 @@ export class DndBoardContext {
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		globalEvents.forEach((eventName: any) => {
-			const cancelListener = this.addListener(this, document, eventName, e => {
-				this.cancelDragEmitter.emit({pointerId: e.pointerId});
-			});
+			const cancelListener = this.addListener(
+				this,
+				document,
+				eventName,
+				e => {
+					this.cancelDragEmitter.emit({pointerId: e.pointerId});
+				}
+			);
 			this.cleanups.push(cancelListener);
 		});
 	}
@@ -98,7 +103,10 @@ export class DndBoardContext {
 			};
 
 			const cancelDragSub = this.cancelDragEmitter.subscribe(e => {
-				if (e.pointerId !== undefined || e.pointerId === downEvent.pointerId) {
+				if (
+					e.pointerId !== undefined ||
+					e.pointerId === downEvent.pointerId
+				) {
 					cleanupDown();
 				}
 			});
@@ -200,12 +208,16 @@ export class DndBoardContext {
 				const nextX = clip({
 					value: startDraggableX + deltaX,
 					min: gap,
-					max: window.innerWidth - draggable.element.clientWidth - gap,
+					max:
+						window.innerWidth - draggable.element.clientWidth - gap,
 				});
 				const nextY = clip({
 					value: startDraggableY + deltaY,
 					min: gap,
-					max: window.innerHeight - draggable.element.clientHeight - gap,
+					max:
+						window.innerHeight -
+						draggable.element.clientHeight -
+						gap,
 				});
 
 				draggable.element.style.left = `${nextX}px`;
@@ -283,8 +295,10 @@ export class DndBoardContext {
 					scroller.target = this.scrollable;
 				} else if (
 					this.scrollable.scrollLeft <
-						this.scrollable.clientWidth + this.scrollable.scrollWidth &&
-					draggableRect.right > boardRect.right - AUTOSCROLL_THRESHOLD_X
+						this.scrollable.clientWidth +
+							this.scrollable.scrollWidth &&
+					draggableRect.right >
+						boardRect.right - AUTOSCROLL_THRESHOLD_X
 				) {
 					scroller.direction = 'right';
 					scroller.target = this.scrollable;
@@ -292,7 +306,8 @@ export class DndBoardContext {
 					const column = this.columns.find(column => {
 						const rect = column.scrollable.getBoundingClientRect();
 						return (
-							draggableCenterX >= rect.left && draggableCenterX <= rect.right
+							draggableCenterX >= rect.left &&
+							draggableCenterX <= rect.right
 						);
 					});
 
@@ -382,7 +397,9 @@ export class DndBoardContext {
 				const rect = column.scrollable.getBoundingClientRect();
 				return {
 					column,
-					distance: Math.abs(rect.x + rect.width / 2 - draggableCenterX),
+					distance: Math.abs(
+						rect.x + rect.width / 2 - draggableCenterX
+					),
 				};
 			})
 			.sort((a, b) => a.distance - b.distance)
@@ -433,7 +450,8 @@ export class DndBoardContext {
 
 		let offsetTop = targetColumn.container.getBoundingClientRect().top;
 		for (const neighbor of columnCards) {
-			const neighborRectNative = neighbor.container.getBoundingClientRect();
+			const neighborRectNative =
+				neighbor.container.getBoundingClientRect();
 			const combinedHeight =
 				neighborRectNative.height + DND_CARD_GAP + cardHeight;
 			const combinedTop = offsetTop;

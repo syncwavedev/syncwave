@@ -14,7 +14,7 @@ import {
 	type ColumnId,
 	type Timestamp,
 	type User,
-} from 'syncwave-data';
+} from 'syncwave';
 import {observeAwareness} from './awareness.svelte.js';
 import type {CrdtDerivator} from './crdt-manager.js';
 import type {State} from './state.js';

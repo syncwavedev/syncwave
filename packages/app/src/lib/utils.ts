@@ -16,7 +16,7 @@ import {
 	type MeDto,
 	type Nothing,
 	type Unsubscribe,
-} from 'syncwave-data';
+} from 'syncwave';
 import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
 import {AuthManager} from '../auth-manager';
 import {WsTransportClient} from '../ws-transport-client';

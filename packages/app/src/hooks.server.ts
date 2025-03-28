@@ -1,4 +1,4 @@
-import {CancelledError, log, toError} from 'syncwave-data';
+import {CancelledError, log, toError} from 'syncwave';
 
 process.on('unhandledRejection', reason => {
 	if (reason instanceof CancelledError) {

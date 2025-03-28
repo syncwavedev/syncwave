@@ -6,8 +6,8 @@ import {
     S3Client,
     type S3ClientConfig,
 } from '@aws-sdk/client-s3';
-import type {ObjectKey, ObjectMetadata, ObjectStore} from 'syncwave-data';
-import {assert} from 'syncwave-data';
+import type {ObjectKey, ObjectMetadata, ObjectStore} from 'syncwave';
+import {assert} from 'syncwave';
 
 export interface S3ObjectStoreOptions {
     bucketName: string;

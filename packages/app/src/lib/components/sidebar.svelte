@@ -2,7 +2,7 @@
 	import Avatar from '$lib/components/avatar.svelte';
 	import CogIcon from '$lib/components/icons/cog-icon.svelte';
 	import PanelRightIcon from '$lib/components/icons/panel-right-icon.svelte';
-	import type {Identity, MemberDto, UserDto} from 'syncwave-data';
+	import type {Identity, MemberDto, UserDto} from 'syncwave';
 	import PlusIcon from './icons/plus-icon.svelte';
 	import SearchIcon from './icons/search-icon.svelte';
 	import {observe} from '$lib/utils.svelte';

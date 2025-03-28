@@ -12,7 +12,7 @@ import {
     Subject,
     toError,
     type TransportServer,
-} from 'syncwave-data';
+} from 'syncwave';
 import {WebSocket, WebSocketServer} from 'ws';
 
 export interface WsTransportServerOptions<T> {

@@ -6,7 +6,7 @@
 		type Message,
 		type MessageDto,
 		type User,
-	} from 'syncwave-data';
+	} from 'syncwave';
 	import Avatar from './avatar.svelte';
 	import {timeSince} from '$lib/utils';
 	import RichtextView from './richtext-view.svelte';

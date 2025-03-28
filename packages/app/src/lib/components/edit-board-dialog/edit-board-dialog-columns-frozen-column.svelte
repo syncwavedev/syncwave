@@ -2,7 +2,7 @@
 	import TrashIcon from '../icons/trash-icon.svelte';
 	import {ColumnView} from '../../agent/view.svelte';
 	import {getAgent} from '../../agent/agent.svelte';
-	import type {ColumnId} from 'syncwave-data';
+	import type {ColumnId} from 'syncwave';
 
 	interface Props {
 		column: ColumnView;

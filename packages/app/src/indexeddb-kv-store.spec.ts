@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import {deleteDB, openDB} from 'idb';
-import {whenAll} from 'syncwave-data';
+import {whenAll} from 'syncwave';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {IndexedDBKVStore, IndexedDBTransaction} from './indexeddb-kv-store.js';
 

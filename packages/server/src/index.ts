@@ -34,7 +34,7 @@ import {
     toError,
     toStream,
     TupleStore,
-} from 'syncwave-data';
+} from 'syncwave';
 import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
 import type {Tuple} from '../../data/dist/esm/src/tuple.js';
 import {eventLoopMonitor} from './event-loop-monitor.js';

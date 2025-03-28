@@ -8,7 +8,7 @@
 		getDndBoardContext,
 		type Ref,
 	} from './board-dnd';
-	import {getNow} from 'syncwave-data';
+	import {getNow} from 'syncwave';
 	import HashtagIcon from '../../components/icons/hashtag-icon.svelte';
 
 	const {

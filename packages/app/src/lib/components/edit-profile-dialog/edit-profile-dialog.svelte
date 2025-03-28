@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Dialog from '../dialog.svelte';
 	import EditProfileDialogFrozenContent from './edit-profile-dialog-content-frozen.svelte';
-	import type {User} from 'syncwave-data';
+	import type {User} from 'syncwave';
 	import {getAgent} from '../../agent/agent.svelte';
 
 	interface Props {

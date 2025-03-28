@@ -4,7 +4,7 @@ import {
 	type IDBPDatabase,
 	type IDBPTransaction,
 } from 'idb';
-import type {Entry} from 'syncwave-data';
+import type {Entry} from 'syncwave';
 import {
 	ENVIRONMENT,
 	log,
@@ -13,7 +13,7 @@ import {
 	type Condition,
 	type Uint8KvStore,
 	type Uint8Transaction,
-} from 'syncwave-data';
+} from 'syncwave';
 
 function createKeyRange(condition: Condition<Uint8Array>): IDBKeyRange {
 	if (condition.gt !== undefined) {

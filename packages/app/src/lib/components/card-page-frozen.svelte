@@ -20,7 +20,7 @@
 		type CrdtDoc,
 		type Message,
 		type User,
-	} from 'syncwave-data';
+	} from 'syncwave';
 	import {goto} from '$app/navigation';
 
 	interface Props {

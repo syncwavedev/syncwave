@@ -9,7 +9,7 @@ import {
 	zip,
 	type CardId,
 	type ColumnId,
-} from 'syncwave-data';
+} from 'syncwave';
 import {getAgent} from '../../agent/agent.svelte';
 import type {State} from '../../agent/state';
 import type {

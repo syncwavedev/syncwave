@@ -4,7 +4,7 @@ import {
 	type Awareness,
 	type AwarenessState,
 	type AwarenessUpdate,
-} from 'syncwave-data';
+} from 'syncwave';
 
 export function observeAwareness(awareness: Awareness) {
 	const result = new SvelteMap<number, AwarenessState>();

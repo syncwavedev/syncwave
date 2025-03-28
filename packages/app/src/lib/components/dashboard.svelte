@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type {Identity, MemberDto, UserDto} from 'syncwave-data';
+	import type {Identity, MemberDto, UserDto} from 'syncwave';
 	import {observe} from '$lib/utils.svelte';
 	import BoardItem from './board-item.svelte';
 

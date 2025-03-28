@@ -9,7 +9,7 @@
 		type BoardId,
 		type MemberAdminDto,
 		type MemberId,
-	} from 'syncwave-data';
+	} from 'syncwave';
 	import {getMe, getRpc, markErrorAsHandled} from '../../utils';
 	import ScrollArea from '../scroll-area.svelte';
 

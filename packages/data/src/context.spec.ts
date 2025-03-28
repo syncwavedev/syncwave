@@ -18,7 +18,7 @@ describe('Context', () => {
     });
 
     it('should create context', () => {
-        const tracer = opentelemetry.trace.getTracer('syncwave-data');
+        const tracer = opentelemetry.trace.getTracer('syncwave');
         const span = tracer.startSpan(
             'some span',
             {

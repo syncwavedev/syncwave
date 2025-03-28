@@ -15,7 +15,7 @@
 	import {XmlFragment} from 'yjs';
 	import {Extension} from '@tiptap/core';
 	import type {Awareness} from '../../../../data/dist/esm/src/awareness';
-	import {hashString, type User} from 'syncwave-data';
+	import {hashString, type User} from 'syncwave';
 
 	let editor = $state() as Readable<Editor>;
 

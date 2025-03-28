@@ -13,7 +13,7 @@ const exporter = new OTLPTraceExporter({
 });
 const provider = new BasicTracerProvider({
     resource: new Resource({
-        [ATTR_SERVICE_NAME]: 'syncwave-data',
+        [ATTR_SERVICE_NAME]: 'syncwave',
     }),
     // spanProcessors: [new BatchSpanProcessor(new ConsoleSpanExporter())],
     spanProcessors: [new BatchSpanProcessor(exporter)],

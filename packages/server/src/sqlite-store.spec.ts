@@ -7,7 +7,7 @@ import {
     type LtCondition,
     type LteCondition,
     toStream,
-} from 'syncwave-data';
+} from 'syncwave';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {SqliteRwStore} from './sqlite-store.js';
 

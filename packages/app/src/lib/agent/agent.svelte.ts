@@ -36,7 +36,7 @@ import {
 	type TransportClient,
 	type User,
 	type UserId,
-} from 'syncwave-data';
+} from 'syncwave';
 
 import type {AuthManager} from '../../auth-manager';
 

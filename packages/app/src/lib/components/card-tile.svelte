@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {Crdt, type BoardViewCardDto} from 'syncwave-data';
+	import {Crdt, type BoardViewCardDto} from 'syncwave';
 	import Avatar from './avatar.svelte';
 	import {getCardRoute} from '$lib/routes';
 	import {yFragmentToPlaintext} from '$lib/richtext';

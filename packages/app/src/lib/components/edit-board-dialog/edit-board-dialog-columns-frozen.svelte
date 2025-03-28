@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {createColumnId, toPosition} from 'syncwave-data';
+	import {createColumnId, toPosition} from 'syncwave';
 	import ArrowLeftIcon from '../icons/arrow-left-icon.svelte';
 	import TimesIcon from '../icons/times-icon.svelte';
 	import {getRpc} from '../../utils';

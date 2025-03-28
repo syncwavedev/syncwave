@@ -1,5 +1,5 @@
 import {getContext, onDestroy, setContext} from 'svelte';
-import {AppError, CancelledError, Context, context} from 'syncwave-data';
+import {AppError, CancelledError, Context, context} from 'syncwave';
 
 const COMPONENT_CONTEXT = 'component-context';
 

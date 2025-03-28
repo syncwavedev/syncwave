@@ -1,7 +1,7 @@
 <script lang="ts">
 	import TimesIcon from '../icons/times-icon.svelte';
 	import {getAgent} from '../../agent/agent.svelte';
-	import type {User} from 'syncwave-data';
+	import type {User} from 'syncwave';
 
 	interface Props {
 		profile: User;

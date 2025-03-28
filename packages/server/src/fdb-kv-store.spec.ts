@@ -7,7 +7,7 @@
 //     PrefixedKVStore,
 //     Uint8KVStore,
 //     toStream,
-// } from 'syncwave-data';
+// } from 'syncwave';
 // import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 // import {FoundationDBUint8KVStore} from './fdb-kv-store.js';
 

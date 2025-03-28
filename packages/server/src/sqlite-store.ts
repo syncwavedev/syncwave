@@ -9,7 +9,7 @@ import {
     type Uint8Transaction,
     mapCondition,
     unreachable,
-} from 'syncwave-data';
+} from 'syncwave';
 
 function buildConditionSql(condition: Condition<Uint8Array>): {
     clause: string;

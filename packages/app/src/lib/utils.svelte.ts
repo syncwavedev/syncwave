@@ -13,7 +13,7 @@ import {
 	type CoordinatorRpc,
 	type Nothing,
 	type Stream,
-} from 'syncwave-data';
+} from 'syncwave';
 import {getRpc} from './utils';
 
 // observable is wrapped in $state, so it can be used in templates directly

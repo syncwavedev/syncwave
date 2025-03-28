@@ -3,7 +3,7 @@ import {
 	type BoardId,
 	type CardId,
 	type CoordinatorClient,
-} from 'syncwave-data';
+} from 'syncwave';
 
 export interface UploadRequest {
 	files: File[];

@@ -1,5 +1,5 @@
 import {createHook} from 'node:async_hooks';
-import {context, log, type TraceId} from 'syncwave-data';
+import {context, log, type TraceId} from 'syncwave';
 
 const THRESHOLD_NS = 1e8; // 100ms
 

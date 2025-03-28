@@ -1,4 +1,4 @@
-import {assert, Crdt, type Unsubscribe, type ValueChange} from 'syncwave-data';
+import {assert, Crdt, type Unsubscribe, type ValueChange} from 'syncwave';
 import type {State} from './state';
 
 function applyChange(state: unknown, change: ValueChange) {

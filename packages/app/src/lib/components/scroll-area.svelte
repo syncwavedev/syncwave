@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {ScrollArea, type WithoutChild} from 'bits-ui';
-	import {assert} from 'syncwave-data';
+	import {assert} from 'syncwave';
 
 	type Props = WithoutChild<ScrollArea.RootProps> & {
 		orientation: 'vertical' | 'horizontal' | 'both';

@@ -14,7 +14,7 @@ import {
 	type CrdtDiff,
 	type Recipe,
 	type Unsubscribe,
-} from 'syncwave-data';
+} from 'syncwave';
 import {deriveCrdtSnapshot} from './crdt.svelte.js';
 import type {State} from './state.js';
 

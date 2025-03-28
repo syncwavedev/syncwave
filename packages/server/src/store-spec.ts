@@ -7,7 +7,7 @@ import {
     type LteCondition,
     toStream,
     type Uint8KvStore,
-} from 'syncwave-data';
+} from 'syncwave';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 
 export function describeKVStore<T extends Uint8KvStore>(

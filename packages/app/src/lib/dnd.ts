@@ -1,4 +1,4 @@
-import {assert, toPosition, type BigFloat} from 'syncwave-data';
+import {assert, toPosition, type BigFloat} from 'syncwave';
 
 export function findMoved<TId>(
 	before: TId[],

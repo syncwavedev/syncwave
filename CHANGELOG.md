@@ -1,19 +1,23 @@
 # Changelog
 
+## 2025-03-28
+
+- Create default board on user creation.
+
 ## 2025-03-27
 
-- Fix MVCC Adapter GC
-- Fix scroll with thumb
+- Fix MVCC Adapter GC.
+- Fix scroll with thumb.
 
 ## 2025-03-26
 
-- Board DnD performance and animation improvements
-- Fix Google auth
-- Fix auth code enter form
-- Fix Safari DnD drop animation after autoscroll
-- Fix scroll into view in Safari
-- Fix richtext bullet, ordered, and task list styles
-- Fix column creation
+- Board DnD performance and animation improvements.
+- Fix Google auth.
+- Fix auth code enter form.
+- Fix Safari DnD drop animation after autoscroll.
+- Fix scroll into view in Safari.
+- Fix richtext bullet, ordered, and task list styles.
+- Fix column creation.
 
 ## 2025-03-23
 

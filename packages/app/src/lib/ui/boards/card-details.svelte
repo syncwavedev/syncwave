@@ -8,7 +8,7 @@
 	import Editor from '../../components/editor.svelte';
 	import type {CardView} from '../../agent/view.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
-	import type {User} from 'syncwave-data';
+	import type {User} from 'syncwave';
 	import {onMount, tick} from 'svelte';
 	import HashtagIcon from '../components/icons/hashtag-icon.svelte';
 	import DropdownMenu from '../components/dropdown-menu.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {unimplemented} from 'syncwave-data';
+	import {unimplemented} from 'syncwave';
 	import router from '../lib/router';
 	import {getAuthManager} from '../lib/utils';
 

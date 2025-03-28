@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {getRpc} from '$lib/utils';
-	import {BusinessError, createBoardId, log, toError} from 'syncwave-data';
+	import {BusinessError, createBoardId, log, toError} from 'syncwave';
 	import AddBoardDialogSettings from './add-board-dialog-board-settings.svelte';
 	import AddBoardDialogMemberList from './add-board-dialog-member-list.svelte';
 	import Dialog from '../dialog.svelte';

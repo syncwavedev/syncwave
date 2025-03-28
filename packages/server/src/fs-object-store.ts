@@ -7,7 +7,7 @@ import {
     type ObjectKey,
     type ObjectMetadata,
     type ObjectStore,
-} from 'syncwave-data';
+} from 'syncwave';
 
 export class FsObjectStore implements ObjectStore {
     private basePath: string;

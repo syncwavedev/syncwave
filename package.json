@@ -16,7 +16,7 @@
         "dev": "run-p -l srv app dat",
         "srv": "npm run dev --workspace=syncwave-server",
         "app": "npm run dev --workspace=syncwave-app",
-        "dat": "npm run dev --workspace=syncwave-data"
+        "dat": "npm run dev --workspace=syncwave"
     },
     "devDependencies": {
         "editorconfig": "^2.0.0",

@@ -12,7 +12,7 @@ import {
 	type Observer,
 	type TransportClient,
 	type Unsubscribe,
-} from 'syncwave-data';
+} from 'syncwave';
 
 export interface WsTransportClientOptions<T> {
 	readonly url: string;

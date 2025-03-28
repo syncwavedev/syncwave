@@ -12,6 +12,7 @@
 	import {onMount, tick} from 'svelte';
 	import HashtagIcon from '../components/icons/hashtag-icon.svelte';
 	import DropdownMenu from '../components/dropdown-menu.svelte';
+	import Select from '../components/select.svelte';
 
 	const {
 		card,
@@ -109,12 +110,22 @@
 		</div>
 		<hr class="mt-2 mb-1" />
 		<!-- Task Actions -->
-		<div class="mx-4">
-			<div class="flex gap-1">
-				<button class="btn--flat text-sm">
-					<CircleDashedIcon />
-					<span class="text-xs">{card.column?.name}</span>
-				</button>
+		<div class="mx-2">
+			<div class="flex">
+				<Select
+					value={card.column?.id}
+					options={[
+						{value: '1', label: 'Backlog'},
+						{value: '2', label: 'Ready for Dev'},
+						{value: '3', label: 'In Progress'},
+						{value: '4', label: 'Done'},
+					]}
+				>
+					<button class="btn--flat text-sm">
+						<CircleDashedIcon />
+						<span class="text-xs">{card.column?.name}</span>
+					</button>
+				</Select>
 
 				<button class="btn--flat text-sm">
 					<UserIcon />

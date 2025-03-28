@@ -92,7 +92,6 @@
 		class="
         bg-subtle-0
         dark:bg-subtle-1
-        hover:border-divider-object
         hover:bg-subtle-2
         group
         data-active:border-divider-active

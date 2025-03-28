@@ -38,13 +38,13 @@
 			alignOffset={0}
 			preventOverflowTextSelection={true}
 			{...contentProps}
-			class="z-100 bg-subtle-2 p-1 rounded-md min-w-40 border border-divider-object outline-none"
+			class="z-100 bg-subtle-3 p-1 rounded-md min-w-40 border border-divider-object outline-none"
 		>
 			<DropdownMenu.Group>
 				{#each items as item (item.text)}
 					<DropdownMenu.Item textValue={item.text}>
 						<div
-							class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 py-0.25 rounded-sm cursor-pointer outline-none"
+							class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-pointer outline-none"
 						>
 							<span class="mr-1.5"><item.icon /></span>
 							<span class="text-xs">{item.text}</span>

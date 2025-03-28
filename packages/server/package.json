@@ -55,7 +55,6 @@
         "@opentelemetry/semantic-conventions": "^1.30.0",
         "better-sqlite3": "^11.9.0",
         "foundationdb": "1",
-        "bufferutil": "^4.0.9",
         "dotenv": "^16.4.7",
         "jsonwebtoken": "^9.0.2",
         "koa": "^2.15.3",

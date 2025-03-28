@@ -6,3 +6,4 @@ dev.sqlite-journal
 !/.env.example
 /dev-object-store
 /backups
+/ui

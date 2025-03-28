@@ -1,4 +1,4 @@
-FROM node:22-bullseye AS builder
+FROM node:22-slim AS builder
 
 # We need those for C bindings (foundationdb)
 RUN apt-get update

@@ -1,3 +1,5 @@
+/self-hosted
+
 # Exclude all node_modules directories
 node_modules
 
@@ -11,3 +13,5 @@ dist
 .cache
 logs
 *.log
+
+.env

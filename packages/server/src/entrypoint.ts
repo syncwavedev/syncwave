@@ -30,6 +30,7 @@ import {
     toError,
     toStream,
     TupleStore,
+    type Uint8KvStore,
 } from 'syncwave';
 import {match} from 'ts-pattern';
 import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
@@ -38,6 +39,7 @@ import {eventLoopMonitor} from './event-loop-monitor.js';
 import {FsObjectStore} from './fs-object-store.js';
 import {createApiRouter} from './http/api.js';
 import {createMetricsRouter} from './http/metrics.js';
+import {createUiRouter} from './http/ui.js';
 import {NodeCryptoService} from './node-crypto-service.js';
 import {NodeJwtService} from './node-jwt-service.js';
 import {SesEmailService} from './ses-email-service.js';
@@ -47,9 +49,6 @@ collectDefaultMetrics();
 
 eventLoopMonitor.enable();
 
-const APP_PORT = 4567;
-const METRICS_PORT = 5678;
-
 type Stage = 'prod' | 'dev' | 'local' | 'self_hosted';
 
 interface Options {
@@ -57,12 +56,14 @@ interface Options {
     google?: GoogleOptions;
     logLevel: LogLevel;
     workersCount: number;
-    staticPath: string | undefined;
-    apiPrefix: string;
+    uiPath: string | undefined;
     jwtSecret: string;
     store: KvStore<Tuple, Uint8Array>;
     hub: Hub;
     emailService: EmailService;
+    launchCluster: boolean;
+    appPort: number;
+    metricsPort: number;
 }
 
 function getGoogleOptions(apiUrl: string): GoogleOptions | undefined {
@@ -105,7 +106,9 @@ async function getOptions(): Promise<Options> {
 
     const {store, hub} = await getKvStore(
         stage,
-        stage !== 'local' || FORCE_FOUNDATIONDB ? 'fdb' : 'sqlite'
+        (stage !== 'local' && stage !== 'self_hosted') || FORCE_FOUNDATIONDB
+            ? 'fdb'
+            : 'sqlite'
     );
     const logLevel = match(stage)
         .with('local', () => 'debug' as const)
@@ -137,27 +140,22 @@ async function getOptions(): Promise<Options> {
         .with('self_hosted', () => `${appUrl}/api`)
         .exhaustive();
 
-    const apiPrefix = match(stage)
-        .with('local', () => '')
-        .with('dev', () => '')
-        .with('prod', () => '')
-        .with('self_hosted', () => '/api')
-        .exhaustive();
-
     const google = getGoogleOptions(apiUrl);
-    const staticPath = stage === 'self_hosted' ? './static' : undefined;
+    const uiPath = stage === 'self_hosted' ? './ui' : undefined;
 
     return {
-        apiPrefix,
         appUrl,
         logLevel,
         workersCount: stage === 'prod' ? cpus().length : 1,
         emailService: new SesEmailService(awsRegion),
         jwtSecret,
-        staticPath,
+        uiPath,
         hub,
         store,
         google,
+        launchCluster: stage !== 'local' && stage !== 'self_hosted',
+        appPort: stage === 'self_hosted' ? 80 : 4567,
+        metricsPort: 5678,
     };
 }
 
@@ -175,7 +173,12 @@ async function getKvStore(
             log.info(
                 `using FoundationDB as a primary store (./fdb/fdb.${stage}.cluster)`
             );
-            const fdbStore = await import('./fdb-kv-store.js').then(x => {
+            // use a variable to prevent typescript type check
+            // because this module is deleted in self-hosted docker image and never imported
+            const fdbModulePath: string = './fdb-kv-store.js';
+            const fdbStore: Uint8KvStore & Hub = await import(
+                fdbModulePath
+            ).then((x: any) => {
                 return new x.FoundationDBUint8KvStore({
                     clusterFilePath: `./fdb/fdb.${stage}.cluster`,
                     topicPrefix: '/hub/topics/',
@@ -191,16 +194,14 @@ async function getKvStore(
             const sqliteStore = await import('./sqlite-store.js').then(
                 x =>
                     new x.SqliteRwStore({
-                        dbFilePath: './dev.sqlite',
+                        dbFilePath:
+                            stage === 'local'
+                                ? './dev.sqlite'
+                                : '/data/db.sqlite',
                         concurrentReadLimit: 4,
                     })
             );
             const store = new MvccAdapter(sqliteStore);
-
-            const storeStats = await store.stats();
-            log.info(
-                `SQLite MVCC stats: ${JSON.stringify(storeStats, null, 2)}`
-            );
 
             return {
                 store,
@@ -262,15 +263,23 @@ async function launchApp(options: Options) {
     await upgradeKVStore(options.store);
     log.info('Successfully upgraded KV store');
 
-    const api = new Koa();
+    const app = new Koa();
+
     const apiRouter = createApiRouter(() => coordinator, {
         appUrl: options.appUrl,
         google: options.google,
-    });
-    api.use(apiRouter.routes()).use(apiRouter.allowedMethods());
-    api.use(helmet.default());
+    }).prefix(options.uiPath ? '/api' : '');
+    app.use(apiRouter.routes());
 
-    const appHttpServer = createServer(api.callback());
+    if (options.uiPath) {
+        const uiRouter = await createUiRouter({
+            staticPath: options.uiPath,
+            googleClientId: options.google?.clientId,
+        });
+        app.use(uiRouter.routes()).use(uiRouter.allowedMethods());
+    }
+
+    const appHttpServer = createServer(app.callback());
 
     const coordinator = new CoordinatorServer({
         transport: new WsTransportServer({
@@ -300,7 +309,7 @@ async function launchApp(options: Options) {
     });
 
     const appServerStarted = new Deferred<void>();
-    appHttpServer.listen(APP_PORT, () => appServerStarted.resolve());
+    appHttpServer.listen(options.appPort, () => appServerStarted.resolve());
     await coordinator.launch();
 
     await appServerStarted.promise;
@@ -326,7 +335,7 @@ async function launchMetrics() {
     });
 
     const metricsServerStarted = new Deferred<void>();
-    metricsHttpServer.listen(METRICS_PORT, () =>
+    metricsHttpServer.listen(options.metricsPort, () =>
         metricsServerStarted.resolve()
     );
 
@@ -352,14 +361,16 @@ process.on('unhandledRejection', reason => {
 
 log.info('launching coordinator...');
 
-if (cluster.isPrimary && options.workersCount > 1) {
+if (cluster.isPrimary && options.launchCluster) {
     log.info(`Master process ${process.pid} is running`);
 
     serverCtx
         .run(async () => {
             try {
                 await launchMetrics();
-                log.info(`metrics server is running on port ${METRICS_PORT}`);
+                log.info(
+                    `metrics server is running on port ${options.metricsPort}`
+                );
             } catch (err) {
                 log.error(toError(err), 'failed to launch coordinator');
             }
@@ -390,7 +401,7 @@ if (cluster.isPrimary && options.workersCount > 1) {
         .run(async () => {
             try {
                 await launchApp(options);
-                log.info(`coordinator is running on port ${APP_PORT}`);
+                log.info(`coordinator is running on port ${options.appPort}`);
             } catch (err) {
                 log.error(toError(err), 'failed to launch coordinator');
             }

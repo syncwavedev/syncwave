@@ -189,16 +189,16 @@ describe('assert', () => {
 describe('assertDefined', () => {
     it('should return the value when it is defined', () => {
         const value = 'defined value';
-        const result = assertDefined(value);
+        const result = assertDefined(value, 'test assert');
         expect(result).toBe(value);
     });
 
     it('should throw an error when the value is null', () => {
-        expect(() => assertDefined(null)).toThrowError();
+        expect(() => assertDefined(null, 'test assert')).toThrowError();
     });
 
     it('should throw an error when the value is undefined', () => {
-        expect(() => assertDefined(undefined)).toThrowError();
+        expect(() => assertDefined(undefined, 'test assert')).toThrowError();
     });
 });
 
@@ -841,7 +841,7 @@ describe('run', () => {
 
     it('should work with complex functions', () => {
         const complexFn = () => {
-            const result = [];
+            const result: number[] = [];
             for (let i = 0; i < 5; i++) {
                 result.push(i * i);
             }

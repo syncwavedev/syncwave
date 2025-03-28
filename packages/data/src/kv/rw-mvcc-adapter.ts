@@ -441,20 +441,19 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             ).count();
 
             return {
-                staleTransactions,
+                totalKeys,
                 staleKeys,
+                totalTombstones,
                 staleTombstones,
+                activeTransactions,
+                staleTransactions,
                 averageActiveTransactionVersionsBehind,
                 averageActiveTransactionAge,
 
                 readVersion,
                 oldestReadVersionInUse,
                 gcOffsets,
-                activeTransactions,
                 commitSets,
-                totalKeys,
-                observableKeys: totalKeys - staleKeys,
-                totalTombstones,
                 observableTombstones: totalTombstones - staleTombstones,
             };
         });

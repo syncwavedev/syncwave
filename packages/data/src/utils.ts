@@ -57,12 +57,31 @@ export function assertSingle<T>(value: T[], message: AssertMessage): T {
     return value[0];
 }
 
-export function assertDefined<T>(value: T | undefined | null): T {
+export function assertDefined<T>(
+    value: T | undefined | null,
+    message: string
+): T {
     if (value === null || value === undefined) {
-        throw new AppError('assertion failed: value is not defined');
+        throw new AppError(message);
     }
 
     return value;
+}
+
+export function assertOneOf<T>(
+    value: unknown,
+    options: T[],
+    message: AssertMessage
+): T {
+    if (!options.includes(value as T)) {
+        throw new AppError(
+            'assertOneOf failed: ' +
+                renderAssertMessage(message) +
+                `, got: ${JSON.stringify(value)}`
+        );
+    }
+
+    return value as T;
 }
 
 export interface WaitOptions {

@@ -16,7 +16,7 @@ import type {Tuple} from '../tuple.js';
 import {getIdentity, signJwtToken} from './auth-api.js';
 import {
     createCoordinatorApi,
-    type CoordinatorApiInputState,
+    type CoordinatorApiPublicState,
 } from './coordinator-api.js';
 
 export interface CoordinatorServerOptions {
@@ -32,7 +32,7 @@ export interface CoordinatorServerOptions {
 
 export class CoordinatorServer {
     private readonly dataLayer: DataLayer;
-    private readonly rpcServer: RpcServer<CoordinatorApiInputState>;
+    private readonly rpcServer: RpcServer<CoordinatorApiPublicState>;
 
     constructor(private readonly options: CoordinatorServerOptions) {
         this.dataLayer = new DataLayer(

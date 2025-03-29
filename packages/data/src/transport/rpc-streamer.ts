@@ -119,7 +119,15 @@ class RpcStreamerServerApiState<T> {
 }
 
 export function stringifyLogPart(arg: unknown) {
-    return JSON.stringify(arg)?.slice(0, 100);
+    const string = JSON.stringify(arg);
+    if (!string) {
+        return string;
+    }
+    if (string.length > 100) {
+        return `${string.slice(0, 100)}...`;
+    }
+
+    return string?.slice(0, 100);
 }
 
 function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {

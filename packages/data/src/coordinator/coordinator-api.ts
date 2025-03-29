@@ -16,6 +16,7 @@ import {createReadApi, ReadApiState} from '../data/read-api.js';
 import {createWriteApi, WriteApiState} from '../data/write-api.js';
 import {log} from '../logger.js';
 import type {Hub} from '../transport/hub.js';
+import {stringifyLogPart} from '../transport/rpc-streamer.js';
 import {
     type Api,
     applyMiddleware,
@@ -23,9 +24,8 @@ import {
     mapApiState,
 } from '../transport/rpc.js';
 import {type AuthApi, type AuthApiState, createAuthApi} from './auth-api.js';
-import {createE2eApi} from './e2e-api.js';
 
-export interface CoordinatorApiState {
+export interface CoordinatorApiPrivateState {
     jwt: JwtService;
     crypto: CryptoService;
     emailService: EmailService;
@@ -35,7 +35,7 @@ export interface CoordinatorApiState {
     objectStore: ObjectStore;
 }
 
-export interface CoordinatorApiInputState {
+export interface CoordinatorApiPublicState {
     dataLayer: DataLayer;
     config: Config;
     jwt: JwtService;
@@ -49,7 +49,7 @@ export interface CoordinatorApiInputState {
 export function createCoordinatorApi() {
     const adaptedWriteApi = applyMiddleware(
         createWriteApi(),
-        async (next, state: CoordinatorApiState) => {
+        async (next, state: CoordinatorApiPrivateState) => {
             await state.transact(async tx => {
                 await next(
                     new WriteApiState(
@@ -66,7 +66,7 @@ export function createCoordinatorApi() {
 
     const adaptedReadApi = mapApiState(
         createReadApi(),
-        (state: CoordinatorApiState) => {
+        (state: CoordinatorApiPrivateState) => {
             return new ReadApiState(
                 state.transact,
                 state.esReader,
@@ -77,7 +77,7 @@ export function createCoordinatorApi() {
 
     const adaptedAwarenessApi = mapApiState(
         createAwarenessApi(),
-        (state: CoordinatorApiState) => {
+        (state: CoordinatorApiPrivateState) => {
             return new AwarenessApiState(
                 state.transact,
                 state.hub,
@@ -88,7 +88,7 @@ export function createCoordinatorApi() {
 
     const adaptedAuthApi = applyMiddleware<
         AuthApiState,
-        CoordinatorApiState,
+        CoordinatorApiPrivateState,
         AuthApi
     >(createAuthApi(), async (next, state) => {
         await state.transact(async tx => {
@@ -103,29 +103,27 @@ export function createCoordinatorApi() {
         });
     });
 
-    const e2eApi = createE2eApi();
-
     const combinedApi = {
-        ...e2eApi,
         ...adaptedReadApi,
         ...adaptedWriteApi,
         ...adaptedAuthApi,
         ...adaptedAwarenessApi,
-    } satisfies Api<CoordinatorApiState>;
+    } satisfies Api<CoordinatorApiPrivateState>;
 
     const timeLoggerApi = applyMiddleware<
-        CoordinatorApiState,
-        CoordinatorApiState,
+        CoordinatorApiPrivateState,
+        CoordinatorApiPrivateState,
         typeof combinedApi
     >(combinedApi, async (next, state, processorName, arg) => {
-        return await log.time(`${processorName}(${JSON.stringify(arg)})`, () =>
-            next(state)
+        return await log.time(
+            `${processorName}(${stringifyLogPart(arg)})`,
+            () => next(state)
         );
     });
 
     const resultApi = applyMiddleware<
-        CoordinatorApiState,
-        CoordinatorApiInputState,
+        CoordinatorApiPrivateState,
+        CoordinatorApiPublicState,
         typeof timeLoggerApi
     >(
         timeLoggerApi,
@@ -134,7 +132,7 @@ export function createCoordinatorApi() {
             {dataLayer, objectStore, jwt, hub, emailService, crypto},
             {principal}
         ) => {
-            const state: CoordinatorApiState = {
+            const state: CoordinatorApiPrivateState = {
                 transact: fn => dataLayer.transact(principal, fn),
                 jwt,
                 objectStore,

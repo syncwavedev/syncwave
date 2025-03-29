@@ -277,7 +277,6 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
         transport: TransportServer<unknown>,
         private readonly api: Api<TState>,
         private readonly state: TState,
-        private readonly serverName: string,
         private readonly authenticator: Authenticator
     ) {
         this.transport = new RpcTransportServer(transport);
@@ -293,13 +292,7 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
     }
 
     private handleConnection(conn: RpcConnection): void {
-        launchRpcStreamerServer(
-            this.api,
-            this.state,
-            conn,
-            this.serverName,
-            this.authenticator
-        );
+        launchRpcStreamerServer(this.api, this.state, conn, this.authenticator);
     }
 }
 

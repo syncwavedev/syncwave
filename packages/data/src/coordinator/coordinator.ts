@@ -68,7 +68,6 @@ export class CoordinatorServer {
                     }, 800); // give some time to finish pending requests
                 },
             },
-            'server',
             authenticator
         );
     }

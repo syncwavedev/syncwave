@@ -57,7 +57,6 @@ export function launchRpcStreamerServer<T>(
     api: StreamerApi<T>,
     state: T,
     conn: RpcConnection,
-    serverName: string,
     authenticator: Authenticator
 ) {
     context().ensureActive();
@@ -76,7 +75,7 @@ export function launchRpcStreamerServer<T>(
         close: () =>
             cleanup(
                 new CancelledError(
-                    `${serverName} launchRpcStreamerServer: connection closed`,
+                    'launchRpcStreamerServer: connection closed',
                     'connection_closed'
                 )
             ),
@@ -86,8 +85,7 @@ export function launchRpcStreamerServer<T>(
         state,
         createRpcHandlerClient(createRpcStreamerClientApi(), conn, () => ({
             ...context().extract(),
-        })),
-        serverName
+        }))
     );
     launchRpcHandlerServer(
         createRpcStreamerServerApi(api),
@@ -111,8 +109,7 @@ class RpcStreamerServerApiState<T> {
 
     constructor(
         public readonly state: T,
-        public readonly client: RpcStreamerClientRpc,
-        public readonly serverName: string
+        public readonly client: RpcStreamerClientRpc
     ) {}
 
     close(reason: unknown) {
@@ -136,7 +133,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a handler');
                 }
 
-                const callInfo = `handle_call ${state.serverName}.${req.name} [rid=${ctx.requestId}]`;
+                const callInfo = `handle_call ${req.name} [rid=${ctx.requestId}]`;
 
                 try {
                     if (log.enabled('debug')) {
@@ -173,7 +170,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a streamer');
                 }
 
-                const callInfo = `handle ${state.serverName}.${name} [sid=${streamId}]`;
+                const callInfo = `handle ${name} [sid=${streamId}]`;
 
                 log.debug(() => `${callInfo}...`);
 

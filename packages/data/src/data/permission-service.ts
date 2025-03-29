@@ -1,5 +1,5 @@
 import {BusinessError} from '../errors.js';
-import type {AuthContext} from './auth-context.js';
+import type {Principal} from './auth.js';
 import type {DataTx} from './data-layer.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
 import type {BoardId} from './repos/board-repo.js';
@@ -23,7 +23,7 @@ export function canManageRole(managerRole: MemberRole, role: MemberRole) {
 
 export class PermissionService {
     constructor(
-        private readonly auth: AuthContext,
+        private readonly auth: Principal,
         private readonly tx: () => DataTx
     ) {}
 

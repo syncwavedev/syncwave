@@ -24,6 +24,7 @@
                 "message": "Use AppError instead."
             }
         ],
+        "no-empty-pattern": "off",
         "no-console": "error",
         "no-constant-condition": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",

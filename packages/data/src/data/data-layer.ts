@@ -9,7 +9,7 @@ import type {Hub} from '../transport/hub.js';
 import type {Tuple} from '../tuple.js';
 import {assert, type Brand, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
-import {type AuthContext} from './auth-context.js';
+import {type Principal} from './auth.js';
 import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
 import type {ChangeOptions} from './doc-repo.js';
@@ -198,12 +198,12 @@ export class DataLayer {
     }
 
     async transact<T>(
-        auth: AuthContext,
+        principal: Principal,
         fn: (tx: DataTx) => Promise<T>
     ): Promise<T> {
         let effects: AsyncCallback[] = [];
         const result = await this.kv.transact(async tx => {
-            // clear effect because of transaction retries
+            // clear effects because of transaction retries
             effects = [];
             let triggers: AsyncCallback[] = [];
 
@@ -302,7 +302,7 @@ export class DataLayer {
                 esWriter,
                 users,
                 members,
-                ps: new PermissionService(auth, () => dataTx),
+                ps: new PermissionService(principal, () => dataTx),
                 config: {
                     jwtSecret: this.jwtSecret,
                 },

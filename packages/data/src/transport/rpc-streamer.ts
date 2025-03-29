@@ -1,5 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {type Cancel, Context, context} from '../context.js';
+import type {Authenticator} from '../data/auth.js';
 import {
     AppError,
     CancelledError,
@@ -56,7 +57,8 @@ export function launchRpcStreamerServer<T>(
     api: StreamerApi<T>,
     state: T,
     conn: RpcConnection,
-    serverName: string
+    serverName: string,
+    authenticator: Authenticator
 ) {
     context().ensureActive();
 
@@ -90,7 +92,8 @@ export function launchRpcStreamerServer<T>(
     launchRpcHandlerServer(
         createRpcStreamerServerApi(api),
         serverApiState,
-        conn
+        conn,
+        authenticator
     );
 }
 
@@ -453,7 +456,9 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
     const stopRpcHandlerServer = launchRpcHandlerServer(
         createRpcStreamerClientApi(),
         clientApiState,
-        new RpcConnection(conn)
+        new RpcConnection(conn),
+        // we trust the server, so no auth is needed
+        undefined
     );
 
     let cancelCleanup: Unsubscribe | undefined = undefined;

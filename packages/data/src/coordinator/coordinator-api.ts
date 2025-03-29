@@ -1,4 +1,3 @@
-import {type AuthContext, AuthContextParser} from '../data/auth-context.js';
 import {AwarenessApiState, createAwarenessApi} from '../data/awareness-api.js';
 import {
     type ChangeEvent,
@@ -27,7 +26,6 @@ import {type AuthApi, type AuthApiState, createAuthApi} from './auth-api.js';
 import {createE2eApi} from './e2e-api.js';
 
 export interface CoordinatorApiState {
-    auth: AuthContext;
     jwt: JwtService;
     crypto: CryptoService;
     emailService: EmailService;
@@ -40,7 +38,6 @@ export interface CoordinatorApiState {
 export interface CoordinatorApiInputState {
     dataLayer: DataLayer;
     config: Config;
-    authContextParser: AuthContextParser;
     jwt: JwtService;
     hub: Hub;
     emailService: EmailService;
@@ -73,7 +70,6 @@ export function createCoordinatorApi() {
             return new ReadApiState(
                 state.transact,
                 state.esReader,
-                state.auth,
                 state.objectStore
             );
         }
@@ -85,7 +81,6 @@ export function createCoordinatorApi() {
             return new AwarenessApiState(
                 state.transact,
                 state.hub,
-                state.auth,
                 state.esReader
             );
         }
@@ -122,15 +117,11 @@ export function createCoordinatorApi() {
         CoordinatorApiState,
         CoordinatorApiState,
         typeof combinedApi
-    >(
-        combinedApi,
-        async (next, state, headers, processor, processorName, arg) => {
-            return await log.time(
-                `${processorName}(${JSON.stringify(arg)})`,
-                () => next(state)
-            );
-        }
-    );
+    >(combinedApi, async (next, state, processorName, arg) => {
+        return await log.time(`${processorName}(${JSON.stringify(arg)})`, () =>
+            next(state)
+        );
+    });
 
     const resultApi = applyMiddleware<
         CoordinatorApiState,
@@ -140,25 +131,11 @@ export function createCoordinatorApi() {
         timeLoggerApi,
         async (
             next,
-            {
-                dataLayer,
-                authContextParser,
-                objectStore,
-                jwt,
-                hub,
-                emailService,
-                crypto,
-                config,
-            },
-            {headers}
+            {dataLayer, objectStore, jwt, hub, emailService, crypto},
+            {principal}
         ) => {
-            const auth = await authContextParser.parse(
-                config.jwtSecret,
-                headers.auth
-            );
             const state: CoordinatorApiState = {
-                transact: fn => dataLayer.transact(auth, fn),
-                auth,
+                transact: fn => dataLayer.transact(principal, fn),
                 jwt,
                 objectStore,
                 hub,

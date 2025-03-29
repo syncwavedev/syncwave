@@ -1,4 +1,5 @@
-import {anonAuthContext, AuthContextParser} from '../data/auth-context.js';
+import {AUTHENTICATOR_PRINCIPAL_CACHE_SIZE} from '../constants.js';
+import {anonymous, Authenticator} from '../data/auth.js';
 import {DataLayer} from '../data/data-layer.js';
 import type {
     CryptoService,
@@ -40,12 +41,16 @@ export class CoordinatorServer {
             this.options.jwtSecret,
             this.options.crypto
         );
-        const authContextParser = new AuthContextParser(4, this.options.jwt);
+        const authenticator = new Authenticator(
+            AUTHENTICATOR_PRINCIPAL_CACHE_SIZE,
+            this.options.jwt,
+            this.options.jwtSecret
+        );
+
         this.rpcServer = new RpcServer(
             this.options.transport,
             createCoordinatorApi(),
             {
-                authContextParser,
                 dataLayer: this.dataLayer,
                 jwt: this.options.jwt,
                 crypto: this.options.crypto,
@@ -63,12 +68,13 @@ export class CoordinatorServer {
                     }, 800); // give some time to finish pending requests
                 },
             },
-            'server'
+            'server',
+            authenticator
         );
     }
 
     async status() {
-        await this.dataLayer.transact(anonAuthContext, async tx => {
+        await this.dataLayer.transact(anonymous, async tx => {
             await tx.boards.getByKey('SYNC');
         });
 

@@ -10,7 +10,7 @@ import {
 } from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
-import type {AuthContext} from './auth-context.js';
+import type {Principal} from './auth.js';
 import {
     boardEvents,
     type ChangeEvent,
@@ -45,19 +45,18 @@ export class ReadApiState {
     constructor(
         public readonly transact: Transact,
         readonly esReader: EventStoreReader<ChangeEvent>,
-        public readonly auth: AuthContext,
         public readonly objectStore: ObjectStore
     ) {}
 
-    ensureAuthenticated(): UserId {
-        if (this.auth.userId === undefined) {
+    ensureAuthenticated(auth: Principal): UserId {
+        if (auth.userId === undefined) {
             throw new BusinessError(
                 'user is not authenticated',
                 'not_authenticated'
             );
         }
 
-        return this.auth.userId;
+        return auth.userId;
     }
 }
 
@@ -67,7 +66,7 @@ export function createReadApi() {
             req: Type.Object({}),
             item: zMeDto(),
             async *stream(st, _, ctx) {
-                const userId = st.ensureAuthenticated();
+                const userId = st.ensureAuthenticated(ctx.principal);
 
                 yield* observable({
                     async get() {
@@ -137,8 +136,8 @@ export function createReadApi() {
         getMyMembers: streamer({
             req: Type.Object({}),
             item: Type.Array(zMemberDto()),
-            async *stream(st) {
-                const userId = st.ensureAuthenticated();
+            async *stream(st, {}, ctx) {
+                const userId = st.ensureAuthenticated(ctx.principal);
 
                 yield* observable({
                     async get() {

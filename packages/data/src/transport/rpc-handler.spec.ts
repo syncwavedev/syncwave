@@ -54,7 +54,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, undefined);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const [ctx] = context().createChild({span: 'test child context'});
@@ -79,7 +79,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, undefined);
         const client = createRpcHandlerClient(api, clientConn, () => ({
             ...context().createDetached({span: 'invalid'})[0].extract(),
         }));
@@ -108,7 +108,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, undefined);
         const [expectedCtx] = context().createDetached({
             span: 'test bg context',
         });
@@ -134,7 +134,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, undefined);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const result = await client.test({value: 'some value'});
@@ -153,7 +153,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, undefined);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const result = client.test({
@@ -174,7 +174,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, undefined);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const result = client.test({});
@@ -198,7 +198,7 @@ describe('RpcHandler', () => {
             }),
         });
 
-        launchRpcHandlerServer(api, {}, serverConn);
+        launchRpcHandlerServer(api, {}, serverConn, undefined);
         const client = createRpcHandlerClient(api, clientConn, () => ({}));
 
         const [ctx, cancel] = context().createChild({span: 'test ctx'});

@@ -25,3 +25,4 @@ export const SUPERADMIN_IDS = [
 ];
 export const PULL_INTERVAL_MS = 5_000;
 export const EVENT_STORE_MAX_PULL_COUNT = 128;
+export const AUTHENTICATOR_PRINCIPAL_CACHE_SIZE = 1024;

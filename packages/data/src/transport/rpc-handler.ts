@@ -1,5 +1,6 @@
 import {RPC_CALL_TIMEOUT_MS} from '../constants.js';
 import {type Cancel, Context, context} from '../context.js';
+import {anonymous, type Authenticator} from '../data/auth.js';
 import {Deferred} from '../deferred.js';
 import {
     AppError,
@@ -35,7 +36,8 @@ export type HandlerApi<TState> = Record<string, Handler<TState, any, any>>;
 export function launchRpcHandlerServer<T>(
     api: HandlerApi<T>,
     state: T,
-    conn: RpcConnection
+    conn: RpcConnection,
+    authenticator: Authenticator | undefined
 ): Cancel {
     context().ensureActive();
 
@@ -75,6 +77,11 @@ export function launchRpcHandlerServer<T>(
                                 {
                                     headers: msg.headers,
                                     requestId: msg.id,
+                                    principal: authenticator
+                                        ? await authenticator.authenticate(
+                                              msg.headers.auth
+                                          )
+                                        : anonymous,
                                 }
                             );
 

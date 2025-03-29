@@ -1,3 +1,4 @@
+import type {Authenticator, Principal} from '../data/auth.js';
 import {Deferred} from '../deferred.js';
 import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
@@ -43,6 +44,7 @@ export type HandlerResponseSchema<T extends Handler<any, any, any>> =
 export interface RequestContext {
     requestId: RpcMessageId;
     headers: MessageHeaders;
+    principal: Principal;
 }
 
 export interface HandlerOptions<TState, TRequest, TResponse> {
@@ -275,7 +277,8 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
         transport: TransportServer<unknown>,
         private readonly api: Api<TState>,
         private readonly state: TState,
-        private readonly serverName: string
+        private readonly serverName: string,
+        private readonly authenticator: Authenticator
     ) {
         this.transport = new RpcTransportServer(transport);
     }
@@ -290,7 +293,13 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
     }
 
     private handleConnection(conn: RpcConnection): void {
-        launchRpcStreamerServer(this.api, this.state, conn, this.serverName);
+        launchRpcStreamerServer(
+            this.api,
+            this.state,
+            conn,
+            this.serverName,
+            this.authenticator
+        );
     }
 }
 

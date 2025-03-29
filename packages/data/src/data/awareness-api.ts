@@ -15,7 +15,7 @@ import {
 } from '../transport/rpc.js';
 import {assert, equals, interval, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
-import type {AuthContext} from './auth-context.js';
+import type {Principal} from './auth.js';
 import {AwarenessOwnershipError} from './awareness-store.js';
 import {boardEvents, type ChangeEvent, type Transact} from './data-layer.js';
 import type {EventStoreReader} from './event-store.js';
@@ -32,22 +32,26 @@ export class AwarenessApiState {
     constructor(
         public readonly transact: Transact,
         public readonly hub: Hub,
-        public readonly auth: AuthContext,
         public readonly esReader: EventStoreReader<ChangeEvent>
     ) {}
 
-    ensureAuthenticated(): UserId {
-        if (this.auth.userId === undefined) {
+    ensureAuthenticated(auth: Principal): UserId {
+        if (auth.userId === undefined) {
             throw new BusinessError(
                 'user is not authenticated',
                 'not_authenticated'
             );
         }
 
-        return this.auth.userId;
+        return auth.userId;
     }
 
-    async putState(boardId: BoardId, clientId: number, state: AwarenessState) {
+    async putState(
+        auth: Principal,
+        boardId: BoardId,
+        clientId: number,
+        state: AwarenessState
+    ) {
         const batchKey = boardId + clientId;
         let batchProcessor = this.batchProcessors.get(batchKey);
         if (batchProcessor === undefined) {
@@ -64,14 +68,14 @@ export class AwarenessApiState {
                             );
                             await tx.awareness.put(
                                 boardAwarenessRoom(boardId),
-                                this.ensureAuthenticated(),
+                                this.ensureAuthenticated(auth),
                                 clientId,
                                 latestState
                             );
                         } catch (error) {
                             if (error instanceof AwarenessOwnershipError) {
                                 throw new BusinessError(
-                                    `awareness client ${clientId} is owned by another user ${error.ownerId}, user ${this.auth.userId} is not allowed to update it`,
+                                    `awareness client ${clientId} is owned by another user ${error.ownerId}, user ${auth.userId} is not allowed to update it`,
                                     'forbidden'
                                 );
                             }
@@ -119,7 +123,7 @@ export function createAwarenessApi() {
                     })
                 ),
             }),
-            async *stream(st, {boardId, clientId, state}) {
+            async *stream(st, {boardId, clientId, state}, ctx) {
                 const board = await st.transact(tx =>
                     tx.boards.getById(boardId)
                 );
@@ -130,7 +134,7 @@ export function createAwarenessApi() {
                     );
                 }
 
-                await st.putState(board.id, clientId, state);
+                await st.putState(ctx.principal, board.id, clientId, state);
 
                 const updates = Stream.merge([
                     await st.esReader.subscribe(boardEvents(board.id)),
@@ -182,11 +186,11 @@ export function createAwarenessApi() {
                 state: zAwarenessState(),
             }),
             res: Type.Object({}),
-            async handle(st, {boardId, clientId, state}) {
+            async handle(st, {boardId, clientId, state}, ctx) {
                 await st.transact(async tx => {
                     const [result] = await whenAll([
                         tx.ps.ensureBoardMember(boardId, 'reader'),
-                        st.putState(boardId, clientId, state),
+                        st.putState(ctx.principal, boardId, clientId, state),
                     ]);
                     return result;
                 });

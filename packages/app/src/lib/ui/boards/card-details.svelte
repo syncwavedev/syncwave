@@ -8,21 +8,29 @@
 	import Editor from '../../components/editor.svelte';
 	import type {CardView} from '../../agent/view.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
-	import type {User} from 'syncwave';
+	import type {ColumnId, User} from 'syncwave';
 	import {onMount, tick} from 'svelte';
 	import HashtagIcon from '../components/icons/hashtag-icon.svelte';
 	import DropdownMenu from '../components/dropdown-menu.svelte';
 	import Select from '../components/select.svelte';
+	import {getAgent} from '../../agent/agent.svelte';
 
 	const {
 		card,
 		awareness,
 		me,
+		columnOptions,
 	}: {
 		card: CardView;
 		awareness: Awareness;
 		me: User;
+		columnOptions: {
+			value: string;
+			label: string;
+		}[];
 	} = $props();
+
+	const agent = getAgent();
 
 	let editor: Editor | null = $state(null);
 
@@ -96,7 +104,7 @@
 		<!-- Task Description -->
 		<div class="mx-2">
 			<div
-				class="input w-full text-xs leading-relaxed focus-within:bg-subtle-3 py-1 px-2 rounded-sm transition-colors duration-150"
+				class="input w-full text-xs leading-relaxed focus-within:bg-subtle-2 py-1 px-2 rounded-sm transition-colors duration-150"
 			>
 				<Editor
 					bind:this={editor}
@@ -114,12 +122,9 @@
 			<div class="flex">
 				<Select
 					value={card.column?.id}
-					options={[
-						{value: '1', label: 'Backlog'},
-						{value: '2', label: 'Ready for Dev'},
-						{value: '3', label: 'In Progress'},
-						{value: '4', label: 'Done'},
-					]}
+					options={columnOptions}
+					onValueChange={value =>
+						agent.setCardColumn(card.id, value as ColumnId)}
 				>
 					<button class="btn--flat text-sm">
 						<CircleDashedIcon />

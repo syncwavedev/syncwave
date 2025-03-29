@@ -210,6 +210,10 @@
 
 		return undefined;
 	});
+
+	const columnOptions = $derived(
+		board.columns.map(x => ({value: x.id, label: x.name}))
+	);
 </script>
 
 <main class="flex h-screen w-full">
@@ -277,7 +281,7 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetails {me} {awareness} card={selectedCard} />
+			<CardDetails {me} {awareness} card={selectedCard} {columnOptions} />
 		{/key}
 	{/if}
 </main>

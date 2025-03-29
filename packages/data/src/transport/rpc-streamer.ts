@@ -326,6 +326,7 @@ class RpcStreamerClientApiState {
                 reconstructError({
                     message: params.message,
                     code: params.code,
+                    method: sub.method,
                 })
             )
         );

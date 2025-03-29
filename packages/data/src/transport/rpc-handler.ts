@@ -177,7 +177,10 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
 }
 
 export class RpcError extends AppError {
-    constructor(message: string) {
+    constructor(
+        message: string,
+        public readonly method: string
+    ) {
         super(message);
     }
 }
@@ -238,6 +241,7 @@ async function proxyRequest(
                         reconstructError({
                             message: msg.payload.message,
                             code: msg.payload.code,
+                            method: name,
                         })
                     );
                 } else {
@@ -277,7 +281,8 @@ async function proxyRequest(
                 if (result.state === 'pending') {
                     result.reject(
                         new RpcTimeoutError(
-                            `rpc call ${name}(${JSON.stringify(arg)}) failed: timeout`
+                            `rpc call ${name}(${JSON.stringify(arg)}) failed: timeout`,
+                            name
                         )
                     );
                     cleanup(new AppError('timeout'));
@@ -360,9 +365,10 @@ export function reportRpcError(error: AppError, callInfo: string) {
 export function reconstructError(params: {
     message: string;
     code: string;
+    method: string;
 }): AppError {
     if (params.code === 'unknown') {
-        return new RpcError(params.message);
+        return new RpcError(params.message, params.method);
     } else if (params.code === 'cancelled') {
         return new CancelledError(params.message, 'remote rpc cancelled');
     } else {

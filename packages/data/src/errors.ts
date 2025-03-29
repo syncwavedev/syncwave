@@ -70,7 +70,7 @@ export class BusinessError extends AppError {
     constructor(
         message: string,
         public readonly code: ErrorCode,
-        public readonly meta?: Record<string, unknown>
+        public readonly meta?: NestedAttributeMap
     ) {
         super(message);
     }
@@ -79,6 +79,7 @@ export class BusinessError extends AppError {
         return {
             ...super.toJSON(),
             code: this.code,
+            meta: this.meta,
         };
     }
 }

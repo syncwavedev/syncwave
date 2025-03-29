@@ -35,7 +35,7 @@ export function flattenAttributeMap(obj: NestedAttributeMap): AttributeMap {
     return result;
 }
 
-export type AttributeValue = number | string | boolean;
+export type AttributeValue = number | string | boolean | undefined;
 
 export interface AttributeMap extends Record<string, AttributeValue> {}
 

@@ -14,8 +14,9 @@ import type {Principal} from './auth.js';
 import {
     boardEvents,
     type ChangeEvent,
+    DataLayer,
+    type DataTx,
     profileEvents,
-    type Transact,
     userEvents,
     zChangeEvent,
 } from './data-layer.js';
@@ -42,11 +43,14 @@ import {type CardId} from './repos/card-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
+    readonly esReader: EventStoreReader<ChangeEvent>;
+
     constructor(
-        public readonly transact: Transact,
-        readonly esReader: EventStoreReader<ChangeEvent>,
+        public readonly dataLayer: DataLayer,
         public readonly objectStore: ObjectStore
-    ) {}
+    ) {
+        this.esReader = dataLayer.esReader;
+    }
 
     ensureAuthenticated(auth: Principal): UserId {
         if (auth.userId === undefined) {
@@ -58,6 +62,13 @@ export class ReadApiState {
 
         return auth.userId;
     }
+
+    async transact<T>(
+        principal: Principal,
+        fn: (tx: DataTx) => Promise<T>
+    ): Promise<T> {
+        return this.dataLayer.transact(principal, fn);
+    }
 }
 
 export function createReadApi() {
@@ -65,12 +76,12 @@ export function createReadApi() {
         getMe: streamer({
             req: Type.Object({}),
             item: zMeDto(),
-            async *stream(st, _, ctx) {
-                const userId = st.ensureAuthenticated(ctx.principal);
+            async *stream(state, {}, {principal}) {
+                const userId = state.ensureAuthenticated(principal);
 
                 yield* observable({
                     async get() {
-                        return await st.transact(async tx => {
+                        return await state.transact(principal, async tx => {
                             const user = await toUserDto(tx, userId);
                             assert(user !== undefined, 'getMe: user not found');
                             const identity =
@@ -82,7 +93,7 @@ export function createReadApi() {
                             return {user, identity};
                         });
                     },
-                    update$: st.esReader
+                    update$: state.esReader
                         .subscribe(userEvents(userId))
                         .then(x => x.map(() => undefined)),
                 });
@@ -102,12 +113,12 @@ export function createReadApi() {
                     event: zChangeEvent(),
                 }),
             ]),
-            async *stream(st, {userId}) {
+            async *stream(st, {userId}, {principal}) {
                 const events = await st.esReader.subscribe(
                     profileEvents(userId)
                 );
 
-                const [user] = await st.transact(async tx => {
+                const [user] = await st.transact(principal, async tx => {
                     return await whenAll([tx.users.getById(userId, true)]);
                 });
 
@@ -136,12 +147,12 @@ export function createReadApi() {
         getMyMembers: streamer({
             req: Type.Object({}),
             item: Type.Array(zMemberDto()),
-            async *stream(st, {}, ctx) {
-                const userId = st.ensureAuthenticated(ctx.principal);
+            async *stream(st, {}, {principal}) {
+                const userId = st.ensureAuthenticated(principal);
 
                 yield* observable({
                     async get() {
-                        return st.transact(async tx => {
+                        return st.transact(principal, async tx => {
                             const members = tx.members.getByUserId(
                                 userId,
                                 false
@@ -168,8 +179,8 @@ export function createReadApi() {
         getCardView: streamer({
             req: Type.Object({cardId: Uuid<CardId>()}),
             item: zCardViewDto(),
-            async *stream(st, {cardId}) {
-                const card = await st.transact(tx =>
+            async *stream(st, {cardId}, {principal}) {
+                const card = await st.transact(principal, tx =>
                     tx.cards.getById(cardId, false)
                 );
                 if (!card) {
@@ -180,7 +191,7 @@ export function createReadApi() {
                 }
                 yield* observable({
                     async get() {
-                        return await st.transact(async tx => {
+                        return await st.transact(principal, async tx => {
                             const [nextCard] = await whenAll([
                                 toCardViewDto(tx, cardId),
                                 tx.ps.ensureCardMember(cardId, 'reader'),
@@ -200,8 +211,8 @@ export function createReadApi() {
                 counter: Type.Number(),
             }),
             item: zCardViewDto(),
-            async *stream(st, {boardKey, counter}) {
-                const board = await st.transact(tx =>
+            async *stream(st, {boardKey, counter}, {principal}) {
+                const board = await st.transact(principal, tx =>
                     tx.boards.getByKey(boardKey)
                 );
                 if (board === undefined) {
@@ -210,7 +221,7 @@ export function createReadApi() {
                         'board_not_found'
                     );
                 }
-                const card = await st.transact(tx =>
+                const card = await st.transact(principal, tx =>
                     tx.cards.getByBoardIdAndCounter(board.id, counter)
                 );
                 if (card === undefined) {
@@ -222,7 +233,7 @@ export function createReadApi() {
                 const boardId = board.id;
                 yield* observable({
                     async get() {
-                        return await st.transact(async tx => {
+                        return await st.transact(principal, async tx => {
                             const [nextCard] = await whenAll([
                                 toCardViewDto(tx, card.id),
                                 tx.ps.ensureBoardMember(card.boardId, 'reader'),
@@ -241,8 +252,8 @@ export function createReadApi() {
                 attachmentId: Uuid<AttachmentId>(),
             }),
             res: zObjectEnvelope(),
-            async handle(st, {attachmentId}) {
-                return await st.transact(async tx => {
+            async handle(st, {attachmentId}, {principal}) {
+                return await st.transact(principal, async tx => {
                     await tx.ps.ensureAttachmentMember(attachmentId, 'reader');
                     const attachment = await tx.attachments.getById(
                         attachmentId,
@@ -270,13 +281,13 @@ export function createReadApi() {
         getCardMessages: streamer({
             req: Type.Object({cardId: Uuid<CardId>()}),
             item: Type.Array(zMessageDto()),
-            async *stream(st, {cardId}) {
-                const card = await st.transact(tx =>
+            async *stream(st, {cardId}, {principal}) {
+                const card = await st.transact(principal, tx =>
                     tx.ps.ensureCardMember(cardId, 'reader')
                 );
                 yield* observable({
                     get() {
-                        return st.transact(async tx => {
+                        return st.transact(principal, async tx => {
                             await tx.ps.ensureCardMember(cardId, 'reader');
                             return tx.messages
                                 .getByCardId(cardId)
@@ -293,10 +304,10 @@ export function createReadApi() {
         getBoardMembers: streamer({
             req: Type.Object({boardId: Uuid<BoardId>()}),
             item: Type.Array(zMemberAdminDto()),
-            async *stream(st, {boardId}) {
+            async *stream(st, {boardId}, {principal}) {
                 yield* observable({
                     get() {
-                        return st.transact(async tx => {
+                        return st.transact(principal, async tx => {
                             await tx.ps.ensureBoardMember(boardId, 'admin');
                             return tx.members
                                 .getByBoardId(boardId)
@@ -315,8 +326,10 @@ export function createReadApi() {
                 key: Type.String(),
             }),
             item: zBoardDto(),
-            async *stream(st, {key}) {
-                const board = await st.transact(tx => tx.boards.getByKey(key));
+            async *stream(st, {key}, {principal}) {
+                const board = await st.transact(principal, tx =>
+                    tx.boards.getByKey(key)
+                );
                 if (board === undefined) {
                     throw new BusinessError(
                         `board with key ${key} not found`,
@@ -326,7 +339,7 @@ export function createReadApi() {
                 const boardId = board.id;
                 yield* observable({
                     async get() {
-                        return await st.transact(async tx => {
+                        return await st.transact(principal, async tx => {
                             const [board] = await whenAll([
                                 tx.boards.getById(boardId, true),
                                 tx.ps.ensureBoardMember(boardId, 'reader'),
@@ -361,8 +374,8 @@ export function createReadApi() {
                     event: zChangeEvent(),
                 }),
             ]),
-            async *stream(st, {key}) {
-                const boardByKey = await st.transact(tx =>
+            async *stream(st, {key}, {principal}) {
+                const boardByKey = await st.transact(principal, tx =>
                     tx.boards.getByKey(key.toUpperCase())
                 );
                 if (!boardByKey) {
@@ -378,6 +391,7 @@ export function createReadApi() {
                 );
 
                 const [board, columns, cards, users] = await st.transact(
+                    principal,
                     async tx => {
                         return await whenAll([
                             tx.boards.getById(boardId),

@@ -17,7 +17,7 @@ import {assert, equals, interval, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {Principal} from './auth.js';
 import {AwarenessOwnershipError} from './awareness-store.js';
-import {boardEvents, type ChangeEvent, type Transact} from './data-layer.js';
+import {boardEvents, DataLayer, type ChangeEvent} from './data-layer.js';
 import type {EventStoreReader} from './event-store.js';
 import type {BoardId} from './repos/board-repo.js';
 import {type UserId} from './repos/user-repo.js';
@@ -28,12 +28,14 @@ function boardAwarenessRoom(boardId: BoardId) {
 
 export class AwarenessApiState {
     private batchProcessors = new Map<string, BatchProcessor<AwarenessState>>();
+    public readonly esReader: EventStoreReader<ChangeEvent>;
 
     constructor(
-        public readonly transact: Transact,
-        public readonly hub: Hub,
-        public readonly esReader: EventStoreReader<ChangeEvent>
-    ) {}
+        public readonly dataLayer: DataLayer,
+        public readonly hub: Hub
+    ) {
+        this.esReader = dataLayer.esReader;
+    }
 
     ensureAuthenticated(auth: Principal): UserId {
         if (auth.userId === undefined) {
@@ -47,7 +49,7 @@ export class AwarenessApiState {
     }
 
     async putState(
-        auth: Principal,
+        principal: Principal,
         boardId: BoardId,
         clientId: number,
         state: AwarenessState
@@ -59,7 +61,7 @@ export class AwarenessApiState {
                 state: {type: 'running'},
                 enqueueDelay: 0,
                 process: async batch => {
-                    await this.transact(async tx => {
+                    await this.dataLayer.transact(principal, async tx => {
                         try {
                             const latestState = batch.at(-1);
                             assert(
@@ -68,14 +70,14 @@ export class AwarenessApiState {
                             );
                             await tx.awareness.put(
                                 boardAwarenessRoom(boardId),
-                                this.ensureAuthenticated(auth),
+                                this.ensureAuthenticated(principal),
                                 clientId,
                                 latestState
                             );
                         } catch (error) {
                             if (error instanceof AwarenessOwnershipError) {
                                 throw new BusinessError(
-                                    `awareness client ${clientId} is owned by another user ${error.ownerId}, user ${auth.userId} is not allowed to update it`,
+                                    `awareness client ${clientId} is owned by another user ${error.ownerId}, user ${principal.userId} is not allowed to update it`,
                                     'forbidden'
                                 );
                             }
@@ -97,8 +99,8 @@ export class AwarenessApiState {
         await batchProcessor.enqueue(state);
     }
 
-    async offline(boardId: BoardId, clientId: number) {
-        await this.transact(async tx => {
+    async offline(principal: Principal, boardId: BoardId, clientId: number) {
+        await this.dataLayer.transact(principal, async tx => {
             await tx.awareness.offline(boardAwarenessRoom(boardId), clientId);
             tx.scheduleEffect(async () => {
                 await this.hub.emit(boardAwarenessRoom(boardId));
@@ -123,8 +125,8 @@ export function createAwarenessApi() {
                     })
                 ),
             }),
-            async *stream(st, {boardId, clientId, state}, ctx) {
-                const board = await st.transact(tx =>
+            async *stream(st, {boardId, clientId, state}, {principal}) {
+                const board = await st.dataLayer.transact(principal, tx =>
                     tx.boards.getById(boardId)
                 );
                 if (board === undefined) {
@@ -134,7 +136,7 @@ export function createAwarenessApi() {
                     );
                 }
 
-                await st.putState(ctx.principal, board.id, clientId, state);
+                await st.putState(principal, board.id, clientId, state);
 
                 const updates = Stream.merge([
                     await st.esReader.subscribe(boardEvents(board.id)),
@@ -150,16 +152,19 @@ export function createAwarenessApi() {
                 try {
                     let prevItem: unknown = undefined;
                     for await (const _ of updates) {
-                        const nextItem = await st.transact(async tx => {
-                            const [states] = await whenAll([
-                                tx.awareness.getAll(
-                                    boardAwarenessRoom(board.id)
-                                ),
-                                tx.ps.ensureBoardMember(board.id, 'reader'),
-                            ]);
+                        const nextItem = await st.dataLayer.transact(
+                            principal,
+                            async tx => {
+                                const [states] = await whenAll([
+                                    tx.awareness.getAll(
+                                        boardAwarenessRoom(board.id)
+                                    ),
+                                    tx.ps.ensureBoardMember(board.id, 'reader'),
+                                ]);
 
-                            return {states};
-                        });
+                                return {states};
+                            }
+                        );
 
                         if (!equals(prevItem, nextItem)) {
                             yield nextItem;
@@ -169,12 +174,14 @@ export function createAwarenessApi() {
                     }
                 } finally {
                     context().detach({span: 'awareness stream closed'}, () => {
-                        st.offline(boardId, clientId).catch(error => {
-                            log.error(
-                                toError(error),
-                                'failed to remove awareness state'
-                            );
-                        });
+                        st.offline(principal, boardId, clientId).catch(
+                            error => {
+                                log.error(
+                                    toError(error),
+                                    'failed to remove awareness state'
+                                );
+                            }
+                        );
                     });
                 }
             },
@@ -186,11 +193,11 @@ export function createAwarenessApi() {
                 state: zAwarenessState(),
             }),
             res: Type.Object({}),
-            async handle(st, {boardId, clientId, state}, ctx) {
-                await st.transact(async tx => {
+            async handle(st, {boardId, clientId, state}, {principal}) {
+                await st.dataLayer.transact(principal, async tx => {
                     const [result] = await whenAll([
                         tx.ps.ensureBoardMember(boardId, 'reader'),
-                        st.putState(ctx.principal, boardId, clientId, state),
+                        st.putState(principal, boardId, clientId, state),
                     ]);
                     return result;
                 });

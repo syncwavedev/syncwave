@@ -90,10 +90,9 @@ export function createCoordinatorApi() {
         CoordinatorApiState,
         CoordinatorApiState,
         typeof combinedApi
-    >(combinedApi, async (next, state, processorName, arg) => {
-        return await log.time(
-            `${processorName}(${stringifyLogPart(arg)})`,
-            () => next(state)
+    >(combinedApi, async (next, state, ctx, processor, method, arg) => {
+        return await log.time(`${method}(${stringifyLogPart(arg)})`, () =>
+            next(state)
         );
     });
 

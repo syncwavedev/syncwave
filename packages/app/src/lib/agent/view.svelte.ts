@@ -151,6 +151,8 @@ export class BoardView implements Board {
 	protected readonly _data!: BoardData;
 	protected readonly _board!: Board;
 
+	members = $derived(this._data.userViews);
+
 	authorId = $derived(this._board.authorId);
 	deleted = $derived(this._board.deleted);
 	updatedAt = $derived(this._board.updatedAt);

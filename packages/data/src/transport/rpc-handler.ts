@@ -264,7 +264,7 @@ async function proxyRequest(
                 `proxyRequest: connection closed (${getReadableError(reason)}) ` +
                     name +
                     '(' +
-                    JSON.stringify(arg)?.slice(0, 100) +
+                    stringifyLogPart(arg) +
                     ')',
                 {
                     cause: reason,
@@ -281,7 +281,7 @@ async function proxyRequest(
                 if (result.state === 'pending') {
                     result.reject(
                         new RpcTimeoutError(
-                            `rpc call ${name}(${JSON.stringify(arg)}) failed: timeout`,
+                            `rpc call ${name}(${stringifyLogPart(arg)}) failed: timeout`,
                             name
                         )
                     );

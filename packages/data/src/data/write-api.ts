@@ -91,6 +91,7 @@ export function createWriteApi() {
                                     position: true,
                                     deleted: true,
                                     updatedAt: true,
+                                    assigneeId: true,
                                 })
                             );
                             if (before?.columnId !== after.columnId) {

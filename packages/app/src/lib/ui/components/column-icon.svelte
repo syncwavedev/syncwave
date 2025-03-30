@@ -15,11 +15,11 @@
 	const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180);
 
 	// Calculate progress percentage
-	const progressPercentage = total > 0 ? active / total : 0;
+	const progressPercentage = $derived(total > 0 ? active / total : 0);
 
 	// Calculate the arc for the progress indicator
 	const startAngle = -90; // Start from top
-	const endAngle = startAngle + progressPercentage * 360;
+	const endAngle = $derived(startAngle + progressPercentage * 360);
 
 	// SVG arc path calculation for filled arc
 	const createFilledArcPath = (
@@ -55,10 +55,8 @@
 	};
 
 	// Generate filled arc path for progress indicator
-	const progressFilledArcPath = createFilledArcPath(
-		innerRadius,
-		startAngle,
-		endAngle
+	const progressFilledArcPath = $derived(
+		createFilledArcPath(innerRadius, startAngle, endAngle)
 	);
 </script>
 

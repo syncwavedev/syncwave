@@ -6,7 +6,7 @@ export interface AppConfig {
 	googleClientId: string;
 	apiUrl: string;
 	serverWsUrl: string;
-	stage: 'dev' | 'local' | 'prod' | 'self_hosted';
+	stage: 'dev' | 'prod' | 'self' | 'local' | 'dev_self';
 }
 
 // wss://api-dev.syncwave.dev:443
@@ -35,7 +35,16 @@ export const appConfig: AppConfig = (() => {
 			serverWsUrl: 'wss://api.syncwave.dev',
 			stage: PUBLIC_STAGE,
 		};
-	} else if (PUBLIC_STAGE === 'self_hosted') {
+	} else if (PUBLIC_STAGE === 'dev_self') {
+		const origin = 'https://self.syncwave.dev';
+		return {
+			serverWsUrl: origin,
+			apiUrl: origin + '/api',
+			stage: PUBLIC_STAGE,
+			googleClientId:
+				'848724615154-dt9ejfs9rfu1vfhkvlk19pg6rbvnue9u.apps.googleusercontent.com',
+		};
+	} else if (PUBLIC_STAGE === 'self') {
 		return {
 			serverWsUrl: window.location.origin,
 			apiUrl: window.location.origin + '/api',

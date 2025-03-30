@@ -29,7 +29,7 @@ RUN rm ./src/fdb-kv-store.ts ./src/fdb-kv-store.spec.ts
 RUN npm run build
 
 WORKDIR /app/packages/app
-RUN VITE_PUBLIC_STAGE=self_hosted npm run build
+RUN VITE_PUBLIC_STAGE=self npm run build
 
 FROM base AS runtime
 

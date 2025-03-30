@@ -81,7 +81,7 @@ export function createApiRouter(
                 );
 
                 return ctx.redirect(
-                    `${options.appUrl}/login/callback/google/?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
+                    `${options.appUrl}/login/callback/google?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
                 );
             } catch (error) {
                 log.error(toError(error), 'failed to handle google callback');

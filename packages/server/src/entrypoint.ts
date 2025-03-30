@@ -49,7 +49,7 @@ collectDefaultMetrics();
 
 eventLoopMonitor.enable();
 
-type Stage = 'prod' | 'dev' | 'local' | 'self_hosted';
+type Stage = 'prod' | 'dev' | 'local' | 'self';
 
 interface Options {
     appUrl: string;
@@ -92,7 +92,7 @@ async function getOptions(): Promise<Options> {
     const FORCE_FOUNDATIONDB = process.env.FORCE_FOUNDATIONDB === 'true';
     const stage: Stage = assertOneOf(
         process.env.STAGE,
-        ['prod', 'dev', 'local', 'self_hosted'] as const,
+        ['prod', 'dev', 'local', 'self'] as const,
         'invalid stage'
     );
     const awsRegion = assertDefined(
@@ -106,7 +106,7 @@ async function getOptions(): Promise<Options> {
 
     const {store, hub} = await getKvStore(
         stage,
-        (stage !== 'local' && stage !== 'self_hosted') || FORCE_FOUNDATIONDB
+        (stage !== 'local' && stage !== 'self') || FORCE_FOUNDATIONDB
             ? 'fdb'
             : 'sqlite'
     );
@@ -114,14 +114,14 @@ async function getOptions(): Promise<Options> {
         .with('local', () => 'debug' as const)
         .with('dev', () => 'info' as const)
         .with('prod', () => 'info' as const)
-        .with('self_hosted', () => 'info' as const)
+        .with('self', () => 'info' as const)
         .exhaustive();
 
     const appUrl = match(stage)
         .with('local', () => 'http://localhost:5173')
         .with('dev', () => 'https://dev.syncwave.dev')
         .with('prod', () => 'https://app.syncwave.dev')
-        .with('self_hosted', () => {
+        .with('self', () => {
             let baseUrl = assertDefined(
                 process.env.BASE_URL,
                 'BASE_URL is required'
@@ -137,11 +137,11 @@ async function getOptions(): Promise<Options> {
         .with('local', () => 'http://localhost:4567')
         .with('dev', () => 'https://api-dev.syncwave.dev')
         .with('prod', () => 'https://api.syncwave.dev')
-        .with('self_hosted', () => `${appUrl}/api`)
+        .with('self', () => `${appUrl}/api`)
         .exhaustive();
 
     const google = getGoogleOptions(apiUrl);
-    const uiPath = stage === 'self_hosted' ? './ui' : undefined;
+    const uiPath = stage === 'self' ? './ui' : undefined;
 
     return {
         appUrl,
@@ -153,8 +153,8 @@ async function getOptions(): Promise<Options> {
         hub,
         store,
         google,
-        launchCluster: stage !== 'local' && stage !== 'self_hosted',
-        appPort: stage === 'self_hosted' ? 80 : 4567,
+        launchCluster: stage !== 'local' && stage !== 'self',
+        appPort: stage === 'self' ? 80 : 4567,
         metricsPort: 5678,
     };
 }

@@ -1,0 +1,75 @@
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+name: self
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Evaluate stage config
+        id: config
+        run: |
+          echo "TAG=sha-${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}" >> $GITHUB_OUTPUT
+
+      - name: Setup docker
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ghcr.io/syncwavedev/syncwave:${{ steps.config.outputs.TAG }}
+          context: '.'
+          file: ./packages/server/Dockerfile
+          cache-from: type=registry,ref=ghcr.io/syncwavedev/syncwave:cache
+          cache-to: type=registry,mode=max,ref=ghcr.io/syncwavedev/syncwave:cache
+
+      - name: Deploy containers
+        if: success()
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.HOST_USERNAME }}
+          key: ${{ secrets.HOST_KEY }}
+          port: 22
+          script_stop: true
+          script: |
+            docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
+            docker pull ghcr.io/syncwavedev/syncwave:${{ steps.config.outputs.TAG }}
+
+            docker stop syncwave-self || true
+            docker rm syncwave-self || true
+            docker run \
+              -v syncwave-data:/data
+              --name syncwave-self \
+              -p 7301:4567 \
+              -e BASE_URL=https://self.syncwave.dev \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET_DEV }} \
+              -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }} \
+              -e GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_DEV }} \
+              -e AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }} \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -d \
+              --restart unless-stopped \
+              ghcr.io/syncwavedev/syncwave:${{ steps.config.outputs.TAG }}

@@ -62,7 +62,7 @@ jobs:
             docker run \
               -v syncwave-data:/data \
               --name syncwave-self \
-              -p 7301:4567 \
+              -p 7301:80 \
               -e BASE_URL=https://self.syncwave.dev \
               -e JWT_SECRET=${{ secrets.JWT_SECRET_DEV }} \
               -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }} \

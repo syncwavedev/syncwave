@@ -14,10 +14,18 @@
 		throw new Error('User ID not found');
 	}
 
+	const boardPromise = agent.observeBoardAsync(key);
+	const mePromise = agent.observeProfileAsync(userId);
+
+	// todo: add user role (internal, external, etc.) and use it instead of board key
+	if (key.toUpperCase() === 'SYNC') {
+		localStorage.setItem('plausible_ignore', 'true');
+	}
+
 	boardHistoryManager.save(key);
 </script>
 
-{#await Promise.all( [agent.observeBoardAsync(key), agent.observeProfileAsync(userId)] )}
+{#await Promise.all([boardPromise, mePromise])}
 	<Loading />
 {:then [[board, awareness], me]}
 	<BoardScreen

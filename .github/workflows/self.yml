@@ -39,7 +39,7 @@ jobs:
           push: true
           tags: ghcr.io/syncwavedev/syncwave:${{ steps.config.outputs.TAG }}
           context: '.'
-          file: ./packages/server/Dockerfile
+          file: ./self-hosted/Dockerfile
           cache-from: type=registry,ref=ghcr.io/syncwavedev/syncwave:cache
           cache-to: type=registry,mode=max,ref=ghcr.io/syncwavedev/syncwave:cache
 
@@ -63,7 +63,6 @@ jobs:
               -v syncwave-data:/data \
               --name syncwave-self \
               -p 7301:4567 \
-              -e STAGE=self \
               -e BASE_URL=https://self.syncwave.dev \
               -e JWT_SECRET=${{ secrets.JWT_SECRET_DEV }} \
               -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }} \

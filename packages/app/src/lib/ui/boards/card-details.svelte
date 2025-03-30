@@ -8,7 +8,7 @@
 	import Editor from '../../components/editor.svelte';
 	import type {CardView} from '../../agent/view.svelte';
 	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
-	import type {ColumnId, User} from 'syncwave';
+	import type {ColumnId, User, UserId} from 'syncwave';
 	import {onMount, tick} from 'svelte';
 	import HashtagIcon from '../components/icons/hashtag-icon.svelte';
 	import DropdownMenu from '../components/dropdown-menu.svelte';
@@ -20,12 +20,17 @@
 		awareness,
 		me,
 		columnOptions,
+		assigneeOptions,
 		onDelete,
 	}: {
 		card: CardView;
 		awareness: Awareness;
 		me: User;
 		columnOptions: {
+			value: string;
+			label: string;
+		}[];
+		assigneeOptions: {
 			value: string;
 			label: string;
 		}[];
@@ -127,27 +132,28 @@
 		<div class="mx-2">
 			<div class="flex">
 				<Select
-					value={card.column?.id}
+					value={card.column.id}
 					options={columnOptions}
 					onValueChange={value =>
 						agent.setCardColumn(card.id, value as ColumnId)}
 				>
 					<button class="btn--flat text-sm">
 						<CircleDashedIcon />
-						<span class="text-xs">{card.column?.name}</span>
+						<span class="text-xs">{card.column.name}</span>
 					</button>
 				</Select>
 
-				<button class="btn--flat text-sm">
-					<UserIcon />
-					<span class="text-xs">Assignee</span>
-				</button>
-				<!-- <button
-					class="btn--block"
-					onclick={() => agent.setCardColumn(card.id, board.columns[0].id)}
+				<Select
+					value={card.assignee?.id ?? ''}
+					options={assigneeOptions}
+					onValueChange={value =>
+						agent.setCardAssignee(card.id, value as UserId)}
 				>
-					To {board.columns[0].name}
-				</button> -->
+					<button class="btn--flat text-sm">
+						<UserIcon />
+						<span class="text-xs">{card.assignee?.fullName ?? 'Assignee'}</span>
+					</button>
+				</Select>
 			</div>
 			<hr class="-mx-4 mt-1 mb-2" />
 		</div>

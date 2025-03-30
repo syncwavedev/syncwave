@@ -219,6 +219,10 @@
 	const columnOptions = $derived(
 		board.columns.map(x => ({value: x.id, label: x.name}))
 	);
+
+	let assigneeOptions = $derived(
+		board.members.map(x => ({value: x.id, label: x.fullName}))
+	);
 </script>
 
 <main class="flex h-screen w-full">
@@ -293,6 +297,7 @@
 				{awareness}
 				card={selectedCard}
 				{columnOptions}
+				{assigneeOptions}
 				onDelete={() => deleteCard(selectedCard!)}
 			/>
 		{/key}

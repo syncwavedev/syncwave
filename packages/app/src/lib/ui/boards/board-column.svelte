@@ -107,8 +107,6 @@
 							{card}
 							onClick={() => onCardClick(card)}
 							active={card.id === activeCardId}
-							{columnsCount}
-							{columnPosition}
 						/>
 					</div>
 				{/snippet}

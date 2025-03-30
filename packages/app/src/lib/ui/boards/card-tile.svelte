@@ -16,14 +16,10 @@
 		card,
 		onClick,
 		active,
-		columnsCount,
-		columnPosition,
 	}: {
 		card: CardView;
 		onClick: () => void;
 		active: boolean;
-		columnsCount: number;
-		columnPosition: number;
 	} = $props();
 
 	let {preview, todoStats} = $derived.by(() => {
@@ -126,9 +122,6 @@
 				data-active={active || undefined}
 			>
 				{#if !card.isDraft}
-					<span class="text-base mr-1">
-						<ColumnIcon active={columnPosition} total={columnsCount} />
-					</span>
 					<span>
 						{preview}
 					</span>

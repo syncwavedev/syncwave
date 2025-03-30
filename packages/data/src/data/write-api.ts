@@ -85,13 +85,19 @@ export function createWriteApi() {
                             const {before, after} = await st.tx.cards.apply(
                                 cardId,
                                 diff,
-                                writable({
+                                writable<Card>({
                                     text: true,
                                     columnId: true,
                                     position: true,
                                     deleted: true,
                                     updatedAt: true,
                                     assigneeId: true,
+                                    id: false,
+                                    authorId: false,
+                                    boardId: false,
+                                    counter: false,
+                                    pk: false,
+                                    createdAt: false,
                                 })
                             );
                             if (before?.columnId !== after.columnId) {

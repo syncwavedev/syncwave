@@ -404,6 +404,10 @@ export class Agent {
 			x.columnId = columnId;
 		});
 
+		this.clearCardConsider(cardId);
+	}
+
+	clearCardConsider(cardId: CardId) {
 		this.activeBoards.forEach(x => {
 			x.cardDragSettledAt.delete(cardId);
 			x.considerCardPosition.delete(cardId);
@@ -426,6 +430,14 @@ export class Agent {
 	setCardColumn(cardId: CardId, columnId: ColumnId): void {
 		this.crdtManager.update<Card>(cardId, x => {
 			x.columnId = columnId;
+		});
+
+		this.clearCardConsider(cardId);
+	}
+
+	setCardAssignee(cardId: CardId, assigneeId: UserId | undefined): void {
+		this.crdtManager.update<Card>(cardId, x => {
+			x.assigneeId = assigneeId;
 		});
 	}
 

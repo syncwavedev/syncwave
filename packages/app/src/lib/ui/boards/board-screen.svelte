@@ -160,6 +160,11 @@
 		selectCard(draft);
 	}
 
+	async function deleteCard(card: CardView) {
+		agent.deleteCard(card.id);
+		selectCard(null);
+	}
+
 	$effect(() => {
 		if (selectedCard?.isDraft) {
 			const {text} = yFragmentToPlaintextAndTaskList(
@@ -283,7 +288,13 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetails {me} {awareness} card={selectedCard} {columnOptions} />
+			<CardDetails
+				{me}
+				{awareness}
+				card={selectedCard}
+				{columnOptions}
+				onDelete={() => deleteCard(selectedCard!)}
+			/>
 		{/key}
 	{/if}
 </main>

@@ -20,6 +20,7 @@
 		awareness,
 		me,
 		columnOptions,
+		onDelete,
 	}: {
 		card: CardView;
 		awareness: Awareness;
@@ -28,6 +29,7 @@
 			value: string;
 			label: string;
 		}[];
+		onDelete: () => void;
 	} = $props();
 
 	const agent = getAgent();
@@ -66,10 +68,14 @@
 						{
 							icon: LinkIcon,
 							text: 'Copy Card Link',
+							onSelect: _ => {
+								navigator.clipboard.writeText(window.location.href);
+							},
 						},
 						{
 							icon: TrashIcon,
 							text: 'Delete',
+							onSelect: _ => onDelete(),
 						},
 					]}
 				>

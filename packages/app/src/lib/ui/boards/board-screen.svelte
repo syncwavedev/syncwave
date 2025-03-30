@@ -266,13 +266,15 @@
 				bind:this={columnsContainerRef}
 				class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 text-xs"
 			>
-				{#each board.columns as column (column.id)}
+				{#each board.columns as column, i (column.id)}
 					<div animate:flip={{duration: DND_REORDER_DURATION_MS}}>
 						<BoardColumn
 							{column}
 							onCardClick={selectCard}
 							activeCardId={selectedCard?.id}
 							onCreateCard={() => createCard(column)}
+							columnPosition={i}
+							columnsCount={board.columns.length - 1}
 						/>
 					</div>
 				{/each}

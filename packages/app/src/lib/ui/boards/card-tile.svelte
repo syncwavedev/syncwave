@@ -10,15 +10,20 @@
 	} from './board-dnd';
 	import {getNow} from 'syncwave';
 	import HashtagIcon from '../../components/icons/hashtag-icon.svelte';
+	import ColumnIcon from '../components/column-icon.svelte';
 
 	const {
 		card,
 		onClick,
 		active,
+		columnsCount,
+		columnPosition,
 	}: {
 		card: CardView;
 		onClick: () => void;
 		active: boolean;
+		columnsCount: number;
+		columnPosition: number;
 	} = $props();
 
 	let {preview, todoStats} = $derived.by(() => {
@@ -115,15 +120,20 @@
 		onkeydown={e => e.key === 'Enter' && onClick()}
 	>
 		<div class="flex w-full flex-col gap-1 truncate">
-			<span
-				class="truncate"
+			<div
+				class="flex items-center"
 				class:h-6={card.isDraft}
 				data-active={active || undefined}
 			>
 				{#if !card.isDraft}
-					{preview}
+					<span class="text-base mr-1">
+						<ColumnIcon active={columnPosition} total={columnsCount} />
+					</span>
+					<span>
+						{preview}
+					</span>
 				{/if}
-			</span>
+			</div>
 			{#if !card.isDraft}
 				<div class="flex items-center">
 					<span class="text-2xs text-ink-detail mr-auto">

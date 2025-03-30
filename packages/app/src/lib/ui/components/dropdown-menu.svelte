@@ -38,7 +38,7 @@
 			alignOffset={0}
 			preventOverflowTextSelection={true}
 			{...contentProps}
-			class="z-100 bg-subtle-3 dark:bg-subtle-2 p-1 rounded-md min-w-40 border border-divider-object outline-none"
+			class="z-100 bg-subtle-2 p-1 rounded-md min-w-40 border border-divider-object outline-none"
 		>
 			<DropdownMenu.Group>
 				{#each items as item (item.text)}

@@ -66,7 +66,7 @@
 	bind:viewportRef
 	orientation="vertical"
 	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-2.5rem)]"
-	type="scroll"
+	type="hover"
 >
 	<div class="flex w-80 flex-shrink-0 flex-col pb-1" data-column-id={column.id}>
 		<div

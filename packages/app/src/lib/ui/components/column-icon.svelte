@@ -3,37 +3,63 @@
 
 	const center = {x: 12, y: 12};
 	const circleRadius = 9;
+	const innerRadius = 6;
 
 	const getActiveColor = () => {
 		if (active === total) return 'text-green-400';
-		if (active > 0) return 'text-yellow-250';
+		if (active > 0) return 'text-yellow-300';
 		return 'dark:text-gray-600 text-gray-200';
 	};
 	const activeColorClass = getActiveColor();
 
 	const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180);
 
-	const gapAngle = 20;
-	const initialRotation = -80;
+	// Calculate progress percentage
+	const progressPercentage = total > 0 ? active / total : 0;
 
-	const segments = Array.from({length: total}, (_, i) => {
-		const availableAngle = 360 - total * gapAngle;
-		const segmentAngle = availableAngle / total;
+	// Calculate the arc for the progress indicator
+	const startAngle = -90; // Start from top
+	const endAngle = startAngle + progressPercentage * 360;
 
-		// Calculate start and end angles with gap consideration
-		const startAngle = initialRotation + i * (segmentAngle + gapAngle);
-		const endAngle = startAngle + segmentAngle;
+	// SVG arc path calculation for filled arc
+	const createFilledArcPath = (
+		radius: number,
+		startAngle: number,
+		endAngle: number
+	) => {
+		// If we have a complete circle (360 degrees), use a different approach
+		if (Math.abs(endAngle - startAngle) >= 360) {
+			return `M ${center.x} ${center.y - radius}
+																A ${radius} ${radius} 0 1 1 ${center.x - 0.001} ${center.y - radius}
+																Z`;
+		}
 
-		const startRad = degreesToRadians(startAngle);
-		const endRad = degreesToRadians(endAngle);
-
-		return {
-			startX: center.x + circleRadius * Math.cos(startRad),
-			startY: center.y + circleRadius * Math.sin(startRad),
-			endX: center.x + circleRadius * Math.cos(endRad),
-			endY: center.y + circleRadius * Math.sin(endRad),
+		const start = {
+			x: center.x + radius * Math.cos(degreesToRadians(startAngle)),
+			y: center.y + radius * Math.sin(degreesToRadians(startAngle)),
 		};
-	});
+
+		const end = {
+			x: center.x + radius * Math.cos(degreesToRadians(endAngle)),
+			y: center.y + radius * Math.sin(degreesToRadians(endAngle)),
+		};
+
+		// Large arc flag is 1 if angle > 180 degrees
+		const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+
+		// We return to center to create a filled sector
+		return `M ${center.x} ${center.y}
+																L ${start.x} ${start.y}
+																A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}
+																Z`;
+	};
+
+	// Generate filled arc path for progress indicator
+	const progressFilledArcPath = createFilledArcPath(
+		innerRadius,
+		startAngle,
+		endAngle
+	);
 </script>
 
 <svg
@@ -44,26 +70,34 @@
 >
 	<title>{active} out of {total} active</title>
 
-	<!-- Inner solid circle -->
+	<!-- Background circle -->
 	<circle
 		cx={center.x}
 		cy={center.y}
-		r="6"
-		fill="currentColor"
+		r={circleRadius}
+		stroke="currentColor"
+		stroke-width="1.75"
+		fill="none"
+		class="dark:text-gray-600 text-gray-200"
+	/>
+
+	<!-- Just the outer circle with no progress -->
+	<circle
+		cx={center.x}
+		cy={center.y}
+		r={circleRadius}
+		stroke="currentColor"
+		stroke-width="1.75"
+		fill="none"
 		class={activeColorClass}
 	/>
 
-	<!-- Rounded outer sections -->
-	{#each segments as segment, i}
-		{@const isActive = i < active}
+	<!-- Filled progress arc inside -->
+	{#if progressPercentage > 0}
 		<path
-			d="M {segment.startX} {segment.startY}
-						A {circleRadius} {circleRadius} 0 0 1 {segment.endX} {segment.endY}"
-			stroke="currentColor"
-			stroke-width="1.75"
-			stroke-linecap="round"
-			fill="none"
-			class={isActive ? activeColorClass : 'dark:text-gray-600 text-gray-200'}
+			d={progressFilledArcPath}
+			fill="currentColor"
+			class={activeColorClass}
 		/>
-	{/each}
+	{/if}
 </svg>

@@ -47,7 +47,7 @@ COPY --from=builder /app/packages/app/dist ./packages/server/ui/
 
 EXPOSE 80
 
-ENV STAGE=self_hosted
+ENV STAGE=self
 ENV AWS_DEFAULT_REGION=us-east-1
 
 ENV NODE_ENV=production

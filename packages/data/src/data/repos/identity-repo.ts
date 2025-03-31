@@ -8,6 +8,7 @@ import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
+    type CrdtDoc,
     type Doc,
     DocRepo,
     type OnDocChange,
@@ -118,7 +119,7 @@ export class IdentityRepo {
         return this.rawRepo.getUnique(EMAIL_INDEX, [email]);
     }
 
-    getByUserId(userId: UserId): Promise<Identity | undefined> {
+    getByUserId(userId: UserId): Promise<CrdtDoc<Identity> | undefined> {
         return this.rawRepo.getUnique(USER_ID_INDEX, [userId]);
     }
 

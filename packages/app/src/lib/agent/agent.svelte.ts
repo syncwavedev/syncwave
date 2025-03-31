@@ -32,6 +32,7 @@ import {
 	type ColumnId,
 	type CoordinatorRpc,
 	type CrdtDoc,
+	type MeViewDataDto,
 	type Placement,
 	type TransportClient,
 	type User,
@@ -44,7 +45,7 @@ import {getRpc, type Rpc} from '../utils';
 import {setComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
-import {BoardData, BoardTreeView, CardView, UserView} from './view.svelte';
+import {BoardData, BoardTreeView, CardView, MeView} from './view.svelte';
 
 export class Agent {
 	private crdtManager: CrdtManager;
@@ -52,6 +53,7 @@ export class Agent {
 	public readonly rpc: CoordinatorRpc;
 
 	private activeBoards: BoardData[] = [];
+	private activeMes: MeView[] = [];
 
 	constructor(
 		client: TransportClient<unknown>,
@@ -95,6 +97,48 @@ export class Agent {
 		}
 	}
 
+	async observeMeAsync() {
+		const ctx = setComponentContext();
+
+		const rpc = getRpc();
+		const me = await rpc(x =>
+			x
+				.getMeViewData({})
+				.filter(x => x.type === 'snapshot')
+				.map(x => x.data)
+				.first()
+		);
+
+		return ctx.run(() => this.observeMe(me, rpc));
+	}
+
+	private observeMe(initialMe: MeViewDataDto, rpc: Rpc): MeView {
+		const view = MeView.create(initialMe, this.crdtManager);
+
+		this.activeMes.push(view);
+		context().onEnd(() => {
+			this.activeMes = this.activeMes.filter(x => x !== view);
+		});
+
+		(async () => {
+			const items = toStream(rpc(x => x.getMeViewData({})));
+
+			for await (const item of items) {
+				if (item.type === 'snapshot') {
+					view.sync(item.data, this.crdtManager);
+				} else if (item.type === 'event') {
+					this.handleEvent(item.event);
+				} else {
+					softNever(item, 'observeBoard got an unknown event');
+				}
+			}
+		})().catch(error => {
+			log.error(toError(error), 'observeBoard failed');
+		});
+
+		return view;
+	}
+
 	async observeBoardAsync(key: string) {
 		const ctx = setComponentContext();
 
@@ -115,9 +159,7 @@ export class Agent {
 			),
 		]);
 
-		return ctx.run(() => {
-			return this.observeBoard(board, me, rpc);
-		});
+		return ctx.run(() => this.observeBoard(board, me, rpc));
 	}
 
 	private observeBoard(
@@ -256,65 +298,6 @@ export class Agent {
 		});
 
 		return [data.boardTreeView, awareness];
-	}
-
-	async observeProfileAsync(userId: UserId) {
-		const ctx = setComponentContext();
-		const rpc = getRpc();
-		const {user} = await rpc(x =>
-			x
-				.getProfileData({userId})
-				.filter(x => x.type === 'snapshot')
-				.map(x => x.data)
-				.first()
-		);
-
-		return ctx.run(() =>
-			this._observeProfile(
-				this.crdtManager.view({
-					id: user.id,
-					isDraft: false,
-					state: user.state,
-					type: 'user',
-				}).value,
-				rpc
-			)
-		);
-	}
-
-	observeProfile(initial: User) {
-		const ctx = setComponentContext();
-		const rpc = getRpc();
-		return ctx.run(() => this._observeProfile(initial, rpc));
-	}
-
-	private _observeProfile(initial: User, rpc: Rpc): UserView {
-		const view = new UserView(initial);
-
-		(async () => {
-			const items = toStream(
-				rpc(x => x.getProfileData({userId: initial.id}))
-			);
-			for await (const item of items) {
-				if (item.type === 'snapshot') {
-					const user = this.crdtManager.view({
-						id: item.data.user.id,
-						state: item.data.user.state,
-						type: 'user',
-						isDraft: false,
-					}).value;
-					view.update(user);
-				} else if (item.type === 'event') {
-					this.handleEvent(item.event);
-				} else {
-					softNever(item, 'observeBoard got an unknown event');
-				}
-			}
-		})().catch(error => {
-			log.error(toError(error), 'observeBoard failed');
-		});
-
-		return view;
 	}
 
 	setProfileFullName(profileId: UserId, fullName: string): void {

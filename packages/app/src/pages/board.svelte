@@ -15,7 +15,7 @@
 	}
 
 	const boardPromise = agent.observeBoardAsync(key);
-	const mePromise = agent.observeProfileAsync(userId);
+	const mePromise = agent.observeMeAsync();
 
 	// todo: add user role (internal, external, etc.) and use it instead of board key
 	if (key.toUpperCase() === 'SYNC') {

@@ -33,6 +33,7 @@ import {
     zMemberAdminDto,
     zMemberDto,
     zMessageDto,
+    zMeViewDataDto,
     zUserDataDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
@@ -426,6 +427,74 @@ export function createReadApi() {
                         columns: columns,
                         cards: cards,
                         users: users,
+                    },
+                };
+
+                for await (const event of events) {
+                    yield {
+                        type: 'event' as const,
+                        event,
+                    };
+                }
+            },
+        }),
+        getMeViewData: streamer({
+            req: Type.Object({}),
+            item: Type.Union([
+                Type.Object({
+                    type: Type.Literal('snapshot'),
+                    data: zMeViewDataDto(),
+                }),
+                Type.Object({
+                    type: Type.Literal('event'),
+                    event: zChangeEvent(),
+                }),
+            ]),
+            async *stream(st, {}, {principal}) {
+                const profileId = st.ensureAuthenticated(principal);
+
+                const events = await st.esReader.subscribe(
+                    userEvents(profileId)
+                );
+
+                const [profile, account, boards] = await st.transact(
+                    principal,
+                    async tx => {
+                        return await whenAll([
+                            tx.users.getById(profileId, true).then(user => {
+                                assert(
+                                    user !== undefined,
+                                    `user with id ${profileId} not found`
+                                );
+                                return user;
+                            }),
+                            tx.identities
+                                .getByUserId(profileId)
+                                .then(identity => {
+                                    assert(
+                                        identity !== undefined,
+                                        `identity for user ${profileId} not found`
+                                    );
+                                    return identity;
+                                }),
+                            tx.members
+                                .getByUserId(profileId, false)
+                                .mapParallel(member =>
+                                    tx.boards.getById(member.boardId, true)
+                                )
+                                .assert(x => x !== undefined, 'board not found')
+                                .filter(x => x.deleted === false)
+                                .toArray(),
+                        ]);
+                    }
+                );
+
+                yield {
+                    type: 'snapshot' as const,
+                    data: {
+                        boards,
+                        profile,
+                        account,
                     },
                 };
 

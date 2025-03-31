@@ -7,7 +7,11 @@ import {type AttachmentId, zAttachment} from './repos/attachment-repo.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
 import {type Card, type CardId, zCard} from './repos/card-repo.js';
 import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
-import {type IdentityId, zIdentity} from './repos/identity-repo.js';
+import {
+    type Identity,
+    type IdentityId,
+    zIdentity,
+} from './repos/identity-repo.js';
 import {type Member, type MemberId, zMember} from './repos/member-repo.js';
 import {type Message, type MessageId, zMessage} from './repos/message-repo.js';
 import {type User, type UserId, zUser} from './repos/user-repo.js';
@@ -322,6 +326,28 @@ export function zMeDto() {
 }
 
 export interface MeDto extends Static<ReturnType<typeof zMeDto>> {}
+
+export function zMeViewDataDto() {
+    return Type.Object({
+        profile: Type.Object({
+            id: Uuid<UserId>(),
+            state: zCrdtDiff<User>(),
+        }),
+        account: Type.Object({
+            id: Uuid<IdentityId>(),
+            state: zCrdtDiff<Identity>(),
+        }),
+        boards: Type.Array(
+            Type.Object({
+                id: Uuid<BoardId>(),
+                state: zCrdtDiff<Board>(),
+            })
+        ),
+    });
+}
+
+export interface MeViewDataDto
+    extends Static<ReturnType<typeof zMeViewDataDto>> {}
 
 export function zBoardViewDataDto() {
     return Type.Object({

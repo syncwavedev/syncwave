@@ -12,6 +12,8 @@ import {
 	type CardId,
 	type Column,
 	type ColumnId,
+	type Identity,
+	type MeViewDataDto,
 	type Timestamp,
 	type User,
 } from 'syncwave';
@@ -30,6 +32,48 @@ function findRequired<T>(array: T[], predicate: (item: T) => boolean): T {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lateInit(): any {
 	return undefined;
+}
+
+export class MeView {
+	private _profileState: State<User> = $state.raw(lateInit());
+	private _accountState: State<Identity> = $state.raw(lateInit());
+	private _boardStates: Array<State<Board>> = $state.raw(lateInit());
+
+	profile: UserView = $derived(new UserView(this._profileState.value));
+	account: Identity = $derived(this._accountState.value);
+
+	boards: Board[] = $derived(this._boardStates.map(x => x.value));
+
+	static create(data: MeViewDataDto, derivator: CrdtDerivator) {
+		const result = new MeView();
+		result.sync(data, derivator);
+		return result;
+	}
+
+	private constructor() {}
+
+	sync(me: MeViewDataDto, derivator: CrdtDerivator) {
+		this._accountState = derivator.view({
+			state: me.account.state,
+			id: me.account.id,
+			type: 'identity',
+			isDraft: false,
+		});
+		this._profileState = derivator.view({
+			state: me.profile.state,
+			id: me.profile.id,
+			type: 'user',
+			isDraft: false,
+		});
+		this._boardStates = me.boards.map(x =>
+			derivator.view({
+				id: x.id,
+				type: 'board',
+				state: x.state,
+				isDraft: false,
+			})
+		);
+	}
 }
 
 export class BoardData {

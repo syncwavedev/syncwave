@@ -112,7 +112,7 @@ export class DocRepo<T extends Doc<Tuple>> {
         indexName: string,
         key: Tuple,
         includeDeleted?: boolean
-    ): Promise<T | undefined> {
+    ): Promise<CrdtDoc<T> | undefined> {
         return await context().runChild({span: 'repo.get'}, async () => {
             return await this.rawRepo.getUnique(indexName, key, includeDeleted);
         });
@@ -245,7 +245,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         indexName: string,
         key: Tuple,
         includeDeleted?: boolean
-    ): Promise<T | undefined> {
+    ): Promise<CrdtDoc<T> | undefined> {
         const index = this._index(indexName);
         const ids = await toStream(index.get(key)).take(2).toArray();
         if (ids.length > 1) {

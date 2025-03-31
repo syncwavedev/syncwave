@@ -1,5 +1,9 @@
 # Changelog
 
+## 2025-03-31
+
+- Redirect to the first board if there is board in the history.
+
 ## 2025-03-28
 
 - Create default board on user creation.

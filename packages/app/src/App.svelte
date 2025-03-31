@@ -34,6 +34,7 @@
 	import Loading from './lib/ui/components/loading.svelte';
 	import LoginFailed from './pages/login-failed.svelte';
 	import Testbed from './pages/testbed.svelte';
+	import Index from './pages/index.svelte';
 
 	const themeManager = createThemeManager();
 	setContext('theme', {
@@ -62,17 +63,7 @@
 
 	onMount(() => {
 		router.on('/', () => {
-			Page = Loading;
-
-			if (!authManager.getTokenInfo()) {
-				router.route('/login', {replace: true});
-				return;
-			}
-
-			const lastBoardKey = BoardHistoryManager.last();
-			if (lastBoardKey) {
-				router.route(`/b/${lastBoardKey}`, {replace: true});
-			}
+			Page = Index;
 		});
 		router.on('/login', () => {
 			Page = LoginPage;
@@ -96,6 +87,17 @@
 		});
 
 		router.listen();
+	});
+
+	onMount(() => {
+		const userId = authManager.getTokenInfo()?.userId;
+		if (!userId) {
+			router.route(
+				`/login?redirect_url=${encodeURIComponent(window.location.href)}`,
+				{replace: true}
+			);
+			return;
+		}
 	});
 </script>
 

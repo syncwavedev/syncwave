@@ -21,7 +21,7 @@ function applyChange(state: unknown, change: ValueChange) {
 }
 
 export function deriveCrdtSnapshot<T>(crdt: Crdt<T>): [State<T>, Unsubscribe] {
-	const snapshot = $state({value: crdt.snapshot(true)});
+	const snapshot = $state({value: crdt.snapshot({exposeRichtext: true})});
 
 	const unsub = crdt.onChange(changes => {
 		changes.forEach(change => {

@@ -108,8 +108,8 @@ export class Crdt<T> {
         return this.doc.clientID;
     }
 
-    snapshot(exposeRichtext = false): T {
-        return mapFromYValue(this.yValue, exposeRichtext) as T;
+    snapshot(options: {exposeRichtext: boolean} = {exposeRichtext: false}): T {
+        return mapFromYValue(this.yValue, options.exposeRichtext) as T;
     }
 
     state(): CrdtDiff<T> {

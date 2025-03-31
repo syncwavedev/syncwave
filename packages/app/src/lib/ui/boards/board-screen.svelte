@@ -101,8 +101,7 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						const columnElement =
-							cardElement.closest('[data-column-id]');
+						const columnElement = cardElement.closest('[data-column-id]');
 						if (columnElement) {
 							// requestAnimationFrame makes it work in Safari when pointer down => small move => pointer up
 							// it registers like a click (as it should), but Safari doesn't scroll smoothly to the element
@@ -234,19 +233,11 @@
 				<div class="text-xs leading-none font-semibold">{board.name}</div>
 				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
-						online: {board.onlineMembers
-							.map(x => x.fullName)
-							.join(', ')}
+						online: {board.onlineMembers.map(x => x.fullName).join(', ')}
 					</div>
 				{/if}
-				<button
-					class="btn--icon ml-auto"
-					onclick={() => createCard(undefined)}
-				>
+				<button class="btn--icon ml-auto" onclick={() => createCard(undefined)}>
 					<PlusIcon />
-				</button>
-				<button class="btn--icon">
-					<SearchIcon />
 				</button>
 				<button onclick={editBoard} class="btn--icon">
 					<EllipsisIcon />

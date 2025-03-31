@@ -117,7 +117,7 @@ export class Awareness {
     }
 
     getLocalState(): AwarenessState {
-        return this.states.get(this.clientId)!.state;
+        return this.states.get(this.clientId)?.state ?? {};
     }
 
     setLocalStateField<K extends keyof AwarenessState>(

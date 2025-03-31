@@ -269,7 +269,7 @@ async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
             const done = await store.transact(async tx => {
                 const entries = await toStream(tx.query({gt: lastKey}))
                     .take(100)
-                    .filter(x => x.key[0] === 'identities')
+                    .while(x => x.key[0] === 'identities')
                     .toArray();
 
                 if (entries.length === 0) {
@@ -404,11 +404,11 @@ process.on('unhandledRejection', reason => {
     log.error(toError(reason), 'unhandled rejection');
 });
 
-log.info('launching coordinator...');
-
 log.info('Upgrading KV store...');
 await upgradeKVStore(options.store);
 log.info('Successfully upgraded KV store');
+
+log.info('launching coordinator...');
 
 if (cluster.isPrimary && options.launchCluster) {
     log.info(`Master process ${process.pid} is running`);

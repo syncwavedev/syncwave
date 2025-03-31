@@ -3,6 +3,10 @@
 ## 2025-03-31
 
 - Redirect to the first board if there is board in the history.
+- Fix awareness stale states
+- Fix graceful server shutdown
+- Fix member management in board settings
+- Add unsupported screen size alert
 
 ## 2025-03-28
 

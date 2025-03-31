@@ -7,6 +7,7 @@
 - Fix graceful server shutdown
 - Fix member management in board settings
 - Add unsupported screen size alert
+- Make right sidebar resizable.
 
 ## 2025-03-28
 

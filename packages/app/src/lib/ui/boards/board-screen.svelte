@@ -3,7 +3,6 @@
 
 	import {onMount, tick} from 'svelte';
 	import PlusIcon from '../components/icons/plus-icon.svelte';
-	import SearchIcon from '../components/icons/search-icon.svelte';
 	import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 	import BoardColumn from './board-column.svelte';
 	import Scrollable from '../components/scrollable.svelte';
@@ -22,6 +21,8 @@
 	import {flip} from 'svelte/animate';
 	import {createDndContext, DND_REORDER_DURATION_MS} from './board-dnd';
 	import {yFragmentToPlaintextAndTaskList} from '../../richtext';
+	import ResizablePanel from '../components/resizable-panel.svelte';
+	import PanelSizeManager from '../../panel-size-manager';
 
 	const {
 		board,
@@ -291,14 +292,22 @@
 	</div>
 	{#if selectedCard !== null}
 		{#key selectedCard.id}
-			<CardDetails
-				me={me.profile}
-				{awareness}
-				card={selectedCard}
-				{columnOptions}
-				{assigneeOptions}
-				onDelete={() => deleteCard(selectedCard!)}
-			/>
+			<ResizablePanel
+				freeSide="left"
+				defaultSize={PanelSizeManager.getWidth('right') ?? 600}
+				minWidth={520}
+				maxWidth={800}
+				onWidthChange={w => PanelSizeManager.saveWidth('right', w)}
+			>
+				<CardDetails
+					me={me.profile}
+					{awareness}
+					card={selectedCard}
+					{columnOptions}
+					{assigneeOptions}
+					onDelete={() => deleteCard(selectedCard!)}
+				/>
+			</ResizablePanel>
 		{/key}
 	{/if}
 </main>

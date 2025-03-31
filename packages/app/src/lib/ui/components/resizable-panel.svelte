@@ -20,7 +20,7 @@
 		minWidth,
 		maxWidth,
 		class: className,
-		resizerClass = 'w-1 cursor-col-resize hover:bg-gray-300 active:bg-gray-400',
+		resizerClass = 'w-1 cursor-col-resize hover:bg-divider-object hover:dark:bg-divider-object',
 	}: Props = $props();
 
 	let width = $state(defaultSize);
@@ -67,7 +67,7 @@
 	{@render children()}
 
 	<div
-		class={`resizer ${resizerClass}`}
+		class={`resizer z-50 ${resizerClass}`}
 		style="position: absolute; {freeSide}: 0; top: 0; bottom: 0;"
 		onpointerdown={handlePointerDown}
 		onpointermove={handlePointerMove}

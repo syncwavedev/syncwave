@@ -51,7 +51,7 @@
 </script>
 
 <div
-	class="border-divider bg-subtle-0 z-10 flex w-124 min-w-84 flex-shrink-0 flex-col border-l"
+	class="border-divider bg-subtle-0 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
 	<!-- Scrollable Content Section -->
 	<div class="flex-grow overflow-y-auto">
@@ -138,7 +138,7 @@
 						agent.setCardColumn(card.id, value as ColumnId)}
 				>
 					<button class="btn--flat text-sm">
-						<CircleDashedIcon />
+						<span class="text-base"><CircleDashedIcon /></span>
 						<span class="text-xs">{card.column.name}</span>
 					</button>
 				</Select>
@@ -150,12 +150,12 @@
 						agent.setCardAssignee(card.id, value as UserId)}
 				>
 					<button class="btn--flat text-sm">
-						<UserIcon />
+						<span class="text-base"><UserIcon /></span>
 						<span class="text-xs">{card.assignee?.fullName ?? 'Assignee'}</span>
 					</button>
 				</Select>
 			</div>
-			<hr class="-mx-4 mt-2 mb-2" />
 		</div>
+		<hr class="mt-2 mb-2" />
 	</div>
 </div>

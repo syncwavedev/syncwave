@@ -13,7 +13,6 @@ import {
 	toStream,
 	unimplemented,
 	type CoordinatorRpc,
-	type MeDto,
 	type Nothing,
 	type Unsubscribe,
 } from 'syncwave';
@@ -174,22 +173,6 @@ export function timeSince(ts: Timestamp) {
 
 export function markErrorAsHandled(error: unknown) {
 	log.info('error handled + ' + getReadableError(error));
-}
-
-const ME_CONTEXT_KEY = 'me-context';
-export interface MeContext {
-	readonly value: MeDto;
-}
-export function setMe(me: MeContext) {
-	setContext(ME_CONTEXT_KEY, me);
-}
-
-export function getMe() {
-	const me = getContext<MeContext>(ME_CONTEXT_KEY);
-	if (!me) {
-		throw new Error('context MeDto is not available');
-	}
-	return me;
 }
 
 export function fireEscape() {

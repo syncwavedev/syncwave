@@ -10,6 +10,7 @@
 		type BoardId,
 		type CardId,
 		type Message,
+		type UserId,
 	} from 'syncwave';
 	import ArrowUpIcon from './icons/arrow-up-icon.svelte';
 	import AttachIcon from './icons/attach-icon.svelte';
@@ -19,15 +20,16 @@
 	import AttachmentPreview from './attachment-preview.svelte';
 	import SpinnerIcon from './icons/spinner-icon.svelte';
 	import {yFragmentToPlaintext} from '../richtext';
+	import type {MeView} from '../agent/view.svelte';
 
 	interface Props {
+		me: MeView;
 		cardId: CardId;
 		boardId: BoardId;
 		onSend: (message: Crdt<Message>, attachments: AttachmentDto[]) => void;
 	}
 
-	let {cardId, boardId, onSend}: Props = $props();
-	const me = getMe();
+	let {cardId, boardId, onSend, me}: Props = $props();
 
 	const doc = new Doc();
 	const fragment = doc.getXmlFragment('message');
@@ -72,7 +74,7 @@
 				const message = Crdt.from<Message>({
 					id: messageId,
 					pk: [messageId],
-					authorId: me.value.user.id,
+					authorId: me.profile.id,
 					cardId,
 					createdAt,
 					updatedAt: createdAt,
@@ -147,7 +149,7 @@
 	</UploadButton>
 	<div class="flex-1">
 		<Editor
-			me={me.value.user}
+			me={me.profile}
 			bind:this={editorRef}
 			onEnter={sendMessage}
 			{fragment}

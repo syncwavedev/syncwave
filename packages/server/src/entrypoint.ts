@@ -307,10 +307,6 @@ async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
 }
 
 async function launchApp(options: Options) {
-    log.info('Upgrading KV store...');
-    await upgradeKVStore(options.store);
-    log.info('Successfully upgraded KV store');
-
     const app = new Koa();
 
     const apiRouter = createApiRouter(() => coordinator, {
@@ -409,6 +405,10 @@ process.on('unhandledRejection', reason => {
 });
 
 log.info('launching coordinator...');
+
+log.info('Upgrading KV store...');
+await upgradeKVStore(options.store);
+log.info('Successfully upgraded KV store');
 
 if (cluster.isPrimary && options.launchCluster) {
     log.info(`Master process ${process.pid} is running`);

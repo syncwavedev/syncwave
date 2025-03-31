@@ -139,7 +139,7 @@
 				>
 					<button class="btn--flat text-sm">
 						<span class="text-base"><CircleDashedIcon /></span>
-						<span class="text-xs">{card.column.name}</span>
+						<span class="text-2xs">{card.column.name}</span>
 					</button>
 				</Select>
 
@@ -151,7 +151,8 @@
 				>
 					<button class="btn--flat text-sm">
 						<span class="text-base"><UserIcon /></span>
-						<span class="text-xs">{card.assignee?.fullName ?? 'Assignee'}</span>
+						<span class="text-2xs">{card.assignee?.fullName ?? 'Assignee'}</span
+						>
 					</button>
 				</Select>
 			</div>

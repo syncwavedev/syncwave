@@ -46,8 +46,6 @@
 		const newWidth =
 			freeSide === 'right' ? startWidth + deltaX : startWidth - deltaX;
 
-		console;
-
 		if (newWidth >= minWidth && newWidth <= maxWidth) {
 			width = newWidth;
 			onWidthChange?.(width);
@@ -68,6 +66,7 @@
 
 	<div
 		class={`resizer z-50 ${resizerClass}`}
+		class:select-none={isResizing}
 		style="position: absolute; {freeSide}: 0; top: 0; bottom: 0;"
 		onpointerdown={handlePointerDown}
 		onpointermove={handlePointerMove}

@@ -294,9 +294,9 @@
 		{#key selectedCard.id}
 			<ResizablePanel
 				freeSide="left"
-				defaultSize={PanelSizeManager.getWidth('right') ?? 600}
-				minWidth={520}
-				maxWidth={800}
+				defaultSize={PanelSizeManager.getWidth('right') ?? 624}
+				minWidth={320}
+				maxWidth={1600}
 				onWidthChange={w => PanelSizeManager.saveWidth('right', w)}
 			>
 				<CardDetails

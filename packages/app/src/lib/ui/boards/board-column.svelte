@@ -74,7 +74,7 @@
 			data-disable-scroll-view-drag="true"
 		>
 			<div class="text-2xs font-medium flex items-center gap-1.5">
-				<span class="text-sm">
+				<span class="text-base">
 					<ColumnIcon active={columnPosition} total={columnsCount} />
 				</span>
 				{column.name}

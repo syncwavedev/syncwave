@@ -1,18 +1,18 @@
 import {LRUCache} from 'lru-cache';
 import {SUPERADMIN_IDS} from '../constants.js';
 import {type JwtService} from './infrastructure.js';
-import {type IdentityId} from './repos/identity-repo.js';
+import {type AccountId} from './repos/account-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
 export const anonymous: Principal = {
     userId: undefined,
-    identityId: undefined,
+    accountId: undefined,
     superadmin: false,
 };
 
 export interface Principal {
     readonly userId: UserId | undefined;
-    readonly identityId: IdentityId | undefined;
+    readonly accountId: AccountId | undefined;
     readonly superadmin: boolean;
 }
 
@@ -38,7 +38,7 @@ export class Authenticator {
 
             const jwtPayload = await this.jwt.verify(jwtToken, this.jwtSecret);
             const principal: Principal = {
-                identityId: jwtPayload.sub as IdentityId | undefined,
+                accountId: jwtPayload.sub as AccountId | undefined,
                 userId: jwtPayload.uid as UserId | undefined,
                 superadmin:
                     SUPERADMIN_IDS.includes(jwtPayload.sub ?? '') ||

@@ -7,11 +7,11 @@ import type {
     JwtService,
 } from '../data/infrastructure.js';
 import {
-    createIdentityId,
-    type Identity,
-    type IdentityRepo,
+    createAccountId,
+    type Account,
+    type AccountRepo,
     type VerificationCode,
-} from '../data/repos/identity-repo.js';
+} from '../data/repos/account-repo.js';
 import {createUserId, UserRepo, type UserId} from '../data/repos/user-repo.js';
 import {AppError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
@@ -52,7 +52,7 @@ export function createAuthApi() {
             ]),
             handle: async (
                 {
-                    tx: {identities, users},
+                    tx: {accounts, users},
                     crypto,
                     boardService,
                     scheduleEffect,
@@ -62,8 +62,8 @@ export function createAuthApi() {
             ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
                 const verificationCode = await createVerificationCode(crypto);
 
-                const identity = await getIdentity({
-                    identities,
+                const account = await getAccount({
+                    accounts,
                     users,
                     email,
                     crypto,
@@ -71,11 +71,11 @@ export function createAuthApi() {
                     boardService,
                 });
 
-                if (await needsCooldown(identity)) {
+                if (await needsCooldown(account)) {
                     return {type: 'cooldown'};
                 }
 
-                await identities.update(identity.id, doc => {
+                await accounts.update(account.id, doc => {
                     doc.verificationCode = verificationCode;
                     pushActivityLog(doc);
                 });
@@ -124,42 +124,42 @@ export function createAuthApi() {
                 Type.Object({type: Type.Literal('cooldown')}),
             ]),
             handle: async (
-                {tx: {identities, config}, crypto, jwt},
+                {tx: {accounts, config}, crypto, jwt},
                 {email, code}
             ): Promise<VerifySignInCodeResponse> => {
-                const identity = await identities.getByEmail(email);
-                if (!identity) {
-                    throw new AppError('invalid email, no identity found');
+                const account = await accounts.getByEmail(email);
+                if (!account) {
+                    throw new AppError('invalid email, no account found');
                 }
 
-                if (await needsCooldown(identity)) {
+                if (await needsCooldown(account)) {
                     return {type: 'cooldown'};
                 }
 
-                if (identity.verificationCode === undefined) {
+                if (account.verificationCode === undefined) {
                     throw new AppError('verification code was not requested');
                 }
 
-                if (getNow() > identity.verificationCode.expires) {
+                if (getNow() > account.verificationCode.expires) {
                     return {type: 'code_expired'};
                 }
 
-                await identities.update(identity.id, x => {
+                await accounts.update(account.id, x => {
                     pushActivityLog(x);
                 });
 
-                if (code !== identity.verificationCode.code) {
+                if (code !== account.verificationCode.code) {
                     return {type: 'invalid_code'};
                 }
 
                 const verificationCode = await createVerificationCode(crypto);
-                await identities.update(identity.id, x => {
+                await accounts.update(account.id, x => {
                     x.verificationCode = verificationCode;
                 });
 
                 return {
                     type: 'success',
-                    token: await signJwtToken(jwt, identity, config.jwtSecret),
+                    token: await signJwtToken(jwt, account, config.jwtSecret),
                 };
             },
         }),
@@ -188,13 +188,13 @@ interface JwtPayload {
     iat: number;
 }
 
-async function needsCooldown(identity: Identity): Promise<boolean> {
+async function needsCooldown(account: Account): Promise<boolean> {
     const cutoff = addHours(getNow(), -AUTH_ACTIVITY_WINDOW_HOURS);
-    const actions = identity.authActivityLog.filter(x => x > cutoff);
+    const actions = account.authActivityLog.filter(x => x > cutoff);
     return actions.length >= AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT;
 }
 
-function pushActivityLog(x: Identity) {
+function pushActivityLog(x: Account) {
     x.authActivityLog.push(getNow());
     if (x.authActivityLog.length > AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT) {
         x.authActivityLog = x.authActivityLog.slice(
@@ -205,7 +205,7 @@ function pushActivityLog(x: Identity) {
 
 export async function signJwtToken(
     jwt: JwtService,
-    identity: Identity,
+    account: Account,
     jwtSecret: string
 ) {
     const now = new Date();
@@ -214,8 +214,8 @@ export async function signJwtToken(
 
     return await jwt.sign(
         {
-            sub: identity.id.toString(),
-            uid: identity.userId,
+            sub: account.id.toString(),
+            uid: account.userId,
             exp: Math.trunc(exp.getTime() / 1000),
             iat: Math.trunc(now.getDate() / 1000),
         } satisfies JwtPayload,
@@ -225,25 +225,25 @@ export async function signJwtToken(
 
 export const DEFAULT_BOARD_NAME = 'My First Board';
 
-export async function getIdentity(params: {
-    identities: IdentityRepo;
+export async function getAccount(params: {
+    accounts: AccountRepo;
     users: UserRepo;
     email: string;
     crypto: CryptoService;
     fullName: string | undefined;
     boardService: BoardService;
-}): Promise<Identity> {
-    const existingIdentity = await params.identities.getByEmail(params.email);
-    if (existingIdentity) {
-        return existingIdentity;
+}): Promise<Account> {
+    const existingAccount = await params.accounts.getByEmail(params.email);
+    if (existingAccount) {
+        return existingAccount;
     }
 
     const now = getNow();
     const userId = createUserId();
 
-    const [identity] = await whenAll([
-        params.identities.create({
-            id: createIdentityId(),
+    const [account] = await whenAll([
+        params.accounts.create({
+            id: createAccountId(),
             createdAt: now,
             updatedAt: now,
             email: params.email,
@@ -262,8 +262,8 @@ export async function getIdentity(params: {
         }),
     ]);
 
-    // we can't call createBoard in parallel to identity creation, because createBoard fetches
-    // author info from the identity. we need to ensure that the identity is created first.
+    // we can't call createBoard in parallel to account creation, because createBoard fetches
+    // author info from the account. we need to ensure that the account is created first.
     await params.boardService.createBoard({
         authorId: userId,
         name: DEFAULT_BOARD_NAME,
@@ -271,5 +271,5 @@ export async function getIdentity(params: {
         members: [],
     });
 
-    return identity;
+    return account;
 }

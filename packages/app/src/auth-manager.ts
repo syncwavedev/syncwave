@@ -15,7 +15,7 @@ function parseJwt(token: string): unknown {
 	return JSON.parse(jsonPayload);
 }
 
-export interface IdentityInfo {
+export interface TokenInfo {
 	userId: UserId;
 }
 
@@ -26,7 +26,7 @@ export class AuthManager {
 	 * Checks if the user is authorized by verifying the presence of a valid JWT token.
 	 */
 	get authorized(): boolean {
-		return this.getIdentityInfo() !== undefined;
+		return this.getTokenInfo() !== undefined;
 	}
 
 	/**
@@ -39,19 +39,19 @@ export class AuthManager {
 
 	/**
 	 * Ensures the user is authorized. Throws an error if not.
-	 * @returns The identity information if authorized.
+	 * @returns The token information if authorized.
 	 */
-	ensureAuthorized(): IdentityInfo {
-		const identity = this.getIdentityInfo();
-		assert(identity !== undefined, 'user is not authorized');
-		return identity;
+	ensureAuthorized(): TokenInfo {
+		const tokenInfo = this.getTokenInfo();
+		assert(tokenInfo !== undefined, 'user is not authorized');
+		return tokenInfo;
 	}
 
 	/**
-	 * Retrieves the identity information from the JWT token.
-	 * @returns The identity information if the token is valid, otherwise undefined.
+	 * Retrieves the token information from the JWT token.
+	 * @returns The token information if the token is valid, otherwise undefined.
 	 */
-	getIdentityInfo(): IdentityInfo | undefined {
+	getTokenInfo(): TokenInfo | undefined {
 		const token = this.getJwt();
 		if (!token) {
 			return undefined;

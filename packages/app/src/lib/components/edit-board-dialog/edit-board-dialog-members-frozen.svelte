@@ -88,7 +88,10 @@
 
 <div class="h-dialog flex flex-col">
 	<div class="shrink-0">
-		<form onsubmit={addMember} class="my-2 flex h-[2.5em] items-center px-4">
+		<form
+			onsubmit={addMember}
+			class="my-2 flex h-[2.5em] items-center px-4"
+		>
 			<button type="button" onclick={onBack} class="btn--icon">
 				<ArrowLeftIcon />
 			</button>
@@ -109,19 +112,23 @@
 		<ScrollArea orientation="both" class="h-full">
 			<div class="mx-2 my-2 flex flex-col">
 				{#each members as member (member.id)}
-					{@const removeDisabledReason = getRemoveDisabledReason(member)}
+					{@const removeDisabledReason =
+						getRemoveDisabledReason(member)}
 					<div class="flex items-center p-2">
 						<button class="btn text-[2em]">
 							<Avatar user={{fullName: 'A'} as any} />
 						</button>
 						<span class="ml-1.5 text-xs">
-							{member.identity?.email ?? member.user.fullName}
+							{member.account?.email ?? member.user.fullName}
 						</span>
 						<span class="text-second mr-1.5 ml-auto text-xs">
 							{member.role}
 						</span>
 						{#if removeDisabledReason === undefined}
-							<button onclick={() => removeMember(member.id)} class="btn--icon">
+							<button
+								onclick={() => removeMember(member.id)}
+								class="btn--icon"
+							>
 								<TimesIcon />
 							</button>
 						{:else}

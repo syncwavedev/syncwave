@@ -85,13 +85,13 @@ export function createReadApi() {
                         return await state.transact(principal, async tx => {
                             const user = await toUserDto(tx, userId);
                             assert(user !== undefined, 'getMe: user not found');
-                            const identity =
-                                await tx.identities.getByUserId(userId);
+                            const account =
+                                await tx.accounts.getByUserId(userId);
                             assert(
-                                identity !== undefined,
-                                'getMe: identity not found'
+                                account !== undefined,
+                                'getMe: account not found'
                             );
-                            return {user, identity};
+                            return {user, account};
                         });
                     },
                     update$: state.esReader
@@ -468,15 +468,13 @@ export function createReadApi() {
                                 );
                                 return user;
                             }),
-                            tx.identities
-                                .getByUserId(profileId)
-                                .then(identity => {
-                                    assert(
-                                        identity !== undefined,
-                                        `identity for user ${profileId} not found`
-                                    );
-                                    return identity;
-                                }),
+                            tx.accounts.getByUserId(profileId).then(account => {
+                                assert(
+                                    account !== undefined,
+                                    `account for user ${profileId} not found`
+                                );
+                                return account;
+                            }),
                             tx.members
                                 .getByUserId(profileId, false)
                                 .mapParallel(member =>

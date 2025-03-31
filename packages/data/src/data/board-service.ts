@@ -1,34 +1,34 @@
-import {getIdentity} from '../coordinator/auth-api.js';
+import {getAccount} from '../coordinator/auth-api.js';
 import {getNow} from '../timestamp.js';
 import {whenAll} from '../utils.js';
 import type {CryptoService} from './infrastructure.js';
+import type {AccountRepo} from './repos/account-repo.js';
 import {
     createBoardId,
     type Board,
     type BoardId,
     type BoardRepo,
 } from './repos/board-repo.js';
-import type {IdentityRepo} from './repos/identity-repo.js';
 import {createMemberId, MemberRepo} from './repos/member-repo.js';
 import type {UserId, UserRepo} from './repos/user-repo.js';
 
 export class BoardService {
     private readonly boards: BoardRepo;
     private readonly members: MemberRepo;
-    private readonly identities: IdentityRepo;
+    private readonly accounts: AccountRepo;
     private readonly users: UserRepo;
     private readonly crypto: CryptoService;
 
     constructor(params: {
         boards: BoardRepo;
         members: MemberRepo;
-        identities: IdentityRepo;
+        accounts: AccountRepo;
         users: UserRepo;
         crypto: CryptoService;
     }) {
         this.boards = params.boards;
         this.members = params.members;
-        this.identities = params.identities;
+        this.accounts = params.accounts;
         this.users = params.users;
         this.crypto = params.crypto;
     }
@@ -65,8 +65,8 @@ export class BoardService {
                 version: '2',
             }),
             ...params.members.map(async member => {
-                const identity = await getIdentity({
-                    identities: this.identities,
+                const account = await getAccount({
+                    accounts: this.accounts,
                     crypto: this.crypto,
                     email: member,
                     fullName: undefined,
@@ -75,7 +75,7 @@ export class BoardService {
                 });
 
                 // user is trying to add themselves as a member
-                if (identity.userId === params.authorId) {
+                if (account.userId === params.authorId) {
                     return;
                 }
 
@@ -87,7 +87,7 @@ export class BoardService {
                     position: Math.random(),
                     role: 'writer',
                     updatedAt: now,
-                    userId: identity.userId,
+                    userId: account.userId,
                     version: '2',
                 });
             }),

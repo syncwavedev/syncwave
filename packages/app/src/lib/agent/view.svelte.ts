@@ -5,6 +5,7 @@ import {
 	Awareness,
 	compareNumbers,
 	uniqBy,
+	type Account,
 	type AwarenessState,
 	type Board,
 	type BoardViewDataDto,
@@ -12,7 +13,6 @@ import {
 	type CardId,
 	type Column,
 	type ColumnId,
-	type Identity,
 	type MeViewDataDto,
 	type Timestamp,
 	type User,
@@ -36,11 +36,11 @@ function lateInit(): any {
 
 export class MeView {
 	private _profileState: State<User> = $state.raw(lateInit());
-	private _accountState: State<Identity> = $state.raw(lateInit());
+	private _accountState: State<Account> = $state.raw(lateInit());
 	private _boardStates: Array<State<Board>> = $state.raw(lateInit());
 
 	profile: UserView = $derived(new UserView(this._profileState.value));
-	account: Identity = $derived(this._accountState.value);
+	account: Account = $derived(this._accountState.value);
 
 	boards: Board[] = $derived(this._boardStates.map(x => x.value));
 
@@ -56,7 +56,7 @@ export class MeView {
 		this._accountState = derivator.view({
 			state: me.account.state,
 			id: me.account.id,
-			type: 'identity',
+			type: 'account',
 			isDraft: false,
 		});
 		this._profileState = derivator.view({

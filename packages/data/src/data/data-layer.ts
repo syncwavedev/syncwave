@@ -17,6 +17,11 @@ import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import type {CryptoService} from './infrastructure.js';
 import {PermissionService} from './permission-service.js';
 import {
+    type Account,
+    type AccountId,
+    AccountRepo,
+} from './repos/account-repo.js';
+import {
     type Attachment,
     type AttachmentId,
     AttachmentRepo,
@@ -24,11 +29,6 @@ import {
 import {type Board, type BoardId, BoardRepo} from './repos/board-repo.js';
 import {type Card, type CardId, CardRepo} from './repos/card-repo.js';
 import {type Column, type ColumnId, ColumnRepo} from './repos/column-repo.js';
-import {
-    type Identity,
-    type IdentityId,
-    IdentityRepo,
-} from './repos/identity-repo.js';
 import {type Member, type MemberId, MemberRepo} from './repos/member-repo.js';
 import {
     type Message,
@@ -50,7 +50,7 @@ export interface DataTx {
     readonly columns: ColumnRepo;
     readonly messages: MessageRepo;
     readonly attachments: AttachmentRepo;
-    readonly identities: IdentityRepo;
+    readonly accounts: AccountRepo;
     readonly config: Config;
     readonly tx: AppTransaction;
     readonly events: CollectionManager<ChangeEvent>;
@@ -109,12 +109,12 @@ export function zCardChangeEvent() {
 export interface CardChangeEvent
     extends Static<ReturnType<typeof zCardChangeEvent>> {}
 
-export function zIdentityChangeEvent() {
-    return zBaseChangeEvent<'identity', IdentityId, Identity>('identity');
+export function zAccountChangeEvent() {
+    return zBaseChangeEvent<'account', AccountId, Account>('account');
 }
 
-export interface IdentityChangeEvent
-    extends Static<ReturnType<typeof zIdentityChangeEvent>> {}
+export interface AccountChangeEvent
+    extends Static<ReturnType<typeof zAccountChangeEvent>> {}
 
 export function zColumnChangeEvent() {
     return zBaseChangeEvent<'column', ColumnId, Column>('column');
@@ -145,7 +145,7 @@ export function zChangeEvent() {
         zMemberChangeEvent(),
         zBoardChangeEvent(),
         zCardChangeEvent(),
-        zIdentityChangeEvent(),
+        zAccountChangeEvent(),
         zColumnChangeEvent(),
         zMessageChangeEvent(),
         zAttachmentChangeEvent(),
@@ -181,7 +181,7 @@ export class DataLayer {
             fn =>
                 this.transact(
                     {
-                        identityId: undefined,
+                        accountId: undefined,
                         superadmin: false,
                         userId: undefined,
                     },
@@ -215,10 +215,10 @@ export class DataLayer {
                 onChange: options => logUserChange(dataTx, options),
                 scheduleTrigger,
             });
-            const identities = new IdentityRepo({
+            const accounts = new AccountRepo({
                 tx: isolate(['identities'])(tx),
                 userRepo: users,
-                onChange: options => logIdentityChange(dataTx, options),
+                onChange: options => logAccountChange(dataTx, options),
                 scheduleTrigger,
             });
             const boards = new BoardRepo({
@@ -284,7 +284,7 @@ export class DataLayer {
             const boardService = new BoardService({
                 boards,
                 crypto: this.crypto,
-                identities,
+                accounts,
                 members,
                 users,
             });
@@ -298,7 +298,7 @@ export class DataLayer {
                 attachments,
                 messages,
                 events,
-                identities,
+                accounts,
                 esWriter,
                 users,
                 members,
@@ -361,22 +361,19 @@ export function boardEvents(boardId: BoardId) {
     return `boards-${boardId}`;
 }
 
-async function logIdentityChange(
+async function logAccountChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<Identity>
+    {pk: [id], diff, kind}: ChangeOptions<Account>
 ) {
-    const identity = await tx.identities.getById(id);
-    assert(
-        identity !== undefined,
-        `logIdentityChange: identity ${id} not found`
-    );
+    const account = await tx.accounts.getById(id);
+    assert(account !== undefined, `logAccountChange: account ${id} not found`);
     const members = await tx.members
-        .getByUserId(identity.userId, true)
+        .getByUserId(account.userId, true)
         .toArray();
     const ts = getNow();
-    const event: IdentityChangeEvent = {type: 'identity', id, diff, ts, kind};
+    const event: AccountChangeEvent = {type: 'account', id, diff, ts, kind};
     await whenAll([
-        tx.esWriter.append(userEvents(identity.userId), event),
+        tx.esWriter.append(userEvents(account.userId), event),
         ...members.map(member =>
             tx.esWriter.append(boardEvents(member.boardId), event)
         ),

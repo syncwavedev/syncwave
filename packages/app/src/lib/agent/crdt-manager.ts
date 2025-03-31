@@ -82,8 +82,8 @@ class DiffSender<T> {
 			});
 		} else if (this.entity.type === 'attachment') {
 			throw new Error('Attachment diff not supported');
-		} else if (this.entity.type === 'identity') {
-			throw new Error('Identity diff not supported');
+		} else if (this.entity.type === 'account') {
+			throw new Error('Account diff not supported');
 		} else if (this.entity.type === 'member') {
 			throw new Error('Member diff not supported');
 		} else if (this.entity.type === 'message') {

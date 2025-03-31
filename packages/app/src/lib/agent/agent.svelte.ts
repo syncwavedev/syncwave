@@ -475,7 +475,7 @@ export class Agent {
 				event.type === 'board' ||
 				event.type === 'attachment' ||
 				event.type === 'message' ||
-				event.type === 'identity' ||
+				event.type === 'account' ||
 				event.type === 'member'
 			) {
 				// do nothing

@@ -1,6 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {encodeBase64, zBase64} from '../base64.js';
-import {getIdentity} from '../coordinator/auth-api.js';
+import {getAccount} from '../coordinator/auth-api.js';
 import {Crdt, zCrdtDiff} from '../crdt/crdt.js';
 import {createRichtext} from '../crdt/richtext.js';
 import {BusinessError} from '../errors.js';
@@ -275,16 +275,16 @@ export function createWriteApi() {
             handle: async (st, {boardId, email, role}) => {
                 await st.ps.ensureCanManage(boardId, role);
 
-                const identity = await getIdentity({
+                const account = await getAccount({
                     email,
                     crypto: st.crypto,
                     fullName: undefined,
-                    identities: st.tx.identities,
+                    accounts: st.tx.accounts,
                     users: st.tx.users,
                     boardService: st.tx.boardService,
                 });
 
-                if (!identity) {
+                if (!account) {
                     throw new BusinessError(
                         `user with email ${email} not found`,
                         'user_not_found'
@@ -295,7 +295,7 @@ export function createWriteApi() {
 
                 const existingMember =
                     await st.tx.members.getByUserIdAndBoardId(
-                        identity.userId,
+                        account.userId,
                         boardId,
                         true
                     );
@@ -318,7 +318,7 @@ export function createWriteApi() {
                     member = await st.tx.members.create({
                         id: createMemberId(),
                         boardId,
-                        userId: identity.userId,
+                        userId: account.userId,
                         createdAt: now,
                         updatedAt: now,
                         deleted: false,

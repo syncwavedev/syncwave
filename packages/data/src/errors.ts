@@ -48,7 +48,7 @@ export class CancelledError extends AppError {
 
 export type ErrorCode =
     | 'board_key_taken'
-    | 'identity_email_taken'
+    | 'account_email_taken'
     | 'forbidden'
     | 'not_authenticated'
     | 'board_change_key_not_supported'

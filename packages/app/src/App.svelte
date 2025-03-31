@@ -64,7 +64,7 @@
 		router.on('/', () => {
 			Page = Loading;
 
-			if (!authManager.getIdentityInfo()) {
+			if (!authManager.getTokenInfo()) {
 				router.route('/login', {replace: true});
 				return;
 			}

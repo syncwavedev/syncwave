@@ -9,7 +9,7 @@
 
 	const agent = getAgent();
 	const authManager = getAuthManager();
-	const userId = authManager.getIdentityInfo()?.userId;
+	const userId = authManager.getTokenInfo()?.userId;
 	if (!userId) {
 		throw new Error('User ID not found');
 	}

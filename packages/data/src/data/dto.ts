@@ -3,15 +3,11 @@ import {zCrdtDiff} from '../crdt/crdt.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type DataTx} from './data-layer.js';
+import {type Account, type AccountId, zAccount} from './repos/account-repo.js';
 import {type AttachmentId, zAttachment} from './repos/attachment-repo.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
 import {type Card, type CardId, zCard} from './repos/card-repo.js';
 import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
-import {
-    type Identity,
-    type IdentityId,
-    zIdentity,
-} from './repos/identity-repo.js';
 import {type Member, type MemberId, zMember} from './repos/member-repo.js';
 import {type Message, type MessageId, zMessage} from './repos/message-repo.js';
 import {type User, type UserId, zUser} from './repos/user-repo.js';
@@ -173,7 +169,7 @@ export function zMemberAdminDto() {
         Type.Object({
             user: zUserDto(),
             board: zBoardDto(),
-            identity: Type.Optional(zIdentityDto()),
+            account: Type.Optional(zAccountDto()),
         }),
     ]);
 }
@@ -189,13 +185,13 @@ export async function toMemberAdminDto(
     assert(member !== undefined, `toMemberDto: member not found: ${memberId}`);
     const user = await toUserDto(tx, member.userId);
     const board = await toBoardDto(tx, member.boardId);
-    const identity = await tx.identities.getByUserId(member.userId);
+    const account = await tx.accounts.getByUserId(member.userId);
 
     return {
         ...member,
         user,
         board,
-        identity: identity ? await toIdentityDto(tx, identity.id) : undefined,
+        account: account ? await toAccountDto(tx, account.id) : undefined,
     };
 }
 
@@ -217,29 +213,29 @@ export async function toUserDto(tx: DataTx, userId: UserId): Promise<UserDto> {
     return user;
 }
 
-export function zIdentityDto() {
+export function zAccountDto() {
     return Type.Composite([
-        zIdentity(),
+        zAccount(),
         Type.Object({
             zUser: zUserDto(),
         }),
     ]);
 }
 
-export interface IdentityDto extends Static<ReturnType<typeof zIdentityDto>> {}
+export interface AccountDto extends Static<ReturnType<typeof zAccountDto>> {}
 
-export async function toIdentityDto(
+export async function toAccountDto(
     tx: DataTx,
-    identityId: IdentityId
-): Promise<IdentityDto> {
-    const identity = await tx.identities.getById(identityId);
+    accountId: AccountId
+): Promise<AccountDto> {
+    const account = await tx.accounts.getById(accountId);
     assert(
-        identity !== undefined,
-        `toIdentityDto: identity not found: ${identityId}`
+        account !== undefined,
+        `toAccountDto: account not found: ${accountId}`
     );
-    const zUser = await toUserDto(tx, identity.userId);
+    const zUser = await toUserDto(tx, account.userId);
 
-    return {...identity, zUser};
+    return {...account, zUser};
 }
 
 export function zAttachmentDto() {
@@ -321,7 +317,7 @@ export async function toMessageDto(
 export function zMeDto() {
     return Type.Object({
         user: zUserDto(),
-        identity: zIdentity(),
+        account: zAccount(),
     });
 }
 
@@ -334,8 +330,8 @@ export function zMeViewDataDto() {
             state: zCrdtDiff<User>(),
         }),
         account: Type.Object({
-            id: Uuid<IdentityId>(),
-            state: zCrdtDiff<Identity>(),
+            id: Uuid<AccountId>(),
+            state: zCrdtDiff<Account>(),
         }),
         boards: Type.Array(
             Type.Object({

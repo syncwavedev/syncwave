@@ -13,7 +13,7 @@ import type {RpcMessage} from '../transport/rpc-message.js';
 import {RpcServer} from '../transport/rpc.js';
 import type {TransportServer} from '../transport/transport.js';
 import type {Tuple} from '../tuple.js';
-import {getIdentity, signJwtToken} from './auth-api.js';
+import {getAccount, signJwtToken} from './auth-api.js';
 import {
     createCoordinatorApi,
     type CoordinatorApiState,
@@ -93,10 +93,10 @@ export class CoordinatorServer {
         fullName: string;
     }): Promise<string> {
         return await this.dataLayer.transact(
-            {identityId: undefined, superadmin: false, userId: undefined},
+            {accountId: undefined, superadmin: false, userId: undefined},
             async tx => {
-                const identity = await getIdentity({
-                    identities: tx.identities,
+                const account = await getAccount({
+                    accounts: tx.accounts,
                     users: tx.users,
                     email: params.email,
                     crypto: this.options.crypto,
@@ -106,7 +106,7 @@ export class CoordinatorServer {
 
                 return signJwtToken(
                     this.options.jwt,
-                    identity,
+                    account,
                     this.options.jwtSecret
                 );
             }

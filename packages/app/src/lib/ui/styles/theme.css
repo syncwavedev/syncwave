@@ -74,14 +74,15 @@
 	--color-slate-600: oklch(52% 0.0075 246deg);
 	--color-slate-650: oklch(48% 0.008 246deg);
 	--color-slate-700: oklch(44% 0.0085 246deg);
-	--color-slate-750: oklch(40% 0.014 246deg);
-	--color-slate-790: oklch(36.8% 0.016 246deg);
-	--color-slate-800: oklch(36% 0.018 246deg);
-	--color-slate-820: oklch(34.4% 0.019 246deg);
-	--color-slate-850: oklch(32% 0.018 246deg);
-	--color-slate-880: oklch(29.6% 0.017 242deg);
-	--color-slate-900: oklch(28% 0.016 246deg);
-	--color-slate-910: oklch(27.2% 0.015 242deg);
+	--color-slate-750: oklch(40% 0.042 246deg);
+	--color-slate-790: oklch(36.8% 0.032 246deg);
+	--color-slate-800: oklch(36% 0.024 246deg);
+	--color-slate-830: oklch(33.6% 0.022 246deg);
+	--color-slate-850: oklch(32% 0.021 246deg);
+	--color-slate-860: oklch(31.2% 0.021 246deg);
+	--color-slate-890: oklch(28.8% 0.02 242deg);
+	--color-slate-900: oklch(28% 0.019 246deg);
+	--color-slate-920: oklch(26.4% 0.018 242deg);
 	--color-slate-950: oklch(24% 0.014 246deg);
 
 	/* Blue */
@@ -215,16 +216,16 @@
 		--theme-color-ink-danger: var(--color-red-350);
 
 		--theme-color-divider-subtle: var(--color-slate-880);
-		--theme-color-divider: var(--color-slate-850);
+		--theme-color-divider: var(--color-slate-800);
 		--theme-color-divider-object: var(--color-slate-750);
 
 		--theme-color-scrollbar: var(--color-slate-450);
 
-		--theme-color-subtle-0: var(--color-slate-910);
-		--theme-color-subtle-1: var(--color-slate-880);
-		--theme-color-subtle-2: var(--color-slate-850);
-		--theme-color-subtle-3: var(--color-slate-820);
-		--theme-color-subtle-4: var(--color-slate-790);
+		--theme-color-subtle-0: var(--color-slate-920);
+		--theme-color-subtle-1: var(--color-slate-890);
+		--theme-color-subtle-2: var(--color-slate-860);
+		--theme-color-subtle-3: var(--color-slate-830);
+		--theme-color-subtle-4: var(--color-slate-800);
 
 		--theme-color-subtle-active: var(--color-blue-850);
 		--theme-color-divider-active: var(--color-blue-750);

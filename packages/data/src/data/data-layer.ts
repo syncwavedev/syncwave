@@ -216,7 +216,7 @@ export class DataLayer {
                 scheduleTrigger,
             });
             const accounts = new AccountRepo({
-                tx: isolate(['identities'])(tx),
+                tx: isolate(['accounts'])(tx),
                 userRepo: users,
                 onChange: options => logAccountChange(dataTx, options),
                 scheduleTrigger,

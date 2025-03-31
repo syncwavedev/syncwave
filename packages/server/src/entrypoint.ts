@@ -111,7 +111,7 @@ async function getOptions(): Promise<Options> {
             : 'sqlite'
     );
     const logLevel = match(stage)
-        .with('local', () => 'debug' as const)
+        .with('local', () => 'info' as const)
         .with('dev', () => 'info' as const)
         .with('prod', () => 'info' as const)
         .with('self', () => 'info' as const)
@@ -216,10 +216,10 @@ async function getKvStore(
     };
 }
 
-async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
+async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
     const versionKey = ['version'];
     log.info('Retrieving KV store version...');
-    const version = await kvStore.transact(async tx => {
+    const version = await store.transact(async tx => {
         log.info('Running tx.get(versionKey)...');
         const version = await tx.get(versionKey);
         if (version) {
@@ -237,7 +237,7 @@ async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
 
     if (!version || version === 1) {
         log.info("KV store doesn't have a version, upgrading...");
-        await kvStore.transact(async tx => {
+        await store.transact(async tx => {
             const keys = await toStream(tx.query({gte: []}))
                 .map(entry => entry.key)
                 .toArray();
@@ -254,6 +254,52 @@ async function upgradeKVStore(kvStore: KvStore<Tuple, Uint8Array>) {
 
             log.info('Set KV store version to 1...');
             await tx.put(versionKey, encodeNumber(2));
+        });
+    }
+
+    if (version === 2) {
+        log.info('start upgrading KV store from version 2 to version 3...');
+        let processedEntries = 0;
+        let lastKey: Tuple = ['identities'];
+        while (true) {
+            log.info(
+                `Processing entries to upgrade from version 2 to version 3... (processed: ${processedEntries})`
+            );
+            const done = await store.transact(async tx => {
+                const entries = await toStream(tx.query({gt: lastKey}))
+                    .take(100)
+                    .filter(x => x.key[0] === 'identities')
+                    .toArray();
+
+                if (entries.length === 0) {
+                    return true;
+                }
+
+                lastKey = entries[entries.length - 1].key;
+                processedEntries += entries.length;
+
+                for (const {
+                    key: [, ...suffix],
+                    value,
+                } of entries) {
+                    await tx.put(['accounts', ...suffix], value);
+                }
+
+                return false;
+            });
+
+            if (done) {
+                break;
+            }
+        }
+
+        log.info(
+            `Finished upgrading KV store from version 2 to version 3. Processed ${processedEntries} entries.`
+        );
+
+        await store.transact(async tx => {
+            log.info('Setting KV store version to 3...');
+            await tx.put(versionKey, encodeNumber(3));
         });
     }
 }
@@ -397,6 +443,8 @@ if (cluster.isPrimary && options.launchCluster) {
         }
     }
 } else {
+    log.info(`Worker process ${process.pid} is running`);
+
     serverCtx
         .run(async () => {
             try {

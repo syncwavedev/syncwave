@@ -1,5 +1,5 @@
 .btn--icon {
-	@apply text-ink-body hover:bg-subtle-2 hover:dark:bg-subtle-1 hover:text-ink grid aspect-square h-[2em] w-[2em] cursor-pointer place-items-center rounded-full;
+	@apply text-ink-body hover:bg-subtle-1 hover:text-ink grid aspect-square h-[2em] w-[2em] cursor-pointer place-items-center rounded-full;
 
 	&.btn--icon--ink {
 		@apply bg-subtle-3 hover:bg-subtle-4 text-ink rounded-lg;
@@ -23,6 +23,6 @@
 }
 
 .btn--flat {
-	@apply h-[2em] px-[0.6em] rounded-md gap-1.5 flex items-center leading-none text-ink-body cursor-pointer
-	hover:bg-subtle-2 hover:text-ink hover:dark:bg-subtle-1;
+	@apply h-[1.8em] px-[0.5em] rounded-md gap-1.5 flex items-center leading-none text-ink-body cursor-pointer
+	hover:bg-subtle-1 hover:text-ink;
 }

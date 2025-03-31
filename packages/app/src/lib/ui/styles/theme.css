@@ -3,11 +3,11 @@
 @theme static {
 	--text-4xs: 0.6875rem; /* 11px */
 	--text-3xs: 0.75rem; /* 12px */
-	--text-2xs: 0.8125rem; /* 13px */
+	--text-2xs: 0.811rem; /* 13px */
 	--text-xs: 0.875rem; /* 14px */
 	--text-sm: 0.9375rem; /* 15px */
 	--text-base: 1rem; /* 16px */
-	--text-lg: 1.125rem; /* 18px */
+	--text-lg: 1.11rem; /* 18px */
 	--text-xl: 1.25rem; /* 20px */
 	--text-2xl: 1.5rem; /* 24px */
 	--text-3xl: 2rem; /* 32px */
@@ -35,28 +35,29 @@
 	--text-9xl--line-height: 0.95;
 
 	/* Gray */
-	--color-gray-25: oklch(98% 0 0deg);
-	--color-gray-50: oklch(96% 0 0deg);
-	--color-gray-75: oklch(94% 0 0deg);
-	--color-gray-100: oklch(92% 0 0deg);
-	--color-gray-125: oklch(90% 0 0deg);
-	--color-gray-150: oklch(88% 0 0deg);
-	--color-gray-200: oklch(84% 0.012 276deg);
-	--color-gray-250: oklch(80% 0.0135 276deg);
-	--color-gray-300: oklch(76% 0.015 276deg);
-	--color-gray-350: oklch(72% 0.0165 276deg);
-	--color-gray-400: oklch(68% 0.018 276deg);
-	--color-gray-450: oklch(64% 0.0195 276deg);
-	--color-gray-500: oklch(60% 0.021 276deg);
-	--color-gray-550: oklch(56% 0.022 276deg);
-	--color-gray-600: oklch(52% 0.023 276deg);
-	--color-gray-650: oklch(48% 0.024 276deg);
-	--color-gray-700: oklch(44% 0.025 276deg);
-	--color-gray-750: oklch(40% 0.026 276deg);
-	--color-gray-800: oklch(36% 0.027 276deg);
-	--color-gray-850: oklch(32% 0.028 276deg);
-	--color-gray-900: oklch(28% 0.029 276deg);
-	--color-gray-950: oklch(24% 0.03 276deg);
+	--color-gray-30: oklch(97.2% 0.002 110deg);
+	--color-gray-50: oklch(96% 0.0015 110deg);
+	--color-gray-70: oklch(94.4% 0.001 110deg);
+	--color-gray-90: oklch(92.8% 0.0005 110deg);
+	--color-gray-100: oklch(92% 0 110deg);
+	--color-gray-110: oklch(90% 0 110deg);
+	--color-gray-150: oklch(88% 0 110deg);
+	--color-gray-200: oklch(84% 0 110deg);
+	--color-gray-250: oklch(80% 0 110deg);
+	--color-gray-300: oklch(76% 0 110deg);
+	--color-gray-350: oklch(72% 0 110deg);
+	--color-gray-400: oklch(68% 0 110deg);
+	--color-gray-450: oklch(64% 0 110deg);
+	--color-gray-500: oklch(60% 0 110deg);
+	--color-gray-550: oklch(56% 0 110deg);
+	--color-gray-600: oklch(52% 0 110deg);
+	--color-gray-650: oklch(48% 0 110deg);
+	--color-gray-700: oklch(44% 0 110deg);
+	--color-gray-750: oklch(40% 0 110deg);
+	--color-gray-800: oklch(36% 0 110deg);
+	--color-gray-850: oklch(32% 0 110deg);
+	--color-gray-900: oklch(28% 0 110deg);
+	--color-gray-950: oklch(24% 0 110deg);
 
 	/* Slate */
 	--color-slate-50: oklch(96% 0.002 246deg);
@@ -137,7 +138,7 @@
 	--color-green-450: oklch(64% 0.175 151deg);
 	--color-green-500: oklch(60% 0.155 151deg);
 	--color-green-550: oklch(56% 0.14 151deg);
-	--color-green-600: oklch(52% 0.125 151deg);
+	--color-green-600: oklch(52% 0.11 151deg);
 	--color-green-650: oklch(48% 0.11 151deg);
 	--color-green-700: oklch(44% 0.095 151deg);
 	--color-green-750: oklch(40% 0.08 151deg);
@@ -181,7 +182,7 @@
 
 @layer base {
 	[data-theme='light'] {
-		--theme-color-ink: var(--color-gray-850);
+		--theme-color-ink: var(--color-gray-950);
 		--theme-color-ink-body: var(--color-gray-600);
 		--theme-color-ink-detail: var(--color-gray-500);
 		--theme-color-ink-placeholder: var(--color-gray-350);
@@ -190,16 +191,16 @@
 		--theme-color-ink-danger: var(--color-red-450);
 
 		--theme-color-divider-subtle: var(--color-gray-50);
-		--theme-color-divider: var(--color-gray-100);
-		--theme-color-divider-object: var(--color-gray-125);
+		--theme-color-divider: var(--color-gray-110);
+		--theme-color-divider-object: var(--color-gray-150);
 
 		--theme-color-scrollbar: var(--color-gray-350);
 
 		--theme-color-subtle-0: var(--color-white);
-		--theme-color-subtle-1: var(--color-gray-25);
+		--theme-color-subtle-1: var(--color-gray-30);
 		--theme-color-subtle-2: var(--color-gray-50);
-		--theme-color-subtle-3: var(--color-gray-75);
-		--theme-color-subtle-4: var(--color-gray-100);
+		--theme-color-subtle-3: var(--color-gray-70);
+		--theme-color-subtle-4: var(--color-gray-90);
 
 		--theme-color-subtle-active: var(--color-blue-100);
 		--theme-color-divider-active: var(--color-blue-200);
@@ -246,7 +247,7 @@
 		display: inline-flex;
 		width: 1em;
 		height: 1em;
-		vertical-align: -0.125em;
+		vertical-align: -0.11em;
 		flex-shrink: 0;
 	}
 }

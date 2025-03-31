@@ -228,10 +228,10 @@
 </script>
 
 <main class="flex h-screen w-full">
-	<div class="dark:bg-subtle-0 bg-subtle-1 flex min-w-0 grow flex-col">
-		<div class="dark:bg-subtle-0 px-4">
+	<div class="bg-subtle-0 flex min-w-0 grow flex-col">
+		<div class="bg-subtle-0 px-4">
 			<div class="my-1 flex items-center">
-				<div class="text-xs leading-none font-medium">{board.name}</div>
+				<div class="text-xs leading-none font-semibold">{board.name}</div>
 				{#if board.onlineMembers.length > 0}
 					<div class="text-2xs text-ink-detail ml-auto">
 						online: {board.onlineMembers

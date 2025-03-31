@@ -51,13 +51,13 @@
 </script>
 
 <div
-	class="border-divider bg-subtle-1 dark:bg-subtle-0 z-10 flex w-124 min-w-84 flex-shrink-0 flex-col border-l"
+	class="border-divider bg-subtle-0 z-10 flex w-124 min-w-84 flex-shrink-0 flex-col border-l"
 >
 	<!-- Scrollable Content Section -->
 	<div class="flex-grow overflow-y-auto">
 		<!-- Header with Context Menu -->
 		<div
-			class="bg-subtle-1 dark:bg-subtle-0 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
+			class="bg-subtle-0 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
 		>
 			<div class="text-xs flex items-baseline gap-1">
 				{#if card.isDraft}
@@ -115,7 +115,7 @@
 		<!-- Task Description -->
 		<div class="mx-2">
 			<div
-				class="input w-full text-xs leading-relaxed focus-within:bg-subtle-2 py-1 px-2 rounded-sm transition-colors duration-150"
+				class="input w-full text-xs leading-relaxed focus-within:bg-subtle-1 py-1 px-2 rounded-sm transition-colors duration-150"
 			>
 				<Editor
 					bind:this={editor}
@@ -127,7 +127,7 @@
 				/>
 			</div>
 		</div>
-		<hr class="mt-2 mb-1" />
+		<hr class="mt-2 mb-2" />
 		<!-- Task Actions -->
 		<div class="mx-2">
 			<div class="flex">
@@ -155,7 +155,7 @@
 					</button>
 				</Select>
 			</div>
-			<hr class="-mx-4 mt-1 mb-2" />
+			<hr class="-mx-4 mt-2 mb-2" />
 		</div>
 	</div>
 </div>

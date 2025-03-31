@@ -91,8 +91,7 @@
 		tabindex="0"
 		data-active={active || undefined}
 		class="
-        bg-subtle-0
-        dark:bg-subtle-1
+        bg-subtle-1
         hover:bg-subtle-2
         group
         data-active:border-divider-active
@@ -102,7 +101,7 @@
         items-end
         gap-1
         rounded-md
-        border-divider-subtle
+        border-subtle-1
         p-2
         select-none
         text-xs

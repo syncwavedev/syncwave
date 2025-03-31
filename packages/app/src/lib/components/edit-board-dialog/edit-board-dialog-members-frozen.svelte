@@ -11,7 +11,7 @@
 		type MemberId,
 		type UserId,
 	} from 'syncwave';
-	import {getMe, getRpc, markErrorAsHandled} from '../../utils';
+	import {getRpc, markErrorAsHandled} from '../../utils';
 	import ScrollArea from '../scroll-area.svelte';
 
 	interface Props {

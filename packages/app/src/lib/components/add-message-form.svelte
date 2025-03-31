@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {getMe, getRpc, getUploadManager, showErrorToast} from '../utils';
+	import {getRpc, getUploadManager, showErrorToast} from '../utils';
 	import {
 		Crdt,
 		createMessageId,

@@ -1,4 +1,5 @@
 import {Type, type Static} from '@sinclair/typebox';
+import {AWARENESS_OFFLINE_TIMEOUT_MS} from './constants.js';
 import {type UserId} from './data/repos/user-repo.js';
 import type {Entry} from './kv/kv-store.js';
 import {getNow} from './timestamp.js';
@@ -70,8 +71,6 @@ function toEvent(
     };
 }
 
-export const OUTDATED_TIMEOUT = 30000;
-
 export class Awareness {
     private handlers: AwarenessHandler[] = [];
     private readonly states = new Map<number, MetaAwarenessState>();
@@ -83,17 +82,13 @@ export class Awareness {
     }
 
     constructor(public clientId: number) {
-        this.init(clientId);
+        this.clientId = clientId;
+        this.setLocalState({});
 
         this.checkInterval = setInterval(
             this.periodicCheck.bind(this),
-            Math.ceil(OUTDATED_TIMEOUT / 10)
+            Math.ceil(AWARENESS_OFFLINE_TIMEOUT_MS / 10)
         );
-    }
-
-    init(clientId: number) {
-        this.clientId = clientId;
-        this.setLocalState({});
     }
 
     destroy(): void {
@@ -122,7 +117,7 @@ export class Awareness {
     }
 
     getLocalState(): AwarenessState {
-        return this.states.get(this.clientId)?.state ?? {};
+        return this.states.get(this.clientId)!.state;
     }
 
     setLocalStateField<K extends keyof AwarenessState>(
@@ -194,7 +189,7 @@ export class Awareness {
         assert(local !== undefined, 'Awareness.check: local state not found');
         if (
             local.state !== null &&
-            now - local.lastUpdated >= OUTDATED_TIMEOUT / 2
+            now - local.lastUpdated >= AWARENESS_OFFLINE_TIMEOUT_MS / 2
         ) {
             // renew local: force server to send the changed state to all peers
             this.setLocalStateField('__trigger', createUuidV4());
@@ -203,7 +198,7 @@ export class Awareness {
         this.states.forEach((meta, clientId) => {
             if (
                 clientId !== this.clientId &&
-                OUTDATED_TIMEOUT <= now - meta.lastUpdated &&
+                AWARENESS_OFFLINE_TIMEOUT_MS <= now - meta.lastUpdated &&
                 this.states.has(clientId)
             ) {
                 this.setState(clientId, null, 'timeout');

@@ -1,5 +1,6 @@
 import type {AwarenessState} from '../awareness.js';
-import {MsgpackCodec} from '../codec.js';
+import {MsgpackCodec, NumberCodec} from '../codec.js';
+import {AWARENESS_OFFLINE_TIMEOUT_MS} from '../constants.js';
 import {AppError} from '../errors.js';
 import {
     isolate,
@@ -9,6 +10,7 @@ import {
     type Transaction,
 } from '../kv/kv-store.js';
 import {toStream} from '../stream.js';
+import {getNow, type Timestamp} from '../timestamp.js';
 import {NumberPacker} from '../tuple.js';
 import {assert, pipe, whenAll} from '../utils.js';
 import {type UserId} from './repos/user-repo.js';
@@ -77,6 +79,7 @@ export interface AwarenessStateEntry {
 
 class AwarenessRoom {
     private readonly states: Transaction<number, AwarenessState>;
+    private readonly updatedAt: Transaction<number, Timestamp>;
     private readonly owners: Transaction<number, UserId>;
     constructor(tx: AppTransaction) {
         this.states = pipe(
@@ -91,11 +94,18 @@ class AwarenessRoom {
             withPacker(new NumberPacker()),
             withCodec(new MsgpackCodec())
         );
+        this.updatedAt = pipe(
+            tx,
+            isolate(['updatedAt_1']),
+            withPacker(new NumberPacker()),
+            withCodec<Timestamp>(new NumberCodec<Timestamp>())
+        );
     }
 
     async put(userId: UserId, clientId: number, state: AwarenessState) {
         await whenAll([
             this.states.put(clientId, state),
+            this.updatedAt.put(clientId, getNow()),
             this.owners.get(clientId).then(async ownerId => {
                 if (ownerId === undefined) {
                     await this.owners.put(clientId, userId);
@@ -113,29 +123,51 @@ class AwarenessRoom {
     async offline(clientId: number) {
         await whenAll([
             this.states.delete(clientId),
+            this.updatedAt.delete(clientId),
             this.owners.delete(clientId),
         ]);
     }
 
     async getAll(): Promise<AwarenessStateEntry[]> {
-        const [owners, states] = await whenAll([
+        const [owners, updatedAtInfo, states] = await whenAll([
             toStream(this.owners.query({gte: 0})).toArray(),
+            toStream(this.updatedAt.query({gte: 0})).toArray(),
             toStream(this.states.query({gte: 0})).toArray(),
         ]);
 
-        return states.map(({key: clientId, value}): AwarenessStateEntry => {
-            const ownerId = owners.find(o => o.key === clientId)?.value;
+        const offlineIds: number[] = [];
 
-            assert(
-                ownerId !== undefined,
-                'AwarenessStore.getAll: meta not found for client ' + clientId
-            );
+        const result = states.flatMap(
+            ({key: clientId, value}): AwarenessStateEntry[] => {
+                const ownerId = owners.find(o => o.key === clientId)?.value;
+                const updatedAt =
+                    updatedAtInfo.find(u => u.key === clientId)?.value ?? -1;
 
-            return {
-                clientId,
-                state: value,
-                userId: ownerId,
-            };
-        });
+                assert(
+                    ownerId !== undefined,
+                    'AwarenessStore.getAll: meta not found for client ' +
+                        clientId
+                );
+
+                if (getNow() - updatedAt >= AWARENESS_OFFLINE_TIMEOUT_MS) {
+                    offlineIds.push(clientId);
+                    return [];
+                }
+
+                return [
+                    {
+                        clientId,
+                        state: value,
+                        userId: ownerId,
+                    },
+                ];
+            }
+        );
+
+        if (offlineIds.length > 0) {
+            await whenAll(offlineIds.map(clientId => this.offline(clientId)));
+        }
+
+        return result;
     }
 }

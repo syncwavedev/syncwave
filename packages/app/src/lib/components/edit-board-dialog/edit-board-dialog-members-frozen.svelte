@@ -9,6 +9,7 @@
 		type BoardId,
 		type MemberAdminDto,
 		type MemberId,
+		type UserId,
 	} from 'syncwave';
 	import {getMe, getRpc, markErrorAsHandled} from '../../utils';
 	import ScrollArea from '../scroll-area.svelte';
@@ -18,9 +19,10 @@
 		onClose: () => void;
 		boardId: BoardId;
 		members: MemberAdminDto[];
+		meId: UserId;
 	}
 
-	let {onBack, onClose, members, boardId}: Props = $props();
+	let {onBack, onClose, members, boardId, meId}: Props = $props();
 
 	let email = $state('');
 
@@ -62,8 +64,7 @@
 		}
 	}
 
-	const me = getMe();
-	const meMemberOptional = members.find(x => x.userId === me.value.user.id);
+	const meMemberOptional = members.find(x => x.userId === meId);
 	assert(meMemberOptional !== undefined, 'Me member not found');
 	const meMember = meMemberOptional;
 

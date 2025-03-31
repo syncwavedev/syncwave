@@ -252,6 +252,7 @@
 					<EllipsisIcon />
 				</button>
 				<EditBoardDialog
+					meId={me.profile.id}
 					{board}
 					open={editBoardOpen}
 					onClose={() => {

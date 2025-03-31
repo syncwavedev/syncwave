@@ -4,13 +4,15 @@
 	import EditBoardDialogFrozenMembers from './edit-board-dialog-members-frozen.svelte';
 	import {observeAsync} from '../../utils.svelte';
 	import type {BoardTreeView} from '../../agent/view.svelte';
+	import type {UserId} from 'syncwave';
 
 	interface Props {
 		board: BoardTreeView;
+		meId: UserId;
 		onClose: () => void;
 	}
 
-	let {board, onClose}: Props = $props();
+	let {board, onClose, meId}: Props = $props();
 
 	type Route = 'main' | 'members' | 'columns';
 
@@ -35,6 +37,7 @@
 		Loading...
 	{:then members}
 		<EditBoardDialogFrozenMembers
+			{meId}
 			boardId={board.id}
 			members={members.value}
 			onBack={() => (route = 'main')}

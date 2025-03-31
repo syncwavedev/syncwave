@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {getMe, getRpc, getUploadManager, showErrorToast} from '$lib/utils';
+	import {getMe, getRpc, getUploadManager, showErrorToast} from '../utils';
 	import {
 		Crdt,
 		createMessageId,
@@ -18,7 +18,7 @@
 	import UploadButton from './upload-button.svelte';
 	import AttachmentPreview from './attachment-preview.svelte';
 	import SpinnerIcon from './icons/spinner-icon.svelte';
-	import {yFragmentToPlaintext} from '$lib/richtext';
+	import {yFragmentToPlaintext} from '../richtext';
 
 	interface Props {
 		cardId: CardId;
@@ -147,6 +147,7 @@
 	</UploadButton>
 	<div class="flex-1">
 		<Editor
+			me={me.value.user}
 			bind:this={editorRef}
 			onEnter={sendMessage}
 			{fragment}

@@ -12,6 +12,7 @@ import {
 	type ChangeEvent,
 	type CoordinatorRpc,
 	type CrdtDiff,
+	type DiffOptions,
 	type Recipe,
 	type Unsubscribe,
 } from 'syncwave';
@@ -40,6 +41,7 @@ class DiffSender<T> {
 		this.batchProcessor = new BatchProcessor({
 			state: this.entity.isDraft ? {type: 'idle'} : {type: 'running'},
 			process: this.process.bind(this),
+			enqueueDelay: 10,
 		});
 	}
 
@@ -227,7 +229,7 @@ export class CrdtManager implements CrdtDerivator {
 
 		return {
 			sender,
-			close: entity.crdt.onUpdate((diff, {origin}) => {
+			close: entity.crdt.onUpdate((diff, {origin}: DiffOptions) => {
 				if (origin !== REMOTE_ORIGIN) {
 					sender.enqueue(diff);
 				}

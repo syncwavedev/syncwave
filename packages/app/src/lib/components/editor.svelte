@@ -15,15 +15,18 @@
 	import {XmlFragment} from 'yjs';
 	import {Extension} from '@tiptap/core';
 	import type {Awareness} from '../../../../data/dist/esm/src/awareness';
-	import {hashString, type User} from 'syncwave';
+	import {hashString, type User, type UserId} from 'syncwave';
 
 	let editor = $state() as Readable<Editor>;
 
 	interface Props {
 		fragment: XmlFragment;
-		awareness: Awareness;
+		awareness?: Awareness;
 		placeholder: string;
-		me: User;
+		me: {
+			readonly id: UserId;
+			readonly fullName: string;
+		};
 		class?: string;
 		onEnter?: () => void;
 	}
@@ -83,25 +86,31 @@
 	}
 
 	onMount(() => {
-		fragment.doc!.clientID = awareness.clientId;
-		editor = createEditor({
-			extensions: [
-				...tiptapExtensions,
-				Collaboration.configure({
-					fragment,
-				}),
+		const extensions = [
+			...tiptapExtensions,
+			Collaboration.configure({
+				fragment,
+			}),
+			Placeholder.configure({
+				placeholder,
+			}),
+			...(onEnter ? [SendMessageExtension] : []),
+		];
+		if (awareness) {
+			fragment.doc!.clientID = awareness.clientId;
+			extensions.push(
 				CollaborationCursor.configure({
 					provider: {awareness},
 					user: {
 						name: me.fullName,
 						color: colors[hashString(me.id) % colors.length],
 					},
-				}),
-				Placeholder.configure({
-					placeholder,
-				}),
-				...(onEnter ? [SendMessageExtension] : []),
-			],
+				})
+			);
+		}
+
+		editor = createEditor({
+			extensions,
 			content: '',
 		});
 	});

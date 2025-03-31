@@ -219,7 +219,7 @@ async function getKvStore(
 async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
     const versionKey = ['version'];
     log.info('Retrieving KV store version...');
-    const version = await store.transact(async tx => {
+    let version = await store.transact(async tx => {
         log.info('Running tx.get(versionKey)...');
         const version = await tx.get(versionKey);
         if (version) {
@@ -254,6 +254,7 @@ async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
 
             log.info('Set KV store version to 1...');
             await tx.put(versionKey, encodeNumber(2));
+            version = 2;
         });
     }
 
@@ -301,6 +302,7 @@ async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
             log.info('Setting KV store version to 3...');
             await tx.put(versionKey, encodeNumber(3));
         });
+        version = 3;
     }
 }
 
@@ -346,6 +348,7 @@ async function launchApp(options: Options) {
     async function shutdown() {
         log.info('shutting down app...');
         coordinator.close('shutdown');
+        appHttpServer.close();
     }
 
     context().onEnd(() => {

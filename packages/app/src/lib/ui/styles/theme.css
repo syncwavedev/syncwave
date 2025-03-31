@@ -60,22 +60,21 @@
 	--color-gray-950: oklch(24% 0 110deg);
 
 	/* Slate */
-	--color-slate-50: oklch(96% 0.002 246deg);
-	--color-slate-100: oklch(92% 0.0025 246deg);
-	--color-slate-150: oklch(88% 0.003 246deg);
-	--color-slate-200: oklch(84% 0.0035 246deg);
-	--color-slate-250: oklch(80% 0.004 246deg);
-	--color-slate-300: oklch(76% 0.0045 246deg);
-	--color-slate-350: oklch(72% 0.005 246deg);
-	--color-slate-400: oklch(68% 0.0055 246deg);
-	--color-slate-450: oklch(64% 0.006 246deg);
-	--color-slate-500: oklch(60% 0.0065 246deg);
-	--color-slate-550: oklch(56% 0.007 246deg);
-	--color-slate-600: oklch(52% 0.0075 246deg);
-	--color-slate-650: oklch(48% 0.008 246deg);
-	--color-slate-700: oklch(44% 0.0085 246deg);
-	--color-slate-750: oklch(40% 0.042 246deg);
-	--color-slate-790: oklch(36.8% 0.032 246deg);
+	--color-slate-50: oklch(96% 0.001 246deg);
+	--color-slate-100: oklch(92% 0.0012 246deg);
+	--color-slate-150: oklch(88% 0.0014 246deg);
+	--color-slate-200: oklch(84% 0.0016 246deg);
+	--color-slate-250: oklch(80% 0.0018 246deg);
+	--color-slate-300: oklch(76% 0.002 246deg);
+	--color-slate-350: oklch(72% 0.0022 246deg);
+	--color-slate-400: oklch(68% 0.0024 246deg);
+	--color-slate-450: oklch(64% 0.0026 246deg);
+	--color-slate-500: oklch(60% 0.0028 246deg);
+	--color-slate-550: oklch(56% 0.003 246deg);
+	--color-slate-600: oklch(52% 0.0032 246deg);
+	--color-slate-650: oklch(48% 0.003 246deg);
+	--color-slate-700: oklch(44% 0.0028 246deg);
+	--color-slate-750: oklch(40% 0.026 246deg);
 	--color-slate-800: oklch(36% 0.024 246deg);
 	--color-slate-830: oklch(33.6% 0.022 246deg);
 	--color-slate-850: oklch(32% 0.021 246deg);

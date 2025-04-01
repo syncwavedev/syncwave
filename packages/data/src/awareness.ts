@@ -114,7 +114,9 @@ export class Awareness {
         this.visibilitySub('Awareness.destroy');
     }
 
-    applyRemote(entries: Array<Entry<number, AwarenessState>>) {
+    applyRemote(remoteEntries: Array<Entry<number, AwarenessState>>) {
+        const entries = remoteEntries.filter(x => x.key !== this.clientId);
+
         const remoteIds = new Set(entries.map(e => e.key));
         const removed = [...this.states.keys()].filter(
             id => !remoteIds.has(id)

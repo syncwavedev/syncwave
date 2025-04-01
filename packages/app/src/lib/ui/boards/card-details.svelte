@@ -117,7 +117,7 @@
 		<!-- Task Description -->
 		<div class="mx-2">
 			<div
-				class="input w-full text-xs leading-relaxed focus-within:bg-subtle-1 py-1 px-2 rounded-sm transition-colors duration-150"
+				class="input w-full text-sm leading-relaxed py-1 px-2 rounded-sm transition-colors duration-150"
 			>
 				<Editor
 					bind:this={editor}
@@ -129,10 +129,9 @@
 				/>
 			</div>
 		</div>
-		<hr class="mt-2 mb-2" />
 		<!-- Task Actions -->
-		<div class="mx-2">
-			<div class="flex">
+		<div class="mx-4 mt-3">
+			<div class="flex gap-2">
 				<Select
 					value={card.column.id}
 					options={columnOptions}
@@ -160,6 +159,6 @@
 				</Select>
 			</div>
 		</div>
-		<hr class="mt-2 mb-2" />
+		<hr class="mt-3 mb-2" />
 	</div>
 </div>

@@ -17,7 +17,7 @@ COPY . .
 WORKDIR /app
 RUN npm i
 
-WORKDIR /app/packages/data
+WORKDIR /app/packages/lib
 RUN npm run build
 
 WORKDIR /app/packages/app

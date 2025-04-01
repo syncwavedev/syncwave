@@ -36,12 +36,12 @@ FROM base AS runtime
 WORKDIR /app
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
-COPY --from=builder /app/packages/data/package.json ./packages/data/
+COPY --from=builder /app/packages/lib/package.json ./packages/lib/
 COPY --from=builder /app/packages/server/package.json ./packages/server/
 
 RUN npm install --omit=dev
 
-COPY --from=builder /app/packages/data/dist ./packages/data/dist
+COPY --from=builder /app/packages/lib/dist ./packages/lib/dist
 COPY --from=builder /app/packages/server/dist ./packages/server/dist
 COPY --from=builder /app/packages/app/dist ./packages/server/ui/
 

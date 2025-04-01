@@ -3,13 +3,18 @@
 	import {onMount} from 'svelte';
 	import cx from 'clsx';
 	import {get, type Readable} from 'svelte/store';
-	import {BubbleMenu, createEditor, Editor, EditorContent} from 'svelte-tiptap';
+	import {
+		BubbleMenu,
+		createEditor,
+		Editor,
+		EditorContent,
+	} from 'svelte-tiptap';
 	import {Collaboration} from '@tiptap/extension-collaboration';
 	import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
 	import Placeholder from '@tiptap/extension-placeholder';
 	import {XmlFragment} from 'yjs';
 	import {Extension} from '@tiptap/core';
-	import type {Awareness} from '../../../../data/dist/esm/src/awareness';
+	import type {Awareness} from 'syncwave';
 	import {hashString, type User, type UserId} from 'syncwave';
 
 	let editor = $state() as Readable<Editor>;

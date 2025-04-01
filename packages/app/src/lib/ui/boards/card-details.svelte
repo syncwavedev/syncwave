@@ -7,7 +7,7 @@
 	import UserIcon from '../components/icons/user-icon.svelte';
 	import Editor from '../../components/editor.svelte';
 	import type {CardView} from '../../agent/view.svelte';
-	import type {Awareness} from '../../../../../data/dist/esm/src/awareness';
+	import type {Awareness} from 'syncwave';
 	import type {ColumnId, User, UserId} from 'syncwave';
 	import {onMount, tick} from 'svelte';
 	import HashtagIcon from '../components/icons/hashtag-icon.svelte';
@@ -74,7 +74,9 @@
 							icon: LinkIcon,
 							text: 'Copy Card Link',
 							onSelect: _ => {
-								navigator.clipboard.writeText(window.location.href);
+								navigator.clipboard.writeText(
+									window.location.href
+								);
 							},
 						},
 						{
@@ -151,7 +153,8 @@
 				>
 					<button class="btn--flat text-sm">
 						<span class="text-base"><UserIcon /></span>
-						<span class="text-2xs">{card.assignee?.fullName ?? 'Assignee'}</span
+						<span class="text-2xs"
+							>{card.assignee?.fullName ?? 'Assignee'}</span
 						>
 					</button>
 				</Select>

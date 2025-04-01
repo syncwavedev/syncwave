@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import {pino as createPino, type Level} from 'pino';
+import {logs, SeverityNumber} from '@opentelemetry/api-logs';
 import {ENVIRONMENT} from './constants.js';
 import {context, type NestedAttributeMap} from './context.js';
 import {AppError, toError} from './errors.js';
@@ -14,13 +14,13 @@ export type LogLevel =
     | 'fatal'
     | 'silent';
 const LogLevelValues: Record<LogLevel, number> = {
-    trace: 10,
-    debug: 20,
-    info: 30,
-    warn: 40,
-    error: 50,
-    fatal: 60,
-    silent: 70,
+    trace: SeverityNumber.TRACE,
+    debug: SeverityNumber.DEBUG,
+    info: SeverityNumber.INFO,
+    warn: SeverityNumber.WARN,
+    error: SeverityNumber.ERROR,
+    fatal: SeverityNumber.FATAL,
+    silent: 1000,
 };
 
 export interface Logger {
@@ -46,7 +46,7 @@ export interface Logger {
     ): void;
 
     log(
-        level: Level,
+        level: LogLevel,
         ...args:
             | [error: AppError, message: string]
             | [message: string]
@@ -57,38 +57,40 @@ export interface Logger {
 }
 
 abstract class BaseLogger implements Logger {
+    private logLevel: LogLevel = 'info';
+
     protected abstract _log(
-        level: Level,
+        level: LogLevel,
         ...args: [error: AppError, message: string] | [message: string]
     ): void;
 
-    abstract setLogLevel(level: LogLevel): void;
-
-    abstract getLogLevel(): LogLevel;
+    setLogLevel(level: LogLevel): void {
+        this.logLevel = level;
+    }
 
     log(
-        level: Level,
+        level: LogLevel,
         ...args:
             | [error: AppError, message: string]
             | [message: string]
             | [() => string]
     ): void {
-        if (this.enabled(level)) {
-            if (args[0] instanceof Function) {
-                this._log(level, args[0]());
-            } else {
-                this._log(
-                    level,
-                    ...(args as
-                        | [error: AppError, message: string]
-                        | [message: string])
-                );
-            }
+        if (!this.enabled(level)) return;
+
+        if (args[0] instanceof Function) {
+            this._log(level, args[0]());
+        } else {
+            this._log(
+                level,
+                ...(args as
+                    | [error: AppError, message: string]
+                    | [message: string])
+            );
         }
     }
 
     enabled(level: LogLevel): boolean {
-        return LogLevelValues[level] >= LogLevelValues[this.getLogLevel()];
+        return LogLevelValues[level] >= LogLevelValues[this.logLevel];
     }
 
     trace(
@@ -137,19 +139,11 @@ abstract class BaseLogger implements Logger {
     }
 }
 
-class PinoLogger extends BaseLogger {
-    private readonly pino = createPino();
-
-    override getLogLevel(): LogLevel {
-        return this.pino.level as LogLevel;
-    }
-
-    setLogLevel(level: LogLevel): void {
-        this.pino.level = level;
-    }
+class OtelLogger extends BaseLogger {
+    private readonly logger = logs.getLogger('syncwave-server', '1.0.0');
 
     _log(
-        level: Level,
+        level: LogLevel,
         ...args: [error: AppError, message: string] | [message: string]
     ) {
         const ctx = context();
@@ -181,23 +175,19 @@ class PinoLogger extends BaseLogger {
                 log['stack'] = stack.split('\n').slice(1).join('\n');
             }
         }
-        this.pino[level]({...log, msg: message});
+        this.logger.emit({
+            severityNumber: LogLevelValues[level],
+            severityText: level.toUpperCase(),
+            body: {...log, msg: message},
+        });
     }
 }
 
-class TestLogger extends BaseLogger {
+class ConsoleLogger extends BaseLogger {
     private level: LogLevel = 'debug';
 
-    override getLogLevel(): LogLevel {
-        return this.level;
-    }
-
-    setLogLevel(level: LogLevel): void {
-        this.level = level;
-    }
-
     _log(
-        level: Level,
+        level: LogLevel,
         ...args: [error: AppError, message: string] | [message: string]
     ) {
         if (LogLevelValues[level] < LogLevelValues[this.level]) {
@@ -223,7 +213,7 @@ class TestLogger extends BaseLogger {
         }
     }
 
-    formatLevel(level: Level) {
+    formatLevel(level: LogLevel) {
         if (level === 'fatal') {
             return '[FTL]';
         } else if (level === 'error') {
@@ -236,6 +226,8 @@ class TestLogger extends BaseLogger {
             return '[DBG]';
         } else if (level === 'trace') {
             return '[TRC]';
+        } else if (level === 'silent') {
+            return '[SLT]';
         } else {
             assertNever(level);
         }
@@ -243,4 +235,4 @@ class TestLogger extends BaseLogger {
 }
 
 export const log: Logger =
-    process.env.NODE_ENV === 'test' ? new TestLogger() : new PinoLogger();
+    process.env.NODE_ENV === 'test' ? new ConsoleLogger() : new OtelLogger();

@@ -47,6 +47,7 @@
 		"vitest": "^3.0.8"
 	},
 	"dependencies": {
+		"@opentelemetry/sdk-logs": "^0.200.0",
 		"@tiptap/core": "^2.11.5",
 		"@tiptap/extension-bold": "^2.11.5",
 		"@tiptap/extension-bubble-menu": "^2.11.5",

@@ -8,6 +8,7 @@ import Koa from 'koa';
 import helmet from 'koa-helmet';
 import {cpus} from 'os';
 import {collectDefaultMetrics} from 'prom-client';
+import type {Hub, Tuple} from 'syncwave';
 import {
     AppError,
     assertDefined,
@@ -33,8 +34,6 @@ import {
     type Uint8KvStore,
 } from 'syncwave';
 import {match} from 'ts-pattern';
-import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
-import type {Tuple} from '../../data/dist/esm/src/tuple.js';
 import {eventLoopMonitor} from './event-loop-monitor.js';
 import {FsObjectStore} from './fs-object-store.js';
 import {createApiRouter} from './http/api.js';

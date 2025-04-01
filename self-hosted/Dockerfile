@@ -5,7 +5,7 @@ FROM base AS deps
 WORKDIR /app
 
 COPY package*.json .
-COPY packages/data/package*.json ./packages/data/
+COPY packages/lib/package*.json ./packages/lib/
 COPY packages/server/package*.json ./packages/server/
 COPY packages/app/package*.json ./packages/app/
 
@@ -21,7 +21,7 @@ WORKDIR /app
 COPY . .
 COPY --from=deps /app .
 
-WORKDIR /app/packages/data
+WORKDIR /app/packages/lib
 RUN npm run build
 
 WORKDIR /app/packages/server

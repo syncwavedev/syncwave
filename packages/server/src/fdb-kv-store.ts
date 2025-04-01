@@ -1,4 +1,5 @@
 import * as fdb from 'foundationdb';
+import type {Hub} from 'syncwave';
 import {
     type Condition,
     createUuidV4,
@@ -15,7 +16,6 @@ import {
     type Uint8KvStore,
     type Uint8Transaction,
 } from 'syncwave';
-import type {Hub} from '../../data/dist/esm/src/transport/hub.js';
 
 fdb.setAPIVersion(620, 620);
 

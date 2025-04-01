@@ -1,4 +1,5 @@
 import {getContext, onDestroy, setContext} from 'svelte';
+import type {Timestamp} from 'syncwave';
 import {
 	AppError,
 	CancelledError,
@@ -16,7 +17,6 @@ import {
 	type Nothing,
 	type Unsubscribe,
 } from 'syncwave';
-import type {Timestamp} from '../../../data/dist/esm/src/timestamp';
 import {AuthManager} from '../auth-manager';
 import {WsTransportClient} from '../ws-transport-client';
 import {appConfig} from './config';

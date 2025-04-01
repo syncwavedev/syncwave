@@ -8,18 +8,44 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import {ATTR_SERVICE_NAME} from '@opentelemetry/semantic-conventions';
 
+import {logs} from '@opentelemetry/api-logs';
+import {
+	LoggerProvider,
+	SimpleLogRecordProcessor,
+} from '@opentelemetry/sdk-logs';
+
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
-const exporter = new BatchSpanProcessor(
+
+// traces
+
+const spanExporter = new BatchSpanProcessor(
 	new OTLPTraceExporter({
 		url: 'https://otel.bridgex.dev/v1/traces',
 	})
 );
 
-const provider = new BasicTracerProvider({
+const tracerProvider = new BasicTracerProvider({
 	resource: new Resource({
 		[ATTR_SERVICE_NAME]: 'client',
 	}),
-	spanProcessors: [exporter],
+	spanProcessors: [spanExporter],
 	sampler: new AlwaysOnSampler(),
 });
-provider.register();
+tracerProvider.register();
+
+// logs
+
+const loggerProvider = new LoggerProvider();
+loggerProvider.addLogRecordProcessor(
+	new SimpleLogRecordProcessor({
+		export: (logs, cb) => {
+			for (const log of logs) {
+				console.log(JSON.stringify(log.body));
+			}
+
+			cb({code: 0});
+		},
+		shutdown: () => Promise.resolve(),
+	})
+);
+logs.setGlobalLoggerProvider(loggerProvider);

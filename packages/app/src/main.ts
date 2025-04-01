@@ -1,4 +1,7 @@
-import './hooks';
+import '@webfill/async-context';
+
+import './instrumentation.js';
+
 import './lib/ui/styles/main.css';
 
 import {mount} from 'svelte';

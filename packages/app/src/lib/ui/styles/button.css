@@ -1,5 +1,5 @@
 .btn--icon {
-	@apply text-ink-body hover:border-divider-object hover:text-ink grid aspect-square h-[2em] w-[2em] cursor-pointer place-items-center rounded-full border border-transparent;
+	@apply text-ink-body hover:bg-subtle-1 hover:text-ink grid aspect-square h-[2em] w-[2em] cursor-pointer place-items-center rounded-full;
 
 	&.btn--icon--ink {
 		@apply bg-subtle-3 hover:bg-subtle-4 text-ink rounded-lg;

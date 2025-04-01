@@ -61,7 +61,10 @@
 	}
 </script>
 
-<div class={`relative flex ${className}`} style={`width: ${width}px;`}>
+<div
+	class={`relative shrink-0 flex ${className ?? ''}`}
+	style={`width: ${width}px;`}
+>
 	{@render children()}
 
 	<div

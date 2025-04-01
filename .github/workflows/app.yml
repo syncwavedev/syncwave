@@ -3,7 +3,7 @@ on:
     branches: [main]
     paths:
       - packages/app/**
-      - packages/data/**
+      - packages/lib/**
       - .github/workflows/app.yml
       - tsconfig.json
   workflow_dispatch:

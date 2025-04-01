@@ -40,9 +40,9 @@
 	import LoginFailed from './pages/login-failed.svelte';
 	import Testbed from './pages/testbed.svelte';
 	import Index from './pages/index.svelte';
-	import {monitorDocumentVisibility} from './document-visibility.js';
+	import {monitorDocumentActivity} from './document-activity.js';
 
-	monitorDocumentVisibility();
+	monitorDocumentActivity();
 
 	const themeManager = createThemeManager();
 	setContext('theme', {

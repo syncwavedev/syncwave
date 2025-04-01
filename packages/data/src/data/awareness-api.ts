@@ -163,9 +163,7 @@ export function createAwarenessApi() {
                                 ]);
 
                                 return {
-                                    states: states.filter(
-                                        x => x.state.visibility === 'visible'
-                                    ),
+                                    states: states.filter(x => x.state.active),
                                 };
                             }
                         );

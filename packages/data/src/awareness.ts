@@ -28,10 +28,7 @@ export function zAwarenessState() {
         userId: Type.Optional(Uuid<UserId>()),
         selectedCardId: Type.Optional(Type.String()),
         hoverCardId: Type.Optional(Type.String()),
-        visibility: Type.Union([
-            Type.Literal('visible'),
-            Type.Literal('hidden'),
-        ]),
+        active: Type.Boolean(),
         __trigger: Type.Optional(Type.String()),
     });
 }
@@ -44,11 +41,9 @@ interface MetaAwarenessState {
     state: AwarenessState;
 }
 
-export interface VisibilityMonitor {
-    visibility: 'visible' | 'hidden';
-    subscribe: (
-        callback: (visibility: 'visible' | 'hidden') => void
-    ) => Unsubscribe;
+export interface ActivityMonitor {
+    readonly active: boolean;
+    subscribe(callback: (active: boolean) => void): Unsubscribe;
 }
 
 function toEvent(
@@ -95,15 +90,15 @@ export class Awareness {
 
     constructor(
         public clientId: number,
-        private readonly visibilityMonitor: VisibilityMonitor
+        private readonly activityMonitor: ActivityMonitor
     ) {
         this.clientId = clientId;
         this.setLocalState({
-            visibility: visibilityMonitor.visibility,
+            active: activityMonitor.active,
         });
 
-        this.visibilitySub = visibilityMonitor.subscribe(visibility => {
-            this.setLocalStateField('visibility', visibility);
+        this.visibilitySub = activityMonitor.subscribe(active => {
+            this.setLocalStateField('active', active);
         });
 
         this.checkInterval = setInterval(
@@ -141,7 +136,7 @@ export class Awareness {
     getLocalState(): AwarenessState {
         return (
             this.states.get(this.clientId)?.state ?? {
-                visibility: this.visibilityMonitor.visibility,
+                active: this.activityMonitor.active,
             }
         );
     }

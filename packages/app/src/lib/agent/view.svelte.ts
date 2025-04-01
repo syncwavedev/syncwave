@@ -115,11 +115,10 @@ export class BoardData {
 	meView: UserView = $derived(new UserView(this.me));
 
 	awareness: SvelteMap<number, AwarenessState> = $state(lateInit());
+	// note: server sends only clients with visibility === 'visible'
 	activeClients = $derived(
 		[...this.awareness.values()]
-			.filter(
-				x => x.visibility === 'visible' && x.userId !== this.meView.id
-			)
+			.filter(x => x.userId !== this.meView.id)
 			.map(state => ({
 				state,
 				user: this.userViews.find(x => x.id === state?.userId),

@@ -162,7 +162,11 @@ export function createAwarenessApi() {
                                     tx.ps.ensureBoardMember(board.id, 'reader'),
                                 ]);
 
-                                return {states};
+                                return {
+                                    states: states.filter(
+                                        x => x.state.visibility === 'visible'
+                                    ),
+                                };
                             }
                         );
 

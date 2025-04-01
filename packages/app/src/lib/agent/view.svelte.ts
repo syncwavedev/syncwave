@@ -222,7 +222,9 @@ export class BoardView implements Board {
 	name = $derived(this._board.name);
 	id = $derived(this._board.id);
 	pk = $derived(this._board.pk);
-	onlineUsers = $derived(uniqBy(this._data.activeClients, x => x.user.id));
+	onlineUsers = $derived(
+		uniqBy(this._data.activeClients, x => x.user.id).map(x => x.user)
+	);
 
 	author = $derived.by(() => {
 		return findRequired(

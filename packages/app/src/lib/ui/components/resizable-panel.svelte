@@ -43,10 +43,18 @@
 		if (!isResizing) return;
 
 		const deltaX = e.clientX - startX;
-		const newWidth =
+		let newWidth =
 			freeSide === 'right' ? startWidth + deltaX : startWidth - deltaX;
 
-		if (newWidth >= minWidth && newWidth <= maxWidth) {
+		if (newWidth < minWidth) {
+			newWidth = minWidth;
+		}
+
+		if (newWidth > maxWidth) {
+			newWidth = maxWidth;
+		}
+
+		if (newWidth !== width) {
 			width = newWidth;
 			onWidthChange?.(width);
 		}

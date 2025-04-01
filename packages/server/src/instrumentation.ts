@@ -35,7 +35,12 @@ trace.setGlobalTracerProvider(tracerProvider);
 
 // logs
 
-const loggerProvider = new LoggerProvider();
+const loggerProvider = new LoggerProvider({
+    resource: resourceFromAttributes({
+        [ATTR_SERVICE_NAME]: 'server',
+    }),
+});
+
 loggerProvider.addLogRecordProcessor(
     new SimpleLogRecordProcessor({
         export: (logs, cb) => {

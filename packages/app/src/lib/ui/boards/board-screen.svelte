@@ -206,6 +206,8 @@
 		}, true);
 	}
 
+	console.log('board', board);
+
 	let columnsContainerRef: HTMLDivElement | null = $state(null);
 	let viewportRef: HTMLDivElement | null = $state(null);
 

@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import {logs, SeverityNumber} from '@opentelemetry/api-logs';
-import {ENVIRONMENT} from './constants.js';
 import {context, type NestedAttributeMap} from './context.js';
 import {AppError, toError} from './errors.js';
 import {assertNever} from './utils.js';
@@ -140,7 +139,7 @@ abstract class BaseLogger implements Logger {
 }
 
 class OtelLogger extends BaseLogger {
-    private readonly logger = logs.getLogger('syncwave-server', '1.0.0');
+    private readonly logger = logs.getLogger('syncwave', '1.0.0');
 
     _log(
         level: LogLevel,
@@ -148,11 +147,7 @@ class OtelLogger extends BaseLogger {
     ) {
         const ctx = context();
         let log: NestedAttributeMap = {
-            traceId: ctx.traceId.slice(
-                0,
-                // less noise in logs
-                ENVIRONMENT === 'dev' ? 4 : undefined
-            ),
+            traceId: ctx.traceId,
             spanId: ctx.spanId,
             level,
         };

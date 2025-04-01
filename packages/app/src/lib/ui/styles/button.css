@@ -1,5 +1,5 @@
 .btn--icon {
-	@apply text-ink-body hover:bg-subtle-1 hover:text-ink grid aspect-square h-[2em] w-[2em] cursor-pointer place-items-center rounded-full;
+	@apply text-ink-body hover:bg-subtle-1 hover:text-ink grid aspect-square h-[2em] w-[2em] place-items-center rounded-full;
 
 	&.btn--icon--ink {
 		@apply bg-subtle-3 hover:bg-subtle-4 text-ink rounded-lg;
@@ -11,7 +11,7 @@
 }
 
 .btn--block {
-	@apply text-ink-body hover:bg-subtle-2 hover:text-ink flex h-[2em] cursor-pointer items-center justify-center rounded-2xl px-[0.5em];
+	@apply text-ink-body hover:bg-subtle-2 hover:text-ink flex h-[2em] items-center justify-center rounded-2xl px-[0.5em];
 
 	&.btn--block--danger {
 		@apply text-ink-danger;
@@ -19,10 +19,10 @@
 }
 
 .btn--normal {
-	@apply bg-subtle-0 hover:bg-subtle-2 dark:bg-subtle-3 dark:hover:bg-subtle-4 border-divider-object flex h-[2.6em] cursor-pointer items-center justify-center rounded-md border px-[0.5em];
+	@apply bg-subtle-0 hover:bg-subtle-2 dark:bg-subtle-3 dark:hover:bg-subtle-4 border-divider-object flex h-[2.6em] items-center justify-center rounded-md border px-[0.5em];
 }
 
 .btn--flat {
-	@apply py-[0.1em] px-[0.4em] rounded-sm gap-1.5 flex items-center leading-none text-ink-body cursor-pointer
+	@apply py-[0.1em] px-[0.4em] rounded-sm gap-1.5 flex items-center leading-none text-ink-body
 	hover:bg-subtle-1 hover:text-ink bg-subtle-1;
 }

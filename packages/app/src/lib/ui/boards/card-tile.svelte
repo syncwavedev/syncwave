@@ -97,8 +97,8 @@
         data-active:border-divider-active
         data-active:bg-subtle-active
         flex
-        cursor-pointer
         items-end
+        cursor-default
         gap-1
         rounded-md
         border-subtle-1

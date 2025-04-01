@@ -45,7 +45,7 @@
 				{#each items as item (item.text)}
 					<DropdownMenu.Item textValue={item.text} onSelect={item.onSelect}>
 						<div
-							class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-pointer outline-none"
+							class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-default outline-none"
 						>
 							<span class="mr-1.5"><item.icon /></span>
 							<span class="text-xs">{item.text}</span>

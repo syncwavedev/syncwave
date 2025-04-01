@@ -44,7 +44,7 @@
 						value={option.value}
 						label={option.label}
 						disabled={option.disabled}
-						class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-pointer outline-none"
+						class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-default outline-none"
 					>
 						{#snippet children({selected})}
 							<span class="truncate text-xs">{option.label}</span>

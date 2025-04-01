@@ -23,6 +23,6 @@
 }
 
 .btn--flat {
-	@apply py-[0.1em] px-[0.4em] rounded-md gap-1.5 flex items-center leading-none text-ink-body cursor-pointer
+	@apply py-[0.1em] px-[0.4em] rounded-sm gap-1.5 flex items-center leading-none text-ink-body cursor-pointer
 	hover:bg-subtle-1 hover:text-ink bg-subtle-1;
 }

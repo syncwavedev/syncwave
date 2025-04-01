@@ -37,10 +37,12 @@ import {
 	type TransportClient,
 	type User,
 	type UserId,
+	type VisibilityMonitor,
 } from 'syncwave';
 
 import type {AuthManager} from '../../auth-manager';
 
+import {getDocumentVisibility} from '../../document-visibility';
 import {getRpc, type Rpc} from '../utils';
 import {setComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
@@ -142,6 +144,8 @@ export class Agent {
 	async observeBoardAsync(key: string) {
 		const ctx = setComponentContext();
 
+		const visibilityMonitor = getDocumentVisibility();
+
 		const rpc = getRpc();
 		const [board, me] = await whenAll([
 			rpc(x =>
@@ -159,15 +163,18 @@ export class Agent {
 			),
 		]);
 
-		return ctx.run(() => this.observeBoard(board, me, rpc));
+		return ctx.run(() =>
+			this.observeBoard(board, me, rpc, visibilityMonitor)
+		);
 	}
 
 	private observeBoard(
 		initialBoard: BoardViewDataDto,
 		initialMe: CrdtDoc<User>,
-		rpc: Rpc
+		rpc: Rpc,
+		visibilityMonitor: VisibilityMonitor
 	): [BoardTreeView, Awareness] {
-		const awareness = new Awareness(createClientId());
+		const awareness = new Awareness(createClientId(), visibilityMonitor);
 		const me = this.crdtManager.view({
 			id: initialMe.id,
 			isDraft: false,
@@ -206,6 +213,7 @@ export class Agent {
 		awareness.setLocalState({
 			user: {name: initialMe.fullName},
 			userId: initialMe.id,
+			visibility: visibilityMonitor.visibility,
 		});
 
 		const destroySignal = new Deferred<void>();

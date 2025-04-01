@@ -3,7 +3,7 @@ import {AWARENESS_OFFLINE_TIMEOUT_MS} from './constants.js';
 import {type UserId} from './data/repos/user-repo.js';
 import type {Entry} from './kv/kv-store.js';
 import {getNow} from './timestamp.js';
-import {assert, equals} from './utils.js';
+import {assert, equals, type Unsubscribe} from './utils.js';
 import {createUuidV4, Uuid} from './uuid.js';
 
 export interface AwarenessUpdate {
@@ -28,6 +28,10 @@ export function zAwarenessState() {
         userId: Type.Optional(Uuid<UserId>()),
         selectedCardId: Type.Optional(Type.String()),
         hoverCardId: Type.Optional(Type.String()),
+        visibility: Type.Union([
+            Type.Literal('visible'),
+            Type.Literal('hidden'),
+        ]),
         __trigger: Type.Optional(Type.String()),
     });
 }
@@ -38,6 +42,13 @@ export interface AwarenessState
 interface MetaAwarenessState {
     lastUpdated: number;
     state: AwarenessState;
+}
+
+export interface VisibilityMonitor {
+    visibility: 'visible' | 'hidden';
+    subscribe: (
+        callback: (visibility: 'visible' | 'hidden') => void
+    ) => Unsubscribe;
 }
 
 function toEvent(
@@ -75,15 +86,25 @@ export class Awareness {
     private handlers: AwarenessHandler[] = [];
     private readonly states = new Map<number, MetaAwarenessState>();
     private readonly checkInterval: NodeJS.Timeout;
+    private readonly visibilitySub: Unsubscribe;
 
     // yjs awareness compatibility
     get clientID() {
         return this.clientId;
     }
 
-    constructor(public clientId: number) {
+    constructor(
+        public clientId: number,
+        private readonly visibilityMonitor: VisibilityMonitor
+    ) {
         this.clientId = clientId;
-        this.setLocalState({});
+        this.setLocalState({
+            visibility: visibilityMonitor.visibility,
+        });
+
+        this.visibilitySub = visibilityMonitor.subscribe(visibility => {
+            this.setLocalStateField('visibility', visibility);
+        });
 
         this.checkInterval = setInterval(
             this.periodicCheck.bind(this),
@@ -95,6 +116,7 @@ export class Awareness {
         clearInterval(this.checkInterval);
         this.setLocalState(null);
         this.handlers = [];
+        this.visibilitySub('Awareness.destroy');
     }
 
     applyRemote(entries: Array<Entry<number, AwarenessState>>) {
@@ -117,7 +139,11 @@ export class Awareness {
     }
 
     getLocalState(): AwarenessState {
-        return this.states.get(this.clientId)?.state ?? {};
+        return (
+            this.states.get(this.clientId)?.state ?? {
+                visibility: this.visibilityMonitor.visibility,
+            }
+        );
     }
 
     setLocalStateField<K extends keyof AwarenessState>(

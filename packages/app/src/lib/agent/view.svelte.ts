@@ -76,6 +76,11 @@ export class MeView {
 	}
 }
 
+interface ClientInfo {
+	state: AwarenessState;
+	user: UserView;
+}
+
 export class BoardData {
 	private _boardState: State<Board> = $state.raw(lateInit());
 	private _meState: State<User> = $state.raw(lateInit());
@@ -110,6 +115,18 @@ export class BoardData {
 	meView: UserView = $derived(new UserView(this.me));
 
 	awareness: SvelteMap<number, AwarenessState> = $state(lateInit());
+	activeClients = $derived(
+		[...this.awareness.values()]
+			.filter(
+				x => x.visibility === 'visible' && x.userId !== this.meView.id
+			)
+			.map(state => ({
+				state,
+				user: this.userViews.find(x => x.id === state?.userId),
+			}))
+			// awareness might be ahead of the board data, so ignore unknown users
+			.filter(x => x.user !== undefined) as ClientInfo[]
+	);
 
 	static create(
 		awareness: Awareness,
@@ -205,18 +222,7 @@ export class BoardView implements Board {
 	name = $derived(this._board.name);
 	id = $derived(this._board.id);
 	pk = $derived(this._board.pk);
-	onlineMembers = $derived(
-		uniqBy(
-			[...this._data.awareness.values()]
-				.map(state =>
-					this._data.userViews.find(x => x.id === state?.userId)
-				)
-				// awareness might be ahead of the board data, so ignore unknown users
-				.filter(x => x !== undefined)
-				.filter(x => x.id !== this._data.meView.id),
-			x => x.id
-		)
-	);
+	onlineUsers = $derived(uniqBy(this._data.activeClients, x => x.user.id));
 
 	author = $derived.by(() => {
 		return findRequired(
@@ -329,33 +335,17 @@ export class CardView implements Card {
 	assigneeId = $derived(this._card.assigneeId);
 	hoverUsers = $derived.by(() => {
 		return uniqBy(
-			[...this._data.awareness.values()]
-				.filter(
-					state =>
-						state?.hoverCardId === this.id &&
-						this._data.meView.id !== state?.userId
-				)
-				.map(state =>
-					this._data.userViews.find(x => x.id === state?.userId)
-				)
-				// awareness might be ahead of the board data, so ignore unknown users
-				.filter(x => x !== undefined),
+			this._data.activeClients
+				.filter(x => x.state?.hoverCardId === this.id)
+				.map(x => x.user),
 			x => x.id
 		);
 	});
 	viewerUsers = $derived.by(() => {
 		return uniqBy(
-			[...this._data.awareness.values()]
-				.filter(
-					state =>
-						state?.selectedCardId === this.id &&
-						this._data.meView.id !== state?.userId
-				)
-				.map(state =>
-					this._data.userViews.find(x => x.id === state?.userId)
-				)
-				// awareness might be ahead of the board data, so ignore unknown users
-				.filter(x => x !== undefined),
+			this._data.activeClients
+				.filter(x => x.state?.selectedCardId === this.id)
+				.map(x => x.user),
 			x => x.id
 		);
 	});

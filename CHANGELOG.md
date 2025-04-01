@@ -1,5 +1,9 @@
 # Changelog
 
+## 2025-04-01
+
+- Exclude users with hidden document from awareness state.
+
 ## 2025-03-31
 
 - Redirect to the first board if there is board in the history.

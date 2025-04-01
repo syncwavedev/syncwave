@@ -1,5 +1,11 @@
 <script module lang="ts">
-	import {CancelledError, log, MsgpackCodec, toError} from 'syncwave';
+	import {
+		CancelledError,
+		EventEmitter,
+		log,
+		MsgpackCodec,
+		toError,
+	} from 'syncwave';
 
 	window.addEventListener('unhandledrejection', event => {
 		if (event.reason instanceof CancelledError) {
@@ -30,11 +36,13 @@
 	import BoardPage from './pages/board.svelte';
 	import LoginCallback from './pages/login-callback.svelte';
 	import LoginPage from './pages/login.svelte';
-	import BoardHistoryManager from './lib/board-history-manager';
 	import Loading from './lib/ui/components/loading.svelte';
 	import LoginFailed from './pages/login-failed.svelte';
 	import Testbed from './pages/testbed.svelte';
 	import Index from './pages/index.svelte';
+	import {monitorDocumentVisibility} from './document-visibility.js';
+
+	monitorDocumentVisibility();
 
 	const themeManager = createThemeManager();
 	setContext('theme', {

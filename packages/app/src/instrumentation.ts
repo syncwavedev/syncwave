@@ -1,6 +1,6 @@
-import {diag, DiagConsoleLogger, DiagLogLevel} from '@opentelemetry/api';
+import {diag, DiagConsoleLogger, DiagLogLevel, trace} from '@opentelemetry/api';
 import {OTLPTraceExporter} from '@opentelemetry/exporter-trace-otlp-http';
-import {Resource} from '@opentelemetry/resources';
+import {resourceFromAttributes} from '@opentelemetry/resources';
 import {
 	AlwaysOnSampler,
 	BasicTracerProvider,
@@ -25,13 +25,13 @@ const spanExporter = new BatchSpanProcessor(
 );
 
 const tracerProvider = new BasicTracerProvider({
-	resource: new Resource({
+	resource: resourceFromAttributes({
 		[ATTR_SERVICE_NAME]: 'client',
 	}),
 	spanProcessors: [spanExporter],
 	sampler: new AlwaysOnSampler(),
 });
-tracerProvider.register();
+trace.setGlobalTracerProvider(tracerProvider);
 
 // logs
 

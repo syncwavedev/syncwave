@@ -74,9 +74,7 @@
 							icon: LinkIcon,
 							text: 'Copy Card Link',
 							onSelect: _ => {
-								navigator.clipboard.writeText(
-									window.location.href
-								);
+								navigator.clipboard.writeText(window.location.href);
 							},
 						},
 						{
@@ -121,7 +119,7 @@
 			>
 				<Editor
 					bind:this={editor}
-					placeholder="Write here..."
+					placeholder="Description"
 					fragment={card.text.__fragment!}
 					class="min-h-15"
 					{awareness}
@@ -152,8 +150,7 @@
 				>
 					<button class="btn--flat text-sm">
 						<span class="text-base"><UserIcon /></span>
-						<span class="text-2xs"
-							>{card.assignee?.fullName ?? 'Assignee'}</span
+						<span class="text-2xs">{card.assignee?.fullName ?? 'Assignee'}</span
 						>
 					</button>
 				</Select>

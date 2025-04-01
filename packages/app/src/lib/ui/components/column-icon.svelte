@@ -7,7 +7,7 @@
 
 	const getActiveColor = () => {
 		if (active === total) return 'text-green-400';
-		if (active > 0) return 'text-yellow-300';
+		if (active > 0) return 'text-blue-450';
 		return 'dark:text-gray-600 text-gray-200';
 	};
 	const activeColorClass = getActiveColor();

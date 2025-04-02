@@ -585,3 +585,25 @@ export function compareNumbers(a: number, b: number): number {
 export function nextTick() {
     return new Promise<void>(resolve => setTimeout(resolve, 0));
 }
+
+export async function infiniteRetry<R>(
+    fn: () => Promise<R>,
+    ctx: string
+): Promise<R> {
+    while (context().isActive) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (error instanceof CancelledError) {
+                log.info(toError(error), `infiniteRetry cancelled: ${ctx}`);
+                throw error;
+            }
+
+            log.error(toError(error), `infiniteRetry failed: ${ctx}`);
+
+            await wait({ms: 1000, onCancel: 'resolve'});
+        }
+    }
+
+    throw new CancelledError('infiniteRetry cancelled', undefined);
+}

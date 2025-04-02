@@ -1,11 +1,10 @@
 import {
 	assert,
 	BatchProcessor,
-	CancelledError,
 	Deferred,
+	infiniteRetry,
 	log,
 	toError,
-	wait,
 	type Awareness,
 	type AwarenessState,
 	type BoardId,
@@ -64,25 +63,10 @@ export class AwarenessSynchronizer {
 	}
 
 	private async startPull() {
-		while (this.isActive) {
-			try {
-				await this.pull();
-			} catch (error) {
-				if (error instanceof CancelledError) {
-					log.info(
-						`awareness pull cancelled, board id = ${this.boardId}`
-					);
-					return;
-				}
-
-				log.error(
-					toError(error),
-					'awareness pull failed, retrying in 1s...'
-				);
-
-				await wait({ms: 1000, onCancel: 'resolve'});
-			}
-		}
+		await infiniteRetry(
+			() => this.pull(),
+			`awareness pull, board id = ${this.boardId}`
+		);
 	}
 
 	private async pull() {

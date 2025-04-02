@@ -3,7 +3,6 @@ import {
 	assert,
 	assertNever,
 	Awareness,
-	CancelledError,
 	context,
 	Crdt,
 	createCardId,
@@ -12,6 +11,7 @@ import {
 	createRichtext,
 	createRpcClient,
 	getNow,
+	infiniteRetry,
 	log,
 	PersistentConnection,
 	RpcConnection,
@@ -19,7 +19,6 @@ import {
 	toError,
 	toPosition,
 	toStream,
-	wait,
 	whenAll,
 	type ActivityMonitor,
 	type Board,
@@ -122,38 +121,19 @@ export class Agent {
 			this.activeMes = this.activeMes.filter(x => x !== view);
 		});
 
-		(async () => {
-			while (context().isActive) {
-				try {
-					const items = toStream(rpc(x => x.getMeViewData({})));
+		infiniteRetry(async () => {
+			const items = toStream(rpc(x => x.getMeViewData({})));
 
-					for await (const item of items) {
-						if (item.type === 'snapshot') {
-							view.update(item.data, this.crdtManager);
-						} else if (item.type === 'event') {
-							this.handleEvent(item.event);
-						} else {
-							softNever(
-								item,
-								'observeBoard got an unknown event'
-							);
-						}
-					}
-				} catch (error) {
-					if (error instanceof CancelledError) {
-						log.info('observeMe cancelled');
-						return;
-					}
-
-					log.error(
-						toError(error),
-						'observeMe failed, retrying in 1s...'
-					);
-
-					await wait({ms: 1000, onCancel: 'resolve'});
+			for await (const item of items) {
+				if (item.type === 'snapshot') {
+					view.update(item.data, this.crdtManager);
+				} else if (item.type === 'event') {
+					this.handleEvent(item.event);
+				} else {
+					softNever(item, 'observeBoard got an unknown event');
 				}
 			}
-		})().catch(error => {
+		}, 'observeMe').catch(error => {
 			log.error(toError(error), 'observeBoard failed');
 		});
 
@@ -217,44 +197,21 @@ export class Agent {
 			this.activeBoards = this.activeBoards.filter(x => x !== data);
 		});
 
-		(async () => {
-			while (context().isActive) {
-				try {
-					const items = toStream(
-						rpc(x =>
-							x.getBoardViewData({key: initialBoard.board.key})
-						)
-					);
+		infiniteRetry(async () => {
+			const items = toStream(
+				rpc(x => x.getBoardViewData({key: initialBoard.board.key}))
+			);
 
-					for await (const item of items) {
-						if (item.type === 'snapshot') {
-							data.update(item.data, this.crdtManager);
-						} else if (item.type === 'event') {
-							this.handleEvent(item.event);
-						} else {
-							softNever(
-								item,
-								'observeBoard got an unknown event'
-							);
-						}
-					}
-				} catch (error) {
-					if (error instanceof CancelledError) {
-						log.info(
-							`observeBoard cancelled, board id = ${initialBoard.board.id}`
-						);
-						return;
-					}
-
-					log.error(
-						toError(error),
-						'awareness pull failed, retrying in 1s...'
-					);
-
-					await wait({ms: 1000, onCancel: 'resolve'});
+			for await (const item of items) {
+				if (item.type === 'snapshot') {
+					data.update(item.data, this.crdtManager);
+				} else if (item.type === 'event') {
+					this.handleEvent(item.event);
+				} else {
+					softNever(item, 'observeBoard got an unknown event');
 				}
 			}
-		})().catch(error => {
+		}, `observeBoard, board id = ${initialBoard.board.id}`).catch(error => {
 			log.error(toError(error), 'observeBoard failed');
 		});
 

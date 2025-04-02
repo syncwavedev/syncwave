@@ -42,7 +42,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
     async subscribe(
         collection: string,
         offsetArg?: number
-    ): Promise<Cursor<T>> {
+    ): Promise<{offset: number; events: Cursor<{event: T; offset: number}>}> {
         // we wanna trigger event store iteration immediately if we didn't reach the end of the topic
         const selfTrigger = new Channel<void>();
         context().onEnd(() => selfTrigger.end());
@@ -58,7 +58,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             getEventHubTopic(this.id, collection)
         );
 
-        return Stream.merge<void>([
+        const stream = Stream.merge<void>([
             // make the first check immediately
             toStream<void>([undefined]),
             toStream(selfTrigger),
@@ -78,7 +78,10 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                             .get(collection)
                             .list(offset)
                             .take(EVENT_STORE_MAX_PULL_COUNT)
-                            .map(entry => entry.data)
+                            .map(entry => ({
+                                offset: entry.offset,
+                                event: entry.data,
+                            }))
                             .toArray();
 
                         // check if there are potentially more values to pull from the topic
@@ -91,6 +94,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                                 );
                             });
                         }
+
                         return result;
                     });
 
@@ -111,5 +115,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                 }
             })
             .toCursor();
+
+        return {offset, events: stream};
     }
 }

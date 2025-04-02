@@ -96,7 +96,7 @@ export function createReadApi() {
                     },
                     update$: state.esReader
                         .subscribe(userEvents(userId))
-                        .then(x => x.map(() => undefined)),
+                        .then(x => x.events.map(() => undefined)),
                 });
             },
         }),
@@ -115,7 +115,7 @@ export function createReadApi() {
                 }),
             ]),
             async *stream(st, {userId}, {principal}) {
-                const events = await st.esReader.subscribe(
+                const {offset, events} = await st.esReader.subscribe(
                     profileEvents(userId)
                 );
 
@@ -132,12 +132,13 @@ export function createReadApi() {
 
                 yield {
                     type: 'snapshot' as const,
+                    offset,
                     data: {
                         user,
                     },
                 };
 
-                for await (const event of events) {
+                for await (const {event} of events) {
                     yield {
                         type: 'event' as const,
                         event,
@@ -168,7 +169,7 @@ export function createReadApi() {
                     },
                     update$: st.esReader
                         .subscribe(userEvents(userId))
-                        .then(x => x.map(() => undefined))
+                        .then(x => x.events.map(() => undefined))
                         .then(x =>
                             x.finally(() => {
                                 log.debug('getMyBoards finish updates');
@@ -202,7 +203,7 @@ export function createReadApi() {
                     },
                     update$: st.esReader
                         .subscribe(boardEvents(card.boardId))
-                        .then(x => x.map(() => undefined)),
+                        .then(x => x.events.map(() => undefined)),
                 });
             },
         }),
@@ -244,7 +245,7 @@ export function createReadApi() {
                     },
                     update$: st.esReader
                         .subscribe(boardEvents(boardId))
-                        .then(x => x.map(() => undefined)),
+                        .then(x => x.events.map(() => undefined)),
                 });
             },
         }),
@@ -298,7 +299,7 @@ export function createReadApi() {
                     },
                     update$: st.esReader
                         .subscribe(boardEvents(card.boardId))
-                        .then(x => x.map(() => undefined)),
+                        .then(x => x.events.map(() => undefined)),
                 });
             },
         }),
@@ -318,7 +319,7 @@ export function createReadApi() {
                     },
                     update$: st.esReader
                         .subscribe(boardEvents(boardId))
-                        .then(x => x.map(() => undefined)),
+                        .then(x => x.events.map(() => undefined)),
                 });
             },
         }),
@@ -357,25 +358,28 @@ export function createReadApi() {
                     },
                     update$: st.esReader
                         .subscribe(boardEvents(boardId))
-                        .then(x => x.map(() => undefined)),
+                        .then(x => x.events.map(() => undefined)),
                 });
             },
         }),
         getBoardViewData: streamer({
             req: Type.Object({
                 key: Type.String(),
+                startOffset: Type.Optional(Type.Number()),
             }),
             item: Type.Union([
                 Type.Object({
                     type: Type.Literal('snapshot'),
                     data: zBoardViewDataDto(),
+                    offset: Type.Number(),
                 }),
                 Type.Object({
                     type: Type.Literal('event'),
                     event: zChangeEvent(),
+                    offset: Type.Number(),
                 }),
             ]),
-            async *stream(st, {key}, {principal}) {
+            async *stream(st, {key, startOffset}, {principal}) {
                 const boardByKey = await st.transact(principal, tx =>
                     tx.boards.getByKey(key.toUpperCase())
                 );
@@ -387,8 +391,9 @@ export function createReadApi() {
                 }
 
                 const boardId = boardByKey.id;
-                const events = await st.esReader.subscribe(
-                    boardEvents(boardId)
+                const {offset, events} = await st.esReader.subscribe(
+                    boardEvents(boardId),
+                    startOffset
                 );
 
                 const [board, columns, cards, users] = await st.transact(
@@ -420,41 +425,50 @@ export function createReadApi() {
                     );
                 }
 
-                yield {
-                    type: 'snapshot' as const,
-                    data: {
-                        board: board,
-                        columns: columns,
-                        cards: cards,
-                        users: users,
-                    },
-                };
+                if (startOffset === undefined) {
+                    yield {
+                        type: 'snapshot' as const,
+                        offset,
+                        data: {
+                            board: board,
+                            columns: columns,
+                            cards: cards,
+                            users: users,
+                        },
+                    };
+                }
 
-                for await (const event of events) {
+                for await (const {event, offset} of events) {
                     yield {
                         type: 'event' as const,
                         event,
+                        offset,
                     };
                 }
             },
         }),
         getMeViewData: streamer({
-            req: Type.Object({}),
+            req: Type.Object({
+                startOffset: Type.Optional(Type.Number()),
+            }),
             item: Type.Union([
                 Type.Object({
                     type: Type.Literal('snapshot'),
                     data: zMeViewDataDto(),
+                    offset: Type.Number(),
                 }),
                 Type.Object({
                     type: Type.Literal('event'),
                     event: zChangeEvent(),
+                    offset: Type.Number(),
                 }),
             ]),
-            async *stream(st, {}, {principal}) {
+            async *stream(st, {startOffset}, {principal}) {
                 const profileId = st.ensureAuthenticated(principal);
 
-                const events = await st.esReader.subscribe(
-                    userEvents(profileId)
+                const {offset, events} = await st.esReader.subscribe(
+                    userEvents(profileId),
+                    startOffset
                 );
 
                 const [profile, account, boards] = await st.transact(
@@ -487,19 +501,23 @@ export function createReadApi() {
                     }
                 );
 
-                yield {
-                    type: 'snapshot' as const,
-                    data: {
-                        boards,
-                        profile,
-                        account,
-                    },
-                };
+                if (startOffset === undefined) {
+                    yield {
+                        type: 'snapshot' as const,
+                        offset,
+                        data: {
+                            boards,
+                            profile,
+                            account,
+                        },
+                    };
+                }
 
-                for await (const event of events) {
+                for await (const {event, offset} of events) {
                     yield {
                         type: 'event' as const,
                         event,
+                        offset,
                     };
                 }
             },

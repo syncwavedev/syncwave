@@ -17,7 +17,7 @@ import {assert, equals, interval, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {Principal} from './auth.js';
 import {AwarenessOwnershipError} from './awareness-store.js';
-import {boardEvents, DataLayer, type ChangeEvent} from './data-layer.js';
+import {DataLayer, type ChangeEvent} from './data-layer.js';
 import type {EventStoreReader} from './event-store.js';
 import type {BoardId} from './repos/board-repo.js';
 import {type UserId} from './repos/user-repo.js';
@@ -139,7 +139,6 @@ export function createAwarenessApi() {
                 await st.putState(principal, board.id, clientId, state);
 
                 const updates = Stream.merge([
-                    await st.esReader.subscribe(boardEvents(board.id)),
                     (await st.hub.subscribe(boardAwarenessRoom(board.id))).map(
                         () => undefined
                     ),

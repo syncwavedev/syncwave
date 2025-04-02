@@ -51,9 +51,7 @@ export class Collection<T> {
     }
 
     list(start: number, end?: number): Stream<CollectionEntry<T>> {
-        return context().runChild({span: 'collection.list'}, () => {
-            return toStream(this._list(start, end));
-        });
+        return toStream(this._list(start, end));
     }
 
     private async *_list(

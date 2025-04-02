@@ -121,10 +121,15 @@ export class Agent {
 			this.activeMes = this.activeMes.filter(x => x !== view);
 		});
 
+		let nextOffset: number | undefined = undefined;
+
 		infiniteRetry(async () => {
-			const items = toStream(rpc(x => x.getMeViewData({})));
+			const items = toStream(
+				rpc(x => x.getMeViewData({startOffset: nextOffset}))
+			);
 
 			for await (const item of items) {
+				nextOffset = item.offset + 1;
 				if (item.type === 'snapshot') {
 					view.update(item.data, this.crdtManager);
 				} else if (item.type === 'event') {
@@ -197,12 +202,20 @@ export class Agent {
 			this.activeBoards = this.activeBoards.filter(x => x !== data);
 		});
 
+		let nextOffset: number | undefined = undefined;
+
 		infiniteRetry(async () => {
 			const items = toStream(
-				rpc(x => x.getBoardViewData({key: initialBoard.board.key}))
+				rpc(x =>
+					x.getBoardViewData({
+						key: initialBoard.board.key,
+						startOffset: nextOffset,
+					})
+				)
 			);
 
 			for await (const item of items) {
+				nextOffset = item.offset + 1;
 				if (item.type === 'snapshot') {
 					data.update(item.data, this.crdtManager);
 				} else if (item.type === 'event') {

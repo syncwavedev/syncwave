@@ -46,13 +46,13 @@ export class MeView {
 
 	static create(data: MeViewDataDto, derivator: CrdtDerivator) {
 		const result = new MeView();
-		result.sync(data, derivator);
+		result.update(data, derivator);
 		return result;
 	}
 
 	private constructor() {}
 
-	sync(me: MeViewDataDto, derivator: CrdtDerivator) {
+	update(me: MeViewDataDto, derivator: CrdtDerivator) {
 		this._accountState = derivator.view({
 			state: me.account.state,
 			id: me.account.id,

@@ -68,7 +68,12 @@ export class AwarenessSynchronizer {
 			try {
 				await this.pull();
 			} catch (error) {
-				if (error instanceof CancelledError) return;
+				if (error instanceof CancelledError) {
+					log.info(
+						`awareness pull cancelled, board id = ${this.boardId}`
+					);
+					return;
+				}
 
 				log.error(
 					toError(error),

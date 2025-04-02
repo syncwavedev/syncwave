@@ -3,6 +3,7 @@ import {
 	assert,
 	assertNever,
 	Awareness,
+	CancelledError,
 	context,
 	Crdt,
 	createCardId,
@@ -18,6 +19,7 @@ import {
 	toError,
 	toPosition,
 	toStream,
+	wait,
 	whenAll,
 	type ActivityMonitor,
 	type Board,
@@ -121,15 +123,34 @@ export class Agent {
 		});
 
 		(async () => {
-			const items = toStream(rpc(x => x.getMeViewData({})));
+			while (context().isActive) {
+				try {
+					const items = toStream(rpc(x => x.getMeViewData({})));
 
-			for await (const item of items) {
-				if (item.type === 'snapshot') {
-					view.sync(item.data, this.crdtManager);
-				} else if (item.type === 'event') {
-					this.handleEvent(item.event);
-				} else {
-					softNever(item, 'observeBoard got an unknown event');
+					for await (const item of items) {
+						if (item.type === 'snapshot') {
+							view.update(item.data, this.crdtManager);
+						} else if (item.type === 'event') {
+							this.handleEvent(item.event);
+						} else {
+							softNever(
+								item,
+								'observeBoard got an unknown event'
+							);
+						}
+					}
+				} catch (error) {
+					if (error instanceof CancelledError) {
+						log.info('observeMe cancelled');
+						return;
+					}
+
+					log.error(
+						toError(error),
+						'observeMe failed, retrying in 1s...'
+					);
+
+					await wait({ms: 1000, onCancel: 'resolve'});
 				}
 			}
 		})().catch(error => {
@@ -172,7 +193,7 @@ export class Agent {
 		rpc: Rpc,
 		activityMonitor: ActivityMonitor
 	): [BoardTreeView, Awareness] {
-		const awareness = this.observeAwareness(
+		const awareness = this.createBoardAwareness(
 			rpc,
 			initialBoard.board.id,
 			initialMe,
@@ -197,17 +218,40 @@ export class Agent {
 		});
 
 		(async () => {
-			const items = toStream(
-				rpc(x => x.getBoardViewData({key: initialBoard.board.key}))
-			);
+			while (context().isActive) {
+				try {
+					const items = toStream(
+						rpc(x =>
+							x.getBoardViewData({key: initialBoard.board.key})
+						)
+					);
 
-			for await (const item of items) {
-				if (item.type === 'snapshot') {
-					data.update(item.data, this.crdtManager);
-				} else if (item.type === 'event') {
-					this.handleEvent(item.event);
-				} else {
-					softNever(item, 'observeBoard got an unknown event');
+					for await (const item of items) {
+						if (item.type === 'snapshot') {
+							data.update(item.data, this.crdtManager);
+						} else if (item.type === 'event') {
+							this.handleEvent(item.event);
+						} else {
+							softNever(
+								item,
+								'observeBoard got an unknown event'
+							);
+						}
+					}
+				} catch (error) {
+					if (error instanceof CancelledError) {
+						log.info(
+							`observeBoard cancelled, board id = ${initialBoard.board.id}`
+						);
+						return;
+					}
+
+					log.error(
+						toError(error),
+						'awareness pull failed, retrying in 1s...'
+					);
+
+					await wait({ms: 1000, onCancel: 'resolve'});
 				}
 			}
 		})().catch(error => {
@@ -217,7 +261,7 @@ export class Agent {
 		return [data.boardTreeView, awareness];
 	}
 
-	private observeAwareness(
+	private createBoardAwareness(
 		rpc: Rpc,
 		boardId: BoardId,
 		initialMe: CrdtDoc<User>,

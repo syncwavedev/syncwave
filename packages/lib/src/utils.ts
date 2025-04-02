@@ -595,11 +595,10 @@ export async function infiniteRetry<R>(
             return await fn();
         } catch (error) {
             if (error instanceof CancelledError) {
-                log.info(toError(error), `infiniteRetry cancelled: ${ctx}`);
-                throw error;
+                log.info(error, `infiniteRetry cancelled: ${ctx}`);
+            } else {
+                log.error(toError(error), `infiniteRetry failed: ${ctx}`);
             }
-
-            log.error(toError(error), `infiniteRetry failed: ${ctx}`);
 
             await wait({ms: 1000, onCancel: 'resolve'});
         }

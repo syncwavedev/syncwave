@@ -1,6 +1,5 @@
 import {Deferred} from './deferred.js';
 import {AppError} from './errors.js';
-import {log} from './logger.js';
 
 export class Mutex {
     private locked = false;
@@ -8,12 +7,7 @@ export class Mutex {
 
     async run<T>(fn: () => Promise<T>): Promise<T> {
         try {
-            const start = performance.now();
             await this.lock();
-            const elapsed = performance.now() - start;
-            if (elapsed > 100) {
-                log.warn('Mutex wait time: ' + elapsed);
-            }
             return await fn();
         } finally {
             this.unlock();

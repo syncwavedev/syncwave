@@ -610,6 +610,12 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             );
                             await channel.pipe(writer);
                         }).catch(error => {
+                            writer.throw(toError(error)).catch(error => {
+                                log.error(
+                                    toError(error),
+                                    'failed to throw stream error'
+                                );
+                            });
                             cleanup(new AppError('run failed', {cause: error}));
                             log.error(
                                 toError(error),

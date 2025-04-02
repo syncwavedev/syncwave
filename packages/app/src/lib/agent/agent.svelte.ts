@@ -3,7 +3,6 @@ import {
 	assert,
 	assertNever,
 	Awareness,
-	BatchProcessor,
 	context,
 	Crdt,
 	createCardId,
@@ -11,7 +10,6 @@ import {
 	createCoordinatorApi,
 	createRichtext,
 	createRpcClient,
-	Deferred,
 	getNow,
 	log,
 	PersistentConnection,
@@ -22,7 +20,6 @@ import {
 	toStream,
 	whenAll,
 	type ActivityMonitor,
-	type AwarenessState,
 	type Board,
 	type BoardId,
 	type BoardViewDataDto,
@@ -44,6 +41,7 @@ import type {AuthManager} from '../../auth-manager';
 
 import {getDocumentActivity} from '../../document-activity';
 import {getRpc, type Rpc} from '../utils';
+import {AwarenessSynchronizer} from './awareness-syncronizer';
 import {setComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
@@ -174,7 +172,12 @@ export class Agent {
 		rpc: Rpc,
 		activityMonitor: ActivityMonitor
 	): [BoardTreeView, Awareness] {
-		const awareness = new Awareness(createClientId(), activityMonitor);
+		const awareness = this.observeAwareness(
+			rpc,
+			initialBoard.board.id,
+			initialMe,
+			activityMonitor
+		);
 		const me = this.crdtManager.view({
 			id: initialMe.id,
 			isDraft: false,
@@ -210,102 +213,35 @@ export class Agent {
 		})().catch(error => {
 			log.error(toError(error), 'observeBoard failed');
 		});
+
+		return [data.boardTreeView, awareness];
+	}
+
+	private observeAwareness(
+		rpc: Rpc,
+		boardId: BoardId,
+		initialMe: CrdtDoc<User>,
+		activityMonitor: ActivityMonitor
+	) {
+		const awareness = new Awareness(createClientId(), activityMonitor);
+
 		awareness.setLocalState({
 			user: {name: initialMe.fullName},
 			userId: initialMe.id,
 			active: activityMonitor.active,
 		});
 
-		const destroySignal = new Deferred<void>();
-		context().onEnd(() => {
-			destroySignal.resolve();
+		const awarenessSynchronizer = AwarenessSynchronizer.start(
+			awareness,
+			boardId,
+			rpc
+		);
+
+		context().onEnd(reason => {
+			awarenessSynchronizer.destroy(reason);
 		});
 
-		const awarenessSender = new BatchProcessor<AwarenessState>({
-			state: {type: 'running'},
-			// delay to batch async bursts of awareness updates
-			// in particular it helps for tiptap initial focus with awareness
-			enqueueDelay: 10,
-			process: (states: AwarenessState[]) => {
-				const latestState = states.at(-1);
-				assert(
-					latestState !== undefined,
-					'awareness latest state not found'
-				);
-
-				// don't wait for result to allow sending multiple updates concurrently
-				rpc(x =>
-					x.updateBoardAwarenessState({
-						clientId: awareness.clientId,
-						boardId: initialBoard.board.id,
-						state: latestState,
-					})
-				).catch(error => {
-					log.error(toError(error), 'failed to send awareness state');
-				});
-
-				return Promise.resolve();
-			},
-		});
-
-		async function startAwarenessPull() {
-			const handleUpdate = (_: unknown, origin: unknown) => {
-				if (origin !== 'local') return;
-
-				awarenessSender
-					.enqueue(awareness.getLocalState())
-					.catch(error => {
-						log.error(
-							toError(error),
-							'failed to enqueue local awareness'
-						);
-					});
-			};
-
-			awareness.on('update', handleUpdate);
-			destroySignal.promise.then(() => {
-				awareness.off('update', handleUpdate);
-			});
-
-			await rpc(x =>
-				x.updateBoardAwarenessState({
-					clientId: awareness.clientId,
-					boardId: initialBoard.board.id,
-					state: awareness.getLocalState(),
-				})
-			);
-		}
-
-		(async () => {
-			const updates = rpc(x =>
-				x.joinBoardAwareness({
-					boardId: initialBoard.board.id,
-					state: awareness.getLocalState(),
-					clientId: awareness.clientId,
-				})
-			);
-
-			let initialized = false;
-			for await (const update of updates) {
-				awareness.applyRemote(
-					update.states.map(({clientId, state}) => ({
-						key: clientId,
-						value: state,
-					}))
-				);
-
-				if (!initialized) {
-					initialized = true;
-					startAwarenessPull().catch(error => {
-						log.error(toError(error), 'awareness pull failed');
-					});
-				}
-			}
-		})().catch(error => {
-			log.error(toError(error), 'observeBoard awareness failed');
-		});
-
-		return [data.boardTreeView, awareness];
+		return awareness;
 	}
 
 	setProfileFullName(profileId: UserId, fullName: string): void {

@@ -8,11 +8,10 @@ function applyChange(state: unknown, change: ValueChange) {
 		'change target must be an object'
 	);
 	const key = change.path[0];
-	assert(key in state, 'change path must be a valid property');
-
 	if (change.path.length === 1) {
 		(state as Record<string | number, unknown>)[key] = change.value;
 	} else {
+		assert(key in state, `key ${key} not found in svelte state`);
 		applyChange((state as Record<string | number, unknown>)[key], {
 			path: change.path.slice(1),
 			value: change.value,

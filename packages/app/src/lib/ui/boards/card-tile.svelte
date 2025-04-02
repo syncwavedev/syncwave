@@ -10,7 +10,6 @@
 	} from './board-dnd';
 	import {getNow} from 'syncwave';
 	import HashtagIcon from '../../components/icons/hashtag-icon.svelte';
-	import ColumnIcon from '../components/column-icon.svelte';
 
 	const {
 		card,

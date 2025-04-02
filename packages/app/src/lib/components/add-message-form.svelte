@@ -10,7 +10,6 @@
 		type BoardId,
 		type CardId,
 		type Message,
-		type UserId,
 	} from 'syncwave';
 	import ArrowUpIcon from './icons/arrow-up-icon.svelte';
 	import AttachIcon from './icons/attach-icon.svelte';
@@ -129,7 +128,7 @@
 <div>
 	{#if files.length > 0}
 		<div class="flex flex-wrap gap-1">
-			{#each files as file}
+			{#each files as file (file)}
 				<AttachmentPreview
 					file={file.file}
 					loading={file.uploading}

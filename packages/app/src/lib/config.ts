@@ -50,7 +50,8 @@ export const appConfig: AppConfig = (() => {
 			apiUrl: window.location.origin + '/api',
 			stage: PUBLIC_STAGE,
 			googleClientId: assertDefined(
-				(window as any).CONFIG_GOOGLE_CLIENT_ID,
+				(window as unknown as Record<string, string>)
+					.CONFIG_GOOGLE_CLIENT_ID,
 				'window.CONFIG_GOOGLE_CLIENT_ID must be defined in self-hosted mode'
 			),
 		};

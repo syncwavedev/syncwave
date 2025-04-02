@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type {BoardDto, MemberDto} from 'syncwave';
+	import type {BoardDto} from 'syncwave';
 
 	import HashtagIcon from './icons/hashtag-icon.svelte';
 

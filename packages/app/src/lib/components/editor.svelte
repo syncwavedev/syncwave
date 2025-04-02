@@ -15,7 +15,7 @@
 	import {XmlFragment} from 'yjs';
 	import {Extension} from '@tiptap/core';
 	import type {Awareness} from 'syncwave';
-	import {hashString, type User, type UserId} from 'syncwave';
+	import {hashString, type UserId} from 'syncwave';
 
 	let editor = $state() as Readable<Editor>;
 
@@ -130,6 +130,7 @@
 		get(editor).isActive(name, attrs);
 </script>
 
+<!-- eslint-disable-next-line svelte/require-store-reactive-access -->
 {#if editor}
 	<BubbleMenu editor={$editor}>
 		<div data-test-id="bubble-menu" class="flex">

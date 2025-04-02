@@ -4,7 +4,6 @@
 		type AttachmentDto,
 		type CrdtDoc,
 		type Message,
-		type MessageDto,
 		type User,
 	} from 'syncwave';
 	import Avatar from './avatar.svelte';
@@ -43,7 +42,7 @@
 			<div class="text-4xs text-ink-detail">{when}</div>
 		</div>
 	</div>
-	{#each attachments as attachment}
+	{#each attachments as attachment (attachment.id)}
 		<AttachmentView {attachment} />
 	{/each}
 	<div class="ml-[calc(1.325em+0.5rem)] text-xs leading-relaxed">

@@ -1,43 +1,46 @@
 // @ts-check
 
 import {includeIgnoreFile} from '@eslint/compat';
-import {default as eslint, default as pluginJs} from '@eslint/js';
+import {default as eslint} from '@eslint/js';
 import pluginPrettier from 'eslint-config-prettier';
 import prettier from 'eslint-plugin-prettier/recommended';
-import pluginSvelte from 'eslint-plugin-svelte';
+import {default as pluginSvelte, default as svelte} from 'eslint-plugin-svelte';
 import globals from 'globals';
 import {fileURLToPath} from 'node:url';
 import tseslint from 'typescript-eslint';
+import svelteConfig from './svelte.config.js';
 
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 const config = tseslint.config(
 	includeIgnoreFile(gitignorePath),
 	eslint.configs.recommended,
+	...tseslint.configs.recommended,
 	prettier,
-	{languageOptions: {globals: globals.browser}},
-	pluginJs.configs.recommended,
-	tseslint.configs.recommended,
-	pluginSvelte.configs['flat/recommended'],
-	pluginPrettier,
-	...pluginSvelte.configs['flat/prettier'],
+	...svelte.configs.recommended,
 	{
 		languageOptions: {
-			globals: {
-				...globals.browser,
-				...globals.node,
-			},
-		},
-		rules: {
-			'@typescript-eslint/no-empty-object-type': 'off',
+			globals: globals.browser,
 		},
 	},
 	{
 		files: ['**/*.svelte', '**/*.svelte.ts'],
 		languageOptions: {
 			parserOptions: {
+				projectService: true,
+				extraFileExtensions: ['.svelte'],
 				parser: tseslint.parser,
+				svelteConfig,
 			},
+		},
+	},
+	pluginSvelte.configs['flat/recommended'],
+	pluginPrettier,
+	...pluginSvelte.configs['flat/prettier'],
+	{
+		rules: {
+			'@typescript-eslint/no-empty-object-type': 'off',
+			'svelte/no-at-html-tags': 'off',
 		},
 	}
 );

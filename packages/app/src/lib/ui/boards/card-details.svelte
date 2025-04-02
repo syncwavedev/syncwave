@@ -73,7 +73,7 @@
 						{
 							icon: LinkIcon,
 							text: 'Copy Card Link',
-							onSelect: _ => {
+							onSelect: () => {
 								navigator.clipboard.writeText(
 									window.location.href
 								);
@@ -82,7 +82,7 @@
 						{
 							icon: TrashIcon,
 							text: 'Delete',
-							onSelect: _ => onDelete(),
+							onSelect: () => onDelete(),
 						},
 					]}
 				>

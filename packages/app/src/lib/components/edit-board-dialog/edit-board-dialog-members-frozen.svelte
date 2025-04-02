@@ -117,7 +117,7 @@
 						getRemoveDisabledReason(member)}
 					<div class="flex items-center p-2">
 						<button class="btn text-[2em]">
-							<Avatar user={{fullName: 'A'} as any} />
+							<Avatar user={{fullName: 'A'}} />
 						</button>
 						<span class="ml-1.5 text-xs">
 							{member.account?.email ?? member.user.fullName}

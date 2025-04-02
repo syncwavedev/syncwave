@@ -7,7 +7,6 @@
 		open: boolean;
 		onClose: () => void;
 		children: Snippet;
-		searchMode: boolean;
 	}
 
 	let {open, onClose, children}: Props = $props();

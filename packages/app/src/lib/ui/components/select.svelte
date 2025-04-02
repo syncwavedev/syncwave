@@ -18,7 +18,6 @@
 	}: {
 		options: SelectOption[];
 		value: string;
-		placeholder?: string;
 		onValueChange?: (value: string) => void;
 		disabled?: boolean;
 		children?: Snippet | undefined;

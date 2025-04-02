@@ -89,8 +89,7 @@
 
 				const currentY = parseInt(element.dataset.currentY!, 10);
 
-				if (targetY === currentY) {
-				} else {
+				if (targetY !== currentY) {
 					const deadline = parseInt(element.dataset.deadline!, 10);
 					const progress =
 						1 - (deadline - now) / DND_REORDER_DURATION_MS;

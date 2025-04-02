@@ -40,10 +40,10 @@
 </form>
 <hr />
 <div class="mx-2 my-2 flex flex-col">
-	{#each members as email}
+	{#each members as email (email)}
 		<div class="flex items-center p-2">
 			<button class="btn text-[2em]">
-				<Avatar user={{fullName: 'A'} as any} />
+				<Avatar user={{fullName: 'A'}} />
 			</button>
 			<span class="ml-1.5 text-xs">{email}</span>
 			<button

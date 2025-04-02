@@ -46,8 +46,6 @@
 		const newWidth =
 			freeSide === 'right' ? startWidth + deltaX : startWidth - deltaX;
 
-		console;
-
 		if (newWidth >= minWidth && newWidth <= maxWidth) {
 			width = newWidth;
 			onWidthChange?.(width);

@@ -1,7 +1,7 @@
 import {context} from '../context.js';
 import {getReadableError} from '../errors.js';
 import type {Observer} from '../subject.js';
-import type {Nothing, Unsubscribe} from '../utils.js';
+import type {Unsubscribe} from '../utils.js';
 import type {
     Connection,
     TransportClient,
@@ -35,7 +35,7 @@ export class InstrumentedTransportClient<T> implements TransportClient<T> {
 
 export class InstrumentedTransportServer<T> implements TransportServer<T> {
     constructor(private readonly server: TransportServer<T>) {}
-    async launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
+    async launch(cb: (connection: Connection<T>) => void): Promise<void> {
         return await this.server.launch(connection => {
             return cb(new InstrumentedConnection(connection));
         });

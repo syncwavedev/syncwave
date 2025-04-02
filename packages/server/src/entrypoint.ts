@@ -424,7 +424,7 @@ if (cluster.isPrimary && options.launchCluster) {
             }
         })
         .catch(error => {
-            log.error(error, 'error during launch');
+            log.error(toError(error), 'error during launch');
         });
 
     for (let i = 0; i < options.workersCount; i++) {
@@ -457,6 +457,6 @@ if (cluster.isPrimary && options.launchCluster) {
             }
         })
         .catch(error => {
-            log.error(error, 'error during launch');
+            log.error(toError(error), 'error during launch');
         });
 }

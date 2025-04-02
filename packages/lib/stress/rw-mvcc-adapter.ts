@@ -17,7 +17,7 @@ import {whenAll} from '../src/utils.js';
 const createId = (state: StressTestState) =>
     state.options.rand.int32(10000).toString().padStart(4, '0');
 
-class DualSnapController<K, V> {
+class DualSnapController<K extends number, V> {
     public readonly id: string;
     private released = false;
 
@@ -66,7 +66,7 @@ class DualSnapController<K, V> {
     }
 }
 
-class DualTxController<K, V> {
+class DualTxController<K extends number, V extends number> {
     private released = false;
     public readonly id: string;
 
@@ -140,7 +140,7 @@ async function wrapResultPromise(p: Promise<void>) {
     }
 }
 
-class DualKvStoreController<K, V> {
+class DualKvStoreController<K extends number, V extends number> {
     constructor(
         private readonly subject: KvStore<K, V>,
         private readonly target: KvStore<K, V>

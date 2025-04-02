@@ -9,7 +9,7 @@ import {Deferred} from './deferred.js';
 import {CancelledError} from './errors.js';
 import {log, type LogLevel} from './logger.js';
 import {Stream, toStream} from './stream.js';
-import {type Brand, type Nothing, runAll, type Unsubscribe} from './utils.js';
+import {type Brand, runAll, type Unsubscribe} from './utils.js';
 
 export interface NestedAttributeMap
     extends Record<
@@ -52,7 +52,7 @@ export interface ContextOptions {
     readonly attributes?: Record<string, string | undefined>;
 }
 
-export type Cancel = (reason: unknown) => Nothing;
+export type Cancel = (reason: unknown) => void;
 
 export type CancelBehavior = 'reject' | 'resolve' | 'suspend';
 
@@ -132,7 +132,7 @@ export class Context {
     private _ended = false;
     private _endRequested = false;
     private children: Context[] = [];
-    private _endReason: unknown | undefined = undefined;
+    private _endReason: unknown = undefined;
 
     get isActive() {
         return !this._ended;
@@ -166,7 +166,7 @@ export class Context {
         return signal.promise;
     }
 
-    onEnd(cb: (reason: unknown) => Nothing): Unsubscribe {
+    onEnd(cb: (reason: unknown) => void): Unsubscribe {
         if (this._endRequested) {
             log.debug('Context.onEnd: new onEnd was registered after end');
         }
@@ -208,11 +208,11 @@ export class Context {
             const result = ctx.run(fn);
 
             if (result instanceof Promise) {
-                return result.finally(() => endCtx('end of runChild')) as any;
+                return result.finally(() => endCtx('end of runChild')) as never;
             } else {
                 return toStream(result).finally(() => {
                     endCtx('end of runChild');
-                }) as any;
+                }) as never;
             }
         } catch (error) {
             endCtx('end of runChild');
@@ -252,7 +252,7 @@ export class Context {
         ];
     }
 
-    detach(options: ContextOptions, fn: () => Nothing): void {
+    detach(options: ContextOptions, fn: () => void): void {
         const [ctx] = this.createDetached(options);
         ctx.run(fn);
     }

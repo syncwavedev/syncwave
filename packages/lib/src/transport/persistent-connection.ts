@@ -35,7 +35,7 @@ export class PersistentConnection<T> implements Connection<T> {
 
         // connect if not already
         this.getConnection().catch(err => {
-            log.error(err, 'error while connection to the server: ');
+            log.error(toError(err), 'error while connection to the server: ');
         });
 
         return this.subject.subscribe(cb);
@@ -53,7 +53,7 @@ export class PersistentConnection<T> implements Connection<T> {
                 .then(x => x.close(reason))
                 .catch(error => {
                     log.error(
-                        error,
+                        toError(error),
                         'PersistentConnection: failed to close the connection'
                     );
                 });
@@ -105,7 +105,7 @@ export class PersistentConnection<T> implements Connection<T> {
                         // reconnect
                         this.getConnection().catch(err => {
                             log.error(
-                                err,
+                                toError(err),
                                 'error while reconnection to the server: '
                             );
                         });
@@ -122,7 +122,7 @@ export class PersistentConnection<T> implements Connection<T> {
                     close: () => {
                         unsub('PersistentConnection => connection closed');
                         reconnect().catch(error => {
-                            log.error(error, 'close => reconnect');
+                            log.error(toError(error), 'close => reconnect');
                         });
                     },
                 });

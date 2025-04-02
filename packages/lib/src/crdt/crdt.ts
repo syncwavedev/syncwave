@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {Type} from '@sinclair/typebox';
 import {uint53 as createUint53} from 'lib0/random.js';
 import {
@@ -18,7 +21,6 @@ import {
     assert,
     assertNever,
     type Brand,
-    type Nothing,
     type Unsubscribe,
     zip,
 } from '../utils.js';
@@ -176,7 +178,7 @@ export class Crdt<T> {
         applyUpdateV2(this.doc, diff.payload, options?.origin);
     }
 
-    onChange(cb: (changes: ValueChange[]) => Nothing): Unsubscribe {
+    onChange(cb: (changes: ValueChange[]) => void): Unsubscribe {
         const fn = (events: Array<YEvent<any>>) => {
             const changes: ValueChange[] = [];
             for (const event of events) {
@@ -222,7 +224,7 @@ export class Crdt<T> {
     }
 
     onUpdate(
-        cb: (diff: CrdtDiff<T>, options: DiffOptions) => Nothing
+        cb: (diff: CrdtDiff<T>, options: DiffOptions) => void
     ): Unsubscribe {
         const fn = (state: Uint8Array, origin: string | undefined) =>
             cb(
@@ -327,7 +329,9 @@ export function mapFromYValue(
     } else if (yValue.constructor === YXmlFragment) {
         return createRichtext(exposeRichtext ? yValue : undefined);
     } else {
-        throw new AppError('cannot map unsupported YValue: ' + yValue);
+        throw new AppError(
+            'cannot map unsupported YValue: ' + yValue.constructor.name
+        );
     }
 }
 
@@ -340,7 +344,7 @@ function mapToYValue(value: any): YValue {
         typeof value === 'number' ||
         typeof value === 'boolean'
     ) {
-        return value;
+        return value as YValue;
     } else if (isRichtext(value)) {
         return value.__fragment ?? new YXmlFragment();
     } else if (value.constructor === Map) {

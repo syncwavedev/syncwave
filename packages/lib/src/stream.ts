@@ -5,7 +5,7 @@ import {Cursor, toCursor} from './cursor.js';
 import {Deferred} from './deferred.js';
 import {AppError, CancelledError, toError} from './errors.js';
 import {log} from './logger.js';
-import {assert, type Nothing, type Unsubscribe, whenAll} from './utils.js';
+import {assert, type Unsubscribe, whenAll} from './utils.js';
 
 export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;
@@ -83,7 +83,7 @@ export class AsyncIteratorFactory<T> implements AsyncIterable<T> {
             )
             .catch(error =>
                 log.error(
-                    error,
+                    toError(error),
                     'AsyncIteratorFactory.returnAll: failed to return all iterators'
                 )
             );
@@ -109,14 +109,14 @@ export function toStream<T>(
         | ((writer: ChannelWriter<T>) => Unsubscribe)
 ): Stream<T> {
     if (source instanceof Stream) {
-        return source;
+        return source as Stream<T>;
     }
 
     if (source instanceof Promise) {
         const factory = new AsyncIteratorFactory<T>(channel => {
             source
                 .then(value => channel.next(value))
-                .catch(error => channel.throw(error))
+                .catch(error => channel.throw(toError(error)))
                 .finally(() => channel.end());
 
             return () => {
@@ -129,7 +129,7 @@ export function toStream<T>(
                     )
                     .finally(() => channel.end())
                     .catch(error => {
-                        log.error(error, 'stream unsubscribe');
+                        log.error(toError(error), 'stream unsubscribe');
                     });
             };
         });
@@ -209,7 +209,7 @@ export class Stream<T> implements AsyncIterable<T> {
                 resolve({done: true, value: undefined});
             }
         })().catch(error => {
-            reject(error);
+            reject(toError(error));
         });
 
         try {
@@ -374,7 +374,7 @@ export class Stream<T> implements AsyncIterable<T> {
         return toStream(this._finally(fn));
     }
 
-    private async *_finally(fn: () => Nothing) {
+    private async *_finally(fn: () => void) {
         try {
             yield* this;
         } finally {
@@ -401,7 +401,7 @@ export class Stream<T> implements AsyncIterable<T> {
             | ((value: T) => Promise<boolean> | boolean)
             | ((value: T) => value is T)
     ): Stream<T> {
-        return toStream(this._while(predicate)) as Stream<any>;
+        return toStream(this._while(predicate));
     }
 
     private async *_while(
@@ -420,7 +420,7 @@ export class Stream<T> implements AsyncIterable<T> {
             | ((value: T) => Promise<boolean> | boolean)
             | ((value: T) => value is T)
     ): Stream<T> {
-        return toStream(this._filter(predicate)) as Stream<any>;
+        return toStream(this._filter(predicate));
     }
 
     private async *_filter(
@@ -558,7 +558,7 @@ export class Stream<T> implements AsyncIterable<T> {
                 falsyChan.end();
             }
         })().catch(error => {
-            log.error(error, 'stream partition failed');
+            log.error(toError(error), 'stream partition failed');
         });
 
         return [toCursor(truthyChan), toCursor(falsyChan)] as [

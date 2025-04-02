@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {decodeTuple, encodeTuple, type Primitive} from './tuple.js';
+import {decodeTuple, encodeTuple, type Primitive, type Tuple} from './tuple.js';
 import {compareUint8Array} from './utils.js';
 import {createUuid} from './uuid.js';
 
@@ -37,9 +37,9 @@ describe('encodeTuple and decodeTuple', () => {
     });
 
     it('should throw an error when decoding a tuple with undefined', () => {
-        const invalidTuple = [undefined];
+        const invalidTuple = [undefined] as unknown as Tuple;
 
-        expect(() => encodeTuple(invalidTuple as any)).toThrowError(
+        expect(() => encodeTuple(invalidTuple)).toThrowError(
             /Packed element cannot be undefined/
         );
     });
@@ -70,17 +70,17 @@ describe('encodeTuple and decodeTuple', () => {
     });
 
     it('should throw an error when decoding a tuple with Set', () => {
-        const invalidItemTuple = [new Set()];
+        const invalidItemTuple = [new Set()] as unknown as Tuple;
 
-        expect(() => encodeTuple(invalidItemTuple as any)).toThrowError(
+        expect(() => encodeTuple(invalidItemTuple)).toThrowError(
             'Packed items must be basic types or lists'
         );
     });
 
     interface Testcase {
         name: string;
-        a: any;
-        b: any;
+        a: Tuple;
+        b: Tuple;
         result: -1 | 0 | 1;
     }
 

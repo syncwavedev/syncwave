@@ -43,14 +43,19 @@
 		>
 			<DropdownMenu.Group>
 				{#each items as item (item.text)}
-					<DropdownMenu.Item textValue={item.text} onSelect={item.onSelect}>
+					<DropdownMenu.Item
+						textValue={item.text}
+						onSelect={item.onSelect}
+					>
 						<div
 							class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-default outline-none"
 						>
 							<span class="mr-1.5"><item.icon /></span>
 							<span class="text-xs">{item.text}</span>
 							{#if item.shortcut}
-								<span class="ml-auto text-ink-detail">{item.shortcut}</span>
+								<span class="ml-auto text-ink-detail"
+									>{item.shortcut}</span
+								>
 							{/if}
 						</div>
 					</DropdownMenu.Item>

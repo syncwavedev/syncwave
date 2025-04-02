@@ -1,8 +1,8 @@
 import {context, type Context} from './context.js';
 import {AppError} from './errors.js';
-import {runAll, type Nothing, type Unsubscribe} from './utils.js';
+import {runAll, type Unsubscribe} from './utils.js';
 
-export type EventEmitterCallback<T> = (value: T) => Nothing;
+export type EventEmitterCallback<T> = (value: T) => void;
 
 interface EventEmitterSubscriber<T> {
     callback: EventEmitterCallback<T>;

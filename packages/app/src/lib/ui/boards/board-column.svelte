@@ -68,7 +68,10 @@
 	viewportClass="h-full max-h-[calc(100vh-8rem)] min-h-[calc(100vh-2.5rem)]"
 	type="hover"
 >
-	<div class="flex w-80 flex-shrink-0 flex-col pb-1" data-column-id={column.id}>
+	<div
+		class="flex w-80 flex-shrink-0 flex-col pb-1"
+		data-column-id={column.id}
+	>
 		<div
 			class="bg-subtle-0 sticky top-0 z-1 flex min-h-10 items-center px-2 py-1"
 			data-disable-scroll-view-drag="true"

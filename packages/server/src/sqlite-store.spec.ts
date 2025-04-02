@@ -22,7 +22,7 @@ describe('SqliteUint8KVStore (localhost:4500)', () => {
     });
 
     afterEach(async () => {
-        await store.close();
+        store.close();
         await rm('./test.sqlite');
     });
 

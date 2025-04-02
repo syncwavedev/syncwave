@@ -112,7 +112,8 @@ class Router {
 	public run(uri?: string): this {
 		const formattedUri = this.format(uri || location.pathname);
 		if (formattedUri) {
-			const uriWithoutQuery = formattedUri.match(/[^?#]*/)?.[0] ?? formattedUri;
+			const uriWithoutQuery =
+				formattedUri.match(/[^?#]*/)?.[0] ?? formattedUri;
 			this.currentUri = uriWithoutQuery;
 
 			for (const route of this.routes) {

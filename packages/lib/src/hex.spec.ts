@@ -55,8 +55,12 @@ describe('HexCodec', () => {
         });
 
         it('should throw an error for null or undefined input', () => {
-            expect(() => codec.encode(null as any)).toThrowError();
-            expect(() => codec.encode(undefined as any)).toThrowError();
+            expect(() =>
+                codec.encode(null as unknown as string)
+            ).toThrowError();
+            expect(() =>
+                codec.encode(undefined as unknown as string)
+            ).toThrowError();
         });
     });
 

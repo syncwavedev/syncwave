@@ -253,7 +253,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         }
                     )
                 ).catch(error => {
-                    log.error(error, `${callInfo} failed`);
+                    log.error(toError(error), `${callInfo} failed`);
                 });
 
                 return {streamId};
@@ -364,7 +364,7 @@ class RpcStreamerClientApiState {
                     .finally(() => writer.end())
             )
             .catch(error => {
-                log.error(error, 'failed to finish the channel');
+                log.error(toError(error), 'failed to finish the channel');
             });
     }
 
@@ -544,7 +544,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             })
                             .catch(async error => {
                                 log.error(
-                                    error,
+                                    toError(error),
                                     `${callInfo} failed: ${getReadableError(error)}`
                                 );
                                 throw error;
@@ -585,6 +585,12 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             )
                             .finally(() => {
                                 writer.end();
+                            })
+                            .catch(error => {
+                                log.error(
+                                    toError(error),
+                                    'failed to cancel stream'
+                                );
                             });
                     });
                     return requestCtx.run(() => {
@@ -605,7 +611,10 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             await channel.pipe(writer);
                         }).catch(error => {
                             cleanup(new AppError('run failed', {cause: error}));
-                            log.error(error, 'failed to start streaming');
+                            log.error(
+                                toError(error),
+                                'failed to start streaming'
+                            );
                         });
 
                         return (reason: unknown) => {
@@ -646,5 +655,6 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
         };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return new Proxy<any>({}, {get});
 }

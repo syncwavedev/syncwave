@@ -1,5 +1,4 @@
 <script lang="ts">
-	import {cubicOut} from 'svelte/easing';
 	import ListAnimator from '../lib/ui/components/list-animator.svelte';
 
 	const NUM = 3;

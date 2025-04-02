@@ -20,6 +20,7 @@ import {
     type CryptoService,
     type EmailMessage,
     type EmailService,
+    type JwtPayload,
     type JwtService,
     type RpcMessage,
 } from '../src/index.js';
@@ -35,7 +36,7 @@ export class E2eFixture {
         const coordinatorKv = new MemMvccStore();
         const jwt: JwtService = {
             sign: async payload => JSON.stringify(payload),
-            verify: token => JSON.parse(token),
+            verify: async token => JSON.parse(token) as JwtPayload,
         };
         const crypto: CryptoService = {
             randomBytes: async () => new Uint8Array(0),

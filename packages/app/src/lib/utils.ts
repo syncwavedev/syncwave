@@ -14,7 +14,6 @@ import {
 	toStream,
 	unimplemented,
 	type CoordinatorRpc,
-	type Nothing,
 	type Unsubscribe,
 } from 'syncwave';
 import {AuthManager} from '../auth-manager';
@@ -184,12 +183,12 @@ export function fireEscape() {
 	);
 }
 
-const escapeHandlers: Array<{priority: number; cb: () => Nothing}> = [];
+const escapeHandlers: Array<{priority: number; cb: () => void}> = [];
 
 export const DIALOG_PRIORITY = 100;
 export const CARD_DETAILS_PRIORITY = 10;
 
-export function onEscape(priority: number, cb: () => Nothing): Unsubscribe {
+export function onEscape(priority: number, cb: () => void): Unsubscribe {
 	const handler = {priority, cb};
 	escapeHandlers.push(handler);
 	escapeHandlers.sort((a, b) => b.priority - a.priority);

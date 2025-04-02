@@ -173,6 +173,7 @@ export function createRpcHandlerClient<TApi extends HandlerApi<any>>(
         return createHandlerProxy(conn, getHeaders, handler, name);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return new Proxy<any>({}, {get});
 }
 
@@ -221,7 +222,10 @@ async function proxyRequest(
                     reason: getReadableError(reason),
                 })
             ).catch(error =>
-                log.error(error, 'proxyRequest: failed to send cancellation')
+                log.error(
+                    toError(error),
+                    'proxyRequest: failed to send cancellation'
+                )
             );
         }
         unsub?.(reason);
@@ -299,6 +303,7 @@ async function proxyRequest(
             payload: {name, arg},
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return await result.promise;
     } finally {
         cleanup(new AppError('end of rpc proxy request'));
@@ -334,6 +339,7 @@ function createHandlerProxy(
                 partialHeaders ?? {}
             );
 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return await proxyRequest(conn, name, arg, headers);
         });
 

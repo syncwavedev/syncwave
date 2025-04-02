@@ -1,8 +1,9 @@
 // @ts-check
 
 import {includeIgnoreFile} from '@eslint/compat';
-import pluginJs from '@eslint/js';
+import {default as eslint, default as pluginJs} from '@eslint/js';
 import pluginPrettier from 'eslint-config-prettier';
+import prettier from 'eslint-plugin-prettier/recommended';
 import pluginSvelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import {fileURLToPath} from 'node:url';
@@ -12,6 +13,8 @@ const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 const config = tseslint.config(
 	includeIgnoreFile(gitignorePath),
+	eslint.configs.recommended,
+	prettier,
 	{languageOptions: {globals: globals.browser}},
 	pluginJs.configs.recommended,
 	tseslint.configs.recommended,

@@ -24,7 +24,9 @@ export function createThemeManager() {
 
 	$effect(() => {
 		if (typeof window !== 'undefined') {
-			const prefersLight = window.matchMedia('(prefers-color-scheme: light)');
+			const prefersLight = window.matchMedia(
+				'(prefers-color-scheme: light)'
+			);
 			systemTheme = prefersLight.matches ? 'light' : 'dark';
 
 			const listener = (event: MediaQueryListEvent) => {

@@ -1,6 +1,6 @@
 import type {Observer} from '../subject.js';
 import {checkValue} from '../type.js';
-import {type Nothing, type Unsubscribe} from '../utils.js';
+import {type Unsubscribe} from '../utils.js';
 import {zRpcMessage, type RpcMessage} from './rpc-message.js';
 import type {
     Connection,
@@ -36,7 +36,7 @@ export class RpcConnection implements Connection<RpcMessage> {
 export class RpcTransportServer implements TransportServer<RpcMessage> {
     constructor(private readonly server: TransportServer<unknown>) {}
 
-    async launch(cb: (connection: RpcConnection) => Nothing): Promise<void> {
+    async launch(cb: (connection: RpcConnection) => void): Promise<void> {
         await this.server.launch(conn => {
             cb(new RpcConnection(conn));
         });

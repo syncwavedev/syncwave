@@ -14,7 +14,7 @@ import {Stream, toStream} from '../stream.js';
 import {getNow, type Timestamp, zTimestamp} from '../timestamp.js';
 import {compareTuple, stringifyTuple, type Tuple} from '../tuple.js';
 import {checkValue, type ToSchema} from '../type.js';
-import {type Nothing, pipe, whenAll} from '../utils.js';
+import {pipe, whenAll} from '../utils.js';
 import {type TransitionChecker} from './transition-checker.js';
 
 export class ConstraintError extends AppError {
@@ -78,7 +78,7 @@ export interface DocStoreOptions<T extends Doc<Tuple>> {
     upgrade?: Recipe<any>;
 }
 
-export type Recipe<T> = (doc: T) => Nothing;
+export type Recipe<T> = (doc: T) => void;
 
 export type CrdtDoc<T> = T & {state: CrdtDiff<T>};
 
@@ -140,7 +140,7 @@ export class DocRepo<T extends Doc<Tuple>> {
 
     async apply(
         pk: Tuple,
-        diff: CrdtDiff<T> | CrdtDiff<T>,
+        diff: CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
         return await context().runChild({span: 'repo.apply'}, async () => {
@@ -250,7 +250,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         const ids = await toStream(index.get(key)).take(2).toArray();
         if (ids.length > 1) {
             throw new AppError(
-                `index ${indexName} contains multiple docs for the key: ${key}`
+                `index ${indexName} contains multiple docs for the key: ${stringifyTuple(key)}`
             );
         } else if (ids.length === 1) {
             return await this.getById(ids[0], includeDeleted);
@@ -280,7 +280,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     ): Promise<T> {
         const doc = await this.primary.get(id);
         if (!doc || (!includeDeleted && doc.snapshot().deleted)) {
-            throw new AppError('doc not found: ' + id);
+            throw new AppError('doc not found: ' + stringifyTuple(id));
         }
 
         const diff = doc.update(draft => {
@@ -304,7 +304,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     // todo: add tests
     async apply(
         pk: Tuple,
-        diff: CrdtDiff<T> | CrdtDiff<T>,
+        diff: CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
         const existingDoc = await this.getUpgrade(pk);

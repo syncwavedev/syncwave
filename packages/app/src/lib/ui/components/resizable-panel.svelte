@@ -24,7 +24,7 @@
 	}: Props = $props();
 
 	let width = $state(defaultSize);
-	let isResizing = false;
+	let isResizing = $state(false);
 	let startX = 0;
 	let startWidth = 0;
 

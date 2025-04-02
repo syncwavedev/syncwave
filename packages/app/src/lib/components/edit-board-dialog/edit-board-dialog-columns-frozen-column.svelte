@@ -14,7 +14,9 @@
 
 	function deleteColumn(columnId: ColumnId) {
 		if (
-			!confirm(`Are you sure you want to delete this column ${column.name}?`)
+			!confirm(
+				`Are you sure you want to delete this column ${column.name}?`
+			)
 		) {
 			return;
 		}

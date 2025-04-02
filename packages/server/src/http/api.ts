@@ -76,8 +76,11 @@ export function createApiRouter(
                 });
                 const jwtTokenComponent = encodeURIComponent(jwtToken);
                 const redirectUrlComponent = encodeURIComponent(
-                    JSON.parse(decodeURIComponent(state as string))
-                        .redirectUrl ?? ''
+                    (
+                        JSON.parse(
+                            decodeURIComponent(state as string)
+                        ) as Record<string, string>
+                    )?.redirectUrl ?? ''
                 );
 
                 return ctx.redirect(

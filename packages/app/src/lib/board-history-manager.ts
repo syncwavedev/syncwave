@@ -27,7 +27,10 @@ class BoardHistoryManager {
 		try {
 			return localStorage.getItem(this.STORAGE_KEY);
 		} catch (error: unknown) {
-			console.error('Failed to retrieve board key from local storage:', error);
+			console.error(
+				'Failed to retrieve board key from local storage:',
+				error
+			);
 			return null;
 		}
 	}
@@ -40,7 +43,10 @@ class BoardHistoryManager {
 			localStorage.removeItem(this.STORAGE_KEY);
 			console.log('Board key cleared successfully');
 		} catch (error: unknown) {
-			console.error('Failed to clear board key from local storage:', error);
+			console.error(
+				'Failed to clear board key from local storage:',
+				error
+			);
 		}
 	}
 }

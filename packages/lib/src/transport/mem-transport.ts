@@ -2,7 +2,7 @@ import type {Codec} from '../codec.js';
 import {AppError} from '../errors.js';
 import {log} from '../logger.js';
 import {type Observer, Subject} from '../subject.js';
-import type {Nothing, Unsubscribe} from '../utils.js';
+import type {Unsubscribe} from '../utils.js';
 import type {
     Connection,
     TransportClient,
@@ -42,11 +42,11 @@ export class MemConnection<T> implements Connection<T> {
         return this.subject.subscribe(observer);
     }
 
-    async close(reason: unknown): Promise<void> {
+    close(reason: unknown): void {
         log.debug('mem connection close');
         this.subject.close(reason);
         if (this.peer.subject.open) {
-            await this.peer.close(reason);
+            this.peer.close(reason);
         }
     }
 
@@ -77,7 +77,7 @@ export class MemTransportClient<T> implements TransportClient<T> {
 }
 
 export class MemTransportServer<T> implements TransportServer<T> {
-    private listener?: (connection: Connection<T>) => Nothing;
+    private listener?: (connection: Connection<T>) => void;
 
     constructor(private readonly codec: Codec<T>) {}
 
@@ -89,7 +89,7 @@ export class MemTransportServer<T> implements TransportServer<T> {
         return new MemTransportClient(this, this.codec);
     }
 
-    launch(cb: (connection: Connection<T>) => Nothing): Promise<void> {
+    launch(cb: (connection: Connection<T>) => void): Promise<void> {
         this.listener = cb;
         return Promise.resolve();
     }

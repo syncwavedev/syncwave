@@ -1,6 +1,5 @@
-import {AppError} from './errors.js';
+import {AppError, toError} from './errors.js';
 import {log} from './logger.js';
-import type {Nothing} from './utils.js';
 
 export class Cursor<T> implements AsyncIterable<T> {
     private _isConsumed = false;
@@ -68,7 +67,7 @@ export class Cursor<T> implements AsyncIterable<T> {
         return toCursor(this._finally(fn));
     }
 
-    private async *_finally(fn: () => Nothing) {
+    private async *_finally(fn: () => void) {
         try {
             yield* this;
         } finally {
@@ -80,7 +79,7 @@ export class Cursor<T> implements AsyncIterable<T> {
         if (this._isConsumed) return;
 
         this.iter.return?.().catch(error => {
-            log.error(error, 'failed to close cursor');
+            log.error(toError(error), 'failed to close cursor');
         });
     }
 }

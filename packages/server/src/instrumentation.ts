@@ -45,6 +45,7 @@ loggerProvider.addLogRecordProcessor(
     new SimpleLogRecordProcessor({
         export: (logs, cb) => {
             for (const log of logs) {
+                // eslint-disable-next-line no-console
                 console.log(JSON.stringify(log.body));
             }
 

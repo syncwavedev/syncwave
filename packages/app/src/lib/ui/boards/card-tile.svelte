@@ -134,10 +134,14 @@
 						{/if}
 						by {card.author.fullName}
 						{#if card.hoverUsers.length > 0}
-							hovers {card.hoverUsers.map(x => x.fullName).join(', ')}
+							hovers {card.hoverUsers
+								.map(x => x.fullName)
+								.join(', ')}
 						{/if}
 						{#if card.viewerUsers.length > 0}
-							viewers {card.viewerUsers.map(x => x.fullName).join(', ')}
+							viewers {card.viewerUsers
+								.map(x => x.fullName)
+								.join(', ')}
 						{/if}
 					</span>
 					{#if todoStats.total > 0}

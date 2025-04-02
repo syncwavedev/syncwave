@@ -1,5 +1,5 @@
 import {createHash, randomBytes} from 'crypto';
-import {type CryptoService} from 'syncwave';
+import {toError, type CryptoService} from 'syncwave';
 
 export const NodeCryptoService: CryptoService = {
     sha256: text => createHash('sha256').update(text).digest('hex'),
@@ -15,7 +15,7 @@ export const NodeCryptoService: CryptoService = {
                     resolve(randomNumbers);
                 });
             } catch (error) {
-                reject(error);
+                reject(toError(error));
             }
         });
     },

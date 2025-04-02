@@ -11,7 +11,6 @@ import {
 	toStream,
 	wait,
 	type CoordinatorRpc,
-	type Nothing,
 	type Stream,
 } from 'syncwave';
 import {getRpc} from './utils';
@@ -44,11 +43,11 @@ export function mapObservable<T, R>(
 
 function createObservable<T>(initialValue: T): ObservableController<T> {
 	let subs: Array<{
-		run: (value: T) => Nothing;
-		invalidate: (() => Nothing) | undefined;
+		run: (value: T) => void;
+		invalidate: (() => void) | undefined;
 	}> = [];
 
-	const subscribe = (run: Subscriber<T>, invalidate?: () => Nothing) => {
+	const subscribe = (run: Subscriber<T>, invalidate?: () => void) => {
 		run(observable.value);
 
 		const sub = {run, invalidate};

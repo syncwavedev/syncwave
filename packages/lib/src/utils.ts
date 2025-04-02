@@ -14,12 +14,10 @@ import {Stream, toStream} from './stream.js';
 
 export type Brand<T, B> = T & {__brand: () => B | undefined};
 
-export type Nothing = void | undefined;
-
 export type Unsubscribe = (reason: unknown) => void;
 
 export function assertNever(value: never): never {
-    throw new AppError('assertNever failed: ' + value);
+    throw new AppError('assertNever failed: ' + String(value));
 }
 
 export function softNever(value: never, reason: string): void {
@@ -129,7 +127,7 @@ export async function catchCancel<T>(promise: Promise<T>): Promise<T | void> {
         if (isCancelledError(error)) {
             return;
         }
-        return await Promise.reject(error);
+        return await Promise.reject(toError(error));
     }
 }
 
@@ -226,7 +224,7 @@ export function pipe<T, A, B, C, D, E, F, G, R>(
     fn7: (arg: F) => G,
     fn8: (arg: G) => R
 ): R;
-export function pipe<T>(x: T, ...fns: Function[]): any {
+export function pipe<T>(x: T, ...fns: ((x: any) => any)[]): any {
     if (fns.length === 0) {
         return x;
     }
@@ -299,22 +297,26 @@ export function arrayEqual<T>(a: T[], b: T[]) {
 
 function aggregateSettled<const T extends PromiseSettledResult<unknown>[]>(
     result: T
-): T[number] {
+): Array<T[number]> {
     const rejected = result.filter(x => x.status === 'rejected');
 
     if (rejected.length === 0) {
         return result
             .filter(x => x.status === 'fulfilled')
-            .map(x => x.value) as any;
+            .map(x => x.value) as Array<T[number]>;
     } else if (rejected.length === 1) {
         throw rejected[0].reason;
     } else {
         if (rejected.every(x => x.reason instanceof BusinessError)) {
-            throw new AggregateBusinessError(rejected.map(x => x.reason));
+            throw new AggregateBusinessError(
+                rejected.map(x => x.reason as BusinessError)
+            );
         } else if (rejected.every(x => x.reason instanceof CancelledError)) {
-            throw new AggregateCancelledError(rejected.map(x => x.reason));
+            throw new AggregateCancelledError(
+                rejected.map(x => x.reason as CancelledError)
+            );
         } else {
-            throw new AggregateError(rejected.map(x => x.reason));
+            throw new AggregateError(rejected.map(x => x.reason as unknown));
         }
     }
 }
@@ -469,7 +471,10 @@ export function equals(a: unknown, b: unknown): boolean {
             for (const key of aKeys) {
                 if (
                     !bKeys.includes(key) ||
-                    !equals((a as any)[key], (b as any)[key])
+                    !equals(
+                        (a as Record<string, any>)[key],
+                        (b as Record<string, any>)[key]
+                    )
                 ) {
                     return false;
                 }

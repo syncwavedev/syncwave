@@ -639,16 +639,12 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                         streamId,
                                         reason: 'stream_has_no_consumers',
                                     })
-                                )
-                                    .then(() => {
-                                        log.debug('cancelled');
-                                    })
-                                    .catch(error => {
-                                        log.error(
-                                            toError(error),
-                                            'failed to cancel stream'
-                                        );
-                                    });
+                                ).catch(error => {
+                                    log.error(
+                                        toError(error),
+                                        'failed to cancel stream'
+                                    );
+                                });
                             });
                         };
                     });

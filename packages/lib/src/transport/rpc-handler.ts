@@ -358,7 +358,7 @@ export function reportRpcError(error: AppError, callInfo: string) {
         } else if (error.cause === 'connection_closed') {
             log.debug(`[${callInfo}] cancelled: connection closed`);
         } else {
-            log.warn(error, `[${callInfo}] cancelled`);
+            log.warn(`[${callInfo}] cancelled: ${error.message}`);
         }
     } else {
         log.error(

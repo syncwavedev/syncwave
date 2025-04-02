@@ -47,7 +47,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
         const selfTrigger = new Channel<void>();
         context().onEnd(() => selfTrigger.end());
 
-        let offset =
+        const initialOffset =
             offsetArg === undefined
                 ? await this.transact(async topics =>
                       topics.get(collection).length()
@@ -58,6 +58,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             getEventHubTopic(this.id, collection)
         );
 
+        let offset = initialOffset;
         const stream = Stream.merge<void>([
             // make the first check immediately
             toStream<void>([undefined]),
@@ -116,6 +117,6 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             })
             .toCursor();
 
-        return {offset, events: stream};
+        return {offset: initialOffset, events: stream};
     }
 }

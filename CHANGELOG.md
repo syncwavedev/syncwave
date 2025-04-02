@@ -1,5 +1,10 @@
 # Changelog
 
+## 2025-04-02
+
+- Add automatic reconnect.
+- Fix assignee field in card details.
+
 ## 2025-04-01
 
 - Exclude users with hidden document from awareness state.

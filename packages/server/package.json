@@ -25,7 +25,7 @@
     "type": "module",
     "scripts": {
         "clean": "rimraf dist",
-        "dev": "AWS_DEFAULT_REGION=us-east-1 NODE_OPTIONS='--enable-source-maps' tsx watch --clear-screen=false ./src/entrypoint.ts | tsx ../../log-prettify.js",
+        "dev": "AWS_DEFAULT_REGION=us-east-1 NODE_OPTIONS='--enable-source-maps' tsx watch --clear-screen=false ./src/entrypoint.ts | tsx ../../log-prettify.ts",
         "build": "tsc",
         "build:watch": "tsc -w",
         "test": "vitest run"

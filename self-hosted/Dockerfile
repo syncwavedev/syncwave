@@ -12,7 +12,7 @@ COPY packages/app/package*.json ./packages/app/
 # Self-hosted doesn't use FoundationDB
 RUN cd packages/server && sed -i '/foundationdb/d' package.json
 
-RUN npm i
+RUN npm install
 
 FROM base AS builder
 

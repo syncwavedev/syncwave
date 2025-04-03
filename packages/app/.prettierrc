@@ -2,14 +2,11 @@
 	"bracketSpacing": false,
 	"arrowParens": "avoid",
 
-	"useTabs": true,
+	"useTabs": false,
 	"singleQuote": true,
 	"trailingComma": "es5",
 	"printWidth": 80,
-	"plugins": [
-		"prettier-plugin-svelte",
-		"prettier-plugin-organize-imports"
-	],
+	"plugins": ["prettier-plugin-svelte", "prettier-plugin-organize-imports"],
 	"overrides": [
 		{
 			"files": "*.svelte",

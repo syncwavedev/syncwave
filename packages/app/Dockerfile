@@ -15,7 +15,7 @@ WORKDIR /app
 COPY . .
 
 WORKDIR /app
-RUN npm i
+RUN npm install
 
 WORKDIR /app/packages/lib
 RUN npm run build

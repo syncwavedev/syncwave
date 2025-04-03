@@ -23,6 +23,7 @@
 	import ResizablePanel from '../components/resizable-panel.svelte';
 	import PanelSizeManager from '../../panel-size-manager';
 	import Avatar from '../components/avatar.svelte';
+	import BoardCommands from './board-commands.svelte';
 
 	const {
 		board,
@@ -102,8 +103,7 @@
 					) as HTMLElement;
 
 					if (cardElement) {
-						const columnElement =
-							cardElement.closest('[data-column-id]');
+						const columnElement = cardElement.closest('[data-column-id]');
 						if (columnElement) {
 							// requestAnimationFrame makes it work in Safari when pointer down => small move => pointer up
 							// it registers like a click (as it should), but Safari doesn't scroll smoothly to the element
@@ -228,6 +228,7 @@
 	);
 </script>
 
+<!-- <BoardCommands /> -->
 <main class="flex h-screen w-full">
 	<div class="bg-subtle-0 flex min-w-0 grow flex-col">
 		<div class="bg-subtle-0 px-4">
@@ -249,10 +250,12 @@
 						</div>
 					{/each}
 				</div>
-				<button
-					class="btn--icon ml-2"
-					onclick={() => createCard(undefined)}
-				>
+				{#if board.onlineUsers.length > 0}
+					<div class="text-2xs text-ink-detail ml-auto">
+						online: {board.onlineUsers.map(x => x.fullName).join(', ')}
+					</div>
+				{/if}
+				<button class="btn--icon ml-auto" onclick={() => createCard(undefined)}>
 					<PlusIcon />
 				</button>
 				<button onclick={editBoard} class="btn--icon">

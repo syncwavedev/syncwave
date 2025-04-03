@@ -161,9 +161,7 @@ export function createAwarenessApi() {
                                     tx.ps.ensureBoardMember(board.id, 'reader'),
                                 ]);
 
-                                return {
-                                    states: states.filter(x => x.state.active),
-                                };
+                                return {states};
                             }
                         );
 

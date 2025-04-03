@@ -582,6 +582,10 @@ export function compareNumbers(a: number, b: number): number {
     return a - b;
 }
 
+export function compareStrings(a: string, b: string): number {
+    return a > b ? 1 : a < b ? -1 : 0;
+}
+
 export function nextTick() {
     return new Promise<void>(resolve => setTimeout(resolve, 0));
 }

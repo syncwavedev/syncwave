@@ -4,6 +4,8 @@ import {
 	assert,
 	Awareness,
 	compareNumbers,
+	compareStrings,
+	partition,
 	uniqBy,
 	type Account,
 	type AwarenessState,
@@ -115,8 +117,8 @@ export class BoardData {
 	meView: UserView = $derived(new UserView(this.me));
 
 	awareness: SvelteMap<number, AwarenessState> = $state(lateInit());
-	// note: server sends only clients with visibility === 'visible'
-	activeClients = $derived(
+
+	clients = $derived(
 		[...this.awareness.values()]
 			.filter(x => x.userId !== this.meView.id)
 			.map(state => ({
@@ -126,6 +128,9 @@ export class BoardData {
 			// awareness might be ahead of the board data, so ignore unknown users
 			.filter(x => x.user !== undefined) as ClientInfo[]
 	);
+
+	activeClients = $derived(this.clients.filter(x => x.state.active));
+	idleClients = $derived(this.clients.filter(x => !x.state.active));
 
 	static create(
 		awareness: Awareness,
@@ -221,9 +226,16 @@ export class BoardView implements Board {
 	name = $derived(this._board.name);
 	id = $derived(this._board.id);
 	pk = $derived(this._board.pk);
-	onlineUsers = $derived(
-		uniqBy(this._data.activeClients, x => x.user.id).map(x => x.user)
-	);
+	onlineUsers = $derived.by(() => {
+		const [active, idle] = partition(
+			uniqBy(this._data.clients, x => x.user.id).sort((a, b) =>
+				compareStrings(a.user.id, b.user.id)
+			),
+			x => x.state.active
+		);
+
+		return [...active, ...idle];
+	});
 
 	author = $derived.by(() => {
 		return findRequired(

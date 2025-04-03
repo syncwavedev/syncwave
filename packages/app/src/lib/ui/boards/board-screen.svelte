@@ -22,6 +22,7 @@
 	import {yFragmentToPlaintextAndTaskList} from '../../richtext';
 	import ResizablePanel from '../components/resizable-panel.svelte';
 	import PanelSizeManager from '../../panel-size-manager';
+	import Avatar from '../components/avatar.svelte';
 
 	const {
 		board,
@@ -234,15 +235,34 @@
 				<div class="text-xs leading-none font-semibold">
 					{board.name}
 				</div>
-				{#if board.onlineUsers.length > 0}
-					<div class="text-2xs text-ink-detail ml-auto">
-						online: {board.onlineUsers
-							.map(x => x.fullName)
-							.join(', ')}
+				<div class="text-2xl text-ink-detail ml-auto flex gap-2">
+					{#each board.onlineUsers as user (user.user.id)}
+						<div
+							class={user.state.active ? '' : 'opacity-50'}
+							animate:flip={{duration: 100}}
+						>
+							<Avatar
+								title={`${user.user.fullName} - ${user.state.active ? 'online' : 'away'}`}
+								class="border-blue-400 border-2"
+								name={user.user.fullName}
+							/>
+						</div>
+					{/each}
+					<Avatar
+						title="First - online"
+						class="border-blue-400 border-2"
+						name="First"
+					/>
+					<div class="opacity-50">
+						<Avatar
+							title="Second - away"
+							class="border-blue-400 border-2"
+							name="Second"
+						/>
 					</div>
-				{/if}
+				</div>
 				<button
-					class="btn--icon ml-auto"
+					class="btn--icon ml-2"
 					onclick={() => createCard(undefined)}
 				>
 					<PlusIcon />

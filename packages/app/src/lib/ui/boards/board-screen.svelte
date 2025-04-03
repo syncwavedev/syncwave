@@ -228,7 +228,7 @@
     );
 </script>
 
-<!-- <BoardCommands /> -->
+<BoardCommands />
 <main class="flex h-screen w-full">
     <div class="bg-subtle-0 flex min-w-0 grow flex-col">
         <div class="bg-subtle-0 px-4">

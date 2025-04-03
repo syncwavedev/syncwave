@@ -1,123 +1,123 @@
 <script lang="ts" generics="T">
-	import {untrack, type Snippet} from 'svelte';
-	import {sineOut} from 'svelte/easing';
-	import {DND_REORDER_DURATION_MS} from '../boards/board-dnd';
+    import {untrack, type Snippet} from 'svelte';
+    import {sineOut} from 'svelte/easing';
+    import {DND_REORDER_DURATION_MS} from '../boards/board-dnd';
 
-	type Key = string;
+    type Key = string;
 
-	interface Props {
-		items: T[];
-		gap: number;
-		renderItem: Snippet<[T]>;
-		key: (item: T) => Key;
-	}
+    interface Props {
+        items: T[];
+        gap: number;
+        renderItem: Snippet<[T]>;
+        key: (item: T) => Key;
+    }
 
-	let {items, renderItem, gap, key}: Props = $props();
-	let container: HTMLDivElement | null = $state(null);
+    let {items, renderItem, gap, key}: Props = $props();
+    let container: HTMLDivElement | null = $state(null);
 
-	let shadow: T[] = $state([]);
+    let shadow: T[] = $state([]);
 
-	$effect(() => {
-		const itemKeys = new Set(items.map(key));
+    $effect(() => {
+        const itemKeys = new Set(items.map(key));
 
-		untrack(() => {
-			const shadowKeys = new Set(shadow.map(key));
+        untrack(() => {
+            const shadowKeys = new Set(shadow.map(key));
 
-			const removedItems = new Set<Key>();
-			shadowKeys.forEach(k => {
-				if (!itemKeys.has(k)) {
-					removedItems.add(k);
-				}
-			});
+            const removedItems = new Set<Key>();
+            shadowKeys.forEach(k => {
+                if (!itemKeys.has(k)) {
+                    removedItems.add(k);
+                }
+            });
 
-			shadow = shadow.filter(item => !removedItems.has(key(item)));
+            shadow = shadow.filter(item => !removedItems.has(key(item)));
 
-			items.forEach(item => {
-				const k = key(item);
-				if (!shadowKeys.has(k)) {
-					shadow.push(item);
-				}
-			});
-		});
-	});
+            items.forEach(item => {
+                const k = key(item);
+                if (!shadowKeys.has(k)) {
+                    shadow.push(item);
+                }
+            });
+        });
+    });
 
-	$effect(() => {
-		let cancelled = false;
+    $effect(() => {
+        let cancelled = false;
 
-		function tick() {
-			if (!container) return;
+        function tick() {
+            if (!container) return;
 
-			const elementMap = new Map<Key, HTMLElement>();
+            const elementMap = new Map<Key, HTMLElement>();
 
-			const containerChildren = container.children;
-			let containerHeight = 0;
-			for (let i = 0; i < containerChildren.length; i += 1) {
-				const element = container.children[i] as HTMLElement;
-				const key = element.dataset.key!;
-				elementMap.set(key, element);
+            const containerChildren = container.children;
+            let containerHeight = 0;
+            for (let i = 0; i < containerChildren.length; i += 1) {
+                const element = container.children[i] as HTMLElement;
+                const key = element.dataset.key!;
+                elementMap.set(key, element);
 
-				containerHeight += element.offsetHeight + (i === 0 ? 0 : gap);
-			}
+                containerHeight += element.offsetHeight + (i === 0 ? 0 : gap);
+            }
 
-			let targetY = 0;
+            let targetY = 0;
 
-			container.style.height = `${containerHeight}px`;
+            container.style.height = `${containerHeight}px`;
 
-			const now = performance.now();
+            const now = performance.now();
 
-			function setY(element: HTMLElement, y: number) {
-				element.style.transform = `translateY(${y}px)`;
-				element.dataset.currentY = y.toString();
-			}
+            function setY(element: HTMLElement, y: number) {
+                element.style.transform = `translateY(${y}px)`;
+                element.dataset.currentY = y.toString();
+            }
 
-			for (const item of items) {
-				const k = key(item);
-				const element = elementMap.get(k);
+            for (const item of items) {
+                const k = key(item);
+                const element = elementMap.get(k);
 
-				if (!element) return;
+                if (!element) return;
 
-				if (element.dataset.targetY !== targetY.toString()) {
-					element.dataset.targetY = targetY.toString();
-					const deadline = now + DND_REORDER_DURATION_MS;
-					element.dataset.deadline = deadline.toString();
-				}
+                if (element.dataset.targetY !== targetY.toString()) {
+                    element.dataset.targetY = targetY.toString();
+                    const deadline = now + DND_REORDER_DURATION_MS;
+                    element.dataset.deadline = deadline.toString();
+                }
 
-				// freshman
-				if (element.dataset.currentY === undefined) {
-					setY(element, targetY);
-				}
+                // freshman
+                if (element.dataset.currentY === undefined) {
+                    setY(element, targetY);
+                }
 
-				const currentY = parseInt(element.dataset.currentY!, 10);
+                const currentY = parseInt(element.dataset.currentY!, 10);
 
-				if (targetY !== currentY) {
-					const deadline = parseInt(element.dataset.deadline!, 10);
-					const progress =
-						1 - (deadline - now) / DND_REORDER_DURATION_MS;
+                if (targetY !== currentY) {
+                    const deadline = parseInt(element.dataset.deadline!, 10);
+                    const progress =
+                        1 - (deadline - now) / DND_REORDER_DURATION_MS;
 
-					const t = sineOut(Math.min(1, progress));
-					setY(element, currentY + (targetY - currentY) * t);
-				}
+                    const t = sineOut(Math.min(1, progress));
+                    setY(element, currentY + (targetY - currentY) * t);
+                }
 
-				targetY += gap + element.offsetHeight;
-			}
-		}
+                targetY += gap + element.offsetHeight;
+            }
+        }
 
-		function animate() {
-			if (cancelled) return;
-			tick();
-			requestAnimationFrame(animate);
-		}
+        function animate() {
+            if (cancelled) return;
+            tick();
+            requestAnimationFrame(animate);
+        }
 
-		requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
 
-		return () => (cancelled = true);
-	});
+        return () => (cancelled = true);
+    });
 </script>
 
 <div class="relative" bind:this={container}>
-	{#each shadow as item (key(item))}
-		<div data-key={key(item)} class="absolute top-0 left-0 right-0">
-			{@render renderItem(item)}
-		</div>
-	{/each}
+    {#each shadow as item (key(item))}
+        <div data-key={key(item)} class="absolute top-0 left-0 right-0">
+            {@render renderItem(item)}
+        </div>
+    {/each}
 </div>

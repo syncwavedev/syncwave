@@ -1,3 +1,3 @@
 export interface State<T> {
-	readonly value: T;
+    readonly value: T;
 }

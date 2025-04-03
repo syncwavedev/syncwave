@@ -5,40 +5,40 @@ import {nodePolyfills} from 'vite-plugin-node-polyfills';
 import {defineConfig} from 'vitest/config';
 
 const esbuildOptions = {
-	supported: {
-		// because of zonejs package
-		'async-await': false,
-	},
+    supported: {
+        // because of zonejs package
+        'async-await': false,
+    },
 };
 
 export default defineConfig({
-	clearScreen: false,
-	plugins: [
-		tailwindcss(),
-		svelte(),
-		nodePolyfills({
-			// because of fdb-tuple package
-			include: ['buffer'],
-		}),
-		{
-			...babel(),
-			apply: 'serve',
-			enforce: 'post',
-		},
-	],
+    clearScreen: false,
+    plugins: [
+        tailwindcss(),
+        svelte(),
+        nodePolyfills({
+            // because of fdb-tuple package
+            include: ['buffer'],
+        }),
+        {
+            ...babel(),
+            apply: 'serve',
+            enforce: 'post',
+        },
+    ],
 
-	optimizeDeps: {
-		esbuildOptions,
-		exclude: [],
-	},
+    optimizeDeps: {
+        esbuildOptions,
+        exclude: [],
+    },
 
-	build: {
-		sourcemap: true,
-	},
+    build: {
+        sourcemap: true,
+    },
 
-	esbuild: esbuildOptions,
+    esbuild: esbuildOptions,
 
-	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}'],
-	},
+    test: {
+        include: ['src/**/*.{test,spec}.{js,ts}'],
+    },
 });

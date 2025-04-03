@@ -1,7 +1,7 @@
 <script lang="ts">
-	import {getAgent} from '../lib/agent/agent.svelte';
+    import {getAgent} from '../lib/agent/agent.svelte';
 
-	getAgent().observeBoardAsync('LOCAL');
+    getAgent().observeBoardAsync('LOCAL');
 </script>
 
 Testbed

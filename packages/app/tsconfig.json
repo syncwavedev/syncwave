@@ -1,8 +1,8 @@
 {
-	"extends": ["@tsconfig/svelte/tsconfig.json", "../../tsconfig.json"],
-	"compilerOptions": {
-		"module": "esnext",
-		"moduleResolution": "bundler",
-		"lib": ["DOM", "ES2020"]
-	}
+    "extends": ["@tsconfig/svelte/tsconfig.json", "../../tsconfig.json"],
+    "compilerOptions": {
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "lib": ["DOM", "ES2020"]
+    }
 }

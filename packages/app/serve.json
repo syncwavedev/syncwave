@@ -1,6 +1,6 @@
 {
-	"public": "./dist",
-	"trailingSlash": false,
+    "public": "./dist",
+    "trailingSlash": false,
 
-	"rewrites": [{"source": "!/assets/**", "destination": "/index.html"}]
+    "rewrites": [{"source": "!/assets/**", "destination": "/index.html"}]
 }

@@ -22,73 +22,73 @@ import {yXmlFragmentToProsemirrorJSON} from 'y-prosemirror';
 import {XmlFragment} from 'yjs';
 
 export const tiptapExtensions = [
-	Document,
-	Bold,
-	Code,
-	CodeBlock,
-	Italic,
-	Strike,
-	Text,
-	Paragraph,
-	Underline,
-	HardBreak,
-	History,
-	Link,
-	BulletList,
-	OrderedList,
-	ListItem.extend({content: 'paragraph'}),
-	TaskList,
-	TaskItem.extend({content: 'paragraph'}),
+    Document,
+    Bold,
+    Code,
+    CodeBlock,
+    Italic,
+    Strike,
+    Text,
+    Paragraph,
+    Underline,
+    HardBreak,
+    History,
+    Link,
+    BulletList,
+    OrderedList,
+    ListItem.extend({content: 'paragraph'}),
+    TaskList,
+    TaskItem.extend({content: 'paragraph'}),
 ];
 
 const tiptapSchema = getSchema(tiptapExtensions);
 
 export function yFragmentToJSON(fragment: XmlFragment) {
-	return yXmlFragmentToProsemirrorJSON(fragment);
+    return yXmlFragmentToProsemirrorJSON(fragment);
 }
 
 export function yFragmentToHtml(fragment: XmlFragment) {
-	const prosemirrorJSON = yFragmentToJSON(fragment);
-	return generateHTML(prosemirrorJSON, tiptapExtensions);
+    const prosemirrorJSON = yFragmentToJSON(fragment);
+    return generateHTML(prosemirrorJSON, tiptapExtensions);
 }
 
 export function yFragmentToPlaintext(fragment: XmlFragment) {
-	const prosemirrorJSON = yFragmentToJSON(fragment);
-	const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
-	return node.textBetween(0, node.content.size, '\n', '\n');
+    const prosemirrorJSON = yFragmentToJSON(fragment);
+    const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
+    return node.textBetween(0, node.content.size, '\n', '\n');
 }
 
 export function yFragmentToTaskList(fragment: XmlFragment) {
-	const prosemirrorJSON = yFragmentToJSON(fragment);
-	const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
-	return prosemirrorNodeToTaskList(node);
+    const prosemirrorJSON = yFragmentToJSON(fragment);
+    const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
+    return prosemirrorNodeToTaskList(node);
 }
 
 export function yFragmentToPlaintextAndTaskList(fragment: XmlFragment) {
-	const prosemirrorJSON = yFragmentToJSON(fragment);
-	const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
-	const text = node.textBetween(0, node.content.size, '\n', '\n');
-	const {checked, total} = prosemirrorNodeToTaskList(node);
-	return {text, checked, total};
+    const prosemirrorJSON = yFragmentToJSON(fragment);
+    const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
+    const text = node.textBetween(0, node.content.size, '\n', '\n');
+    const {checked, total} = prosemirrorNodeToTaskList(node);
+    return {text, checked, total};
 }
 
 export interface TodoStats {
-	checked: number;
-	total: number;
+    checked: number;
+    total: number;
 }
 
 function prosemirrorNodeToTaskList(node: Node): TodoStats {
-	let checked = 0;
-	let total = 0;
+    let checked = 0;
+    let total = 0;
 
-	node.descendants(child => {
-		if (child.type.name === 'taskItem') {
-			total++;
-			if (child.attrs.checked) {
-				checked++;
-			}
-		}
-	});
+    node.descendants(child => {
+        if (child.type.name === 'taskItem') {
+            total++;
+            if (child.attrs.checked) {
+                checked++;
+            }
+        }
+    });
 
-	return {checked, total};
+    return {checked, total};
 }

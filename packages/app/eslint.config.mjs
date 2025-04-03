@@ -13,36 +13,36 @@ import svelteConfig from './svelte.config.js';
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 const config = tseslint.config(
-	includeIgnoreFile(gitignorePath),
-	eslint.configs.recommended,
-	...tseslint.configs.recommended,
-	prettier,
-	...svelte.configs.recommended,
-	{
-		languageOptions: {
-			globals: globals.browser,
-		},
-	},
-	{
-		files: ['**/*.svelte', '**/*.svelte.ts'],
-		languageOptions: {
-			parserOptions: {
-				projectService: true,
-				extraFileExtensions: ['.svelte'],
-				parser: tseslint.parser,
-				svelteConfig,
-			},
-		},
-	},
-	pluginSvelte.configs['flat/recommended'],
-	pluginPrettier,
-	...pluginSvelte.configs['flat/prettier'],
-	{
-		rules: {
-			'@typescript-eslint/no-empty-object-type': 'off',
-			'svelte/no-at-html-tags': 'off',
-		},
-	}
+    includeIgnoreFile(gitignorePath),
+    eslint.configs.recommended,
+    ...tseslint.configs.recommended,
+    prettier,
+    ...svelte.configs.recommended,
+    {
+        languageOptions: {
+            globals: globals.browser,
+        },
+    },
+    {
+        files: ['**/*.svelte', '**/*.svelte.ts'],
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                extraFileExtensions: ['.svelte'],
+                parser: tseslint.parser,
+                svelteConfig,
+            },
+        },
+    },
+    pluginSvelte.configs['flat/recommended'],
+    pluginPrettier,
+    ...pluginSvelte.configs['flat/prettier'],
+    {
+        rules: {
+            '@typescript-eslint/no-empty-object-type': 'off',
+            'svelte/no-at-html-tags': 'off',
+        },
+    }
 );
 
 export default config;

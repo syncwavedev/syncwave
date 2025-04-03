@@ -248,18 +248,6 @@
 							/>
 						</div>
 					{/each}
-					<Avatar
-						title="First - online"
-						class="border-blue-400 border-2"
-						name="First"
-					/>
-					<div class="opacity-50">
-						<Avatar
-							title="Second - away"
-							class="border-blue-400 border-2"
-							name="Second"
-						/>
-					</div>
 				</div>
 				<button
 					class="btn--icon ml-2"

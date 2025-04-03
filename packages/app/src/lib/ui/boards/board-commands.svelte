@@ -1,5 +1,5 @@
 <script lang="ts">
-    import CommandPallete from '../command-center/command-pallete.svelte';
+    import CommandView from '../command-center/command-view.svelte';
 </script>
 
-<CommandPallete title="boards">My Board Commands</CommandPallete>
+<CommandView>My Board Commands</CommandView>

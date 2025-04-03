@@ -35,6 +35,7 @@
     import Testbed from './pages/testbed.svelte';
     import Index from './pages/index.svelte';
     import {monitorDocumentActivity} from './document-activity.js';
+    import CommandPallete from './lib/ui/command-center/command-pallete.svelte';
 
     monitorDocumentActivity();
 
@@ -105,12 +106,14 @@
 
 <main>
     {#if appConfig.stage === 'local' || appConfig.stage === 'dev'}
+        <CommandPallete />
         <Page {...pageProps} />
     {:else}
         <svelte:boundary>
             {#snippet failed(error, reset)}
                 <ErrorCard {error} {reset} />
             {/snippet}
+            <CommandPallete />
             <Page {...pageProps} />
         </svelte:boundary>
     {/if}

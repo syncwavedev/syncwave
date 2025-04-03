@@ -1,11 +1,14 @@
 import * as regexparam from 'regexparam';
 
+type NavItemType = 'page' | 'action' | 'command-center';
+
 interface NavItem {
     uri?: string;
     replace?: boolean;
     shallow?: boolean;
     onEscape?: boolean;
     onBack?: () => void;
+    type: NavItemType;
 }
 
 interface Route {
@@ -73,7 +76,14 @@ class Router {
             shallow,
         };
 
-        const navItem = {uri, replace, shallow, onEscape, onBack};
+        const navItem: NavItem = {
+            uri,
+            replace,
+            shallow,
+            onEscape,
+            onBack,
+            type: 'page',
+        };
 
         if (replace && this.navigations.length > 0) {
             this.navigations[this.navigations.length - 1] = navItem;
@@ -88,16 +98,32 @@ class Router {
         }
     }
 
-    public action(onBack: () => void, onEscape?: boolean): void {
+    public action(
+        onBack: () => void,
+        onEscape?: boolean,
+        type: NavItemType = 'action'
+    ): void {
         this.id = Date.now();
         const state: RouterState = {
             id: this.id,
             shallow: true,
         };
 
-        this.navigations.push({onBack, onEscape});
+        this.navigations.push({onBack, onEscape, type});
 
         history.pushState(state, '', `#${this.id}`);
+    }
+
+    public clearByType(type: NavItemType, onBack?: boolean): void {
+        for (let i = this.navigations.length - 1; i >= 0; i--) {
+            const navigation = this.navigations[i];
+            if (navigation.type === type) {
+                if (onBack && navigation.onBack) {
+                    navigation.onBack();
+                }
+                this.navigations.splice(i, 1);
+            }
+        }
     }
 
     public on(

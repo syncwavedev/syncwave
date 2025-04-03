@@ -1,6 +1,6 @@
 <script lang="ts">
     import {compareNumbers, log, type Awareness} from 'syncwave';
-    import {onMount, tick} from 'svelte';
+    import {createRawSnippet, onMount, tick} from 'svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import BoardColumn from './board-column.svelte';
@@ -23,6 +23,8 @@
     import ResizablePanel from '../components/resizable-panel.svelte';
     import PanelSizeManager from '../../panel-size-manager';
     import Avatar from '../components/avatar.svelte';
+    import BoardCommands from './board-commands.svelte';
+    import {commandCenter} from '../command-center/command-center-manager.svelte';
 
     const {
         board,
@@ -228,14 +230,21 @@
     );
 </script>
 
-<!-- <BoardCommands /> -->
+{#snippet boardCommands()}
+    <BoardCommands />
+{/snippet}
+
 <main class="flex h-screen w-full">
     <div class="bg-subtle-0 flex min-w-0 grow flex-col">
         <div class="bg-subtle-0 px-4">
             <div class="my-1 flex items-center">
-                <div class="text-xs leading-none font-semibold">
+                <button
+                    class="text-xs leading-none font-semibold"
+                    onclick={() => commandCenter.open(boardCommands)}
+                >
                     {board.name}
-                </div>
+                </button>
+
                 <div class="text-2xl text-ink-detail ml-auto flex gap-2">
                     {#each board.onlineUsers as user (user.user.id)}
                         <div

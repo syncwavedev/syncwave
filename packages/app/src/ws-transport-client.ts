@@ -74,7 +74,7 @@ export class WsClientConnection<T> implements Connection<T> {
                 log.error(err, 'ws err');
             },
             close: () => {
-                log.debug('ws closed');
+                log.info('ws closed');
             },
         });
     }

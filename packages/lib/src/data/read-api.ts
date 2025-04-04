@@ -1,6 +1,5 @@
 import {Type} from '@sinclair/typebox';
 import {BusinessError} from '../errors.js';
-import {log} from '../logger.js';
 import {observable, toStream} from '../stream.js';
 import {
     createApi,
@@ -170,12 +169,7 @@ export function createReadApi() {
                     },
                     update$: st.esReader
                         .subscribe(userEvents(userId))
-                        .then(x => x.events.map(() => undefined))
-                        .then(x =>
-                            x.finally(() => {
-                                log.debug('getMyBoards finish updates');
-                            })
-                        ),
+                        .then(x => x.events.map(() => undefined)),
                 });
             },
         }),

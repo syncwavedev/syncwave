@@ -73,7 +73,6 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             .while(() => context().isActive)
             .flatMap(async () => {
                 try {
-                    log.debug('EventStoreReader.subscribe transact...');
                     const events = await this.transact(async topics => {
                         const result = await topics
                             .get(collection)
@@ -99,7 +98,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                         return result;
                     });
 
-                    log.debug(
+                    log.info(
                         `EventStoreReader.subscribe transact finished: ${events.length}`
                     );
 

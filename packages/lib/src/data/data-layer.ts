@@ -315,14 +315,14 @@ export class DataLayer {
             const result = await fn(dataTx);
 
             while (triggers.length > 0) {
-                log.debug(`running ${triggers.length} triggers...`);
+                log.info(`running ${triggers.length} triggers...`);
 
                 const triggersSnapshot = triggers;
                 triggers = [];
 
                 await whenAll(triggersSnapshot.map(trigger => trigger()));
 
-                log.debug('triggers executed');
+                log.info('triggers executed');
 
                 if (triggers.length > 0) {
                     log.info('trigger recursion detected');
@@ -333,14 +333,14 @@ export class DataLayer {
         });
 
         while (effects.length > 0) {
-            log.debug(`running ${effects.length} effects...`);
+            log.info(`running ${effects.length} effects...`);
 
             const effectsSnapshot = effects;
             effects = [];
 
             await whenAll(effectsSnapshot.map(effect => effect()));
 
-            log.debug('effects executed');
+            log.info('effects executed');
 
             if (effects.length > 0) {
                 log.info('effect recursion detected');

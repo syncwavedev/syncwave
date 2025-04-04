@@ -273,7 +273,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
 
             const result = await fn(tx);
 
-            log.debug(
+            log.trace(
                 `snapshot stats: retrieved = ${tx.retrievedCount}, returned = ${tx.returnedCount}`
             );
 

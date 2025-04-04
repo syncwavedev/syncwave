@@ -5,7 +5,6 @@ import {
     CancelledError,
     context,
     CoordinatorClient,
-    CoordinatorClientDummy,
     getReadableError,
     log,
     MsgpackCodec,
@@ -101,10 +100,6 @@ export function formatTime(timestamp: Timestamp) {
 export interface CookieEntry {
     name: string;
     value: string;
-}
-
-export function createCoordinatorClientDummy(): CoordinatorClient {
-    return new CoordinatorClientDummy() as CoordinatorClient;
 }
 
 export function createCoordinatorClient() {

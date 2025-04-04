@@ -189,7 +189,7 @@ class ConsoleLogger extends BaseLogger {
             return;
         }
 
-        const func = {
+        const func: (msg: string) => void = {
             fatal: console.error,
             error: console.error,
             warn: console.warn,

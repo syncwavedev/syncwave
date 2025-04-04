@@ -1,27 +1,8 @@
 import {context} from '../context.js';
-import {AppError} from '../errors.js';
 import {RpcConnection} from '../transport/rpc-transport.js';
 import {createRpcClient} from '../transport/rpc.js';
 import type {Connection} from '../transport/transport.js';
 import {createCoordinatorApi, type CoordinatorRpc} from './coordinator-api.js';
-
-export class CoordinatorClientDummy {
-    get rpc(): CoordinatorRpc {
-        return new Proxy({} as any, {
-            get: (_, name) => {
-                throw new AppError(
-                    'CoordinatorClientDummy get rpc field ' + String(name)
-                );
-            },
-        });
-    }
-    setAuthToken(token: string | undefined): void {
-        // do nothing
-    }
-    close(reason: unknown): void {
-        // do nothing
-    }
-}
 
 export class CoordinatorClient {
     private readonly connection: RpcConnection;
@@ -38,8 +19,7 @@ export class CoordinatorClient {
             () => ({
                 ...context().extract(),
                 auth: this.authToken,
-            }),
-            'coord'
+            })
         );
     }
 

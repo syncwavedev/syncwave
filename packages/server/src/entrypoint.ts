@@ -110,7 +110,7 @@ async function getOptions(): Promise<Options> {
             : 'sqlite'
     );
     const logLevel = match(stage)
-        .with('local', () => 'info' as const)
+        .with('local', () => 'debug' as const)
         .with('dev', () => 'info' as const)
         .with('prod', () => 'info' as const)
         .with('self', () => 'info' as const)

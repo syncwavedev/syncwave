@@ -9,7 +9,6 @@ import {
     getGoogleUser,
     type GoogleOptions,
     log,
-    toError,
 } from 'syncwave';
 
 export interface ApiRouterOptions {
@@ -63,9 +62,9 @@ export function createApiRouter(
                 }
 
                 if (!result.user.verified_email || !result.user.email) {
-                    log.warn(
-                        `Google user has unverified email: ${result.user.email}`
-                    );
+                    log.warn({
+                        msg: `Google user has unverified email: ${result.user.email}`,
+                    });
                     return ctx.redirect(`${options.appUrl}/login/failed`);
                 }
 
@@ -87,7 +86,7 @@ export function createApiRouter(
                     `${options.appUrl}/login/callback/google?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
                 );
             } catch (error) {
-                log.error(toError(error), 'failed to handle google callback');
+                log.error({error, msg: 'failed to handle google callback'});
                 return ctx.redirect(`${options.appUrl}/login/failed`);
             }
         });

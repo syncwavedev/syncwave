@@ -88,28 +88,31 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                         if (result.length === EVENT_STORE_MAX_PULL_COUNT) {
                             // we don't wanna block on this call to avoid a deadlock
                             selfTrigger.next().catch((error: unknown) => {
-                                log.error(
-                                    toError(error),
-                                    'failed to trigger event store iteration'
-                                );
+                                log.error({
+                                    error: toError(error),
+                                    msg: 'failed to trigger event store iteration',
+                                });
                             });
                         }
 
                         return result;
                     });
 
-                    log.info(
-                        `EventStoreReader.subscribe transact finished: ${events.length}`
-                    );
+                    log.info({
+                        msg: `EventStoreReader.subscribe transact finished: ${events.length}`,
+                    });
 
                     offset += events.length;
 
                     return events;
                 } catch (error) {
                     if (error instanceof CancelledError) {
-                        log.info('EventStoreReader.subscribe cancelled');
+                        log.info({msg: 'EventStoreReader.subscribe cancelled'});
                     } else {
-                        log.error(toError(error), 'EventStoreReader.subscribe');
+                        log.error({
+                            error: toError(error),
+                            msg: 'EventStoreReader.subscribe',
+                        });
                     }
                     return [];
                 }

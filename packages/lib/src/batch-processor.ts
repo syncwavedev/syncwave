@@ -76,7 +76,10 @@ export class BatchProcessor<T> {
                     }
                     this.queue.push(...batch);
 
-                    log.error(toError(error), 'BatchProcessor: send error');
+                    log.error({
+                        error: toError(error),
+                        msg: 'BatchProcessor: send error',
+                    });
                     await wait({ms: 1000, onCancel: 'reject'});
 
                     attempt++;

@@ -85,7 +85,7 @@ export class Subject<T> {
                 sub.context.run(() => sub.observer.close(reason));
             }
         } else {
-            log.warn('subject already closed');
+            log.warn({msg: 'subject already closed'});
         }
     }
 

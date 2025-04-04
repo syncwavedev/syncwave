@@ -9,6 +9,7 @@ import {Deferred} from './deferred.js';
 import {CancelledError} from './errors.js';
 import {log, type LogLevel} from './logger.js';
 import {Stream, toStream} from './stream.js';
+import {stringifyLogPart} from './transport/rpc-streamer.js';
 import {type Brand, runAll, type Unsubscribe} from './utils.js';
 
 export interface NestedAttributeMap
@@ -109,7 +110,9 @@ export class Context {
     private constructor(params: ContextConstructorParams) {
         const contextOptionsJSON = JSON.stringify(params.options);
         if (contextOptionsJSON.length > 1000) {
-            log.warn('context options are too big: ' + contextOptionsJSON);
+            log.warn({
+                msg: 'context options are too big: ' + contextOptionsJSON,
+            });
         }
         this.tracer = params.tracer;
 
@@ -168,7 +171,9 @@ export class Context {
 
     onEnd(cb: (reason: unknown) => void): Unsubscribe {
         if (this._endRequested) {
-            log.debug('Context.onEnd: new onEnd was registered after end');
+            log.debug({
+                msg: 'Context.onEnd: new onEnd was registered after end',
+            });
         }
         // wrap to guarantee function uniqueness (needed for unsubscribe filtration)
         const wrapper = (reason: unknown) => cb(reason);
@@ -225,7 +230,9 @@ export class Context {
         startNewSpan = false
     ): [Context, Cancel] {
         if (this._endRequested) {
-            log.warn('Context.createChild: new child was created after end');
+            log.warn({
+                msg: 'Context.createChild: new child was created after end',
+            });
         }
 
         const child = new Context({
@@ -303,10 +310,11 @@ export class Context {
                 performance.now()
             );
         } else {
-            log.warn(
-                'context is not active, cannot add event: ' +
-                    JSON.stringify({name: message, attributes})?.slice(0, 100)
-            );
+            log.warn({
+                msg:
+                    'context is not active, cannot add event: ' +
+                    stringifyLogPart({name: message, attributes}),
+            });
         }
     }
 }

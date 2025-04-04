@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
-import {logs, SeverityNumber} from '@opentelemetry/api-logs';
-import {context, type NestedAttributeMap} from './context.js';
+import {logs, SeverityNumber, type AnyValue} from '@opentelemetry/api-logs';
+import {
+    context,
+    type AttributeValue,
+    type NestedAttributeMap,
+} from './context.js';
 import {AppError, toError} from './errors.js';
 import {assertNever} from './utils.js';
 
@@ -22,35 +26,26 @@ const LogLevelValues: Record<LogLevel, number> = {
     silent: 1000,
 };
 
+export interface LogMessage {
+    msg: string;
+    error?: unknown;
+    [key: string]: unknown;
+}
+
 export interface Logger {
     enabled(level: LogLevel): boolean;
 
     setLogLevel(level: LogLevel): void;
-    trace(
-        ...args: [error: AppError, message: string] | [message: string]
-    ): void;
-    debug(
-        ...args:
-            | [error: AppError, message: string]
-            | [message: string]
-            | [() => string]
-    ): void;
-    info(...args: [error: AppError, message: string] | [message: string]): void;
-    warn(...args: [error: AppError, message: string] | [message: string]): void;
-    error(
-        ...args: [error: AppError, message: string] | [message: string]
-    ): void;
-    fatal(
-        ...args: [error: AppError, message: string] | [message: string]
-    ): void;
+    trace(message: () => LogMessage): void;
+    trace(message: LogMessage): void;
+    debug(message: LogMessage): void;
+    debug(message: () => LogMessage): void;
+    info(message: LogMessage): void;
+    warn(message: LogMessage): void;
+    error(message: LogMessage): void;
+    fatal(message: LogMessage): void;
 
-    log(
-        level: LogLevel,
-        ...args:
-            | [error: AppError, message: string]
-            | [message: string]
-            | [() => string]
-    ): void;
+    log(level: LogLevel, message: LogMessage | (() => LogMessage)): void;
 
     time<T>(name: string, fn: () => Promise<T>): Promise<T>;
 }
@@ -58,33 +53,19 @@ export interface Logger {
 abstract class BaseLogger implements Logger {
     private logLevel: LogLevel = 'info';
 
-    protected abstract _log(
-        level: LogLevel,
-        ...args: [error: AppError, message: string] | [message: string]
-    ): void;
+    protected abstract _log(level: LogLevel, message: LogMessage): void;
 
     setLogLevel(level: LogLevel): void {
         this.logLevel = level;
     }
 
-    log(
-        level: LogLevel,
-        ...args:
-            | [error: AppError, message: string]
-            | [message: string]
-            | [() => string]
-    ): void {
+    log(level: LogLevel, message: LogMessage | (() => LogMessage)): void {
         if (!this.enabled(level)) return;
 
-        if (args[0] instanceof Function) {
-            this._log(level, args[0]());
+        if (message instanceof Function) {
+            this._log(level, message());
         } else {
-            this._log(
-                level,
-                ...(args as
-                    | [error: AppError, message: string]
-                    | [message: string])
-            );
+            this._log(level, message);
         }
     }
 
@@ -92,48 +73,34 @@ abstract class BaseLogger implements Logger {
         return LogLevelValues[level] >= LogLevelValues[this.logLevel];
     }
 
-    trace(
-        ...args:
-            | [error: AppError, message: string]
-            | [message: string]
-            | [() => string]
-    ): void {
-        this.log('trace', ...args);
+    trace(message: LogMessage): void;
+    trace(message: () => LogMessage): void;
+    trace(message: LogMessage | (() => LogMessage)): void {
+        this.log('trace', message);
     }
-    debug(
-        ...args:
-            | [error: AppError, message: string]
-            | [message: string]
-            | [() => string]
-    ): void {
-        this.log('debug', ...args);
+    debug(message: LogMessage): void;
+    debug(message: () => LogMessage): void;
+    debug(message: LogMessage | (() => LogMessage)): void {
+        this.log('debug', message);
     }
-    info(
-        ...args: [error: AppError, message: string] | [message: string]
-    ): void {
-        this.log('info', ...args);
+    info(message: LogMessage): void {
+        this.log('info', message);
     }
-    warn(
-        ...args: [error: AppError, message: string] | [message: string]
-    ): void {
-        this.log('warn', ...args);
+    warn(message: LogMessage): void {
+        this.log('warn', message);
     }
-    error(
-        ...args: [error: AppError, message: string] | [message: string]
-    ): void {
-        this.log('error', ...args);
+    error(message: LogMessage): void {
+        this.log('error', message);
     }
-    fatal(
-        ...args: [error: AppError, message: string] | [message: string]
-    ): void {
-        this.log('fatal', ...args);
+    fatal(message: LogMessage): void {
+        this.log('fatal', message);
     }
 
     async time<T>(name: string, fn: () => Promise<T>): Promise<T> {
         const start = performance.now();
         const result = await fn();
         const end = performance.now();
-        this.debug(`${name} took ${(end - start).toFixed(0)}ms`);
+        this.debug({msg: `${name} took ${(end - start).toFixed(0)}ms`});
         return result;
     }
 }
@@ -141,27 +108,9 @@ abstract class BaseLogger implements Logger {
 class OtelLogger extends BaseLogger {
     private readonly logger = logs.getLogger('syncwave', '1.0.0');
 
-    _log(
-        level: LogLevel,
-        ...args: [error: AppError, message: string] | [message: string]
-    ) {
+    _log(level: LogLevel, message: LogMessage) {
         const ctx = context();
-        let log: NestedAttributeMap = {
-            traceId: ctx.traceId,
-            spanId: ctx.spanId,
-            level,
-        };
-        let message: string;
-        if (args.length === 2) {
-            const error = toError(args[0]);
-            log = {
-                ...log,
-                error: error.toJSON(),
-            };
-            message = args[1];
-        } else {
-            message = args[0];
-        }
+        const log: NestedAttributeMap = {};
 
         if (LogLevelValues[level] >= LogLevelValues['error']) {
             const stack = new AppError('log stack').stack;
@@ -170,10 +119,33 @@ class OtelLogger extends BaseLogger {
                 log['stack'] = stack.split('\n').slice(1).join('\n');
             }
         }
+
+        const body: Record<string, AnyValue> = {};
+        for (const [key, value] of Object.entries({
+            ...message,
+            error: message.error ? toError(message.error) : undefined,
+        })) {
+            if (
+                typeof value === 'object' &&
+                value !== null &&
+                'toJSON' in value &&
+                typeof value.toJSON === 'function'
+            ) {
+                body[key] = (value.toJSON as () => NestedAttributeMap)();
+            } else {
+                body[key] = value as AttributeValue;
+            }
+        }
+
         this.logger.emit({
             severityNumber: LogLevelValues[level],
             severityText: level.toUpperCase(),
-            body: {...log, msg: message},
+            body: {
+                ...body,
+                traceId: ctx.traceId,
+                spanId: ctx.spanId,
+                level,
+            },
         });
     }
 }
@@ -181,10 +153,7 @@ class OtelLogger extends BaseLogger {
 class ConsoleLogger extends BaseLogger {
     private level: LogLevel = 'debug';
 
-    _log(
-        level: LogLevel,
-        ...args: [error: AppError, message: string] | [message: string]
-    ) {
+    _log(level: LogLevel, message: LogMessage) {
         if (LogLevelValues[level] < LogLevelValues[this.level]) {
             return;
         }
@@ -198,13 +167,13 @@ class ConsoleLogger extends BaseLogger {
             trace: console.trace,
         }[level];
 
-        if (args.length === 2) {
-            const error = toError(args[0]);
+        if (message.error) {
+            const error = toError(message.error);
             func(
-                `${this.formatLevel(level)} ${args[1]}\n${error.stack ? error.stack : error.message}`
+                `${this.formatLevel(level)} ${message.msg}\n${error.stack ? error.stack : error.message}`
             );
         } else {
-            func(`${this.formatLevel(level)} ${args[0]}`);
+            func(`${this.formatLevel(level)} ${message.msg}`);
         }
     }
 

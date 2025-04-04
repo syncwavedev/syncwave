@@ -21,9 +21,9 @@ export function assertNever(value: never): never {
 }
 
 export function softNever(value: never, reason: string): void {
-    log.warn(
-        `the app is outdated, softNever (${reason}) got called with: ${JSON.stringify(value)}`
-    );
+    log.warn({
+        msg: `the app is outdated, softNever (${reason}) got called with: ${JSON.stringify(value)}`,
+    });
 }
 
 export type AssertMessage = string | (() => string);
@@ -599,9 +599,12 @@ export async function infiniteRetry<R>(
             return await fn();
         } catch (error) {
             if (error instanceof CancelledError) {
-                log.info(error, `infiniteRetry cancelled: ${ctx}`);
+                log.info({error, msg: `infiniteRetry cancelled: ${ctx}`});
             } else {
-                log.error(toError(error), `infiniteRetry failed: ${ctx}`);
+                log.error({
+                    error: toError(error),
+                    msg: `infiniteRetry failed: ${ctx}`,
+                });
             }
 
             await wait({ms: 1000, onCancel: 'resolve'});

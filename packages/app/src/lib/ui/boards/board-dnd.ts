@@ -409,13 +409,13 @@ export class DndBoardContext {
     private handlePlacement(draggable: Draggable, cardId: CardId) {
         const targetColumn = this.getClosestColumn(draggable);
         if (!targetColumn) {
-            log.warn('No target column for DnD found');
+            log.error({msg: 'No target column for DnD found'});
             return;
         }
 
         const card = this.cards.find(x => x.card.value.id === cardId);
         if (!card) {
-            log.warn('No card for DnD found');
+            log.error({msg: 'No card for DnD found'});
             return;
         }
 

@@ -144,7 +144,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                 const callInfo = `handle_call ${req.name} [rid=${ctx.requestId}]`;
 
                 try {
-                    log.info(`req ${callInfo}...`);
+                    log.info({msg: `req ${callInfo}...`});
 
                     const result = await processor.handle(
                         state.state,
@@ -152,11 +152,16 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         ctx
                     );
 
-                    log.info(`res ${callInfo} => ${stringifyLogPart(result)}`);
+                    log.info({
+                        msg: `res ${callInfo} => ${stringifyLogPart(result)}`,
+                    });
 
                     return result;
                 } catch (error) {
-                    log.error(toError(error), `${callInfo} failed`);
+                    log.error({
+                        error: toError(error),
+                        msg: `${callInfo} failed`,
+                    });
                     throw error;
                 }
             },
@@ -176,7 +181,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
 
                 const callInfo = `handle ${name} [sid=${streamId}]`;
 
-                log.info(`req ${callInfo}...`);
+                log.info({msg: `req ${callInfo}...`});
 
                 const [ctx, cancelCtx] = context().createDetached({
                     span: `handle_stream ${name}`,
@@ -198,9 +203,9 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                 )
                                     .map((value, index) => ({value, index}))
                                     .mapParallel(async ({value, index}) => {
-                                        log.info(
-                                            `res ${callInfo} => ${stringifyLogPart(value)}`
-                                        );
+                                        log.info({
+                                            msg: `res ${callInfo} => ${stringifyLogPart(value)}`,
+                                        });
                                         assert(
                                             index === counter,
                                             'stream value index !== counter'
@@ -228,7 +233,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                     );
                                 }
                             } finally {
-                                log.info(`end ${callInfo}`);
+                                log.info({msg: `end ${callInfo}`});
 
                                 // no point in sending end if the stream was cancelled by client
                                 if (!state.jobManager.isCancelled(streamId)) {
@@ -248,7 +253,10 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                         }
                     )
                 ).catch(error => {
-                    log.error(toError(error), `${callInfo} failed`);
+                    log.error({
+                        error: toError(error),
+                        msg: `${callInfo} failed`,
+                    });
                 });
 
                 return {streamId};
@@ -359,7 +367,10 @@ class RpcStreamerClientApiState {
                     .finally(() => writer.end())
             )
             .catch(error => {
-                log.error(toError(error), 'failed to finish the channel');
+                log.error({
+                    error: toError(error),
+                    msg: 'failed to finish the channel',
+                });
             });
     }
 
@@ -374,7 +385,7 @@ class RpcStreamerClientApiState {
             channel.counter++;
         }
         if (!channel) {
-            log.warn(`unknown streamId: ${streamId}`);
+            log.warn({msg: `unknown streamId: ${streamId}`, streamId});
             context().detach({span: 'getSub: cancel stream'}, () => {
                 this.server
                     .cancel({
@@ -382,10 +393,10 @@ class RpcStreamerClientApiState {
                         reason: `unknown streamId: ${streamId}`,
                     })
                     .catch(error =>
-                        log.error(
-                            toError(error),
-                            `failed to cancel stream ${streamId}`
-                        )
+                        log.error({
+                            error: toError(error),
+                            msg: `failed to cancel stream ${streamId}`,
+                        })
                     );
             });
         }
@@ -507,10 +518,10 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             try {
                 arg = checkValue(handler.req, arg);
             } catch (error) {
-                log.error(
-                    toError(error),
-                    `invalid request for ${name}` + JSON.stringify(arg)
-                );
+                log.error({
+                    error: toError(error),
+                    msg: `invalid request for ${name}` + JSON.stringify(arg),
+                });
 
                 throw error;
             }
@@ -527,20 +538,20 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                 });
                 return requestCtx
                     .run(async () => {
-                        log.info(`req ${callInfo}...`);
+                        log.info({msg: `req ${callInfo}...`});
                         return server
                             .handle({name, arg}, headers)
                             .then(async result => {
-                                log.info(
-                                    `res ${callInfo} => ${stringifyLogPart(result)}`
-                                );
+                                log.info({
+                                    msg: `res ${callInfo} => ${stringifyLogPart(result)}`,
+                                });
                                 return result;
                             })
                             .catch(async error => {
-                                log.error(
-                                    toError(error),
-                                    `${callInfo} failed: ${getReadableError(error)}`
-                                );
+                                log.error({
+                                    error: toError(error),
+                                    msg: `${callInfo} failed: ${getReadableError(error)}`,
+                                });
                                 throw error;
                             });
                     })
@@ -581,10 +592,10 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                 writer.end();
                             })
                             .catch(error => {
-                                log.error(
-                                    toError(error),
-                                    'failed to cancel stream'
-                                );
+                                log.error({
+                                    error: toError(error),
+                                    msg: 'failed to cancel stream',
+                                });
                             });
                     });
                     return requestCtx.run(() => {
@@ -597,46 +608,46 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                 arg,
                             });
 
-                            log.info(`req ${callInfo}...`);
+                            log.info({msg: `req ${callInfo}...`});
                             await server.stream(
                                 {streamId, name, arg},
                                 {...headers}
                             );
                             await channel.pipe({
                                 next: value => {
-                                    log.info(
-                                        `next ${callInfo} => ${stringifyLogPart(
+                                    log.info({
+                                        msg: `next ${callInfo} => ${stringifyLogPart(
                                             value
-                                        )}`
-                                    );
+                                        )}`,
+                                    });
                                     return writer.next(value);
                                 },
                                 throw: error => {
-                                    log.error(
-                                        toError(error),
-                                        `${callInfo} failed: ${getReadableError(
+                                    log.error({
+                                        error: toError(error),
+                                        msg: `${callInfo} failed: ${getReadableError(
                                             error
-                                        )}`
-                                    );
+                                        )}`,
+                                    });
                                     return writer.throw(error);
                                 },
                                 end: () => {
-                                    log.info(`end ${callInfo}`);
+                                    log.info({msg: `end ${callInfo}`});
                                     return writer.end();
                                 },
                             });
                         }).catch(error => {
                             writer.throw(toError(error)).catch(error => {
-                                log.error(
-                                    toError(error),
-                                    'failed to throw stream error'
-                                );
+                                log.error({
+                                    error: toError(error),
+                                    msg: 'failed to throw stream error',
+                                });
                             });
                             cleanup(new AppError('run failed', {cause: error}));
-                            log.error(
-                                toError(error),
-                                'failed to start streaming'
-                            );
+                            log.error({
+                                error: toError(error),
+                                msg: 'failed to start streaming',
+                            });
                         });
 
                         return (reason: unknown) => {
@@ -646,9 +657,9 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             );
                             // we need to run cancellation separately to avoid cancellation of the cancellation
                             context().detach({span: 'cancel stream'}, () => {
-                                log.debug(
-                                    'stream consumer unsubscribed, send cancellation to the server...'
-                                );
+                                log.debug({
+                                    msg: 'stream consumer unsubscribed, send cancellation to the server...',
+                                });
                                 cleanup(new AppError('stream cancelled'));
                                 catchConnectionClosed(
                                     server.cancel({
@@ -656,10 +667,10 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                         reason: 'stream_has_no_consumers',
                                     })
                                 ).catch(error => {
-                                    log.error(
-                                        toError(error),
-                                        'failed to cancel stream'
-                                    );
+                                    log.error({
+                                        error: toError(error),
+                                        msg: 'failed to cancel stream',
+                                    });
                                 });
                             });
                         };

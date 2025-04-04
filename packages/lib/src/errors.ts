@@ -1,9 +1,9 @@
-import {context, type NestedAttributeMap} from './context.js';
-import {createUuidV4} from './uuid.js';
+import {v4} from 'uuid';
+import type {NestedAttributeMap} from './context.js';
 
 // eslint-disable-next-line no-restricted-globals
 export class AppError extends Error {
-    public readonly id = createUuidV4();
+    public readonly id = v4();
 
     constructor(message: string, options?: {cause?: unknown}) {
         super(message, options);
@@ -39,8 +39,6 @@ export class AppError extends Error {
 }
 
 export class CancelledError extends AppError {
-    public readonly traceId = context().traceId;
-
     constructor(message: string, reason: unknown) {
         super(message, {cause: reason});
     }

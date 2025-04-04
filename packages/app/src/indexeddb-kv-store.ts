@@ -8,7 +8,6 @@ import type {Entry} from 'syncwave';
 import {
     ENVIRONMENT,
     log,
-    toError,
     toStream,
     type Condition,
     type Uint8KvStore,
@@ -60,9 +59,9 @@ export class IndexedDBTransaction implements Uint8Transaction {
         this.tx.oncomplete = () => {
             this.active = false;
             if (!this.done && ENVIRONMENT !== 'test') {
-                log.error(
-                    'Transaction completed (auto-commit) before user function finished'
-                );
+                log.error({
+                    msg: 'Transaction completed (auto-commit) before user function finished',
+                });
             }
         };
         this.tx.onerror = () => {
@@ -164,8 +163,8 @@ export class IndexedDBKVStore implements Uint8KvStore {
                 } else {
                     tx.abort();
                 }
-            } catch (abortErr) {
-                log.error(toError(abortErr), 'Abort error:');
+            } catch (error) {
+                log.error({error, msg: 'Abort error'});
             }
             wrappedTxn.markDone();
             throw err;
@@ -176,7 +175,7 @@ export class IndexedDBKVStore implements Uint8KvStore {
         this.dbPromise
             .then(db => db.close())
             .catch(error => {
-                log.error(toError(error), 'failed to close idb');
+                log.error({error, msg: 'failed to close idb'});
             });
     }
 }

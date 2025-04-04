@@ -32,27 +32,27 @@ export class WsTransportServer<T> implements TransportServer<T> {
         this.wss = new WebSocketServer({server: this.opt.server});
 
         this.wss.on('connection', (ws: WebSocket) => {
-            log.trace('ws server connection');
+            log.info({msg: 'ws server connection'});
             launchCtx
                 .run(async () => {
                     const conn = new WsConnection<T>(ws, this.opt.codec);
                     cb(conn);
                 })
                 .catch(error => {
-                    log.error(toError(error), 'ws server connection error');
+                    log.error({error, msg: 'ws server connection error'});
                 });
         });
 
         const listening = new Deferred<void>();
 
         this.wss.on('listening', () => {
-            log.trace('ws server running');
+            log.trace({msg: 'ws server running'});
             launchCtx
                 .run(async () => {
                     listening.resolve();
                 })
                 .catch(error => {
-                    log.error(toError(error), 'ws server listening error');
+                    log.error({error, msg: 'ws server listening error'});
                 });
         });
 
@@ -79,7 +79,7 @@ export class WsConnection<T> implements Connection<T> {
 
     async send(message: T): Promise<void> {
         this.ensureOpen();
-        log.trace('ws.send: ' + JSON.stringify(message));
+        log.trace(() => ({msg: 'ws.send: ' + JSON.stringify(message)}));
         return new Promise((resolve, reject) => {
             const data = this.codec.encode(message);
             this.ws.send(data, (error?: unknown) => {
@@ -112,7 +112,6 @@ export class WsConnection<T> implements Connection<T> {
     }
 
     subscribe(observer: Observer<T>) {
-        log.trace('ws.subscribe');
         this.ensureOpen();
         return this.subject.subscribe(observer);
     }
@@ -141,11 +140,11 @@ export class WsConnection<T> implements Connection<T> {
                         const message = this.codec.decode(rawData);
                         await this.subject.next(message);
                     } catch (error) {
-                        log.error(toError(error), 'ws.message');
+                        log.error({error, msg: 'ws.message'});
                     }
                 })
                 .catch(error => {
-                    log.error(toError(error), 'ws.message error');
+                    log.error({error, msg: 'ws.message error'});
                 });
         });
 
@@ -153,14 +152,14 @@ export class WsConnection<T> implements Connection<T> {
             capturedCtx
                 .run(async () => {
                     try {
-                        log.debug(toError(error), 'WsConnection error');
+                        log.debug({error, msg: 'WsConnection error'});
                         await this.subject.throw(toError(error));
                     } catch (error) {
-                        log.error(toError(error), 'ws.error');
+                        log.error({error, msg: 'ws.error'});
                     }
                 })
                 .catch(error => {
-                    log.error(toError(error), 'ws.error error');
+                    log.error({error, msg: 'ws.error error'});
                 });
         });
 
@@ -168,30 +167,30 @@ export class WsConnection<T> implements Connection<T> {
             capturedCtx
                 .run(async () => {
                     try {
-                        log.debug('WsConnection unexpected-response');
+                        log.error({msg: 'WsConnection unexpected-response'});
                         await this.subject.throw(
                             new AppError('ws.unexpected response')
                         );
                     } catch (error) {
-                        log.error(
-                            toError(error),
-                            'error during ws.unexpected-response'
-                        );
+                        log.error({
+                            error,
+                            msg: 'error during ws.unexpected-response',
+                        });
                     }
                 })
                 .catch(error => {
-                    log.error(toError(error), 'ws.unexpected-response error');
+                    log.error({error, msg: 'ws.unexpected-response error'});
                 });
         });
 
         this.ws.on('close', () => {
             capturedCtx
                 .run(async () => {
-                    log.debug('WsConnection close');
+                    log.info({msg: 'WsConnection close'});
                     this.subject.close('ws close event');
                 })
                 .catch(error => {
-                    log.error(toError(error), 'ws.close error');
+                    log.error({error, msg: 'ws.close error'});
                 });
         });
     }

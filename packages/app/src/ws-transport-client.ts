@@ -5,7 +5,6 @@ import {
     ConnectionClosedError,
     log,
     Subject,
-    toError,
     TransportServerUnreachableError,
     type Codec,
     type Connection,
@@ -23,14 +22,14 @@ export class WsTransportClient<T> implements TransportClient<T> {
     constructor(private readonly opt: WsTransportClientOptions<T>) {}
 
     connect(): Promise<Connection<T>> {
-        log.trace('ws connect');
+        log.info({msg: 'ws connect'});
 
         return new Promise((resolve, reject) => {
             const ws = new WebSocket(this.opt.url);
             ws.binaryType = 'arraybuffer';
 
             ws.addEventListener('open', () => {
-                log.trace('ws connect: open');
+                log.info({msg: 'ws connect: open'});
                 const connection = new WsClientConnection<T>(
                     ws,
                     this.opt.codec
@@ -38,8 +37,8 @@ export class WsTransportClient<T> implements TransportClient<T> {
                 resolve(connection);
             });
 
-            ws.addEventListener('error', err => {
-                log.trace('ws connect: error: ' + err.message);
+            ws.addEventListener('error', error => {
+                log.error({error, msg: 'ws connect: error'});
                 const codes = [
                     'ECONNRESET',
                     'ECONNREFUSED',
@@ -47,10 +46,10 @@ export class WsTransportClient<T> implements TransportClient<T> {
                     'EPIPE',
                 ];
                 // err.message might be undefined
-                if (codes.some(code => err.message?.includes(code))) {
-                    reject(new TransportServerUnreachableError(err.message));
+                if (codes.some(code => error.message?.includes(code))) {
+                    reject(new TransportServerUnreachableError(error.message));
                 } else {
-                    reject(err);
+                    reject(error);
                 }
             });
         });
@@ -68,13 +67,13 @@ export class WsClientConnection<T> implements Connection<T> {
 
         this.subscribe({
             next: async msg => {
-                log.trace('ws got: ' + JSON.stringify(msg));
+                log.trace(() => ({msg: 'ws got: ' + JSON.stringify(msg)}));
             },
-            throw: async err => {
-                log.error(err, 'ws err');
+            throw: async error => {
+                log.error({error, msg: 'ws err'});
             },
             close: () => {
-                log.info('ws closed');
+                log.info({msg: 'ws closed'});
             },
         });
     }
@@ -82,7 +81,7 @@ export class WsClientConnection<T> implements Connection<T> {
     send(message: T): Promise<void> {
         this.ensureReady();
 
-        log.trace('ws client: send: ' + JSON.stringify(message));
+        log.trace(() => ({msg: 'ws client: send: ' + JSON.stringify(message)}));
         const data = this.codec.encode(message);
         this.ws.send(data);
 
@@ -91,12 +90,12 @@ export class WsClientConnection<T> implements Connection<T> {
 
     subscribe(cb: Observer<T>): Unsubscribe {
         this.ensureReady();
-        log.trace('ws subscribe');
+        log.trace({msg: 'ws subscribe'});
         return this.subject.subscribe(cb);
     }
 
     close(): void {
-        log.trace('ws client: close');
+        log.info({msg: 'ws client: close'});
         this.ws.close();
     }
 
@@ -122,26 +121,23 @@ export class WsClientConnection<T> implements Connection<T> {
                 const message = this.codec.decode(new Uint8Array(event.data));
                 await this.subject.next(message);
             } catch (error) {
-                log.error(toError(error), 'error during ws message');
+                log.error({error, msg: 'error during ws message'});
             }
         });
 
         this.ws.addEventListener('error', async error => {
-            log.error(
-                toError(error),
-                'ws client: error event: ' + error.message
-            );
+            log.error({error, msg: 'ws client: error event'});
             try {
                 await this.subject.throw(
                     new AppError('ws.error: ' + error.toString())
                 );
             } catch (error) {
-                log.error(toError(error), 'error during ws error');
+                log.error({error, msg: 'error during ws error'});
             }
         });
 
         this.ws.addEventListener('close', () => {
-            log.trace('ws client: close event');
+            log.info({msg: 'ws client: close event'});
             this.subject.close('ws client: close event');
         });
     }

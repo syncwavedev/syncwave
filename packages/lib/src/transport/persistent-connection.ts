@@ -39,7 +39,10 @@ export class PersistentConnection<T> implements Connection<T> {
 
         // connect if not already
         this.getConnection().catch(err => {
-            log.error(toError(err), 'error while connection to the server: ');
+            log.error({
+                error: toError(err),
+                msg: 'error while connection to the server: ',
+            });
         });
 
         return this.subject.subscribe(cb);
@@ -86,7 +89,10 @@ export class PersistentConnection<T> implements Connection<T> {
                 const unsub = this.connection.subscribe({
                     next: message => this.subject.next(message),
                     throw: async error => {
-                        log.error(error, 'error in underlying connection');
+                        log.error({
+                            error,
+                            msg: 'error in underlying connection',
+                        });
                         cleanup(error);
                         await this.subject.throw(error);
                     },
@@ -99,10 +105,10 @@ export class PersistentConnection<T> implements Connection<T> {
                                 )
                             )
                             .catch(error => {
-                                log.error(
-                                    toError(error),
-                                    'PersistentConnection: failed to throw error'
-                                );
+                                log.error({
+                                    error: toError(error),
+                                    msg: 'PersistentConnection: failed to throw error',
+                                });
                             });
                     },
                 });

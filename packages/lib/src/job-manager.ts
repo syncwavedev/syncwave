@@ -41,11 +41,11 @@ export class JobManager<T extends string> {
             this.cancelledJobs.set(id, job);
         } else if (this.cancelledJobs.has(id)) {
             const job = this.cancelledJobs.get(id)!;
-            log.warn(
-                `job ${id} is already cancelled, job.traceId = ${job.ctx.traceId}`
-            );
+            log.warn({
+                msg: `job ${id} is already cancelled, job.traceId = ${job.ctx.traceId}`,
+            });
         } else {
-            log.warn(`JobManager.cancel: unknown job: ${id}`);
+            log.warn({msg: `JobManager.cancel: unknown job: ${id}`});
         }
     }
 
@@ -58,7 +58,7 @@ export class JobManager<T extends string> {
             this.runningJobs.delete(job);
             this.cancelledJobs.delete(job);
         } else {
-            log.warn(`JobManager.finish: unknown job: ${job}`);
+            log.warn({msg: `JobManager.finish: unknown job: ${job}`});
         }
     }
 

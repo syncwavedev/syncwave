@@ -20,7 +20,7 @@
     };
 
     $effect(() => {
-        log.error(appError, `Error occurred in web app`);
+        log.error({error: appError, msg: `Error occurred in web app`});
     });
 
     const currentTime = new Date().toLocaleString();

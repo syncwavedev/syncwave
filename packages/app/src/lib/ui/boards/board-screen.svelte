@@ -1,6 +1,6 @@
 <script lang="ts">
     import {compareNumbers, log, type Awareness} from 'syncwave';
-    import {createRawSnippet, onMount, tick} from 'svelte';
+    import {onMount, tick} from 'svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import BoardColumn from './board-column.svelte';
@@ -131,7 +131,9 @@
 
     $effect(() => {
         if (board.deletedAt) {
-            log.info(`board ${board.id} got deleted, redirect to app...`);
+            log.info({
+                msg: `board ${board.id} got deleted, redirect to app...`,
+            });
             router.route('/');
         }
     });

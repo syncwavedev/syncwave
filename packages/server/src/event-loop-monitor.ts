@@ -51,9 +51,10 @@ function after(asyncId: number) {
     if (diffNs > THRESHOLD_NS) {
         const time = diffNs / 1e6; // in ms
 
-        log.warn(
-            `Event loop blocked for ${time.toFixed(2)}ms, info: ${JSON.stringify(cached)}`
-        );
+        log.warn({
+            msg: `Event loop blocked for ${time.toFixed(2)}ms`,
+            info: cached,
+        });
     }
 }
 
@@ -62,12 +63,12 @@ export const eventLoopMonitor = (() => {
 
     return {
         enable: () => {
-            log.info('Initializing event loop monitor');
+            log.info({msg: 'Initializing event loop monitor'});
 
             hook.enable();
         },
         disable: () => {
-            log.info('Disabling event loop monitor');
+            log.info({msg: 'Disabling event loop monitor'});
 
             hook.disable();
         },

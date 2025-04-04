@@ -7,12 +7,12 @@ import {
     Deferred,
     log,
     runAll,
-    toError,
     toStream,
     wait,
     type CoordinatorRpc,
     type Stream,
 } from 'syncwave';
+import router from './router';
 import {getRpc} from './utils';
 
 // observable is wrapped in $state, so it can be used in templates directly
@@ -137,15 +137,15 @@ function useStream<T>(
                         }
                         onNext(value);
                     }
-                } catch (e) {
+                } catch (error) {
                     if (!cancelled) {
-                        log.error(toError(e), 'observable failed');
+                        log.error({error, msg: 'observable failed'});
                     }
-                    if (e instanceof CancelledError) return;
-                    if (e instanceof BusinessError) {
-                        if (e.code === 'forbidden') {
-                            log.error('Access denied');
-                            // goto('/app');
+                    if (error instanceof CancelledError) return;
+                    if (error instanceof BusinessError) {
+                        if (error.code === 'forbidden') {
+                            log.error({msg: 'Access denied'});
+                            router.route('/');
                         }
                         return;
                     }

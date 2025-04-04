@@ -166,7 +166,7 @@ export function timeSince(ts: Timestamp) {
 }
 
 export function markErrorAsHandled(error: unknown) {
-    log.info('error handled + ' + getReadableError(error));
+    log.info({msg: 'error handled + ' + getReadableError(error)});
 }
 
 export function fireEscape() {

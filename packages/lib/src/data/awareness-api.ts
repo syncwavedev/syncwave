@@ -175,10 +175,10 @@ export function createAwarenessApi() {
                     context().detach({span: 'awareness stream closed'}, () => {
                         st.offline(principal, boardId, clientId).catch(
                             error => {
-                                log.error(
-                                    toError(error),
-                                    'failed to remove awareness state'
-                                );
+                                log.error({
+                                    error: toError(error),
+                                    msg: 'failed to remove awareness state',
+                                });
                             }
                         );
                     });

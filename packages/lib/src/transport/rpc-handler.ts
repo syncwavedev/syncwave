@@ -222,10 +222,10 @@ async function proxyRequest(
                     reason: getReadableError(reason),
                 })
             ).catch(error =>
-                log.error(
-                    toError(error),
-                    'proxyRequest: failed to send cancellation'
-                )
+                log.error({
+                    error: toError(error),
+                    msg: 'proxyRequest: failed to send cancellation',
+                })
             );
         }
         unsub?.(reason);
@@ -293,7 +293,10 @@ async function proxyRequest(
                 }
             })
             .catch((err: unknown) => {
-                log.error(toError(err), 'unexpected error after rpc timed out');
+                log.error({
+                    error: toError(err),
+                    msg: 'unexpected error after rpc timed out',
+                });
             });
 
         await conn.send({
@@ -351,20 +354,20 @@ function createHandlerProxy(
 
 export function reportRpcError(error: AppError, callInfo: string) {
     if (error instanceof BusinessError) {
-        log.warn(error, `[${callInfo}] business error`);
+        log.warn({error, msg: `[${callInfo}] business error`});
     } else if (error instanceof CancelledError) {
         if (error.cause === 'stream_has_no_consumers') {
-            log.info(`[${callInfo}] cancelled: stream has no consumers`);
+            log.info({msg: `[${callInfo}] cancelled: stream has no consumers`});
         } else if (error.cause === 'connection_closed') {
-            log.info(`[${callInfo}] cancelled: connection closed`);
+            log.info({msg: `[${callInfo}] cancelled: connection closed`});
         } else {
-            log.warn(`[${callInfo}] cancelled: ${error.message}`);
+            log.warn({msg: `[${callInfo}] cancelled: ${error.message}`});
         }
     } else {
-        log.error(
+        log.error({
             error,
-            `${callInfo} failed: ` + stringifyLogPart(error.toJSON())
-        );
+            msg: `${callInfo} failed: ` + stringifyLogPart(error.toJSON()),
+        });
     }
 }
 

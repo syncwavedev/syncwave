@@ -1,11 +1,9 @@
 <script lang="ts">
-    import {getRpc} from '$lib/utils';
     import {BusinessError, createBoardId, log, toError} from 'syncwave';
     import AddBoardDialogSettings from './add-board-dialog-board-settings.svelte';
     import AddBoardDialogMemberList from './add-board-dialog-member-list.svelte';
     import Dialog from '../dialog.svelte';
-    import {goto} from '$app/navigation';
-    import {getBoardRoute} from '$lib/routes';
+    import {getRpc} from '../../utils';
 
     interface Props {
         open: boolean;
@@ -32,7 +30,7 @@
                 x.createBoard({boardId: createBoardId(), key, name, members})
             );
             onClose();
-            goto(getBoardRoute(key.toUpperCase()));
+            window.location.href = `/b/${key.toUpperCase()}`;
         } catch (e) {
             if (e instanceof BusinessError) {
                 if (e.code === 'board_key_taken') {
@@ -43,7 +41,7 @@
                 }
             } else {
                 alert('Sorry, something went wrong. Please try again later.');
-                log.error(toError(e), 'Failed to create board');
+                log.error({error: toError(e), msg: 'Failed to create board'});
             }
         }
     }

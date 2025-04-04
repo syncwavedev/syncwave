@@ -22,7 +22,10 @@
                     );
                 })
                 .catch(error => {
-                    log.error(toError(error), 'Error fetching attachment:');
+                    log.error({
+                        error: toError(error),
+                        msg: 'Error fetching attachment:',
+                    });
                 });
         }
     });

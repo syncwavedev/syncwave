@@ -72,7 +72,7 @@ describe('IndexedDBKVStore', () => {
             await tx.put(key1, value1);
             await tx.put(key2, value2);
 
-            const entries = [];
+            const entries: unknown[] = [];
             for await (const entry of tx.query({gte: key1})) {
                 entries.push(entry);
             }
@@ -117,7 +117,7 @@ describe('IndexedDBKVStore', () => {
             await tx.put(key1, value1);
             await tx.put(key2, value2);
 
-            const entries = [];
+            const entries: unknown[] = [];
             for await (const entry of tx.query({lt: key2})) {
                 entries.push(entry);
             }

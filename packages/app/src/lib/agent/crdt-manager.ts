@@ -171,11 +171,14 @@ export class CrdtManager implements CrdtDerivator {
         const box = this.entities.get(id);
         assert(box !== undefined, 'commit: Crdt not found');
         if (box.entity.isDraft === false) {
-            log.warn('commit: Crdt already committed, id = ' + id);
+            log.warn({msg: 'commit: Crdt already committed, id = ' + id});
         }
         box.entity.isDraft = false;
         box.observer.sender.start().catch(error => {
-            log.error(toError(error), 'CrdtManager: commit error');
+            log.error({
+                error: toError(error),
+                msg: 'CrdtManager: commit error',
+            });
         });
     }
 

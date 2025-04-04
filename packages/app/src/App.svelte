@@ -1,12 +1,12 @@
 <script module lang="ts">
-    import {CancelledError, log, MsgpackCodec, toError} from 'syncwave';
+    import {CancelledError, log, MsgpackCodec} from 'syncwave';
 
     window.addEventListener('unhandledrejection', event => {
         if (event.reason instanceof CancelledError) {
             event.preventDefault();
         }
 
-        log.error(toError(event.reason), 'unhandled rejection');
+        log.error({error: event.reason, msg: 'unhandled rejection'});
     });
 </script>
 

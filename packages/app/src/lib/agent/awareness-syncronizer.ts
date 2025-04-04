@@ -16,10 +16,16 @@ export class AwarenessSynchronizer {
         const synchronizer = new AwarenessSynchronizer(awareness, boardId, rpc);
 
         synchronizer.startPush().catch(error => {
-            log.error(toError(error), 'failed to start awareness pusher');
+            log.error({
+                error: toError(error),
+                msg: 'failed to start awareness pusher',
+            });
         });
         synchronizer.startPull().catch(error => {
-            log.error(toError(error), 'failed to start awareness puller');
+            log.error({
+                error: toError(error),
+                msg: 'failed to start awareness puller',
+            });
         });
 
         return synchronizer;
@@ -54,7 +60,10 @@ export class AwarenessSynchronizer {
                         state: latestState,
                     })
                 ).catch(error => {
-                    log.error(toError(error), 'failed to send awareness state');
+                    log.error({
+                        error: toError(error),
+                        msg: 'failed to send awareness state',
+                    });
                 });
 
                 return Promise.resolve();
@@ -95,10 +104,10 @@ export class AwarenessSynchronizer {
             this.awarenessSender
                 .enqueue(this.awareness.getLocalState())
                 .catch(error => {
-                    log.error(
-                        toError(error),
-                        'failed to enqueue local awareness'
-                    );
+                    log.error({
+                        error: toError(error),
+                        msg: 'failed to enqueue local awareness',
+                    });
                 });
         };
 

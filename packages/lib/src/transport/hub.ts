@@ -27,7 +27,7 @@ export class MemHub implements Hub {
             .get(topic)
             ?.next()
             .catch(error => {
-                log.error(toError(error), 'MemHub.emit: ');
+                log.error({error: toError(error), msg: 'MemHub.emit'});
             });
     }
 

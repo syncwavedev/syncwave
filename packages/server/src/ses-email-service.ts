@@ -15,7 +15,9 @@ export class SesEmailService implements EmailService {
     }
 
     async send({html, recipient, subject, text}: EmailMessage): Promise<void> {
-        log.info(`Sending email to ${recipient} with subject: ${subject}`);
+        log.info({
+            msg: `Sending email to ${recipient} with subject: ${subject}`,
+        });
 
         await this.ses.send(
             new SendEmailCommand({

@@ -68,8 +68,7 @@ export class Agent {
             () => ({
                 ...context().extract(),
                 auth: this.authManager.getJwt() ?? undefined,
-            }),
-            'server'
+            })
         );
         this.crdtManager = new CrdtManager(this.rpc);
     }
@@ -139,7 +138,7 @@ export class Agent {
                 }
             }
         }, 'observeMe').catch(error => {
-            log.error(toError(error), 'observeBoard failed');
+            log.error({error: toError(error), msg: 'observeBoard failed'});
         });
 
         return view;
@@ -225,7 +224,7 @@ export class Agent {
                 }
             }
         }, `observeBoard, board id = ${initialBoard.board.id}`).catch(error => {
-            log.error(toError(error), 'observeBoard failed');
+            log.error({error: toError(error), msg: 'observeBoard failed'});
         });
 
         return [data.boardTreeView, awareness];

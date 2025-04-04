@@ -3,7 +3,8 @@ import './instrumentation.js';
 import 'dotenv/config';
 
 import cluster from 'cluster';
-import {createServer} from 'http';
+import {createServer, IncomingMessage, ServerResponse} from 'http';
+import type {Http2ServerRequest, Http2ServerResponse} from 'http2';
 import Koa from 'koa';
 import helmet from 'koa-helmet';
 import {cpus} from 'os';
@@ -28,7 +29,6 @@ import {
     MemHub,
     MsgpackCodec,
     MvccAdapter,
-    toError,
     toStream,
     TupleStore,
     type Uint8KvStore,
@@ -169,9 +169,9 @@ async function getKvStore(
 }> {
     const {store, hub} = await match(type)
         .with('fdb', async () => {
-            log.info(
-                `using FoundationDB as a primary store (./fdb/fdb.${stage}.cluster)`
-            );
+            log.info({
+                msg: `using FoundationDB as a primary store (./fdb/fdb.${stage}.cluster)`,
+            });
             // use a variable to prevent typescript type check
             // because this module is deleted in self-hosted docker image and never imported
             const fdbModulePath: string = './fdb-kv-store.js';
@@ -189,7 +189,7 @@ async function getKvStore(
             };
         })
         .with('sqlite', async () => {
-            log.info('using Sqlite as primary store');
+            log.info({msg: 'using Sqlite as primary store'});
             const sqliteStore = await import('./sqlite-store.js').then(
                 x =>
                     new x.SqliteRwStore({
@@ -217,9 +217,9 @@ async function getKvStore(
 
 async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
     const versionKey = ['version'];
-    log.info('Retrieving KV store version...');
+    log.info({msg: 'Retrieving KV store version...'});
     let version = await store.transact(async tx => {
-        log.info('Running tx.get(versionKey)...');
+        log.info({msg: 'Running tx.get(versionKey)...'});
         const version = await tx.get(versionKey);
         if (version) {
             try {
@@ -232,16 +232,16 @@ async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
             return 0;
         }
     });
-    log.info('KV store version: ' + version);
+    log.info({msg: 'KV store version: ' + version});
 
     if (!version || version === 1) {
-        log.info("KV store doesn't have a version, upgrading...");
+        log.info({msg: "KV store doesn't have a version, upgrading..."});
         await store.transact(async tx => {
             const keys = await toStream(tx.query({gte: []}))
                 .map(entry => entry.key)
                 .toArray();
 
-            log.info(`Store has ${keys.length} keys, removing them...`);
+            log.info({msg: `Store has ${keys.length} keys, removing them...`});
 
             if (keys.length > 1000) {
                 throw new AppError('too many keys to truncate the database');
@@ -251,20 +251,22 @@ async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
                 await tx.delete(key);
             }
 
-            log.info('Set KV store version to 1...');
+            log.info({msg: 'Set KV store version to 1...'});
             await tx.put(versionKey, encodeNumber(2));
             version = 2;
         });
     }
 
     if (version === 2) {
-        log.info('start upgrading KV store from version 2 to version 3...');
+        log.info({
+            msg: 'start upgrading KV store from version 2 to version 3...',
+        });
         let processedEntries = 0;
         let lastKey: Tuple = ['identities'];
         while (true) {
-            log.info(
-                `Processing entries to upgrade from version 2 to version 3... (processed: ${processedEntries})`
-            );
+            log.info({
+                msg: `Processing entries to upgrade from version 2 to version 3... (processed: ${processedEntries})`,
+            });
             const done = await store.transact(async tx => {
                 const entries = await toStream(tx.query({gt: lastKey}))
                     .take(100)
@@ -293,16 +295,29 @@ async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
             }
         }
 
-        log.info(
-            `Finished upgrading KV store from version 2 to version 3. Processed ${processedEntries} entries.`
-        );
+        log.info({
+            msg: `Finished upgrading KV store from version 2 to version 3. Processed ${processedEntries} entries.`,
+        });
 
         await store.transact(async tx => {
-            log.info('Setting KV store version to 3...');
+            log.info({msg: 'Setting KV store version to 3...'});
             await tx.put(versionKey, encodeNumber(3));
         });
         version = 3;
     }
+}
+
+function getKoaCallback(app: Koa) {
+    return (
+        ...args: [
+            req: IncomingMessage | Http2ServerRequest,
+            res: ServerResponse | Http2ServerResponse,
+        ]
+    ) => {
+        app.callback()(...args).catch(error => {
+            log.error({error, msg: 'failed to handle request'});
+        });
+    };
 }
 
 async function launchApp(options: Options) {
@@ -322,7 +337,7 @@ async function launchApp(options: Options) {
         app.use(uiRouter.routes()).use(uiRouter.allowedMethods());
     }
 
-    const appHttpServer = createServer(app.callback());
+    const appHttpServer = createServer(getKoaCallback(app));
 
     const coordinator = new CoordinatorServer({
         transport: new WsTransportServer({
@@ -341,14 +356,14 @@ async function launchApp(options: Options) {
     });
 
     async function shutdown() {
-        log.info('shutting down app...');
+        log.info({msg: 'shutting down app...'});
         coordinator.close('shutdown');
         appHttpServer.close();
     }
 
     context().onEnd(() => {
         shutdown().catch(error => {
-            log.error(toError(error), 'failed to shutdown');
+            log.error({error, msg: 'failed to shutdown'});
         });
     });
 
@@ -365,16 +380,16 @@ async function launchMetrics() {
     metrics.use(metricsRouter.routes()).use(metricsRouter.allowedMethods());
     metrics.use(helmet.default());
 
-    const metricsHttpServer = createServer(metrics.callback());
+    const metricsHttpServer = createServer(getKoaCallback(metrics));
 
     async function shutdown() {
-        log.info('shutting down metrics server...');
+        log.info({msg: 'shutting down metrics server...'});
         metricsHttpServer.close();
     }
 
     context().onEnd(() => {
         shutdown().catch(error => {
-            log.error(toError(error), 'failed to shutdown');
+            log.error({error, msg: 'failed to shutdown'});
         });
     });
 
@@ -396,46 +411,48 @@ process.once('SIGINT', () => cancelServerCtx(new AppError('server shutdown')));
 process.once('SIGTERM', () => cancelServerCtx(new AppError('server shutdown')));
 process.on('unhandledRejection', reason => {
     if (reason instanceof CancelledError) {
-        log.info('unhandled cancellation');
+        log.info({msg: 'unhandled cancellation'});
         return;
     }
 
-    log.error(toError(reason), 'unhandled rejection');
+    log.error({error: reason, msg: 'unhandled rejection'});
 });
 
-log.info('Upgrading KV store...');
+log.info({msg: 'Upgrading KV store...'});
 await upgradeKVStore(options.store);
-log.info('Successfully upgraded KV store');
+log.info({msg: 'Successfully upgraded KV store'});
 
-log.info('launching coordinator...');
+log.info({msg: 'launching coordinator...'});
 
 if (cluster.isPrimary && options.launchCluster) {
-    log.info(`Master process ${process.pid} is running`);
+    log.info({msg: `Master process ${process.pid} is running`});
 
     serverCtx
         .run(async () => {
             try {
                 await launchMetrics();
-                log.info(
-                    `metrics server is running on port ${options.metricsPort}`
-                );
-            } catch (err) {
-                log.error(toError(err), 'failed to launch coordinator');
+                log.info({
+                    msg: `metrics server is running on port ${options.metricsPort}`,
+                });
+            } catch (error) {
+                log.error({error, msg: 'failed to launch coordinator'});
             }
         })
         .catch(error => {
-            log.error(toError(error), 'error during launch');
+            log.error({error, msg: 'error during launch'});
         });
 
     for (let i = 0; i < options.workersCount; i++) {
         const spawnWorker = () => {
             const worker = cluster.fork();
-            log.info(`Spawned worker ${worker.process.pid}`);
+            log.info({msg: `Spawned worker ${worker.process.pid}`});
 
             worker.on('exit', (code, signal) => {
-                log.error(
-                    `Worker ${worker.process.pid} died (code: ${code}, signal: ${signal}). Restarting...`
-                );
+                log.error({
+                    msg: `Worker ${worker.process.pid} died (code: ${code}, signal: ${signal}). Restarting...`,
+                    code,
+                    signal,
+                });
                 spawnWorker();
             });
         };
@@ -445,18 +462,23 @@ if (cluster.isPrimary && options.launchCluster) {
         }
     }
 } else {
-    log.info(`Worker process ${process.pid} is running`);
+    log.info({
+        msg: `Worker process ${process.pid} is running`,
+        pid: process.pid,
+    });
 
     serverCtx
         .run(async () => {
             try {
                 await launchApp(options);
-                log.info(`coordinator is running on port ${options.appPort}`);
-            } catch (err) {
-                log.error(toError(err), 'failed to launch coordinator');
+                log.info({
+                    msg: `coordinator is running on port ${options.appPort}`,
+                });
+            } catch (error) {
+                log.error({error, msg: 'failed to launch coordinator'});
             }
         })
         .catch(error => {
-            log.error(toError(error), 'error during launch');
+            log.error({error, msg: 'error during launch'});
         });
 }

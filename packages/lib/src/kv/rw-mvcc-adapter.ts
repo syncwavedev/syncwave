@@ -273,9 +273,9 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
 
             const result = await fn(tx);
 
-            log.trace(
-                `snapshot stats: retrieved = ${tx.retrievedCount}, returned = ${tx.returnedCount}`
-            );
+            log.trace({
+                msg: `snapshot stats: retrieved = ${tx.retrievedCount}, returned = ${tx.returnedCount}`,
+            });
 
             return result;
         } finally {
@@ -312,7 +312,10 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     const gcScanSize = this.writtenCount;
                     this.writtenCount = 0;
                     const gcPromise = this.gc(gcScanSize).catch(error => {
-                        log.error(toError(error), 'Failed to run GC');
+                        log.error({
+                            error: toError(error),
+                            msg: 'Failed to run GC',
+                        });
                     });
 
                     if (this.options.syncGc) {
@@ -343,7 +346,10 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             undefined,
             async tx => await tx.activeTransactions.delete(snapKey)
         ).catch(error => {
-            log.error(toError(error), 'Failed to record transaction end');
+            log.error({
+                error: toError(error),
+                msg: 'Failed to record transaction end',
+            });
         });
     }
 

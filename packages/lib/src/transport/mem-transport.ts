@@ -28,7 +28,7 @@ export class MemConnection<T> implements Connection<T> {
     async send(message: T) {
         this.ensureOpen();
 
-        log.debug('mem connection send: ' + JSON.stringify(message));
+        log.debug({msg: 'mem connection send: ' + JSON.stringify(message)});
 
         // don't wait for peer to respond
         await this.peer.receive(this.codec.encode(message));
@@ -37,13 +37,13 @@ export class MemConnection<T> implements Connection<T> {
     subscribe(observer: Observer<T>): Unsubscribe {
         this.ensureOpen();
 
-        log.debug('mem connection subscribe');
+        log.debug({msg: 'mem connection subscribe'});
 
         return this.subject.subscribe(observer);
     }
 
     close(reason: unknown): void {
-        log.debug('mem connection close');
+        log.debug({msg: 'mem connection close'});
         this.subject.close(reason);
         if (this.peer.subject.open) {
             this.peer.close(reason);
@@ -52,7 +52,7 @@ export class MemConnection<T> implements Connection<T> {
 
     private async receive(rawMessage: Uint8Array): Promise<void> {
         const message = this.codec.decode(rawMessage);
-        log.debug('mem connection receive: ' + JSON.stringify(message));
+        log.debug({msg: 'mem connection receive: ' + JSON.stringify(message)});
         await this.subject.next(message);
     }
 

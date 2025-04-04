@@ -44,21 +44,23 @@ export async function getGoogleUser(
 
         return {type: 'success', user};
     } catch (err: unknown) {
-        log.error(toError(err), 'Cannot get google user');
+        log.error({error: toError(err), msg: 'Cannot get google user'});
         return {type: 'error'};
     }
+}
+
+interface GoogleToken {
+    access_token: string;
+    expires_in: number;
+    refresh_token: string;
+    scope: string;
+    id_token: string;
 }
 
 async function getTokens(
     code: string,
     {clientId, clientSecret, redirectUri}: GoogleOptions
-): Promise<{
-    access_token: string;
-    expires_in: Number;
-    refresh_token: string;
-    scope: string;
-    id_token: string;
-}> {
+): Promise<GoogleToken> {
     const result = await fetch('https://oauth2.googleapis.com/token', {
         method: 'post',
         body: new URLSearchParams({
@@ -71,7 +73,7 @@ async function getTokens(
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-    }).then(x => x.json() as any);
+    }).then(x => x.json() as Promise<GoogleToken>);
 
     return result;
 }

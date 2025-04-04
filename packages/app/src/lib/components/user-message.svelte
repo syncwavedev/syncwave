@@ -20,7 +20,7 @@
     let {message, author, attachments}: Props = $props();
 
     let fragment = $derived(
-        Crdt.load(message.state).extractXmlFragment(x => x.text)
+        Crdt.load(message.state).extractXmlFragment(x => x.payload.text)
     );
 
     let when = $state(timeSince(message.createdAt));

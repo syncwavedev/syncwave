@@ -1,4 +1,4 @@
-import {assert, toPosition, type BigFloat} from 'syncwave';
+import {assert, toPosition} from 'syncwave';
 
 export function findMoved<TId>(
     before: TId[],
@@ -75,8 +75,8 @@ export function calculateChange<T extends {pk: [unknown]; id: unknown}>(
     localItems: T[],
     dndItems: T[],
     newDndItems: T[],
-    getPosition: (item: T | undefined) => BigFloat | undefined
-): {target: T['pk'][0]; newPosition: BigFloat} | undefined {
+    getPosition: (item: T | undefined) => number | undefined
+): {target: T['pk'][0]; newPosition: number} | undefined {
     const moved = findMoved(toIds(dndItems), toIds(newDndItems));
 
     if (!moved) {

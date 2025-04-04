@@ -79,7 +79,7 @@ export class Cursor<T> implements AsyncIterable<T> {
         if (this._isConsumed) return;
 
         this.iter.return?.().catch(error => {
-            log.error(toError(error), 'failed to close cursor');
+            log.error({error: toError(error), msg: 'failed to close cursor'});
         });
     }
 }

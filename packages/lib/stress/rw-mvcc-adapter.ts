@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {unreachable} from '../dist/esm/src/utils.js';
 import {Deferred} from '../src/deferred.js';
-import {AppError, toError} from '../src/errors.js';
+import {AppError} from '../src/errors.js';
 import {KvStoreMapper, log, NumberCodec} from '../src/index.js';
 import type {Condition, Entry, KvStore} from '../src/kv/kv-store.js';
 import {MemMvccStore, MvccConflictError} from '../src/kv/mem-mvcc-store.js';
@@ -30,7 +30,7 @@ class DualSnapController<K extends number, V> {
     }
 
     async get(key: K): Promise<V | undefined> {
-        log.debug(`[${this.id}] GET ${key}`);
+        log.debug({msg: `[${this.id}] GET ${key}`});
         const [subjectValue, targetValue] = await whenAll([
             this.subject.get(key),
             this.target.get(key),
@@ -43,9 +43,9 @@ class DualSnapController<K extends number, V> {
         condition: Condition<K>,
         take: number
     ): Promise<Array<Entry<K, V>>> {
-        log.debug(
-            `[${this.id}] QUERY ${JSON.stringify(condition)} take=${take}`
-        );
+        log.debug({
+            msg: `[${this.id}] QUERY ${JSON.stringify(condition)} take=${take}`,
+        });
         const [subjectResult, targetResult] = await whenAll([
             toStream(this.subject.query(condition)).take(take).toArray(),
             toStream(this.target.query(condition)).take(take).toArray(),
@@ -55,7 +55,7 @@ class DualSnapController<K extends number, V> {
     }
 
     done() {
-        log.debug(`[${this.id}] DONE`);
+        log.debug({msg: `[${this.id}] DONE`});
         if (this.released) {
             throw new AppError('already released');
         }
@@ -79,19 +79,19 @@ class DualTxController<K extends number, V extends number> {
     }
 
     async put(key: K, value: V): Promise<void> {
-        log.debug(`[${this.id}] PUT ${key}=${value}`);
+        log.debug({msg: `[${this.id}] PUT ${key}=${value}`});
         await this.subject.put(key, value);
         await this.target.put(key, value);
     }
 
     async remove(key: K): Promise<void> {
-        log.debug(`[${this.id}] DELETE ${key}`);
+        log.debug({msg: `[${this.id}] DELETE ${key}`});
         await this.subject.delete(key);
         await this.target.delete(key);
     }
 
     async get(key: K): Promise<V | undefined> {
-        log.debug(`[${this.id}] GET ${key}`);
+        log.debug({msg: `[${this.id}] GET ${key}`});
         const [subjectValue, targetValue] = await whenAll([
             this.subject.get(key),
             this.target.get(key),
@@ -104,9 +104,9 @@ class DualTxController<K extends number, V extends number> {
         condition: Condition<K>,
         take: number
     ): Promise<Array<Entry<K, V>>> {
-        log.debug(
-            `[${this.id}] QUERY ${JSON.stringify(condition)} take=${take}`
-        );
+        log.debug({
+            msg: `[${this.id}] QUERY ${JSON.stringify(condition)} take=${take}`,
+        });
         const [subjectResult, targetResult] = await whenAll([
             toStream(this.subject.query(condition)).take(take).toArray(),
             toStream(this.target.query(condition)).take(take).toArray(),
@@ -116,7 +116,7 @@ class DualTxController<K extends number, V extends number> {
     }
 
     done() {
-        log.debug(`[${this.id}] DONE`);
+        log.debug({msg: `[${this.id}] DONE`});
         if (this.released) {
             throw new AppError('already released');
         }
@@ -173,7 +173,7 @@ class DualKvStoreController<K extends number, V extends number> {
         await instant(targetCtl.accept());
 
         const dualCtl = new DualSnapController(subjectCtl, targetCtl, state);
-        log.debug(`[${dualCtl.id}] SNAP`);
+        log.debug({msg: `[${dualCtl.id}] SNAP`});
 
         return [dualCtl, result];
     }
@@ -205,7 +205,7 @@ class DualKvStoreController<K extends number, V extends number> {
         await instant(targetCtl.accept());
 
         const dualCtl = new DualTxController(subjectCtl, targetCtl, state);
-        log.debug(`[${dualCtl.id}] TX`);
+        log.debug({msg: `[${dualCtl.id}] TX`});
 
         return [dualCtl, result];
     }
@@ -427,7 +427,7 @@ async function stress(state: StressTestState, timeBudget: number) {
         for (let round = 0; round < state.options.maxRounds; round++) {
             if (performance.now() - reportTime > 10_000) {
                 reportTime = performance.now();
-                log.info(`seed=${seed}, round=${round}...`);
+                log.info({msg: `seed=${seed}, round=${round}...`});
             }
 
             try {
@@ -436,7 +436,7 @@ async function stress(state: StressTestState, timeBudget: number) {
                     await validate(state);
                 }
             } catch (error) {
-                log.error(toError(error), `Found error, seed = ${seed}`);
+                log.error({error, msg: `Found error, seed = ${seed}`});
 
                 throw error;
             }
@@ -447,16 +447,16 @@ async function stress(state: StressTestState, timeBudget: number) {
 if (process.argv[2] === 'prof') {
     log.setLogLevel('info');
 
-    log.info('Small...');
+    log.info({msg: 'Small...'});
     await stress(getState('small', 0), 5 * 1000);
 } else if (process.argv[2] === 'ci') {
     log.setLogLevel('info');
 
-    log.info('Small...');
+    log.info({msg: 'Small...'});
     await stress(getState('small', 0), 60 * 1000);
-    log.info('Medium...');
+    log.info({msg: 'Medium...'});
     await stress(getState('medium', 0), 60 * 1000);
-    log.info('Large...');
+    log.info({msg: 'Large...'});
     await stress(getState('large', 0), 60 * 1000);
 } else if (process.argv[2] === 'search') {
     log.setLogLevel('info');
@@ -473,10 +473,10 @@ if (process.argv[2] === 'prof') {
         for (let round = 0; round < fastestSeedScore; round++) {
             if (performance.now() - reportTime > 10_000) {
                 reportTime = performance.now();
-                log.info(`seed=${seed}, round=${round}...`);
-                log.info(
-                    `stats: ${JSON.stringify(await state.mvccAdapter.stats(), null, 2)}`
-                );
+                log.info({msg: `seed=${seed}, round=${round}...`});
+                log.info({
+                    msg: `stats: ${JSON.stringify(await state.mvccAdapter.stats(), null, 2)}`,
+                });
             }
 
             try {
@@ -488,9 +488,9 @@ if (process.argv[2] === 'prof') {
                 if (fastestSeedScore > round) {
                     fastestSeed = seed;
                     fastestSeedScore = round;
-                    log.warn(
-                        `  new best seed: ${fastestSeed} with score ${fastestSeedScore}`
-                    );
+                    log.warn({
+                        msg: `  new best seed: ${fastestSeed} with score ${fastestSeedScore}`,
+                    });
                 }
 
                 break;
@@ -500,7 +500,7 @@ if (process.argv[2] === 'prof') {
 } else if (process.argv[2] === 'seed') {
     const variant: 'small' | 'medium' | 'large' = process.argv[3] as any;
     const seed = parseInt(process.argv[4], 10);
-    log.info('Options: ' + JSON.stringify({seed, variant}));
+    log.info({msg: 'Options: ' + JSON.stringify({seed, variant})});
 
     const state = getState(variant, seed);
     for (let i = 0; i < 10000; i++) {

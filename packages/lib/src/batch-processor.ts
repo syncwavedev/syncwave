@@ -1,4 +1,4 @@
-import {AppError, toError} from './errors.js';
+import {AppError} from './errors.js';
 import {log} from './logger.js';
 import {assert, wait} from './utils.js';
 
@@ -77,7 +77,7 @@ export class BatchProcessor<T> {
                     this.queue.push(...batch);
 
                     log.error({
-                        error: toError(error),
+                        error,
                         msg: 'BatchProcessor: send error',
                     });
                     await wait({ms: 1000, onCancel: 'reject'});

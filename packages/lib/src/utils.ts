@@ -602,7 +602,7 @@ export async function infiniteRetry<R>(
                 log.info({error, msg: `infiniteRetry cancelled: ${ctx}`});
             } else {
                 log.error({
-                    error: toError(error),
+                    error,
                     msg: `infiniteRetry failed: ${ctx}`,
                 });
             }

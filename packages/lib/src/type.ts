@@ -14,7 +14,7 @@ const typeCheckCache = new WeakMap<{}, TypeCheck<any>>();
 function createTypeCheck<T extends TSchema>(schema: T): TypeCheck<T> {
     const cached = typeCheckCache.get(schema);
     if (cached) {
-        return cached;
+        return cached as TypeCheck<T>;
     }
     const result = TypeCompiler.Compile(schema);
     typeCheckCache.set(schema, result);

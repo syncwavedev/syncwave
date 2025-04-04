@@ -1,5 +1,5 @@
 import {context} from '../context.js';
-import {getReadableError, toError} from '../errors.js';
+import {getReadableError} from '../errors.js';
 import {log} from '../logger.js';
 import {Mutex} from '../mutex.js';
 import {type Observer, Subject} from '../subject.js';
@@ -38,9 +38,9 @@ export class PersistentConnection<T> implements Connection<T> {
         this.assertOpen();
 
         // connect if not already
-        this.getConnection().catch(err => {
+        this.getConnection().catch(error => {
             log.error({
-                error: toError(err),
+                error,
                 msg: 'error while connection to the server: ',
             });
         });
@@ -106,7 +106,7 @@ export class PersistentConnection<T> implements Connection<T> {
                             )
                             .catch(error => {
                                 log.error({
-                                    error: toError(error),
+                                    error,
                                     msg: 'PersistentConnection: failed to throw error',
                                 });
                             });

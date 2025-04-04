@@ -1,5 +1,5 @@
 import {MsgpackCodec, NumberCodec} from '../codec.js';
-import {AppError, toError} from '../errors.js';
+import {AppError} from '../errors.js';
 import {log} from '../logger.js';
 import {toStream} from '../stream.js';
 import {getNow, type Timestamp} from '../timestamp.js';
@@ -313,7 +313,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     this.writtenCount = 0;
                     const gcPromise = this.gc(gcScanSize).catch(error => {
                         log.error({
-                            error: toError(error),
+                            error,
                             msg: 'Failed to run GC',
                         });
                     });
@@ -347,7 +347,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             async tx => await tx.activeTransactions.delete(snapKey)
         ).catch(error => {
             log.error({
-                error: toError(error),
+                error,
                 msg: 'Failed to record transaction end',
             });
         });

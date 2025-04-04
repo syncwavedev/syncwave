@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {BusinessError, createBoardId, log, toError} from 'syncwave';
+    import {BusinessError, createBoardId, log} from 'syncwave';
     import AddBoardDialogSettings from './add-board-dialog-board-settings.svelte';
     import AddBoardDialogMemberList from './add-board-dialog-member-list.svelte';
     import Dialog from '../dialog.svelte';
@@ -31,9 +31,9 @@
             );
             onClose();
             window.location.href = `/b/${key.toUpperCase()}`;
-        } catch (e) {
-            if (e instanceof BusinessError) {
-                if (e.code === 'board_key_taken') {
+        } catch (error) {
+            if (error instanceof BusinessError) {
+                if (error.code === 'board_key_taken') {
                     alert(
                         `Sorry, board with key "${key}" already exists. Please choose another one.`
                     );
@@ -41,7 +41,7 @@
                 }
             } else {
                 alert('Sorry, something went wrong. Please try again later.');
-                log.error({error: toError(e), msg: 'Failed to create board'});
+                log.error({error, msg: 'Failed to create board'});
             }
         }
     }

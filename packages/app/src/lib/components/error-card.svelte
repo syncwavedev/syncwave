@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {log, toError} from 'syncwave';
+    import {log} from 'syncwave';
 
     interface Props {
         error: unknown;
@@ -7,8 +7,6 @@
     }
 
     let {error, reset}: Props = $props();
-
-    let appError = $derived(toError(error));
 
     const errorConfig = {
         default: {
@@ -20,7 +18,7 @@
     };
 
     $effect(() => {
-        log.error({error: appError, msg: `Error occurred in web app`});
+        log.error({error, msg: `Error occurred in web app`});
     });
 
     const currentTime = new Date().toLocaleString();

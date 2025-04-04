@@ -1,7 +1,7 @@
 import {EVENT_STORE_MAX_PULL_COUNT, PULL_INTERVAL_MS} from '../constants.js';
 import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
-import {CancelledError, toError} from '../errors.js';
+import {CancelledError} from '../errors.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {log} from '../logger.js';
 import {Channel, Stream, toStream} from '../stream.js';
@@ -89,7 +89,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                             // we don't wanna block on this call to avoid a deadlock
                             selfTrigger.next().catch((error: unknown) => {
                                 log.error({
-                                    error: toError(error),
+                                    error,
                                     msg: 'failed to trigger event store iteration',
                                 });
                             });
@@ -110,7 +110,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                         log.info({msg: 'EventStoreReader.subscribe cancelled'});
                     } else {
                         log.error({
-                            error: toError(error),
+                            error,
                             msg: 'EventStoreReader.subscribe',
                         });
                     }

@@ -16,7 +16,6 @@ import {
     PersistentConnection,
     RpcConnection,
     softNever,
-    toError,
     toPosition,
     toStream,
     whenAll,
@@ -138,7 +137,7 @@ export class Agent {
                 }
             }
         }, 'observeMe').catch(error => {
-            log.error({error: toError(error), msg: 'observeBoard failed'});
+            log.error({error, msg: 'observeBoard failed'});
         });
 
         return view;
@@ -224,7 +223,7 @@ export class Agent {
                 }
             }
         }, `observeBoard, board id = ${initialBoard.board.id}`).catch(error => {
-            log.error({error: toError(error), msg: 'observeBoard failed'});
+            log.error({error, msg: 'observeBoard failed'});
         });
 
         return [data.boardTreeView, awareness];

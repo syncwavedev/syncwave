@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {log, toError, type AttachmentDto} from 'syncwave';
+    import {log, type AttachmentDto} from 'syncwave';
     import Loading from './loading.svelte';
     import {getRpc} from '../utils';
 
@@ -23,7 +23,7 @@
                 })
                 .catch(error => {
                     log.error({
-                        error: toError(error),
+                        error,
                         msg: 'Error fetching attachment:',
                     });
                 });

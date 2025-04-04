@@ -83,7 +83,7 @@ export class AsyncIteratorFactory<T> implements AsyncIterable<T> {
             )
             .catch(error =>
                 log.error({
-                    error: toError(error),
+                    error,
                     msg: 'AsyncIteratorFactory.returnAll: failed to return all iterators',
                 })
             );
@@ -130,7 +130,7 @@ export function toStream<T>(
                     .finally(() => channel.end())
                     .catch(error => {
                         log.error({
-                            error: toError(error),
+                            error,
                             msg: 'toStream unsubscribe',
                         });
                     });
@@ -561,7 +561,7 @@ export class Stream<T> implements AsyncIterable<T> {
                 falsyChan.end();
             }
         })().catch(error => {
-            log.error({error: toError(error), msg: 'stream partition failed'});
+            log.error({error, msg: 'stream partition failed'});
         });
 
         return [toCursor(truthyChan), toCursor(falsyChan)] as [

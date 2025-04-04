@@ -159,7 +159,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     return result;
                 } catch (error) {
                     log.error({
-                        error: toError(error),
+                        error,
                         msg: `${callInfo} failed`,
                     });
                     throw error;
@@ -254,7 +254,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     )
                 ).catch(error => {
                     log.error({
-                        error: toError(error),
+                        error,
                         msg: `${callInfo} failed`,
                     });
                 });
@@ -333,13 +333,11 @@ class RpcStreamerClientApiState {
             'rpc.throw.message': stringifyLogPart(params.message),
         });
         await sub?.writer.throw(
-            toError(
-                reconstructError({
-                    message: params.message,
-                    code: params.code,
-                    method: sub.method,
-                })
-            )
+            reconstructError({
+                message: params.message,
+                code: params.code,
+                method: sub.method,
+            })
         );
     }
 
@@ -368,7 +366,7 @@ class RpcStreamerClientApiState {
             )
             .catch(error => {
                 log.error({
-                    error: toError(error),
+                    error,
                     msg: 'failed to finish the channel',
                 });
             });
@@ -394,7 +392,7 @@ class RpcStreamerClientApiState {
                     })
                     .catch(error =>
                         log.error({
-                            error: toError(error),
+                            error,
                             msg: `failed to cancel stream ${streamId}`,
                         })
                     );
@@ -519,7 +517,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                 arg = checkValue(handler.req, arg);
             } catch (error) {
                 log.error({
-                    error: toError(error),
+                    error,
                     msg: `invalid request for ${name}` + JSON.stringify(arg),
                 });
 
@@ -549,7 +547,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             })
                             .catch(async error => {
                                 log.error({
-                                    error: toError(error),
+                                    error,
                                     msg: `${callInfo} failed: ${getReadableError(error)}`,
                                 });
                                 throw error;
@@ -593,7 +591,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             })
                             .catch(error => {
                                 log.error({
-                                    error: toError(error),
+                                    error,
                                     msg: 'failed to cancel stream',
                                 });
                             });
@@ -624,7 +622,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                 },
                                 throw: error => {
                                     log.error({
-                                        error: toError(error),
+                                        error,
                                         msg: `${callInfo} failed: ${getReadableError(
                                             error
                                         )}`,
@@ -639,13 +637,13 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                         }).catch(error => {
                             writer.throw(toError(error)).catch(error => {
                                 log.error({
-                                    error: toError(error),
+                                    error,
                                     msg: 'failed to throw stream error',
                                 });
                             });
                             cleanup(new AppError('run failed', {cause: error}));
                             log.error({
-                                error: toError(error),
+                                error,
                                 msg: 'failed to start streaming',
                             });
                         });
@@ -668,7 +666,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                     })
                                 ).catch(error => {
                                     log.error({
-                                        error: toError(error),
+                                        error,
                                         msg: 'failed to cancel stream',
                                     });
                                 });

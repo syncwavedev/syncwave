@@ -1,5 +1,4 @@
 import {Cursor, toCursor} from '../cursor.js';
-import {toError} from '../errors.js';
 import {log} from '../logger.js';
 import {Subject} from '../subject.js';
 import {runAll} from '../utils.js';
@@ -27,7 +26,7 @@ export class MemHub implements Hub {
             .get(topic)
             ?.next()
             .catch(error => {
-                log.error({error: toError(error), msg: 'MemHub.emit'});
+                log.error({error, msg: 'MemHub.emit'});
             });
     }
 

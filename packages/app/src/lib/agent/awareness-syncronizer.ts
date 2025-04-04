@@ -4,7 +4,6 @@ import {
     Deferred,
     infiniteRetry,
     log,
-    toError,
     type Awareness,
     type AwarenessState,
     type BoardId,
@@ -17,13 +16,13 @@ export class AwarenessSynchronizer {
 
         synchronizer.startPush().catch(error => {
             log.error({
-                error: toError(error),
+                error,
                 msg: 'failed to start awareness pusher',
             });
         });
         synchronizer.startPull().catch(error => {
             log.error({
-                error: toError(error),
+                error,
                 msg: 'failed to start awareness puller',
             });
         });
@@ -61,7 +60,7 @@ export class AwarenessSynchronizer {
                     })
                 ).catch(error => {
                     log.error({
-                        error: toError(error),
+                        error,
                         msg: 'failed to send awareness state',
                     });
                 });
@@ -105,7 +104,7 @@ export class AwarenessSynchronizer {
                 .enqueue(this.awareness.getLocalState())
                 .catch(error => {
                     log.error({
-                        error: toError(error),
+                        error,
                         msg: 'failed to enqueue local awareness',
                     });
                 });

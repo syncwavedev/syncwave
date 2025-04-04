@@ -3,7 +3,7 @@ import {zAwarenessState, type AwarenessState} from '../awareness.js';
 import {BatchProcessor} from '../batch-processor.js';
 import {PULL_INTERVAL_MS} from '../constants.js';
 import {context} from '../context.js';
-import {BusinessError, toError} from '../errors.js';
+import {BusinessError} from '../errors.js';
 import {log} from '../logger.js';
 import {Stream, toStream} from '../stream.js';
 import type {Hub} from '../transport/hub.js';
@@ -176,7 +176,7 @@ export function createAwarenessApi() {
                         st.offline(principal, boardId, clientId).catch(
                             error => {
                                 log.error({
-                                    error: toError(error),
+                                    error,
                                     msg: 'failed to remove awareness state',
                                 });
                             }

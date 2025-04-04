@@ -1,4 +1,3 @@
-import {toError} from '../errors.js';
 import {log} from '../logger.js';
 
 export interface GoogleOptions {
@@ -43,8 +42,8 @@ export async function getGoogleUser(
         }
 
         return {type: 'success', user};
-    } catch (err: unknown) {
-        log.error({error: toError(err), msg: 'Cannot get google user'});
+    } catch (error: unknown) {
+        log.error({error, msg: 'Cannot get google user'});
         return {type: 'error'};
     }
 }

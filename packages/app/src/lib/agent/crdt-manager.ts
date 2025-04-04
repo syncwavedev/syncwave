@@ -6,7 +6,6 @@ import {
     Crdt,
     log,
     runAll,
-    toError,
     Uuid,
     type BaseChangeEvent,
     type ChangeEvent,
@@ -176,7 +175,7 @@ export class CrdtManager implements CrdtDerivator {
         box.entity.isDraft = false;
         box.observer.sender.start().catch(error => {
             log.error({
-                error: toError(error),
+                error,
                 msg: 'CrdtManager: commit error',
             });
         });

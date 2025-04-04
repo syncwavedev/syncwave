@@ -223,7 +223,7 @@ async function proxyRequest(
                 })
             ).catch(error =>
                 log.error({
-                    error: toError(error),
+                    error,
                     msg: 'proxyRequest: failed to send cancellation',
                 })
             );
@@ -292,9 +292,9 @@ async function proxyRequest(
                     cleanup(new AppError('timeout'));
                 }
             })
-            .catch((err: unknown) => {
+            .catch((error: unknown) => {
                 log.error({
-                    error: toError(err),
+                    error,
                     msg: 'unexpected error after rpc timed out',
                 });
             });

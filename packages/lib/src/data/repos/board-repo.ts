@@ -8,7 +8,13 @@ import {Registry} from '../../kv/registry.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import {type DataTriggerScheduler} from '../data-layer.js';
-import {DocRepo, type OnDocChange, type Recipe, zDoc} from '../doc-repo.js';
+import {
+    DocRepo,
+    type OnDocChange,
+    type QueryOptions,
+    type Recipe,
+    zDoc,
+} from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {UserId, UserRepo} from './user-repo.js';
 
@@ -67,7 +73,7 @@ export class BoardRepo {
                     verify: async board => {
                         const user = await params.users.getById(
                             board.authorId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (user === undefined) {
                             return `user with id ${board.authorId} does not exist`;
@@ -84,8 +90,8 @@ export class BoardRepo {
         );
     }
 
-    async getById(id: BoardId, includeDeleted = false) {
-        return await this.rawRepo.getById([id], includeDeleted);
+    async getById(id: BoardId, options?: QueryOptions) {
+        return await this.rawRepo.getById([id], options);
     }
 
     async getByKey(key: string): Promise<Board | undefined> {
@@ -134,10 +140,10 @@ export class BoardRepo {
     async update(
         id: BoardId,
         recipe: Recipe<Board>,
-        includeDeleted = false
+        options?: QueryOptions
     ): Promise<Board> {
         try {
-            return await this.rawRepo.update([id], recipe, includeDeleted);
+            return await this.rawRepo.update([id], recipe, options);
         } catch (err) {
             if (
                 err instanceof UniqueError &&

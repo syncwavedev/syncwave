@@ -85,7 +85,9 @@ export class PermissionService {
         columnId: ColumnId,
         minimum: MemberRole
     ): Promise<Member> {
-        const column = await this.tx().columns.getById(columnId, true);
+        const column = await this.tx().columns.getById(columnId, {
+            includeDeleted: true,
+        });
 
         if (!column) {
             throw new BusinessError(
@@ -100,10 +102,9 @@ export class PermissionService {
         attachmentId: AttachmentId,
         minimum: MemberRole
     ): Promise<Member> {
-        const attachment = await this.tx().attachments.getById(
-            attachmentId,
-            true
-        );
+        const attachment = await this.tx().attachments.getById(attachmentId, {
+            includeDeleted: true,
+        });
 
         if (!attachment) {
             throw new BusinessError(
@@ -118,7 +119,9 @@ export class PermissionService {
         cardId: CardId,
         minimum: MemberRole
     ): Promise<Member> {
-        const card = await this.tx().cards.getById(cardId, true);
+        const card = await this.tx().cards.getById(cardId, {
+            includeDeleted: true,
+        });
 
         if (!card) {
             throw new BusinessError(
@@ -130,7 +133,9 @@ export class PermissionService {
     }
 
     async ensureMember(memberId: MemberId): Promise<Member> {
-        const member = await this.tx().members.getById(memberId, true);
+        const member = await this.tx().members.getById(memberId, {
+            includeDeleted: true,
+        });
 
         if (!member) {
             throw new BusinessError(
@@ -148,7 +153,9 @@ export class PermissionService {
         messageId: MessageId,
         minimum: MemberRole
     ): Promise<Member> {
-        const message = await this.tx().messages.getById(messageId, true);
+        const message = await this.tx().messages.getById(messageId, {
+            includeDeleted: true,
+        });
 
         if (!message) {
             throw new BusinessError(
@@ -156,7 +163,9 @@ export class PermissionService {
                 'message_not_found'
             );
         }
-        const card = await this.tx().cards.getById(message.cardId, true);
+        const card = await this.tx().cards.getById(message.cardId, {
+            includeDeleted: true,
+        });
         if (!card) {
             throw new BusinessError(
                 `card ${message.cardId} doesn't exist`,

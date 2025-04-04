@@ -370,7 +370,7 @@ async function logAccountChange(
     const account = await tx.accounts.getById(id);
     assert(account !== undefined, `logAccountChange: account ${id} not found`);
     const members = await tx.members
-        .getByUserId(account.userId, true)
+        .getByUserId(account.userId, {includeDeleted: true})
         .toArray();
     const ts = getNow();
     const event: AccountChangeEvent = {type: 'account', id, diff, ts, kind};
@@ -386,7 +386,9 @@ async function logUserChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<User>
 ) {
-    const members = await tx.members.getByUserId(id, true).toArray();
+    const members = await tx.members
+        .getByUserId(id, {includeDeleted: true})
+        .toArray();
     const ts = getNow();
     const event: UserChangeEvent = {type: 'user', id, diff, ts, kind};
     await whenAll([
@@ -419,7 +421,7 @@ async function logMemberChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Member>
 ) {
-    const member = await tx.members.getById(id, true);
+    const member = await tx.members.getById(id, {includeDeleted: true});
     assert(member !== undefined, `logMemberChange: member ${id} not found`);
     const ts = getNow();
     const event: MemberChangeEvent = {type: 'member', id, diff, ts, kind};
@@ -433,7 +435,7 @@ async function logCardChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Card>
 ) {
-    const card = await tx.cards.getById(id, true);
+    const card = await tx.cards.getById(id, {includeDeleted: true});
     assert(card !== undefined, `logCardChange: card ${id} not found`);
     const ts = getNow();
     const event: CardChangeEvent = {type: 'card', id, diff, ts, kind};
@@ -444,7 +446,7 @@ async function logColumnChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Column>
 ) {
-    const column = await tx.columns.getById(id, true);
+    const column = await tx.columns.getById(id, {includeDeleted: true});
     assert(column !== undefined, `logColumnChange: column ${id} not found`);
     const ts = getNow();
     const event: ColumnChangeEvent = {type: 'column', id, diff, ts, kind};
@@ -455,9 +457,9 @@ async function logMessageChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Message>
 ) {
-    const message = await tx.messages.getById(id, true);
+    const message = await tx.messages.getById(id, {includeDeleted: true});
     assert(message !== undefined, `logMessageChange: message ${id} not found`);
-    const card = await tx.cards.getById(message.cardId, true);
+    const card = await tx.cards.getById(message.cardId, {includeDeleted: true});
     assert(
         card !== undefined,
         `logMessageChange: card ${message.cardId} not found`
@@ -471,12 +473,14 @@ async function logAttachmentChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Attachment>
 ) {
-    const attachment = await tx.attachments.getById(id, true);
+    const attachment = await tx.attachments.getById(id, {includeDeleted: true});
     assert(
         attachment !== undefined,
         `logAttachmentChange: attachment ${id} not found`
     );
-    const card = await tx.cards.getById(attachment.cardId, true);
+    const card = await tx.cards.getById(attachment.cardId, {
+        includeDeleted: true,
+    });
     assert(
         card !== undefined,
         `logAttachmentChange: card ${attachment.cardId} not found`

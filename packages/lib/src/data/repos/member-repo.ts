@@ -11,6 +11,7 @@ import {
     type CrdtDoc,
     DocRepo,
     type OnDocChange,
+    type QueryOptions,
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
@@ -90,7 +91,7 @@ export class MemberRepo {
                     verify: async member => {
                         const user = await params.userRepo.getById(
                             member.userId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (user === undefined) {
                             return `user not found: ${member.userId}`;
@@ -114,34 +115,30 @@ export class MemberRepo {
         });
     }
 
-    async getById(id: MemberId, includeDeleted: boolean) {
-        return await this.rawRepo.getById([id], includeDeleted);
+    async getById(id: MemberId, options?: QueryOptions) {
+        return await this.rawRepo.getById([id], options);
     }
 
-    getByUserId(userId: UserId, includeDeleted: boolean): Stream<Member> {
-        return this.rawRepo.get(
-            USER_ID_BOARD_ID_INDEX,
-            [userId],
-            includeDeleted
-        );
+    getByUserId(userId: UserId, options?: QueryOptions): Stream<Member> {
+        return this.rawRepo.get(USER_ID_BOARD_ID_INDEX, [userId], options);
     }
 
     getByBoardId(
         boardId: BoardId,
-        includeDeleted = false
+        options?: QueryOptions
     ): Stream<CrdtDoc<Member>> {
-        return this.rawRepo.get(BOARD_ID_INDEX, [boardId], includeDeleted);
+        return this.rawRepo.get(BOARD_ID_INDEX, [boardId], options);
     }
 
     async getByUserIdAndBoardId(
         userId: UserId,
         boardId: BoardId,
-        includeDeleted = false
+        options?: QueryOptions
     ): Promise<Member | undefined> {
         const result = await this.rawRepo.getUnique(
             USER_ID_BOARD_ID_INDEX,
             [userId, boardId],
-            includeDeleted
+            options
         );
 
         if (!result) {
@@ -180,8 +177,8 @@ export class MemberRepo {
     async update(
         id: MemberId,
         recipe: Recipe<Member>,
-        includeDeleted = false
+        options?: QueryOptions
     ): Promise<Member> {
-        return await this.rawRepo.update([id], recipe, includeDeleted);
+        return await this.rawRepo.update([id], recipe, options);
     }
 }

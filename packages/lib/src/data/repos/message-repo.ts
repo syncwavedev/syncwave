@@ -7,7 +7,13 @@ import {getNow} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import {DocRepo, type OnDocChange, type Recipe, zDoc} from '../doc-repo.js';
+import {
+    DocRepo,
+    type OnDocChange,
+    type QueryOptions,
+    type Recipe,
+    zDoc,
+} from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {AttachmentId} from './attachment-repo.js';
 import type {BoardId, BoardRepo} from './board-repo.js';
@@ -114,7 +120,7 @@ export class MessageRepo {
                     verify: async message => {
                         const user = await params.userRepo.getById(
                             message.authorId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (user === undefined) {
                             return `user not found: ${message.authorId}`;
@@ -127,7 +133,7 @@ export class MessageRepo {
                     verify: async message => {
                         const card = await params.cardRepo.getById(
                             message.cardId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (card === undefined) {
                             return `card not found: ${message.cardId}`;
@@ -140,7 +146,7 @@ export class MessageRepo {
                     verify: async message => {
                         const column = await params.columnRepo.getById(
                             message.columnId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (column === undefined) {
                             return `column not found: ${message.columnId}`;
@@ -153,7 +159,7 @@ export class MessageRepo {
                     verify: async message => {
                         const board = await params.boardRepo.getById(
                             message.boardId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (board === undefined) {
                             return `board not found: ${message.boardId}`;
@@ -169,7 +175,7 @@ export class MessageRepo {
                         }
                         const replyTo = await this.getById(
                             message.payload.replyToId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (replyTo === undefined) {
                             return `replyTo not found: ${message.payload.replyToId}`;
@@ -181,8 +187,8 @@ export class MessageRepo {
         });
     }
 
-    getById(id: MessageId, includeDeleted: boolean) {
-        return this.rawRepo.getById([id], includeDeleted);
+    getById(id: MessageId, options?: QueryOptions) {
+        return this.rawRepo.getById([id], options);
     }
 
     getByCardId(cardId: CardId): Stream<Message> {
@@ -209,8 +215,8 @@ export class MessageRepo {
     update(
         id: MessageId,
         recipe: Recipe<Message>,
-        includeDeleted = false
+        options?: QueryOptions
     ): Promise<Message> {
-        return this.rawRepo.update([id], recipe, includeDeleted);
+        return this.rawRepo.update([id], recipe, options);
     }
 }

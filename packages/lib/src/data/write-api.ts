@@ -77,7 +77,9 @@ export function createWriteApi() {
             }),
             res: Type.Object({}),
             handle: async (st, {cardId, diff}) => {
-                const existingCard = await st.tx.cards.getById(cardId, true);
+                const existingCard = await st.tx.cards.getById(cardId, {
+                    includeDeleted: true,
+                });
                 if (existingCard) {
                     await whenAll([
                         st.ps.ensureCardMember(cardId, 'writer'),
@@ -158,7 +160,9 @@ export function createWriteApi() {
             handle: async (st, {cardId, data, contentType}) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureCardMember(cardId, 'writer');
-                const card = await st.tx.cards.getById(cardId, true);
+                const card = await st.tx.cards.getById(cardId, {
+                    includeDeleted: true,
+                });
                 if (!card) {
                     throw new BusinessError(
                         `card not found: ${cardId}`,
@@ -203,7 +207,9 @@ export function createWriteApi() {
                     st.ps.ensureCardMember(message.cardId, 'writer'),
                 ]);
 
-                const card = await st.tx.cards.getById(message.cardId, true);
+                const card = await st.tx.cards.getById(message.cardId, {
+                    includeDeleted: true,
+                });
                 if (!card) {
                     throw new BusinessError(
                         `card not found: ${message.cardId}`,
@@ -228,7 +234,7 @@ export function createWriteApi() {
                 if (message.payload.replyToId) {
                     const replyTo = await st.tx.messages.getById(
                         message.payload.replyToId,
-                        true
+                        {includeDeleted: true}
                     );
                     if (!replyTo) {
                         throw new BusinessError(
@@ -308,7 +314,7 @@ export function createWriteApi() {
                     await st.tx.members.getByUserIdAndBoardId(
                         account.userId,
                         boardId,
-                        true
+                        {includeDeleted: true}
                     );
 
                 let member: Member;
@@ -323,7 +329,7 @@ export function createWriteApi() {
                             x.deletedAt = undefined;
                             x.role = role;
                         },
-                        true
+                        {includeDeleted: true}
                     );
                 } else {
                     member = await st.tx.members.create({
@@ -345,7 +351,9 @@ export function createWriteApi() {
             req: Type.Object({memberId: Uuid<MemberId>()}),
             res: Type.Object({}),
             handle: async (st, {memberId}) => {
-                const member = await st.tx.members.getById(memberId, true);
+                const member = await st.tx.members.getById(memberId, {
+                    includeDeleted: true,
+                });
 
                 if (!member) {
                     throw new BusinessError(
@@ -374,7 +382,7 @@ export function createWriteApi() {
                     x => {
                         x.deletedAt = getNow();
                     },
-                    true
+                    {includeDeleted: true}
                 );
 
                 return {};
@@ -416,7 +424,7 @@ export function createWriteApi() {
                     x => {
                         x.deletedAt = getNow();
                     },
-                    true
+                    {includeDeleted: true}
                 );
 
                 return {};
@@ -432,7 +440,7 @@ export function createWriteApi() {
                     x => {
                         x.deletedAt = getNow();
                     },
-                    true
+                    {includeDeleted: true}
                 );
 
                 return {};
@@ -541,7 +549,7 @@ export function createWriteApi() {
                     x => {
                         x.deletedAt = getNow();
                     },
-                    true
+                    {includeDeleted: true}
                 );
 
                 return {};

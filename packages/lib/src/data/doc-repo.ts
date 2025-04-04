@@ -82,6 +82,11 @@ export type Recipe<T> = (doc: T) => void;
 
 export type CrdtDoc<T> = T & {state: CrdtDiff<T>};
 
+export interface QueryOptions {
+    // false by default
+    includeDeleted?: boolean;
+}
+
 export class DocRepo<T extends Doc<Tuple>> {
     public readonly rawRepo: DocRepoImpl<T>;
 
@@ -91,50 +96,50 @@ export class DocRepo<T extends Doc<Tuple>> {
 
     async getById(
         id: Tuple,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Promise<CrdtDoc<T> | undefined> {
         return await context().runChild({span: 'repo.getById'}, async () => {
-            return await this.rawRepo.getById(id, includeDeleted);
+            return await this.rawRepo.getById(id, options);
         });
     }
 
     get(
         indexName: string,
         key: Tuple,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Stream<CrdtDoc<T>> {
         return context().runChild({span: 'repo.get'}, () => {
-            return this.rawRepo.get(indexName, key, includeDeleted);
+            return this.rawRepo.get(indexName, key, options);
         });
     }
 
     async getUnique(
         indexName: string,
         key: Tuple,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Promise<CrdtDoc<T> | undefined> {
         return await context().runChild({span: 'repo.get'}, async () => {
-            return await this.rawRepo.getUnique(indexName, key, includeDeleted);
+            return await this.rawRepo.getUnique(indexName, key, options);
         });
     }
 
     query(
         indexName: string,
         condition: Condition<Tuple>,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Stream<T> {
         return context().runChild({span: 'repo.query'}, () => {
-            return this.rawRepo.query(indexName, condition, includeDeleted);
+            return this.rawRepo.query(indexName, condition, options);
         });
     }
 
     async update(
         id: Tuple,
         recipe: Recipe<T>,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Promise<T> {
         return await context().runChild({span: 'repo.update'}, async () => {
-            return await this.rawRepo.update(id, recipe, includeDeleted);
+            return await this.rawRepo.update(id, recipe, options);
         });
     }
 
@@ -213,7 +218,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
 
     async getById(
         id: Tuple,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Promise<CrdtDoc<T> | undefined> {
         const doc = await this.getUpgrade(id);
         if (!doc) {
@@ -221,7 +226,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         }
 
         const snapshot = doc.snapshot();
-        if (!includeDeleted && snapshot?.deletedAt) {
+        if (!options?.includeDeleted && snapshot?.deletedAt) {
             return undefined;
         }
 
@@ -231,20 +236,20 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     get(
         indexName: string,
         key: Tuple,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Stream<CrdtDoc<T>> {
         const index = this._index(indexName);
         return this._mapToDocs(
             index.get(key),
             'repo.get: index lookup',
-            includeDeleted
+            options
         );
     }
 
     async getUnique(
         indexName: string,
         key: Tuple,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Promise<CrdtDoc<T> | undefined> {
         const index = this._index(indexName);
         const ids = await toStream(index.get(key)).take(2).toArray();
@@ -253,7 +258,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
                 `index ${indexName} contains multiple docs for the key: ${stringifyTuple(key)}`
             );
         } else if (ids.length === 1) {
-            return await this.getById(ids[0], includeDeleted);
+            return await this.getById(ids[0], options);
         } else {
             return undefined;
         }
@@ -262,24 +267,24 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     query(
         indexName: string,
         condition: Condition<Tuple>,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Stream<T> {
         const index = this._index(indexName);
 
         return this._mapToDocs(
             index.query(condition),
             'repo.query: index lookup',
-            includeDeleted
+            options
         );
     }
 
     async update(
         id: Tuple,
         recipe: Recipe<T>,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Promise<T> {
         const doc = await this.primary.get(id);
-        if (!doc || (!includeDeleted && doc.snapshot().deletedAt)) {
+        if (!doc || (!options?.includeDeleted && doc.snapshot().deletedAt)) {
             throw new AppError('doc not found: ' + stringifyTuple(id));
         }
 
@@ -426,12 +431,12 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     private _mapToDocs(
         ids: AsyncIterable<Tuple>,
         message: string,
-        includeDeleted?: boolean
+        options?: QueryOptions
     ): Stream<CrdtDoc<T>> {
         return toStream(ids)
             .mapParallel(id => this.getUpgrade(id))
             .assert(x => x !== undefined, message)
             .map(doc => ({...doc.snapshot(), state: doc.state()}))
-            .filter(x => includeDeleted || !x.deletedAt);
+            .filter(x => options?.includeDeleted || !x.deletedAt);
     }
 }

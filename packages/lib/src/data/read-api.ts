@@ -120,7 +120,9 @@ export function createReadApi() {
                 );
 
                 const [user] = await st.transact(principal, async tx => {
-                    return await whenAll([tx.users.getById(userId, true)]);
+                    return await whenAll([
+                        tx.users.getById(userId, {includeDeleted: true}),
+                    ]);
                 });
 
                 if (!user) {
@@ -155,10 +157,9 @@ export function createReadApi() {
                 yield* observable({
                     async get() {
                         return st.transact(principal, async tx => {
-                            const members = tx.members.getByUserId(
-                                userId,
-                                false
-                            );
+                            const members = tx.members.getByUserId(userId, {
+                                includeDeleted: false,
+                            });
                             return await toStream(members)
                                 .mapParallel(member =>
                                     toMemberDto(tx, member.id)
@@ -183,7 +184,7 @@ export function createReadApi() {
             item: zCardViewDto(),
             async *stream(st, {cardId}, {principal}) {
                 const card = await st.transact(principal, tx =>
-                    tx.cards.getById(cardId, false)
+                    tx.cards.getById(cardId, {includeDeleted: false})
                 );
                 if (!card) {
                     throw new BusinessError(
@@ -259,7 +260,7 @@ export function createReadApi() {
                     await tx.ps.ensureAttachmentMember(attachmentId, 'reader');
                     const attachment = await tx.attachments.getById(
                         attachmentId,
-                        true
+                        {includeDeleted: true}
                     );
                     if (attachment === undefined) {
                         throw new BusinessError(
@@ -343,7 +344,9 @@ export function createReadApi() {
                     async get() {
                         return await st.transact(principal, async tx => {
                             const [board] = await whenAll([
-                                tx.boards.getById(boardId, true),
+                                tx.boards.getById(boardId, {
+                                    includeDeleted: true,
+                                }),
                                 tx.ps.ensureBoardMember(boardId, 'reader'),
                             ]);
                             if (board === undefined) {
@@ -402,14 +405,24 @@ export function createReadApi() {
                         return await whenAll([
                             tx.boards.getById(boardId),
                             toStream(
-                                tx.columns.getByBoardId(boardId, true)
+                                tx.columns.getByBoardId(boardId, {
+                                    includeDeleted: true,
+                                })
                             ).toArray(),
                             toStream(
-                                tx.cards.getByBoardId(boardId, true)
+                                tx.cards.getByBoardId(boardId, {
+                                    includeDeleted: true,
+                                })
                             ).toArray(),
-                            toStream(tx.members.getByBoardId(boardId, true))
+                            toStream(
+                                tx.members.getByBoardId(boardId, {
+                                    includeDeleted: true,
+                                })
+                            )
                                 .mapParallel(x =>
-                                    tx.users.getById(x.userId, true)
+                                    tx.users.getById(x.userId, {
+                                        includeDeleted: true,
+                                    })
                                 )
                                 .assert(x => x !== undefined, 'user not found')
                                 .toArray(),
@@ -475,13 +488,15 @@ export function createReadApi() {
                     principal,
                     async tx => {
                         return await whenAll([
-                            tx.users.getById(profileId, true).then(user => {
-                                assert(
-                                    user !== undefined,
-                                    `user with id ${profileId} not found`
-                                );
-                                return user;
-                            }),
+                            tx.users
+                                .getById(profileId, {includeDeleted: true})
+                                .then(user => {
+                                    assert(
+                                        user !== undefined,
+                                        `user with id ${profileId} not found`
+                                    );
+                                    return user;
+                                }),
                             tx.accounts.getByUserId(profileId).then(account => {
                                 assert(
                                     account !== undefined,
@@ -490,9 +505,11 @@ export function createReadApi() {
                                 return account;
                             }),
                             tx.members
-                                .getByUserId(profileId, false)
+                                .getByUserId(profileId, {includeDeleted: false})
                                 .mapParallel(member =>
-                                    tx.boards.getById(member.boardId, true)
+                                    tx.boards.getById(member.boardId, {
+                                        includeDeleted: true,
+                                    })
                                 )
                                 .assert(x => x !== undefined, 'board not found')
                                 .filter(x => !x.deletedAt)

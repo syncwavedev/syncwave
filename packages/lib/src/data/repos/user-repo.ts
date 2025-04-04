@@ -4,7 +4,13 @@ import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import {DocRepo, type OnDocChange, type Recipe, zDoc} from '../doc-repo.js';
+import {
+    DocRepo,
+    type OnDocChange,
+    type QueryOptions,
+    type Recipe,
+    zDoc,
+} from '../doc-repo.js';
 import {zObjectKey} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
 
@@ -45,8 +51,8 @@ export class UserRepo {
         });
     }
 
-    getById(id: UserId, includeDeleted: boolean) {
-        return this.rawRepo.getById([id], includeDeleted);
+    getById(id: UserId, options?: QueryOptions) {
+        return this.rawRepo.getById([id], options);
     }
 
     async apply(
@@ -64,8 +70,8 @@ export class UserRepo {
     update(
         id: UserId,
         recipe: Recipe<User>,
-        includeDeleted = false
+        options?: QueryOptions
     ): Promise<User> {
-        return this.rawRepo.update([id], recipe, includeDeleted);
+        return this.rawRepo.update([id], recipe, options);
     }
 }

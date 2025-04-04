@@ -28,7 +28,7 @@ export function zCardDto() {
 export interface CardDto extends Static<ReturnType<typeof zCardDto>> {}
 
 export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
-    const card = await tx.cards.getById(cardId, true);
+    const card = await tx.cards.getById(cardId, {includeDeleted: true});
     assert(card !== undefined, `toCardDto: card not found: ${cardId}`);
     const column = card.columnId ? await toColumnDto(tx, card.columnId) : null;
     const author = await toUserDto(tx, card.authorId);
@@ -85,7 +85,7 @@ export async function toBoardViewCardDto(
     tx: DataTx,
     cardId: CardId
 ): Promise<BoardViewCardDto> {
-    const card = await tx.cards.getById(cardId, true);
+    const card = await tx.cards.getById(cardId, {includeDeleted: true});
     assert(card !== undefined, `toBoardViewCardDto: card not found: ${cardId}`);
     const column = card.columnId ? await toColumnDto(tx, card.columnId) : null;
     const board = await toBoardDto(tx, card.boardId);
@@ -110,7 +110,7 @@ export async function toColumnDto(
     tx: DataTx,
     columnId: ColumnId
 ): Promise<ColumnDto> {
-    const column = await tx.columns.getById(columnId, true);
+    const column = await tx.columns.getById(columnId, {includeDeleted: true});
     assert(column !== undefined, `toColumnDto: column not found: ${columnId}`);
     const board = await toBoardDto(tx, column.boardId);
 
@@ -132,7 +132,7 @@ export async function toBoardDto(
     tx: DataTx,
     boardId: BoardId
 ): Promise<BoardDto> {
-    const board = await tx.boards.getById(boardId, true);
+    const board = await tx.boards.getById(boardId, {includeDeleted: true});
     assert(board !== undefined, `toBoardDto: board not found: ${boardId}`);
 
     return {...board};
@@ -155,7 +155,7 @@ export async function toMemberDto(
     tx: DataTx,
     memberId: MemberId
 ): Promise<MemberDto> {
-    const member = await tx.members.getById(memberId, true);
+    const member = await tx.members.getById(memberId, {includeDeleted: true});
     assert(member !== undefined, `toMemberDto: member not found: ${memberId}`);
     const user = await toUserDto(tx, member.userId);
     const board = await toBoardDto(tx, member.boardId);
@@ -181,7 +181,7 @@ export async function toMemberAdminDto(
     tx: DataTx,
     memberId: MemberId
 ): Promise<MemberAdminDto> {
-    const member = await tx.members.getById(memberId, true);
+    const member = await tx.members.getById(memberId, {includeDeleted: true});
     assert(member !== undefined, `toMemberDto: member not found: ${memberId}`);
     const user = await toUserDto(tx, member.userId);
     const board = await toBoardDto(tx, member.boardId);
@@ -207,7 +207,7 @@ export function zUserDto() {
 export interface UserDto extends Static<ReturnType<typeof zUserDto>> {}
 
 export async function toUserDto(tx: DataTx, userId: UserId): Promise<UserDto> {
-    const user = await tx.users.getById(userId, true);
+    const user = await tx.users.getById(userId, {includeDeleted: true});
     assert(user !== undefined, `toUserDto: user not found: ${userId}`);
 
     return user;
@@ -249,7 +249,9 @@ export async function toAttachmentDto(
     tx: DataTx,
     attachmentId: AttachmentId
 ): Promise<AttachmentDto> {
-    const attachment = await tx.attachments.getById(attachmentId, true);
+    const attachment = await tx.attachments.getById(attachmentId, {
+        includeDeleted: true,
+    });
     assert(
         attachment !== undefined,
         `toAttachmentDto: attachment not found: ${attachmentId}`
@@ -277,7 +279,9 @@ export async function toMessageWithoutReplyDto(
     tx: DataTx,
     messageId: MessageId
 ): Promise<MessageWithoutReplyDto> {
-    const message = await tx.messages.getById(messageId, true);
+    const message = await tx.messages.getById(messageId, {
+        includeDeleted: true,
+    });
     assert(
         message !== undefined,
         `toMessageDto: message not found: ${messageId}`

@@ -5,7 +5,13 @@ import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import {DocRepo, type OnDocChange, type Recipe, zDoc} from '../doc-repo.js';
+import {
+    DocRepo,
+    type OnDocChange,
+    type QueryOptions,
+    type Recipe,
+    zDoc,
+} from '../doc-repo.js';
 import {zObjectKey, zObjectMetadata} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {BoardId, BoardRepo} from './board-repo.js';
@@ -75,7 +81,7 @@ export class AttachmentRepo {
                     verify: async message => {
                         const user = await params.userRepo.getById(
                             message.authorId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (user === undefined) {
                             return `user not found: ${message.authorId}`;
@@ -88,7 +94,7 @@ export class AttachmentRepo {
                     verify: async message => {
                         const card = await params.cardRepo.getById(
                             message.cardId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (card === undefined) {
                             return `card not found: ${message.cardId}`;
@@ -101,7 +107,7 @@ export class AttachmentRepo {
                     verify: async message => {
                         const board = await params.boardRepo.getById(
                             message.boardId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (board === undefined) {
                             return `board not found: ${message.boardId}`;
@@ -113,8 +119,8 @@ export class AttachmentRepo {
         });
     }
 
-    getById(id: AttachmentId, includeDeleted: boolean) {
-        return this.rawRepo.getById([id], includeDeleted);
+    getById(id: AttachmentId, options?: QueryOptions) {
+        return this.rawRepo.getById([id], options);
     }
 
     getByCardId(cardId: CardId): Stream<Attachment> {
@@ -140,8 +146,8 @@ export class AttachmentRepo {
     update(
         id: AttachmentId,
         recipe: Recipe<Attachment>,
-        includeDeleted = false
+        options?: QueryOptions
     ): Promise<Attachment> {
-        return this.rawRepo.update([id], recipe, includeDeleted);
+        return this.rawRepo.update([id], recipe, options);
     }
 }

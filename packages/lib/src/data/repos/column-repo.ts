@@ -9,6 +9,7 @@ import {
     type CrdtDoc,
     DocRepo,
     type OnDocChange,
+    type QueryOptions,
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
@@ -65,7 +66,7 @@ export class ColumnRepo {
                     verify: async column => {
                         const user = await params.userRepo.getById(
                             column.authorId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (user === undefined) {
                             return `user not found: ${column.authorId}`;
@@ -90,15 +91,15 @@ export class ColumnRepo {
         });
     }
 
-    async getById(id: ColumnId, includeDeleted: boolean) {
-        return await this.rawRepo.getById([id], includeDeleted);
+    async getById(id: ColumnId, options?: QueryOptions) {
+        return await this.rawRepo.getById([id], options);
     }
 
     getByBoardId(
         boardId: BoardId,
-        includeDeleted = false
+        options?: QueryOptions
     ): Stream<CrdtDoc<Column>> {
-        return this.rawRepo.get(BOARD_ID_INDEX, [boardId], includeDeleted);
+        return this.rawRepo.get(BOARD_ID_INDEX, [boardId], options);
     }
 
     async apply(
@@ -116,8 +117,8 @@ export class ColumnRepo {
     update(
         id: ColumnId,
         recipe: Recipe<Column>,
-        includeDeleted = false
+        options?: QueryOptions
     ): Promise<Column> {
-        return this.rawRepo.update([id], recipe, includeDeleted);
+        return this.rawRepo.update([id], recipe, options);
     }
 }

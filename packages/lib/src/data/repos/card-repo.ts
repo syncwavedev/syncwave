@@ -10,6 +10,7 @@ import {
     type CrdtDoc,
     DocRepo,
     type OnDocChange,
+    type QueryOptions,
     type Recipe,
     zDoc,
 } from '../doc-repo.js';
@@ -85,7 +86,7 @@ export class CardRepo {
                     verify: async card => {
                         const user = await params.userRepo.getById(
                             card.authorId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (user === undefined) {
                             return `author not found: ${card.authorId}`;
@@ -114,7 +115,7 @@ export class CardRepo {
 
                         const user = await params.userRepo.getById(
                             card.assigneeId,
-                            true
+                            {includeDeleted: true}
                         );
                         if (user === undefined) {
                             return `assignee not found: ${card.authorId}`;
@@ -133,19 +134,15 @@ export class CardRepo {
         });
     }
 
-    getById(id: CardId, includeDeleted: boolean) {
-        return this.rawRepo.getById([id], includeDeleted);
+    getById(id: CardId, options?: QueryOptions) {
+        return this.rawRepo.getById([id], options);
     }
 
     getByBoardId(
         boardId: BoardId,
-        includeDeleted = false
+        options?: QueryOptions
     ): Stream<CrdtDoc<Card>> {
-        return this.rawRepo.get(
-            BOARD_ID_COUNTER_INDEX,
-            [boardId],
-            includeDeleted
-        );
+        return this.rawRepo.get(BOARD_ID_COUNTER_INDEX, [boardId], options);
     }
 
     async getByBoardIdAndCounter(
@@ -177,8 +174,8 @@ export class CardRepo {
     update(
         id: CardId,
         recipe: Recipe<Card>,
-        includeDeleted = false
+        options?: QueryOptions
     ): Promise<Card> {
-        return this.rawRepo.update([id], recipe, includeDeleted);
+        return this.rawRepo.update([id], recipe, options);
     }
 }

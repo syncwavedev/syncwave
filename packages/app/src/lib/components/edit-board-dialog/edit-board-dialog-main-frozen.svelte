@@ -57,7 +57,7 @@
 <hr />
 <button
     onclick={onMembers}
-    class="hover:bg-subtle-1 flex w-full cursor-pointer items-center gap-2 p-4"
+    class="hover:bg-surface-1 flex w-full cursor-pointer items-center gap-2 p-4"
 >
     <span class="text-xs">Members</span>
     <span class="text-ink-body ml-auto flex items-center gap-1.5">
@@ -68,7 +68,7 @@
 <hr />
 <button
     onclick={onColumns}
-    class="hover:bg-subtle-1 flex w-full cursor-pointer items-center gap-2 p-4"
+    class="hover:bg-surface-1 flex w-full cursor-pointer items-center gap-2 p-4"
 >
     <span class="text-xs">Columns</span>
     <span class="text-ink-body ml-auto flex items-center gap-1.5">

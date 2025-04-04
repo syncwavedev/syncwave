@@ -51,13 +51,13 @@
 </script>
 
 <div
-    class="border-divider bg-subtle-0 z-10 flex w-full flex-shrink-0 flex-col border-l"
+    class="border-divider bg-surface-0 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
     <!-- Scrollable Content Section -->
     <div class="flex-grow overflow-y-auto">
         <!-- Header with Context Menu -->
         <div
-            class="bg-subtle-0 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
+            class="bg-surface-0 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
         >
             <div class="text-xs flex items-baseline gap-1">
                 {#if card.isDraft}
@@ -92,17 +92,17 @@
                 </DropdownMenu>
                 <div
                     id="context-menu"
-                    class="bg-subtle-2 border-divider-object absolute right-0 hidden w-46 rounded-lg border p-1"
+                    class="bg-surface-2 border-divider-object absolute right-0 hidden w-46 rounded-lg border p-1"
                 >
                     <ul>
                         <li
-                            class="hover:bg-subtle-3 flex h-[1.8rem] cursor-pointer items-center gap-1.5 rounded-sm px-2"
+                            class="hover:bg-surface-3 flex h-[1.8rem] cursor-pointer items-center gap-1.5 rounded-sm px-2"
                         >
                             <LinkIcon />
                             <span class="text-xs leading-none">Copy Link</span>
                         </li>
                         <li
-                            class="hover:bg-subtle-3 text-ink-danger flex h-[1.8rem] cursor-pointer items-center gap-1.5 rounded-sm px-2"
+                            class="hover:bg-surface-3 text-ink-danger flex h-[1.8rem] cursor-pointer items-center gap-1.5 rounded-sm px-2"
                         >
                             <TrashIcon />
                             <span class="text-xs leading-none">Delete </span>

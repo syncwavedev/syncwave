@@ -237,8 +237,8 @@
 {/snippet}
 
 <main class="flex h-screen w-full">
-    <div class="bg-subtle-0 flex min-w-0 grow flex-col">
-        <div class="bg-subtle-0 px-4">
+    <div class="bg-surface-0 flex min-w-0 grow flex-col">
+        <div class="bg-surface-0 px-4">
             <div class="my-1 flex items-center">
                 <button
                     class="text-xs leading-none font-semibold"

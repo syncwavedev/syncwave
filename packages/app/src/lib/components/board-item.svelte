@@ -8,7 +8,7 @@
 
 <a
     href={`/app/b/${board.key}`}
-    class="text-ink-body hover-text-ink hover-subtle-1 flex w-full cursor-pointer! items-center gap-2 rounded-lg p-2"
+    class="text-ink-body hover-text-ink hover-surface-1 flex w-full cursor-pointer! items-center gap-2 rounded-lg p-2"
 >
     <HashtagIcon />
     <span class="truncate leading-snug">

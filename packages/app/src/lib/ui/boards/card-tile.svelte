@@ -90,8 +90,8 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-        bg-subtle-1
-        hover:bg-subtle-2
+        bg-surface-2
+        hover:bg-surface-3
         group
         data-active:border-divider-active
         data-active:bg-subtle-active
@@ -100,7 +100,7 @@
         cursor-default
         gap-1
         rounded-md
-        border-subtle-1
+        border-surface-2
         p-2
         select-none
         text-xs

@@ -30,7 +30,7 @@
     </Select.Trigger>
     <Select.Portal>
         <Select.Content
-            class="z-100 bg-subtle-2 p-1 rounded-md min-w-40 border border-divider-object outline-none"
+            class="z-100 bg-surface-2 p-1 rounded-md min-w-40 border border-divider-object outline-none"
             side="bottom"
             sideOffset={0}
             align="end"

@@ -35,6 +35,7 @@
     --text-9xl--line-height: 0.95;
 
     /* Gray */
+    --color-gray-20: oklch(98.8% 0.002 110deg);
     --color-gray-30: oklch(97.2% 0.002 110deg);
     --color-gray-50: oklch(96% 0.0015 110deg);
     --color-gray-70: oklch(94.4% 0.001 110deg);
@@ -161,11 +162,12 @@
 
     --color-scrollbar: var(--theme-color-scrollbar);
 
-    --color-subtle-0: var(--theme-color-subtle-0);
-    --color-subtle-1: var(--theme-color-subtle-1);
-    --color-subtle-2: var(--theme-color-subtle-2);
-    --color-subtle-3: var(--theme-color-subtle-3);
-    --color-subtle-4: var(--theme-color-subtle-4);
+    --color-surface-0: var(--theme-color-surface-0);
+    --color-surface-1: var(--theme-color-surface-1);
+    --color-surface-2: var(--theme-color-surface-2);
+    --color-surface-3: var(--theme-color-surface-3);
+    --color-surface-4: var(--theme-color-surface-4);
+    --color-surface-5: var(--theme-color-surface-5);
 
     --color-ink-contrast: var(--theme-color-ink-contrast);
     --color-ink-danger-contrast: var(--theme-color-ink-danger-contrast);
@@ -196,11 +198,12 @@
 
         --theme-color-scrollbar: var(--color-gray-350);
 
-        --theme-color-subtle-0: var(--color-white);
-        --theme-color-subtle-1: var(--color-gray-30);
-        --theme-color-subtle-2: var(--color-gray-50);
-        --theme-color-subtle-3: var(--color-gray-70);
-        --theme-color-subtle-4: var(--color-gray-90);
+        --theme-color-surface-0: var(--color-white);
+        --theme-color-surface-1: var(--color-gray-20);
+        --theme-color-surface-2: var(--color-gray-30);
+        --theme-color-surface-3: var(--color-gray-50);
+        --theme-color-surface-4: var(--color-gray-70);
+        --theme-color-surface-5: var(--color-gray-90);
 
         --theme-color-subtle-active: var(--color-blue-100);
         --theme-color-divider-active: var(--color-blue-200);
@@ -220,11 +223,12 @@
 
         --theme-color-scrollbar: var(--color-slate-450);
 
-        --theme-color-subtle-0: var(--color-slate-920);
-        --theme-color-subtle-1: var(--color-slate-890);
-        --theme-color-subtle-2: var(--color-slate-860);
-        --theme-color-subtle-3: var(--color-slate-830);
-        --theme-color-subtle-4: var(--color-slate-800);
+        --theme-color-surface-0: var(--color-slate-920);
+        --theme-color-surface-1: var(--color-slate-900);
+        --theme-color-surface-2: var(--color-slate-890);
+        --theme-color-surface-3: var(--color-slate-860);
+        --theme-color-surface-4: var(--color-slate-830);
+        --theme-color-surface-5: var(--color-slate-800);
 
         --theme-color-subtle-active: var(--color-blue-850);
         --theme-color-divider-active: var(--color-blue-750);
@@ -232,7 +236,7 @@
 
     html,
     body {
-        @apply text-ink bg-subtle-0 overscroll-none font-sans antialiased select-none;
+        @apply text-ink bg-surface-0 overscroll-none font-sans antialiased select-none;
     }
 
     hr {

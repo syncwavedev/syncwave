@@ -147,7 +147,7 @@
     {/if}
 </div>
 <div
-    class="border-divider bg-subtle-0 dark:bg-subtle-1 flex shrink-0 items-center gap-1 border-t p-2"
+    class="border-divider bg-surface-0 dark:bg-surface-1 flex shrink-0 items-center gap-1 border-t p-2"
 >
     <UploadButton class="btn--icon mt-auto" callback={handleAttach}>
         <AttachIcon />

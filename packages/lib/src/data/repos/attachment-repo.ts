@@ -1,23 +1,12 @@
-import {Type} from '@sinclair/typebox';
+import {type Static, Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import {
-    type Doc,
-    DocRepo,
-    type OnDocChange,
-    type Recipe,
-    zDoc,
-} from '../doc-repo.js';
-import {
-    type ObjectKey,
-    type ObjectMetadata,
-    zObjectKey,
-    zObjectMetadata,
-} from '../infrastructure.js';
+import {DocRepo, type OnDocChange, type Recipe, zDoc} from '../doc-repo.js';
+import {zObjectKey, zObjectMetadata} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {BoardId, BoardRepo} from './board-repo.js';
 import {type CardId, CardRepo} from './card-repo.js';
@@ -27,15 +16,6 @@ export type AttachmentId = Brand<Uuid, 'message_id'>;
 
 export function createAttachmentId(): AttachmentId {
     return createUuid() as AttachmentId;
-}
-
-export interface Attachment extends Doc<[AttachmentId]> {
-    readonly id: AttachmentId;
-    readonly authorId: UserId;
-    readonly boardId: BoardId;
-    readonly cardId: CardId;
-    readonly metadata: ObjectMetadata;
-    readonly objectKey: ObjectKey;
 }
 
 const CARD_ID_INDEX = 'card_id';
@@ -56,6 +36,8 @@ export function zAttachment() {
         }),
     ]);
 }
+
+export interface Attachment extends Static<ReturnType<typeof zAttachment>> {}
 
 export class AttachmentRepo {
     public readonly rawRepo: DocRepo<Attachment>;

@@ -1,4 +1,4 @@
-import {Type} from '@sinclair/typebox';
+import {type Static, Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {Counter} from '../../kv/counter.js';
@@ -8,13 +8,7 @@ import {Registry} from '../../kv/registry.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import {type DataTriggerScheduler} from '../data-layer.js';
-import {
-    type Doc,
-    DocRepo,
-    type OnDocChange,
-    type Recipe,
-    zDoc,
-} from '../doc-repo.js';
+import {DocRepo, type OnDocChange, type Recipe, zDoc} from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {UserId, UserRepo} from './user-repo.js';
 
@@ -22,13 +16,6 @@ export type BoardId = Brand<Uuid, 'board_id'>;
 
 export function createBoardId(): BoardId {
     return createUuid() as BoardId;
-}
-
-export interface Board extends Doc<[BoardId]> {
-    readonly key: string;
-    readonly id: BoardId;
-    readonly authorId: UserId;
-    name: string;
 }
 
 const BOARD_KEY_INDEX = 'key';
@@ -45,6 +32,8 @@ export function zBoard() {
         }),
     ]);
 }
+
+export interface Board extends Static<ReturnType<typeof zBoard>> {}
 
 export class BoardRepo {
     public readonly rawRepo: DocRepo<Board>;

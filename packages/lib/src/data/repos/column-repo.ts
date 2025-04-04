@@ -1,4 +1,4 @@
-import {Type} from '@sinclair/typebox';
+import {type Static, Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
@@ -7,7 +7,6 @@ import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
-    type Doc,
     DocRepo,
     type OnDocChange,
     type Recipe,
@@ -21,14 +20,6 @@ export type ColumnId = Brand<Uuid, 'column_id'>;
 
 export function createColumnId(): ColumnId {
     return createUuid() as ColumnId;
-}
-
-export interface Column extends Doc<[ColumnId]> {
-    readonly id: ColumnId;
-    readonly authorId: UserId;
-    readonly boardId: BoardId;
-    name: string;
-    position: number;
 }
 
 const BOARD_ID_INDEX = 'boardId';
@@ -46,6 +37,8 @@ export function zColumn() {
         }),
     ]);
 }
+
+export interface Column extends Static<ReturnType<typeof zColumn>> {}
 
 export class ColumnRepo {
     public readonly rawRepo: DocRepo<Column>;

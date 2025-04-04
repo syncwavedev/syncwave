@@ -1,15 +1,14 @@
-import {Type} from '@sinclair/typebox';
+import {type Static, Type} from '@sinclair/typebox';
 import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
-import {type Timestamp, zTimestamp} from '../../timestamp.js';
+import {zTimestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
-    type Doc,
     DocRepo,
     type OnDocChange,
     type Recipe,
@@ -24,35 +23,20 @@ export function createAccountId(): AccountId {
     return createUuid() as AccountId;
 }
 
-export interface VerificationCode {
-    readonly code: string;
-    readonly expires: Timestamp;
-}
-
-export interface Account extends Doc<[AccountId]> {
-    readonly id: AccountId;
-    readonly userId: UserId;
-    email: string;
-    verificationCode: VerificationCode;
-    authActivityLog: Timestamp[];
-}
-
 const EMAIL_INDEX = 'email';
 const USER_ID_INDEX = 'userId';
 
 export class EmailTakenAccountRepoError extends BusinessError {}
 
 export function zVerificationCode() {
-    return Type.Object(
-        {
-            code: Type.String(),
-            expires: zTimestamp(),
-        },
-        {
-            description: 'VerificationCode',
-        }
-    );
+    return Type.Object({
+        code: Type.String(),
+        expires: zTimestamp(),
+    });
 }
+
+export interface VerificationCode
+    extends Static<ReturnType<typeof zVerificationCode>> {}
 
 export function zAccount() {
     return Type.Composite([
@@ -66,6 +50,8 @@ export function zAccount() {
         }),
     ]);
 }
+
+export interface Account extends Static<ReturnType<typeof zAccount>> {}
 
 export class AccountRepo {
     public readonly rawRepo: DocRepo<Account>;

@@ -1,6 +1,6 @@
-import {Type} from '@sinclair/typebox';
+import {type Static, Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
-import {type Richtext, zRichtext} from '../../crdt/richtext.js';
+import {zRichtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
@@ -8,7 +8,6 @@ import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
-    type Doc,
     DocRepo,
     type OnDocChange,
     type Recipe,
@@ -23,17 +22,6 @@ export type CardId = Brand<Uuid, 'card_id'>;
 
 export function createCardId(): CardId {
     return createUuid() as CardId;
-}
-
-export interface Card extends Doc<[CardId]> {
-    readonly id: CardId;
-    readonly authorId: UserId;
-    readonly boardId: BoardId;
-    assigneeId?: UserId;
-    counter: number | null;
-    text: Richtext;
-    columnId: ColumnId;
-    position: number;
 }
 
 const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
@@ -58,6 +46,8 @@ export function zCard() {
         }),
     ]);
 }
+
+export interface Card extends Static<ReturnType<typeof zCard>> {}
 
 export class CardRepo {
     public readonly rawRepo: DocRepo<Card>;

@@ -1,29 +1,17 @@
-import {Type} from '@sinclair/typebox';
+import {type Static, Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import {
-    type Doc,
-    DocRepo,
-    type OnDocChange,
-    type Recipe,
-    zDoc,
-} from '../doc-repo.js';
-import {type ObjectKey, zObjectKey} from '../infrastructure.js';
+import {DocRepo, type OnDocChange, type Recipe, zDoc} from '../doc-repo.js';
+import {zObjectKey} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 
 export function createUserId(): UserId {
     return createUuid() as UserId;
-}
-
-export interface User extends Doc<[UserId]> {
-    readonly id: UserId;
-    fullName: string;
-    avatarKey?: ObjectKey;
 }
 
 export function zUser() {
@@ -36,6 +24,8 @@ export function zUser() {
         }),
     ]);
 }
+
+export interface User extends Static<ReturnType<typeof zUser>> {}
 
 export class UserRepo {
     public readonly rawRepo: DocRepo<User>;

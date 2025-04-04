@@ -1,4 +1,4 @@
-import {Type} from '@sinclair/typebox';
+import {type Static, Type} from '@sinclair/typebox';
 import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
@@ -9,7 +9,6 @@ import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
-    type Doc,
     DocRepo,
     type OnDocChange,
     type Recipe,
@@ -45,14 +44,6 @@ export const ROLE_ORDER: Record<MemberRole, number> = {
 
 export const MEMBER_ROLES = Object.keys(ROLE_ORDER) as MemberRole[];
 
-export interface Member extends Doc<[MemberId]> {
-    readonly id: MemberId;
-    readonly userId: UserId;
-    readonly boardId: BoardId;
-    role: MemberRole;
-    position: number;
-}
-
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
 
@@ -68,6 +59,8 @@ export function zMember() {
         }),
     ]);
 }
+
+export interface Member extends Static<ReturnType<typeof zMember>> {}
 
 export class MemberRepo {
     public readonly rawRepo: DocRepo<Member>;

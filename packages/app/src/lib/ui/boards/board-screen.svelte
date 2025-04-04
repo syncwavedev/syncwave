@@ -130,7 +130,7 @@
     });
 
     $effect(() => {
-        if (board.deleted) {
+        if (board.deletedAt) {
             log.info(`board ${board.id} got deleted, redirect to app...`);
             router.route('/');
         }

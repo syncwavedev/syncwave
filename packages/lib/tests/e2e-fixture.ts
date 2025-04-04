@@ -131,7 +131,6 @@ export class E2eFixture {
             boardId,
             columnId,
             createdAt: toTimestamp(now),
-            deleted: false,
             id: cardId,
             position: toPosition({next: undefined, prev: undefined}),
             counter: 0,

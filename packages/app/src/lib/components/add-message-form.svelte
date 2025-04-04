@@ -9,6 +9,7 @@
         type AttachmentDto,
         type BoardId,
         type CardId,
+        type ColumnId,
         type Message,
     } from 'syncwave';
     import ArrowUpIcon from './icons/arrow-up-icon.svelte';
@@ -24,11 +25,12 @@
     interface Props {
         me: MeView;
         cardId: CardId;
+        columnId: ColumnId;
         boardId: BoardId;
         onSend: (message: Crdt<Message>, attachments: AttachmentDto[]) => void;
     }
 
-    let {cardId, boardId, onSend, me}: Props = $props();
+    let {cardId, boardId, columnId, onSend, me}: Props = $props();
 
     const doc = new Doc();
     const fragment = doc.getXmlFragment('message');
@@ -75,11 +77,15 @@
                     pk: [messageId],
                     authorId: me.profile.id,
                     cardId,
+                    columnId,
+                    target: 'card',
                     createdAt,
                     updatedAt: createdAt,
-                    deleted: false,
-                    text: createRichtext(fragment),
-                    attachmentIds: attachments.map(x => x.id),
+                    payload: {
+                        type: 'text',
+                        text: createRichtext(fragment),
+                        attachmentIds: attachments.map(x => x.id),
+                    },
                     boardId: boardId,
                 });
 

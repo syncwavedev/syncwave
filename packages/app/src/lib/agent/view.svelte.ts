@@ -219,7 +219,7 @@ export class BoardView implements Board {
     members = $derived(this._data.userViews);
 
     authorId = $derived(this._board.authorId);
-    deleted = $derived(this._board.deleted);
+    deletedAt = $derived(this._board.deletedAt);
     updatedAt = $derived(this._board.updatedAt);
     createdAt = $derived(this._board.createdAt);
     key = $derived(this._board.key);
@@ -253,7 +253,7 @@ export class BoardView implements Board {
 export class BoardTreeView extends BoardView {
     columns = $derived(
         this._data.columnTreeViews
-            .filter(x => !x.deleted)
+            .filter(x => !x.deletedAt)
             .sort((a, b) => compareNumbers(a.position, b.position))
     );
 }
@@ -273,7 +273,7 @@ export class ColumnView implements Column {
     }
 
     authorId = $derived(this._column.authorId);
-    deleted = $derived(this._column.deleted);
+    deletedAt = $derived(this._column.deletedAt);
     updatedAt = $derived(this._column.updatedAt);
     createdAt = $derived(this._column.createdAt);
     name = $derived(this._column.name);
@@ -281,7 +281,6 @@ export class ColumnView implements Column {
     pk = $derived(this._column.pk);
     boardId = $derived(this._column.boardId);
     position = $derived(this._column.position);
-    version = $derived(this._column.version);
 
     board = $derived(this._data.boardView);
     author = $derived.by(() => {
@@ -296,7 +295,7 @@ export class ColumnTreeView extends ColumnView {
     cards = $derived(
         this._data.cardViews
             .filter(x => x.columnId === this.id)
-            .filter(x => !x.deleted)
+            .filter(x => !x.deletedAt)
             .sort((a, b) => compareNumbers(a.position, b.position))
     );
 }
@@ -321,7 +320,7 @@ export class CardView implements Card {
 
     isDraft = $derived(this._card.counter === null);
     authorId = $derived(this._card.authorId);
-    deleted = $derived(this._card.deleted);
+    deletedAt = $derived(this._card.deletedAt);
     updatedAt = $derived(this._card.updatedAt);
     createdAt = $derived(this._card.createdAt);
     id = $derived(this._card.id);
@@ -393,13 +392,12 @@ export class UserView implements User {
         this._user = {value: user};
     }
 
-    deleted = $derived(this._user.value.deleted);
+    deleted = $derived(this._user.value.deletedAt !== undefined);
     updatedAt = $derived(this._user.value.updatedAt);
     createdAt = $derived(this._user.value.createdAt);
     id = $derived(this._user.value.id);
     pk = $derived(this._user.value.pk);
     fullName = $derived(this._user.value.fullName);
-    version = $derived(this._user.value.version);
     avatarKey = $derived(this._user.value.avatarKey);
 
     update(user: User) {

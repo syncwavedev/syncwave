@@ -15,8 +15,12 @@ class ExpectAny<T> {
     constructor(public readonly ctor: new () => T) {}
 }
 
+class ExpectOptional<T> {
+    constructor(public readonly value: T) {}
+}
+
 function expectAny<T>(ctor: new () => T): T {
-    return new ExpectAny(ctor) as any;
+    return new ExpectAny(ctor) as T;
 }
 
 export function expectBoolean() {
@@ -35,6 +39,10 @@ export function expectTimestamp() {
     return expectAny(Number) as Timestamp;
 }
 
+export function expectOptional<T>(value: T): T | undefined {
+    return new ExpectOptional(value) as T | undefined;
+}
+
 interface ValidationError {
     path: string[];
     message: string;
@@ -51,7 +59,13 @@ function validateCondition(
 }
 
 function validate<T>(value: T, expected: T): ValidationError[] {
-    if (expected instanceof ExpectAny) {
+    if (expected instanceof ExpectOptional) {
+        if (value === undefined) {
+            return [];
+        }
+
+        return validate(value, expected.value);
+    } else if (expected instanceof ExpectAny) {
         if (expected.ctor === String) {
             return validateCondition(typeof value === 'string', {
                 message: `expected string, but got ${typeof value}`,
@@ -83,7 +97,7 @@ function validate<T>(value: T, expected: T): ValidationError[] {
             typeof expected === 'symbol'
         ) {
             return validateCondition(value === expected, {
-                message: `expected ${String(expected)}, but got ${value}`,
+                message: `expected ${String(expected)}, but got ${String(value)}`,
                 path: [],
             });
         } else if (Array.isArray(expected)) {
@@ -146,8 +160,8 @@ function validate<T>(value: T, expected: T): ValidationError[] {
                     );
                 }
 
-                const expectedValue = (expected as any)[key];
-                const valueValue = (value as any)[key];
+                const expectedValue = (expected as Record<string, any>)[key];
+                const valueValue = (value as Record<string, any>)[key];
 
                 errors.push(
                     ...validate(valueValue, expectedValue).map(error => ({
@@ -204,7 +218,7 @@ export function writable<T extends object>(
             }
 
             if (
-                (writable as any)[key] !== true &&
+                (writable as Record<string, any>)[key] !== true &&
                 !equals(prev[key], next[key])
             ) {
                 errors.push(`property ${key} is readonly`);

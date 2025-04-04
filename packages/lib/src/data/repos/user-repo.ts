@@ -1,7 +1,7 @@
 import {Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
-import {assertNever, type Brand} from '../../utils.js';
+import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
@@ -20,32 +20,11 @@ export function createUserId(): UserId {
     return createUuid() as UserId;
 }
 
-interface UserV1 extends Doc<[UserId]> {
+export interface User extends Doc<[UserId]> {
     readonly id: UserId;
-}
-
-interface UserV2 extends Doc<[UserId]> {
-    readonly id: UserId;
-    readonly version: 2;
-    name: string;
-}
-
-interface UserV3 extends Doc<[UserId]> {
-    readonly id: UserId;
-    readonly version: 3;
-    fullName: string;
-}
-
-export interface UserV4 extends Doc<[UserId]> {
-    readonly id: UserId;
-    readonly version: '4';
     fullName: string;
     avatarKey?: ObjectKey;
 }
-
-export interface User extends UserV4 {}
-
-type StoredUser = UserV1 | UserV2 | UserV3 | UserV4;
 
 export function zUser() {
     return Type.Composite([
@@ -53,7 +32,6 @@ export function zUser() {
         Type.Object({
             id: Uuid<UserId>(),
             fullName: Type.String(),
-            version: Type.Literal('4'),
             avatarKey: Type.Optional(zObjectKey()),
         }),
     ]);
@@ -74,30 +52,6 @@ export class UserRepo {
             schema: zUser(),
             constraints: [],
             scheduleTrigger: params.scheduleTrigger,
-            upgrade: function upgradeUser(user: StoredUser) {
-                if ('version' in user) {
-                    if (user.version === 2) {
-                        (user as any).version = 3;
-                        (user as any).fullName = user.name;
-                        delete (user as any).name;
-
-                        upgradeUser(user);
-                    } else if (user.version === 3) {
-                        (user as any).version = '4';
-
-                        upgradeUser(user);
-                    } else if (user.version === '4') {
-                        // latest version
-                    } else {
-                        assertNever(user);
-                    }
-                } else {
-                    (user as any).version = 2;
-                    (user as any).name = 'Anon';
-
-                    upgradeUser(user);
-                }
-            },
         });
     }
 

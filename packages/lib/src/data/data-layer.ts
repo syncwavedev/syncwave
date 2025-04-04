@@ -249,9 +249,11 @@ export class DataLayer {
                 scheduleTrigger,
             });
             const messages = new MessageRepo({
-                tx: isolate(['messages'])(tx),
+                tx: isolate(['messages_v2'])(tx),
                 cardRepo: cards,
                 userRepo: users,
+                boardRepo: boards,
+                columnRepo: columns,
                 onChange: options => logMessageChange(dataTx, options),
                 scheduleTrigger,
             });

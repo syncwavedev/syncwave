@@ -41,7 +41,7 @@ import {type Message, type MessageId} from './repos/message-repo.js';
 import {type User, type UserId} from './repos/user-repo.js';
 import {
     creatable,
-    expectBoolean,
+    expectOptional,
     expectTimestamp,
     writable,
 } from './transition-checker.js';
@@ -89,7 +89,7 @@ export function createWriteApi() {
                                     text: true,
                                     columnId: true,
                                     position: true,
-                                    deleted: true,
+                                    deletedAt: true,
                                     updatedAt: true,
                                     assigneeId: true,
                                     id: false,
@@ -137,7 +137,7 @@ export function createWriteApi() {
                             counter,
                             position: card.position,
                             createdAt: expectTimestamp(),
-                            deleted: expectBoolean(),
+                            deletedAt: expectOptional(expectTimestamp()),
                             updatedAt: expectTimestamp(),
                             text: createRichtext(),
                         })
@@ -176,7 +176,6 @@ export function createWriteApi() {
                     boardId: card.boardId,
                     cardId,
                     createdAt: now,
-                    deleted: false,
                     id: createAttachmentId(),
                     objectKey,
                     updatedAt: now,
@@ -198,7 +197,7 @@ export function createWriteApi() {
                 const meId = st.ps.ensureAuthenticated();
 
                 await whenAll([
-                    ...message.attachmentIds.map(id =>
+                    ...message.payload.attachmentIds.map(id =>
                         st.ps.ensureAttachmentMember(id, 'reader')
                     ),
                     st.ps.ensureCardMember(message.cardId, 'writer'),
@@ -214,31 +213,38 @@ export function createWriteApi() {
 
                 if (card.boardId !== message.boardId) {
                     throw new BusinessError(
-                        `card ${message.cardId} doesn't belong to board ${message.boardId}`,
+                        `card ${message.columnId} doesn't belong to column ${card.columnId}`,
                         'forbidden'
                     );
                 }
 
-                if (message.replyToId) {
+                if (card.columnId !== message.columnId) {
+                    throw new BusinessError(
+                        `card ${message.cardId} doesn't belong to board ${card.boardId}`,
+                        'forbidden'
+                    );
+                }
+
+                if (message.payload.replyToId) {
                     const replyTo = await st.tx.messages.getById(
-                        message.replyToId,
+                        message.payload.replyToId,
                         true
                     );
                     if (!replyTo) {
                         throw new BusinessError(
-                            `message ${message.replyToId} not found`,
+                            `message ${message.payload.replyToId} not found`,
                             'message_not_found'
                         );
                     }
                     if (replyTo.boardId !== message.boardId) {
                         throw new BusinessError(
-                            `message ${message.replyToId} doesn't belong to board ${message.boardId}`,
+                            `message ${message.payload.replyToId} doesn't belong to board ${message.boardId}`,
                             'forbidden'
                         );
                     }
                     if (replyTo.cardId !== message.cardId) {
                         throw new BusinessError(
-                            `message ${message.replyToId} doesn't belong to card ${message.cardId}`,
+                            `message ${message.payload.replyToId} doesn't belong to card ${message.cardId}`,
                             'forbidden'
                         );
                     }
@@ -253,12 +259,17 @@ export function createWriteApi() {
                         authorId: meId,
                         cardId: message.cardId,
                         createdAt: expectTimestamp(),
-                        deleted: expectBoolean(),
+                        deletedAt: expectOptional(expectTimestamp()),
                         updatedAt: expectTimestamp(),
-                        text: createRichtext(),
+                        target: 'card',
+                        columnId: message.columnId,
+                        payload: {
+                            type: 'text',
+                            text: createRichtext(),
+                            replyToId: message.payload.replyToId,
+                            attachmentIds: [],
+                        },
                         boardId: card.boardId,
-                        attachmentIds: [],
-                        replyToId: message.replyToId,
                     })
                 );
 
@@ -301,7 +312,7 @@ export function createWriteApi() {
                     );
 
                 let member: Member;
-                if (existingMember?.deleted) {
+                if (existingMember?.deletedAt) {
                     await st.ps.ensureCanManage(
                         existingMember.boardId,
                         existingMember.role
@@ -309,7 +320,7 @@ export function createWriteApi() {
                     member = await st.tx.members.update(
                         existingMember.id,
                         x => {
-                            x.deleted = false;
+                            x.deletedAt = undefined;
                             x.role = role;
                         },
                         true
@@ -321,9 +332,7 @@ export function createWriteApi() {
                         userId: account.userId,
                         createdAt: now,
                         updatedAt: now,
-                        deleted: false,
                         role,
-                        version: '2',
                         // todo: add to the beginning of the user list
                         position: Math.random(),
                     });
@@ -363,7 +372,7 @@ export function createWriteApi() {
                 await st.tx.members.update(
                     memberId,
                     x => {
-                        x.deleted = true;
+                        x.deletedAt = getNow();
                     },
                     true
                 );
@@ -390,10 +399,8 @@ export function createWriteApi() {
                     boardId: boardId,
                     createdAt: now,
                     updatedAt: now,
-                    deleted: false,
                     name: name,
                     position,
-                    version: '4',
                 });
 
                 return await toColumnDto(st.tx, column.id);
@@ -407,7 +414,7 @@ export function createWriteApi() {
                 await st.tx.columns.update(
                     columnId,
                     x => {
-                        x.deleted = true;
+                        x.deletedAt = getNow();
                     },
                     true
                 );
@@ -423,7 +430,7 @@ export function createWriteApi() {
                 await st.tx.cards.update(
                     cardId,
                     x => {
-                        x.deleted = true;
+                        x.deletedAt = getNow();
                     },
                     true
                 );
@@ -456,7 +463,7 @@ export function createWriteApi() {
                 await whenAll([
                     st.ps.ensureBoardMember(boardId, 'owner'),
                     st.tx.boards.update(boardId, x => {
-                        x.deleted = true;
+                        x.deletedAt = getNow();
                     }),
                 ]);
                 return {};
@@ -508,10 +515,16 @@ export function createWriteApi() {
                     st.tx.columns.apply(
                         columnId,
                         diff,
-                        writable({
+                        writable<Column>({
                             position: true,
                             name: true,
-                            deleted: true,
+                            deletedAt: true,
+                            id: false,
+                            authorId: false,
+                            boardId: false,
+                            pk: false,
+                            createdAt: false,
+                            updatedAt: false,
                         })
                     ),
                 ]);
@@ -526,7 +539,7 @@ export function createWriteApi() {
                 await st.tx.messages.update(
                     messageId,
                     x => {
-                        x.deleted = true;
+                        x.deletedAt = getNow();
                     },
                     true
                 );

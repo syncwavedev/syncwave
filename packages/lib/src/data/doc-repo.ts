@@ -31,7 +31,7 @@ export interface Doc<TKey extends Tuple> {
     readonly pk: TKey;
     readonly createdAt: Timestamp;
     updatedAt: Timestamp;
-    deleted: boolean;
+    deletedAt?: Timestamp;
 }
 
 export function zDoc<T extends Tuple>(pk: ToSchema<T>) {
@@ -39,7 +39,7 @@ export function zDoc<T extends Tuple>(pk: ToSchema<T>) {
         pk: pk,
         createdAt: zTimestamp(),
         updatedAt: zTimestamp(),
-        deleted: Type.Boolean(),
+        deletedAt: Type.Optional(zTimestamp()),
     });
 }
 
@@ -171,7 +171,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     private readonly constraints: readonly Constraint<T>[];
     // todo: add tests
     private readonly upgrade: Recipe<any>;
-    private readonly scheduleTrigger: (check: () => Promise<void>) => void;
+    private readonly scheduleTrigger: (trigger: () => Promise<void>) => void;
 
     constructor(options: DocStoreOptions<T>) {
         this.upgrade = options.upgrade ?? (() => {});
@@ -221,7 +221,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         }
 
         const snapshot = doc.snapshot();
-        if (!includeDeleted && snapshot?.deleted) {
+        if (!includeDeleted && snapshot?.deletedAt) {
             return undefined;
         }
 
@@ -279,7 +279,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         includeDeleted?: boolean
     ): Promise<T> {
         const doc = await this.primary.get(id);
-        if (!doc || (!includeDeleted && doc.snapshot().deleted)) {
+        if (!doc || (!includeDeleted && doc.snapshot().deletedAt)) {
             throw new AppError('doc not found: ' + stringifyTuple(id));
         }
 
@@ -432,6 +432,6 @@ class DocRepoImpl<T extends Doc<Tuple>> {
             .mapParallel(id => this.getUpgrade(id))
             .assert(x => x !== undefined, message)
             .map(doc => ({...doc.snapshot(), state: doc.state()}))
-            .filter(x => includeDeleted || !x.deleted);
+            .filter(x => includeDeleted || !x.deletedAt);
     }
 }

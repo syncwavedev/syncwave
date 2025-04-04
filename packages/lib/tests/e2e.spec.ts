@@ -66,7 +66,6 @@ describe('e2e', () => {
         const expectedBoard: BoardDto = {
             authorId: me.user.id,
             createdAt: toTimestamp(now),
-            deleted: false,
             id: boardId,
             key: 'TEST-BOARD',
             name: 'Test board',
@@ -102,7 +101,6 @@ describe('e2e', () => {
             boardId,
             columnId,
             createdAt: toTimestamp(now),
-            deleted: false,
             id: cardId,
             position: toPosition({next: undefined, prev: undefined}),
             counter: 0,
@@ -129,7 +127,6 @@ describe('e2e', () => {
             boardId,
             columnId,
             createdAt: toTimestamp(now),
-            deleted: false,
             id: cardId,
             position: expect.any(Number),
             counter: 1,
@@ -150,14 +147,18 @@ describe('e2e', () => {
                 authorId: card.authorId,
                 cardId: card.id,
                 createdAt: toTimestamp(now),
-                deleted: false,
                 id: messageAId,
                 updatedAt: toTimestamp(now),
-                text: createRichtext(),
+                target: 'card',
+                columnId: card.columnId,
+                payload: {
+                    type: 'text',
+                    text: createRichtext(),
+                    attachmentIds: [],
+                    replyToId: undefined,
+                },
                 pk: [messageAId],
-                attachmentIds: [],
                 boardId: card.boardId,
-                replyToId: undefined,
             }).state(),
         });
 
@@ -166,15 +167,19 @@ describe('e2e', () => {
             diff: Crdt.from<Message>({
                 authorId: card.authorId,
                 cardId: card.id,
+                columnId: card.columnId,
                 createdAt: toTimestamp(now),
-                deleted: false,
                 id: messageBId,
                 updatedAt: toTimestamp(now),
-                text: createRichtext(),
+                target: 'card',
+                payload: {
+                    type: 'text',
+                    text: createRichtext(),
+                    attachmentIds: [],
+                    replyToId: messageAId,
+                },
                 pk: [messageBId],
-                attachmentIds: [],
                 boardId: card.boardId,
-                replyToId: messageAId,
             }).state(),
         });
 
@@ -183,7 +188,7 @@ describe('e2e', () => {
             .first();
         expect(cardView.messages[0].id).toEqual(messageAId);
         expect(cardView.messages[1].id).toEqual(messageBId);
-        expect(cardView.messages[1].replyToId).toEqual(messageAId);
+        expect(cardView.messages[1].payload.replyToId).toEqual(messageAId);
         expect(cardView.messages[1].replyTo?.id).toEqual(messageAId);
     });
 
@@ -195,15 +200,19 @@ describe('e2e', () => {
             diff: Crdt.from<Message>({
                 authorId: cardA.authorId,
                 cardId: cardA.id,
+                columnId: cardA.columnId,
                 createdAt: toTimestamp(now),
-                deleted: false,
                 id: messageAId,
                 updatedAt: toTimestamp(now),
-                text: createRichtext(),
+                target: 'card',
+                payload: {
+                    type: 'text',
+                    text: createRichtext(),
+                    attachmentIds: [],
+                    replyToId: undefined,
+                },
                 pk: [messageAId],
-                attachmentIds: [],
                 boardId: cardA.boardId,
-                replyToId: undefined,
             }).state(),
         });
 
@@ -214,14 +223,18 @@ describe('e2e', () => {
                 authorId: cardB.authorId,
                 cardId: cardB.id,
                 createdAt: toTimestamp(now),
-                deleted: false,
                 id: messageBId,
                 updatedAt: toTimestamp(now),
-                text: createRichtext(),
+                target: 'card',
+                columnId: cardB.columnId,
+                payload: {
+                    type: 'text',
+                    text: createRichtext(),
+                    attachmentIds: [],
+                    replyToId: messageAId,
+                },
                 pk: [messageBId],
-                attachmentIds: [],
                 boardId: cardA.boardId,
-                replyToId: messageAId,
             }).state(),
         });
 

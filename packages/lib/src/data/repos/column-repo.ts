@@ -2,7 +2,7 @@ import {Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
-import {type Brand, unreachable} from '../../utils.js';
+import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
@@ -23,44 +23,13 @@ export function createColumnId(): ColumnId {
     return createUuid() as ColumnId;
 }
 
-interface ColumnV1 extends Doc<[ColumnId]> {
+export interface Column extends Doc<[ColumnId]> {
     readonly id: ColumnId;
-    readonly authorId: UserId;
-    readonly boardId: BoardId;
-    title: string;
-    deleted: boolean;
-}
-
-export interface ColumnV2 extends Doc<[ColumnId]> {
-    readonly id: ColumnId;
-    readonly version: 2;
-    readonly authorId: UserId;
-    readonly boardId: BoardId;
-    title: string;
-    deleted: boolean;
-}
-
-export interface ColumnV3 extends Doc<[ColumnId]> {
-    readonly id: ColumnId;
-    readonly version: '3';
-    readonly authorId: UserId;
-    readonly boardId: BoardId;
-    title: string;
-    deleted: boolean;
-}
-
-export interface ColumnV4 extends Doc<[ColumnId]> {
-    readonly id: ColumnId;
-    readonly version: '4';
     readonly authorId: UserId;
     readonly boardId: BoardId;
     name: string;
-    deleted: boolean;
     position: number;
 }
-
-export interface Column extends ColumnV4 {}
-type StoredColumn = ColumnV1 | ColumnV2 | ColumnV3 | ColumnV4;
 
 const BOARD_ID_INDEX = 'boardId';
 const AUTHOR_ID_INDEX = 'author_id';
@@ -73,7 +42,6 @@ export function zColumn() {
             authorId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
             name: Type.String(),
-            version: Type.Literal('4'),
             position: Type.Number(),
         }),
     ]);
@@ -98,36 +66,6 @@ export class ColumnRepo {
                 [AUTHOR_ID_INDEX]: x => [x.authorId, x.createdAt],
             },
             schema: zColumn(),
-            upgrade: function upgradeColumn(column: StoredColumn) {
-                if ((column as any).position === undefined) {
-                    (column as any).position = Math.random();
-                }
-
-                if ('version' in column) {
-                    if (typeof column.version === 'number') {
-                        (column as any).version = '3';
-
-                        upgradeColumn(column);
-                    } else if (typeof column.version === 'string') {
-                        if (column.version === '3') {
-                            (column as any).version = '4';
-                            (column as any).name = column.title;
-
-                            upgradeColumn(column);
-                        } else if (column.version === '4') {
-                            // latest version
-                        }
-                    } else {
-                        // assertNever(column);
-                        unreachable();
-                    }
-                } else {
-                    (column as any).version = 2;
-                    (column as any).boardPosition = Math.random();
-
-                    upgradeColumn(column);
-                }
-            },
             constraints: [
                 {
                     name: 'column.authorId fk',

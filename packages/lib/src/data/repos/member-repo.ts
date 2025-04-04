@@ -4,7 +4,7 @@ import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
-import {type Brand, unreachable} from '../../utils.js';
+import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
@@ -45,24 +45,13 @@ export const ROLE_ORDER: Record<MemberRole, number> = {
 
 export const MEMBER_ROLES = Object.keys(ROLE_ORDER) as MemberRole[];
 
-interface MemberV1 extends Doc<[MemberId]> {
+export interface Member extends Doc<[MemberId]> {
     readonly id: MemberId;
     readonly userId: UserId;
     readonly boardId: BoardId;
-    role: MemberRole;
-}
-
-export interface MemberV2 extends Doc<[MemberId]> {
-    readonly id: MemberId;
-    readonly userId: UserId;
-    readonly boardId: BoardId;
-    readonly version: '2';
     role: MemberRole;
     position: number;
 }
-
-export interface Member extends MemberV2 {}
-type StoredMember = MemberV1 | MemberV2;
 
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
@@ -75,7 +64,6 @@ export function zMember() {
             userId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
             role: zMemberRole(),
-            version: Type.Literal('2'),
             position: Type.Number(),
         }),
     ]);
@@ -103,23 +91,6 @@ export class MemberRepo {
                 [BOARD_ID_INDEX]: x => [x.boardId],
             },
             schema: zMember(),
-            upgrade: function upgrade(doc: StoredMember): void {
-                if (typeof (doc as any).position !== 'number') {
-                    (doc as any).position = Math.random();
-                }
-                if ('version' in doc) {
-                    if (doc.version === '2') {
-                        // latest version
-                    } else {
-                        unreachable();
-                    }
-                } else {
-                    (doc as any).version = '2';
-                    (doc as any).position = Math.random();
-
-                    upgrade(doc);
-                }
-            },
             constraints: [
                 {
                     name: 'member.userId fk',

@@ -610,3 +610,6 @@ export async function infiniteRetry<R>(
 
     throw new CancelledError('infiniteRetry cancelled', undefined);
 }
+
+export type UnknownType =
+    'placeholder_type_for_cases_when_new_type_is_added_in_the_future';

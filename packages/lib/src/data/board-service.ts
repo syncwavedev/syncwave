@@ -45,7 +45,6 @@ export class BoardService {
             id: params.boardId ?? createBoardId(),
             createdAt: now,
             updatedAt: now,
-            deleted: false,
             name: params.name,
             authorId: params.authorId,
             key: params.key.toUpperCase(),
@@ -58,11 +57,9 @@ export class BoardService {
                 createdAt: now,
                 updatedAt: now,
                 userId: params.authorId,
-                deleted: false,
                 role: 'owner',
                 // todo: add to the beginning of the user list
                 position: Math.random(),
-                version: '2',
             }),
             ...params.members.map(async member => {
                 const account = await getAccount({
@@ -82,13 +79,11 @@ export class BoardService {
                 await this.members.create({
                     boardId: board.id,
                     createdAt: now,
-                    deleted: false,
                     id: createMemberId(),
                     position: Math.random(),
                     role: 'writer',
                     updatedAt: now,
                     userId: account.userId,
-                    version: '2',
                 });
             }),
         ]);

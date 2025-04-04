@@ -163,7 +163,7 @@ export function createReadApi() {
                                 .mapParallel(member =>
                                     toMemberDto(tx, member.id)
                                 )
-                                .filter(x => !x.deleted && !x.board.deleted)
+                                .filter(x => !x.deletedAt && !x.board.deletedAt)
                                 .toArray();
                         });
                     },
@@ -495,7 +495,7 @@ export function createReadApi() {
                                     tx.boards.getById(member.boardId, true)
                                 )
                                 .assert(x => x !== undefined, 'board not found')
-                                .filter(x => x.deleted === false)
+                                .filter(x => !x.deletedAt)
                                 .toArray(),
                         ]);
                     }

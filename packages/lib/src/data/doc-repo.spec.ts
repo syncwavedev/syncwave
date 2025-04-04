@@ -53,7 +53,6 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Alice',
             age: 30,
-            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -69,7 +68,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.create(doc);
         });
@@ -84,7 +83,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             return repo2.getById(id);
         });
@@ -111,7 +110,6 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Bob',
             age: 22,
-            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -124,7 +122,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange: async () => {},
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.create(doc);
         });
@@ -139,7 +137,7 @@ describe('DocStore with MemKVStore', () => {
                     onChange: async () => {},
                     schema,
                     constraints: [],
-                    scheduleTrigger: async () => {},
+                    scheduleTrigger: () => {},
                 });
                 await repo.create(doc);
             })
@@ -152,7 +150,6 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Charlie',
             age: 40,
-            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -167,7 +164,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.create(doc);
         });
@@ -180,7 +177,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             return repo.update(id, current => {
                 current.age = 41;
@@ -197,7 +194,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             return repo.getById(id);
         });
@@ -214,7 +211,6 @@ describe('DocStore with MemKVStore', () => {
             pk: id,
             name: 'Charlie',
             age: 40,
-            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -228,7 +224,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.create(doc);
         });
@@ -241,10 +237,10 @@ describe('DocStore with MemKVStore', () => {
                     onChange,
                     schema,
                     constraints: [],
-                    scheduleTrigger: async () => {},
+                    scheduleTrigger: () => {},
                 });
                 return repo.update(id, current => {
-                    (current as any).unknownProp = 'val';
+                    (current as Record<string, any>).unknownProp = 'val';
                 });
             })
         ).resolves.toEqual({
@@ -254,7 +250,6 @@ describe('DocStore with MemKVStore', () => {
             createdAt: expect.any(Number) as Timestamp,
             updatedAt: expect.any(Number) as Timestamp,
             unknownProp: 'val',
-            deleted: false,
         });
 
         await expect(
@@ -265,10 +260,10 @@ describe('DocStore with MemKVStore', () => {
                     onChange,
                     schema,
                     constraints: [],
-                    scheduleTrigger: async () => {},
+                    scheduleTrigger: () => {},
                 });
                 return repo.update(id, current => {
-                    (current as any).pk = 'val';
+                    (current as Record<string, any>).pk = 'val';
                 });
             })
         ).rejects.toThrowError();
@@ -281,10 +276,10 @@ describe('DocStore with MemKVStore', () => {
                     onChange,
                     schema,
                     constraints: [],
-                    scheduleTrigger: async () => {},
+                    scheduleTrigger: () => {},
                 });
                 return repo.update(id, current => {
-                    (current as any).pk = ['val'];
+                    (current as Record<string, any>).pk = ['val'];
                 });
             })
         ).rejects.toThrowError();
@@ -300,13 +295,12 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.create({
                 pk: [createUuid()],
                 name: 'Dana',
                 age: 20,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -314,7 +308,6 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Dana',
                 age: 25,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             }); // same name
@@ -322,7 +315,6 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Eli',
                 age: 25,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -335,7 +327,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             const results: MyDoc[] = [];
             const doc$ = repo.get('byName', ['Dana']);
@@ -357,7 +349,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             const results: MyDoc[] = [];
             const doc$ = repo.get('byAge', [25]);
@@ -379,13 +371,12 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.create({
                 pk: [createUuid()],
                 name: 'Fiona',
                 age: 10,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -393,7 +384,6 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Gabe',
                 age: 15,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -401,7 +391,6 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Hank',
                 age: 20,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -409,7 +398,6 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Iris',
                 age: 25,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -417,7 +405,6 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Jake',
                 age: 30,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -431,7 +418,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
 
             const results: MyDoc[] = [];
@@ -463,13 +450,12 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.create({
                 pk: [createUuid()],
                 name: 'Zed',
                 age: 55,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -477,7 +463,6 @@ describe('DocStore with MemKVStore', () => {
                 pk: [createUuid()],
                 name: 'Zed',
                 age: 60,
-                deleted: false,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -490,7 +475,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await expect(
                 repo.getUnique('byName', ['Zed'])
@@ -505,7 +490,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             const zedEntries: MyDoc[] = [];
             const zedDoc$ = repo.get('byName', ['Zed']);
@@ -525,7 +510,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             return repo.getUnique('byName', ['Zed']);
         });
@@ -544,7 +529,7 @@ describe('DocStore with MemKVStore', () => {
                     onChange,
                     schema,
                     constraints: [],
-                    scheduleTrigger: async () => {},
+                    scheduleTrigger: () => {},
                 });
                 return repo.update(nonExistentId, doc => {
                     doc.name = 'Nope';
@@ -560,7 +545,6 @@ describe('DocStore with MemKVStore', () => {
             pk: [createUuid()],
             name: 'Alpha',
             age: 1,
-            deleted: false,
             createdAt: now,
             updatedAt: now,
         };
@@ -571,7 +555,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.create(createdDoc);
         });
@@ -593,7 +577,7 @@ describe('DocStore with MemKVStore', () => {
                 onChange,
                 schema,
                 constraints: [],
-                scheduleTrigger: async () => {},
+                scheduleTrigger: () => {},
             });
             await repo.update(createdDoc.pk, doc => {
                 doc.age = 2;

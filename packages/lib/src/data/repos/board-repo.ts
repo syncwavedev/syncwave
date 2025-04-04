@@ -42,7 +42,6 @@ export function zBoard() {
             key: Type.String(),
             name: Type.String(),
             authorId: Uuid<UserId>(),
-            deleted: Type.Boolean(),
         }),
     ]);
 }

@@ -4,11 +4,11 @@
 import 'dotenv/config';
 
 import {WsTransportClient} from '../packages/app/src/ws-transport-client.js';
-import {MsgpackCodec} from '../packages/data/src/codec.js';
+import {MsgpackCodec} from '../packages/lib/src/codec.js';
 import {
     CoordinatorClient,
     PersistentConnection,
-} from '../packages/data/src/index.js';
+} from '../packages/lib/src/index.js';
 
 const client = new CoordinatorClient(
     new PersistentConnection(

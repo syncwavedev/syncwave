@@ -276,7 +276,6 @@ export class Agent {
             boardId: board.id,
             columnId: options.columnId,
             createdAt: now,
-            deleted: false,
             id: cardId,
             assigneeId: me.userId,
             position: toPosition(options.placement),
@@ -391,13 +390,13 @@ export class Agent {
 
     deleteColumn(columnId: ColumnId): void {
         this.crdtManager.update<Column>(columnId, x => {
-            x.deleted = true;
+            x.deletedAt = getNow();
         });
     }
 
     deleteCard(cardId: CardId): void {
         this.crdtManager.update<Card>(cardId, x => {
-            x.deleted = true;
+            x.deletedAt = getNow();
         });
     }
 
@@ -409,7 +408,7 @@ export class Agent {
 
     deleteBoard(boardId: BoardId): void {
         this.crdtManager.update<Board>(boardId, x => {
-            x.deleted = true;
+            x.deletedAt = getNow();
         });
     }
 

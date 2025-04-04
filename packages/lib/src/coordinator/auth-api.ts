@@ -250,15 +250,12 @@ export async function getAccount(params: {
             userId,
             verificationCode: await createVerificationCode(params.crypto),
             authActivityLog: [],
-            deleted: false,
         }),
         params.users.create({
             id: userId,
             createdAt: now,
             updatedAt: now,
-            deleted: false,
             fullName: params.fullName ?? 'Anonymous',
-            version: '4',
         }),
     ]);
 

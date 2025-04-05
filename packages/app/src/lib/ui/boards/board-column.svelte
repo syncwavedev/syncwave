@@ -73,25 +73,25 @@
         data-column-id={column.id}
     >
         <div
-            class="bg-surface-0 sticky top-0 z-1 flex min-h-10 items-center px-2 py-1"
+            class="bg-surface-0 sticky top-0 z-1 flex min-h-10 items-center px-2 py-1 text-2xs icon-2xs"
             data-disable-scroll-view-drag="true"
         >
-            <div class="text-2xs font-medium flex items-center gap-1.5">
-                <span class="text-base">
-                    <ColumnIcon active={columnPosition} total={columnsCount} />
-                </span>
+            <div class="font-medium flex items-center gap-1.5">
+                <ColumnIcon active={columnPosition} total={columnsCount} />
+
                 {column.name}
             </div>
-            <button onclick={editColumn} class="btn--icon ml-auto">
-                <EllipsisIcon class="pointer-events-none" />
-            </button>
+
             <EditColumnDialog
                 {column}
                 open={editColumnOpen}
                 onClose={() => (editColumnOpen = false)}
             />
-            <button class="btn--icon" onclick={onCreateCard}>
+            <button class="btn--icon ml-auto" onclick={onCreateCard}>
                 <PlusIcon class="pointer-events-none" />
+            </button>
+            <button onclick={editColumn} class="btn--icon">
+                <EllipsisIcon class="pointer-events-none" />
             </button>
         </div>
 

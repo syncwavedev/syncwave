@@ -8,7 +8,7 @@
         footer,
     }: {
         children: Snippet;
-        footer: Snippet;
+        footer?: Snippet;
     } = $props();
 </script>
 
@@ -23,7 +23,7 @@
         ></div>
 
         <div
-            class="bg-surface-1 fixed top-12 left-1/2 z-[1000] w-full max-w-xl -translate-x-1/2 rounded-lg shadow-lg border border-divider text-sm"
+            class="bg-surface-1 fixed top-12 left-1/2 z-[1000] w-full max-w-xl -translate-x-1/2 rounded-lg shadow-lg border border-divider text-sm icon-sm"
         >
             <ScrollArea class="max-h-dialog" orientation="both">
                 <div class="h-dialog flex flex-col">
@@ -40,7 +40,7 @@
                             <input
                                 autocomplete="off"
                                 type="email"
-                                class="input ml-1.5"
+                                class="input"
                                 placeholder="Find a board..."
                                 autofocus
                             />
@@ -57,10 +57,12 @@
                             {@render children()}
                         </ScrollArea>
                     </div>
-                    <div class="shrink-0">
-                        <hr />
-                        {@render footer()}
-                    </div>
+                    {#if footer}
+                        <div class="shrink-0">
+                            <hr />
+                            {@render footer()}
+                        </div>
+                    {/if}
                 </div>
             </ScrollArea>
         </div>

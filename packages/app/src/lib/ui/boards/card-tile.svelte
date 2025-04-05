@@ -126,29 +126,28 @@
                 {/if}
             </div>
             {#if !card.isDraft}
-                <div class="flex items-center">
-                    <span class="text-2xs text-ink-detail mr-auto">
-                        {#if card.counter}
-                            <HashtagIcon />{card.counter}
-                        {/if}
-                        by {card.author.fullName}
-                        {#if card.hoverUsers.length > 0}
-                            hovers {card.hoverUsers
-                                .map(x => x.fullName)
-                                .join(', ')}
-                        {/if}
-                        {#if card.viewerUsers.length > 0}
-                            viewers {card.viewerUsers
-                                .map(x => x.fullName)
-                                .join(', ')}
-                        {/if}
-                    </span>
+                <div class="flex items-center text-2xs text-ink-detail">
+                    {#if card.counter}
+                        <HashtagIcon />{card.counter}
+                    {/if}
+                    by {card.author.fullName}
+                    {#if card.hoverUsers.length > 0}
+                        hovers {card.hoverUsers.map(x => x.fullName).join(', ')}
+                    {/if}
+                    {#if card.viewerUsers.length > 0}
+                        viewers {card.viewerUsers
+                            .map(x => x.fullName)
+                            .join(', ')}
+                    {/if}
                     {#if todoStats.total > 0}
                         <span class="text-2xs text-ink-detail ml-auto">
                             {todoStats.checked} / {todoStats.total}
                         </span>
                     {/if}
-                    <span class="ml-2 text-[1.325rem]">
+                    <span
+                        class="ml-2 text-[1.325rem]"
+                        class:ml-auto={todoStats.total == 0}
+                    >
                         <Avatar name={card.author.fullName} />
                     </span>
                 </div>

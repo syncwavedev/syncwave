@@ -48,10 +48,10 @@
                         onSelect={item.onSelect}
                     >
                         <div
-                            class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-default outline-none"
+                            class="flex items-center gap-1.5 icon-xs text-xs dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-default outline-none"
                         >
-                            <span class="mr-1.5"><item.icon /></span>
-                            <span class="text-xs">{item.text}</span>
+                            <item.icon />
+                            {item.text}
                             {#if item.shortcut}
                                 <span class="ml-auto text-ink-detail"
                                     >{item.shortcut}</span

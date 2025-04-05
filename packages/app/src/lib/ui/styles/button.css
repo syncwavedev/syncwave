@@ -1,13 +1,5 @@
 .btn--icon {
     @apply text-ink-body hover:bg-surface-1 hover:text-ink grid aspect-square h-[2em] w-[2em] place-items-center rounded-full;
-
-    &.btn--icon--ink {
-        @apply bg-surface-3 hover:bg-surface-4 text-ink rounded-lg;
-    }
-
-    &.btn-sm {
-        @apply h-[1.5em] w-[1.5em];
-    }
 }
 
 .btn--block {
@@ -22,7 +14,12 @@
     @apply bg-surface-0 hover:bg-surface-2 dark:bg-surface-3 dark:hover:bg-surface-4 border-divider-object flex h-[2.6em] items-center justify-center rounded-md border px-[0.5em];
 }
 
-.btn--flat {
-    @apply py-[0.1em] px-[0.4em] rounded-sm gap-1.5 flex items-center leading-none text-ink-body
+.btn-ghost {
+    @apply h-[2em] px-[0.4em] rounded-sm gap-1.5 flex items-center leading-none
+	hover:bg-surface-1 hover:text-ink;
+}
+
+.btn-tinted {
+    @apply h-[2em] px-[0.4em] rounded-sm gap-1.5 flex items-center leading-none text-ink-body
 	hover:bg-surface-1 hover:text-ink bg-surface-1;
 }

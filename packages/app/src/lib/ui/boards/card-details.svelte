@@ -57,13 +57,13 @@
     <div class="flex-grow overflow-y-auto">
         <!-- Header with Context Menu -->
         <div
-            class="bg-surface-0 border-divider sticky top-0 z-20 flex items-center px-4 py-1"
+            class="bg-surface-0 border-divider sticky top-0 z-20 flex items-center px-4 py-2 text-xs icon-xs"
         >
-            <div class="text-xs flex items-baseline gap-1">
+            <div class="flex items-center gap-0.5 icon-base">
                 {#if card.isDraft}
                     New card
                 {:else}
-                    <span><HashtagIcon /></span>
+                    <HashtagIcon />
                     <span>{card.counter}</span>
                 {/if}
             </div>
@@ -90,25 +90,6 @@
                         <EllipsisIcon />
                     </button>
                 </DropdownMenu>
-                <div
-                    id="context-menu"
-                    class="bg-surface-2 border-divider-object absolute right-0 hidden w-46 rounded-lg border p-1"
-                >
-                    <ul>
-                        <li
-                            class="hover:bg-surface-3 flex h-[1.8rem] cursor-pointer items-center gap-1.5 rounded-sm px-2"
-                        >
-                            <LinkIcon />
-                            <span class="text-xs leading-none">Copy Link</span>
-                        </li>
-                        <li
-                            class="hover:bg-surface-3 text-ink-danger flex h-[1.8rem] cursor-pointer items-center gap-1.5 rounded-sm px-2"
-                        >
-                            <TrashIcon />
-                            <span class="text-xs leading-none">Delete </span>
-                        </li>
-                    </ul>
-                </div>
             </div>
             <button class="btn--icon" onclick={() => history.back()}>
                 <TimesIcon />
@@ -138,9 +119,9 @@
                     onValueChange={value =>
                         agent.setCardColumn(card.id, value as ColumnId)}
                 >
-                    <button class="btn--flat text-sm">
-                        <span class="text-base"><CircleDashedIcon /></span>
-                        <span class="text-2xs">{card.column.name}</span>
+                    <button class="btn-tinted text-2xs icon-2xs">
+                        <CircleDashedIcon />
+                        {card.column.name}
                     </button>
                 </Select>
 
@@ -150,11 +131,9 @@
                     onValueChange={value =>
                         agent.setCardAssignee(card.id, value as UserId)}
                 >
-                    <button class="btn--flat text-sm">
-                        <span class="text-base"><UserIcon /></span>
-                        <span class="text-2xs"
-                            >{card.assignee?.fullName ?? 'Assignee'}</span
-                        >
+                    <button class="btn-tinted text-2xs icon-2xs">
+                        <UserIcon />
+                        {card.assignee?.fullName ?? 'Assignee'}
                     </button>
                 </Select>
             </div>

@@ -25,6 +25,7 @@
     import Avatar from '../components/avatar.svelte';
     import BoardCommands from './board-commands.svelte';
     import {commandCenter} from '../command-center/command-center-manager.svelte';
+    import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
 
     const {
         board,
@@ -192,7 +193,7 @@
     });
 
     let editBoardOpen = $state(false);
-    let editMyProfileOpen = $state(false);
+    // let editMyProfileOpen = $state(false);
 
     function editBoard() {
         editBoardOpen = true;
@@ -202,13 +203,13 @@
         }, true);
     }
 
-    function editMyProfile() {
-        editMyProfileOpen = true;
+    // function editMyProfile() {
+    //     editMyProfileOpen = true;
 
-        router.action(() => {
-            editMyProfileOpen = false;
-        }, true);
-    }
+    //     router.action(() => {
+    //         editMyProfileOpen = false;
+    //     }, true);
+    // }
 
     let columnsContainerRef: HTMLDivElement | null = $state(null);
     let viewportRef: HTMLDivElement | null = $state(null);
@@ -238,57 +239,56 @@
 
 <main class="flex h-screen w-full">
     <div class="bg-surface-0 flex min-w-0 grow flex-col">
-        <div class="bg-surface-0 px-4">
-            <div class="my-1 flex items-center">
-                <button
-                    class="text-xs leading-none font-semibold"
-                    onclick={() => commandCenter.open(boardCommands)}
-                >
-                    {board.name}
-                </button>
+        <div class="my-2 flex items-center text-xs icon-xs px-4">
+            <button
+                class="btn-ghost font-semibold -ml-1"
+                onclick={() => commandCenter.open(boardCommands)}
+            >
+                <span>{board.name}</span>
+                <ChevronDownIcon />
+            </button>
 
-                <div class="text-2xl text-ink-detail ml-auto flex gap-2">
-                    {#each board.onlineUsers as user (user.user.id)}
-                        <div
-                            class={user.state.active ? '' : 'opacity-50'}
-                            animate:flip={{duration: 200}}
-                        >
-                            <Avatar
-                                title={`${user.user.fullName} - ${user.state.active ? 'online' : 'away'}`}
-                                class="border-blue-400 border-2"
-                                name={user.user.fullName}
-                            />
-                        </div>
-                    {/each}
-                </div>
-                <button
-                    class="btn--icon ml-auto"
-                    onclick={() => createCard(undefined)}
-                >
-                    <PlusIcon />
-                </button>
-                <button onclick={editBoard} class="btn--icon">
-                    <EllipsisIcon />
-                </button>
-                <EditBoardDialog
-                    meId={me.profile.id}
-                    {board}
-                    open={editBoardOpen}
-                    onClose={() => {
-                        editBoardOpen = false;
-                    }}
-                />
-                <button onclick={editMyProfile} class="btn--icon">
-                    <UserIcon />
-                </button>
-                <EditProfileDialog
-                    {me}
-                    open={editMyProfileOpen}
-                    onClose={() => {
-                        editMyProfileOpen = false;
-                    }}
-                />
+            <div class="text-2xl text-ink-detail ml-auto flex gap-2">
+                {#each board.onlineUsers as user (user.user.id)}
+                    <div
+                        class={user.state.active ? '' : 'opacity-50'}
+                        animate:flip={{duration: 200}}
+                    >
+                        <Avatar
+                            title={`${user.user.fullName} - ${user.state.active ? 'online' : 'away'}`}
+                            class="border-blue-400 border-2"
+                            name={user.user.fullName}
+                        />
+                    </div>
+                {/each}
             </div>
+            <button
+                class="btn--icon ml-auto"
+                onclick={() => createCard(undefined)}
+            >
+                <PlusIcon />
+            </button>
+            <button onclick={editBoard} class="btn--icon">
+                <EllipsisIcon />
+            </button>
+            <EditBoardDialog
+                meId={me.profile.id}
+                {board}
+                open={editBoardOpen}
+                onClose={() => {
+                    editBoardOpen = false;
+                }}
+            />
+            <!-- <button onclick={editMyProfile} class="btn--icon">
+                <UserIcon />
+            </button>
+            <EditProfileDialog
+                {me}
+                open={editMyProfileOpen}
+                onClose={() => {
+                    editMyProfileOpen = false;
+                }}
+            /> -->
         </div>
         <Scrollable
             orientation="horizontal"

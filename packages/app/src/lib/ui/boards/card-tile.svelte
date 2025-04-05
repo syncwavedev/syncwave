@@ -99,7 +99,7 @@
         cursor-default
         gap-1
         rounded-md
-        p-2
+        p-2.5
         select-none
         content
     "

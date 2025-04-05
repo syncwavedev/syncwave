@@ -8,9 +8,9 @@
 
 <div
     title={title ?? name}
-    class={`grid h-[1em] w-[1em] place-items-center rounded-full bg-[#3F6B7E] text-white ${className ?? ''}`}
+    class={`avatar grid place-items-center rounded-full bg-[#3F6B7E] text-white ${className ?? ''}`}
 >
-    <div class="text-[0.45em] font-semibold">
+    <div class="font-semibold text-[calc(var(--icon-size)/2)]">
         {name[0]?.toUpperCase() ?? 'U'}
     </div>
 </div>

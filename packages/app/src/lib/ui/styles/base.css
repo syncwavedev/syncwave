@@ -1,0 +1,16 @@
+html,
+body {
+    @apply text-ink bg-surface-0 overscroll-none font-sans antialiased select-none;
+}
+
+body {
+    @apply text-md;
+}
+
+hr {
+    @apply border-divider border-t-[0.5px];
+}
+
+textarea {
+    resize: none;
+}

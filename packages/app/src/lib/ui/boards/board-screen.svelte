@@ -14,8 +14,6 @@
     import CardDetails from './card-details.svelte';
     import {getAgent} from '../../agent/agent.svelte';
     import EditBoardDialog from '../../components/edit-board-dialog/edit-board-dialog.svelte';
-    import UserIcon from '../components/icons/user-icon.svelte';
-    import EditProfileDialog from '../../components/edit-profile-dialog/edit-profile-dialog.svelte';
     import router from '../../router';
     import {flip} from 'svelte/animate';
     import {createDndContext, DND_REORDER_DURATION_MS} from './board-dnd';
@@ -239,9 +237,9 @@
 
 <main class="flex h-screen w-full">
     <div class="bg-surface-0 flex min-w-0 grow flex-col">
-        <div class="my-2 flex items-center text-xs icon-xs px-4">
+        <div class="mt-2 mb-3 flex items-center px-4">
             <button
-                class="btn-ghost font-semibold -ml-1"
+                class="btn-ghost font-medium -ml-1"
                 onclick={() => commandCenter.open(boardCommands)}
             >
                 <span>{board.name}</span>
@@ -300,7 +298,7 @@
             <div
                 bind:this={boardRef}
                 bind:this={columnsContainerRef}
-                class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 text-xs"
+                class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2"
             >
                 {#each board.columns as column, i (column.id)}
                     <div animate:flip={{duration: DND_REORDER_DURATION_MS}}>

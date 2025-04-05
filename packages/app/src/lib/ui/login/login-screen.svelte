@@ -91,7 +91,7 @@
     <div class="w-full max-w-2xs text-center mt-[23vh] mx-auto">
         {#if !showCodeInput}
             <h1 class="mb-1 font-extrabold text-2xl">Let's get started!</h1>
-            <p class="text-ink-detail mb-8 text-xs">
+            <p class="text-ink-detail mb-8">
                 Please enter your email to log in or sign up, or continue with
                 Google.
             </p>
@@ -182,7 +182,7 @@
             </div>
         {:else}
             <h1 class="mb-1 font-extrabold text-2xl">Check your email</h1>
-            <p class="text-ink-detail text-xs mb-6">
+            <p class="text-ink-detail mb-6">
                 Enter the 6-digit code sent to <span class="font-medium"
                     >{email}</span
                 >
@@ -223,7 +223,7 @@
                 {/if}
             </form>
         {/if}
-        <div class="mt-8 mx-auto text-ink-detail text-center text-xs">
+        <div class="mt-8 mx-auto text-ink-detail text-center">
             By continuing, you acknowledge and accept our <a
                 href="/terms"
                 class="text-primary hover:underline">Terms of Service</a

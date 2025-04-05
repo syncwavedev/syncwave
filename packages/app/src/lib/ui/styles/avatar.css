@@ -1,0 +1,4 @@
+.avatar {
+    block-size: var(--icon-size);
+    inline-size: var(--icon-size);
+}

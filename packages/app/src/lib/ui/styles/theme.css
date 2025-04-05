@@ -1,19 +1,15 @@
 @import 'tailwindcss';
 
 @theme static {
-    --text-3xs: 0.75rem; /* 12px */
-    --text-2xs: 0.8125rem; /* 13px */
-    --text-xs: 0.875rem; /* 14px */
-    --text-sm: 0.9375rem; /* 15px */
-    --text-base: 1rem; /* 16px */
-    --text-lg: 1.0625rem; /* 17px */
+    --text-xs: 0.75rem; /* 12px */
+    --text-sm: 0.8125rem; /* 13px */
+    --text-md: 0.875rem; /* 14px */
+    --text-lg: 0.9375rem; /* 15px */
 
-    --text-3xs--line-height: 0.875rem; /* 14px */
-    --text-2xs--line-height: 1rem; /* 16px */
-    --text-xs--line-height: 1.125rem; /* 18px */
-    --text-sm--line-height: 1.25rem; /* 20px */
-    --text-base--line-height: 1.3125rem; /* 21px */
-    --text-lg--line-height: 1.375rem; /* 22px */
+    --text-xs--line-height: 0.875rem; /* 14px */
+    --text-sm--line-height: 1rem; /* 16px */
+    --text-md--line-height: 1.125rem; /* 18px */
+    --text-lg--line-height: 1.25rem; /* 20px */
 
     /* Gray */
     --color-gray-20: oklch(98.8% 0.002 110deg);
@@ -42,29 +38,29 @@
     --color-gray-950: oklch(24% 0 110deg);
 
     /* Slate */
-    --color-slate-50: oklch(96% 0.001 246deg);
-    --color-slate-100: oklch(92% 0.0012 246deg);
-    --color-slate-150: oklch(88% 0.0014 246deg);
-    --color-slate-200: oklch(84% 0.0016 246deg);
-    --color-slate-250: oklch(80% 0.0018 246deg);
-    --color-slate-300: oklch(76% 0.002 246deg);
-    --color-slate-350: oklch(72% 0.0022 246deg);
-    --color-slate-400: oklch(68% 0.0024 246deg);
-    --color-slate-450: oklch(64% 0.0026 246deg);
-    --color-slate-500: oklch(60% 0.0028 246deg);
-    --color-slate-550: oklch(56% 0.003 246deg);
-    --color-slate-600: oklch(52% 0.0032 246deg);
-    --color-slate-650: oklch(48% 0.003 246deg);
-    --color-slate-700: oklch(44% 0.0028 246deg);
-    --color-slate-750: oklch(40% 0.026 246deg);
-    --color-slate-800: oklch(36% 0.024 246deg);
-    --color-slate-830: oklch(33.6% 0.022 246deg);
-    --color-slate-850: oklch(32% 0.021 246deg);
-    --color-slate-860: oklch(31.2% 0.021 246deg);
-    --color-slate-890: oklch(28.8% 0.02 242deg);
-    --color-slate-900: oklch(28% 0.019 246deg);
-    --color-slate-920: oklch(26.4% 0.018 242deg);
-    --color-slate-950: oklch(24% 0.014 246deg);
+    --color-slate-50: oklch(96% 0.003 264deg);
+    --color-slate-100: oklch(92% 0.0035 264deg);
+    --color-slate-150: oklch(88% 0.004 264deg);
+    --color-slate-200: oklch(84% 0.0045 264deg);
+    --color-slate-250: oklch(80% 0.005 264deg);
+    --color-slate-300: oklch(76% 0.0055 264deg);
+    --color-slate-350: oklch(72% 0.006 264deg);
+    --color-slate-400: oklch(68% 0.0065 264deg);
+    --color-slate-450: oklch(64% 0.007 264deg);
+    --color-slate-500: oklch(60% 0.0075 264deg);
+    --color-slate-550: oklch(56% 0.008 264deg);
+    --color-slate-600: oklch(52% 0.0085 264deg);
+    --color-slate-650: oklch(48% 0.008 264deg);
+    --color-slate-700: oklch(44% 0.0075 264deg);
+    --color-slate-750: oklch(40% 0.007 264deg);
+    --color-slate-800: oklch(36% 0.0065 264deg);
+    --color-slate-830: oklch(33.6% 0.006 264deg);
+    --color-slate-850: oklch(32% 0.0055 264deg);
+    --color-slate-860: oklch(31.2% 0.007 264deg);
+    --color-slate-890: oklch(28.8% 0.0085 264deg);
+    --color-slate-900: oklch(28% 0.009 264deg);
+    --color-slate-920: oklch(26.4% 0.0095 264deg);
+    --color-slate-950: oklch(24% 0.01 264deg);
 
     /* Blue */
     --color-blue-50: oklch(96% 0.01 255deg);
@@ -200,9 +196,9 @@
 
         --theme-color-divider-subtle: var(--color-slate-880);
         --theme-color-divider: var(--color-slate-800);
-        --theme-color-divider-object: var(--color-slate-700);
+        --theme-color-divider-object: var(--color-slate-750);
 
-        --theme-color-scrollbar: var(--color-slate-450);
+        --theme-color-scrollbar: var(--color-slate-750);
 
         --theme-color-surface-0: var(--color-slate-920);
         --theme-color-surface-1: var(--color-slate-900);
@@ -213,18 +209,5 @@
 
         --theme-color-subtle-active: var(--color-blue-850);
         --theme-color-divider-active: var(--color-blue-750);
-    }
-
-    html,
-    body {
-        @apply text-ink bg-surface-0 overscroll-none font-sans antialiased select-none;
-    }
-
-    hr {
-        @apply border-divider border-t-[0.5px];
-    }
-
-    textarea {
-        resize: none;
     }
 }

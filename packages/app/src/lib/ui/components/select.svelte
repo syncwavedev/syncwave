@@ -46,7 +46,7 @@
                         class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-7 rounded-sm cursor-default outline-none"
                     >
                         {#snippet children({selected})}
-                            <span class="truncate text-xs">{option.label}</span>
+                            <span class="truncate">{option.label}</span>
                             {#if selected}
                                 <span class="ml-auto">
                                     <CheckIcon />

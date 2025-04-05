@@ -1,7 +1,9 @@
 @import './theme.css';
+@import './base.css';
 @import './button.css';
 @import './input.css';
 @import './icons.css';
+@import './avatar.css';
 
 html,
 body {

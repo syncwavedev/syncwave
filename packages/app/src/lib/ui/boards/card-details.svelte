@@ -57,7 +57,7 @@
     <div class="flex-grow overflow-y-auto">
         <!-- Header with Context Menu -->
         <div
-            class="bg-surface-0 border-divider sticky top-0 z-20 flex items-center px-4 py-2 text-xs icon-xs"
+            class="bg-surface-0 border-divider sticky top-0 z-20 flex items-center px-4 py-2"
         >
             <div class="flex items-center gap-0.5 icon-base">
                 {#if card.isDraft}
@@ -98,7 +98,7 @@
         <!-- Task Description -->
         <div class="mx-2">
             <div
-                class="input w-full text-sm leading-relaxed py-1 px-2 rounded-sm transition-colors duration-150"
+                class="input w-full text-lg leading-relaxed py-1 px-2 rounded-sm transition-colors duration-150"
             >
                 <Editor
                     bind:this={editor}
@@ -119,7 +119,7 @@
                     onValueChange={value =>
                         agent.setCardColumn(card.id, value as ColumnId)}
                 >
-                    <button class="btn-tinted text-2xs icon-2xs">
+                    <button class="btn-tinted text-sm icon-sm">
                         <CircleDashedIcon />
                         {card.column.name}
                     </button>
@@ -131,7 +131,7 @@
                     onValueChange={value =>
                         agent.setCardAssignee(card.id, value as UserId)}
                 >
-                    <button class="btn-tinted text-2xs icon-2xs">
+                    <button class="btn-tinted text-sm icon-sm">
                         <UserIcon />
                         {card.assignee?.fullName ?? 'Assignee'}
                     </button>

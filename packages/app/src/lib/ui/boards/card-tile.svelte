@@ -93,19 +93,15 @@
         bg-surface-2
         hover:bg-surface-3
         group
-        data-active:border-divider-active
         data-active:bg-subtle-active
         flex
         items-end
         cursor-default
         gap-1
         rounded-md
-        border-surface-2
         p-2
         select-none
-        text-xs
         content
-        border
     "
         class:border-dashed={card.isDraft}
         onclick={onClick}
@@ -120,13 +116,15 @@
                 data-active={active || undefined}
             >
                 {#if !card.isDraft}
-                    <span>
+                    <span class="truncate">
                         {preview}
                     </span>
                 {/if}
             </div>
             {#if !card.isDraft}
-                <div class="flex items-center text-2xs text-ink-detail">
+                <div
+                    class="flex items-center text-sm icon-base text-ink-detail"
+                >
                     {#if card.counter}
                         <HashtagIcon />{card.counter}
                     {/if}
@@ -140,15 +138,15 @@
                             .join(', ')}
                     {/if}
                     {#if todoStats.total > 0}
-                        <span class="text-2xs text-ink-detail ml-auto">
+                        <span class="text-ink-detail ml-auto">
                             {todoStats.checked} / {todoStats.total}
                         </span>
                     {/if}
                     <span
-                        class="ml-2 text-[1.325rem]"
+                        class="ml-2 icon-lg"
                         class:ml-auto={todoStats.total == 0}
                     >
-                        <Avatar name={card.author.fullName} />
+                        <Avatar name={card.assignee?.fullName ?? 'Unknown'} />
                     </span>
                 </div>
             {/if}

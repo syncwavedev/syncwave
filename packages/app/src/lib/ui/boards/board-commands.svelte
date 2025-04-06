@@ -1,7 +1,6 @@
 <script lang="ts">
     import type {Board} from 'syncwave';
     import CommandView from '../command-center/command-view.svelte';
-    import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
     import CommandCenterItem from '../command-center/command-center-item.svelte';

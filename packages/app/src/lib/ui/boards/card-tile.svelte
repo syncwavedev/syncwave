@@ -116,15 +116,13 @@
                 data-active={active || undefined}
             >
                 {#if !card.isDraft}
-                    <span class="truncate">
+                    <span class="truncate text-lg">
                         {preview}
                     </span>
                 {/if}
             </div>
             {#if !card.isDraft}
-                <div
-                    class="flex items-center text-sm icon-base text-ink-detail"
-                >
+                <div class="flex items-center icon-base text-ink-detail">
                     {#if card.counter}
                         <HashtagIcon />{card.counter}
                     {/if}

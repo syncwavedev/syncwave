@@ -1,5 +1,5 @@
 :root {
-    --icon-size: 1.125rem;
+    --icon-size: 1rem;
 }
 
 .icon {
@@ -14,15 +14,15 @@
     --icon-size: 1em;
 }
 
-.icon-xs {
+.icon-sm {
     --icon-size: 0.875rem;
 }
-.icon-sm {
+.icon-md {
     --icon-size: 1rem;
 }
-.icon-md {
+.icon-lg {
     --icon-size: 1.125rem;
 }
-.icon-lg {
+.icon-xl {
     --icon-size: 1.25rem;
 }

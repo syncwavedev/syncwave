@@ -160,7 +160,7 @@
 
 @layer base {
     [data-theme='light'] {
-        --theme-color-ink: var(--color-gray-950);
+        --theme-color-ink: var(--color-gray-850);
         --theme-color-ink-body: var(--color-gray-650);
         --theme-color-ink-detail: var(--color-gray-500);
         --theme-color-ink-placeholder: var(--color-gray-350);

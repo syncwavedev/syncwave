@@ -19,5 +19,6 @@
 }
 
 .btn-tinted {
-    @apply h-[2em] px-[0.4em] rounded-sm gap-1.5 flex items-center text-ink-body hover:bg-surface-1 hover:text-ink bg-surface-1;
+    @apply h-[2em] px-[0.4em] rounded-sm gap-1.5 flex items-center  text-ink-body
+	hover:bg-surface-1 hover:text-ink bg-surface-1;
 }

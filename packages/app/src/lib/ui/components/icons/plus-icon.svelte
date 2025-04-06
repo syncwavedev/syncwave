@@ -10,15 +10,14 @@
 
 <svg
     xmlns="http://www.w3.org/2000/svg"
-    fill="none"
+    width="24"
+    height="24"
     viewBox="0 0 24 24"
-    stroke-width="1.5"
+    fill="none"
     stroke="currentColor"
-    class={cx(className, 'icon')}
+    stroke-width="1.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={cx('icon', className)}
+    ><path d="M5 12h14" /><path d="M12 5v14" /></svg
 >
-    <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M12 4.5v15m7.5-7.5h-15"
-    />
-</svg>

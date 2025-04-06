@@ -112,14 +112,14 @@
         </div>
         <!-- Task Actions -->
         <div class="mx-4 mt-3">
-            <div class="flex gap-2">
+            <div class="flex gap-2 text-ink-body">
                 <Select
                     value={card.column.id}
                     options={columnOptions}
                     onValueChange={value =>
                         agent.setCardColumn(card.id, value as ColumnId)}
                 >
-                    <button class="btn-tinted text-sm icon-sm">
+                    <button class="btn-ghost text-sm icon-sm">
                         <CircleDashedIcon />
                         {card.column.name}
                     </button>
@@ -131,7 +131,7 @@
                     onValueChange={value =>
                         agent.setCardAssignee(card.id, value as UserId)}
                 >
-                    <button class="btn-tinted text-sm icon-sm">
+                    <button class="btn-ghost text-sm icon-sm">
                         <UserIcon />
                         {card.assignee?.fullName ?? 'Assignee'}
                     </button>

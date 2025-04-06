@@ -12,11 +12,13 @@
     --text-lg--line-height: 1.25rem; /* 20px */
 
     /* Gray */
-    --color-gray-20: oklch(98.4% 0.0035 110deg);
-    --color-gray-40: oklch(96.8% 0.0025 110deg);
-    --color-gray-50: oklch(96% 0.0015 110deg);
-    --color-gray-60: oklch(95.2% 0.001 110deg);
-    --color-gray-80: oklch(93.6% 0.0005 110deg);
+    --color-gray-10: oklch(99.2% 0.001 110deg);
+    --color-gray-25: oklch(98% 0.001 110deg);
+    --color-gray-40: oklch(96.8% 0.001 110deg);
+    --color-gray-50: oklch(96% 0.001 110deg);
+    --color-gray-55: oklch(95.6% 0.001 110deg);
+    --color-gray-70: oklch(94.4% 0.001 110deg);
+    --color-gray-85: oklch(93.2% 0.0005 110deg);
     --color-gray-100: oklch(92% 0 110deg);
     --color-gray-150: oklch(88% 0 110deg);
     --color-gray-200: oklch(84% 0 110deg);
@@ -175,11 +177,11 @@
         --theme-color-scrollbar: var(--color-gray-350);
 
         --theme-color-surface-0: var(--color-white);
-        --theme-color-surface-1: var(--color-gray-20);
-        --theme-color-surface-2: var(--color-gray-40);
-        --theme-color-surface-3: var(--color-gray-60);
-        --theme-color-surface-4: var(--color-gray-80);
-        --theme-color-surface-5: var(--color-gray-100);
+        --theme-color-surface-1: var(--color-gray-10);
+        --theme-color-surface-2: var(--color-gray-25);
+        --theme-color-surface-3: var(--color-gray-40);
+        --theme-color-surface-4: var(--color-gray-55);
+        --theme-color-surface-5: var(--color-gray-70);
 
         --theme-color-subtle-active: var(--color-blue-100);
         --theme-color-divider-active: var(--color-blue-200);

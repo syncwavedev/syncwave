@@ -64,6 +64,11 @@
     let Page = $state<Component<any>>(Loading);
     let pageProps = $state<Record<string, string>>({});
 
+    let pageKey = $derived(`${Page.name}-${JSON.stringify(pageProps)}`);
+    $effect(() => {
+        console.log('pageProps', pageKey);
+    });
+
     onMount(() => {
         router.on('/', () => {
             Page = Index;
@@ -105,16 +110,18 @@
 </script>
 
 <main>
-    {#if appConfig.stage === 'local' || appConfig.stage === 'dev'}
-        <CommandPallete />
-        <Page {...pageProps} />
-    {:else}
-        <svelte:boundary>
-            {#snippet failed(error, reset)}
-                <ErrorCard {error} {reset} />
-            {/snippet}
+    {#key pageKey}
+        {#if appConfig.stage === 'local' || appConfig.stage === 'dev'}
             <CommandPallete />
             <Page {...pageProps} />
-        </svelte:boundary>
-    {/if}
+        {:else}
+            <svelte:boundary>
+                {#snippet failed(error, reset)}
+                    <ErrorCard {error} {reset} />
+                {/snippet}
+                <CommandPallete />
+                <Page {...pageProps} />
+            </svelte:boundary>
+        {/if}
+    {/key}
 </main>

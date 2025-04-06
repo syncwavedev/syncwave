@@ -90,8 +90,8 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-        bg-surface-2
-        hover:bg-surface-3
+        bg-surface-3
+        hover:bg-surface-4
         group
         data-active:bg-subtle-active
         flex

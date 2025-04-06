@@ -232,7 +232,7 @@
 </script>
 
 {#snippet boardCommands()}
-    <BoardCommands />
+    <BoardCommands boards={me.boards} />
 {/snippet}
 
 <main class="flex h-screen w-full">

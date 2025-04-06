@@ -19,19 +19,9 @@
     <div class="flex flex-col py-1 px-1">
         <CommandCenterItem icon={PlusIcon} label="New Board" />
         {#each boards as board (board.id)}
-            {#snippet trailing()}
-                <button
-                    class="btn--icon ml-auto"
-                    onclick={() => console.log(board.id)}
-                >
-                    <EllipsisIcon />
-                </button>
-            {/snippet}
-
             <CommandCenterItem
                 icon={HashtagIcon}
                 label={board.name}
-                {trailing}
                 onclick={() => {
                     commandCenter.close();
                     router.route(`/b/${board.key}`);

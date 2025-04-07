@@ -9,7 +9,7 @@
         type Ref,
     } from './board-dnd';
     import {getNow} from 'syncwave';
-    import HashtagIcon from '../../components/icons/hashtag-icon.svelte';
+    import HashtagIcon from '../components/icons/hashtag-icon.svelte';
 
     const {
         card,

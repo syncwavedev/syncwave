@@ -7,7 +7,7 @@
         ColumnTreeView,
     } from '../../agent/view.svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
-    import EllipsisIcon from '../../components/icons/ellipsis-icon.svelte';
+    import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import EditColumnDialog from '../../components/edit-column-dialog/edit-column-dialog.svelte';
     import {DND_CARD_GAP, getDndBoardContext, type Ref} from './board-dnd';
     import router from '../../router';

@@ -1,4 +1,12 @@
+:root {
+    --avatar-size: 1.5rem;
+}
+
 .avatar {
-    block-size: var(--icon-size);
-    inline-size: var(--icon-size);
+    block-size: var(--avatar-size);
+    inline-size: var(--avatar-size);
+}
+
+.avatar-sm {
+    --avatar-size: 1.25rem;
 }

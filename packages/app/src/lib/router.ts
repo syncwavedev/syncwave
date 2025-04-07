@@ -1,6 +1,6 @@
 import * as regexparam from 'regexparam';
 
-type NavItemType = 'page' | 'action' | 'command-center';
+type NavItemType = 'page' | 'action' | 'modal';
 
 interface NavItem {
     uri?: string;

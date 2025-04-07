@@ -5,27 +5,57 @@
     import PlusIcon from '../components/icons/plus-icon.svelte';
     import CommandCenterItem from '../command-center/command-center-item.svelte';
     import router from '../../router';
-    import {commandCenter} from '../command-center/command-center-manager.svelte';
-
+    import modalManager from '../modal-manager.svelte';
+    import CommandHeader from '../command-center/command-header.svelte';
+    import AddBoardModal from './add-board-modal.svelte';
     const {
         boards,
     }: {
         boards: Board[];
     } = $props();
+
+    let filter = $state('');
+
+    let inputs = [
+        {
+            id: 'new-board',
+            icon: PlusIcon,
+            label: 'New Board',
+            onclick: () => {
+                modalManager.navigate(newBoard, true);
+            },
+        },
+        ...boards.map(x => ({
+            id: x.id,
+            icon: HashtagIcon,
+            label: x.name,
+            onclick: () => {
+                modalManager.close();
+                router.route(`/b/${x.key}`);
+            },
+        })),
+    ];
+
+    let filtered = $derived(
+        inputs.filter(x => x.label.toLowerCase().includes(filter.toLowerCase()))
+    );
 </script>
 
+{#snippet newBoard()}
+    <AddBoardModal />
+{/snippet}
+
 <CommandView>
+    <CommandHeader placeholder="Search boards..." bind:filter />
     <div class="flex flex-col py-1 px-1">
-        <CommandCenterItem icon={PlusIcon} label="New Board" />
-        {#each boards as board (board.id)}
+        {#each filtered as item (item.id)}
             <CommandCenterItem
-                icon={HashtagIcon}
-                label={board.name}
-                onclick={() => {
-                    commandCenter.close();
-                    router.route(`/b/${board.key}`);
-                }}
+                icon={item.icon}
+                label={item.label}
+                onclick={item.onclick}
             />
+        {:else}
+            <p class="text-ink-detail my-2 ml-3">No matches</p>
         {/each}
     </div>
 </CommandView>

@@ -91,6 +91,8 @@
         data-active={active || undefined}
         class="
         bg-surface-3
+        dark:bg-surface-2
+        dark:hover:bg-surface-3
         hover:bg-surface-4
         group
         data-active:bg-subtle-active
@@ -141,7 +143,7 @@
                         </span>
                     {/if}
                     <span
-                        class="ml-2 icon-lg"
+                        class="ml-2 avatar-sm"
                         class:ml-auto={todoStats.total == 0}
                     >
                         <Avatar name={card.assignee?.fullName ?? 'Unknown'} />

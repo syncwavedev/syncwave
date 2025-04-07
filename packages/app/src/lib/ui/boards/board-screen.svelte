@@ -22,8 +22,9 @@
     import PanelSizeManager from '../../panel-size-manager';
     import Avatar from '../components/avatar.svelte';
     import BoardCommands from './board-commands.svelte';
-    import {commandCenter} from '../command-center/command-center-manager.svelte';
     import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
+    import modalManager from '../modal-manager.svelte';
+    import InviteMembersModal from './invite-members-modal.svelte';
 
     const {
         board,
@@ -235,12 +236,13 @@
     <BoardCommands boards={me.boards} />
 {/snippet}
 
+<!-- <InviteMembersModal /> -->
 <main class="flex h-screen w-full">
     <div class="bg-surface-0 flex min-w-0 grow flex-col">
         <div class="mt-2 mb-3 flex items-center px-4">
             <button
                 class="btn-ghost font-medium -ml-1"
-                onclick={() => commandCenter.open(boardCommands)}
+                onclick={() => modalManager.open(boardCommands)}
             >
                 <span>{board.name}</span>
                 <ChevronDownIcon />

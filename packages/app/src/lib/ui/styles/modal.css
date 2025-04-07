@@ -1,0 +1,19 @@
+:root {
+    --modal-header-height: 3.25em;
+    --modal-footer-height: 3.25em;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    height: var(--modal-header-height);
+    padding-inline: 1rem;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: var(--modal-footer-height);
+    padding-inline: 1rem;
+}

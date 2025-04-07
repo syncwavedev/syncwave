@@ -2,6 +2,10 @@
     @apply placeholder:text-ink-placeholder flex-grow focus-visible:outline-none;
 }
 
+.input-block {
+    @apply bg-surface-0 h-[3em] px-2 rounded-sm border border-divider-subtle;
+}
+
 .input--bordered {
     @apply border-divider-object bg-surface-0 bg-surface-0 h-[2.6em] rounded-md border px-2;
 }

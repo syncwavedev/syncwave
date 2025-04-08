@@ -13,7 +13,6 @@
     } from '../../agent/view.svelte';
     import CardDetails from './card-details.svelte';
     import {getAgent} from '../../agent/agent';
-    import EditBoardDialog from '../../components/edit-board-dialog/edit-board-dialog.svelte';
     import router from '../../router';
     import {flip} from 'svelte/animate';
     import {createDndContext, DND_REORDER_DURATION_MS} from './board-dnd';

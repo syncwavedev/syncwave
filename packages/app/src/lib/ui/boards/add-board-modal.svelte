@@ -9,8 +9,8 @@
 <CommandView>
     <CommandHeader placeholder="Enter board name..." bind:filter />
     <hr />
-    <div class="modal-footer">
-        <button type="submit" class="btn-ghost">
+    <div class="modal-footer mx-2">
+        <button type="submit" class="btn-ghost ml-auto">
             <PlusIcon />
             Create
         </button>

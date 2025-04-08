@@ -8,7 +8,7 @@
         <input
             autocomplete="off"
             type="email"
-            class="input input-block mb-2"
+            class="input input-block mb-2 bg-surface-0"
             placeholder="Enter an email address..."
             autofocus
         />

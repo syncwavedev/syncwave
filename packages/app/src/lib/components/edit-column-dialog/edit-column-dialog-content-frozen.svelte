@@ -2,7 +2,7 @@
     import TimesIcon from '../icons/times-icon.svelte';
     import TrashIcon from '../icons/trash-icon.svelte';
     import type {ColumnView} from '../../agent/view.svelte';
-    import {getAgent} from '../../agent/agent.svelte';
+    import {getAgent} from '../../agent/agent';
 
     interface Props {
         column: ColumnView;

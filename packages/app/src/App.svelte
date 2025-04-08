@@ -22,7 +22,7 @@
     import ErrorCard from './lib/components/error-card.svelte';
     import {UploadManager} from './lib/upload-manager.svelte';
     import {createThemeManager} from './lib/ui/theme-manager.svelte.js';
-    import {createAgent} from './lib/agent/agent.svelte';
+    import {createAgent} from './lib/agent/agent';
     import {appConfig} from './lib/config';
     import {WsTransportClient} from './ws-transport-client';
     import {AuthManager} from './auth-manager';

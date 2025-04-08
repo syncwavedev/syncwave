@@ -3,7 +3,7 @@
     import Loading from '../lib/ui/components/loading.svelte';
     import BoardHistoryManager from '../lib/board-history-manager';
     import router from '../lib/router';
-    import {getAgent} from '../lib/agent/agent.svelte';
+    import {getAgent} from '../lib/agent/agent';
     import {getAuthManager} from '../lib/utils';
 
     const agent = getAgent();

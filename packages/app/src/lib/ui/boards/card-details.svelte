@@ -13,7 +13,7 @@
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
     import Select from '../components/select.svelte';
-    import {getAgent} from '../../agent/agent.svelte';
+    import {getAgent} from '../../agent/agent';
 
     const {
         card,

@@ -2,7 +2,7 @@
     import {yFragmentToPlaintextAndTaskList} from '../../richtext';
     import Avatar from '../components/avatar.svelte';
     import type {CardView} from '../../agent/view.svelte';
-    import {getAgent} from '../../agent/agent.svelte';
+    import {getAgent} from '../../agent/agent';
     import {
         DND_REORDER_DURATION_MS,
         getDndBoardContext,

@@ -3,7 +3,7 @@
     import ChevronIcon from '../icons/chevron-icon.svelte';
     import TrashIcon from '../icons/trash-icon.svelte';
     import type {BoardTreeView} from '../../agent/view.svelte';
-    import {getAgent} from '../../agent/agent.svelte';
+    import {getAgent} from '../../agent/agent';
 
     interface Props {
         board: BoardTreeView;

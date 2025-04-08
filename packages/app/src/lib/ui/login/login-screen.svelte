@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {getAgent} from '../../agent/agent.svelte';
+    import {getAgent} from '../../agent/agent';
     import {appConfig} from '../../config.js';
     import router from '../../router';
     import {getRpc, getAuthManager} from '../../utils.js';

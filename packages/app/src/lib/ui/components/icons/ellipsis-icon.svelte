@@ -1,3 +1,13 @@
+<script lang="ts">
+    import cx from 'clsx';
+
+    interface Props {
+        class?: string;
+    }
+
+    let {class: className}: Props = $props();
+</script>
+
 <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -8,7 +18,7 @@
     stroke-width="1.5"
     stroke-linecap="round"
     stroke-linejoin="round"
-    class="icon"
+    class={cx('icon', className)}
     ><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle
         cx="5"
         cy="12"

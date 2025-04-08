@@ -13,7 +13,5 @@
 .modal-footer {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     height: var(--modal-footer-height);
-    padding-inline: 1rem;
 }

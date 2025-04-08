@@ -25,5 +25,5 @@
 
 .btn-block {
     @apply h-[3em] px-[0.5em] rounded-sm gap-1.5 flex items-center justify-center text-ink-body
-	hover:bg-surface-4 hover:text-ink bg-surface-3;
+	hover:text-ink border border-divider-subtle;
 }

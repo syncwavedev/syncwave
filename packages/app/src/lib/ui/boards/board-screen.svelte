@@ -24,7 +24,7 @@
     import BoardCommands from './board-commands.svelte';
     import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
     import modalManager from '../modal-manager.svelte';
-    import InviteMembersModal from './invite-members-modal.svelte';
+    import BoardSettingsModal from './board-settings-modal.svelte';
 
     const {
         board,
@@ -191,16 +191,7 @@
         }
     });
 
-    let editBoardOpen = $state(false);
     // let editMyProfileOpen = $state(false);
-
-    function editBoard() {
-        editBoardOpen = true;
-
-        router.action(() => {
-            editBoardOpen = false;
-        }, true);
-    }
 
     // function editMyProfile() {
     //     editMyProfileOpen = true;
@@ -236,7 +227,10 @@
     <BoardCommands boards={me.boards} />
 {/snippet}
 
-<!-- <InviteMembersModal /> -->
+{#snippet boardSettings()}
+    <BoardSettingsModal />
+{/snippet}
+
 <main class="flex h-screen w-full">
     <div class="bg-surface-0 flex min-w-0 grow flex-col">
         <div class="mt-2 mb-3 flex items-center px-4">
@@ -268,17 +262,13 @@
             >
                 <PlusIcon />
             </button>
-            <button onclick={editBoard} class="btn--icon">
+            <button
+                onclick={() => modalManager.open(boardSettings)}
+                class="btn--icon"
+            >
                 <EllipsisIcon />
             </button>
-            <EditBoardDialog
-                meId={me.profile.id}
-                {board}
-                open={editBoardOpen}
-                onClose={() => {
-                    editBoardOpen = false;
-                }}
-            />
+
             <!-- <button onclick={editMyProfile} class="btn--icon">
                 <UserIcon />
             </button>

@@ -1,12 +1,16 @@
 import type {AppError} from './errors.js';
 
-type DeferredState<T> =
+export function createPromiseStatePending<T>(): PromiseState<T> {
+    return {type: 'pending'};
+}
+
+export type PromiseState<T> =
     | {readonly type: 'fulfilled'; readonly value: T}
     | {readonly type: 'pending'}
     | {readonly type: 'rejected'; readonly reason: AppError};
 
 export class Deferred<T> {
-    private _state: DeferredState<T> = {type: 'pending'};
+    private _state: PromiseState<T> = {type: 'pending'};
 
     private _resolve!: (value: T) => void;
     private _reject!: (error: AppError) => void;

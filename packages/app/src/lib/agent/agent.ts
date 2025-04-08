@@ -5,6 +5,7 @@ import {
     Awareness,
     context,
     Crdt,
+    createBoardId,
     createCardId,
     createClientId,
     createCoordinatorApi,
@@ -40,8 +41,7 @@ import {
 import type {AuthManager} from '../../auth-manager';
 
 import {getDocumentActivity} from '../../document-activity';
-import {getRpc, type Rpc} from '../utils';
-import {AwarenessSynchronizer} from './awareness-syncronizer';
+import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {setComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import type {State} from './state';
@@ -99,19 +99,16 @@ export class Agent {
     async observeMeAsync() {
         const ctx = setComponentContext();
 
-        const rpc = getRpc();
-        const me = await rpc(x =>
-            x
-                .getMeViewData({})
-                .filter(x => x.type === 'snapshot')
-                .map(x => x.data)
-                .first()
-        );
+        const me = await this.rpc
+            .getMeViewData({})
+            .filter(x => x.type === 'snapshot')
+            .map(x => x.data)
+            .first();
 
-        return ctx.run(() => this.observeMe(me, rpc));
+        return ctx.run(() => this.observeMe(me));
     }
 
-    private observeMe(initialMe: MeViewDataDto, rpc: Rpc): MeView {
+    private observeMe(initialMe: MeViewDataDto): MeView {
         const view = MeView.create(initialMe, this.crdtManager);
 
         this.activeMes.push(view);
@@ -123,7 +120,7 @@ export class Agent {
 
         infiniteRetry(async () => {
             const items = toStream(
-                rpc(x => x.getMeViewData({startOffset: nextOffset}))
+                this.rpc.getMeViewData({startOffset: nextOffset})
             );
 
             for await (const item of items) {
@@ -148,36 +145,27 @@ export class Agent {
 
         const activityMonitor = getDocumentActivity();
 
-        const rpc = getRpc();
         const [board, me] = await whenAll([
-            rpc(x =>
-                x
-                    .getBoardViewData({key})
-                    .filter(x => x.type === 'snapshot')
-                    .map(x => x.data)
-                    .first()
-            ),
-            rpc(x =>
-                x
-                    .getMe({})
-                    .map(x => x.user)
-                    .first()
-            ),
+            this.rpc
+                .getBoardViewData({key})
+                .filter(x => x.type === 'snapshot')
+                .map(x => x.data)
+                .first(),
+            this.rpc
+                .getMe({})
+                .map(x => x.user)
+                .first(),
         ]);
 
-        return ctx.run(() =>
-            this.observeBoard(board, me, rpc, activityMonitor)
-        );
+        return ctx.run(() => this.observeBoard(board, me, activityMonitor));
     }
 
     private observeBoard(
         initialBoard: BoardViewDataDto,
         initialMe: CrdtDoc<User>,
-        rpc: Rpc,
         activityMonitor: ActivityMonitor
     ): [BoardTreeView, Awareness] {
         const awareness = this.createBoardAwareness(
-            rpc,
             initialBoard.board.id,
             initialMe,
             activityMonitor
@@ -204,12 +192,10 @@ export class Agent {
 
         infiniteRetry(async () => {
             const items = toStream(
-                rpc(x =>
-                    x.getBoardViewData({
-                        key: initialBoard.board.key,
-                        startOffset: nextOffset,
-                    })
-                )
+                this.rpc.getBoardViewData({
+                    key: initialBoard.board.key,
+                    startOffset: nextOffset,
+                })
             );
 
             for await (const item of items) {
@@ -230,7 +216,6 @@ export class Agent {
     }
 
     private createBoardAwareness(
-        rpc: Rpc,
         boardId: BoardId,
         initialMe: CrdtDoc<User>,
         activityMonitor: ActivityMonitor
@@ -246,7 +231,7 @@ export class Agent {
         const awarenessSynchronizer = AwarenessSynchronizer.start(
             awareness,
             boardId,
-            rpc
+            this.rpc
         );
 
         context().onEnd(reason => {
@@ -260,6 +245,21 @@ export class Agent {
         this.crdtManager.update<User>(profileId, x => {
             x.fullName = fullName;
         });
+    }
+
+    async createBoard(options: {
+        key: string;
+        name: string;
+        memberEmails: string[];
+    }): Promise<BoardId> {
+        const board = await this.rpc.createBoard({
+            boardId: createBoardId(),
+            key: options.name,
+            name: options.name,
+            members: options.memberEmails,
+        });
+
+        return board.id;
     }
 
     createCardDraft(

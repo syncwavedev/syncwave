@@ -10,7 +10,7 @@ import {
     type CardId,
     type ColumnId,
 } from 'syncwave';
-import {getAgent} from '../../agent/agent.svelte';
+import {getAgent} from '../../agent/agent';
 import type {State} from '../../agent/state';
 import type {
     BoardTreeView,

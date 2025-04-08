@@ -7,11 +7,11 @@ import {
     type Awareness,
     type AwarenessState,
     type BoardId,
+    type CoordinatorRpc,
 } from 'syncwave';
-import type {Rpc} from '../utils';
 
 export class AwarenessSynchronizer {
-    static start(awareness: Awareness, boardId: BoardId, rpc: Rpc) {
+    static start(awareness: Awareness, boardId: BoardId, rpc: CoordinatorRpc) {
         const synchronizer = new AwarenessSynchronizer(awareness, boardId, rpc);
 
         synchronizer.startPush().catch(error => {
@@ -32,12 +32,11 @@ export class AwarenessSynchronizer {
 
     private readonly awarenessSender: BatchProcessor<AwarenessState>;
     private readonly destroySignal = new Deferred<void>();
-    private isActive = true;
 
     private constructor(
         private readonly awareness: Awareness,
         private readonly boardId: BoardId,
-        private readonly rpc: Rpc
+        private readonly rpc: CoordinatorRpc
     ) {
         this.awarenessSender = new BatchProcessor<AwarenessState>({
             state: {type: 'running'},
@@ -52,18 +51,18 @@ export class AwarenessSynchronizer {
                 );
 
                 // don't wait for result to allow sending multiple updates concurrently
-                rpc(x =>
-                    x.updateBoardAwarenessState({
+                this.rpc
+                    .updateBoardAwarenessState({
                         clientId: awareness.clientId,
                         boardId: boardId,
                         state: latestState,
                     })
-                ).catch(error => {
-                    log.error({
-                        error,
-                        msg: 'failed to send awareness state',
+                    .catch(error => {
+                        log.error({
+                            error,
+                            msg: 'failed to send awareness state',
+                        });
                     });
-                });
 
                 return Promise.resolve();
             },
@@ -78,13 +77,13 @@ export class AwarenessSynchronizer {
     }
 
     private async pull() {
-        const updates = this.rpc(x =>
-            x.joinBoardAwareness({
+        const updates = this.rpc
+            .joinBoardAwareness({
                 boardId: this.boardId,
                 state: this.awareness.getLocalState(),
                 clientId: this.awareness.clientId,
             })
-        );
+            .until(this.destroySignal.promise);
 
         for await (const update of updates) {
             this.awareness.applyRemote(
@@ -115,17 +114,14 @@ export class AwarenessSynchronizer {
             this.awareness.off('update', handleUpdate);
         });
 
-        await this.rpc(x =>
-            x.updateBoardAwarenessState({
-                clientId: this.awareness.clientId,
-                boardId: this.boardId,
-                state: this.awareness.getLocalState(),
-            })
-        );
+        await this.rpc.updateBoardAwarenessState({
+            clientId: this.awareness.clientId,
+            boardId: this.boardId,
+            state: this.awareness.getLocalState(),
+        });
     }
 
     destroy(reason: unknown) {
-        this.isActive = false;
         this.destroySignal.resolve();
         this.awarenessSender.close(reason);
     }

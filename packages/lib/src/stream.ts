@@ -2,10 +2,14 @@ import {Channel as AsyncChannel} from 'async-channel';
 import {merge, of} from 'ix/Ix.asynciterable';
 import {MAX_LOOKAHEAD_COUNT} from './constants.js';
 import {Cursor, toCursor} from './cursor.js';
-import {Deferred} from './deferred.js';
+import {
+    createPromiseStatePending,
+    Deferred,
+    type PromiseState,
+} from './deferred.js';
 import {AppError, CancelledError, toError} from './errors.js';
 import {log} from './logger.js';
-import {assert, type Unsubscribe, whenAll} from './utils.js';
+import {assert, assertNever, type Unsubscribe, whenAll} from './utils.js';
 
 export interface ChannelWriter<T> {
     next: (value: T) => Promise<void>;
@@ -395,6 +399,33 @@ export class Stream<T> implements AsyncIterable<T> {
         }
 
         return false;
+    }
+
+    until(signal: Promise<void>): Stream<T> {
+        return toStream(this._until(signal));
+    }
+
+    private async *_until(signal: Promise<void>): AsyncIterable<T> {
+        let signalState: PromiseState<undefined> = createPromiseStatePending();
+        signal
+            .then(() => {
+                signalState = {type: 'fulfilled', value: undefined};
+            })
+            .catch(reason => {
+                signalState = {type: 'rejected', reason};
+            });
+
+        for await (const item of this) {
+            if (signalState.type === 'pending') {
+                yield item;
+            } else if (signalState.type === 'fulfilled') {
+                return;
+            } else if (signalState.type === 'rejected') {
+                throw signalState.reason;
+            } else {
+                assertNever(signalState);
+            }
+        }
     }
 
     while<S extends T>(predicate: (value: T) => value is S): Stream<S>;

@@ -49,7 +49,7 @@ export class UserView implements User {
         this.user = user;
     }
 
-    deleted = $derived(this.user.deletedAt !== undefined);
+    deletedAt = $derived(this.user.deletedAt);
     updatedAt = $derived(this.user.updatedAt);
     createdAt = $derived(this.user.createdAt);
     id = $derived(this.user.id);
@@ -323,7 +323,7 @@ export class BoardView implements Board {
     protected readonly _data!: BoardData;
     protected readonly _board!: Board;
 
-    members = $derived(this._data.userViews);
+    members = $derived(this._data.userViews.filter(x => !x.deletedAt));
 
     authorId = $derived(this._board.authorId);
     deletedAt = $derived(this._board.deletedAt);

@@ -55,10 +55,8 @@ import {
     CardTreeView,
     CardTreeViewData,
     CardView,
-    createSyncChannelId,
     MeView,
     MeViewData,
-    type SyncChannelId,
     type SyncTarget,
 } from './view.svelte';
 
@@ -71,12 +69,8 @@ export class Agent {
     private activeMes: MeViewData[] = [];
     private activeCards: CardTreeViewData[] = [];
 
-    private syncTargets(syncChannelId: SyncChannelId): SyncTarget[] {
-        return [
-            ...this.activeBoards,
-            ...this.activeCards,
-            ...this.activeMes,
-        ].filter(x => x.syncChannelId === syncChannelId);
+    private syncTargets(): SyncTarget[] {
+        return [...this.activeBoards, ...this.activeCards, ...this.activeMes];
     }
 
     constructor(
@@ -133,8 +127,7 @@ export class Agent {
     }
 
     private observeMe(initialMe: MeViewDataDto): MeView {
-        const channelId = createSyncChannelId();
-        const data = MeViewData.create(initialMe, this.crdtManager, channelId);
+        const data = MeViewData.create(initialMe, this.crdtManager);
 
         this.activeMes.push(data);
         context().onEnd(() => {
@@ -153,7 +146,7 @@ export class Agent {
                 if (item.type === 'snapshot') {
                     data.override(item.data, this.crdtManager);
                 } else if (item.type === 'event') {
-                    this.handleEvent(item.event, channelId);
+                    this.handleEvent(item.event);
                 } else {
                     softNever(item, 'observeBoard got an unknown event');
                 }
@@ -201,14 +194,7 @@ export class Agent {
             state: initialMe.state,
             type: 'user',
         });
-        const channelId = createSyncChannelId();
-        const data = BoardData.create(
-            awareness,
-            me,
-            dto,
-            this.crdtManager,
-            channelId
-        );
+        const data = BoardData.create(awareness, me, dto, this.crdtManager);
 
         this.activeBoards.push(data);
         context().onEnd(() => {
@@ -230,7 +216,7 @@ export class Agent {
                 if (item.type === 'snapshot') {
                     data.override(item.data, this.crdtManager);
                 } else if (item.type === 'event') {
-                    this.handleEvent(item.event, channelId);
+                    this.handleEvent(item.event);
                 } else {
                     softNever(item, 'observeBoard got an unknown event');
                 }
@@ -316,11 +302,9 @@ export class Agent {
             isDraft: true,
         }).view as Card;
 
-        this.activeBoards
-            .filter(x => x.boardView.id === board.id)
-            .forEach(x => {
-                x.newCard(card);
-            });
+        this.syncTargets().forEach(x => {
+            x.newCard(card);
+        });
 
         const view = board.columns.flatMap(x =>
             x.cards.filter(x => x.id === cardId)
@@ -450,12 +434,7 @@ export class Agent {
     }
 
     private observeCard(dto: CardTreeViewDataDto): CardTreeView {
-        const channelId = createSyncChannelId();
-        const cardData = CardTreeViewData.create(
-            dto,
-            this.crdtManager,
-            channelId
-        );
+        const cardData = CardTreeViewData.create(dto, this.crdtManager);
 
         this.activeCards.push(cardData);
         context().onEnd(() => {
@@ -477,7 +456,7 @@ export class Agent {
                 if (item.type === 'snapshot') {
                     cardData.override(item.data, this.crdtManager);
                 } else if (item.type === 'event') {
-                    this.handleEvent(item.event, channelId);
+                    this.handleEvent(item.event);
                 } else {
                     softNever(item, 'observeBoard got an unknown event');
                 }
@@ -489,7 +468,7 @@ export class Agent {
         return cardData.cardView;
     }
 
-    private handleEvent(event: ChangeEvent, syncChannelId: SyncChannelId) {
+    private handleEvent(event: ChangeEvent) {
         if (event.kind === 'create') {
             const view = this.crdtManager.view({
                 id: event.id,
@@ -502,38 +481,28 @@ export class Agent {
 
                 // we need to check channel to avoid adding new entity before dependencies are ready
                 // each channel would initialize its own dependencies before adding a new entity
-                this.syncTargets(syncChannelId).forEach(x => x.newUser(user));
+                this.syncTargets().forEach(x => x.newUser(user));
             } else if (event.type === 'column') {
                 const column = view as Column;
-                this.syncTargets(syncChannelId).forEach(x =>
-                    x.newColumn(column)
-                );
+                this.syncTargets().forEach(x => x.newColumn(column));
             } else if (event.type === 'card') {
                 const card = view as Card;
-                this.syncTargets(syncChannelId).forEach(x => x.newCard(card));
+                this.syncTargets().forEach(x => x.newCard(card));
             } else if (event.type === 'board') {
                 const board = view as Board;
-                this.syncTargets(syncChannelId).forEach(x => x.newBoard(board));
+                this.syncTargets().forEach(x => x.newBoard(board));
             } else if (event.type === 'attachment') {
                 const attachment = view as Attachment;
-                this.syncTargets(syncChannelId).forEach(x =>
-                    x.newAttachment(attachment)
-                );
+                this.syncTargets().forEach(x => x.newAttachment(attachment));
             } else if (event.type === 'message') {
                 const message = view as Message;
-                this.syncTargets(syncChannelId).forEach(x =>
-                    x.newMessage(message)
-                );
+                this.syncTargets().forEach(x => x.newMessage(message));
             } else if (event.type === 'account') {
                 const account = view as Account;
-                this.syncTargets(syncChannelId).forEach(x =>
-                    x.newAccount(account)
-                );
+                this.syncTargets().forEach(x => x.newAccount(account));
             } else if (event.type === 'member') {
                 const member = view as Member;
-                this.syncTargets(syncChannelId).forEach(x =>
-                    x.newMember(member)
-                );
+                this.syncTargets().forEach(x => x.newMember(member));
             } else {
                 softNever(event, 'observeBoard got an unknown event');
             }

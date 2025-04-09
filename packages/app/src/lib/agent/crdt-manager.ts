@@ -9,6 +9,7 @@ import {
     Uuid,
     type BaseChangeEvent,
     type ChangeEvent,
+    type ChangeEventMapping,
     type CoordinatorRpc,
     type CrdtDiff,
     type DiffOptions,
@@ -125,6 +126,8 @@ export type EntityState = ChangeEvent extends infer T
         : never
     : never;
 
+export type EntityType = keyof ChangeEventMapping;
+
 const REMOTE_ORIGIN = {origin: 'remote'};
 
 export class CrdtManager implements CrdtDerivator {
@@ -153,6 +156,28 @@ export class CrdtManager implements CrdtDerivator {
 
     view(state: EntityState): any {
         return this.load(state).view;
+    }
+
+    tryViewById<K extends keyof ChangeEventMapping>(
+        id: Uuid,
+        type: K
+    ): ChangeEventMapping[K] | undefined {
+        const box = this.entities.get(id);
+        if (box === undefined) {
+            return undefined;
+        }
+
+        assert(box.entity.type === type, 'viewById: Crdt type mismatch');
+        return box.view;
+    }
+
+    viewById<K extends keyof ChangeEventMapping>(
+        id: Uuid,
+        type: K
+    ): ChangeEventMapping[K] {
+        const result = this.tryViewById(id, type);
+        assert(result !== undefined, 'viewById: Crdt not found');
+        return result;
     }
 
     createDraft(entity: EntityState) {

@@ -1,6 +1,6 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
-import {zCrdtDiff} from '../crdt/crdt.js';
+import {type CrdtDiff, zCrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {type AppTransaction, isolate, type KvStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
@@ -138,6 +138,13 @@ export function zAttachmentChangeEvent() {
 
 export interface AttachmentChangeEvent
     extends Static<ReturnType<typeof zAttachmentChangeEvent>> {}
+
+type InferCrdtDiffValue<T extends CrdtDiff<any>> =
+    T extends CrdtDiff<infer U> ? U : never;
+
+export type ChangeEventMapping = {
+    [E in ChangeEvent as E['type']]: InferCrdtDiffValue<E['diff']>;
+};
 
 export function zChangeEvent() {
     return Type.Union([

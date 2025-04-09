@@ -37,9 +37,9 @@
             <ScrollArea orientation="both">
                 <div class="shirnk-0 flex flex-col">
                     <div class="modal-header">
-                        <p class="font-semibold">{title}</p>
+                        <p class="font-medium">{title}</p>
                         <button
-                            class="btn--icon ml-auto"
+                            class="btn--icon ml-auto bg-surface-2"
                             onclick={() => history.back()}
                         >
                             <TimesIcon />

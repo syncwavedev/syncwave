@@ -227,7 +227,7 @@
 {/snippet}
 
 {#snippet boardSettings()}
-    <BoardSettingsModal />
+    <BoardSettingsModal {board} />
 {/snippet}
 
 <main class="flex h-screen w-full">

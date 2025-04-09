@@ -170,8 +170,8 @@
         --theme-color-ink-danger: var(--color-red-450);
 
         --theme-color-divider-subtle: var(--color-gray-50);
-        --theme-color-divider: var(--color-gray-150);
-        --theme-color-divider-object: var(--color-gray-150);
+        --theme-color-divider: var(--color-gray-100);
+        --theme-color-divider-object: var(--color-gray-100);
 
         --theme-color-scrollbar: var(--color-gray-350);
 

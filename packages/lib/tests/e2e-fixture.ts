@@ -1,5 +1,6 @@
 import {MsgpackCodec} from '../src/codec.js';
 import {CoordinatorClient} from '../src/coordinator/coordinator-client.js';
+import {MemEmailService} from '../src/data/mem-email-service.js';
 import {
     CoordinatorServer,
     Crdt,
@@ -18,8 +19,6 @@ import {
     type BoardId,
     type Card,
     type CryptoService,
-    type EmailMessage,
-    type EmailService,
     type JwtPayload,
     type JwtService,
     type RpcMessage,
@@ -42,19 +41,14 @@ export class E2eFixture {
             randomBytes: async () => new Uint8Array(0),
             sha256: text => text,
         };
-        const outbox: EmailMessage[] = [];
-        const email: EmailService = {
-            send: async message => {
-                outbox.push(message);
-            },
-        };
+        const emailService = new MemEmailService();
         const jwtSecret = 'secret';
         const coordinator = new CoordinatorServer({
             transport: coordinatorTransportServer,
             kv: new TupleStore(coordinatorKv),
             jwt,
             crypto,
-            email,
+            email: emailService,
             jwtSecret,
             objectStore: new MemObjectStore(),
             hub: new MemHub(),
@@ -72,17 +66,17 @@ export class E2eFixture {
             undefined
         );
 
-        return new E2eFixture(client, outbox);
+        return new E2eFixture(client, emailService);
     }
 
     constructor(
         public readonly client: CoordinatorClient,
-        public readonly outbox: readonly EmailMessage[]
+        public readonly emailService: MemEmailService
     ) {}
 
     async signIn() {
         await this.client.rpc.sendSignInEmail({email: 'test@test.com'});
-        const message = this.outbox.at(-1);
+        const message = this.emailService.outbox.at(-1);
         assert(message !== undefined, 'message expected');
         const code = message.text
             .split('\n')

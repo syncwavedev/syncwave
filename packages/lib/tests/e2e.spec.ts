@@ -32,7 +32,7 @@ describe('e2e', () => {
         vi.useRealTimers();
     });
 
-    it.only('should get me', async () => {
+    it('should get me', async () => {
         const result = await subject.client.rpc.getMe({}).first();
 
         expect(result.user.fullName).toEqual('Anonymous');

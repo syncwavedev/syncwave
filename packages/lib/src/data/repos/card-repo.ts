@@ -1,6 +1,6 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
-import {zRichtext} from '../../crdt/richtext.js';
+import {Richtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
@@ -8,11 +8,11 @@ import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
+    Doc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
     type Recipe,
-    zDoc,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import {type BoardId, BoardRepo} from './board-repo.js';
@@ -36,23 +36,23 @@ const ASSIGNEE_ID_INDEX = 'assignee_id';
 
 // todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
-export function zCard() {
+export function Card() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<CardId>()])),
+        Doc(Type.Tuple([Uuid<CardId>()])),
         Type.Object({
             id: Uuid<CardId>(),
             authorId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
             counter: Type.Union([Type.Number(), Type.Null()]),
             assigneeId: Type.Optional(Uuid<UserId>()),
-            text: zRichtext(),
+            text: Richtext(),
             columnId: Uuid<ColumnId>(),
             position: Type.Number(),
         }),
     ]);
 }
 
-export interface Card extends Static<ReturnType<typeof zCard>> {}
+export interface Card extends Static<ReturnType<typeof Card>> {}
 
 export class CardRepo {
     public readonly rawRepo: DocRepo<Card>;
@@ -83,7 +83,7 @@ export class CardRepo {
                     key: x => [[x.assigneeId ?? null, x.createdAt]],
                 },
             },
-            schema: zCard(),
+            schema: Card(),
             constraints: [
                 {
                     name: 'card.authorId fk',

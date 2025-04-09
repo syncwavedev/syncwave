@@ -6,7 +6,7 @@ import {decodeHex} from './hex.js';
 import {assertNever, compareUint8Array} from './utils.js';
 import {parseUuid, stringifyUuid, Uuid} from './uuid.js';
 
-export function zPrimitive() {
+export function Primitive() {
     return Type.Union([
         Type.Null(),
         Type.Boolean(),
@@ -17,10 +17,10 @@ export function zPrimitive() {
     ]);
 }
 
-export type Primitive = Static<ReturnType<typeof zPrimitive>>;
+export type Primitive = Static<ReturnType<typeof Primitive>>;
 
-export function zTuple() {
-    return Type.Unsafe<Tuple>(Type.Array(zPrimitive()));
+export function Tuple() {
+    return Type.Unsafe<Tuple>(Type.Array(Primitive()));
 }
 
 export type Tuple = readonly Primitive[];

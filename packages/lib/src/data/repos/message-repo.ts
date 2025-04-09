@@ -1,6 +1,6 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
-import {zRichtext} from '../../crdt/richtext.js';
+import {Richtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
 import {getNow} from '../../timestamp.js';
@@ -9,11 +9,11 @@ import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
+    Doc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
     type Recipe,
-    zDoc,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {AttachmentId} from './attachment-repo.js';
@@ -28,36 +28,36 @@ export function createMessageId(): MessageId {
     return createUuid() as MessageId;
 }
 
-export function zBaseMessagePayload<TType extends string>(type: TType) {
+export function BaseMessagePayload<TType extends string>(type: TType) {
     return Type.Object({
         type: Type.Literal(type),
     });
 }
 
 export interface BaseMessagePayload<TType extends string>
-    extends Static<ReturnType<typeof zBaseMessagePayload<TType>>> {}
+    extends Static<ReturnType<typeof BaseMessagePayload<TType>>> {}
 
-export function zTextMessagePayload() {
+export function TextMessagePayload() {
     return Type.Composite([
-        zBaseMessagePayload('text'),
+        BaseMessagePayload('text'),
         Type.Object({
-            text: zRichtext(),
+            text: Richtext(),
         }),
     ]);
 }
 
 export interface TextMessagePayload
-    extends Static<ReturnType<typeof zTextMessagePayload>> {}
+    extends Static<ReturnType<typeof TextMessagePayload>> {}
 
-export function zMessagePayload() {
-    return Type.Union([zTextMessagePayload()]);
+export function MessagePayload() {
+    return Type.Union([TextMessagePayload()]);
 }
 
-export type MessagePayload = Static<ReturnType<typeof zMessagePayload>>;
+export type MessagePayload = Static<ReturnType<typeof MessagePayload>>;
 
-export function zMessage() {
+export function Message() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<MessageId>()])),
+        Doc(Type.Tuple([Uuid<MessageId>()])),
         Type.Object({
             id: Uuid<MessageId>(),
             authorId: Uuid<UserId>(),
@@ -66,14 +66,14 @@ export function zMessage() {
             cardId: Uuid<CardId>(),
             columnId: Uuid<ColumnId>(),
             boardId: Uuid<BoardId>(),
-            payload: zMessagePayload(),
+            payload: MessagePayload(),
             attachmentIds: Type.Array(Uuid<AttachmentId>()),
             replyToId: Type.Optional(Uuid<MessageId>()),
         }),
     ]);
 }
 
-export interface Message extends Static<ReturnType<typeof zMessage>> {}
+export interface Message extends Static<ReturnType<typeof Message>> {}
 
 const CARD_ID_INDEX = 'card_id';
 const COLUMN_ID_INDEX = 'column_id';
@@ -122,7 +122,7 @@ export class MessageRepo {
                         ]),
                 },
             },
-            schema: zMessage(),
+            schema: Message(),
             constraints: [
                 {
                     name: 'message.authorId fk',

@@ -1,35 +1,31 @@
 import {type Static, Type} from '@sinclair/typebox';
-import {zCrdtDiff} from '../crdt/crdt.js';
+import {CrdtDiff} from '../crdt/crdt.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type DataTx} from './data-layer.js';
-import {type Account, type AccountId, zAccount} from './repos/account-repo.js';
-import {
-    type Attachment,
-    type AttachmentId,
-    zAttachment,
-} from './repos/attachment-repo.js';
-import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
-import {type Card, CardId, zCard} from './repos/card-repo.js';
-import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
-import {type Member, type MemberId, zMember} from './repos/member-repo.js';
-import {type Message, type MessageId, zMessage} from './repos/message-repo.js';
-import {type User, type UserId, zUser} from './repos/user-repo.js';
+import {Account, type AccountId} from './repos/account-repo.js';
+import {Attachment, type AttachmentId} from './repos/attachment-repo.js';
+import {Board, type BoardId} from './repos/board-repo.js';
+import {Card, CardId} from './repos/card-repo.js';
+import {Column, type ColumnId} from './repos/column-repo.js';
+import {Member, type MemberId} from './repos/member-repo.js';
+import {Message, type MessageId} from './repos/message-repo.js';
+import {User, type UserId} from './repos/user-repo.js';
 
-export function zCardDto() {
+export function CardDto() {
     return Type.Composite([
-        zCard(),
+        Card(),
         Type.Object({
-            column: Type.Union([zColumnDto(), Type.Null()]),
-            author: zUserDto(),
-            board: zBoardDto(),
-            assignee: Type.Union([zUserDto(), Type.Null()]),
-            state: zCrdtDiff<Card>(),
+            column: Type.Union([ColumnDto(), Type.Null()]),
+            author: UserDto(),
+            board: BoardDto(),
+            assignee: Type.Union([UserDto(), Type.Null()]),
+            state: CrdtDiff<Card>(),
         }),
     ]);
 }
 
-export interface CardDto extends Static<ReturnType<typeof zCardDto>> {}
+export interface CardDto extends Static<ReturnType<typeof CardDto>> {}
 
 export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
     const card = await tx.cards.getById(cardId, {includeDeleted: true});
@@ -44,16 +40,16 @@ export async function toCardDto(tx: DataTx, cardId: CardId): Promise<CardDto> {
     return {...card, column, board, author, assignee};
 }
 
-export function zCardViewDto() {
+export function CardViewDto() {
     return Type.Composite([
-        zCardDto(),
+        CardDto(),
         Type.Object({
-            messages: Type.Array(zMessageDto()),
+            messages: Type.Array(MessageDto()),
         }),
     ]);
 }
 
-export interface CardViewDto extends Static<ReturnType<typeof zCardViewDto>> {}
+export interface CardViewDto extends Static<ReturnType<typeof CardViewDto>> {}
 
 export async function toCardViewDto(
     tx: DataTx,
@@ -70,20 +66,20 @@ export async function toCardViewDto(
     return {...card, messages};
 }
 
-export function zBoardViewCardDto() {
+export function BoardViewCardDto() {
     return Type.Composite([
-        zCard(),
+        Card(),
         Type.Object({
-            state: zCrdtDiff<Card>(),
-            column: Type.Union([zColumnDto(), Type.Null()]),
-            board: zBoardDto(),
-            author: zUserDto(),
+            state: CrdtDiff<Card>(),
+            column: Type.Union([ColumnDto(), Type.Null()]),
+            board: BoardDto(),
+            author: UserDto(),
         }),
     ]);
 }
 
 export interface BoardViewCardDto
-    extends Static<ReturnType<typeof zBoardViewCardDto>> {}
+    extends Static<ReturnType<typeof BoardViewCardDto>> {}
 
 export async function toBoardViewCardDto(
     tx: DataTx,
@@ -98,17 +94,17 @@ export async function toBoardViewCardDto(
     return {...card, column, board, author};
 }
 
-export function zColumnDto() {
+export function ColumnDto() {
     return Type.Composite([
-        zColumn(),
+        Column(),
         Type.Object({
-            state: zCrdtDiff<Column>(),
-            board: zBoardDto(),
+            state: CrdtDiff<Column>(),
+            board: BoardDto(),
         }),
     ]);
 }
 
-export interface ColumnDto extends Static<ReturnType<typeof zColumnDto>> {}
+export interface ColumnDto extends Static<ReturnType<typeof ColumnDto>> {}
 
 export async function toColumnDto(
     tx: DataTx,
@@ -121,16 +117,16 @@ export async function toColumnDto(
     return {...column, board};
 }
 
-export function zBoardDto() {
+export function BoardDto() {
     return Type.Composite([
-        zBoard(),
+        Board(),
         Type.Object({
-            state: zCrdtDiff<Board>(),
+            state: CrdtDiff<Board>(),
         }),
     ]);
 }
 
-export interface BoardDto extends Static<ReturnType<typeof zBoardDto>> {}
+export interface BoardDto extends Static<ReturnType<typeof BoardDto>> {}
 
 export async function toBoardDto(
     tx: DataTx,
@@ -142,18 +138,18 @@ export async function toBoardDto(
     return {...board};
 }
 
-export function zMemberDto() {
+export function MemberDto() {
     return Type.Composite([
-        zMember(),
+        Member(),
         Type.Object({
-            state: zCrdtDiff<Member>(),
-            user: zUserDto(),
-            board: zBoardDto(),
+            state: CrdtDiff<Member>(),
+            user: UserDto(),
+            board: BoardDto(),
         }),
     ]);
 }
 
-export interface MemberDto extends Static<ReturnType<typeof zMemberDto>> {}
+export interface MemberDto extends Static<ReturnType<typeof MemberDto>> {}
 
 export async function toMemberDto(
     tx: DataTx,
@@ -167,19 +163,19 @@ export async function toMemberDto(
     return {...member, user, board};
 }
 
-export function zMemberAdminDto() {
+export function MemberAdminDto() {
     return Type.Composite([
-        zMember(),
+        Member(),
         Type.Object({
-            user: zUserDto(),
-            board: zBoardDto(),
-            account: Type.Optional(zAccountDto()),
+            user: UserDto(),
+            board: BoardDto(),
+            account: Type.Optional(AccountDto()),
         }),
     ]);
 }
 
 export interface MemberAdminDto
-    extends Static<ReturnType<typeof zMemberAdminDto>> {}
+    extends Static<ReturnType<typeof MemberAdminDto>> {}
 
 export async function toMemberAdminDto(
     tx: DataTx,
@@ -199,16 +195,16 @@ export async function toMemberAdminDto(
     };
 }
 
-export function zUserDto() {
+export function UserDto() {
     return Type.Composite([
-        zUser(),
+        User(),
         Type.Object({
-            state: zCrdtDiff<User>(),
+            state: CrdtDiff<User>(),
         }),
     ]);
 }
 
-export interface UserDto extends Static<ReturnType<typeof zUserDto>> {}
+export interface UserDto extends Static<ReturnType<typeof UserDto>> {}
 
 export async function toUserDto(tx: DataTx, userId: UserId): Promise<UserDto> {
     const user = await tx.users.getById(userId, {includeDeleted: true});
@@ -217,16 +213,16 @@ export async function toUserDto(tx: DataTx, userId: UserId): Promise<UserDto> {
     return user;
 }
 
-export function zAccountDto() {
+export function AccountDto() {
     return Type.Composite([
-        zAccount(),
+        Account(),
         Type.Object({
-            zUser: zUserDto(),
+            user: UserDto(),
         }),
     ]);
 }
 
-export interface AccountDto extends Static<ReturnType<typeof zAccountDto>> {}
+export interface AccountDto extends Static<ReturnType<typeof AccountDto>> {}
 
 export async function toAccountDto(
     tx: DataTx,
@@ -237,17 +233,17 @@ export async function toAccountDto(
         account !== undefined,
         `toAccountDto: account not found: ${accountId}`
     );
-    const zUser = await toUserDto(tx, account.userId);
+    const user = await toUserDto(tx, account.userId);
 
-    return {...account, zUser};
+    return {...account, user};
 }
 
-export function zAttachmentDto() {
-    return zAttachment();
+export function AttachmentDto() {
+    return Attachment();
 }
 
 export interface AttachmentDto
-    extends Static<ReturnType<typeof zAttachmentDto>> {}
+    extends Static<ReturnType<typeof AttachmentDto>> {}
 
 export async function toAttachmentDto(
     tx: DataTx,
@@ -264,20 +260,20 @@ export async function toAttachmentDto(
     return attachment;
 }
 
-export function zMessageWithoutReplyDto() {
+export function MessageWithoutReplyDto() {
     return Type.Composite([
-        zMessage(),
+        Message(),
         Type.Object({
-            state: zCrdtDiff<Message>(),
-            author: zUserDto(),
-            card: zCardDto(),
-            attachments: Type.Array(zAttachmentDto()),
+            state: CrdtDiff<Message>(),
+            author: UserDto(),
+            card: CardDto(),
+            attachments: Type.Array(AttachmentDto()),
         }),
     ]);
 }
 
 export interface MessageWithoutReplyDto
-    extends Static<ReturnType<typeof zMessageWithoutReplyDto>> {}
+    extends Static<ReturnType<typeof MessageWithoutReplyDto>> {}
 
 export async function toMessageWithoutReplyDto(
     tx: DataTx,
@@ -299,16 +295,16 @@ export async function toMessageWithoutReplyDto(
     return {...message, author, card, attachments};
 }
 
-export function zMessageDto() {
+export function MessageDto() {
     return Type.Composite([
-        zMessageWithoutReplyDto(),
+        MessageWithoutReplyDto(),
         Type.Object({
-            replyTo: Type.Optional(zMessageWithoutReplyDto()),
+            replyTo: Type.Optional(MessageWithoutReplyDto()),
         }),
     ]);
 }
 
-export interface MessageDto extends Static<ReturnType<typeof zMessageDto>> {}
+export interface MessageDto extends Static<ReturnType<typeof MessageDto>> {}
 
 export async function toMessageDto(
     tx: DataTx,
@@ -322,85 +318,85 @@ export async function toMessageDto(
     return {...dto, replyTo};
 }
 
-export function zMeDto() {
+export function MeDto() {
     return Type.Object({
-        user: zUserDto(),
-        account: zAccount(),
+        user: UserDto(),
+        account: Account(),
     });
 }
 
-export interface MeDto extends Static<ReturnType<typeof zMeDto>> {}
+export interface MeDto extends Static<ReturnType<typeof MeDto>> {}
 
-export function zMeViewDataDto() {
+export function MeViewDataDto() {
     return Type.Object({
         profile: Type.Object({
             id: Uuid<UserId>(),
-            state: zCrdtDiff<User>(),
+            state: CrdtDiff<User>(),
         }),
         account: Type.Object({
             id: Uuid<AccountId>(),
-            state: zCrdtDiff<Account>(),
+            state: CrdtDiff<Account>(),
         }),
         boards: Type.Array(
             Type.Object({
                 id: Uuid<BoardId>(),
-                state: zCrdtDiff<Board>(),
+                state: CrdtDiff<Board>(),
             })
         ),
     });
 }
 
 export interface MeViewDataDto
-    extends Static<ReturnType<typeof zMeViewDataDto>> {}
+    extends Static<ReturnType<typeof MeViewDataDto>> {}
 
-export function zBoardViewDataDto() {
+export function BoardViewDataDto() {
     return Type.Object({
         board: Type.Object({
-            state: zCrdtDiff<Board>(),
+            state: CrdtDiff<Board>(),
             key: Type.String(),
             id: Uuid<BoardId>(),
         }),
         columns: Type.Array(
-            Type.Object({state: zCrdtDiff<Column>(), id: Uuid<ColumnId>()})
+            Type.Object({state: CrdtDiff<Column>(), id: Uuid<ColumnId>()})
         ),
         cards: Type.Array(
-            Type.Object({state: zCrdtDiff<Card>(), id: Uuid<CardId>()})
+            Type.Object({state: CrdtDiff<Card>(), id: Uuid<CardId>()})
         ),
         users: Type.Array(
-            Type.Object({state: zCrdtDiff<User>(), id: Uuid<UserId>()})
+            Type.Object({state: CrdtDiff<User>(), id: Uuid<UserId>()})
         ),
     });
 }
 
 export interface BoardViewDataDto
-    extends Static<ReturnType<typeof zBoardViewDataDto>> {}
+    extends Static<ReturnType<typeof BoardViewDataDto>> {}
 
-export function zUserDataDto() {
+export function UserDataDto() {
     return Type.Object({
-        user: Type.Object({state: zCrdtDiff<User>(), id: Uuid<UserId>()}),
+        user: Type.Object({state: CrdtDiff<User>(), id: Uuid<UserId>()}),
     });
 }
 
-export interface UserDataDto extends Static<ReturnType<typeof zUserDataDto>> {}
+export interface UserDataDto extends Static<ReturnType<typeof UserDataDto>> {}
 
-export function zCardTreeViewDataDto() {
+export function CardTreeViewDataDto() {
     return Type.Object({
         messages: Type.Array(
-            Type.Object({state: zCrdtDiff<Message>(), id: Uuid<MessageId>()})
+            Type.Object({state: CrdtDiff<Message>(), id: Uuid<MessageId>()})
         ),
         attachments: Type.Array(
             Type.Object({
-                state: zCrdtDiff<Attachment>(),
+                state: CrdtDiff<Attachment>(),
                 id: Uuid<AttachmentId>(),
             })
         ),
         users: Type.Array(
-            Type.Object({state: zCrdtDiff<User>(), id: Uuid<UserId>()})
+            Type.Object({state: CrdtDiff<User>(), id: Uuid<UserId>()})
         ),
-        card: Type.Object({state: zCrdtDiff<Card>(), id: Uuid<CardId>()}),
+        card: Type.Object({state: CrdtDiff<Card>(), id: Uuid<CardId>()}),
         boardId: Uuid<BoardId>(),
     });
 }
 
 export interface CardTreeViewDataDto
-    extends Static<ReturnType<typeof zCardTreeViewDataDto>> {}
+    extends Static<ReturnType<typeof CardTreeViewDataDto>> {}

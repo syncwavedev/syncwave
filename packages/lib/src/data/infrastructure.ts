@@ -45,7 +45,7 @@ export interface ObjectMetadata {
     contentType: string;
 }
 
-export function zObjectMetadata() {
+export function ObjectMetadata() {
     return Type.Object({
         contentType: Type.String(),
     });
@@ -53,7 +53,7 @@ export function zObjectMetadata() {
 
 export type ObjectKey = Brand<Uuid, 'ObjectKey'>;
 
-export function zObjectKey() {
+export function ObjectKey() {
     return Uuid<ObjectKey>();
 }
 
@@ -66,10 +66,10 @@ export interface ObjectEnvelope {
     readonly metadata: ObjectMetadata;
 }
 
-export function zObjectEnvelope() {
+export function ObjectEnvelope() {
     return Type.Object({
         data: Type.Uint8Array(),
-        metadata: zObjectMetadata(),
+        metadata: ObjectMetadata(),
     });
 }
 

@@ -5,13 +5,13 @@ import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
+    Doc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
     type Recipe,
-    zDoc,
 } from '../doc-repo.js';
-import {zObjectKey} from '../infrastructure.js';
+import {ObjectKey} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
@@ -20,18 +20,18 @@ export function createUserId(): UserId {
     return createUuid() as UserId;
 }
 
-export function zUser() {
+export function User() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<UserId>()])),
+        Doc(Type.Tuple([Uuid<UserId>()])),
         Type.Object({
             id: Uuid<UserId>(),
             fullName: Type.String(),
-            avatarKey: Type.Optional(zObjectKey()),
+            avatarKey: Type.Optional(ObjectKey()),
         }),
     ]);
 }
 
-export interface User extends Static<ReturnType<typeof zUser>> {}
+export interface User extends Static<ReturnType<typeof User>> {}
 
 export class UserRepo {
     public readonly rawRepo: DocRepo<User>;
@@ -45,7 +45,7 @@ export class UserRepo {
             tx: isolate(['d'])(params.tx),
             onChange: params.onChange,
             indexes: {},
-            schema: zUser(),
+            schema: User(),
             constraints: [],
             scheduleTrigger: params.scheduleTrigger,
         });

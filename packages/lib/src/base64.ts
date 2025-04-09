@@ -24,7 +24,7 @@ export function encodeBase64(data: Base64): Uint8Array {
     return base64Codec.encode(data);
 }
 
-export function zBase64() {
+export function Base64() {
     return Type.Unsafe<Base64>(Type.String({format: 'base64'}));
 }
 

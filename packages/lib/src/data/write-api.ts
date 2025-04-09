@@ -1,7 +1,7 @@
 import {Type} from '@sinclair/typebox';
-import {encodeBase64, zBase64} from '../base64.js';
+import {Base64, encodeBase64} from '../base64.js';
 import {getAccount} from '../coordinator/auth-api.js';
-import {Crdt, zCrdtDiff} from '../crdt/crdt.js';
+import {Crdt, CrdtDiff} from '../crdt/crdt.js';
 import {createRichtext} from '../crdt/richtext.js';
 import {BusinessError} from '../errors.js';
 import {getNow} from '../timestamp.js';
@@ -10,14 +10,14 @@ import {whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {DataTx} from './data-layer.js';
 import {
+    AttachmentDto,
+    ColumnDto,
+    MemberDto,
+    MessageDto,
     toAttachmentDto,
     toColumnDto,
     toMemberDto,
     toMessageDto,
-    zAttachmentDto,
-    zColumnDto,
-    zMemberDto,
-    zMessageDto,
 } from './dto.js';
 import {
     createObjectKey,
@@ -28,14 +28,14 @@ import {
 } from './infrastructure.js';
 import {PermissionService} from './permission-service.js';
 import {createAttachmentId} from './repos/attachment-repo.js';
-import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
+import {Board, type BoardId} from './repos/board-repo.js';
 import {type Card, type CardId} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
 import {
     createMemberId,
     type Member,
     type MemberId,
-    zMemberRole,
+    MemberRole,
 } from './repos/member-repo.js';
 import {type Message, type MessageId} from './repos/message-repo.js';
 import {type User, type UserId} from './repos/user-repo.js';
@@ -73,7 +73,7 @@ export function createWriteApi() {
         applyCardDiff: handler({
             req: Type.Object({
                 cardId: Uuid<CardId>(),
-                diff: zCrdtDiff<Card>(),
+                diff: CrdtDiff<Card>(),
             }),
             res: Type.Object({}),
             handle: async (st, {cardId, diff}) => {
@@ -156,7 +156,7 @@ export function createWriteApi() {
                 fileName: Type.String(),
                 contentType: Type.String(),
             }),
-            res: zAttachmentDto(),
+            res: AttachmentDto(),
             handle: async (st, {cardId, data, contentType}) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureCardMember(cardId, 'writer');
@@ -192,9 +192,9 @@ export function createWriteApi() {
         }),
         createMessage: handler({
             req: Type.Object({
-                diff: zCrdtDiff<Message>(),
+                diff: CrdtDiff<Message>(),
             }),
-            res: zMessageDto(),
+            res: MessageDto(),
             handle: async (st, {diff}) => {
                 const crdt = Crdt.load(diff);
                 const message = crdt.snapshot();
@@ -287,9 +287,9 @@ export function createWriteApi() {
             req: Type.Object({
                 boardId: Uuid<BoardId>(),
                 email: Type.String(),
-                role: zMemberRole(),
+                role: MemberRole(),
             }),
-            res: zMemberDto(),
+            res: MemberDto(),
             handle: async (st, {boardId, email, role}) => {
                 await st.ps.ensureCanManage(boardId, role);
 
@@ -396,7 +396,7 @@ export function createWriteApi() {
                 name: Type.String(),
                 position: Type.Number(),
             }),
-            res: zColumnDto(),
+            res: ColumnDto(),
             handle: async (st, {boardId, columnId, name, position}) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureBoardMember(boardId, 'writer');
@@ -454,7 +454,7 @@ export function createWriteApi() {
                 key: Type.String(),
                 members: Type.Array(Type.String()),
             }),
-            res: zBoard(),
+            res: Board(),
             handle: async (st, req) => {
                 return await st.tx.boardService.createBoard({
                     authorId: st.ps.ensureAuthenticated(),
@@ -481,7 +481,7 @@ export function createWriteApi() {
         applyBoardDiff: handler({
             req: Type.Object({
                 boardId: Uuid<BoardId>(),
-                diff: zCrdtDiff<Board>(),
+                diff: CrdtDiff<Board>(),
             }),
             res: Type.Object({}),
             handle: async (st, {boardId, diff}) => {
@@ -495,7 +495,7 @@ export function createWriteApi() {
         applyMemberDiff: handler({
             req: Type.Object({
                 memberId: Uuid<MemberId>(),
-                diff: zCrdtDiff<Member>(),
+                diff: CrdtDiff<Member>(),
             }),
             res: Type.Object({}),
             handle: async (st, {memberId, diff}) => {
@@ -515,7 +515,7 @@ export function createWriteApi() {
         applyColumnDiff: handler({
             req: Type.Object({
                 columnId: Uuid<ColumnId>(),
-                diff: zCrdtDiff<Column>(),
+                diff: CrdtDiff<Column>(),
             }),
             res: Type.Object({}),
             handle: async (st, {columnId, diff}) => {
@@ -559,7 +559,7 @@ export function createWriteApi() {
         applyUserDiff: handler({
             req: Type.Object({
                 userId: Uuid<UserId>(),
-                diff: zCrdtDiff<User>(),
+                diff: CrdtDiff<User>(),
             }),
             res: Type.Object({}),
             handle: async (st, {userId, diff}) => {
@@ -573,7 +573,7 @@ export function createWriteApi() {
         setUserAvatar: handler({
             req: Type.Object({
                 userId: Uuid<UserId>(),
-                avatar: zBase64(),
+                avatar: Base64(),
                 contentType: Type.Union([
                     Type.Literal('image/png'),
                     Type.Literal('image/jpeg'),

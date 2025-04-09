@@ -1,10 +1,10 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
-import {type CrdtDiff, zCrdtDiff} from '../crdt/crdt.js';
+import {CrdtDiff} from '../crdt/crdt.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {type AppTransaction, isolate, type KvStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
-import {getNow, zTimestamp} from '../timestamp.js';
+import {getNow, Timestamp} from '../timestamp.js';
 import type {Hub} from '../transport/hub.js';
 import type {Tuple} from '../tuple.js';
 import {assert, type Brand, whenAll} from '../utils.js';
@@ -64,80 +64,78 @@ export interface DataTx {
     readonly scheduleEffect: DataEffectScheduler;
 }
 
-export function zBaseChangeEvent<
-    TType extends string,
-    TId extends Uuid,
-    TValue,
->(type: TType) {
+export function BaseChangeEvent<TType extends string, TId extends Uuid, TValue>(
+    type: TType
+) {
     return Type.Object({
         type: Type.Literal(type),
         kind: Type.Union([Type.Literal('create'), Type.Literal('update')]),
         id: Uuid<TId>(),
-        diff: zCrdtDiff<TValue>(),
-        ts: zTimestamp(),
+        diff: CrdtDiff<TValue>(),
+        ts: Timestamp(),
     });
 }
 
 export interface BaseChangeEvent<TType extends string, TId extends Uuid, TValue>
-    extends Static<ReturnType<typeof zBaseChangeEvent<TType, TId, TValue>>> {}
+    extends Static<ReturnType<typeof BaseChangeEvent<TType, TId, TValue>>> {}
 
-export function zUserChangeEvent() {
-    return zBaseChangeEvent<'user', UserId, User>('user');
+export function UserChangeEvent() {
+    return BaseChangeEvent<'user', UserId, User>('user');
 }
 
 export interface UserChangeEvent
-    extends Static<ReturnType<typeof zUserChangeEvent>> {}
+    extends Static<ReturnType<typeof UserChangeEvent>> {}
 
-export function zMemberChangeEvent() {
-    return zBaseChangeEvent<'member', MemberId, Member>('member');
+export function MemberChangeEvent() {
+    return BaseChangeEvent<'member', MemberId, Member>('member');
 }
 
 export interface MemberChangeEvent
-    extends Static<ReturnType<typeof zMemberChangeEvent>> {}
+    extends Static<ReturnType<typeof MemberChangeEvent>> {}
 
-export function zBoardChangeEvent() {
-    return zBaseChangeEvent<'board', BoardId, Board>('board');
+export function BoardChangeEvent() {
+    return BaseChangeEvent<'board', BoardId, Board>('board');
 }
 
 export interface BoardChangeEvent
-    extends Static<ReturnType<typeof zBoardChangeEvent>> {}
+    extends Static<ReturnType<typeof BoardChangeEvent>> {}
 
-export function zCardChangeEvent() {
-    return zBaseChangeEvent<'card', CardId, Card>('card');
+export function CardChangeEvent() {
+    return BaseChangeEvent<'card', CardId, Card>('card');
 }
 
 export interface CardChangeEvent
-    extends Static<ReturnType<typeof zCardChangeEvent>> {}
+    extends Static<ReturnType<typeof CardChangeEvent>> {}
 
-export function zAccountChangeEvent() {
-    return zBaseChangeEvent<'account', AccountId, Account>('account');
+export function AccountChangeEvent() {
+    return BaseChangeEvent<'account', AccountId, Account>('account');
 }
 
 export interface AccountChangeEvent
-    extends Static<ReturnType<typeof zAccountChangeEvent>> {}
+    extends Static<ReturnType<typeof AccountChangeEvent>> {}
 
-export function zColumnChangeEvent() {
-    return zBaseChangeEvent<'column', ColumnId, Column>('column');
+export function ColumnChangeEvent() {
+    return BaseChangeEvent<'column', ColumnId, Column>('column');
 }
 
 export interface ColumnChangeEvent
-    extends Static<ReturnType<typeof zColumnChangeEvent>> {}
+    extends Static<ReturnType<typeof ColumnChangeEvent>> {}
 
-export function zMessageChangeEvent() {
-    return zBaseChangeEvent<'message', MessageId, Message>('message');
+export function MessageChangeEvent() {
+    return BaseChangeEvent<'message', MessageId, Message>('message');
 }
 
 export interface MessageChangeEvent
-    extends Static<ReturnType<typeof zMessageChangeEvent>> {}
+    extends Static<ReturnType<typeof MessageChangeEvent>> {}
 
-export function zAttachmentChangeEvent() {
-    return zBaseChangeEvent<'attachment', AttachmentId, Attachment>(
+export function AttachmentChangeEvent() {
+    return BaseChangeEvent<'attachment', AttachmentId, Attachment>(
         'attachment'
     );
 }
 
 export interface AttachmentChangeEvent
-    extends Static<ReturnType<typeof zAttachmentChangeEvent>> {}
+    extends Static<ReturnType<typeof AttachmentChangeEvent>> {}
 
 type InferCrdtDiffValue<T extends CrdtDiff<any>> =
     T extends CrdtDiff<infer U> ? U : never;
@@ -146,20 +144,20 @@ export type ChangeEventMapping = {
     [E in ChangeEvent as E['type']]: InferCrdtDiffValue<E['diff']>;
 };
 
-export function zChangeEvent() {
+export function ChangeEvent() {
     return Type.Union([
-        zUserChangeEvent(),
-        zMemberChangeEvent(),
-        zBoardChangeEvent(),
-        zCardChangeEvent(),
-        zAccountChangeEvent(),
-        zColumnChangeEvent(),
-        zMessageChangeEvent(),
-        zAttachmentChangeEvent(),
+        UserChangeEvent(),
+        MemberChangeEvent(),
+        BoardChangeEvent(),
+        CardChangeEvent(),
+        AccountChangeEvent(),
+        ColumnChangeEvent(),
+        MessageChangeEvent(),
+        AttachmentChangeEvent(),
     ]);
 }
 
-export type ChangeEvent = Static<ReturnType<typeof zChangeEvent>>;
+export type ChangeEvent = Static<ReturnType<typeof ChangeEvent>>;
 
 export type AsyncCallback = () => Promise<void>;
 export type DataEffectScheduler = Brand<

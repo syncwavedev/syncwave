@@ -11,7 +11,7 @@ import {
     withCodec,
 } from '../kv/kv-store.js';
 import {Stream, toStream} from '../stream.js';
-import {getNow, type Timestamp, zTimestamp} from '../timestamp.js';
+import {getNow, Timestamp} from '../timestamp.js';
 import {compareTuple, stringifyTuple, type Tuple} from '../tuple.js';
 import {checkValue, type ToSchema} from '../type.js';
 import {pipe, whenAll} from '../utils.js';
@@ -34,12 +34,12 @@ export interface Doc<TKey extends Tuple> {
     deletedAt?: Timestamp;
 }
 
-export function zDoc<T extends Tuple>(pk: ToSchema<T>) {
+export function Doc<T extends Tuple>(pk: ToSchema<T>) {
     return Type.Object({
         pk: pk,
-        createdAt: zTimestamp(),
-        updatedAt: zTimestamp(),
-        deletedAt: Type.Optional(zTimestamp()),
+        createdAt: Timestamp(),
+        updatedAt: Timestamp(),
+        deletedAt: Type.Optional(Timestamp()),
     });
 }
 

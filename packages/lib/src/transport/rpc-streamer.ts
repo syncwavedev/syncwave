@@ -100,7 +100,7 @@ function createStreamId() {
     return createUuid() as StreamId;
 }
 
-function zStreamId() {
+function StreamId() {
     return Uuid<StreamId>();
 }
 
@@ -170,7 +170,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
             req: Type.Object({
                 name: Type.String(),
                 arg: Type.Any(),
-                streamId: zStreamId(),
+                streamId: StreamId(),
             }),
             res: Type.Object({}),
             handle: async (state, {name, streamId, arg}, headers) => {
@@ -263,7 +263,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
             },
         }),
         cancel: handler({
-            req: Type.Object({streamId: zStreamId(), reason: Type.String()}),
+            req: Type.Object({streamId: StreamId(), reason: Type.String()}),
             res: Type.Object({}),
             handle: async (state, {streamId, reason}) => {
                 state.jobManager.cancel(
@@ -407,7 +407,7 @@ function createRpcStreamerClientApi() {
     return createApi<RpcStreamerClientApiState>()({
         next: handler({
             req: Type.Object({
-                streamId: zStreamId(),
+                streamId: StreamId(),
                 value: Type.Unknown(),
                 counter: Type.Number(),
             }),
@@ -420,7 +420,7 @@ function createRpcStreamerClientApi() {
         }),
         throw: handler({
             req: Type.Object({
-                streamId: zStreamId(),
+                streamId: StreamId(),
                 message: Type.String(),
                 code: Type.String(),
                 counter: Type.Number(),
@@ -433,7 +433,7 @@ function createRpcStreamerClientApi() {
             },
         }),
         end: handler({
-            req: Type.Object({streamId: zStreamId(), counter: Type.Number()}),
+            req: Type.Object({streamId: StreamId(), counter: Type.Number()}),
             res: Type.Object({}),
             handle: async (state, {streamId, counter}) => {
                 state.end(streamId, counter);

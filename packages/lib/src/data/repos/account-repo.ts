@@ -3,16 +3,16 @@ import type {CrdtDiff} from '../../crdt/crdt.js';
 import {BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
-import {zTimestamp} from '../../timestamp.js';
+import {Timestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
+    Doc,
     DocRepo,
     type OnDocChange,
     type Recipe,
-    zDoc,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import {type UserId, UserRepo} from './user-repo.js';
@@ -28,30 +28,30 @@ const USER_ID_INDEX = 'userId';
 
 export class EmailTakenAccountRepoError extends BusinessError {}
 
-export function zVerificationCode() {
+export function VerificationCode() {
     return Type.Object({
         code: Type.String(),
-        expires: zTimestamp(),
+        expires: Timestamp(),
     });
 }
 
 export interface VerificationCode
-    extends Static<ReturnType<typeof zVerificationCode>> {}
+    extends Static<ReturnType<typeof VerificationCode>> {}
 
-export function zAccount() {
+export function Account() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<AccountId>()])),
+        Doc(Type.Tuple([Uuid<AccountId>()])),
         Type.Object({
             id: Uuid<AccountId>(),
             userId: Uuid<UserId>(),
             email: Type.String(),
-            authActivityLog: Type.Array(zTimestamp()),
-            verificationCode: zVerificationCode(),
+            authActivityLog: Type.Array(Timestamp()),
+            verificationCode: VerificationCode(),
         }),
     ]);
 }
 
-export interface Account extends Static<ReturnType<typeof zAccount>> {}
+export interface Account extends Static<ReturnType<typeof Account>> {}
 
 export class AccountRepo {
     public readonly rawRepo: DocRepo<Account>;
@@ -77,7 +77,7 @@ export class AccountRepo {
                 },
             },
             onChange: params.onChange,
-            schema: zAccount(),
+            schema: Account(),
             constraints: [
                 {
                     name: 'account.userId fk',

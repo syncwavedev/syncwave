@@ -9,11 +9,11 @@ import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import {type DataTriggerScheduler} from '../data-layer.js';
 import {
+    Doc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
     type Recipe,
-    zDoc,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {UserId, UserRepo} from './user-repo.js';
@@ -27,9 +27,9 @@ export function createBoardId(): BoardId {
 const BOARD_KEY_INDEX = 'key';
 const AUTHOR_ID_INDEX = 'author_id';
 
-export function zBoard() {
+export function Board() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<BoardId>()])),
+        Doc(Type.Tuple([Uuid<BoardId>()])),
         Type.Object({
             id: Uuid<BoardId>(),
             key: Type.String(),
@@ -39,7 +39,7 @@ export function zBoard() {
     ]);
 }
 
-export interface Board extends Static<ReturnType<typeof zBoard>> {}
+export interface Board extends Static<ReturnType<typeof Board>> {}
 
 export class BoardRepo {
     public readonly rawRepo: DocRepo<Board>;
@@ -66,7 +66,7 @@ export class BoardRepo {
                     include: x => x.authorId !== undefined,
                 },
             },
-            schema: zBoard(),
+            schema: Board(),
             constraints: [
                 {
                     name: 'board.ownerId fk',

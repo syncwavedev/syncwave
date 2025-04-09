@@ -7,13 +7,13 @@ import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
+    Doc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
     type Recipe,
-    zDoc,
 } from '../doc-repo.js';
-import {zObjectKey, zObjectMetadata} from '../infrastructure.js';
+import {ObjectKey, ObjectMetadata} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {BoardId, BoardRepo} from './board-repo.js';
 import {type CardId, CardRepo} from './card-repo.js';
@@ -32,22 +32,22 @@ const BOARD_ID_INDEX = 'board_id';
 const AUTHOR_ID_INDEX = 'author_id';
 const OBJECT_KEY_INDEX = 'object_key';
 
-export function zAttachment() {
+export function Attachment() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<AttachmentId>()])),
+        Doc(Type.Tuple([Uuid<AttachmentId>()])),
         Type.Object({
             id: Uuid<AttachmentId>(),
             authorId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
             columnId: Uuid<ColumnId>(),
             cardId: Uuid<CardId>(),
-            objectKey: zObjectKey(),
-            metadata: zObjectMetadata(),
+            objectKey: ObjectKey(),
+            metadata: ObjectMetadata(),
         }),
     ]);
 }
 
-export interface Attachment extends Static<ReturnType<typeof zAttachment>> {}
+export interface Attachment extends Static<ReturnType<typeof Attachment>> {}
 
 export class AttachmentRepo {
     public readonly rawRepo: DocRepo<Attachment>;
@@ -81,7 +81,7 @@ export class AttachmentRepo {
                     key: x => [[x.objectKey, x.createdAt]],
                 },
             },
-            schema: zAttachment(),
+            schema: Attachment(),
             constraints: [
                 {
                     name: 'message.authorId fk',

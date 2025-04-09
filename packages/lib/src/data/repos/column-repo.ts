@@ -7,11 +7,11 @@ import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
+    Doc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
     type Recipe,
-    zDoc,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import {type BoardId, BoardRepo} from './board-repo.js';
@@ -26,9 +26,9 @@ export function createColumnId(): ColumnId {
 const BOARD_ID_INDEX = 'boardId';
 const AUTHOR_ID_INDEX = 'author_id';
 
-export function zColumn() {
+export function Column() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<ColumnId>()])),
+        Doc(Type.Tuple([Uuid<ColumnId>()])),
         Type.Object({
             id: Uuid<ColumnId>(),
             authorId: Uuid<UserId>(),
@@ -39,7 +39,7 @@ export function zColumn() {
     ]);
 }
 
-export interface Column extends Static<ReturnType<typeof zColumn>> {}
+export interface Column extends Static<ReturnType<typeof Column>> {}
 
 export class ColumnRepo {
     public readonly rawRepo: DocRepo<Column>;
@@ -59,7 +59,7 @@ export class ColumnRepo {
                 [BOARD_ID_INDEX]: x => [[x.boardId]],
                 [AUTHOR_ID_INDEX]: x => [[x.authorId, x.createdAt]],
             },
-            schema: zColumn(),
+            schema: Column(),
             constraints: [
                 {
                     name: 'column.authorId fk',

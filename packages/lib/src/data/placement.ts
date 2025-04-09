@@ -1,14 +1,14 @@
 import {Type, type Static} from '@sinclair/typebox';
 import {assert} from '../utils.js';
 
-export function zPlacement() {
+export function Placement() {
     return Type.Object({
         prev: Type.Optional(Type.Number()),
         next: Type.Optional(Type.Number()),
     });
 }
 
-export type Placement = Static<ReturnType<typeof zPlacement>>;
+export type Placement = Static<ReturnType<typeof Placement>>;
 export function toPosition(placement: {prev?: number; next?: number}): number {
     let result: number;
     const rand = Math.max(Math.random(), 1e-18);

@@ -1,14 +1,14 @@
 import type {Observer} from '../subject.js';
 import {checkValue} from '../type.js';
 import {type Unsubscribe} from '../utils.js';
-import {zRpcMessage, type RpcMessage} from './rpc-message.js';
+import {RpcMessage} from './rpc-message.js';
 import type {
     Connection,
     TransportClient,
     TransportServer,
 } from './transport.js';
 
-const messageSchema = zRpcMessage();
+const messageSchema = RpcMessage();
 
 export class RpcConnection implements Connection<RpcMessage> {
     constructor(private readonly conn: Connection<unknown>) {}

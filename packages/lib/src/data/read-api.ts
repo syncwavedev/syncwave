@@ -12,30 +12,29 @@ import {Uuid} from '../uuid.js';
 import type {Principal} from './auth.js';
 import {
     boardEvents,
-    type ChangeEvent,
+    ChangeEvent,
     DataLayer,
     type DataTx,
     profileEvents,
     userEvents,
-    zChangeEvent,
 } from './data-layer.js';
 import {
+    BoardDto,
+    BoardViewDataDto,
+    CardTreeViewDataDto,
+    CardViewDto,
+    MeDto,
+    MemberAdminDto,
+    MemberDto,
+    MeViewDataDto,
     toCardViewDto,
     toMemberAdminDto,
     toMemberDto,
     toUserDto,
-    zBoardDto,
-    zBoardViewDataDto,
-    zCardTreeViewDataDto,
-    zCardViewDto,
-    zMeDto,
-    zMemberAdminDto,
-    zMemberDto,
-    zMeViewDataDto,
-    zUserDataDto,
+    UserDataDto,
 } from './dto.js';
 import {EventStoreReader} from './event-store.js';
-import {type ObjectStore, zObjectEnvelope} from './infrastructure.js';
+import {ObjectEnvelope, type ObjectStore} from './infrastructure.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
 import {type BoardId} from './repos/board-repo.js';
 import {type CardId} from './repos/card-repo.js';
@@ -74,7 +73,7 @@ export function createReadApi() {
     return createApi<ReadApiState>()({
         getMe: streamer({
             req: Type.Object({}),
-            item: zMeDto(),
+            item: MeDto(),
             async *stream(state, {}, {principal}) {
                 const userId = state.ensureAuthenticated(principal);
 
@@ -105,11 +104,11 @@ export function createReadApi() {
             item: Type.Union([
                 Type.Object({
                     type: Type.Literal('snapshot'),
-                    data: zUserDataDto(),
+                    data: UserDataDto(),
                 }),
                 Type.Object({
                     type: Type.Literal('event'),
-                    event: zChangeEvent(),
+                    event: ChangeEvent(),
                 }),
             ]),
             async *stream(st, {userId}, {principal}) {
@@ -148,7 +147,7 @@ export function createReadApi() {
         }),
         getMyMembers: streamer({
             req: Type.Object({}),
-            item: Type.Array(zMemberDto()),
+            item: Type.Array(MemberDto()),
             async *stream(st, {}, {principal}) {
                 const userId = st.ensureAuthenticated(principal);
 
@@ -174,7 +173,7 @@ export function createReadApi() {
         }),
         getCardView: streamer({
             req: Type.Object({cardId: Uuid<CardId>()}),
-            item: zCardViewDto(),
+            item: CardViewDto(),
             async *stream(st, {cardId}, {principal}) {
                 const card = await st.transact(principal, tx =>
                     tx.cards.getById(cardId, {includeDeleted: false})
@@ -206,7 +205,7 @@ export function createReadApi() {
                 boardKey: Type.String(),
                 counter: Type.Number(),
             }),
-            item: zCardViewDto(),
+            item: CardViewDto(),
             async *stream(st, {boardKey, counter}, {principal}) {
                 const board = await st.transact(principal, tx =>
                     tx.boards.getByKey(boardKey)
@@ -247,7 +246,7 @@ export function createReadApi() {
             req: Type.Object({
                 attachmentId: Uuid<AttachmentId>(),
             }),
-            res: zObjectEnvelope(),
+            res: ObjectEnvelope(),
             async handle(st, {attachmentId}, {principal}) {
                 return await st.transact(principal, async tx => {
                     await tx.ps.ensureAttachmentMember(attachmentId, 'reader');
@@ -282,12 +281,12 @@ export function createReadApi() {
             item: Type.Union([
                 Type.Object({
                     type: Type.Literal('snapshot'),
-                    data: zCardTreeViewDataDto(),
+                    data: CardTreeViewDataDto(),
                     offset: Type.Number(),
                 }),
                 Type.Object({
                     type: Type.Literal('event'),
-                    event: zChangeEvent(),
+                    event: ChangeEvent(),
                     offset: Type.Number(),
                 }),
             ]),
@@ -344,7 +343,7 @@ export function createReadApi() {
         }),
         getBoardMembers: streamer({
             req: Type.Object({boardId: Uuid<BoardId>()}),
-            item: Type.Array(zMemberAdminDto()),
+            item: Type.Array(MemberAdminDto()),
             async *stream(st, {boardId}, {principal}) {
                 yield* observable({
                     get() {
@@ -366,7 +365,7 @@ export function createReadApi() {
             req: Type.Object({
                 key: Type.String(),
             }),
-            item: zBoardDto(),
+            item: BoardDto(),
             async *stream(st, {key}, {principal}) {
                 const board = await st.transact(principal, tx =>
                     tx.boards.getByKey(key)
@@ -411,12 +410,12 @@ export function createReadApi() {
             item: Type.Union([
                 Type.Object({
                     type: Type.Literal('snapshot'),
-                    data: zBoardViewDataDto(),
+                    data: BoardViewDataDto(),
                     offset: Type.Number(),
                 }),
                 Type.Object({
                     type: Type.Literal('event'),
-                    event: zChangeEvent(),
+                    event: ChangeEvent(),
                     offset: Type.Number(),
                 }),
             ]),
@@ -494,12 +493,12 @@ export function createReadApi() {
             item: Type.Union([
                 Type.Object({
                     type: Type.Literal('snapshot'),
-                    data: zMeViewDataDto(),
+                    data: MeViewDataDto(),
                     offset: Type.Number(),
                 }),
                 Type.Object({
                     type: Type.Literal('event'),
-                    event: zChangeEvent(),
+                    event: ChangeEvent(),
                     offset: Type.Number(),
                 }),
             ]),

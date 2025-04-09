@@ -36,7 +36,7 @@ export interface CrdtDiff<T> {
 
 export type CrdtDiffPayload<T> = Brand<Uint8Array, [T, 'crdt_diff_buffer']>;
 
-export function zCrdtDiff<T>() {
+export function CrdtDiff<T>() {
     return Type.Unsafe<CrdtDiff<T>>(
         Type.Object({
             timestamp: Type.Number(),

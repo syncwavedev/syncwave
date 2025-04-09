@@ -9,11 +9,11 @@ import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
     type CrdtDoc,
+    Doc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
     type Recipe,
-    zDoc,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import {type BoardId, BoardRepo} from './board-repo.js';
@@ -27,7 +27,7 @@ export function createMemberId(): MemberId {
 
 export type MemberRole = 'owner' | 'admin' | 'writer' | 'reader';
 
-export function zMemberRole() {
+export function MemberRole() {
     return Type.Union([
         Type.Literal('owner'),
         Type.Literal('admin'),
@@ -48,20 +48,20 @@ export const MEMBER_ROLES = Object.keys(ROLE_ORDER) as MemberRole[];
 const USER_ID_BOARD_ID_INDEX = 'userId_boardId';
 const BOARD_ID_INDEX = 'boardId';
 
-export function zMember() {
+export function Member() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid<MemberId>()])),
+        Doc(Type.Tuple([Uuid<MemberId>()])),
         Type.Object({
             id: Uuid<MemberId>(),
             userId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
-            role: zMemberRole(),
+            role: MemberRole(),
             position: Type.Number(),
         }),
     ]);
 }
 
-export interface Member extends Static<ReturnType<typeof zMember>> {}
+export interface Member extends Static<ReturnType<typeof Member>> {}
 
 export class MemberRepo {
     public readonly rawRepo: DocRepo<Member>;
@@ -84,7 +84,7 @@ export class MemberRepo {
                 },
                 [BOARD_ID_INDEX]: x => [[x.boardId]],
             },
-            schema: zMember(),
+            schema: Member(),
             constraints: [
                 {
                     name: 'member.userId fk',

@@ -17,7 +17,7 @@ interface AwarenessHandler {
     handle: (update: AwarenessUpdate, origin: unknown) => void;
 }
 
-export function zAwarenessState() {
+export function AwarenessState() {
     return Type.Object({
         user: Type.Optional(
             Type.Object({
@@ -34,7 +34,7 @@ export function zAwarenessState() {
 }
 
 export interface AwarenessState
-    extends Static<ReturnType<typeof zAwarenessState>> {}
+    extends Static<ReturnType<typeof AwarenessState>> {}
 
 interface MetaAwarenessState {
     lastUpdated: number;

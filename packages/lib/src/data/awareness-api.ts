@@ -1,5 +1,5 @@
 import {Type} from '@sinclair/typebox';
-import {zAwarenessState, type AwarenessState} from '../awareness.js';
+import {AwarenessState} from '../awareness.js';
 import {BatchProcessor} from '../batch-processor.js';
 import {PULL_INTERVAL_MS} from '../constants.js';
 import {context} from '../context.js';
@@ -115,13 +115,13 @@ export function createAwarenessApi() {
             req: Type.Object({
                 boardId: Uuid<BoardId>(),
                 clientId: Type.Number(),
-                state: zAwarenessState(),
+                state: AwarenessState(),
             }),
             item: Type.Object({
                 states: Type.Array(
                     Type.Object({
                         clientId: Type.Number(),
-                        state: zAwarenessState(),
+                        state: AwarenessState(),
                     })
                 ),
             }),
@@ -189,7 +189,7 @@ export function createAwarenessApi() {
             req: Type.Object({
                 boardId: Uuid<BoardId>(),
                 clientId: Type.Number(),
-                state: zAwarenessState(),
+                state: AwarenessState(),
             }),
             res: Type.Object({}),
             async handle(st, {boardId, clientId, state}, {principal}) {

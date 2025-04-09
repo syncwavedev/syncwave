@@ -16,7 +16,7 @@ export function createRichtext(fragment?: XmlFragment): Richtext {
     } as Richtext;
 }
 
-export function zRichtext() {
+export function Richtext() {
     return Type.Unsafe<Richtext>(
         Type.Object({
             [RICHTEXT_MARKER_KEY]: Type.Boolean(),

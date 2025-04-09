@@ -7,22 +7,16 @@ import {TupleStore} from '../kv/tuple-store.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import type {Tuple} from '../tuple.js';
 import {createUuid, Uuid} from '../uuid.js';
-import {
-    type Doc,
-    DocRepo,
-    type IndexSpec,
-    type OnDocChange,
-    zDoc,
-} from './doc-repo.js';
+import {Doc, DocRepo, type IndexSpec, type OnDocChange} from './doc-repo.js';
 
 interface MyDoc extends Doc<readonly [Uuid]> {
     name: string;
     age: number;
 }
 
-function zMyDoc() {
+function MyDoc() {
     return Type.Composite([
-        zDoc(Type.Tuple([Uuid()])),
+        Doc(Type.Tuple([Uuid()])),
         Type.Object({
             name: Type.String(),
             age: Type.Number(),
@@ -30,7 +24,7 @@ function zMyDoc() {
     ]);
 }
 
-const schema = zMyDoc();
+const schema = MyDoc();
 
 const indexes: Record<string, IndexSpec<MyDoc>> = {
     byName: {

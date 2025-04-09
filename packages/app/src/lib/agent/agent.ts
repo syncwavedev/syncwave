@@ -56,8 +56,8 @@ import {
     CardTreeViewData,
     CardView,
     createSyncChannelId,
+    MeView,
     MeViewData,
-    UserView,
     type SyncChannelId,
     type SyncTarget,
 } from './view.svelte';
@@ -120,7 +120,7 @@ export class Agent {
         }
     }
 
-    async observeMeAsync() {
+    async observeMeAsync(): Promise<MeView> {
         const ctx = useComponentContext();
 
         const me = await this.rpc
@@ -132,7 +132,7 @@ export class Agent {
         return ctx.run(() => this.observeMe(me));
     }
 
-    private observeMe(initialMe: MeViewDataDto): UserView {
+    private observeMe(initialMe: MeViewDataDto): MeView {
         const channelId = createSyncChannelId();
         const data = MeViewData.create(initialMe, this.crdtManager, channelId);
 
@@ -162,7 +162,7 @@ export class Agent {
             log.error({error, msg: 'observeMe failed'});
         });
 
-        return data.profileView;
+        return data.userView;
     }
 
     async observeBoardAsync(key: string) {

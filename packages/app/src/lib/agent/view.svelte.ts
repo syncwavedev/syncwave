@@ -82,7 +82,7 @@ export class MeViewData implements SyncTarget {
     boards: Board[] = $state.raw(lateInit());
     account: Account = $state.raw(lateInit());
 
-    profileView: UserView = $derived(new UserView(this.profile));
+    userView = $derived(new MeView(this.profile, this));
 
     static create(
         data: MeViewDataDto,
@@ -144,6 +144,7 @@ export class MeViewData implements SyncTarget {
             type: 'user',
             isDraft: false,
         });
+        console.debug('override', me.boards);
         this.boards = me.boards.map(x =>
             derivator.view({
                 id: x.id,

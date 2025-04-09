@@ -11,7 +11,7 @@
 </script>
 
 <Modal title="Manage Members" size="md">
-    <div class="flex flex-col mx-4 my-1">
+    <div class="flex flex-col mx-4 my-2">
         {#each board.members as member (member.id)}
             <div class="flex items-center py-1">
                 <Avatar name={member.fullName} />

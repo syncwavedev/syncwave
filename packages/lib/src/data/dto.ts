@@ -394,7 +394,10 @@ export function zCardTreeViewDataDto() {
                 id: Uuid<AttachmentId>(),
             })
         ),
-        cardId: CardId(),
+        users: Type.Array(
+            Type.Object({state: zCrdtDiff<User>(), id: Uuid<UserId>()})
+        ),
+        card: Type.Object({state: zCrdtDiff<Card>(), id: Uuid<CardId>()}),
         boardId: Uuid<BoardId>(),
     });
 }

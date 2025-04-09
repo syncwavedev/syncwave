@@ -5,18 +5,22 @@ import {
     Awareness,
     compareNumbers,
     compareStrings,
+    createUuidV4,
     partition,
     uniqBy,
+    Uuid,
     type Account,
     type Attachment,
     type AwarenessState,
     type Board,
     type BoardViewDataDto,
+    type Brand,
     type Card,
     type CardId,
     type CardTreeViewDataDto,
     type Column,
     type ColumnId,
+    type Member,
     type Message,
     type MeViewDataDto,
     type Timestamp,
@@ -52,28 +56,82 @@ export class UserView implements User {
     pk = $derived(this.user.pk);
     fullName = $derived(this.user.fullName);
     avatarKey = $derived(this.user.avatarKey);
-
-    update(user: User) {
-        this.user = user;
-    }
 }
 
-export class MeView {
+export type SyncChannelId = Brand<Uuid, 'sync_channel_id'>;
+
+export function createSyncChannelId() {
+    return createUuidV4() as SyncChannelId;
+}
+
+export interface SyncTarget {
+    readonly syncChannelId: SyncChannelId;
+
+    newBoard(board: Board): void;
+    newUser(user: User): void;
+    newCard(card: Card): void;
+    newColumn(column: Column): void;
+    newAttachment(attachment: Attachment): void;
+    newMessage(message: Message): void;
+    newAccount(account: Account): void;
+    newMember(member: Member): void;
+}
+
+export class MeViewData implements SyncTarget {
     profile: User = $state.raw(lateInit());
     boards: Board[] = $state.raw(lateInit());
     account: Account = $state.raw(lateInit());
 
     profileView: UserView = $derived(new UserView(this.profile));
 
-    static create(data: MeViewDataDto, derivator: CrdtDerivator) {
-        const result = new MeView();
-        result.update(data, derivator);
+    static create(
+        data: MeViewDataDto,
+        derivator: CrdtDerivator,
+        syncChannelId: SyncChannelId
+    ) {
+        const result = new MeViewData(syncChannelId);
+        result.override(data, derivator);
         return result;
     }
 
-    private constructor() {}
+    private constructor(public readonly syncChannelId: SyncChannelId) {}
 
-    update(me: MeViewDataDto, derivator: CrdtDerivator) {
+    newAccount(): void {
+        // ignore
+    }
+
+    newMember(): void {
+        // ignore
+    }
+
+    newUser(): void {
+        // ignore
+    }
+
+    newCard(): void {
+        // ignore
+    }
+
+    newColumn(): void {
+        // ignore
+    }
+
+    newAttachment(): void {
+        // ignore
+    }
+
+    newMessage(): void {
+        // ignore
+    }
+
+    newBoard(board: Board) {
+        if (this.boards.some(x => x.id === board.id)) {
+            return;
+        }
+        this.boards = [...this.boards, board];
+    }
+
+    override(me: MeViewDataDto, derivator: CrdtDerivator) {
         this.account = derivator.view({
             state: me.account.state,
             id: me.account.id,
@@ -95,13 +153,19 @@ export class MeView {
             })
         );
     }
+}
 
-    newBoard(board: Board) {
-        if (this.boards.some(x => x.id === board.id)) {
-            return;
-        }
-        this.boards = [...this.boards, board];
+export class MeView extends UserView {
+    private readonly data!: MeViewData;
+
+    constructor(user: User, data: MeViewData) {
+        super(user);
+
+        this.data = data;
     }
+
+    boards = $derived(this.data.boards);
+    account = $derived(this.data.account);
 }
 
 interface ClientInfo {
@@ -109,7 +173,7 @@ interface ClientInfo {
     user: UserView;
 }
 
-export class BoardData {
+export class BoardData implements SyncTarget {
     private board: Board = $state.raw(lateInit());
 
     rawMe: User = $state.raw(lateInit());
@@ -157,22 +221,71 @@ export class BoardData {
         awareness: Awareness,
         me: User,
         data: BoardViewDataDto,
-        derivator: CrdtDerivator
+        derivator: CrdtDerivator,
+        syncChannelId: SyncChannelId
     ) {
-        const result = new BoardData(awareness, me);
-        result.update(data, derivator);
+        const result = new BoardData(awareness, me, syncChannelId);
+        result.override(data, derivator);
         return result;
     }
 
     private constructor(
-        public rawAwareness: Awareness,
-        me: User
+        public readonly rawAwareness: Awareness,
+        me: User,
+        public readonly syncChannelId: SyncChannelId
     ) {
         this.awareness = observeAwareness(rawAwareness);
         this.rawMe = me;
     }
 
-    update(board: BoardViewDataDto, derivator: CrdtDerivator) {
+    newAccount(): void {
+        // ignore
+    }
+
+    newMember(): void {
+        // ignore
+    }
+
+    newBoard(): void {
+        // ignore
+    }
+
+    newAttachment(): void {
+        // ignore
+    }
+
+    newMessage(): void {
+        // ignore
+    }
+
+    newCard(card: Card) {
+        if (
+            card.boardId !== this.board.id ||
+            this.rawCards.some(x => x.id === card.id)
+        ) {
+            return;
+        }
+        this.rawCards = [...this.rawCards, card];
+    }
+
+    newUser(user: User) {
+        if (this.rawUsers.some(x => x.id === user.id)) {
+            return;
+        }
+        this.rawUsers = [...this.rawUsers, user];
+    }
+
+    newColumn(column: Column) {
+        if (
+            column.boardId !== this.board.id ||
+            this.rawColumns.some(x => x.id === column.id)
+        ) {
+            return;
+        }
+        this.rawColumns = [...this.rawColumns, column];
+    }
+
+    override(board: BoardViewDataDto, derivator: CrdtDerivator) {
         this.board = derivator.view({
             state: board.board.state,
             id: board.board.id,
@@ -203,33 +316,6 @@ export class BoardData {
                 isDraft: false,
             })
         );
-    }
-
-    newCard(card: Card) {
-        if (
-            card.boardId !== this.board.id ||
-            this.rawCards.some(x => x.id === card.id)
-        ) {
-            return;
-        }
-        this.rawCards = [...this.rawCards, card];
-    }
-
-    newUser(user: User) {
-        if (this.rawUsers.some(x => x.id === user.id)) {
-            return;
-        }
-        this.rawUsers = [...this.rawUsers, user];
-    }
-
-    newColumn(column: Column) {
-        if (
-            column.boardId !== this.board.id ||
-            this.rawColumns.some(x => x.id === column.id)
-        ) {
-            return;
-        }
-        this.rawColumns = [...this.rawColumns, column];
     }
 }
 
@@ -406,38 +492,85 @@ export class CardView implements Card {
     });
 }
 
-export class CardTreeViewData {
+export class CardTreeViewData implements SyncTarget {
     static create(
-        boardData: BoardData,
         dto: CardTreeViewDataDto,
-        derivator: CrdtDerivator
+        derivator: CrdtDerivator,
+        syncChannelId: SyncChannelId
     ) {
-        const result = new CardTreeViewData(dto.cardId, boardData);
-        result.update(dto, derivator);
+        const result = new CardTreeViewData(dto.card.id, syncChannelId);
+        result.override(dto, derivator);
         return result;
     }
 
-    public readonly boardData!: BoardData;
-
-    messages: Message[] = $state.raw(lateInit());
-    attachments: Attachment[] = $state.raw(lateInit());
+    rawCard: Card = $state.raw(lateInit());
+    rawUsers: User[] = $state.raw(lateInit());
+    rawMessages: Message[] = $state.raw(lateInit());
+    rawAttachments: Attachment[] = $state.raw(lateInit());
 
     private constructor(
         public readonly cardId: CardId,
-        boardData: BoardData
-    ) {
-        this.boardData = boardData;
+        public readonly syncChannelId: SyncChannelId
+    ) {}
+
+    cardView = $derived(new CardTreeView(this));
+    userViews: UserView[] = $derived(this.rawUsers.map(x => new UserView(x)));
+
+    newAccount(): void {
+        // ignore
     }
 
-    card = $derived(
-        new CardTreeView(
-            findRequired(this.boardData.rawCards, x => x.id === this.cardId),
-            this
-        )
-    );
+    newMember(): void {
+        // ignore
+    }
 
-    update(dto: CardTreeViewDataDto, derivator: CrdtDerivator) {
-        this.messages = dto.messages.map(x =>
+    newBoard(): void {
+        // ignore
+    }
+
+    newCard(): void {
+        // ignore
+    }
+
+    newColumn(): void {
+        // ignore
+    }
+
+    newAttachment(attachment: Attachment) {
+        if (
+            this.rawAttachments.some(x => x.id === attachment.id) ||
+            this.cardView.id !== attachment.cardId
+        ) {
+            return;
+        }
+        this.rawAttachments = [...this.rawAttachments, attachment];
+    }
+
+    newMessage(message: Message) {
+        if (
+            this.rawMessages.some(x => x.id === message.id) ||
+            this.cardView.id !== message.cardId
+        ) {
+            return;
+        }
+        this.rawMessages = [...this.rawMessages, message];
+    }
+
+    newUser(user: User) {
+        if (this.rawUsers.some(x => x.id === user.id)) {
+            return;
+        }
+        this.rawUsers = [...this.rawUsers, user];
+    }
+
+    override(dto: CardTreeViewDataDto, derivator: CrdtDerivator) {
+        this.cardView = derivator.view({
+            id: dto.card.id,
+            type: 'card',
+            state: dto.card.state,
+            isDraft: false,
+        });
+        this.rawMessages = dto.messages.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'message',
@@ -445,7 +578,7 @@ export class CardTreeViewData {
                 isDraft: false,
             })
         );
-        this.attachments = dto.attachments.map(x =>
+        this.rawAttachments = dto.attachments.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'attachment',
@@ -453,39 +586,39 @@ export class CardTreeViewData {
                 isDraft: false,
             })
         );
-    }
-
-    newAttachment(attachment: Attachment) {
-        if (
-            this.attachments.some(x => x.id === attachment.id) ||
-            this.card.id !== attachment.cardId
-        ) {
-            return;
-        }
-        this.attachments = [...this.attachments, attachment];
-    }
-
-    newMessage(message: Message) {
-        if (
-            this.messages.some(x => x.id === message.id) ||
-            this.card.id !== message.cardId
-        ) {
-            return;
-        }
-        this.messages = [...this.messages, message];
+        this.rawUsers = dto.users.map(x =>
+            derivator.view({
+                id: x.id,
+                type: 'user',
+                state: x.state,
+                isDraft: false,
+            })
+        );
     }
 }
 
-export class CardTreeView extends CardView {
+export class CardTreeView implements Card {
     private data: CardTreeViewData = $state.raw(lateInit());
 
-    constructor(card: Card, data: CardTreeViewData) {
-        super(card, data.boardData);
+    constructor(data: CardTreeViewData) {
         this.data = data;
     }
 
+    deletedAt = $derived(this.data.rawCard.deletedAt);
+    updatedAt = $derived(this.data.rawCard.updatedAt);
+    createdAt = $derived(this.data.rawCard.createdAt);
+    id = $derived(this.data.rawCard.id);
+    pk = $derived(this.data.rawCard.pk);
+    boardId = $derived(this.data.rawCard.boardId);
+    columnId = $derived(this.data.rawCard.columnId);
+    position = $derived(this.data.rawCard.position);
+    counter = $derived(this.data.rawCard.counter);
+    text = $derived(this.data.rawCard.text);
+    authorId = $derived(this.data.rawCard.authorId);
+    assigneeId = $derived(this.data.rawCard.assigneeId);
+
     messages: MessageView[] = $derived(
-        this.data.messages
+        this.data.rawMessages
             .map(x => new MessageView(x, this.data))
             .sort((a, b) => compareNumbers(a.createdAt, b.createdAt))
     );
@@ -502,19 +635,19 @@ export class MessageView implements Message {
 
     author = $derived.by(() => {
         return findRequired(
-            this.data.boardData.userViews,
+            this.data.userViews,
             x => x.id === this.message.authorId
         );
     });
     replyTo = $derived.by(() => {
         if (!this.message.replyToId) return undefined;
         return findRequired(
-            this.data.messages,
+            this.data.rawMessages,
             x => x.id === this.message.replyToId
         );
     });
     attachments = $derived.by(() => {
-        return this.data.attachments.filter(x =>
+        return this.data.rawAttachments.filter(x =>
             this.attachmentIds.includes(x.id)
         );
     });

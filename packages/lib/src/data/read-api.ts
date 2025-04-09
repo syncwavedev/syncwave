@@ -307,12 +307,13 @@ export function createReadApi() {
                     startOffset
                 );
 
-                const [messages, attachments] = await st.transact(
+                const [messages, attachments, users] = await st.transact(
                     principal,
                     async tx => {
                         return await whenAll([
                             tx.messages.getByCardId(cardId).toArray(),
                             tx.attachments.getByCardId(cardId).toArray(),
+                            getBoardUsers(tx, card.boardId),
                             tx.ps.ensureCardMember(cardId, 'reader'),
                         ]);
                     }
@@ -323,10 +324,11 @@ export function createReadApi() {
                         type: 'snapshot' as const,
                         offset,
                         data: {
-                            cardId,
                             boardId: card.boardId,
                             messages,
                             attachments,
+                            users,
+                            card,
                         },
                     };
                 }
@@ -450,18 +452,7 @@ export function createReadApi() {
                                     includeDeleted: true,
                                 })
                             ).toArray(),
-                            toStream(
-                                tx.members.getByBoardId(boardId, {
-                                    includeDeleted: true,
-                                })
-                            )
-                                .mapParallel(x =>
-                                    tx.users.getById(x.userId, {
-                                        includeDeleted: true,
-                                    })
-                                )
-                                .assert(x => x !== undefined, 'user not found')
-                                .toArray(),
+                            getBoardUsers(tx, boardId),
                             tx.ps.ensureBoardMember(boardId, 'reader'),
                         ]);
                     }
@@ -579,3 +570,18 @@ export function createReadApi() {
 }
 
 export type ReadApiRpc = InferRpcClient<ReturnType<typeof createReadApi>>;
+
+function getBoardUsers(tx: DataTx, boardId: BoardId) {
+    return toStream(
+        tx.members.getByBoardId(boardId, {
+            includeDeleted: true,
+        })
+    )
+        .mapParallel(x =>
+            tx.users.getById(x.userId, {
+                includeDeleted: true,
+            })
+        )
+        .assert(x => x !== undefined, 'user not found')
+        .toArray();
+}

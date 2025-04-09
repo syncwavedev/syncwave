@@ -11,9 +11,29 @@
 </script>
 
 <Modal title="Manage Members" size="md">
-    <div class="flex flex-col mx-4 my-2">
+    <div class="flex flex-col mx-4 my-1.5">
         {#each board.members as member (member.id)}
-            <div class="flex items-center py-1">
+            <div class="flex items-center py-1.5">
+                <Avatar name={member.fullName} />
+                <span class="ml-1.5">{member.fullName}</span>
+                <button class="btn--icon ml-auto text-ink-body">
+                    <CrownIcon />
+                </button>
+                <button class="btn--icon text-ink-body">
+                    <UserMinusIcon />
+                </button>
+            </div>
+            <div class="flex items-center py-1.5">
+                <Avatar name={member.fullName} />
+                <span class="ml-1.5">{member.fullName}</span>
+                <button class="btn--icon ml-auto text-ink-body">
+                    <CrownIcon />
+                </button>
+                <button class="btn--icon text-ink-body">
+                    <UserMinusIcon />
+                </button>
+            </div>
+            <div class="flex items-center py-1.5">
                 <Avatar name={member.fullName} />
                 <span class="ml-1.5">{member.fullName}</span>
                 <button class="btn--icon ml-auto text-ink-body">

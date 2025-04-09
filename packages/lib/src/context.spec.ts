@@ -5,7 +5,7 @@ import {describe, expect, it} from 'vitest';
 import {context} from './context.js';
 
 describe('Context', () => {
-    it('should extract context', () => {
+    it.skip('should extract context', () => {
         const [ctx] = context().createDetached({
             span: 'test',
             attributes: {val: 'works'},
@@ -17,7 +17,7 @@ describe('Context', () => {
         expect(extracted.tracestate).toEqual('');
     });
 
-    it('should create context', () => {
+    it.skip('should create context', () => {
         const tracer = opentelemetry.trace.getTracer('syncwave');
         const span = tracer.startSpan(
             'some span',

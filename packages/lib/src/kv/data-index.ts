@@ -1,4 +1,5 @@
 import {AppError} from '../errors.js';
+import {Mutex} from '../mutex.js';
 import {
     compareTuple,
     compareTupleItem,
@@ -7,7 +8,7 @@ import {
     getTupleLargestChild,
     type Tuple,
 } from '../tuple.js';
-import {assert, zip} from '../utils.js';
+import {assert, whenAll} from '../utils.js';
 import {
     mapCondition,
     type AppEntry,
@@ -31,7 +32,7 @@ export interface Index<TValue> {
 export interface IndexOptions<TValue> {
     readonly tx: AppTransaction;
     readonly idSelector: (value: TValue) => Tuple;
-    readonly keySelector: (value: TValue) => Tuple;
+    readonly keySelector: (value: TValue) => Tuple[];
     readonly unique: boolean;
     readonly indexName: string;
     readonly filter?: (value: TValue) => boolean;
@@ -41,6 +42,17 @@ export class UniqueError extends AppError {
     constructor(public readonly indexName: string) {
         super('Unique index constraint violation. Index name: ' + indexName);
     }
+}
+
+function diffKeys(prev: Tuple[], next: Tuple[]) {
+    const removed = prev.filter(
+        x => next.findIndex(y => compareTuple(x, y) === 0) === -1
+    );
+    const added = next.filter(
+        x => prev.findIndex(y => compareTuple(x, y) === 0) === -1
+    );
+
+    return {removed, added};
 }
 
 export function createIndex<TValue>({
@@ -95,69 +107,68 @@ export function createIndex<TValue>({
         }
     }
 
+    async function sync(prev: TValue | undefined, next: TValue | undefined) {
+        const prevId = prev && idSelector(prev);
+        const nextId = next && idSelector(next);
+        const id = prevId ?? nextId;
+
+        if (!id) {
+            throw new AppError(
+                'invalid index sync: at least prev or next must be present'
+            );
+        }
+
+        if (prev && next && compareTuple(prevId!, nextId!) !== 0) {
+            throw new AppError(
+                'invalid index sync: changing id is not allowed'
+            );
+        }
+
+        const prevIncluded = prev && filter(prev);
+        const nextIncluded = next && filter(next);
+
+        const prevKeys = prev && prevIncluded ? keySelector(prev) : [];
+        const nextKeys = next && nextIncluded ? keySelector(next) : [];
+
+        const {removed, added} = diffKeys(prevKeys, nextKeys);
+
+        await whenAll([
+            ...removed.map(async key => {
+                if (!prevIncluded) return;
+
+                assert(prevId !== undefined, 'prevId is undefined');
+                if (unique) {
+                    await tx.delete(key);
+                } else {
+                    await tx.delete([...key, ...prevId]);
+                }
+            }),
+            ...added.map(async key => {
+                if (!nextIncluded) return;
+
+                assert(nextId !== undefined, 'nextId is undefined');
+                if (unique) {
+                    const existing = await tx.get(key);
+                    if (existing) {
+                        throw new UniqueError(indexName);
+                    }
+
+                    await tx.put(key, encodeTuple(id));
+                } else {
+                    await tx.put([...key, ...id], encodeTuple(id));
+                }
+            }),
+        ]);
+    }
+
+    const syncMutex = new Mutex();
+
     return {
         info: {
             unique,
         },
         async sync(prev, next) {
-            const prevId = prev && idSelector(prev);
-            const nextId = next && idSelector(next);
-            const id = prevId ?? nextId;
-
-            if (!id) {
-                throw new AppError(
-                    'invalid index sync: at least prev or next must be present'
-                );
-            }
-
-            if (prev && next && compareTuple(prevId!, nextId!) !== 0) {
-                throw new AppError(
-                    'invalid index sync: changing id is not allowed'
-                );
-            }
-
-            const prevKey = prev && keySelector(prev);
-            const nextKey = next && keySelector(next);
-
-            const prevIncluded = prev && filter(prev);
-            const nextIncluded = next && filter(next);
-
-            if (
-                prevKey !== undefined &&
-                nextKey !== undefined &&
-                zip(prevKey, nextKey).every(
-                    ([a, b]) => compareTupleItem(a, b) === 0
-                ) &&
-                prevIncluded === nextIncluded
-            ) {
-                // nothing to do
-                return;
-            }
-
-            // clean up
-            if (prevIncluded) {
-                assert(prevKey !== undefined, 'prevKey is undefined');
-                if (unique) {
-                    await tx.delete(prevKey);
-                } else {
-                    await tx.delete([...prevKey, ...id]);
-                }
-            }
-
-            // add
-            if (nextIncluded) {
-                assert(nextKey !== undefined, 'nextKey is undefined');
-                if (unique) {
-                    const existing = await tx.get(nextKey);
-                    if (existing) {
-                        throw new UniqueError(indexName);
-                    }
-
-                    await tx.put(nextKey, encodeTuple(id));
-                } else {
-                    await tx.put([...nextKey, ...id], encodeTuple(id));
-                }
-            }
+            return await syncMutex.run(() => sync(prev, next));
         },
         async *query(condition): AsyncIterable<Tuple> {
             for await (const entry of queryInternal(condition)) {

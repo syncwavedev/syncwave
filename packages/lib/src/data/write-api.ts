@@ -201,7 +201,7 @@ export function createWriteApi() {
                 const meId = st.ps.ensureAuthenticated();
 
                 await whenAll([
-                    ...message.payload.attachmentIds.map(id =>
+                    ...message.attachmentIds.map(id =>
                         st.ps.ensureAttachmentMember(id, 'reader')
                     ),
                     st.ps.ensureCardMember(message.cardId, 'writer'),
@@ -231,26 +231,26 @@ export function createWriteApi() {
                     );
                 }
 
-                if (message.payload.replyToId) {
+                if (message.replyToId) {
                     const replyTo = await st.tx.messages.getById(
-                        message.payload.replyToId,
+                        message.replyToId,
                         {includeDeleted: true}
                     );
                     if (!replyTo) {
                         throw new BusinessError(
-                            `message ${message.payload.replyToId} not found`,
+                            `message ${message.replyToId} not found`,
                             'message_not_found'
                         );
                     }
                     if (replyTo.boardId !== message.boardId) {
                         throw new BusinessError(
-                            `message ${message.payload.replyToId} doesn't belong to board ${message.boardId}`,
+                            `message ${message.replyToId} doesn't belong to board ${message.boardId}`,
                             'forbidden'
                         );
                     }
                     if (replyTo.cardId !== message.cardId) {
                         throw new BusinessError(
-                            `message ${message.payload.replyToId} doesn't belong to card ${message.cardId}`,
+                            `message ${message.replyToId} doesn't belong to card ${message.cardId}`,
                             'forbidden'
                         );
                     }
@@ -272,10 +272,10 @@ export function createWriteApi() {
                         payload: {
                             type: 'text',
                             text: createRichtext(),
-                            replyToId: message.payload.replyToId,
-                            attachmentIds: [],
                         },
                         boardId: card.boardId,
+                        replyToId: message.replyToId,
+                        attachmentIds: [],
                     })
                 );
 

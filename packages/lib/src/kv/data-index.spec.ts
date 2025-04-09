@@ -30,7 +30,7 @@ const INDEX_NAME = 'some_index_name';
 
 const idSelector = (x: TestUser) => [x.id];
 
-async function getTxn() {
+async function getTx() {
     const store = new TupleStore(new MemMvccStore());
     const tx = await store.transact(async tx => tx);
 
@@ -39,11 +39,11 @@ async function getTxn() {
 
 describe('data-index', async () => {
     it('should insert/update/delete doc', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const houseIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: false,
             indexName: INDEX_NAME,
         });
@@ -94,11 +94,11 @@ describe('data-index', async () => {
     });
 
     it('should enforce unique index constraint', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const uniqueIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: true,
             indexName: INDEX_NAME,
         });
@@ -119,11 +119,11 @@ describe('data-index', async () => {
     });
 
     it('should handle queries with null keys', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const index = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: false,
             indexName: INDEX_NAME,
         });
@@ -144,11 +144,11 @@ describe('data-index', async () => {
     });
 
     it('should support compound index queries', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const compoundIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId, x.age],
+            keySelector: x => [[x.houseId, x.age]],
             unique: false,
             indexName: INDEX_NAME,
         });
@@ -298,11 +298,11 @@ describe('data-index', async () => {
     });
 
     it('should correctly delete entries', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const index = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: false,
             indexName: INDEX_NAME,
         });
@@ -318,11 +318,11 @@ describe('data-index', async () => {
     });
 
     it('should handle null values in compound indexes', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const index = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId, x.name],
+            keySelector: x => [[x.houseId, x.name]],
             unique: false,
             indexName: INDEX_NAME,
         });
@@ -366,11 +366,11 @@ describe('data-index', async () => {
     });
 
     it('should handle Uint8Array values', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const index = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.avatar],
+            keySelector: x => [[x.avatar]],
             unique: false,
             indexName: INDEX_NAME,
         });
@@ -386,11 +386,11 @@ describe('data-index', async () => {
     });
 
     it('should validate id consistency between previous and next values', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const index = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: false,
             indexName: INDEX_NAME,
         });
@@ -409,11 +409,11 @@ describe('data-index', async () => {
 
 describe('partial indexes', async () => {
     it('should only index items passing the filter function', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const partialIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: false,
             indexName: INDEX_NAME,
             filter: x => (x.age ?? -1) > 20,
@@ -456,11 +456,11 @@ describe('partial indexes', async () => {
     });
 
     it('should remove items from index if filter function no longer applies', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const partialIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: false,
             indexName: INDEX_NAME,
             filter: x => (x.age ?? -1) > 20,
@@ -493,11 +493,11 @@ describe('partial indexes', async () => {
     });
 
     it('should support dynamic filter function', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const dynamicPartialIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: false,
             indexName: INDEX_NAME,
             filter: x => x.ready === true,
@@ -537,11 +537,11 @@ describe('partial indexes', async () => {
     });
 
     it('should enforce unique constraint for included items', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const uniquePartialIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: true,
             indexName: INDEX_NAME,
             filter: x => (x.age ?? -1) > 20,
@@ -579,11 +579,11 @@ describe('partial indexes', async () => {
     });
 
     it('should allow multiple items with the same key if excluded by filter function', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const uniquePartialIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: true,
             indexName: INDEX_NAME,
             filter: x => (x.age ?? -1) > 20,
@@ -613,11 +613,11 @@ describe('partial indexes', async () => {
     });
 
     it('should handle updates where include condition changes dynamically', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const uniquePartialIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: true,
             indexName: INDEX_NAME,
             filter: x => x.ready === true,
@@ -667,11 +667,11 @@ describe('partial indexes', async () => {
     });
 
     it('should delete excluded items from unique index', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const uniquePartialIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: true,
             indexName: INDEX_NAME,
             filter: x => (x.age ?? -1) > 20,
@@ -700,11 +700,11 @@ describe('partial indexes', async () => {
     });
 
     it('should re-add items if they satisfy the filter condition again', async () => {
-        const {tx} = await getTxn();
+        const {tx} = await getTx();
         const uniquePartialIndex = createIndex<TestUser>({
             tx,
             idSelector,
-            keySelector: x => [x.houseId],
+            keySelector: x => [[x.houseId]],
             unique: true,
             indexName: INDEX_NAME,
             filter: x => (x.age ?? -1) > 20,
@@ -732,5 +732,59 @@ describe('partial indexes', async () => {
             uniquePartialIndex.query({gte: [null]})
         ).toArray();
         expect(result).toEqual([[id1]]); // id1 is re-added after satisfying the condition again
+    });
+
+    it('should update items', async () => {
+        const {tx} = await getTx();
+        const index = createIndex<TestUser>({
+            tx,
+            idSelector,
+            keySelector: x => [[x.houseId]],
+            unique: true,
+            indexName: INDEX_NAME,
+        });
+
+        const user = {
+            ...emptyUser,
+            id: createUuid(),
+            houseId: createUuid(),
+        };
+
+        await index.sync(undefined, user);
+        await index.sync(user, user);
+
+        const result = await toStream(index.get([user.houseId])).toArray();
+        expect(result).toEqual([[user.id]]);
+    });
+
+    it('should index multiple values for the same key', async () => {
+        const {tx} = await getTx();
+        const index = createIndex<TestUser>({
+            tx,
+            idSelector,
+            keySelector: x => [[x.age], [(x.age ?? 0) + 1]],
+            unique: false,
+            indexName: INDEX_NAME,
+        });
+
+        const userId = createUuid();
+
+        await index.sync(undefined, {
+            ...emptyUser,
+            id: userId,
+            age: 25,
+        });
+
+        const result1 = await toStream(index.query({gte: [25]})).toArray();
+        expect(result1).toEqual([[userId], [userId]]);
+
+        const result2 = await toStream(index.query({gt: [25]})).toArray();
+        expect(result2).toEqual([[userId]]);
+
+        const result3 = await toStream(index.get([25])).firstOrDefault();
+        expect(result3).toEqual([userId]);
+
+        const result4 = await toStream(index.get([26])).firstOrDefault();
+        expect(result4).toEqual([userId]);
     });
 });

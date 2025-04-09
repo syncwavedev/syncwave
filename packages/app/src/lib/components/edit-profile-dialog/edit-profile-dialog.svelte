@@ -28,11 +28,11 @@
         <input
             type="text"
             id="name"
-            value={me.profile.fullName}
+            value={me.profileView.fullName}
             autofocus
             onkeydown={e => e.key === 'Enter' && onClose()}
             oninput={e =>
-                agent.setProfileFullName(me.profile.id, e.currentTarget.value)}
+                agent.setProfileFullName(me.profileView.id, e.currentTarget.value)}
             class="input input--bordered text-xs"
             placeholder="Name"
         />

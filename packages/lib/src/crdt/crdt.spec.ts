@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {describe, expect, it, vi} from 'vitest';
 import {XmlFragment} from 'yjs';
 import type {Timestamp} from '../timestamp.js';
@@ -64,18 +66,6 @@ describe('Doc', () => {
             expect(doc.snapshot()).toEqual(replica.snapshot());
         });
 
-        it('should replace the object', () => {
-            const doc = Crdt.from({val: 111});
-
-            const replica = createReplica(doc);
-            doc.update(() => {
-                return {val: 312};
-            });
-
-            expect(doc.snapshot()).toEqual({val: 312});
-            expect(doc.snapshot()).toEqual(replica.snapshot());
-        });
-
         it('should update string', () => {
             const doc = Crdt.from({s: 'one'});
 
@@ -117,16 +107,6 @@ describe('Doc', () => {
                 x.arr[3] = 3;
             });
             expect(doc.snapshot()).toEqual({arr: [1, 1, 1, 3]});
-            expect(doc.snapshot()).toEqual(replica.snapshot());
-        });
-
-        it('should support root string', () => {
-            const doc = Crdt.from('init');
-
-            const replica = createReplica(doc);
-            doc.update(() => 'updated');
-
-            expect(doc.snapshot()).toEqual('updated');
             expect(doc.snapshot()).toEqual(replica.snapshot());
         });
 
@@ -448,7 +428,7 @@ describe('Doc', () => {
         const events: string[] = [];
 
         crdt.onUpdate((diff, options) => {
-            events.push(options.origin || 'no-tag');
+            events.push((options.origin as string) || 'no-tag');
         });
 
         crdt.apply(createTestDocDiff({key: 'value1'}), {origin: 'first'});

@@ -56,8 +56,8 @@ export class ColumnRepo {
             onChange: params.onChange,
             scheduleTrigger: params.scheduleTrigger,
             indexes: {
-                [BOARD_ID_INDEX]: x => [x.boardId],
-                [AUTHOR_ID_INDEX]: x => [x.authorId, x.createdAt],
+                [BOARD_ID_INDEX]: x => [[x.boardId]],
+                [AUTHOR_ID_INDEX]: x => [[x.authorId, x.createdAt]],
             },
             schema: zColumn(),
             constraints: [

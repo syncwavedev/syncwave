@@ -67,12 +67,12 @@ export class AccountRepo {
             scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [EMAIL_INDEX]: {
-                    key: x => [x.email],
+                    key: x => [[x.email]],
                     unique: true,
                     include: x => x.email !== undefined,
                 },
                 [USER_ID_INDEX]: {
-                    key: x => [x.userId],
+                    key: x => [[x.userId]],
                     unique: true,
                 },
             },

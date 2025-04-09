@@ -16,10 +16,9 @@ import {
     type Unsubscribe,
 } from 'syncwave';
 import {deriveCrdtSnapshot} from './crdt.svelte.js';
-import type {State} from './state.js';
 
 export interface CrdtDerivator {
-    view(state: EntityState): State<any>;
+    view(state: EntityState): any;
 }
 
 interface BaseEntity<TType extends string, TId extends Uuid, TValue> {
@@ -115,7 +114,7 @@ interface EntityObserver {
 
 interface EntityBox {
     entity: Entity;
-    view: State<any>;
+    view: any;
     viewUnsub: Unsubscribe;
     observer: EntityObserver;
 }
@@ -152,7 +151,7 @@ export class CrdtManager implements CrdtDerivator {
         }
     }
 
-    view(state: EntityState): State<any> {
+    view(state: EntityState): any {
         return this.load(state).view;
     }
 

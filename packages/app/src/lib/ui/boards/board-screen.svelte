@@ -316,7 +316,7 @@
                 onWidthChange={w => PanelSizeManager.saveWidth('right', w)}
             >
                 <CardDetails
-                    me={me.profile}
+                    me={me.profileView}
                     {awareness}
                     card={selectedCard}
                     {columnOptions}

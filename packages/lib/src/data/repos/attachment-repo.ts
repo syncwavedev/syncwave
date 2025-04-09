@@ -62,16 +62,16 @@ export class AttachmentRepo {
             scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [CARD_ID_INDEX]: {
-                    key: x => [x.cardId, x.createdAt],
+                    key: x => [[x.cardId, x.createdAt]],
                 },
                 [BOARD_ID_INDEX]: {
-                    key: x => [x.boardId, x.createdAt],
+                    key: x => [[x.boardId, x.createdAt]],
                 },
                 [AUTHOR_ID_INDEX]: {
-                    key: x => [x.authorId, x.createdAt],
+                    key: x => [[x.authorId, x.createdAt]],
                 },
                 [OBJECT_KEY_INDEX]: {
-                    key: x => [x.objectKey, x.createdAt],
+                    key: x => [[x.objectKey, x.createdAt]],
                 },
             },
             schema: zAttachment(),

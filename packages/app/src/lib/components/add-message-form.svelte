@@ -75,7 +75,7 @@
                 const message = Crdt.from<Message>({
                     id: messageId,
                     pk: [messageId],
-                    authorId: me.profile.id,
+                    authorId: me.profileView.id,
                     cardId,
                     columnId,
                     target: 'card',
@@ -154,7 +154,7 @@
     </UploadButton>
     <div class="flex-1">
         <Editor
-            me={me.profile}
+            me={me.profileView}
             bind:this={editorRef}
             onEnter={sendMessage}
             {fragment}

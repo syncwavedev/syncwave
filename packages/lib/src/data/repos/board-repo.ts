@@ -57,12 +57,12 @@ export class BoardRepo {
             scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [BOARD_KEY_INDEX]: {
-                    key: x => [x.key],
+                    key: x => [[x.key]],
                     unique: true,
                     include: x => x.key !== undefined,
                 },
                 [AUTHOR_ID_INDEX]: {
-                    key: x => [x.authorId, x.createdAt],
+                    key: x => [[x.authorId, x.createdAt]],
                     include: x => x.authorId !== undefined,
                 },
             },

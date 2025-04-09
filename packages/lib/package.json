@@ -24,6 +24,11 @@
             "import": "./dist/esm/src/telemetry.js",
             "require": "./dist/cjs/src/telemetry.js",
             "default": "./dist/cjs/src/telemetry.js"
+        },
+        "./node-crypto-service.js": {
+            "import": "./dist/esm/src/node-crypto-service.js",
+            "require": "./dist/cjs/src/node-crypto-service.js",
+            "default": "./dist/cjs/src/node-crypto-service.js"
         }
     },
     "type": "module",

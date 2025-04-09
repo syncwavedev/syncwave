@@ -46,10 +46,10 @@ export function zDoc<T extends Tuple>(pk: ToSchema<T>) {
 export type IndexSpec<T> =
     | {
           readonly unique?: boolean | undefined;
-          readonly key: (x: T) => Tuple;
+          readonly key: (x: T) => Tuple[];
           readonly include?: (x: T) => boolean;
       }
-    | ((x: T) => Tuple);
+    | ((x: T) => Tuple[]);
 
 export type IndexMap<T> = Record<string, IndexSpec<T>>;
 
@@ -78,7 +78,7 @@ export interface DocStoreOptions<T extends Doc<Tuple>> {
     upgrade?: Recipe<any>;
 }
 
-export type Recipe<T> = (doc: T) => void;
+export type Recipe<T> = (doc: T) => void | undefined;
 
 export type CrdtDoc<T> = T & {state: CrdtDiff<T>};
 

@@ -66,17 +66,17 @@ export class CardRepo {
             scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [BOARD_ID_COUNTER_INDEX]: {
-                    key: x => [x.boardId, x.counter],
+                    key: x => [[x.boardId, x.counter]],
                     unique: true,
                 },
                 [COLUMN_ID_INDEX]: {
-                    key: x => [x.columnId],
+                    key: x => [[x.columnId]],
                 },
                 [AUTHOR_ID_INDEX]: {
-                    key: x => [x.authorId, x.createdAt],
+                    key: x => [[x.authorId, x.createdAt]],
                 },
                 [ASSIGNEE_ID_INDEX]: {
-                    key: x => [x.assigneeId ?? null, x.createdAt],
+                    key: x => [[x.assigneeId ?? null, x.createdAt]],
                 },
             },
             schema: zCard(),

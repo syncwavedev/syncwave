@@ -33,13 +33,13 @@ import {
     TupleStore,
     type Uint8KvStore,
 } from 'syncwave';
+import {NodeCryptoService} from 'syncwave/node-crypto-service.js';
 import {match} from 'ts-pattern';
 import {eventLoopMonitor} from './event-loop-monitor.js';
 import {FsObjectStore} from './fs-object-store.js';
 import {createApiRouter} from './http/api.js';
 import {createMetricsRouter} from './http/metrics.js';
 import {createUiRouter} from './http/ui.js';
-import {NodeCryptoService} from './node-crypto-service.js';
 import {NodeJwtService} from './node-jwt-service.js';
 import {SesEmailService} from './ses-email-service.js';
 import {WsTransportServer} from './ws-transport-server.js';

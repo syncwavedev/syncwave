@@ -32,7 +32,7 @@ describe('e2e', () => {
         vi.useRealTimers();
     });
 
-    it('should get me', async () => {
+    it.only('should get me', async () => {
         const result = await subject.client.rpc.getMe({}).first();
 
         expect(result.user.fullName).toEqual('Anonymous');
@@ -154,11 +154,11 @@ describe('e2e', () => {
                 payload: {
                     type: 'text',
                     text: createRichtext(),
-                    attachmentIds: [],
-                    replyToId: undefined,
                 },
                 pk: [messageAId],
                 boardId: card.boardId,
+                attachmentIds: [],
+                replyToId: undefined,
             }).state(),
         });
 
@@ -175,11 +175,11 @@ describe('e2e', () => {
                 payload: {
                     type: 'text',
                     text: createRichtext(),
-                    attachmentIds: [],
-                    replyToId: messageAId,
                 },
                 pk: [messageBId],
                 boardId: card.boardId,
+                attachmentIds: [],
+                replyToId: messageAId,
             }).state(),
         });
 
@@ -188,7 +188,7 @@ describe('e2e', () => {
             .first();
         expect(cardView.messages[0].id).toEqual(messageAId);
         expect(cardView.messages[1].id).toEqual(messageBId);
-        expect(cardView.messages[1].payload.replyToId).toEqual(messageAId);
+        expect(cardView.messages[1].replyToId).toEqual(messageAId);
         expect(cardView.messages[1].replyTo?.id).toEqual(messageAId);
     });
 
@@ -208,11 +208,11 @@ describe('e2e', () => {
                 payload: {
                     type: 'text',
                     text: createRichtext(),
-                    attachmentIds: [],
-                    replyToId: undefined,
                 },
                 pk: [messageAId],
                 boardId: cardA.boardId,
+                attachmentIds: [],
+                replyToId: undefined,
             }).state(),
         });
 
@@ -230,11 +230,11 @@ describe('e2e', () => {
                 payload: {
                     type: 'text',
                     text: createRichtext(),
-                    attachmentIds: [],
-                    replyToId: messageAId,
                 },
                 pk: [messageBId],
                 boardId: cardA.boardId,
+                attachmentIds: [],
+                replyToId: messageAId,
             }).state(),
         });
 

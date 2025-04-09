@@ -198,5 +198,11 @@ class ConsoleLogger extends BaseLogger {
     }
 }
 
+export class NullLogger extends BaseLogger {
+    _log(): void {
+        // do nothing
+    }
+}
+
 export const log: Logger =
-    process.env.NODE_ENV === 'test' ? new ConsoleLogger() : new OtelLogger();
+    process.env.NODE_ENV === 'test' ? new NullLogger() : new OtelLogger();

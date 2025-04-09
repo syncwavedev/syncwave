@@ -289,7 +289,7 @@ export async function toMessageWithoutReplyDto(
     const author = await toUserDto(tx, message.authorId);
     const card = await toCardDto(tx, message.cardId);
     const attachments = await whenAll(
-        message.payload.attachmentIds.map(x => toAttachmentDto(tx, x))
+        message.attachmentIds.map(x => toAttachmentDto(tx, x))
     );
 
     return {...message, author, card, attachments};
@@ -311,8 +311,8 @@ export async function toMessageDto(
     messageId: MessageId
 ): Promise<MessageDto> {
     const dto = await toMessageWithoutReplyDto(tx, messageId);
-    const replyTo = dto.payload.replyToId
-        ? await toMessageWithoutReplyDto(tx, dto.payload.replyToId)
+    const replyTo = dto.replyToId
+        ? await toMessageWithoutReplyDto(tx, dto.replyToId)
         : undefined;
 
     return {...dto, replyTo};

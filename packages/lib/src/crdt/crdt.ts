@@ -15,6 +15,7 @@ import {
     XmlFragment as YXmlFragment,
 } from 'yjs';
 import {type Codec, decodeMsgpack, encodeMsgpack} from '../codec.js';
+import type {Recipe} from '../data/doc-repo.js';
 import {AppError} from '../errors.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import {
@@ -147,22 +148,23 @@ export class Crdt<T> {
     }
 
     // if recipe returns T, then whole doc is overridden with the returned value
-    update(
-        recipe: (draft: T) => T | void,
-        options?: DiffOptions
-    ): CrdtDiff<T> | undefined {
+    update(recipe: Recipe<T>, options?: DiffOptions): CrdtDiff<T> | undefined {
         const snapshot = this.snapshot();
         const locator = new Locator();
         locator.addDeep(snapshot, this.yValue);
 
         const [replacement, log] = observe(snapshot, draft => recipe(draft));
+
+        // this simplifies downstream logic in UI, and it seems that we never actually need to replace the whole doc
+        assert(replacement === undefined, 'recipe should not replace value');
+
         // diff can be undefined if no change were made in recipe
         let diff: CrdtDiff<T> | undefined = undefined;
         const unsub = this.onUpdate((nextDiff: CrdtDiff<T>) => {
             diff = nextDiff;
         });
         this.doc.transact(() => {
-            if (replacement) {
+            if (replacement as unknown) {
                 this.yValue = mapToYValue(replacement);
             } else {
                 replayLog(log, locator);

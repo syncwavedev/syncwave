@@ -41,8 +41,6 @@ export function zTextMessagePayload() {
         zBaseMessagePayload('text'),
         Type.Object({
             text: zRichtext(),
-            attachmentIds: Type.Array(Uuid<AttachmentId>()),
-            replyToId: Type.Optional(Uuid<MessageId>()),
         }),
     ]);
 }
@@ -68,6 +66,8 @@ export function zMessage() {
             columnId: Uuid<ColumnId>(),
             boardId: Uuid<BoardId>(),
             payload: zMessagePayload(),
+            attachmentIds: Type.Array(Uuid<AttachmentId>()),
+            replyToId: Type.Optional(Uuid<MessageId>()),
         }),
     ]);
 }
@@ -79,6 +79,7 @@ const COLUMN_ID_INDEX = 'column_id';
 const REPLY_TO_ID_INDEX = 'reply_to_id';
 const BOARD_ID_INDEX = 'board_id';
 const AUTHOR_ID_INDEX = 'author_id';
+const ATTACHMENT_ID_INDEX = 'attachment_id';
 
 export class MessageRepo {
     public readonly rawRepo: DocRepo<Message>;
@@ -98,19 +99,26 @@ export class MessageRepo {
             scheduleTrigger: params.scheduleTrigger,
             indexes: {
                 [CARD_ID_INDEX]: {
-                    key: x => [x.cardId, x.createdAt],
+                    key: x => [[x.cardId, x.createdAt]],
                 },
                 [BOARD_ID_INDEX]: {
-                    key: x => [x.cardId, x.createdAt],
+                    key: x => [[x.cardId, x.createdAt]],
                 },
                 [AUTHOR_ID_INDEX]: {
-                    key: x => [x.authorId, x.createdAt],
+                    key: x => [[x.authorId, x.createdAt]],
                 },
                 [COLUMN_ID_INDEX]: {
-                    key: x => [x.columnId, x.createdAt],
+                    key: x => [[x.columnId, x.createdAt]],
                 },
                 [REPLY_TO_ID_INDEX]: {
-                    key: x => [x.payload.replyToId ?? null, x.createdAt],
+                    key: x => [[x.replyToId ?? null, x.createdAt]],
+                },
+                [ATTACHMENT_ID_INDEX]: {
+                    key: x =>
+                        x.attachmentIds.map(attachmentId => [
+                            attachmentId,
+                            x.createdAt,
+                        ]),
                 },
             },
             schema: zMessage(),
@@ -170,15 +178,14 @@ export class MessageRepo {
                 {
                     name: 'message.payload.replyToId fk',
                     verify: async message => {
-                        if (!message.payload.replyToId) {
+                        if (!message.replyToId) {
                             return;
                         }
-                        const replyTo = await this.getById(
-                            message.payload.replyToId,
-                            {includeDeleted: true}
-                        );
+                        const replyTo = await this.getById(message.replyToId, {
+                            includeDeleted: true,
+                        });
                         if (replyTo === undefined) {
-                            return `replyTo not found: ${message.payload.replyToId}`;
+                            return `replyTo not found: ${message.replyToId}`;
                         }
                         return;
                     },

@@ -1,5 +1,4 @@
 import {assert, Crdt, type Unsubscribe, type ValueChange} from 'syncwave';
-import type {State} from './state';
 
 function applyChange(state: unknown, change: ValueChange) {
     assert(change.path.length > 0, 'change path must not be empty');
@@ -19,15 +18,12 @@ function applyChange(state: unknown, change: ValueChange) {
     }
 }
 
-export function deriveCrdtSnapshot<T>(crdt: Crdt<T>): [State<T>, Unsubscribe] {
-    const snapshot = $state({value: crdt.snapshot({exposeRichtext: true})});
+export function deriveCrdtSnapshot<T>(crdt: Crdt<T>): [T, Unsubscribe] {
+    const snapshot = crdt.snapshot({exposeRichtext: true});
 
     const unsub = crdt.onChange(changes => {
         changes.forEach(change => {
-            applyChange(snapshot, {
-                path: ['value', ...change.path],
-                value: change.value,
-            });
+            applyChange(snapshot, change);
         });
     });
 

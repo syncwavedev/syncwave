@@ -8,6 +8,7 @@ import {
     partition,
     uniqBy,
     type Account,
+    type Attachment,
     type AwarenessState,
     type Board,
     type BoardViewDataDto,
@@ -15,13 +16,13 @@ import {
     type CardId,
     type Column,
     type ColumnId,
+    type Message,
     type MeViewDataDto,
     type Timestamp,
     type User,
 } from 'syncwave';
 import {observeAwareness} from './awareness.svelte.js';
 import type {CrdtDerivator} from './crdt-manager.js';
-import type {State} from './state.js';
 
 function findRequired<T>(array: T[], predicate: (item: T) => boolean): T {
     const item = array.find(predicate);
@@ -36,15 +37,32 @@ function lateInit(): any {
     return undefined;
 }
 
+export class UserView implements User {
+    private user: User = $state.raw(lateInit());
+
+    constructor(user: User) {
+        this.user = user;
+    }
+
+    deleted = $derived(this.user.deletedAt !== undefined);
+    updatedAt = $derived(this.user.updatedAt);
+    createdAt = $derived(this.user.createdAt);
+    id = $derived(this.user.id);
+    pk = $derived(this.user.pk);
+    fullName = $derived(this.user.fullName);
+    avatarKey = $derived(this.user.avatarKey);
+
+    update(user: User) {
+        this.user = user;
+    }
+}
+
 export class MeView {
-    private _profileState: State<User> = $state.raw(lateInit());
-    private _accountState: State<Account> = $state.raw(lateInit());
-    private _boardStates: Array<State<Board>> = $state.raw(lateInit());
+    profile: User = $state.raw(lateInit());
+    boards: Board[] = $state.raw(lateInit());
+    account: Account = $state.raw(lateInit());
 
-    profile: UserView = $derived(new UserView(this._profileState.value));
-    account: Account = $derived(this._accountState.value);
-
-    boards: Board[] = $derived(this._boardStates.map(x => x.value));
+    profileView: UserView = $derived(new UserView(this.profile));
 
     static create(data: MeViewDataDto, derivator: CrdtDerivator) {
         const result = new MeView();
@@ -55,19 +73,19 @@ export class MeView {
     private constructor() {}
 
     update(me: MeViewDataDto, derivator: CrdtDerivator) {
-        this._accountState = derivator.view({
+        this.account = derivator.view({
             state: me.account.state,
             id: me.account.id,
             type: 'account',
             isDraft: false,
         });
-        this._profileState = derivator.view({
+        this.profile = derivator.view({
             state: me.profile.state,
             id: me.profile.id,
             type: 'user',
             isDraft: false,
         });
-        this._boardStates = me.boards.map(x =>
+        this.boards = me.boards.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'board',
@@ -84,21 +102,15 @@ interface ClientInfo {
 }
 
 export class BoardData {
-    private _boardState: State<Board> = $state.raw(lateInit());
-    private _meState: State<User> = $state.raw(lateInit());
-    private _userStates: Array<State<User>> = $state.raw(lateInit());
-    private _columnStates: Array<State<Column>> = $state.raw(lateInit());
-    private _cardStates: Array<State<Card>> = $state.raw(lateInit());
+    private board: Board = $state.raw(lateInit());
+    private me: User = $state.raw(lateInit());
+    private users: User[] = $state.raw(lateInit());
+    private columns: Column[] = $state.raw(lateInit());
+    private cards: Card[] = $state.raw(lateInit());
 
     readonly cardDragSettledAt = new SvelteMap<CardId, Timestamp>();
     readonly considerCardPosition = new SvelteMap<CardId, number>();
     readonly considerColumnId = new SvelteMap<CardId, ColumnId>();
-
-    private me: User = $derived(this._meState.value);
-    private board: Board = $derived(this._boardState.value);
-    private users: User[] = $derived(this._userStates.map(x => x.value));
-    private columns: Column[] = $derived(this._columnStates.map(x => x.value));
-    private cards: Card[] = $derived(this._cardStates.map(x => x.value));
 
     cardViews: CardView[] = $derived(
         this.cards.map(x => new CardView(x, this))
@@ -134,7 +146,7 @@ export class BoardData {
 
     static create(
         awareness: Awareness,
-        me: State<User>,
+        me: User,
         data: BoardViewDataDto,
         derivator: CrdtDerivator
     ) {
@@ -145,20 +157,20 @@ export class BoardData {
 
     private constructor(
         public rawAwareness: Awareness,
-        me: State<User>
+        me: User
     ) {
         this.awareness = observeAwareness(rawAwareness);
-        this._meState = me;
+        this.me = me;
     }
 
     update(board: BoardViewDataDto, derivator: CrdtDerivator) {
-        this._boardState = derivator.view({
+        this.board = derivator.view({
             state: board.board.state,
             id: board.board.id,
             type: 'board',
             isDraft: false,
         });
-        this._userStates = board.users.map(x =>
+        this.users = board.users.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'user',
@@ -166,7 +178,7 @@ export class BoardData {
                 isDraft: false,
             })
         );
-        this._columnStates = board.columns.map(x =>
+        this.columns = board.columns.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'column',
@@ -174,7 +186,7 @@ export class BoardData {
                 isDraft: false,
             })
         );
-        this._cardStates = board.cards.map(x =>
+        this.cards = board.cards.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'card',
@@ -184,31 +196,31 @@ export class BoardData {
         );
     }
 
-    newCard(card: State<Card>) {
+    newCard(card: Card) {
         if (
-            card.value.boardId !== this.board.id ||
-            this._cardStates.some(x => x.value.id === card.value.id)
+            card.boardId !== this.board.id ||
+            this.cards.some(x => x.id === card.id)
         ) {
             return;
         }
-        this._cardStates = [...this._cardStates, card];
+        this.cards = [...this.cards, card];
     }
 
-    newUser(user: State<User>) {
-        if (this._userStates.some(x => x.value.id === user.value.id)) {
+    newUser(user: User) {
+        if (this.users.some(x => x.id === user.id)) {
             return;
         }
-        this._userStates = [...this._userStates, user];
+        this.users = [...this.users, user];
     }
 
-    newColumn(column: State<Column>) {
+    newColumn(column: Column) {
         if (
-            column.value.boardId !== this.board.id ||
-            this._columnStates.some(x => x.value.id === column.value.id)
+            column.boardId !== this.board.id ||
+            this.columns.some(x => x.id === column.id)
         ) {
             return;
         }
-        this._columnStates = [...this._columnStates, column];
+        this.columns = [...this.columns, column];
     }
 }
 
@@ -385,22 +397,58 @@ export class CardView implements Card {
     });
 }
 
-export class UserView implements User {
-    private _user: State<User> = $state.raw(lateInit());
+export class CardTreeViewData {
+    messages: Message[] = $state.raw(lateInit());
+    attachments: Attachment[] = $state.raw(lateInit());
 
-    constructor(user: User) {
-        this._user = {value: user};
+    constructor(public readonly boardData: BoardData) {}
+}
+
+export class CardTreeView extends CardView {
+    constructor(card: Card, data: CardTreeViewData) {
+        super(card, data.boardData);
+    }
+}
+
+export class MessageView implements Message {
+    private message: Message = $state.raw(lateInit());
+    private data: CardTreeViewData = $state.raw(lateInit());
+
+    constructor(message: Message, data: CardTreeViewData) {
+        this.message = message;
+        this.data = data;
     }
 
-    deleted = $derived(this._user.value.deletedAt !== undefined);
-    updatedAt = $derived(this._user.value.updatedAt);
-    createdAt = $derived(this._user.value.createdAt);
-    id = $derived(this._user.value.id);
-    pk = $derived(this._user.value.pk);
-    fullName = $derived(this._user.value.fullName);
-    avatarKey = $derived(this._user.value.avatarKey);
+    author = $derived.by(() => {
+        return findRequired(
+            this.data.boardData.userViews,
+            x => x.id === this.message.authorId
+        );
+    });
+    replyTo = $derived.by(() => {
+        if (!this.message.replyToId) return undefined;
+        return findRequired(
+            this.data.messages,
+            x => x.id === this.message.replyToId
+        );
+    });
+    attachments = $derived.by(() => {
+        return this.data.attachments.filter(x =>
+            this.attachmentIds.includes(x.id)
+        );
+    });
 
-    update(user: User) {
-        this._user = {value: user};
-    }
+    deletedAt = $derived(this.message.deletedAt);
+    updatedAt = $derived(this.message.updatedAt);
+    createdAt = $derived(this.message.createdAt);
+    id = $derived(this.message.id);
+    pk = $derived(this.message.pk);
+    authorId = $derived(this.message.authorId);
+    boardId = $derived(this.message.boardId);
+    columnId = $derived(this.message.columnId);
+    cardId = $derived(this.message.cardId);
+    target = $derived(this.message.target);
+    payload = $derived(this.message.payload);
+    replyToId = $derived(this.message.replyToId);
+    attachmentIds = $derived(this.message.attachmentIds);
 }

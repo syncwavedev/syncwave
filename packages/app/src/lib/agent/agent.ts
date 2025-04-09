@@ -19,6 +19,7 @@ import {
     softNever,
     toPosition,
     toStream,
+    unimplemented,
     whenAll,
     type ActivityMonitor,
     type Board,
@@ -44,7 +45,6 @@ import {getDocumentActivity} from '../../document-activity';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {setComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
-import type {State} from './state';
 import {BoardData, BoardTreeView, CardView, MeView} from './view.svelte';
 
 export class Agent {
@@ -410,6 +410,10 @@ export class Agent {
         });
     }
 
+    async getCardMessages(_cardId: CardId) {
+        unimplemented();
+    }
+
     private handleEvent(event: ChangeEvent) {
         if (event.kind === 'create') {
             const view = this.crdtManager.view({
@@ -419,13 +423,13 @@ export class Agent {
             } as EntityState);
 
             if (event.type === 'user') {
-                const user = view as State<User>;
+                const user = view as User;
                 this.activeBoards.forEach(x => x.newUser(user));
             } else if (event.type === 'column') {
-                const column = view as State<Column>;
+                const column = view as Column;
                 this.activeBoards.forEach(x => x.newColumn(column));
             } else if (event.type === 'card') {
-                const card = view as State<Card>;
+                const card = view as Card;
                 this.activeBoards.forEach(x => x.newCard(card));
             } else if (
                 event.type === 'board' ||

@@ -34,9 +34,9 @@ const schema = zMyDoc();
 
 const indexes: Record<string, IndexSpec<MyDoc>> = {
     byName: {
-        key: doc => [doc.name],
+        key: doc => [[doc.name]],
     },
-    byAge: doc => [doc.age],
+    byAge: doc => [[doc.age]],
 };
 
 describe('DocStore with MemKVStore', () => {

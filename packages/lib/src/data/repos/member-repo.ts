@@ -79,10 +79,10 @@ export class MemberRepo {
             onChange: params.onChange,
             indexes: {
                 [USER_ID_BOARD_ID_INDEX]: {
-                    key: x => [x.userId, x.boardId],
+                    key: x => [[x.userId, x.boardId]],
                     unique: true,
                 },
-                [BOARD_ID_INDEX]: x => [x.boardId],
+                [BOARD_ID_INDEX]: x => [[x.boardId]],
             },
             schema: zMember(),
             constraints: [

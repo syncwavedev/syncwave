@@ -23,26 +23,6 @@
                     <UserMinusIcon />
                 </button>
             </div>
-            <div class="flex items-center py-1.5">
-                <Avatar name={member.fullName} />
-                <span class="ml-1.5">{member.fullName}</span>
-                <button class="btn--icon ml-auto text-ink-body">
-                    <CrownIcon />
-                </button>
-                <button class="btn--icon text-ink-body">
-                    <UserMinusIcon />
-                </button>
-            </div>
-            <div class="flex items-center py-1.5">
-                <Avatar name={member.fullName} />
-                <span class="ml-1.5">{member.fullName}</span>
-                <button class="btn--icon ml-auto text-ink-body">
-                    <CrownIcon />
-                </button>
-                <button class="btn--icon text-ink-body">
-                    <UserMinusIcon />
-                </button>
-            </div>
         {/each}
     </div>
     <hr />

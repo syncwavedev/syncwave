@@ -170,6 +170,7 @@ export function decorateApi<
         result[key] = decorate(api[key], key);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result as any;
 }
 
@@ -224,6 +225,7 @@ export function applyMiddleware<
                     req
                 );
 
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return await signal.promise;
             }
             if (processor.type === 'handler') {
@@ -232,6 +234,7 @@ export function applyMiddleware<
                     req: processor.req,
                     res: processor.res,
                     handle: async (state, request, headers) => {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return work(state, request, headers);
                     },
                 } satisfies Handler<TStatePublic, any, any>;

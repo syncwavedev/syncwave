@@ -179,6 +179,7 @@ export function createWriteApi() {
                     authorId: meId,
                     boardId: card.boardId,
                     cardId,
+                    columnId: card.columnId,
                     createdAt: now,
                     id: createAttachmentId(),
                     objectKey,

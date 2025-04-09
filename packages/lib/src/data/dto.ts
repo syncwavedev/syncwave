@@ -4,9 +4,13 @@ import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type DataTx} from './data-layer.js';
 import {type Account, type AccountId, zAccount} from './repos/account-repo.js';
-import {type AttachmentId, zAttachment} from './repos/attachment-repo.js';
+import {
+    type Attachment,
+    type AttachmentId,
+    zAttachment,
+} from './repos/attachment-repo.js';
 import {type Board, type BoardId, zBoard} from './repos/board-repo.js';
-import {type Card, type CardId, zCard} from './repos/card-repo.js';
+import {type Card, CardId, zCard} from './repos/card-repo.js';
 import {type Column, type ColumnId, zColumn} from './repos/column-repo.js';
 import {type Member, type MemberId, zMember} from './repos/member-repo.js';
 import {type Message, type MessageId, zMessage} from './repos/message-repo.js';
@@ -378,3 +382,22 @@ export function zUserDataDto() {
 }
 
 export interface UserDataDto extends Static<ReturnType<typeof zUserDataDto>> {}
+
+export function zCardTreeViewDataDto() {
+    return Type.Object({
+        messages: Type.Array(
+            Type.Object({state: zCrdtDiff<Message>(), id: Uuid<MessageId>()})
+        ),
+        attachments: Type.Array(
+            Type.Object({
+                state: zCrdtDiff<Attachment>(),
+                id: Uuid<AttachmentId>(),
+            })
+        ),
+        cardId: CardId(),
+        boardId: Uuid<BoardId>(),
+    });
+}
+
+export interface CardTreeViewDataDto
+    extends Static<ReturnType<typeof zCardTreeViewDataDto>> {}

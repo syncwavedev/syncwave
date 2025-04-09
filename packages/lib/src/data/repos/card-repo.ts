@@ -19,6 +19,10 @@ import {type BoardId, BoardRepo} from './board-repo.js';
 import {type ColumnId} from './column-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
+export function CardId() {
+    return Uuid<CardId>();
+}
+
 export type CardId = Brand<Uuid, 'card_id'>;
 
 export function createCardId(): CardId {

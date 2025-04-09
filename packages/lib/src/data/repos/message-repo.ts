@@ -8,6 +8,7 @@ import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
+    type CrdtDoc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
@@ -198,7 +199,7 @@ export class MessageRepo {
         return this.rawRepo.getById([id], options);
     }
 
-    getByCardId(cardId: CardId): Stream<Message> {
+    getByCardId(cardId: CardId): Stream<CrdtDoc<Message>> {
         return this.rawRepo.get(CARD_ID_INDEX, [cardId]);
     }
 

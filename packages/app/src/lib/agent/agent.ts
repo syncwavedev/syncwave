@@ -19,19 +19,21 @@ import {
     softNever,
     toPosition,
     toStream,
-    unimplemented,
     whenAll,
     type ActivityMonitor,
+    type Attachment,
     type Board,
     type BoardId,
     type BoardViewDataDto,
     type Card,
     type CardId,
+    type CardTreeViewDataDto,
     type ChangeEvent,
     type Column,
     type ColumnId,
     type CoordinatorRpc,
     type CrdtDoc,
+    type Message,
     type MeViewDataDto,
     type Placement,
     type TransportClient,
@@ -45,7 +47,14 @@ import {getDocumentActivity} from '../../document-activity';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {setComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
-import {BoardData, BoardTreeView, CardView, MeView} from './view.svelte';
+import {
+    BoardData,
+    BoardTreeView,
+    CardTreeView,
+    CardTreeViewData,
+    CardView,
+    MeView,
+} from './view.svelte';
 
 export class Agent {
     private crdtManager: CrdtManager;
@@ -54,6 +63,7 @@ export class Agent {
 
     private activeBoards: BoardData[] = [];
     private activeMes: MeView[] = [];
+    private activeCards: CardTreeViewData[] = [];
 
     constructor(
         client: TransportClient<unknown>,
@@ -134,7 +144,7 @@ export class Agent {
                 }
             }
         }, 'observeMe').catch(error => {
-            log.error({error, msg: 'observeBoard failed'});
+            log.error({error, msg: 'observeMe failed'});
         });
 
         return view;
@@ -410,8 +420,63 @@ export class Agent {
         });
     }
 
-    async getCardMessages(_cardId: CardId) {
-        unimplemented();
+    async observeCardAsync(cardId: CardId) {
+        const ctx = setComponentContext();
+
+        const dto = await this.rpc
+            .getCardViewData({cardId})
+            .filter(x => x.type === 'snapshot')
+            .map(x => x.data)
+            .first();
+
+        const boardData = this.activeBoards.find(
+            x => x.boardView.id === dto.boardId
+        );
+        assert(boardData !== undefined, 'board not found');
+
+        return ctx.run(() => this.observeCard(boardData, dto));
+    }
+
+    private observeCard(
+        boardData: BoardData,
+        dto: CardTreeViewDataDto
+    ): CardTreeView {
+        const cardData = CardTreeViewData.create(
+            boardData,
+            dto,
+            this.crdtManager
+        );
+
+        this.activeCards.push(cardData);
+        context().onEnd(() => {
+            this.activeCards = this.activeCards.filter(x => x !== cardData);
+        });
+
+        let nextOffset: number | undefined = undefined;
+
+        infiniteRetry(async () => {
+            const items = toStream(
+                this.rpc.getCardViewData({
+                    cardId: dto.cardId,
+                    startOffset: nextOffset,
+                })
+            );
+
+            for await (const item of items) {
+                nextOffset = item.offset + 1;
+                if (item.type === 'snapshot') {
+                    cardData.update(item.data, this.crdtManager);
+                } else if (item.type === 'event') {
+                    this.handleEvent(item.event);
+                } else {
+                    softNever(item, 'observeBoard got an unknown event');
+                }
+            }
+        }, 'observeMe').catch(error => {
+            log.error({error, msg: 'observeCard failed'});
+        });
+
+        return cardData.card;
     }
 
     private handleEvent(event: ChangeEvent) {
@@ -431,13 +496,16 @@ export class Agent {
             } else if (event.type === 'card') {
                 const card = view as Card;
                 this.activeBoards.forEach(x => x.newCard(card));
-            } else if (
-                event.type === 'board' ||
-                event.type === 'attachment' ||
-                event.type === 'message' ||
-                event.type === 'account' ||
-                event.type === 'member'
-            ) {
+            } else if (event.type === 'board') {
+                const board = view as Board;
+                this.activeMes.forEach(x => x.newBoard(board));
+            } else if (event.type === 'attachment') {
+                const attachment = view as Attachment;
+                this.activeCards.forEach(x => x.newAttachment(attachment));
+            } else if (event.type === 'message') {
+                const message = view as Message;
+                this.activeCards.forEach(x => x.newMessage(message));
+            } else if (event.type === 'account' || event.type === 'member') {
                 // do nothing
             } else {
                 softNever(event, 'observeBoard got an unknown event');

@@ -178,6 +178,7 @@ async function getKvStore(
             const fdbStore: Uint8KvStore & Hub = await import(
                 fdbModulePath
             ).then((x: any) => {
+                // eslint-disable-next-line
                 return new x.FoundationDBUint8KvStore({
                     clusterFilePath: `./fdb/fdb.${stage}.cluster`,
                     topicPrefix: '/hub/topics/',

@@ -23,15 +23,14 @@ import {
     toCardViewDto,
     toMemberAdminDto,
     toMemberDto,
-    toMessageDto,
     toUserDto,
     zBoardDto,
     zBoardViewDataDto,
+    zCardTreeViewDataDto,
     zCardViewDto,
     zMeDto,
     zMemberAdminDto,
     zMemberDto,
-    zMessageDto,
     zMeViewDataDto,
     zUserDataDto,
 } from './dto.js';
@@ -275,27 +274,70 @@ export function createReadApi() {
                 });
             },
         }),
-        getCardMessages: streamer({
-            req: Type.Object({cardId: Uuid<CardId>()}),
-            item: Type.Array(zMessageDto()),
-            async *stream(st, {cardId}, {principal}) {
+        getCardViewData: streamer({
+            req: Type.Object({
+                cardId: Uuid<CardId>(),
+                startOffset: Type.Optional(Type.Number()),
+            }),
+            item: Type.Union([
+                Type.Object({
+                    type: Type.Literal('snapshot'),
+                    data: zCardTreeViewDataDto(),
+                    offset: Type.Number(),
+                }),
+                Type.Object({
+                    type: Type.Literal('event'),
+                    event: zChangeEvent(),
+                    offset: Type.Number(),
+                }),
+            ]),
+            async *stream(st, {cardId, startOffset}, {principal}) {
                 const card = await st.transact(principal, tx =>
-                    tx.ps.ensureCardMember(cardId, 'reader')
+                    tx.cards.getById(cardId, {includeDeleted: true})
                 );
-                yield* observable({
-                    get() {
-                        return st.transact(principal, async tx => {
-                            await tx.ps.ensureCardMember(cardId, 'reader');
-                            return tx.messages
-                                .getByCardId(cardId)
-                                .mapParallel(x => toMessageDto(tx, x.id))
-                                .toArray();
-                        });
-                    },
-                    update$: st.esReader
-                        .subscribe(boardEvents(card.boardId))
-                        .then(x => x.events.map(() => undefined)),
-                });
+                if (!card) {
+                    throw new BusinessError(
+                        `card with id ${cardId} not found`,
+                        'card_not_found'
+                    );
+                }
+
+                const {offset, events} = await st.esReader.subscribe(
+                    boardEvents(card.boardId),
+                    startOffset
+                );
+
+                const [messages, attachments] = await st.transact(
+                    principal,
+                    async tx => {
+                        return await whenAll([
+                            tx.messages.getByCardId(cardId).toArray(),
+                            tx.attachments.getByCardId(cardId).toArray(),
+                            tx.ps.ensureCardMember(cardId, 'reader'),
+                        ]);
+                    }
+                );
+
+                if (startOffset === undefined) {
+                    yield {
+                        type: 'snapshot' as const,
+                        offset,
+                        data: {
+                            cardId,
+                            boardId: card.boardId,
+                            messages,
+                            attachments,
+                        },
+                    };
+                }
+
+                for await (const {event, offset} of events) {
+                    yield {
+                        type: 'event' as const,
+                        event,
+                        offset,
+                    };
+                }
             },
         }),
         getBoardMembers: streamer({

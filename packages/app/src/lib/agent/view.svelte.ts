@@ -14,6 +14,7 @@ import {
     type BoardViewDataDto,
     type Card,
     type CardId,
+    type CardTreeViewDataDto,
     type Column,
     type ColumnId,
     type Message,
@@ -94,6 +95,13 @@ export class MeView {
             })
         );
     }
+
+    newBoard(board: Board) {
+        if (this.boards.some(x => x.id === board.id)) {
+            return;
+        }
+        this.boards = [...this.boards, board];
+    }
 }
 
 interface ClientInfo {
@@ -103,30 +111,31 @@ interface ClientInfo {
 
 export class BoardData {
     private board: Board = $state.raw(lateInit());
-    private me: User = $state.raw(lateInit());
-    private users: User[] = $state.raw(lateInit());
-    private columns: Column[] = $state.raw(lateInit());
-    private cards: Card[] = $state.raw(lateInit());
+
+    rawMe: User = $state.raw(lateInit());
+    rawUsers: User[] = $state.raw(lateInit());
+    rawColumns: Column[] = $state.raw(lateInit());
+    rawCards: Card[] = $state.raw(lateInit());
 
     readonly cardDragSettledAt = new SvelteMap<CardId, Timestamp>();
     readonly considerCardPosition = new SvelteMap<CardId, number>();
     readonly considerColumnId = new SvelteMap<CardId, ColumnId>();
 
     cardViews: CardView[] = $derived(
-        this.cards.map(x => new CardView(x, this))
+        this.rawCards.map(x => new CardView(x, this))
     );
     columnViews: ColumnView[] = $derived(
-        this.columns.map(x => new ColumnView(x, this))
+        this.rawColumns.map(x => new ColumnView(x, this))
     );
     columnTreeViews: ColumnTreeView[] = $derived(
-        this.columns.map(x => new ColumnTreeView(x, this))
+        this.rawColumns.map(x => new ColumnTreeView(x, this))
     );
     boardView: BoardView = $derived(new BoardView(this.board, this));
     boardTreeView: BoardTreeView = $derived(
         new BoardTreeView(this.board, this)
     );
-    userViews: UserView[] = $derived(this.users.map(x => new UserView(x)));
-    meView: UserView = $derived(new UserView(this.me));
+    userViews: UserView[] = $derived(this.rawUsers.map(x => new UserView(x)));
+    meView: UserView = $derived(new UserView(this.rawMe));
 
     awareness: SvelteMap<number, AwarenessState> = $state(lateInit());
 
@@ -160,7 +169,7 @@ export class BoardData {
         me: User
     ) {
         this.awareness = observeAwareness(rawAwareness);
-        this.me = me;
+        this.rawMe = me;
     }
 
     update(board: BoardViewDataDto, derivator: CrdtDerivator) {
@@ -170,7 +179,7 @@ export class BoardData {
             type: 'board',
             isDraft: false,
         });
-        this.users = board.users.map(x =>
+        this.rawUsers = board.users.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'user',
@@ -178,7 +187,7 @@ export class BoardData {
                 isDraft: false,
             })
         );
-        this.columns = board.columns.map(x =>
+        this.rawColumns = board.columns.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'column',
@@ -186,7 +195,7 @@ export class BoardData {
                 isDraft: false,
             })
         );
-        this.cards = board.cards.map(x =>
+        this.rawCards = board.cards.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'card',
@@ -199,28 +208,28 @@ export class BoardData {
     newCard(card: Card) {
         if (
             card.boardId !== this.board.id ||
-            this.cards.some(x => x.id === card.id)
+            this.rawCards.some(x => x.id === card.id)
         ) {
             return;
         }
-        this.cards = [...this.cards, card];
+        this.rawCards = [...this.rawCards, card];
     }
 
     newUser(user: User) {
-        if (this.users.some(x => x.id === user.id)) {
+        if (this.rawUsers.some(x => x.id === user.id)) {
             return;
         }
-        this.users = [...this.users, user];
+        this.rawUsers = [...this.rawUsers, user];
     }
 
     newColumn(column: Column) {
         if (
             column.boardId !== this.board.id ||
-            this.columns.some(x => x.id === column.id)
+            this.rawColumns.some(x => x.id === column.id)
         ) {
             return;
         }
-        this.columns = [...this.columns, column];
+        this.rawColumns = [...this.rawColumns, column];
     }
 }
 
@@ -313,8 +322,8 @@ export class ColumnTreeView extends ColumnView {
 }
 
 export class CardView implements Card {
-    private readonly _card: Card = lateInit();
-    private readonly _data: BoardData = lateInit();
+    private readonly _card!: Card;
+    private readonly _data!: BoardData;
 
     constructor(card: Card, data: BoardData) {
         assert(card.boardId === data.boardView.id, 'card.boardId === data.id');
@@ -398,16 +407,88 @@ export class CardView implements Card {
 }
 
 export class CardTreeViewData {
+    static create(
+        boardData: BoardData,
+        dto: CardTreeViewDataDto,
+        derivator: CrdtDerivator
+    ) {
+        const result = new CardTreeViewData(dto.cardId, boardData);
+        result.update(dto, derivator);
+        return result;
+    }
+
+    public readonly boardData!: BoardData;
+
     messages: Message[] = $state.raw(lateInit());
     attachments: Attachment[] = $state.raw(lateInit());
 
-    constructor(public readonly boardData: BoardData) {}
+    private constructor(
+        public readonly cardId: CardId,
+        boardData: BoardData
+    ) {
+        this.boardData = boardData;
+    }
+
+    card = $derived(
+        new CardTreeView(
+            findRequired(this.boardData.rawCards, x => x.id === this.cardId),
+            this
+        )
+    );
+
+    update(dto: CardTreeViewDataDto, derivator: CrdtDerivator) {
+        this.messages = dto.messages.map(x =>
+            derivator.view({
+                id: x.id,
+                type: 'message',
+                state: x.state,
+                isDraft: false,
+            })
+        );
+        this.attachments = dto.attachments.map(x =>
+            derivator.view({
+                id: x.id,
+                type: 'attachment',
+                state: x.state,
+                isDraft: false,
+            })
+        );
+    }
+
+    newAttachment(attachment: Attachment) {
+        if (
+            this.attachments.some(x => x.id === attachment.id) ||
+            this.card.id !== attachment.cardId
+        ) {
+            return;
+        }
+        this.attachments = [...this.attachments, attachment];
+    }
+
+    newMessage(message: Message) {
+        if (
+            this.messages.some(x => x.id === message.id) ||
+            this.card.id !== message.cardId
+        ) {
+            return;
+        }
+        this.messages = [...this.messages, message];
+    }
 }
 
 export class CardTreeView extends CardView {
+    private data: CardTreeViewData = $state.raw(lateInit());
+
     constructor(card: Card, data: CardTreeViewData) {
         super(card, data.boardData);
+        this.data = data;
     }
+
+    messages: MessageView[] = $derived(
+        this.data.messages
+            .map(x => new MessageView(x, this.data))
+            .sort((a, b) => compareNumbers(a.createdAt, b.createdAt))
+    );
 }
 
 export class MessageView implements Message {

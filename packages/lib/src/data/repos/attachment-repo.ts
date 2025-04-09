@@ -6,6 +6,7 @@ import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
 import {
+    type CrdtDoc,
     DocRepo,
     type OnDocChange,
     type QueryOptions,
@@ -16,6 +17,7 @@ import {zObjectKey, zObjectMetadata} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {BoardId, BoardRepo} from './board-repo.js';
 import {type CardId, CardRepo} from './card-repo.js';
+import type {ColumnId} from './column-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
 export type AttachmentId = Brand<Uuid, 'message_id'>;
@@ -25,6 +27,7 @@ export function createAttachmentId(): AttachmentId {
 }
 
 const CARD_ID_INDEX = 'card_id';
+const COLUMN_ID_INDEX = 'column_id';
 const BOARD_ID_INDEX = 'board_id';
 const AUTHOR_ID_INDEX = 'author_id';
 const OBJECT_KEY_INDEX = 'object_key';
@@ -36,6 +39,7 @@ export function zAttachment() {
             id: Uuid<AttachmentId>(),
             authorId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
+            columnId: Uuid<ColumnId>(),
             cardId: Uuid<CardId>(),
             objectKey: zObjectKey(),
             metadata: zObjectMetadata(),
@@ -63,6 +67,9 @@ export class AttachmentRepo {
             indexes: {
                 [CARD_ID_INDEX]: {
                     key: x => [[x.cardId, x.createdAt]],
+                },
+                [COLUMN_ID_INDEX]: {
+                    key: x => [[x.columnId, x.createdAt]],
                 },
                 [BOARD_ID_INDEX]: {
                     key: x => [[x.boardId, x.createdAt]],
@@ -123,7 +130,7 @@ export class AttachmentRepo {
         return this.rawRepo.getById([id], options);
     }
 
-    getByCardId(cardId: CardId): Stream<Attachment> {
+    getByCardId(cardId: CardId): Stream<CrdtDoc<Attachment>> {
         return this.rawRepo.get(CARD_ID_INDEX, [cardId]);
     }
 

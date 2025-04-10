@@ -38,7 +38,9 @@ export default defineConfig({
 
     esbuild: esbuildOptions,
 
-    test: {
-        include: ['src/**/*.{test,spec}.{js,ts}'],
-    },
+    resolve: process.env.VITEST
+        ? {
+              conditions: ['browser'],
+          }
+        : undefined,
 });

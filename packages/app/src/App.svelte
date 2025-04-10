@@ -11,7 +11,7 @@
 </script>
 
 <script lang="ts">
-    import {onMount, setContext} from 'svelte';
+    import {onDestroy, onMount, setContext} from 'svelte';
     import type {Component} from 'svelte';
     import {CoordinatorClient} from 'syncwave';
     import {
@@ -22,7 +22,10 @@
     import ErrorCard from './lib/components/error-card.svelte';
     import {UploadManager} from './lib/upload-manager.svelte';
     import {createThemeManager} from './lib/ui/theme-manager.svelte.js';
-    import {createAgent} from './lib/agent/agent';
+    import {
+        createAgent,
+        SvelteComponentContextManager,
+    } from './lib/agent/agent';
     import {appConfig} from './lib/config';
     import {WsTransportClient} from './ws-transport-client';
     import {AuthManager} from './auth-manager';
@@ -34,10 +37,14 @@
     import LoginFailed from './pages/login-failed.svelte';
     import Testbed from './pages/testbed.svelte';
     import Index from './pages/index.svelte';
-    import {monitorDocumentActivity} from './document-activity.js';
+    import {DocumentActivityMonitor} from './document-activity.js';
     import ModalContainer from './lib/ui/components/modal-container.svelte';
 
-    monitorDocumentActivity();
+    const documentActivity = new DocumentActivityMonitor();
+
+    onDestroy(() => {
+        documentActivity.destroy();
+    });
 
     const themeManager = createThemeManager();
     setContext('theme', {
@@ -45,7 +52,7 @@
         setUserTheme: themeManager.setUserTheme,
     });
 
-    const authManager = new AuthManager();
+    const authManager = new AuthManager(localStorage);
     setAuthManager(authManager);
 
     const coordinatorClient = createCoordinatorClient();
@@ -57,7 +64,9 @@
             url: appConfig.serverWsUrl,
             codec: new MsgpackCodec(),
         }),
-        authManager
+        authManager,
+        SvelteComponentContextManager,
+        documentActivity
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

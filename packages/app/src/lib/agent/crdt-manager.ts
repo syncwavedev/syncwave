@@ -44,6 +44,10 @@ class DiffSender<T> {
         });
     }
 
+    waitSettled() {
+        return this.batchProcessor.waitSettled();
+    }
+
     async start() {
         this.batchProcessor.start();
     }
@@ -159,6 +163,14 @@ export class CrdtManager implements CrdtDerivator {
         } else {
             assertNever(event.kind);
         }
+    }
+
+    async waitSettled() {
+        await Promise.all(
+            [...this.entities.values()].map(entity =>
+                entity.observer.sender.waitSettled()
+            )
+        );
     }
 
     view(state: EntityState): any {

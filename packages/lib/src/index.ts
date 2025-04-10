@@ -26,6 +26,7 @@ export * from './data/repos/message-repo.js';
 export * from './data/repos/user-repo.js';
 export * from './data/write-api.js';
 export * from './deferred.js';
+export * from './e2e-fixture.js';
 export * from './errors.js';
 export * from './event-emitter.js';
 export * from './kv/instrumented-kv-store.js';

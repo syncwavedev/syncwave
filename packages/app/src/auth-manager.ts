@@ -22,6 +22,8 @@ export interface TokenInfo {
 export class AuthManager {
     private readonly JWT_KEY = 'jwt';
 
+    constructor(private readonly storage: Storage) {}
+
     /**
      * Checks if the user is authorized by verifying the presence of a valid JWT token.
      */
@@ -30,11 +32,11 @@ export class AuthManager {
     }
 
     /**
-     * Retrieves the JWT token from localStorage.
+     * Retrieves the JWT token from storage.
      * @returns The JWT token if present, otherwise null.
      */
     getJwt(): string | null {
-        return localStorage.getItem(this.JWT_KEY);
+        return this.storage.getItem(this.JWT_KEY);
     }
 
     /**
@@ -72,18 +74,26 @@ export class AuthManager {
     }
 
     /**
-     * Logs in the user by storing the JWT token in localStorage.
+     * Logs in the user by storing the JWT token in storage.
      * @param token The JWT token to store.
      */
-    logIn(token: string): void {
-        localStorage.setItem(this.JWT_KEY, token);
+    logIn(
+        token: string,
+        options: {pageReload: boolean} = {pageReload: true}
+    ): void {
+        this.storage.setItem(this.JWT_KEY, token);
+        if (options.pageReload) {
+            window.location.href = '/';
+        }
     }
 
     /**
-     * Logs out the user by removing the JWT token from localStorage and redirecting to the home page.
+     * Logs out the user by removing the JWT token from storage and redirecting to the home page.
      */
-    logOut(): void {
-        localStorage.removeItem(this.JWT_KEY);
-        window.location.href = '/';
+    logOut(options: {pageReload: boolean} = {pageReload: true}): void {
+        this.storage.removeItem(this.JWT_KEY);
+        if (options.pageReload) {
+            window.location.href = '/';
+        }
     }
 }

@@ -1,6 +1,6 @@
-import {MsgpackCodec} from '../src/codec.js';
-import {CoordinatorClient} from '../src/coordinator/coordinator-client.js';
-import {MemEmailService} from '../src/data/mem-email-service.js';
+import {MsgpackCodec} from './codec.js';
+import {CoordinatorClient} from './coordinator/coordinator-client.js';
+import {MemEmailService} from './data/mem-email-service.js';
 import {
     CoordinatorServer,
     Crdt,
@@ -19,35 +19,30 @@ import {
     type BoardId,
     type Card,
     type CryptoService,
-    type JwtPayload,
     type JwtService,
     type RpcMessage,
-} from '../src/index.js';
-import {log} from '../src/logger.js';
-import {assert, assertSingle, drop} from '../src/utils.js';
+    type TransportClient,
+} from './index.js';
+import {log} from './logger.js';
+import {assert, assertSingle, drop} from './utils.js';
 
 export class E2eFixture {
-    static async start() {
+    static async start(options: {
+        jwtService: JwtService;
+        cryptoService: CryptoService;
+    }) {
         log.setLogLevel('error');
         const coordinatorTransportServer = new MemTransportServer<RpcMessage>(
             new MsgpackCodec()
         );
         const coordinatorKv = new MemMvccStore();
-        const jwt: JwtService = {
-            sign: async payload => JSON.stringify(payload),
-            verify: async token => JSON.parse(token) as JwtPayload,
-        };
-        const crypto: CryptoService = {
-            randomBytes: async () => new Uint8Array(0),
-            sha256: text => text,
-        };
         const emailService = new MemEmailService();
         const jwtSecret = 'secret';
         const coordinator = new CoordinatorServer({
             transport: coordinatorTransportServer,
             kv: new TupleStore(coordinatorKv),
-            jwt,
-            crypto,
+            jwt: options.jwtService,
+            crypto: options.cryptoService,
             email: emailService,
             jwtSecret,
             objectStore: new MemObjectStore(),
@@ -66,11 +61,12 @@ export class E2eFixture {
             undefined
         );
 
-        return new E2eFixture(client, emailService);
+        return new E2eFixture(client, coordinatorTransportClient, emailService);
     }
 
     constructor(
         public readonly client: CoordinatorClient,
+        public readonly transportClient: TransportClient<unknown>,
         public readonly emailService: MemEmailService
     ) {}
 

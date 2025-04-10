@@ -3,11 +3,14 @@ import {
     assert,
     assertNever,
     Awareness,
+    CancelledError,
+    Context,
     context,
     Crdt,
     createBoardId,
     createCardId,
     createClientId,
+    createColumnId,
     createCoordinatorApi,
     createMessageId,
     createRichtext,
@@ -47,9 +50,7 @@ import type {XmlFragment} from 'yjs';
 
 import type {AuthManager} from '../../auth-manager';
 
-import {getDocumentActivity} from '../../document-activity';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
-import {useComponentContext} from './component-context';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import {
     BoardData,
@@ -61,6 +62,25 @@ import {
     MeViewData,
     type SyncTarget,
 } from './view.svelte';
+
+export interface ContextManager {
+    use(): Context;
+}
+
+export const SvelteComponentContextManager: ContextManager = {
+    use: () => {
+        const [componentCtx, cancelComponentCtx] = context().createChild({
+            span: 'getRpc',
+        });
+        onDestroy(() => {
+            cancelComponentCtx(
+                new CancelledError('component destroyed', undefined)
+            );
+        });
+
+        return componentCtx;
+    },
+};
 
 export class Agent {
     private crdtManager: CrdtManager;
@@ -77,7 +97,9 @@ export class Agent {
 
     constructor(
         client: TransportClient<unknown>,
-        private readonly authManager: AuthManager
+        private readonly authManager: AuthManager,
+        private readonly contextManager: ContextManager,
+        private readonly activityMonitor: ActivityMonitor
     ) {
         this.connection = new RpcConnection(new PersistentConnection(client));
 
@@ -92,8 +114,16 @@ export class Agent {
         this.crdtManager = new CrdtManager(this.rpc);
     }
 
+    async waitSettled() {
+        return await this.crdtManager.waitSettled();
+    }
+
     async sendSignInEmail(email: string) {
         return await this.rpc.sendSignInEmail({email});
+    }
+
+    async verifySignInCode(options: {email: string; code: string}) {
+        return await this.rpc.verifySignInCode(options);
     }
 
     close(reason: unknown) {
@@ -117,7 +147,7 @@ export class Agent {
     }
 
     async observeMeAsync(): Promise<MeView> {
-        const ctx = useComponentContext();
+        const ctx = this.contextManager.use();
 
         const me = await this.rpc
             .getMeViewData({})
@@ -161,9 +191,7 @@ export class Agent {
     }
 
     async observeBoardAsync(key: string) {
-        const ctx = useComponentContext();
-
-        const activityMonitor = getDocumentActivity();
+        const ctx = this.contextManager.use();
 
         const [board, me] = await whenAll([
             this.rpc
@@ -177,18 +205,17 @@ export class Agent {
                 .first(),
         ]);
 
-        return ctx.run(() => this.observeBoard(board, me, activityMonitor));
+        return ctx.run(() => this.observeBoard(board, me));
     }
 
     private observeBoard(
         dto: BoardViewDataDto,
-        initialMe: CrdtDoc<User>,
-        activityMonitor: ActivityMonitor
+        initialMe: CrdtDoc<User>
     ): [BoardTreeView, Awareness] {
         const awareness = this.createBoardAwareness(
             dto.board.id,
             initialMe,
-            activityMonitor
+            this.activityMonitor
         );
         const me = this.crdtManager.view({
             id: initialMe.id,
@@ -432,6 +459,34 @@ export class Agent {
         });
     }
 
+    createColumn(options: {boardId: BoardId; name: string}): Column {
+        const me = this.authManager.ensureAuthorized();
+        const now = getNow();
+        const columnId = createColumnId();
+        const columnCrdt = Crdt.from<Column>({
+            authorId: me.userId,
+            boardId: options.boardId,
+            createdAt: now,
+            id: columnId,
+            name: options.name,
+            position: 0,
+            pk: [columnId],
+            updatedAt: now,
+        });
+        const column = this.crdtManager.createDraft({
+            id: columnId,
+            state: columnCrdt.state(),
+            type: 'column',
+            isDraft: true,
+        }).view as Column;
+
+        this.syncTargets().forEach(x => {
+            x.newColumn(column);
+        });
+
+        return column;
+    }
+
     setColumnName(columnId: ColumnId, name: string): void {
         this.crdtManager.update<Column>(columnId, x => {
             x.name = name;
@@ -463,7 +518,7 @@ export class Agent {
     }
 
     async observeCardAsync(cardId: CardId) {
-        const ctx = useComponentContext();
+        const ctx = this.contextManager.use();
 
         console.debug('active cards:', this.activeCards.length);
 
@@ -560,12 +615,19 @@ export class Agent {
 
 export function createAgent(
     client: TransportClient<unknown>,
-    authManager: AuthManager
+    authManager: AuthManager,
+    contextManager: ContextManager,
+    activityMonitor: ActivityMonitor
 ) {
     const existingAgent = getContext(Agent);
     assert(existingAgent === undefined, 'Syncwave agent already exists');
 
-    const agent = new Agent(client, authManager);
+    const agent = new Agent(
+        client,
+        authManager,
+        contextManager,
+        activityMonitor
+    );
     setContext(Agent, agent);
     onDestroy(() => agent.close('agent.close: component destroyed'));
 }

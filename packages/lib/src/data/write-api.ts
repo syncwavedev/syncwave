@@ -635,24 +635,53 @@ export function createWriteApi() {
             }),
             res: Type.Object({}),
             handle: async (st, {columnId, diff}) => {
-                await whenAll([
-                    st.ps.ensureColumnMember(columnId, 'writer'),
-                    st.tx.columns.apply(
-                        columnId,
-                        diff,
-                        writable<Column>({
-                            position: true,
-                            name: true,
-                            deletedAt: true,
-                            id: false,
-                            authorId: false,
-                            boardId: false,
-                            pk: false,
-                            createdAt: false,
-                            updatedAt: false,
+                const existingColumn = await st.tx.columns.getById(columnId, {
+                    includeDeleted: true,
+                });
+                if (existingColumn) {
+                    await whenAll([
+                        st.ps.ensureColumnMember(columnId, 'writer'),
+                        st.tx.columns.apply(
+                            columnId,
+                            diff,
+                            writable<Column>({
+                                position: true,
+                                name: true,
+                                deletedAt: true,
+                                id: false,
+                                authorId: false,
+                                boardId: false,
+                                pk: false,
+                                createdAt: false,
+                                updatedAt: false,
+                            })
+                        ),
+                    ]);
+                } else {
+                    const crdt = Crdt.load(diff);
+                    const column = crdt.snapshot();
+
+                    const meId = st.ps.ensureAuthenticated();
+                    await st.ps.ensureBoardMember(column.boardId, 'writer');
+
+                    await st.tx.columns.apply(
+                        column.id,
+                        crdt.state(),
+                        creatable<Column>({
+                            id: column.id,
+                            pk: [column.id],
+                            name: column.name,
+                            position: column.position,
+                            authorId: meId,
+                            boardId: column.boardId,
+                            createdAt: expectTimestamp(),
+                            deletedAt: expectOptional(expectTimestamp()),
+                            updatedAt: expectTimestamp(),
                         })
-                    ),
-                ]);
+                    );
+
+                    return {};
+                }
                 return {};
             },
         }),

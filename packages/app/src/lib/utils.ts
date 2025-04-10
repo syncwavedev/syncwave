@@ -120,7 +120,7 @@ export function createCoordinatorClient() {
 }
 
 export async function createDirectCoordinatorClient() {
-    const authManager = new AuthManager();
+    const authManager = new AuthManager(localStorage);
     const jwt = authManager.getJwt();
     const coordinator = new CoordinatorClient(
         await new WsTransportClient({

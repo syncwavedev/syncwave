@@ -29,6 +29,11 @@
             "import": "./dist/esm/src/node-crypto-service.js",
             "require": "./dist/cjs/src/node-crypto-service.js",
             "default": "./dist/cjs/src/node-crypto-service.js"
+        },
+        "./node-jwt-service.js": {
+            "import": "./dist/esm/src/node-jwt-service.js",
+            "require": "./dist/cjs/src/node-jwt-service.js",
+            "default": "./dist/cjs/src/node-jwt-service.js"
         }
     },
     "type": "module",
@@ -43,6 +48,7 @@
     },
     "devDependencies": {
         "@types/functional-red-black-tree": "^1.0.6",
+        "@types/jsonwebtoken": "^9.0.9",
         "@types/seedrandom": "^3.0.8",
         "npm-run-all": "^4.1.5",
         "pino-pretty": "^13.0.0",
@@ -62,6 +68,7 @@
         "fdb-tuple": "^1.0.0",
         "functional-red-black-tree": "^1.0.1",
         "ix": "^7.0.0",
+        "jsonwebtoken": "^9.0.2",
         "lib0": "^0.2.99",
         "lru-cache": "^11.0.2",
         "msgpackr": "^1.11.2",

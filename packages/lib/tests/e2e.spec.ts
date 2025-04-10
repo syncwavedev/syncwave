@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {DEFAULT_BOARD_NAME} from '../src/coordinator/auth-api.js';
 import {createRichtext} from '../src/crdt/richtext.js';
+import {E2eFixture} from '../src/e2e-fixture.js';
 import {
     assertSingle,
     Crdt,
@@ -14,14 +15,18 @@ import {
     type Card,
     type Message,
 } from '../src/index.js';
-import {E2eFixture} from './e2e-fixture.js';
+import {NodeCryptoService} from '../src/node-crypto-service.js';
+import {NodeJwtService} from '../src/node-jwt-service.js';
 
 describe('e2e', () => {
     let subject: E2eFixture;
     const now = new Date();
 
     beforeEach(async () => {
-        subject = await E2eFixture.start();
+        subject = await E2eFixture.start({
+            jwtService: NodeJwtService,
+            cryptoService: NodeCryptoService,
+        });
         await subject.signIn();
         vi.useFakeTimers();
         vi.setSystemTime(now);

@@ -1,3 +1,4 @@
+import {Deferred} from './deferred.js';
 import {AppError} from './errors.js';
 import {log} from './logger.js';
 import {assert, wait} from './utils.js';
@@ -27,6 +28,19 @@ export class BatchProcessor<T> {
             options.retries === undefined || options.retries >= 0,
             'retries must be >= 0'
         );
+    }
+
+    waitSettled() {
+        const result = new Deferred<void>();
+
+        const interval = setInterval(() => {
+            if (this.queue.length === 0 && !this.inProgress) {
+                result.resolve();
+                clearInterval(interval);
+            }
+        }, 0).unref();
+
+        return result.promise;
     }
 
     async start() {

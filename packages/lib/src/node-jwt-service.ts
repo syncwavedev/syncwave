@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
-import {AppError, type JwtPayload, type JwtService} from 'syncwave';
+import type {JwtPayload, JwtService} from './data/infrastructure.js';
+import {AppError} from './errors.js';
 
 export class JwtVerificationError extends AppError {
     constructor(public readonly errors: jwt.VerifyErrors) {

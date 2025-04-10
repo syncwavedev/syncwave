@@ -410,15 +410,12 @@ export class Agent {
     }
 
     considerCardPosition(cardId: CardId, columnId: ColumnId, position: number) {
-        this.activeBoards.forEach(board =>
-            board.considerColumnId.set(cardId, columnId)
-        );
-        this.activeBoards.forEach(board =>
-            board.considerCardPosition.set(cardId, position)
-        );
-
         const now = getNow();
-        this.activeBoards.forEach(x => x.cardDragSettledAt.set(cardId, now));
+        this.activeBoards.forEach(board => {
+            board.considerColumnId.set(cardId, columnId);
+            board.considerCardPosition.set(cardId, position);
+            board.cardDragSettledAt.set(cardId, now);
+        });
     }
 
     setCardColumn(cardId: CardId, columnId: ColumnId): void {

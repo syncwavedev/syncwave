@@ -90,21 +90,21 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-        bg-surface-3
-        dark:bg-surface-2
-        dark:hover:bg-surface-3
-        hover:bg-surface-4
-        group
-        data-active:bg-subtle-active
-        flex
-        items-end
-        cursor-default
-        gap-1
-        rounded-md
-        p-2.5
-        select-none
-        content
-    "
+            bg-surface-3
+            dark:bg-surface-2
+            dark:hover:bg-surface-3
+            hover:bg-surface-4
+            group
+            data-active:bg-subtle-active
+            flex
+            items-end
+            cursor-default
+            gap-1
+            rounded-md
+            p-2.5
+            select-none
+            content
+        "
         class:border-dashed={card.isDraft}
         onclick={onClick}
         onmouseenter={() => agent.handleCardMouseEnter(card.boardId, card.id)}

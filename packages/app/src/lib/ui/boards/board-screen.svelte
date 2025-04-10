@@ -141,7 +141,7 @@
         if (!column) {
             const firstColumn = board.columns[0];
             if (!firstColumn) {
-                alert('Please, create a column first');
+                alert('Please, create a column to add a card');
                 return;
             }
 
@@ -149,8 +149,7 @@
         }
 
         if (selectedCard?.isDraft) {
-            agent.setCardColumn(selectedCard.id, column.id);
-            return;
+            agent.deleteCard(selectedCard.id);
         }
 
         const draft = agent.createCardDraft(board, {

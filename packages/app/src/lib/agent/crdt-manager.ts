@@ -147,7 +147,11 @@ export class CrdtManager implements CrdtDerivator {
             } as EntityState);
         } else if (event.kind === 'update') {
             const entity = this.entities.get(event.id)?.entity;
-            assert(entity !== undefined, 'apply: Crdt not found');
+            if (entity === undefined) {
+                // possible, for example, for a message change
+                // because we load messages on demand (when card details is requested)
+                return;
+            }
             assert(entity.type === event.type, 'apply: Crdt type mismatch');
             entity.crdt.apply(event.diff as CrdtDiff<any>, {
                 origin: REMOTE_ORIGIN,

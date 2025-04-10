@@ -22,7 +22,7 @@ import {
     type Timestamp,
     type User,
 } from 'syncwave';
-import {observeAwareness} from './awareness.svelte.js';
+import {observeAwareness} from './awareness.js';
 import type {CrdtDerivator, CrdtManager} from './crdt-manager.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

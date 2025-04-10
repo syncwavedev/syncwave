@@ -137,6 +137,7 @@ export function createWriteApi() {
                             boardId: card.boardId,
                             columnId: card.columnId,
                             counter,
+                            assigneeId: card.assigneeId,
                             position: card.position,
                             createdAt: expectTimestamp(),
                             deletedAt: expectOptional(expectTimestamp()),

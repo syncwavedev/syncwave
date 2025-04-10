@@ -54,7 +54,14 @@ loggerProvider.addLogRecordProcessor(
     new SimpleLogRecordProcessor({
         export: (logs, cb) => {
             for (const log of logs) {
-                const message = `${log.body?.['msg']} traceId=${log.body?.['traceId']}`;
+                let message: unknown = `${log.body?.['msg']} traceId=${log.body?.['traceId']}`;
+
+                if (log.body?.['error']) {
+                    message = {
+                        message,
+                        error: log.body?.['error'],
+                    };
+                }
 
                 if (log.severityNumber === SeverityNumber.ERROR) {
                     console.error(message);

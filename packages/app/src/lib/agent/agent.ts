@@ -9,6 +9,7 @@ import {
     createCardId,
     createClientId,
     createCoordinatorApi,
+    createMessageId,
     createRichtext,
     createRpcClient,
     getNow,
@@ -42,6 +43,7 @@ import {
     type User,
     type UserId,
 } from 'syncwave';
+import type {XmlFragment} from 'yjs';
 
 import type {AuthManager} from '../../auth-manager';
 
@@ -325,6 +327,48 @@ export class Agent {
         this.crdtManager.commit(cardId);
     }
 
+    createMessage(options: {
+        boardId: BoardId;
+        cardId: CardId;
+        columnId: ColumnId;
+        fragment: XmlFragment;
+    }): Message {
+        const me = this.authManager.ensureAuthorized();
+        const now = getNow();
+        const messageId = createMessageId();
+        const messageCrdt = Crdt.from<Message>({
+            authorId: me.userId,
+            boardId: options.boardId,
+            cardId: options.cardId,
+            createdAt: now,
+            target: 'card',
+            columnId: options.columnId,
+            id: messageId,
+            attachmentIds: [],
+            payload: {
+                type: 'text',
+                text: createRichtext(options.fragment),
+            },
+            replyToId: undefined,
+            updatedAt: now,
+            pk: [messageId],
+        });
+        const message = this.crdtManager.createDraft({
+            id: messageId,
+            state: messageCrdt.state(),
+            type: 'message',
+            isDraft: true,
+        }).view as Message;
+
+        this.crdtManager.commit(messageId);
+
+        this.syncTargets().forEach(x => {
+            x.newMessage(message);
+        });
+
+        return message;
+    }
+
     setColumnPosition(columnId: ColumnId, position: number): void {
         this.crdtManager.update<Column>(columnId, x => {
             x.position = position;
@@ -424,6 +468,8 @@ export class Agent {
     async observeCardAsync(cardId: CardId) {
         const ctx = useComponentContext();
 
+        console.debug('active cards:', this.activeCards.length);
+
         const dto = await this.rpc
             .getCardViewData({cardId})
             .filter(x => x.type === 'snapshot')
@@ -462,6 +508,7 @@ export class Agent {
                 }
             }
         }, 'observeMe').catch(error => {
+            console.error(error);
             log.error({error, msg: 'observeCard failed'});
         });
 

@@ -590,10 +590,10 @@ export function nextTick() {
     return new Promise<void>(resolve => setTimeout(resolve, 0));
 }
 
-export async function infiniteRetry<R>(
-    fn: () => Promise<R>,
+export async function infiniteRetry(
+    fn: () => Promise<void>,
     ctx: string
-): Promise<R> {
+): Promise<void> {
     while (context().isActive) {
         try {
             return await fn();
@@ -610,8 +610,6 @@ export async function infiniteRetry<R>(
             await wait({ms: 1000, onCancel: 'resolve'});
         }
     }
-
-    throw new CancelledError('infiniteRetry cancelled', undefined);
 }
 
 export type UnknownType =

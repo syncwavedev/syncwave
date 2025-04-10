@@ -70,6 +70,91 @@ export class WriteApiState {
 
 export function createWriteApi() {
     return createApi<WriteApiState>()({
+        applyMessageDiff: handler({
+            req: Type.Object({
+                messageId: Uuid<MessageId>(),
+                diff: CrdtDiff<Message>(),
+            }),
+            res: Type.Object({}),
+            handle: async (st, {messageId, diff}) => {
+                const existingMessage = await st.tx.messages.getById(
+                    messageId,
+                    {includeDeleted: true}
+                );
+                if (existingMessage) {
+                    throw new BusinessError(
+                        'message edit is not allowed',
+                        'forbidden'
+                    );
+                } else {
+                    const crdt = Crdt.load(diff);
+                    const message = crdt.snapshot();
+
+                    const meId = st.ps.ensureAuthenticated();
+                    await st.ps.ensureBoardMember(message.boardId, 'writer');
+                    await st.ps.ensureColumnMember(message.columnId, 'writer');
+                    await st.ps.ensureCardMember(message.cardId, 'writer');
+
+                    const card = await st.tx.cards.getById(message.cardId, {
+                        includeDeleted: true,
+                    });
+                    if (!card) {
+                        throw new BusinessError(
+                            `card not found: ${message.cardId}`,
+                            'card_not_found'
+                        );
+                    }
+                    if (card.boardId !== message.boardId) {
+                        throw new BusinessError(
+                            `card ${message.columnId} doesn't belong to column ${card.columnId}`,
+                            'forbidden'
+                        );
+                    }
+
+                    const column = await st.tx.columns.getById(
+                        message.columnId,
+                        {includeDeleted: true}
+                    );
+                    if (!column) {
+                        throw new BusinessError(
+                            `column not found: ${message.columnId}`,
+                            'column_not_found'
+                        );
+                    }
+                    if (column.boardId !== message.boardId) {
+                        throw new BusinessError(
+                            `column ${message.columnId} doesn't belong to board ${message.boardId}`,
+                            'forbidden'
+                        );
+                    }
+
+                    await st.tx.messages.apply(
+                        message.id,
+                        crdt.state(),
+                        creatable<Message>({
+                            id: message.id,
+                            pk: [message.id],
+                            authorId: meId,
+                            boardId: message.boardId,
+                            columnId: message.columnId,
+                            cardId: message.cardId,
+                            replyToId: message.replyToId,
+                            attachmentIds: message.attachmentIds,
+                            target: message.target,
+                            createdAt: expectTimestamp(),
+                            deletedAt: expectOptional(expectTimestamp()),
+                            updatedAt: expectTimestamp(),
+                            payload: {
+                                type: 'text',
+                                text: createRichtext(),
+                            },
+                        })
+                    );
+
+                    return {};
+                }
+            },
+        }),
         applyCardDiff: handler({
             req: Type.Object({
                 cardId: Uuid<CardId>(),
@@ -118,6 +203,36 @@ export function createWriteApi() {
                     const meId = st.ps.ensureAuthenticated();
                     await st.ps.ensureBoardMember(card.boardId, 'writer');
                     await st.ps.ensureColumnMember(card.columnId, 'writer');
+                    const column = await st.tx.columns.getById(card.columnId, {
+                        includeDeleted: true,
+                    });
+                    if (!column) {
+                        throw new BusinessError(
+                            `column not found: ${card.columnId}`,
+                            'column_not_found'
+                        );
+                    }
+                    if (column.boardId !== card.boardId) {
+                        throw new BusinessError(
+                            `column ${card.columnId} doesn't belong to board ${card.boardId}`,
+                            'forbidden'
+                        );
+                    }
+                    if (card.assigneeId) {
+                        const assigneeMember =
+                            await st.tx.members.getByUserIdAndBoardId(
+                                card.assigneeId,
+                                card.boardId,
+                                {includeDeleted: true}
+                            );
+
+                        if (!assigneeMember) {
+                            throw new BusinessError(
+                                `user ${card.assigneeId} is not a member of board ${card.boardId}`,
+                                'forbidden'
+                            );
+                        }
+                    }
 
                     const counter = await st.tx.boards.incrementBoardCounter(
                         card.boardId

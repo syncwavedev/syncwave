@@ -19,7 +19,7 @@ import Underline from '@tiptap/extension-underline';
 import {generateHTML} from '@tiptap/html';
 import type {Node} from '@tiptap/pm/model';
 import {yXmlFragmentToProsemirrorJSON} from 'y-prosemirror';
-import {XmlFragment} from 'yjs';
+import {XmlFragment, Doc as YDoc} from 'yjs';
 
 export const tiptapExtensions = [
     Document,
@@ -91,4 +91,9 @@ function prosemirrorNodeToTaskList(node: Node): TodoStats {
     });
 
     return {checked, total};
+}
+
+export function createXmlFragment() {
+    const doc = new YDoc();
+    return doc.getXmlFragment('content');
 }

@@ -120,7 +120,6 @@ export class MeViewData implements SyncTarget {
             type: 'user',
             isDraft: false,
         });
-        console.debug('override', me.boards);
         this.boards = me.boards.map(x =>
             derivator.view({
                 id: x.id,
@@ -548,6 +547,12 @@ export class CardTreeViewData implements SyncTarget {
     }
 
     override(dto: CardTreeViewDataDto, derivator: CrdtDerivator) {
+        this.rawCard = derivator.view({
+            id: dto.card.id,
+            type: 'card',
+            state: dto.card.state,
+            isDraft: false,
+        });
         this.cardView = derivator.view({
             id: dto.card.id,
             type: 'card',

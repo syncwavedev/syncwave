@@ -88,7 +88,10 @@ class DiffSender<T> {
         } else if (this.entity.type === 'member') {
             throw new Error('Member diff not supported');
         } else if (this.entity.type === 'message') {
-            throw new Error('Message diff not supported');
+            await this.rpc.applyMessageDiff({
+                messageId: this.entity.id,
+                diff,
+            });
         } else {
             assertNever(this.entity);
         }

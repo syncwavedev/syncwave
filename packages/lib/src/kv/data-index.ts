@@ -1,5 +1,5 @@
 import {AppError} from '../errors.js';
-import {Mutex} from '../mutex.js';
+import {RwLock} from '../rw-lock.js';
 import {
     compareTuple,
     compareTupleItem,
@@ -161,37 +161,47 @@ export function createIndex<TValue>({
         ]);
     }
 
-    const syncMutex = new Mutex();
+    const lock = new RwLock();
 
     return {
         info: {
             unique,
         },
         async sync(prev, next) {
-            return await syncMutex.run(() => sync(prev, next));
+            return await lock.runWrite(() => sync(prev, next));
         },
         async *query(condition): AsyncIterable<Tuple> {
-            for await (const entry of queryInternal(condition)) {
-                yield decodeTuple(entry.value);
+            await lock.readLock();
+            try {
+                for await (const entry of queryInternal(condition)) {
+                    yield decodeTuple(entry.value);
+                }
+            } finally {
+                lock.unlockRead();
             }
         },
         async *get(key): AsyncIterable<Tuple> {
-            for await (const entry of queryInternal({gte: key})) {
-                for (let i = 0; i < key.length; i += 1) {
-                    if (key.length > 0) {
-                        // all parts up to the last were checked in queryInternal
-                        if (
-                            compareTupleItem(
-                                entry.key[key.length - 1],
-                                key[key.length - 1]
-                            ) !== 0
-                        ) {
-                            return;
+            await lock.readLock();
+            try {
+                for await (const entry of queryInternal({gte: key})) {
+                    for (let i = 0; i < key.length; i += 1) {
+                        if (key.length > 0) {
+                            // all parts up to the last were checked in queryInternal
+                            if (
+                                compareTupleItem(
+                                    entry.key[key.length - 1],
+                                    key[key.length - 1]
+                                ) !== 0
+                            ) {
+                                return;
+                            }
                         }
                     }
-                }
 
-                yield decodeTuple(entry.value);
+                    yield decodeTuple(entry.value);
+                }
+            } finally {
+                lock.unlockRead();
             }
         },
     };

@@ -68,7 +68,7 @@ export function Message() {
             boardId: Uuid<BoardId>(),
             payload: MessagePayload(),
             attachmentIds: Type.Array(Uuid<AttachmentId>()),
-            replyToId: Type.Optional(Uuid<MessageId>()),
+            replyToId: Type.Union([Uuid<MessageId>(), Type.Undefined()]),
         }),
     ]);
 }

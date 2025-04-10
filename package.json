@@ -8,8 +8,8 @@
         "node": ">=20.0.0"
     },
     "scripts": {
-        "start": "tsx ./scripts/playground.ts | pino-pretty --config .pino-prettyrc",
-        "toolbox": "tsx --import ./packages/server/src/instrumentation.ts ./scripts/toolbox.ts | pino-pretty --config .pino-prettyrc",
+        "start": "tsx ./scripts/playground.ts | tsx ./log-prettify.ts",
+        "toolbox": "tsx --import ./packages/server/src/instrumentation.ts ./scripts/toolbox.ts | tsx ./log-prettify.ts",
         "bootstrap": "npm install && npm install --workspaces && npm run build",
         "test": "npm test --workspaces",
         "build": "npm run build --workspaces",

@@ -14,6 +14,8 @@
     import DropdownMenu from '../components/dropdown-menu.svelte';
     import Select from '../components/select.svelte';
     import {getAgent} from '../../agent/agent';
+    import RichtextView from '../../components/richtext-view.svelte';
+    import {createXmlFragment} from '../../richtext';
 
     const {
         card,
@@ -48,6 +50,14 @@
             }
         });
     });
+
+    const detailsPromise = agent.observeCardAsync(card.id);
+
+    detailsPromise.then(details => {
+        console.debug('Details:', details);
+    });
+
+    const fragment = createXmlFragment();
 </script>
 
 <div
@@ -140,4 +150,27 @@
         </div>
         <hr class="mt-3 mb-2" />
     </div>
+    {#await detailsPromise then details}
+        {#each details.messages as message (message.id)}
+            <div class="mx-4 mt-3">
+                <div class="flex-col gap-2 text-ink-body">
+                    <span>{message.author.fullName}</span>
+                    <RichtextView fragment={message.payload.text.__fragment!} />
+                </div>
+            </div>
+        {/each}
+    {/await}
+    <Editor {fragment} {me} placeholder="Enter your message!" />
+    <button
+        onclick={() => {
+            agent.createMessage({
+                boardId: card.boardId,
+                columnId: card.columnId,
+                cardId: card.id,
+                fragment: fragment.clone(),
+            });
+
+            fragment.delete(0, Number.MAX_SAFE_INTEGER);
+        }}>Send</button
+    >
 </div>

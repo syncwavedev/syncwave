@@ -1,0 +1,10 @@
+@theme static {
+    /* Font */
+    --text-sm: 0.8125rem; /* 13px */
+    --text-md: 0.875rem; /* 14px */
+    --text-lg: 0.9375rem; /* 15px */
+
+    --text-sm--line-height: 0.875rem; /* 14px */
+    --text-md--line-height: 1.125rem; /* 18px */
+    --text-lg--line-height: 1.25rem; /* 20px */
+}

@@ -1,4 +1,7 @@
-@import './theme.css';
+@import 'tailwindcss';
+
+@import './colors.css';
+@import './text.css';
 @import './base.css';
 @import './button.css';
 @import './input.css';

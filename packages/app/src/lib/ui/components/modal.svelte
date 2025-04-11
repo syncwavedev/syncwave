@@ -31,7 +31,7 @@
             class="bg-surface-1 fixed top-12 left-1/2 z-[1000] w-full -translate-x-1/2 rounded-lg shadow-lg border border-divider"
             class:max-w-[20rem]={size === 'xs'}
             class:max-w-sm={size === 'sm'}
-            class:max-w-md={size === 'md'}
+            class:max-w-[28rem]={size === 'md'}
             class:max-w-lg={size === 'lg'}
         >
             <ScrollArea orientation="both">
@@ -39,7 +39,7 @@
                     <div class="modal-header">
                         <p class="font-medium">{title}</p>
                         <button
-                            class="btn--icon ml-auto bg-surface-2"
+                            class="btn--icon ml-auto"
                             onclick={() => history.back()}
                         >
                             <TimesIcon />

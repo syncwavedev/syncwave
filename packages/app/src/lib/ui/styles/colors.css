@@ -1,16 +1,4 @@
-@import 'tailwindcss';
-
 @theme static {
-    --text-sm: 0.75rem; /* 12px */
-    --text-md: 0.8125rem; /* 13px */
-    --text-lg: 0.875rem; /* 14px */
-    --text-xl: 0.9375rem; /* 15px */
-
-    --text-sm--line-height: 0.875rem; /* 14px */
-    --text-md--line-height: 1rem; /* 16px */
-    --text-lg--line-height: 1.125rem; /* 18px */
-    --text-xl--line-height: 1.25rem; /* 20px */
-
     /* Gray */
     --color-gray-10: oklch(99.2% 0.001 110deg);
     --color-gray-25: oklch(98% 0.001 110deg);

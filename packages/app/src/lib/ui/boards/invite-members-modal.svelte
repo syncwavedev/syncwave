@@ -11,12 +11,12 @@
 </script>
 
 <Modal title="Manage Members" size="md">
-    <div class="flex flex-col mx-4 my-1.5">
+    <div class="flex flex-col mx-4 mt-2.5 mb-4">
         {#each board.members as member (member.id)}
-            <div class="flex items-center py-1.5">
+            <div class="flex items-center py-1">
                 <Avatar name={member.fullName} />
                 <span class="ml-1.5">{member.fullName}</span>
-                <button class="btn--icon ml-auto text-ink-body">
+                <button class="btn--icon ml-auto text-ink-body mr-2">
                     <CrownIcon />
                 </button>
                 <button class="btn--icon text-ink-body">
@@ -24,28 +24,26 @@
                 </button>
             </div>
         {/each}
-    </div>
-    <hr />
-    <div class="flex flex-col gap-2 mx-4 my-4">
-        <p class="font-medium">Invite to Collaborate</p>
         <input
             name="invite"
             autocomplete="off"
             type="email"
-            class="input input-block bg-surface-0"
-            placeholder="Enter an email address..."
+            class="input input-block py-2.5 bg-surface-0 mt-2"
+            placeholder="Enter an email address to invite..."
         />
-        <hr class="my-2" />
-        <p>Anyone with this link can join and edit the board</p>
+        <hr class="my-4" />
+        <p class="text-center mb-2">
+            Anyone with this link can join and edit the board
+        </p>
         <input
             autocomplete="off"
             type="text"
-            class="input input-block bg-surface-0"
+            class="input input-block text-ink-detail py-2.5 bg-surface-0 mb-2"
             value="https://syncwave.dev/b/SYNC/join?code=12312312345qweqwe-123qwe-ewq"
             disabled
         />
-        <div class="flex">
-            <button class="btn-ghost text-ink-body">
+        <div class="flex justify-center">
+            <button class="btn-ghost text-ink-body mr-2">
                 <RefreshIcon />
                 Refresh Link
             </button>

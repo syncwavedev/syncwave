@@ -2,13 +2,13 @@
     const {total, active}: {total: number; active: number} = $props();
 
     const center = {x: 12, y: 12};
-    const circleRadius = 9;
+    const circleRadius = 10;
     const innerRadius = 6;
 
     const getActiveColor = () => {
         if (active === total) return 'text-green-400';
         if (active > 0) return 'text-blue-450';
-        return 'dark:text-gray-600 text-gray-200';
+        return 'dark:text-[var(--color-ink-detail)] text-gray-200';
     };
     const activeColorClass = getActiveColor();
 
@@ -74,9 +74,9 @@
         cy={center.y}
         r={circleRadius}
         stroke="currentColor"
-        stroke-width="1.75"
+        stroke-width="1.5"
         fill="none"
-        class="dark:text-gray-600 text-gray-200"
+        class="dark:text-var(--color-ink-detail) text-gray-200"
     />
 
     <!-- Just the outer circle with no progress -->
@@ -85,7 +85,7 @@
         cy={center.y}
         r={circleRadius}
         stroke="currentColor"
-        stroke-width="1.75"
+        stroke-width="1.5"
         fill="none"
         class={activeColorClass}
     />

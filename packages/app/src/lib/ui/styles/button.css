@@ -1,5 +1,12 @@
 .btn--icon {
-    @apply text-ink-body hover:bg-surface-2 hover:text-ink grid aspect-square h-[2em] w-[2em] place-items-center rounded-full;
+    @apply text-ink-body
+    hover:bg-surface-2
+    hover:text-ink
+    grid
+    aspect-square
+    p-1
+    place-items-center
+    rounded-sm;
 }
 
 .btn--block {
@@ -15,7 +22,7 @@
 }
 
 .btn-ghost {
-    @apply h-[2em] px-[0.5em] rounded-sm gap-1.5 flex items-center hover:bg-surface-2 hover:text-ink;
+    @apply p-1 rounded-sm gap-1.5 flex items-center hover:bg-surface-2 hover:text-ink;
 }
 
 .btn-tinted {

@@ -108,7 +108,7 @@
         <!-- Task Description -->
         <div class="mx-2">
             <div
-                class="input w-full text-xl leading-relaxed py-1 px-2 rounded-sm transition-colors duration-150"
+                class="input w-full leading-relaxed py-1 px-2 rounded-sm transition-colors duration-150"
             >
                 <Editor
                     bind:this={editor}

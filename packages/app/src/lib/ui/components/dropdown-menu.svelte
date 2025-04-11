@@ -48,7 +48,7 @@
                         onSelect={item.onSelect}
                     >
                         <div
-                            class="flex items-center gap-1.5 dark:hover:bg-slate-750 hover:bg-gray-100 px-2 h-[2em] rounded-sm cursor-default outline-none"
+                            class="flex items-center gap-1.5 dark:hover:bg-slate-750 hover:bg-gray-100 px-2 py-1 rounded-sm cursor-default outline-none"
                         >
                             <item.icon />
                             {item.text}

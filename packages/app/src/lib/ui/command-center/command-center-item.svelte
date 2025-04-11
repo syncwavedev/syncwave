@@ -17,7 +17,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
     role="menuitem"
-    class="flex items-center gap-1.5 h-[2.5em] px-2 hover:bg-surface-3 rounded-md cursor-default"
+    class="flex items-center gap-1.5 py-1.5 px-2 hover:bg-surface-3 rounded-md cursor-default"
     {onclick}
     tabindex="0"
 >

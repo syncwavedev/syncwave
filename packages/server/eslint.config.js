@@ -1,3 +1,3 @@
-import config from 'syncwave-eslint';
+import config from 'syncwave-config';
 
 export default config;

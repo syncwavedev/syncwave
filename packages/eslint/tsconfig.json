@@ -1,8 +1,0 @@
-{
-    "extends": "../../configs/tsconfig.json",
-    "compilerOptions": {
-        "rootDir": ".",
-        "outDir": "./dist/esm"
-    },
-    "include": ["eslint.config.js"]
-}

@@ -4,5 +4,5 @@
         "rootDir": ".",
         "outDir": "./dist/esm"
     },
-    "include": ["src/**/*.ts", "tests/**/*.ts"]
+    "include": ["eslint.config.js"]
 }

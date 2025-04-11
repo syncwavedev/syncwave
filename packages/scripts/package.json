@@ -1,0 +1,23 @@
+{
+    "name": "syncwave-scripts",
+    "private": true,
+    "version": "0.0.1",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "type": "module",
+    "scripts": {
+        "clean": "rimraf dist",
+        "dev": "AWS_DEFAULT_REGION=us-east-1 NODE_OPTIONS='--enable-source-maps' tsx watch --clear-screen=false ./src/entrypoint.ts | tsx ../../packages/scripts/src/log-prettify.ts",
+        "build": "tsc",
+        "build:watch": "tsc -w",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@sinclair/typebox": "^0.34.33",
+        "dotenv": "^16.5.0",
+        "pino-pretty": "^13.0.0",
+        "syncwave": "*",
+        "syncwave-eslint": "*"
+    }
+}

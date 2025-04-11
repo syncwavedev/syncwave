@@ -3,12 +3,9 @@
 /* eslint-disable */
 import 'dotenv/config';
 
-import {WsTransportClient} from '../packages/app/src/ws-transport-client.js';
-import {MsgpackCodec} from '../packages/lib/src/codec.js';
-import {
-    CoordinatorClient,
-    PersistentConnection,
-} from '../packages/lib/src/index.js';
+import {WsTransportClient} from '../../app/src/ws-transport-client.js';
+import {MsgpackCodec} from '../../lib/src/codec.js';
+import {CoordinatorClient, PersistentConnection} from '../../lib/src/index.js';
 
 const client = new CoordinatorClient(
     new PersistentConnection(

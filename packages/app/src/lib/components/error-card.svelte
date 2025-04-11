@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {log} from 'syncwave';
+    import {context, log} from 'syncwave';
 
     interface Props {
         error: unknown;
@@ -34,8 +34,8 @@
         <p class="error-meta">
             <span class="meta-label">Time:</span>
             {currentTime}<br />
-            <span class="meta-label">Error ID:</span>
-            {appError.id}
+            <span class="meta-label">Trace ID:</span>
+            {context().traceId}
         </p>
     </div>
     <div class="flex gap-2">

@@ -1,0 +1,30 @@
+{
+    "name": "syncwave-eslint",
+    "private": true,
+    "version": "0.0.1",
+    "module": "eslint.config.js",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "files": [
+        "eslint.config.js"
+    ],
+    "exports": {
+        ".": {
+            "import": "./eslint.config.js"
+        }
+    },
+    "type": "module",
+    "scripts": {
+        "clean": "rimraf dist",
+        "dev": "AWS_DEFAULT_REGION=us-east-1 NODE_OPTIONS='--enable-source-maps' tsx watch --clear-screen=false ./src/entrypoint.ts | tsx ../../packages/scripts/src/log-prettify.ts",
+        "build": "tsc",
+        "build:watch": "tsc -w",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@eslint/js": "^9.24.0",
+        "eslint-plugin-prettier": "^5.2.6",
+        "typescript-eslint": "^8.29.1"
+    }
+}

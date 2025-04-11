@@ -1,6 +1,10 @@
 {
-    "extends": ["@tsconfig/svelte/tsconfig.json", "../../tsconfig.json"],
+    "extends": [
+        "@tsconfig/svelte/tsconfig.json",
+        "../../configs/tsconfig.json"
+    ],
     "compilerOptions": {
+        "rootDir": ".",
         "module": "esnext",
         "moduleResolution": "bundler",
         "lib": ["DOM", "ES2020"]

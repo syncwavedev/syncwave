@@ -92,6 +92,7 @@
         "svelte-dnd-action": "^0.9.60",
         "svelte-tiptap": "^2.1.0",
         "syncwave": "*",
+        "syncwave-eslint": "*",
         "tailwindcss": "^4.0.12",
         "ws": "^8.18.1",
         "y-prosemirror": "^1.2.17"

@@ -39,7 +39,7 @@ jobs:
           push: true
           tags: ghcr.io/syncwavedev/syncwave:${{ steps.config.outputs.TAG }}
           context: '.'
-          file: ./self-hosted/Dockerfile
+          file: ./configs/Dockerfile
           cache-from: type=registry,ref=ghcr.io/syncwavedev/syncwave:cache
           cache-to: type=registry,mode=max,ref=ghcr.io/syncwavedev/syncwave:cache
 

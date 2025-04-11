@@ -69,6 +69,7 @@
         "functional-red-black-tree": "^1.0.1",
         "ix": "^7.0.0",
         "jsonwebtoken": "^9.0.2",
+        "syncwave-eslint": "*",
         "lib0": "^0.2.99",
         "lru-cache": "^11.0.2",
         "msgpackr": "^1.11.2",

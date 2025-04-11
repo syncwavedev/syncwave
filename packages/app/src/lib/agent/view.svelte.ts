@@ -59,8 +59,10 @@ export interface SyncTarget {
 
 export class MeViewData implements SyncTarget {
     profile: User = $state.raw(lateInit());
-    boards: Board[] = $state.raw(lateInit());
+    _boards: Board[] = $state.raw(lateInit());
     account: Account = $state.raw(lateInit());
+
+    boards = $derived(this._boards.filter(x => !x.deletedAt));
 
     userView = $derived(new MeView(this.profile, this));
 
@@ -101,10 +103,10 @@ export class MeViewData implements SyncTarget {
     }
 
     newBoard(board: Board) {
-        if (this.boards.some(x => x.id === board.id)) {
+        if (this._boards.some(x => x.id === board.id)) {
             return;
         }
-        this.boards = [...this.boards, board];
+        this._boards = [...this._boards, board];
     }
 
     override(me: MeViewDataDto, derivator: CrdtDerivator) {

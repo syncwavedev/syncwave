@@ -488,7 +488,7 @@ export function createWriteApi() {
 
                     if (allMembers.length === 1) {
                         throw new BusinessError(
-                            'cannot remove last owner',
+                            'cannot remove the last owner',
                             'last_owner'
                         );
                     }

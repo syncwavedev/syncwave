@@ -60,8 +60,6 @@ export function createAuthApi() {
                 },
                 {email}
             ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
-                const verificationCode = await createVerificationCode(crypto);
-
                 const account = await getAccount({
                     accounts,
                     users,
@@ -75,6 +73,7 @@ export function createAuthApi() {
                     return {type: 'cooldown'};
                 }
 
+                const verificationCode = await createVerificationCode(crypto);
                 await accounts.update(account.id, doc => {
                     doc.verificationCode = verificationCode;
                     pushActivityLog(doc);
@@ -97,12 +96,12 @@ export function createAuthApi() {
                         subject: 'Your SyncWave Account Sign-In Code',
                         text: `Hi there!
                     
-    We noticed a request to sign into your SyncWave account. If this wasn't you, no worries—just ignore this email.
-    
-    Your one-time code is: ${verificationCode.code}
-    
-    Have a great day!
-    The SyncWave Team`,
+We noticed a request to sign into your SyncWave account. If this wasn't you, no worries—just ignore this email.
+
+Your one-time code is: ${verificationCode.code}
+
+Have a great day!
+The SyncWave Team`,
                     });
                 });
 

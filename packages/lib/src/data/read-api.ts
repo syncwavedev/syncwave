@@ -510,7 +510,7 @@ export function createReadApi() {
                     startOffset
                 );
 
-                const [profile, account, boards] = await st.transact(
+                const [profile, account, [members, boards]] = await st.transact(
                     principal,
                     async tx => {
                         return await whenAll([
@@ -530,16 +530,31 @@ export function createReadApi() {
                                 );
                                 return account;
                             }),
-                            tx.members
-                                .getByUserId(profileId, {includeDeleted: false})
-                                .mapParallel(member =>
-                                    tx.boards.getById(member.boardId, {
-                                        includeDeleted: true,
+                            (async () => {
+                                const pairs = await tx.members
+                                    .getByUserId(profileId, {
+                                        includeDeleted: false,
                                     })
-                                )
-                                .assert(x => x !== undefined, 'board not found')
-                                .filter(x => !x.deletedAt)
-                                .toArray(),
+                                    .mapParallel(async member => {
+                                        const board = await tx.boards.getById(
+                                            member.boardId,
+                                            {
+                                                includeDeleted: true,
+                                            }
+                                        );
+                                        assert(
+                                            board !== undefined,
+                                            'board not found'
+                                        );
+                                        return [member, board] as const;
+                                    })
+                                    .toArray();
+
+                                const members = pairs.map(([member]) => member);
+                                const boards = pairs.map(([, board]) => board);
+
+                                return [members, boards] as const;
+                            })(),
                         ]);
                     }
                 );
@@ -552,6 +567,7 @@ export function createReadApi() {
                             boards,
                             profile,
                             account,
+                            members,
                         },
                     };
                 }

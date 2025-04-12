@@ -337,6 +337,12 @@ export function MeViewDataDto() {
             id: Uuid<AccountId>(),
             state: CrdtDiff<Account>(),
         }),
+        members: Type.Array(
+            Type.Object({
+                id: Uuid<MemberId>(),
+                state: CrdtDiff<Member>(),
+            })
+        ),
         boards: Type.Array(
             Type.Object({
                 id: Uuid<BoardId>(),

@@ -119,7 +119,10 @@ export class MemberRepo {
         return await this.rawRepo.getById([id], options);
     }
 
-    getByUserId(userId: UserId, options?: QueryOptions): Stream<Member> {
+    getByUserId(
+        userId: UserId,
+        options?: QueryOptions
+    ): Stream<CrdtDoc<Member>> {
         return this.rawRepo.get(USER_ID_BOARD_ID_INDEX, [userId], options);
     }
 

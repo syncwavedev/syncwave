@@ -58,28 +58,39 @@ export interface SyncTarget {
 }
 
 export class MeViewData implements SyncTarget {
-    profile: User = $state.raw(lateInit());
-    _boards: Board[] = $state.raw(lateInit());
-    account: Account = $state.raw(lateInit());
+    private readonly crdtManager!: CrdtManager;
 
-    boards = $derived(this._boards.filter(x => !x.deletedAt));
+    profile: User = $state.raw(lateInit());
+    account: Account = $state.raw(lateInit());
+    _members: Member[] = $state.raw(lateInit());
+
+    boards = $derived(
+        this._members
+            .map(x => this.crdtManager.viewById(x.boardId, 'board'))
+            .filter(x => !x.deletedAt)
+    );
 
     userView = $derived(new MeView(this.profile, this));
 
-    static create(data: MeViewDataDto, derivator: CrdtDerivator) {
-        const result = new MeViewData();
-        result.override(data, derivator);
+    static create(data: MeViewDataDto, crdtManager: CrdtManager) {
+        const result = new MeViewData(crdtManager);
+        result.override(data, crdtManager);
         return result;
     }
 
-    private constructor() {}
+    private constructor(crdtManager: CrdtManager) {
+        this.crdtManager = crdtManager;
+    }
 
     newAccount(): void {
         // ignore
     }
 
-    newMember(): void {
-        // ignore
+    newMember(member: Member): void {
+        if (this._members.some(x => x.id === member.id)) {
+            return;
+        }
+        this._members = [...this._members, member];
     }
 
     newUser(): void {
@@ -102,14 +113,21 @@ export class MeViewData implements SyncTarget {
         // ignore
     }
 
-    newBoard(board: Board) {
-        if (this._boards.some(x => x.id === board.id)) {
-            return;
-        }
-        this._boards = [...this._boards, board];
+    newBoard() {
+        // ignore
     }
 
     override(me: MeViewDataDto, derivator: CrdtDerivator) {
+        me.boards.forEach(board => {
+            // load board into crdt manager
+            derivator.view({
+                state: board.state,
+                id: board.id,
+                type: 'board',
+                isDraft: false,
+            });
+        });
+
         this.account = derivator.view({
             state: me.account.state,
             id: me.account.id,
@@ -122,10 +140,10 @@ export class MeViewData implements SyncTarget {
             type: 'user',
             isDraft: false,
         });
-        this._boards = me.boards.map(x =>
+        this._members = me.members.map(x =>
             derivator.view({
                 id: x.id,
-                type: 'board',
+                type: 'member',
                 state: x.state,
                 isDraft: false,
             })

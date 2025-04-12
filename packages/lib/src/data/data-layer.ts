@@ -428,6 +428,22 @@ async function logMemberChange(
 ) {
     const member = await tx.members.getById(id, {includeDeleted: true});
     assert(member !== undefined, `logMemberChange: member ${id} not found`);
+    if (kind === 'create') {
+        const board = await tx.boards.getById(member.boardId, {
+            includeDeleted: true,
+        });
+        assert(
+            board !== undefined,
+            `logMemberChange: board ${member.boardId} not found`
+        );
+        await tx.esWriter.append(userEvents(member.userId), {
+            type: 'board',
+            id: board.id,
+            diff: board.state,
+            ts: getNow(),
+            kind: 'create',
+        });
+    }
     const ts = getNow();
     const event: MemberChangeEvent = {type: 'member', id, diff, ts, kind};
     await whenAll([

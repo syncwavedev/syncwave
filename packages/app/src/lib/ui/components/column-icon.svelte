@@ -8,7 +8,7 @@
     const getActiveColor = () => {
         if (active === total) return 'text-green-400';
         if (active > 0) return 'text-blue-450';
-        return 'dark:text-[var(--color-ink-detail)] text-gray-200';
+        return 'text-[var(--color-ink-detail)]';
     };
     const activeColorClass = getActiveColor();
 
@@ -76,7 +76,7 @@
         stroke="currentColor"
         stroke-width="1.5"
         fill="none"
-        class="dark:text-var(--color-ink-detail) text-gray-200"
+        class="text-var(--color-ink-detail)"
     />
 
     <!-- Just the outer circle with no progress -->

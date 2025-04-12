@@ -3,9 +3,13 @@
 /* eslint-disable */
 import 'dotenv/config';
 
+import {
+    CoordinatorClient,
+    createBoardId,
+    MsgpackCodec,
+    PersistentConnection,
+} from 'syncwave';
 import {WsTransportClient} from '../../app/src/ws-transport-client.js';
-import {MsgpackCodec} from '../../lib/src/codec.js';
-import {CoordinatorClient, PersistentConnection} from '../../lib/src/index.js';
 
 const client = new CoordinatorClient(
     new PersistentConnection(
@@ -34,8 +38,17 @@ async function createMember() {
     });
 }
 
+async function createBoard() {
+    await client.rpc.createBoard({
+        name: 'test board #2',
+        boardId: createBoardId(),
+        key: 'test-new-board-2',
+        members: [],
+    });
+}
+
 async function main() {
-    await getMyBoard();
+    await createBoard();
 }
 
 main().finally(() => {

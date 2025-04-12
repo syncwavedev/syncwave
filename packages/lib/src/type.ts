@@ -21,7 +21,11 @@ function createTypeCheck<T extends TSchema>(schema: T): TypeCheck<T> {
     return result;
 }
 
-export function checkValue<T>(schema: ToSchema<T>, x: unknown): T {
+export function checkValue<T>(
+    schema: ToSchema<T>,
+    x: unknown,
+    message?: string
+): T {
     const typeCheck = createTypeCheck(schema);
     try {
         if (typeCheck.Check(x)) {
@@ -31,8 +35,10 @@ export function checkValue<T>(schema: ToSchema<T>, x: unknown): T {
         const errors = [...typeCheck.Errors(x)];
 
         throw new AppError(
-            'validation failed:\n - ' +
-                errors.map(e => e.message).join('\n - '),
+            `${message}: validation failed:\n - ` +
+                errors.map(e => e.message).join('\n - ') +
+                '\n' +
+                JSON.stringify(errors),
             {cause: errors}
         );
     } catch (error) {

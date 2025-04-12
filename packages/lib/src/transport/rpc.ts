@@ -42,6 +42,7 @@ export type HandlerResponseSchema<T extends Handler<any, any, any>> =
     T extends Handler<any, any, infer R> ? R : never;
 
 export interface RequestContext {
+    method: string;
     requestId: RpcMessageId;
     headers: MessageHeaders;
     principal: Principal;
@@ -63,10 +64,10 @@ export function handler<TState, TRequest, TResponse>(
     async function wrapper(state: TState, req: TRequest, info: RequestContext) {
         const res = await options.handle(
             state,
-            checkValue(options.req, req),
+            checkValue(options.req, req, `${info.method} request`),
             info
         );
-        return checkValue(options.res, res);
+        return checkValue(options.res, res, `${info.method} response`);
     }
 
     return {

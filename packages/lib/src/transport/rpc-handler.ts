@@ -75,6 +75,7 @@ export function launchRpcHandlerServer<T>(
                                 state,
                                 msg.payload.arg,
                                 {
+                                    method: msg.payload.name,
                                     headers: msg.headers,
                                     requestId: msg.id,
                                     principal: authenticator

@@ -16,7 +16,7 @@
 
     let filter = $state('');
 
-    let inputs = [
+    let inputs = $derived([
         {
             id: 'new-board',
             icon: PlusIcon,
@@ -34,7 +34,7 @@
                 router.route(`/b/${x.key}`);
             },
         })),
-    ];
+    ]);
 
     let filtered = $derived(
         inputs.filter(x => x.label.toLowerCase().includes(filter.toLowerCase()))

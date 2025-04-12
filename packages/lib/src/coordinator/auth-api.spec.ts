@@ -97,6 +97,7 @@ describe('AccountRepo', () => {
                 },
                 {email: 'test@email.com'},
                 {
+                    method: 'auth',
                     headers: {
                         traceparent: '',
                         tracestate: '',

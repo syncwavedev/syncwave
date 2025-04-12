@@ -122,7 +122,7 @@ export class MeViewData implements SyncTarget {
             type: 'user',
             isDraft: false,
         });
-        this.boards = me.boards.map(x =>
+        this._boards = me.boards.map(x =>
             derivator.view({
                 id: x.id,
                 type: 'board',

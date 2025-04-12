@@ -66,6 +66,7 @@ export class MeViewData implements SyncTarget {
 
     boards = $derived(
         this._members
+            .filter(x => !x.deletedAt)
             .map(x => this.crdtManager.viewById(x.boardId, 'board'))
             .filter(x => !x.deletedAt)
     );

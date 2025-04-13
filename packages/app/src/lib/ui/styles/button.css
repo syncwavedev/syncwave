@@ -5,7 +5,8 @@
     aspect-square
     p-1
     place-items-center
-    rounded-full;
+    rounded-full
+    disabled:text-ink-disabled;
 }
 
 .btn--block {

@@ -214,11 +214,9 @@
                         placeholder="Write a message..."
                         class="px-1 py-1 w-full"
                     />
-                    {#if !isNewMessageEmpty}
-                        <button class="btn--icon">
-                            <ArrowUp />
-                        </button>
-                    {/if}
+                    <button class="btn--icon" disabled={isNewMessageEmpty}>
+                        <ArrowUp />
+                    </button>
                 </form>
             </div>
         </div>

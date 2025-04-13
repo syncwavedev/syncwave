@@ -119,6 +119,7 @@
     --color-ink-body: var(--theme-color-ink-body);
     --color-ink-detail: var(--theme-color-ink-detail);
     --color-ink-placeholder: var(--theme-color-ink-placeholder);
+    --color-ink-disabled: var(--theme-color-ink-disabled);
     --color-ink-reverse: var(--theme-color-ink-reverse);
     --color-ink-danger: var(--theme-color-ink-danger);
 
@@ -154,6 +155,7 @@
         --theme-color-ink-body: var(--color-gray-600);
         --theme-color-ink-detail: var(--color-gray-500);
         --theme-color-ink-placeholder: var(--color-gray-350);
+        --theme-color-ink-disabled: var(--color-gray-450);
 
         --theme-color-ink-reverse: var(--color-white);
         --theme-color-ink-danger: var(--color-red-450);
@@ -181,6 +183,7 @@
         --theme-color-ink-reverse: var(--color-black);
         --theme-color-ink-detail: var(--color-slate-450);
         --theme-color-ink-placeholder: var(--color-slate-650);
+        --theme-color-ink-disabled: var(--color-slate-500);
         --theme-color-ink-danger: var(--color-red-350);
 
         --theme-color-divider-subtle: var(--color-slate-850);

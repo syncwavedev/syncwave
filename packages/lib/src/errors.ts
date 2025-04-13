@@ -62,7 +62,8 @@ export type ErrorCode =
     | 'user_not_found'
     | 'unknown'
     | 'member_exists'
-    | 'last_owner';
+    | 'last_owner'
+    | 'invalid_invite_token';
 
 export class BusinessError extends AppError {
     constructor(

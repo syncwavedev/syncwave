@@ -6,6 +6,7 @@ import {MemEmailService} from '../data/mem-email-service.js';
 import {MemMvccStore} from '../kv/mem-mvcc-store.js';
 import {TupleStore} from '../kv/tuple-store.js';
 import {NodeCryptoService} from '../node-crypto-service.js';
+import {NodeJwtService} from '../node-jwt-service.js';
 import {MemHub} from '../transport/hub.js';
 import type {RpcMessageId} from '../transport/rpc-message.js';
 import {createUuidV4} from '../uuid.js';
@@ -19,8 +20,10 @@ describe('AccountRepo', () => {
         data = new DataLayer(
             new TupleStore(new MemMvccStore()),
             new MemHub(),
-            'test-jwt-secret',
-            NodeCryptoService
+            NodeCryptoService,
+            new MemEmailService(),
+            new NodeJwtService('test-jwt-secret'),
+            'https://example.com/'
         );
 
         authApi = createAuthApi();

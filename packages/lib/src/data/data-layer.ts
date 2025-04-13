@@ -15,7 +15,11 @@ import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
 import type {ChangeOptions} from './doc-repo.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
-import type {CryptoService} from './infrastructure.js';
+import type {
+    CryptoService,
+    EmailService,
+    JwtService,
+} from './infrastructure.js';
 import {PermissionService} from './permission-service.js';
 import {
     type Account,
@@ -39,7 +43,7 @@ import {
 import {type User, type UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
-    readonly jwtSecret: string;
+    readonly uiUrl: string;
 }
 
 export interface DataTx {
@@ -181,8 +185,10 @@ export class DataLayer {
     constructor(
         private readonly kv: KvStore<Tuple, Uint8Array>,
         private readonly hub: Hub,
-        private readonly jwtSecret: string,
-        private readonly crypto: CryptoService
+        private readonly crypto: CryptoService,
+        private readonly email: EmailService,
+        private readonly jwtService: JwtService,
+        private readonly uiUrl: string
     ) {
         this.esReader = new EventStoreReader(
             fn =>
@@ -290,12 +296,20 @@ export class DataLayer {
 
             const awareness = new AwarenessStore(isolate(['awareness'])(tx));
 
+            const config: Config = {
+                uiUrl: this.uiUrl,
+            };
+
             const boardService = new BoardService({
                 boards,
                 crypto: this.crypto,
                 accounts,
                 members,
                 users,
+                email: this.email,
+                scheduleEffect,
+                jwtService: this.jwtService,
+                config,
             });
 
             const version = new Cell(isolate(['version_v2'])(tx), 0);
@@ -316,7 +330,7 @@ export class DataLayer {
                 members,
                 ps: new PermissionService(principal, () => dataTx),
                 config: {
-                    jwtSecret: this.jwtSecret,
+                    uiUrl: this.uiUrl,
                 },
                 tx: tx,
                 scheduleEffect,

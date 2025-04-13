@@ -123,7 +123,7 @@ The SyncWave Team`,
                 Type.Object({type: Type.Literal('cooldown')}),
             ]),
             handle: async (
-                {tx: {accounts, config}, crypto, jwt},
+                {tx: {accounts}, crypto, jwt},
                 {email, code}
             ): Promise<VerifySignInCodeResponse> => {
                 const account = await accounts.getByEmail(email);
@@ -158,7 +158,7 @@ The SyncWave Team`,
 
                 return {
                     type: 'success',
-                    token: await signJwtToken(jwt, account, config.jwtSecret),
+                    token: await signJwtToken(jwt, account),
                 };
             },
         }),
@@ -202,24 +202,17 @@ function pushActivityLog(x: Account) {
     }
 }
 
-export async function signJwtToken(
-    jwt: JwtService,
-    account: Account,
-    jwtSecret: string
-) {
+export async function signJwtToken(jwt: JwtService, account: Account) {
     const now = new Date();
     const exp = new Date(now.getTime());
     exp.setFullYear(exp.getFullYear() + 50);
 
-    return await jwt.sign(
-        {
-            sub: account.id.toString(),
-            uid: account.userId,
-            exp: Math.trunc(exp.getTime() / 1000),
-            iat: Math.trunc(now.getDate() / 1000),
-        } satisfies JwtPayload,
-        jwtSecret
-    );
+    return await jwt.sign({
+        sub: account.id.toString(),
+        uid: account.userId,
+        exp: Math.trunc(exp.getTime() / 1000),
+        iat: Math.trunc(now.getDate() / 1000),
+    } satisfies JwtPayload);
 }
 
 export const DEFAULT_BOARD_NAME = 'My First Board';

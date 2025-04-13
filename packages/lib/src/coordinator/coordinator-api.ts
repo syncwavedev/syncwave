@@ -1,5 +1,5 @@
 import {AwarenessApiState, createAwarenessApi} from '../data/awareness-api.js';
-import {type Config, DataLayer} from '../data/data-layer.js';
+import {DataLayer} from '../data/data-layer.js';
 import type {
     CryptoService,
     EmailService,
@@ -21,8 +21,7 @@ import {type AuthApi, type AuthApiState, createAuthApi} from './auth-api.js';
 
 export interface CoordinatorApiState {
     dataLayer: DataLayer;
-    config: Config;
-    jwt: JwtService;
+    jwtService: JwtService;
     hub: Hub;
     emailService: EmailService;
     crypto: CryptoService;
@@ -41,7 +40,9 @@ export function createCoordinatorApi() {
                         state.objectStore,
                         tx.ps,
                         state.crypto,
-                        state.emailService
+                        state.emailService,
+                        tx.boardService,
+                        state.jwtService
                     )
                 );
             });
@@ -72,7 +73,7 @@ export function createCoordinatorApi() {
                 crypto: state.crypto,
                 tx,
                 emailService: state.emailService,
-                jwt: state.jwt,
+                jwt: state.jwtService,
                 scheduleEffect: tx.scheduleEffect,
                 boardService: tx.boardService,
             });

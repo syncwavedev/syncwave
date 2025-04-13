@@ -37,16 +37,15 @@ export class E2eFixture {
         );
         const coordinatorKv = new MemMvccStore();
         const emailService = new MemEmailService();
-        const jwtSecret = 'secret';
         const coordinator = new CoordinatorServer({
             transport: coordinatorTransportServer,
             kv: new TupleStore(coordinatorKv),
-            jwt: options.jwtService,
+            jwtService: options.jwtService,
             crypto: options.cryptoService,
-            email: emailService,
-            jwtSecret,
+            emailService: emailService,
             objectStore: new MemObjectStore(),
             hub: new MemHub(),
+            uiUrl: 'http://localhost:3000',
         });
 
         drop(coordinator.launch());

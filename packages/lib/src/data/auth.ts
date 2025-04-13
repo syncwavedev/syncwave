@@ -27,8 +27,7 @@ export class Authenticator {
 
     constructor(
         cacheSize: number,
-        private readonly jwt: JwtService,
-        private readonly jwtSecret: string
+        private readonly jwt: JwtService
     ) {
         this.principalCache = new LRUCache<string, Principal>({
             max: cacheSize,
@@ -42,7 +41,7 @@ export class Authenticator {
                 return result;
             }
 
-            const jwtPayload = await this.jwt.verify(jwtToken, this.jwtSecret);
+            const jwtPayload = await this.jwt.verify(jwtToken);
             const principal: Principal = {
                 accountId: jwtPayload.sub as AccountId | undefined,
                 userId: jwtPayload.uid as UserId | undefined,

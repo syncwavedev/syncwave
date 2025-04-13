@@ -24,7 +24,7 @@ describe('e2e', () => {
 
     beforeEach(async () => {
         subject = await E2eFixture.start({
-            jwtService: NodeJwtService,
+            jwtService: new NodeJwtService('secret'),
             cryptoService: NodeCryptoService,
         });
         await subject.signIn();

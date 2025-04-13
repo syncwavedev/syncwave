@@ -2,17 +2,19 @@ import {Type} from '@sinclair/typebox';
 import {context} from '../context.js';
 import type {Brand} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
+import type {MemberId} from './repos/member-repo.js';
 
 export interface JwtPayload {
     sub: string | undefined;
     uid: string | undefined;
+    acceptInviteMemberId?: MemberId;
     exp: number;
     iat: number;
 }
 
 export interface JwtService {
-    verify(token: string, secret: string): Promise<JwtPayload>;
-    sign(payload: JwtPayload, secret: string): Promise<string>;
+    verify(token: string): Promise<JwtPayload>;
+    sign(payload: JwtPayload): Promise<string>;
 }
 
 export interface CryptoService {

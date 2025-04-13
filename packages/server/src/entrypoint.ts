@@ -52,7 +52,7 @@ eventLoopMonitor.enable();
 type Stage = 'prod' | 'dev' | 'local' | 'self';
 
 interface Options {
-    appUrl: string;
+    uiUrl: string;
     google?: GoogleOptions;
     logLevel: LogLevel;
     workersCount: number;
@@ -117,7 +117,7 @@ async function getOptions(): Promise<Options> {
         .with('self', () => 'info' as const)
         .exhaustive();
 
-    const appUrl = match(stage)
+    const uiUrl = match(stage)
         .with('local', () => 'http://localhost:5173')
         .with('dev', () => 'https://dev.syncwave.dev')
         .with('prod', () => 'https://app.syncwave.dev')
@@ -137,14 +137,14 @@ async function getOptions(): Promise<Options> {
         .with('local', () => 'http://localhost:4567')
         .with('dev', () => 'https://api-dev.syncwave.dev')
         .with('prod', () => 'https://api.syncwave.dev')
-        .with('self', () => `${appUrl}/api`)
+        .with('self', () => `${uiUrl}/api`)
         .exhaustive();
 
     const google = getGoogleOptions(apiUrl);
     const uiPath = stage === 'self' ? './ui' : undefined;
 
     return {
-        appUrl,
+        uiUrl,
         logLevel,
         workersCount: stage === 'prod' ? cpus().length : 1,
         emailService: new SesEmailService(awsRegion),
@@ -311,8 +311,10 @@ async function upgradeKVStore({store, jwtSecret}: Options) {
     const dataLayer = new DataLayer(
         store,
         new MemHub(),
-        jwtSecret,
-        NodeCryptoService
+        NodeCryptoService,
+        options.emailService,
+        new NodeJwtService(jwtSecret),
+        options.uiUrl
     );
 
     await dataLayer.upgrade();
@@ -335,7 +337,7 @@ async function launchApp(options: Options) {
     const app = new Koa();
 
     const apiRouter = createApiRouter(() => coordinator, {
-        appUrl: options.appUrl,
+        appUrl: options.uiUrl,
         google: options.google,
     }).prefix(options.uiPath ? '/api' : '');
     app.use(apiRouter.routes());
@@ -356,14 +358,14 @@ async function launchApp(options: Options) {
             server: appHttpServer,
         }),
         kv: options.store,
-        jwt: NodeJwtService,
+        jwtService: new NodeJwtService(options.jwtSecret),
         crypto: NodeCryptoService,
-        email: options.emailService,
-        jwtSecret: options.jwtSecret,
+        emailService: options.emailService,
         objectStore: await FsObjectStore.create({
             basePath: './dev-object-store',
         }),
         hub: options.hub,
+        uiUrl: options.uiUrl,
     });
 
     async function shutdown() {

@@ -22,12 +22,12 @@ import {
 export interface CoordinatorServerOptions {
     transport: TransportServer<RpcMessage>;
     kv: KvStore<Tuple, Uint8Array>;
-    jwt: JwtService;
+    jwtService: JwtService;
     crypto: CryptoService;
-    email: EmailService;
-    jwtSecret: string;
+    emailService: EmailService;
     objectStore: ObjectStore;
     hub: Hub;
+    uiUrl: string;
 }
 
 export class CoordinatorServer {
@@ -38,13 +38,14 @@ export class CoordinatorServer {
         this.dataLayer = new DataLayer(
             this.options.kv,
             this.options.hub,
-            this.options.jwtSecret,
-            this.options.crypto
+            this.options.crypto,
+            options.emailService,
+            options.jwtService,
+            options.uiUrl
         );
         const authenticator = new Authenticator(
             AUTHENTICATOR_PRINCIPAL_CACHE_SIZE,
-            this.options.jwt,
-            this.options.jwtSecret
+            this.options.jwtService
         );
 
         this.rpcServer = new RpcServer(
@@ -52,13 +53,10 @@ export class CoordinatorServer {
             createCoordinatorApi(),
             {
                 dataLayer: this.dataLayer,
-                jwt: this.options.jwt,
+                jwtService: this.options.jwtService,
                 crypto: this.options.crypto,
-                emailService: this.options.email,
+                emailService: this.options.emailService,
                 hub: this.options.hub,
-                config: {
-                    jwtSecret: this.options.jwtSecret,
-                },
                 objectStore: this.options.objectStore,
                 close: reason => {
                     // todo: support async close
@@ -104,11 +102,7 @@ export class CoordinatorServer {
                     boardService: tx.boardService,
                 });
 
-                return signJwtToken(
-                    this.options.jwt,
-                    account,
-                    this.options.jwtSecret
-                );
+                return signJwtToken(this.options.jwtService, account);
             }
         );
     }

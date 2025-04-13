@@ -394,6 +394,9 @@ export class DataLayer {
             for await (const member of tx.members.rawRepo.scan()) {
                 await tx.members.update(member.id, x => {
                     x.inviteAccepted = true;
+                    if (typeof x.position !== 'number') {
+                        x.position = Math.random();
+                    }
                 });
                 membersUpdated++;
             }

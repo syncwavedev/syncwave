@@ -149,12 +149,10 @@
         <div class="flex flex-col gap-3 mt-3">
             {#await detailsPromise then details}
                 {#each details.messages as message (message.id)}
-                    <div class="flex gap-1 mx-4 avatar-lg">
+                    <div class="flex gap-2 mx-4 avatar-lg">
                         <Avatar name={message.author.fullName} />
 
-                        <div
-                            class="flex flex-col bg-surface-3 p-2.5 rounded-md"
-                        >
+                        <div class="flex flex-col">
                             <div class="flex items-center gap-1.5 avatar-sm">
                                 <div class="flex items-baseline gap-1.5">
                                     <div class="font-semibold">

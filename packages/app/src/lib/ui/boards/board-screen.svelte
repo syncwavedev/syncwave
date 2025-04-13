@@ -255,12 +255,6 @@
                 {/each}
             </div>
             <button
-                class="btn--icon text-ink-body ml-auto"
-                onclick={() => createCard(undefined)}
-            >
-                <PlusIcon />
-            </button>
-            <button
                 onclick={() => modalManager.open(boardSettings)}
                 class="btn--icon text-ink-body"
             >

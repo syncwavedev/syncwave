@@ -83,7 +83,7 @@
             fragment: fragment,
         });
 
-        fragment.delete(0, Number.MAX_SAFE_INTEGER);
+        fragment.delete(0, fragment.length);
 
         // Wait for DOM to update and then scroll to bottom
         await tick();

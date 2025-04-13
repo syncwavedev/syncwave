@@ -520,8 +520,6 @@ export class Agent {
     async observeCardAsync(cardId: CardId) {
         const ctx = this.contextManager.use();
 
-        console.debug('active cards:', this.activeCards.length);
-
         const dto = await this.rpc
             .getCardViewData({cardId})
             .filter(x => x.type === 'snapshot')

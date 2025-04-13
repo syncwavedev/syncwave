@@ -347,6 +347,7 @@ export class DndBoardContext {
 
     private handleDrop(cardId: CardId, draggable: Draggable) {
         const card = this.cards.find(x => x.card.value.id === cardId);
+
         if (!card || !card.container.isConnected) {
             if (draggable.element.isConnected) {
                 document.body.removeChild(draggable.element);
@@ -358,6 +359,14 @@ export class DndBoardContext {
 
             return;
         }
+
+        setTimeout(() => {
+            if (draggable.element.isConnected) {
+                document.body.removeChild(draggable.element);
+            }
+
+            this.agent.finalizeCardPosition(card.card.value.id);
+        }, DND_DROP_DURATION_MS);
 
         // find final placement
         this.handlePlacement(draggable, cardId);
@@ -372,14 +381,6 @@ export class DndBoardContext {
         const animateToY = draggable.targetY - draggableRect.y;
 
         draggable.element.style.transform = `translate(${animateToX}px, ${animateToY}px)`;
-
-        setTimeout(() => {
-            if (draggable.element.isConnected) {
-                document.body.removeChild(draggable.element);
-            }
-
-            this.agent.finalizeCardPosition(card.card.value.id);
-        }, DND_DROP_DURATION_MS);
     }
 
     private getClosestColumn(draggable: Draggable) {

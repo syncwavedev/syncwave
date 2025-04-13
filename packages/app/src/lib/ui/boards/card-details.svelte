@@ -146,7 +146,7 @@
             </div>
         </div>
         <hr />
-        <div class="flex flex-col gap-3 mt-3">
+        <div class="flex flex-col gap-4 mt-4">
             {#await detailsPromise then details}
                 {#each details.messages as message (message.id)}
                     <div class="flex gap-2 mx-4 avatar-lg">
@@ -155,18 +155,11 @@
                         <div class="flex flex-col">
                             <div class="flex items-center gap-1.5 avatar-sm">
                                 <div class="flex items-baseline gap-1.5">
-                                    <div class="font-semibold">
+                                    <div class="font-semibold leading-none">
                                         {message.author.fullName}
                                     </div>
 
                                     <span class="text-ink-detail text-xs">
-                                        {new Date(
-                                            message.createdAt
-                                        ).toLocaleDateString(undefined, {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: '2-digit',
-                                        })}
                                         {new Date(message.createdAt)
                                             .toLocaleTimeString(undefined, {
                                                 hour: '2-digit',

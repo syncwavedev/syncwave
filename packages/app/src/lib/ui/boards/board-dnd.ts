@@ -170,7 +170,6 @@ export class DndBoardContext {
             targetColumnId: card.card.value.columnId,
         };
         document.body.appendChild(draggable.element);
-        document.body.classList.add('select-none');
 
         this.agent.considerCardPosition(
             card.card.value.id,
@@ -238,7 +237,11 @@ export class DndBoardContext {
             if (cleanedUp) return;
             cleanedUp = true;
 
-            document.body.classList.remove('select-none');
+            log.debug({
+                msg: `drop card ${card.card.value.id} in column ${draggable.targetColumnId}`,
+            });
+
+            this.handleDrop(card.card.value.id, draggable);
 
             cancelAutoscroll();
             cancelPointerUp();
@@ -248,7 +251,6 @@ export class DndBoardContext {
             cancelDragSub('startDrag cleanup');
 
             draggable.element.releasePointerCapture(downEvent.pointerId);
-            this.handleDrop(card.card.value.id, draggable);
         };
 
         const cancelDragSub = this.cancelDragEmitter.subscribe(() => {
@@ -349,8 +351,14 @@ export class DndBoardContext {
         const card = this.cards.find(x => x.card.value.id === cardId);
 
         if (!card || !card.container.isConnected) {
+            log.warn({msg: `card ${cardId} not found for DnD drop`});
             if (draggable.element.isConnected) {
+                log.debug({msg: `removing dnd draggable element from DOM`});
                 document.body.removeChild(draggable.element);
+            } else {
+                log.debug({
+                    msg: `dnd draggable element already removed from DOM`,
+                });
             }
 
             if (card) {
@@ -362,7 +370,14 @@ export class DndBoardContext {
 
         setTimeout(() => {
             if (draggable.element.isConnected) {
+                log.debug({
+                    msg: `dnd drop timeout: removing dnd draggable element from DOM`,
+                });
                 document.body.removeChild(draggable.element);
+            } else {
+                log.debug({
+                    msg: `dnd drop timeout: dnd draggable element already removed from DOM`,
+                });
             }
 
             this.agent.finalizeCardPosition(card.card.value.id);

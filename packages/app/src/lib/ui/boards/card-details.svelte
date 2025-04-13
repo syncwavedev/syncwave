@@ -16,6 +16,9 @@
     import {getAgent} from '../../agent/agent';
     import RichtextView from '../../components/richtext-view.svelte';
     import {createXmlFragment} from '../../richtext';
+    import ArrowUp from '../components/icons/arrow-up.svelte';
+    import Avatar from '../components/avatar.svelte';
+    import PlusIcon from '../components/icons/plus-icon.svelte';
 
     const {
         card,
@@ -63,52 +66,47 @@
 <div
     class="border-divider bg-surface-0 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
+    <div class="flex items-center px-4 py-2">
+        <div class="flex items-center gap-0.5 icon-base">
+            {#if card.isDraft}
+                New card
+            {:else}
+                <HashtagIcon />
+                <span>{card.counter}</span>
+            {/if}
+        </div>
+        <div class="relative ml-auto">
+            <DropdownMenu
+                items={[
+                    {
+                        icon: LinkIcon,
+                        text: 'Copy Card Link',
+                        onSelect: () => {
+                            navigator.clipboard.writeText(window.location.href);
+                        },
+                    },
+                    {
+                        icon: TrashIcon,
+                        text: 'Delete',
+                        onSelect: () => onDelete(),
+                    },
+                ]}
+            >
+                <button class="btn--icon text-ink-body" id="ellipsis-button">
+                    <EllipsisIcon />
+                </button>
+            </DropdownMenu>
+        </div>
+        <button class="btn--icon text-ink-body" onclick={() => history.back()}>
+            <TimesIcon />
+        </button>
+    </div>
     <!-- Scrollable Content Section -->
     <div class="flex-grow overflow-y-auto">
-        <!-- Header with Context Menu -->
-        <div
-            class="bg-surface-0 border-divider sticky top-0 z-20 flex items-center px-4 py-2"
-        >
-            <div class="flex items-center gap-0.5 icon-base">
-                {#if card.isDraft}
-                    New card
-                {:else}
-                    <HashtagIcon />
-                    <span>{card.counter}</span>
-                {/if}
-            </div>
-            <div class="relative ml-auto">
-                <DropdownMenu
-                    items={[
-                        {
-                            icon: LinkIcon,
-                            text: 'Copy Card Link',
-                            onSelect: () => {
-                                navigator.clipboard.writeText(
-                                    window.location.href
-                                );
-                            },
-                        },
-                        {
-                            icon: TrashIcon,
-                            text: 'Delete',
-                            onSelect: () => onDelete(),
-                        },
-                    ]}
-                >
-                    <button class="btn--icon" id="ellipsis-button">
-                        <EllipsisIcon />
-                    </button>
-                </DropdownMenu>
-            </div>
-            <button class="btn--icon" onclick={() => history.back()}>
-                <TimesIcon />
-            </button>
-        </div>
         <!-- Task Description -->
-        <div class="mx-2">
+        <div class="mx-4 mt-1">
             <div
-                class="input w-full leading-relaxed py-1 px-2 rounded-sm transition-colors duration-150"
+                class="input w-full leading-relaxed transition-colors duration-150"
             >
                 <Editor
                     bind:this={editor}
@@ -119,10 +117,9 @@
                     {me}
                 />
             </div>
-        </div>
-        <!-- Task Actions -->
-        <div class="mx-4 mt-3">
-            <div class="flex gap-2 text-ink-body">
+
+            <!-- Task Actions -->
+            <div class="flex gap-2 text-ink-body my-3 text-sm icon-sm">
                 <Select
                     value={card.column.id}
                     options={columnOptions}
@@ -148,29 +145,87 @@
                 </Select>
             </div>
         </div>
-        <hr class="mt-3 mb-2" />
-    </div>
-    {#await detailsPromise then details}
-        {#each details.messages as message (message.id)}
-            <div class="mx-4 mt-3">
-                <div class="flex-col gap-2 text-ink-body">
-                    <span>{message.author.fullName}</span>
-                    <RichtextView fragment={message.payload.text.__fragment!} />
-                </div>
-            </div>
-        {/each}
-    {/await}
-    <Editor {fragment} {me} placeholder="Enter your message!" />
-    <button
-        onclick={() => {
-            agent.createMessage({
-                boardId: card.boardId,
-                columnId: card.columnId,
-                cardId: card.id,
-                fragment: fragment.clone(),
-            });
+        <hr />
+        <div class="flex flex-col gap-3 mt-3">
+            {#await detailsPromise then details}
+                {#each details.messages as message (message.id)}
+                    <div class="flex flex-col gap-1 mx-4">
+                        <div class="flex items-center gap-1.5 avatar-sm">
+                            <Avatar name={message.author.fullName} />
 
-            fragment.delete(0, Number.MAX_SAFE_INTEGER);
-        }}>Send</button
-    >
+                            <div class="flex items-baseline gap-1.5">
+                                <div class="font-semibold">
+                                    {message.author.fullName}
+                                </div>
+
+                                <span class="text-ink-detail text-xs">
+                                    {new Date(
+                                        message.createdAt
+                                    ).toLocaleDateString(undefined, {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: '2-digit',
+                                    })}
+                                    {new Date(message.createdAt)
+                                        .toLocaleTimeString(undefined, {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: true,
+                                        })
+                                        .toLowerCase()}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="select-text leading-relaxed">
+                            <RichtextView
+                                fragment={message.payload.text.__fragment!}
+                            />
+                        </div>
+                    </div>
+                    <hr class="last:hidden" />
+                {/each}
+            {/await}
+        </div>
+    </div>
+
+    <!-- Fixed Message Input -->
+    <!-- <div class="py-1 px-4 z-10 bg-subtle-3 flex gap-2">
+      <span class="text-ink-detail leading-none"
+        >{{ template "arrow-uturn-left.html" .}}</span
+      >
+      <p class="text-3xs text-ink-body line-clamp-2">
+        MemHash proved there's always room for a new app on Telegram —
+        provided you deeply understand which features made its
+      </p>
+      <button class="btn--icon">{{ template "times.html" .}}</button>
+    </div> -->
+
+    <div class="flex gap-2 items-end m-4">
+        <form
+            class="flex items-end border border-divider z-10 rounded-md w-full p-1.5"
+            onsubmit={() => {
+                agent.createMessage({
+                    boardId: card.boardId,
+                    columnId: card.columnId,
+                    cardId: card.id,
+                    fragment: fragment.clone(),
+                });
+
+                fragment.delete(0, Number.MAX_SAFE_INTEGER);
+            }}
+        >
+            <button class="btn--icon">
+                <PlusIcon />
+            </button>
+            <Editor
+                {fragment}
+                {me}
+                placeholder="Write a message..."
+                class="px-1 py-1 w-full"
+            />
+            <button class="btn--icon">
+                <ArrowUp />
+            </button>
+        </form>
+    </div>
 </div>

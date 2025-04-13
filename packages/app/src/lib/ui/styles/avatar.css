@@ -1,5 +1,5 @@
 :root {
-    --avatar-size: 1.4375rem;
+    --avatar-size: 1.5rem;
 }
 
 .avatar {
@@ -9,4 +9,8 @@
 
 .avatar-sm {
     --avatar-size: 1.325rem;
+}
+
+.avatar-lg {
+    --avatar-size: 2rem;
 }

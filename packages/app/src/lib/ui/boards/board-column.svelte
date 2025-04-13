@@ -78,10 +78,10 @@
             open={editColumnOpen}
             onClose={() => (editColumnOpen = false)}
         />
-        <button class="btn--icon ml-auto" onclick={onCreateCard}>
+        <button class="btn--icon text-ink-body ml-auto" onclick={onCreateCard}>
             <PlusIcon class="pointer-events-none" />
         </button>
-        <button onclick={editColumn} class="btn--icon">
+        <button onclick={editColumn} class="btn--icon text-ink-body">
             <EllipsisIcon class="pointer-events-none" />
         </button>
     </div>

@@ -8,7 +8,7 @@ body {
 }
 
 hr {
-    @apply border-divider border-t-[0.5px];
+    @apply border-divider-subtle;
 }
 
 textarea {

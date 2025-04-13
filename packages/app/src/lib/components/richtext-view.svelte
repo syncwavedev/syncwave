@@ -21,7 +21,9 @@
     });
 </script>
 
-{@html html}
+<div class="tiptap">
+    {@html html}
+</div>
 
 <style>
     :global {

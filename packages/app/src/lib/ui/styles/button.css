@@ -1,12 +1,11 @@
 .btn--icon {
-    @apply text-ink-body
-    hover:bg-surface-2
+    @apply hover:bg-surface-2
     hover:text-ink
     grid
     aspect-square
     p-1
     place-items-center
-    rounded-sm;
+    rounded-full;
 }
 
 .btn--block {

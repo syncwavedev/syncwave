@@ -14,15 +14,15 @@
     --icon-size: 1em;
 }
 
-.icon-sm {
+.icon-xs {
     --icon-size: 0.875rem;
 }
-.icon-md {
+.icon-sm {
     --icon-size: 1rem;
 }
-.icon-lg {
+.icon-md {
     --icon-size: 1.125rem;
 }
-.icon-xl {
+.icon-lg {
     --icon-size: 1.25rem;
 }

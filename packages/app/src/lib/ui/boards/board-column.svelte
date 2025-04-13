@@ -83,9 +83,7 @@
             open={editColumnOpen}
             onClose={() => (editColumnOpen = false)}
         />
-        <div
-            class="opacity-0 group-hover:opacity-100 transition-opacity flex ml-auto"
-        >
+        <div class="flex ml-auto">
             <button class="btn--icon text-ink-body" onclick={onCreateCard}>
                 <PlusIcon class="pointer-events-none" />
             </button>

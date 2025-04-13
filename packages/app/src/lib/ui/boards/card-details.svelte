@@ -183,32 +183,32 @@
         <div class="flex flex-col gap-4 my-4 flex-1">
             {#await detailsPromise then details}
                 {#each details.messages as message (message.id)}
-                    <div class="flex gap-2 mx-4 avatar-lg">
-                        <Avatar name={message.author.fullName} />
+                    <div class="flex flex-col gap-0.5 mx-4">
+                        <div class="flex items-center gap-1.5">
+                            <Avatar name={message.author.fullName} />
 
-                        <div class="flex flex-col">
-                            <div class="flex items-center gap-1.5">
-                                <div class="flex items-baseline gap-1.5">
-                                    <div class="font-semibold leading-none">
-                                        {message.author.fullName}
-                                    </div>
-
-                                    <span class="text-ink-detail text-xs">
-                                        {new Date(message.createdAt)
-                                            .toLocaleTimeString(undefined, {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                hour12: true,
-                                            })
-                                            .toLowerCase()}
-                                    </span>
+                            <div class="flex items-baseline gap-1.5">
+                                <div class="font-semibold leading-none">
+                                    {message.author.fullName}
                                 </div>
+
+                                <span class="text-ink-detail text-xs">
+                                    {new Date(message.createdAt)
+                                        .toLocaleTimeString(undefined, {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: true,
+                                        })
+                                        .toLowerCase()}
+                                </span>
                             </div>
-                            <div class="select-text leading-relaxed">
-                                <RichtextView
-                                    fragment={message.payload.text.__fragment!}
-                                />
-                            </div>
+                        </div>
+                        <div
+                            class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))]"
+                        >
+                            <RichtextView
+                                fragment={message.payload.text.__fragment!}
+                            />
                         </div>
                     </div>
                 {/each}

@@ -287,7 +287,6 @@
                 class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] pl-2"
                 style={`padding-right: calc(100vw - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px)`}
             >
-                {`padding-right: calc(100vw - ${COLUMN_WIDTH} - ${detailsWidth}px)`}
                 {#each board.columns as column, i (column.id)}
                     <div animate:flip={{duration: DND_REORDER_DURATION_MS}}>
                         <BoardColumn

@@ -1,7 +1,6 @@
 <script lang="ts">
     import {compareNumbers, log, type Awareness} from 'syncwave';
     import {onMount, tick} from 'svelte';
-    import PlusIcon from '../components/icons/plus-icon.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import BoardColumn from './board-column.svelte';
     import Scrollable from '../components/scrollable.svelte';
@@ -24,6 +23,7 @@
     import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
     import modalManager from '../modal-manager.svelte';
     import BoardSettingsModal from './board-settings-modal.svelte';
+    import {COLUMN_WIDTH} from './contatnts';
 
     const {
         board,
@@ -219,6 +219,8 @@
     let assigneeOptions = $derived(
         board.members.map(x => ({value: x.id, label: x.fullName}))
     );
+
+    let detailsWidth = $state(PanelSizeManager.getWidth('right') ?? 424);
 </script>
 
 {#snippet boardCommands()}
@@ -282,8 +284,10 @@
             <div
                 bind:this={boardRef}
                 bind:this={columnsContainerRef}
-                class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] px-2 pr-[78vw]"
+                class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] pl-2"
+                style={`padding-right: calc(100vw - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px)`}
             >
+                {`padding-right: calc(100vw - ${COLUMN_WIDTH} - ${detailsWidth}px)`}
                 {#each board.columns as column, i (column.id)}
                     <div animate:flip={{duration: DND_REORDER_DURATION_MS}}>
                         <BoardColumn
@@ -303,10 +307,13 @@
         {#key selectedCard.id}
             <ResizablePanel
                 freeSide="left"
-                defaultSize={PanelSizeManager.getWidth('right') ?? 424}
+                defaultSize={detailsWidth}
                 minWidth={320}
                 maxWidth={1600}
-                onWidthChange={w => PanelSizeManager.saveWidth('right', w)}
+                onWidthChange={w => {
+                    detailsWidth = w;
+                    PanelSizeManager.saveWidth('right', w);
+                }}
             >
                 <CardDetails
                     {me}

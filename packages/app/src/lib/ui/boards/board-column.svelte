@@ -13,6 +13,7 @@
     import router from '../../router';
     import ListAnimator from '../components/list-animator.svelte';
     import ColumnIcon from '../components/column-icon.svelte';
+    import {COLUMN_WIDTH} from './contatnts';
 
     const {
         column,
@@ -62,7 +63,11 @@
     });
 </script>
 
-<div class="flex w-80 flex-shrink-0 flex-col" data-column-id={column.id}>
+<div
+    class="flex flex-shrink-0 flex-col"
+    style={`width: ${COLUMN_WIDTH}`}
+    data-column-id={column.id}
+>
     <div
         class="flex items-center px-2 mb-1.5"
         data-disable-scroll-view-drag="true"

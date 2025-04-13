@@ -22,7 +22,7 @@
 }
 
 .btn-ghost {
-    @apply p-1 rounded-sm gap-1.5 flex items-center hover:bg-surface-2 hover:text-ink;
+    @apply p-1 rounded-sm gap-1.5 flex items-center hover:bg-surface-2 hover:text-ink  disabled:text-ink-disabled;
 }
 
 .btn-tinted {

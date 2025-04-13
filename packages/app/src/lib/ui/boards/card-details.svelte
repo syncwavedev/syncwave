@@ -112,7 +112,7 @@
         </button>
     </div>
     <!-- Scrollable Content Section -->
-    <div class="flex-grow overflow-y-auto no-scrollbar">
+    <div class="overflow-y-auto no-scrollbar flex flex-col flex-1">
         <!-- Task Description -->
         <div class="mx-4 mt-1">
             <div
@@ -156,7 +156,7 @@
             </div>
         </div>
         <hr />
-        <div class="flex flex-col gap-4 mt-4">
+        <div class="flex flex-col gap-4 mt-4 flex-1">
             {#await detailsPromise then details}
                 {#each details.messages as message (message.id)}
                     <div class="flex gap-2 mx-4 avatar-lg">
@@ -190,10 +190,10 @@
                 {/each}
             {/await}
         </div>
-        <div class="sticky bottom-0 bg-surface-0 p-4">
+        <div class="sticky bottom-0 px-4 pb-4 mt-4 bg-surface-0">
             <div class="flex gap-2 items-end">
                 <form
-                    class="flex items-end border border-divider z-10 rounded-md w-full p-1.5"
+                    class="flex items-end bg-surface-0 border border-divider z-10 rounded-md w-full p-1.5"
                     onsubmit={() => {
                         agent.createMessage({
                             boardId: card.boardId,

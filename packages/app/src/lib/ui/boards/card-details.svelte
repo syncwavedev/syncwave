@@ -153,7 +153,7 @@
                         <Avatar name={message.author.fullName} />
 
                         <div class="flex flex-col">
-                            <div class="flex items-center gap-1.5 avatar-sm">
+                            <div class="flex items-center gap-1.5">
                                 <div class="flex items-baseline gap-1.5">
                                     <div class="font-semibold leading-none">
                                         {message.author.fullName}
@@ -180,6 +180,36 @@
                 {/each}
             {/await}
         </div>
+        <div class="sticky bottom-0 bg-surface-0 p-4">
+            <div class="flex gap-2 items-end">
+                <form
+                    class="flex items-end border border-divider z-10 rounded-md w-full p-1.5"
+                    onsubmit={() => {
+                        agent.createMessage({
+                            boardId: card.boardId,
+                            columnId: card.columnId,
+                            cardId: card.id,
+                            fragment: fragment.clone(),
+                        });
+
+                        fragment.delete(0, Number.MAX_SAFE_INTEGER);
+                    }}
+                >
+                    <button class="btn--icon">
+                        <PlusIcon />
+                    </button>
+                    <Editor
+                        {fragment}
+                        {me}
+                        placeholder="Write a message..."
+                        class="px-1 py-1 w-full"
+                    />
+                    <button class="btn--icon">
+                        <ArrowUp />
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Fixed Message Input -->
@@ -193,33 +223,4 @@
       </p>
       <button class="btn--icon">{{ template "times.html" .}}</button>
     </div> -->
-
-    <div class="flex gap-2 items-end m-4">
-        <form
-            class="flex items-end border border-divider z-10 rounded-md w-full p-1.5"
-            onsubmit={() => {
-                agent.createMessage({
-                    boardId: card.boardId,
-                    columnId: card.columnId,
-                    cardId: card.id,
-                    fragment: fragment.clone(),
-                });
-
-                fragment.delete(0, Number.MAX_SAFE_INTEGER);
-            }}
-        >
-            <button class="btn--icon">
-                <PlusIcon />
-            </button>
-            <Editor
-                {fragment}
-                {me}
-                placeholder="Write a message..."
-                class="px-1 py-1 w-full"
-            />
-            <button class="btn--icon">
-                <ArrowUp />
-            </button>
-        </form>
-    </div>
 </div>

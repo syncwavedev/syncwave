@@ -61,16 +61,15 @@
     });
 
     const fragment = createXmlFragment();
-    let isEmpty = $state(true);
+    let isNewMessageEmpty = $state(true);
     $effect(() => {
         const observer = () => {
-            isEmpty = yFragmentToPlaintext(fragment).trim().length === 0;
+            isNewMessageEmpty =
+                yFragmentToPlaintext(fragment).trim().length === 0;
         };
 
         fragment.observeDeep(observer);
-        return () => {
-            fragment.unobserveDeep(observer);
-        };
+        return () => fragment.unobserveDeep(observer);
     });
 </script>
 
@@ -78,7 +77,7 @@
     class="border-divider bg-surface-0 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
     <div class="flex items-center px-4 py-2">
-        <div class="flex items-center gap-0.5 icon-base">
+        <div class="flex items-center gap-0.5 icon-base select-text">
             {#if card.isDraft}
                 New card
             {:else}
@@ -215,7 +214,7 @@
                         placeholder="Write a message..."
                         class="px-1 py-1 w-full"
                     />
-                    {#if !isEmpty}
+                    {#if !isNewMessageEmpty}
                         <button class="btn--icon">
                             <ArrowUp />
                         </button>

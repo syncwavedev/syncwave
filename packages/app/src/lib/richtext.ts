@@ -53,10 +53,6 @@ export function yFragmentToHtml(fragment: XmlFragment) {
 }
 
 export function yFragmentToPlaintext(fragment: XmlFragment) {
-    // make a clone to mount the fragment to a temporary Doc
-    fragment = fragment.clone();
-    new YDoc().getMap().set('content', fragment);
-
     const prosemirrorJSON = yFragmentToJSON(fragment);
     const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);
     return node.textBetween(0, node.content.size, '\n', '\n');

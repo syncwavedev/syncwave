@@ -377,13 +377,8 @@ export class Agent {
         columnId: ColumnId;
         fragment: XmlFragment;
     }): Message | undefined {
-        try {
-            const plaintext = yFragmentToPlaintext(params.fragment);
-            if (plaintext.trim().length === 0) {
-                return undefined;
-            }
-        } catch (e) {
-            console.error(e);
+        const plaintext = yFragmentToPlaintext(params.fragment);
+        if (plaintext.trim().length === 0) {
             return undefined;
         }
 

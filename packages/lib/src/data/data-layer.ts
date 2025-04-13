@@ -456,6 +456,7 @@ export class DataLayer {
                 const joinCode = await createJoinCode(this.crypto);
                 await tx.boards.update(board.id, x => {
                     x.joinCode = joinCode;
+                    x.joinRole = 'admin';
                 });
                 boardsUpdated++;
             }
@@ -471,9 +472,8 @@ export class DataLayer {
         let boardsUpdated = 0;
         await this.transact(system, async tx => {
             for await (const board of tx.boards.rawRepo.scan()) {
-                const joinCode = await createJoinCode(this.crypto);
                 await tx.boards.update(board.id, x => {
-                    x.joinRole = 'reader';
+                    x.joinRole = 'admin';
                 });
                 boardsUpdated++;
             }

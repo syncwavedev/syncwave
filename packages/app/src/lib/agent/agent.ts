@@ -53,6 +53,7 @@ import type {XmlFragment} from 'yjs';
 import type {AuthManager} from '../../auth-manager';
 
 import {WebCryptoProvider} from 'syncwave/web-crypto-provider.js';
+import {yFragmentToPlaintext} from '../richtext';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import {
@@ -370,27 +371,37 @@ export class Agent {
         this.crdtManager.commit(cardId);
     }
 
-    createMessage(options: {
+    createMessage(params: {
         boardId: BoardId;
         cardId: CardId;
         columnId: ColumnId;
         fragment: XmlFragment;
-    }): Message {
+    }): Message | undefined {
+        try {
+            const plaintext = yFragmentToPlaintext(params.fragment);
+            if (plaintext.trim().length === 0) {
+                return undefined;
+            }
+        } catch (e) {
+            console.error(e);
+            return undefined;
+        }
+
         const me = this.authManager.ensureAuthorized();
         const now = getNow();
         const messageId = createMessageId();
         const messageCrdt = Crdt.from<Message>({
             authorId: me.userId,
-            boardId: options.boardId,
-            cardId: options.cardId,
+            boardId: params.boardId,
+            cardId: params.cardId,
             createdAt: now,
             target: 'card',
-            columnId: options.columnId,
+            columnId: params.columnId,
             id: messageId,
             attachmentIds: [],
             payload: {
                 type: 'text',
-                text: createRichtext(options.fragment),
+                text: createRichtext(params.fragment.clone()),
             },
             replyToId: undefined,
             updatedAt: now,

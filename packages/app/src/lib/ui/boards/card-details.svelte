@@ -15,7 +15,7 @@
     import Select from '../components/select.svelte';
     import {getAgent} from '../../agent/agent';
     import RichtextView from '../../components/richtext-view.svelte';
-    import {createXmlFragment} from '../../richtext';
+    import {createXmlFragment, yFragmentToPlaintext} from '../../richtext';
     import ArrowUp from '../components/icons/arrow-up.svelte';
     import Avatar from '../components/avatar.svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
@@ -61,6 +61,17 @@
     });
 
     const fragment = createXmlFragment();
+    let isEmpty = $state(true);
+    $effect(() => {
+        const observer = () => {
+            isEmpty = yFragmentToPlaintext(fragment).trim().length === 0;
+        };
+
+        fragment.observeDeep(observer);
+        return () => {
+            fragment.unobserveDeep(observer);
+        };
+    });
 </script>
 
 <div
@@ -189,7 +200,7 @@
                             boardId: card.boardId,
                             columnId: card.columnId,
                             cardId: card.id,
-                            fragment: fragment.clone(),
+                            fragment: fragment,
                         });
 
                         fragment.delete(0, Number.MAX_SAFE_INTEGER);
@@ -204,9 +215,11 @@
                         placeholder="Write a message..."
                         class="px-1 py-1 w-full"
                     />
-                    <button class="btn--icon">
-                        <ArrowUp />
-                    </button>
+                    {#if !isEmpty}
+                        <button class="btn--icon">
+                            <ArrowUp />
+                        </button>
+                    {/if}
                 </form>
             </div>
         </div>

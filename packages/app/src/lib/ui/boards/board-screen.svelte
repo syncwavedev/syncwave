@@ -15,7 +15,7 @@
     import router from '../../router';
     import {flip} from 'svelte/animate';
     import {createDndContext, DND_REORDER_DURATION_MS} from './board-dnd';
-    import {yFragmentToPlaintextAndTaskList} from '../../richtext';
+    import {yFragmentToPlaintext} from '../../richtext';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import PanelSizeManager from '../../panel-size-manager';
     import Avatar from '../components/avatar.svelte';
@@ -23,7 +23,7 @@
     import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
     import modalManager from '../modal-manager.svelte';
     import BoardSettingsModal from './board-settings-modal.svelte';
-    import {COLUMN_WIDTH} from './contatnts';
+    import {COLUMN_WIDTH} from './constants';
 
     const {
         board,
@@ -172,9 +172,7 @@
 
     $effect(() => {
         if (selectedCard?.isDraft) {
-            const {text} = yFragmentToPlaintextAndTaskList(
-                selectedCard.text.__fragment!
-            );
+            const text = yFragmentToPlaintext(selectedCard.text.__fragment!);
             if (text.length > 0) {
                 agent.commitCardDraft(board, selectedCard.id);
                 router.route(`/b/${board.key}/c/${selectedCard.counter}`, {

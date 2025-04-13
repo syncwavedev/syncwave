@@ -75,7 +75,7 @@
                 const message = Crdt.from<Message>({
                     id: messageId,
                     pk: [messageId],
-                    authorId: me.profileView.id,
+                    authorId: me.id,
                     cardId,
                     columnId,
                     target: 'card',

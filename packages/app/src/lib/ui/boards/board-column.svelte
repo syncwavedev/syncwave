@@ -13,7 +13,7 @@
     import router from '../../router';
     import ListAnimator from '../components/list-animator.svelte';
     import ColumnIcon from '../components/column-icon.svelte';
-    import {COLUMN_WIDTH} from './contatnts';
+    import {COLUMN_WIDTH} from './constants';
 
     const {
         column,

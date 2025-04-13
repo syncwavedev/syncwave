@@ -3,7 +3,7 @@
     hover:text-ink
     grid
     aspect-square
-    p-1
+    h-[1.85em]
     place-items-center
     rounded-full
     disabled:text-ink-disabled;

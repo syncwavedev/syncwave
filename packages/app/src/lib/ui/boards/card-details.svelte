@@ -45,6 +45,7 @@
     const agent = getAgent();
 
     let editor: Editor | null = $state(null);
+    let scrollable: HTMLDivElement;
 
     onMount(() => {
         tick().then(() => {
@@ -71,6 +72,26 @@
         fragment.observeDeep(observer);
         return () => fragment.unobserveDeep(observer);
     });
+
+    const onSendMessage = async (e?: Event) => {
+        e?.preventDefault();
+
+        agent.createMessage({
+            boardId: card.boardId,
+            columnId: card.columnId,
+            cardId: card.id,
+            fragment: fragment,
+        });
+
+        fragment.delete(0, Number.MAX_SAFE_INTEGER);
+
+        // Wait for DOM to update and then scroll to bottom
+        await tick();
+        scrollable?.scrollTo({
+            top: scrollable.scrollHeight,
+            behavior: 'smooth',
+        });
+    };
 </script>
 
 <div
@@ -112,7 +133,10 @@
         </button>
     </div>
     <!-- Scrollable Content Section -->
-    <div class="overflow-y-auto no-scrollbar flex flex-col flex-1">
+    <div
+        bind:this={scrollable}
+        class="overflow-y-auto no-scrollbar flex flex-col flex-1"
+    >
         <!-- Task Description -->
         <div class="mx-4 mt-1">
             <div
@@ -194,16 +218,7 @@
             <div class="flex gap-2 items-end">
                 <form
                     class="flex items-end bg-surface-0 border border-divider z-10 rounded-md w-full p-1.5"
-                    onsubmit={() => {
-                        agent.createMessage({
-                            boardId: card.boardId,
-                            columnId: card.columnId,
-                            cardId: card.id,
-                            fragment: fragment,
-                        });
-
-                        fragment.delete(0, Number.MAX_SAFE_INTEGER);
-                    }}
+                    onsubmit={onSendMessage}
                 >
                     <button class="btn--icon">
                         <PlusIcon />
@@ -213,24 +228,17 @@
                         {me}
                         placeholder="Write a message..."
                         class="px-1 py-1 w-full"
+                        onEnter={() => onSendMessage()}
                     />
-                    <button class="btn--icon" disabled={isNewMessageEmpty}>
+                    <button
+                        type="submit"
+                        class="btn--icon"
+                        disabled={isNewMessageEmpty}
+                    >
                         <ArrowUp />
                     </button>
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- Fixed Message Input -->
-    <!-- <div class="py-1 px-4 z-10 bg-subtle-3 flex gap-2">
-      <span class="text-ink-detail leading-none"
-        >{{ template "arrow-uturn-left.html" .}}</span
-      >
-      <p class="text-3xs text-ink-body line-clamp-2">
-        MemHash proved there's always room for a new app on Telegram —
-        provided you deeply understand which features made its
-      </p>
-      <button class="btn--icon">{{ template "times.html" .}}</button>
-    </div> -->
 </div>

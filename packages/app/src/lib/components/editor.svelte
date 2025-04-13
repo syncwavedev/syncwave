@@ -48,8 +48,12 @@
         addKeyboardShortcuts() {
             return {
                 Enter: () => {
-                    onEnter?.();
-                    return true;
+                    if (onEnter) {
+                        onEnter();
+                        return true;
+                    }
+
+                    return false;
                 },
             };
         },

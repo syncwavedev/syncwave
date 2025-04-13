@@ -285,7 +285,7 @@
                 bind:this={boardRef}
                 bind:this={columnsContainerRef}
                 class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] pl-2"
-                style={`padding-right: calc(100vw - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px)`}
+                style={`padding-right: calc(100vw - 0.5rem - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px)`}
             >
                 {#each board.columns as column, i (column.id)}
                     <div animate:flip={{duration: DND_REORDER_DURATION_MS}}>

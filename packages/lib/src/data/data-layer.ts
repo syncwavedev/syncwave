@@ -1,6 +1,7 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
 import {CrdtDiff} from '../crdt/crdt.js';
+import {Cell} from '../kv/cell.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {type AppTransaction, isolate, type KvStore} from '../kv/kv-store.js';
 import {log} from '../logger.js';
@@ -9,7 +10,7 @@ import type {Hub} from '../transport/hub.js';
 import type {Tuple} from '../tuple.js';
 import {assert, type Brand, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
-import {type Principal} from './auth.js';
+import {type Principal, system} from './auth.js';
 import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
 import type {ChangeOptions} from './doc-repo.js';
@@ -42,6 +43,7 @@ export interface Config {
 }
 
 export interface DataTx {
+    readonly version: Cell<number>;
     readonly awareness: AwarenessStore;
     readonly users: UserRepo;
     readonly members: MemberRepo;
@@ -296,7 +298,10 @@ export class DataLayer {
                 users,
             });
 
+            const version = new Cell(isolate(['version_v2'])(tx), 0);
+
             const dataTx: DataTx = {
+                version,
                 boardService,
                 awareness,
                 boards,
@@ -353,6 +358,37 @@ export class DataLayer {
         }
 
         return result;
+    }
+
+    async upgrade() {
+        const version = await this.transact(
+            system,
+            async tx => await tx.version.get()
+        );
+
+        log.info({msg: `Data layer current version: ${version}`});
+
+        if (version <= 0) {
+            log.info({msg: 'upgrading to version 1'});
+            await this.upgradeToV1();
+        }
+    }
+
+    private async upgradeToV1() {
+        let membersUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const member of tx.members.rawRepo.scan()) {
+                await tx.members.update(member.id, x => {
+                    x.inviteAccepted = true;
+                });
+                membersUpdated++;
+            }
+        });
+
+        log.info({msg: `members updated: ${membersUpdated}`});
+
+        await this.transact(system, tx => tx.version.put(1));
+        log.info({msg: 'upgrading to version 1 done'});
     }
 }
 

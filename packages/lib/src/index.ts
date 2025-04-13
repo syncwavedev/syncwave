@@ -10,6 +10,7 @@ export * from './coordinator/coordinator.js';
 export * from './crdt/crdt.js';
 export * from './crdt/richtext.js';
 export * from './cursor.js';
+export * from './data/auth.js';
 export * from './data/data-layer.js';
 export * from './data/doc-repo.js';
 export * from './data/dto.js';

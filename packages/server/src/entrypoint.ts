@@ -17,6 +17,7 @@ import {
     CancelledError,
     context,
     CoordinatorServer,
+    DataLayer,
     decodeNumber,
     Deferred,
     type EmailService,
@@ -216,7 +217,7 @@ async function getKvStore(
     };
 }
 
-async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
+async function upgradeKVStore({store, jwtSecret}: Options) {
     const versionKey = ['version'];
     log.info({msg: 'Retrieving KV store version...'});
     let version = await store.transact(async tx => {
@@ -306,6 +307,15 @@ async function upgradeKVStore(store: KvStore<Tuple, Uint8Array>) {
         });
         version = 3;
     }
+
+    const dataLayer = new DataLayer(
+        store,
+        new MemHub(),
+        jwtSecret,
+        NodeCryptoService
+    );
+
+    await dataLayer.upgrade();
 }
 
 function getKoaCallback(app: Koa) {
@@ -420,7 +430,7 @@ process.on('unhandledRejection', reason => {
 });
 
 log.info({msg: 'Upgrading KV store...'});
-await upgradeKVStore(options.store);
+await upgradeKVStore(options);
 log.info({msg: 'Successfully upgraded KV store'});
 
 log.info({msg: 'launching coordinator...'});

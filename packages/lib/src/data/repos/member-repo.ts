@@ -57,6 +57,7 @@ export function Member() {
             boardId: Uuid<BoardId>(),
             role: MemberRole(),
             position: Type.Number(),
+            inviteAccepted: Type.Boolean(),
         }),
     ]);
 }

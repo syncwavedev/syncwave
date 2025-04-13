@@ -16,6 +16,12 @@ export interface Principal {
     readonly superadmin: boolean;
 }
 
+export const system: Principal = {
+    userId: undefined,
+    accountId: undefined,
+    superadmin: true,
+};
+
 export class Authenticator {
     private readonly principalCache: LRUCache<string, Principal>;
 

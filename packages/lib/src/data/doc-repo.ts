@@ -94,6 +94,12 @@ export class DocRepo<T extends Doc<Tuple>> {
         this.rawRepo = new DocRepoImpl<T>(options);
     }
 
+    scan(): Stream<CrdtDoc<T>> {
+        return context().runChild({span: 'repo.scan'}, () => {
+            return this.rawRepo.scan();
+        });
+    }
+
     async getById(
         id: Tuple,
         options?: QueryOptions
@@ -214,6 +220,19 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         this.schema = options.schema;
         this.constraints = options.constraints;
         this.scheduleTrigger = options.scheduleTrigger;
+    }
+
+    scan(): Stream<CrdtDoc<T>> {
+        return toStream(this._scan());
+    }
+
+    private async *_scan(): AsyncIterable<CrdtDoc<T>> {
+        for await (const {value} of this.primaryKeyRaw.query({gte: []})) {
+            yield {
+                ...value.snapshot(),
+                state: value.state(),
+            };
+        }
     }
 
     async getById(

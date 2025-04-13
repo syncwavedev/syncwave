@@ -1,12 +1,12 @@
 import {ReturnType} from '@sinclair/typebox';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {anonymous} from '../data/auth.js';
-import {DataLayer, type DataEffectScheduler} from '../data/data-layer.js';
-import {MemEmailService} from '../data/mem-email-service.js';
+import {DataLayer} from '../data/data-layer.js';
+import {MemEmailProvider} from '../data/mem-email-provider.js';
 import {MemMvccStore} from '../kv/mem-mvcc-store.js';
 import {TupleStore} from '../kv/tuple-store.js';
-import {NodeCryptoService} from '../node-crypto-service.js';
-import {NodeJwtService} from '../node-jwt-service.js';
+import {NodeCryptoProvider} from '../node-crypto-provider.js';
+import {NodeJwtProvider} from '../node-jwt-provider.js';
 import {MemHub} from '../transport/hub.js';
 import type {RpcMessageId} from '../transport/rpc-message.js';
 import {createUuidV4} from '../uuid.js';
@@ -20,9 +20,9 @@ describe('AccountRepo', () => {
         data = new DataLayer(
             new TupleStore(new MemMvccStore()),
             new MemHub(),
-            NodeCryptoService,
-            new MemEmailService(),
-            new NodeJwtService('test-jwt-secret'),
+            NodeCryptoProvider,
+            new MemEmailProvider(),
+            new NodeJwtProvider('test-jwt-secret'),
             'https://example.com/'
         );
 
@@ -37,7 +37,7 @@ describe('AccountRepo', () => {
                 email: 'test@email.com',
                 fullName: 'Test User',
                 users: tx.users,
-                crypto: NodeCryptoService,
+                crypto: NodeCryptoProvider,
             });
 
             expect(account.email).toEqual('test@email.com');
@@ -62,7 +62,7 @@ describe('AccountRepo', () => {
                 email: 'test1@email.com',
                 fullName: 'Test User #1',
                 users: tx.users,
-                crypto: NodeCryptoService,
+                crypto: NodeCryptoProvider,
             });
 
             await getAccount({
@@ -71,20 +71,20 @@ describe('AccountRepo', () => {
                 email: 'test2@email.com',
                 fullName: 'Test User #2',
                 users: tx.users,
-                crypto: NodeCryptoService,
+                crypto: NodeCryptoProvider,
             });
         });
     });
 
     it('should send sign in email', async () => {
-        const emailService = new MemEmailService();
+        const emailProvider = new MemEmailProvider();
 
         await data.transact(anonymous, async tx => {
             await authApi.sendSignInEmail.handle(
                 {
                     boardService: tx.boardService,
-                    crypto: NodeCryptoService,
-                    emailService,
+                    crypto: NodeCryptoProvider,
+                    emailService: tx.emailService,
                     jwt: {
                         sign: async () => '',
                         verify: async () => ({
@@ -94,8 +94,6 @@ describe('AccountRepo', () => {
                             uid: createUuidV4(),
                         }),
                     },
-                    scheduleEffect:
-                        (() => {}) as unknown as DataEffectScheduler,
                     tx: tx,
                 },
                 {email: 'test@email.com'},

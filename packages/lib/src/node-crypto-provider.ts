@@ -1,8 +1,7 @@
-import {createHash, randomBytes} from 'crypto';
-import {toError, type CryptoService} from 'syncwave';
+import {randomBytes} from 'crypto';
+import {toError, type CryptoProvider} from 'syncwave';
 
-export const NodeCryptoService: CryptoService = {
-    sha256: text => createHash('sha256').update(text).digest('hex'),
+export const NodeCryptoProvider: CryptoProvider = {
     randomBytes: (size: number): Promise<Uint8Array> => {
         return new Promise((resolve, reject) => {
             try {

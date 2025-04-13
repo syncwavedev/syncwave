@@ -69,7 +69,6 @@ export class MeViewData implements SyncTarget {
             .filter(x => !x.deletedAt)
             .map(x => ({
                 ...this.crdtManager.viewById(x.boardId, 'board'),
-                inviteAccepted: x.inviteAccepted,
                 memberId: x.id,
             }))
             .filter(x => !x.deletedAt)
@@ -341,6 +340,8 @@ export class BoardView implements Board {
     name = $derived(this._board.name);
     id = $derived(this._board.id);
     pk = $derived(this._board.pk);
+    joinCode = $derived(this._board.joinCode);
+    joinRole = $derived(this._board.joinRole);
     onlineUsers = $derived.by(() => {
         const [active, idle] = partition(
             uniqBy(this._data.clients, x => x.user.id).sort((a, b) =>

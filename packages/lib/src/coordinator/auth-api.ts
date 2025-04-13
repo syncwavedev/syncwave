@@ -1,11 +1,8 @@
 import {Type} from '@sinclair/typebox';
 import type {BoardService} from '../data/board-service.js';
-import type {DataEffectScheduler, DataTx} from '../data/data-layer.js';
-import type {
-    CryptoService,
-    EmailService,
-    JwtService,
-} from '../data/infrastructure.js';
+import type {DataTx} from '../data/data-layer.js';
+import type {EmailService} from '../data/email-service.js';
+import type {CryptoProvider, JwtProvider} from '../data/infrastructure.js';
 import {
     createAccountId,
     type Account,
@@ -26,11 +23,10 @@ import {type VerifySignInCodeResponse} from './coordinator.js';
 
 export interface AuthApiState {
     tx: DataTx;
-    jwt: JwtService;
-    crypto: CryptoService;
-    emailService: EmailService;
+    jwt: JwtProvider;
+    crypto: CryptoProvider;
     boardService: BoardService;
-    scheduleEffect: DataEffectScheduler;
+    emailService: EmailService;
 }
 
 export function createAuthApi() {
@@ -51,13 +47,7 @@ export function createAuthApi() {
                 Type.Object({type: Type.Literal('cooldown')}),
             ]),
             handle: async (
-                {
-                    tx: {accounts, users},
-                    crypto,
-                    boardService,
-                    scheduleEffect,
-                    emailService,
-                },
+                {tx: {accounts, users}, crypto, boardService, emailService},
                 {email}
             ): Promise<{type: 'success'} | {type: 'cooldown'}> => {
                 const account = await getAccount({
@@ -79,30 +69,9 @@ export function createAuthApi() {
                     pushActivityLog(doc);
                 });
 
-                scheduleEffect(async () => {
-                    await emailService.send({
-                        recipient: email,
-                        html: `<p>
-                                    Hi there!<br />
-                                    <br />
-                                    We noticed a request to sign into your SyncWave account.<br />
-                                    If this wasn't you, no worries—just ignore this email.<br />
-                                    <br />
-                                    Your one-time code is: <strong>${verificationCode.code}</strong><br />
-                                    <br />
-                                    Have a great day!<br />
-                                    The SyncWave Team
-                                </p>`,
-                        subject: 'Your SyncWave Account Sign-In Code',
-                        text: `Hi there!
-                    
-We noticed a request to sign into your SyncWave account. If this wasn't you, no worries—just ignore this email.
-
-Your one-time code is: ${verificationCode.code}
-
-Have a great day!
-The SyncWave Team`,
-                    });
+                emailService.scheduleSignInEmail({
+                    email,
+                    code: verificationCode.code,
                 });
 
                 return {type: 'success'};
@@ -168,7 +137,7 @@ The SyncWave Team`,
 export type AuthApi = ReturnType<typeof createAuthApi>;
 
 export async function createVerificationCode(
-    crypto: CryptoService
+    crypto: CryptoProvider
 ): Promise<VerificationCode> {
     const buf = await crypto.randomBytes(6);
     return {
@@ -202,7 +171,7 @@ function pushActivityLog(x: Account) {
     }
 }
 
-export async function signJwtToken(jwt: JwtService, account: Account) {
+export async function signJwtToken(jwt: JwtProvider, account: Account) {
     const now = new Date();
     const exp = new Date(now.getTime());
     exp.setFullYear(exp.getFullYear() + 50);
@@ -221,7 +190,7 @@ export async function getAccount(params: {
     accounts: AccountRepo;
     users: UserRepo;
     email: string;
-    crypto: CryptoService;
+    crypto: CryptoProvider;
     fullName: string | undefined;
     boardService: BoardService;
 }): Promise<Account> {

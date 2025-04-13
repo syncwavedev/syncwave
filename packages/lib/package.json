@@ -25,15 +25,20 @@
             "require": "./dist/cjs/src/telemetry.js",
             "default": "./dist/cjs/src/telemetry.js"
         },
-        "./node-crypto-service.js": {
-            "import": "./dist/esm/src/node-crypto-service.js",
-            "require": "./dist/cjs/src/node-crypto-service.js",
-            "default": "./dist/cjs/src/node-crypto-service.js"
+        "./node-crypto-provider.js": {
+            "import": "./dist/esm/src/node-crypto-provider.js",
+            "require": "./dist/cjs/src/node-crypto-provider.js",
+            "default": "./dist/cjs/src/node-crypto-provider.js"
         },
-        "./node-jwt-service.js": {
-            "import": "./dist/esm/src/node-jwt-service.js",
-            "require": "./dist/cjs/src/node-jwt-service.js",
-            "default": "./dist/cjs/src/node-jwt-service.js"
+        "./node-jwt-provider.js": {
+            "import": "./dist/esm/src/node-jwt-provider.js",
+            "require": "./dist/cjs/src/node-jwt-provider.js",
+            "default": "./dist/cjs/src/node-jwt-provider.js"
+        },
+        "./web-crypto-provider.js": {
+            "import": "./dist/esm/src/web-crypto-provider.js",
+            "require": "./dist/cjs/src/web-crypto-provider.js",
+            "default": "./dist/cjs/src/web-crypto-provider.js"
         }
     },
     "type": "module",

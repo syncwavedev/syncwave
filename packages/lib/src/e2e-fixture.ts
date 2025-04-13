@@ -1,6 +1,6 @@
 import {MsgpackCodec} from './codec.js';
 import {CoordinatorClient} from './coordinator/coordinator-client.js';
-import {MemEmailService} from './data/mem-email-service.js';
+import {MemEmailProvider} from './data/mem-email-provider.js';
 import {
     CoordinatorServer,
     Crdt,
@@ -18,8 +18,8 @@ import {
     TupleStore,
     type BoardId,
     type Card,
-    type CryptoService,
-    type JwtService,
+    type CryptoProvider,
+    type JwtProvider,
     type RpcMessage,
     type TransportClient,
 } from './index.js';
@@ -28,21 +28,21 @@ import {assert, assertSingle, drop} from './utils.js';
 
 export class E2eFixture {
     static async start(options: {
-        jwtService: JwtService;
-        cryptoService: CryptoService;
+        jwtProvider: JwtProvider;
+        cryptoService: CryptoProvider;
     }) {
         log.setLogLevel('error');
         const coordinatorTransportServer = new MemTransportServer<RpcMessage>(
             new MsgpackCodec()
         );
         const coordinatorKv = new MemMvccStore();
-        const emailService = new MemEmailService();
+        const emailProvider = new MemEmailProvider();
         const coordinator = new CoordinatorServer({
             transport: coordinatorTransportServer,
             kv: new TupleStore(coordinatorKv),
-            jwtService: options.jwtService,
-            crypto: options.cryptoService,
-            emailService: emailService,
+            jwtProvider: options.jwtProvider,
+            cryptoProvider: options.cryptoService,
+            emailProvider,
             objectStore: new MemObjectStore(),
             hub: new MemHub(),
             uiUrl: 'http://localhost:3000',
@@ -60,18 +60,22 @@ export class E2eFixture {
             undefined
         );
 
-        return new E2eFixture(client, coordinatorTransportClient, emailService);
+        return new E2eFixture(
+            client,
+            coordinatorTransportClient,
+            emailProvider
+        );
     }
 
     constructor(
         public readonly client: CoordinatorClient,
         public readonly transportClient: TransportClient<unknown>,
-        public readonly emailService: MemEmailService
+        public readonly emailProvider: MemEmailProvider
     ) {}
 
     async signIn() {
         await this.client.rpc.sendSignInEmail({email: 'test@test.com'});
-        const message = this.emailService.outbox.at(-1);
+        const message = this.emailProvider.outbox.at(-1);
         assert(message !== undefined, 'message expected');
         const code = message.text
             .split('\n')

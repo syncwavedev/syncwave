@@ -9,7 +9,7 @@ import Koa from 'koa';
 import helmet from 'koa-helmet';
 import {cpus} from 'os';
 import {collectDefaultMetrics} from 'prom-client';
-import type {Hub, Tuple} from 'syncwave';
+import type {EmailProvider, Hub, Tuple} from 'syncwave';
 import {
     AppError,
     assertDefined,
@@ -20,7 +20,6 @@ import {
     DataLayer,
     decodeNumber,
     Deferred,
-    type EmailService,
     encodeNumber,
     type GoogleOptions,
     type KvStore,
@@ -34,15 +33,15 @@ import {
     TupleStore,
     type Uint8KvStore,
 } from 'syncwave';
-import {NodeCryptoService} from 'syncwave/node-crypto-service.js';
-import {NodeJwtService} from 'syncwave/node-jwt-service.js';
+import {NodeCryptoProvider} from 'syncwave/node-crypto-provider.js';
+import {NodeJwtProvider} from 'syncwave/node-jwt-provider.js';
 import {match} from 'ts-pattern';
 import {eventLoopMonitor} from './event-loop-monitor.js';
 import {FsObjectStore} from './fs-object-store.js';
 import {createApiRouter} from './http/api.js';
 import {createMetricsRouter} from './http/metrics.js';
 import {createUiRouter} from './http/ui.js';
-import {SesEmailService} from './ses-email-service.js';
+import {SesEmailProvider} from './ses-email-provider.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
 collectDefaultMetrics();
@@ -60,7 +59,7 @@ interface Options {
     jwtSecret: string;
     store: KvStore<Tuple, Uint8Array>;
     hub: Hub;
-    emailService: EmailService;
+    emailProvider: EmailProvider;
     launchCluster: boolean;
     appPort: number;
     metricsPort: number;
@@ -147,7 +146,7 @@ async function getOptions(): Promise<Options> {
         uiUrl,
         logLevel,
         workersCount: stage === 'prod' ? cpus().length : 1,
-        emailService: new SesEmailService(awsRegion),
+        emailProvider: new SesEmailProvider(awsRegion),
         jwtSecret,
         uiPath,
         hub,
@@ -311,9 +310,9 @@ async function upgradeKVStore({store, jwtSecret}: Options) {
     const dataLayer = new DataLayer(
         store,
         new MemHub(),
-        NodeCryptoService,
-        options.emailService,
-        new NodeJwtService(jwtSecret),
+        NodeCryptoProvider,
+        options.emailProvider,
+        new NodeJwtProvider(jwtSecret),
         options.uiUrl
     );
 
@@ -358,9 +357,9 @@ async function launchApp(options: Options) {
             server: appHttpServer,
         }),
         kv: options.store,
-        jwtService: new NodeJwtService(options.jwtSecret),
-        crypto: NodeCryptoService,
-        emailService: options.emailService,
+        jwtProvider: new NodeJwtProvider(options.jwtSecret),
+        cryptoProvider: NodeCryptoProvider,
+        emailProvider: options.emailProvider,
         objectStore: await FsObjectStore.create({
             basePath: './dev-object-store',
         }),

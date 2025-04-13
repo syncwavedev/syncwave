@@ -16,6 +16,7 @@ import {
     type Recipe,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
+import {MemberRole} from './member-repo.js';
 import type {UserId, UserRepo} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
@@ -26,6 +27,7 @@ export function createBoardId(): BoardId {
 
 const BOARD_KEY_INDEX = 'key';
 const AUTHOR_ID_INDEX = 'author_id';
+const JOIN_CODE_INDEX = 'join_code';
 
 export function Board() {
     return Type.Composite([
@@ -35,6 +37,8 @@ export function Board() {
             key: Type.String(),
             name: Type.String(),
             authorId: Uuid<UserId>(),
+            joinCode: Type.String(),
+            joinRole: MemberRole(),
         }),
     ]);
 }
@@ -59,11 +63,16 @@ export class BoardRepo {
                 [BOARD_KEY_INDEX]: {
                     key: x => [[x.key]],
                     unique: true,
-                    include: x => x.key !== undefined,
+                    filter: x => x.key !== undefined,
                 },
                 [AUTHOR_ID_INDEX]: {
                     key: x => [[x.authorId, x.createdAt]],
-                    include: x => x.authorId !== undefined,
+                    filter: x => x.authorId !== undefined,
+                },
+                [JOIN_CODE_INDEX]: {
+                    key: x => [[x.joinCode]],
+                    unique: true,
+                    filter: x => x.joinCode !== undefined,
                 },
             },
             schema: Board(),
@@ -96,6 +105,13 @@ export class BoardRepo {
 
     async getByKey(key: string): Promise<Board | undefined> {
         return await this.rawRepo.getUnique(BOARD_KEY_INDEX, [key]);
+    }
+
+    async getByJoinCode(
+        code: string,
+        options?: QueryOptions
+    ): Promise<Board | undefined> {
+        return await this.rawRepo.getUnique(JOIN_CODE_INDEX, [code], options);
     }
 
     async checkKeyAvailable(key: string): Promise<boolean> {

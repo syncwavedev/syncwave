@@ -1,7 +1,7 @@
 import {SendEmailCommand, SESClient} from '@aws-sdk/client-ses';
-import {log, type EmailMessage, type EmailService} from 'syncwave';
+import {log, type EmailMessage, type EmailProvider} from 'syncwave';
 
-export class SesEmailService implements EmailService {
+export class SesEmailProvider implements EmailProvider {
     private readonly ses: SESClient;
 
     constructor(region: string) {

@@ -5,17 +5,21 @@ const PUBLIC_STAGE = import.meta.env.VITE_PUBLIC_STAGE;
 export interface AppConfig {
     googleClientId: string;
     apiUrl: string;
+    uiUrl: string;
     serverWsUrl: string;
     stage: 'dev' | 'prod' | 'self' | 'local' | 'dev_self';
 }
 
 // wss://api-dev.syncwave.dev:443
 export const appConfig: AppConfig = (() => {
+    const uiUrl = window.location.origin + '/';
+
     if (PUBLIC_STAGE === 'local') {
         return {
             googleClientId:
                 '848724615154-hlbsminri03tvelsj62fljh5v0tmcjaa.apps.googleusercontent.com',
             apiUrl: 'http://localhost:4567',
+            uiUrl,
             serverWsUrl: 'ws://localhost:4567',
             stage: PUBLIC_STAGE,
         };
@@ -24,6 +28,7 @@ export const appConfig: AppConfig = (() => {
             googleClientId:
                 '848724615154-dt9ejfs9rfu1vfhkvlk19pg6rbvnue9u.apps.googleusercontent.com',
             apiUrl: 'https://api-dev.syncwave.dev',
+            uiUrl,
             serverWsUrl: 'wss://api-dev.syncwave.dev',
             stage: PUBLIC_STAGE,
         };
@@ -32,6 +37,7 @@ export const appConfig: AppConfig = (() => {
             googleClientId:
                 '848724615154-0ln8g1cq9iiddeqtlgv1qfcqf0snbrng.apps.googleusercontent.com',
             apiUrl: 'https://api.syncwave.dev',
+            uiUrl,
             serverWsUrl: 'wss://api.syncwave.dev',
             stage: PUBLIC_STAGE,
         };
@@ -41,6 +47,7 @@ export const appConfig: AppConfig = (() => {
             serverWsUrl: origin,
             apiUrl: origin + '/api',
             stage: PUBLIC_STAGE,
+            uiUrl,
             googleClientId:
                 '848724615154-dt9ejfs9rfu1vfhkvlk19pg6rbvnue9u.apps.googleusercontent.com',
         };
@@ -48,6 +55,7 @@ export const appConfig: AppConfig = (() => {
         return {
             serverWsUrl: window.location.origin,
             apiUrl: window.location.origin + '/api',
+            uiUrl,
             stage: PUBLIC_STAGE,
             googleClientId: assertDefined(
                 (window as unknown as Record<string, string>)

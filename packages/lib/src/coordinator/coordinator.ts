@@ -2,9 +2,9 @@ import {AUTHENTICATOR_PRINCIPAL_CACHE_SIZE} from '../constants.js';
 import {anonymous, Authenticator} from '../data/auth.js';
 import {DataLayer} from '../data/data-layer.js';
 import type {
-    CryptoService,
-    EmailService,
-    JwtService,
+    CryptoProvider,
+    EmailProvider,
+    JwtProvider,
     ObjectStore,
 } from '../data/infrastructure.js';
 import type {KvStore} from '../kv/kv-store.js';
@@ -22,9 +22,9 @@ import {
 export interface CoordinatorServerOptions {
     transport: TransportServer<RpcMessage>;
     kv: KvStore<Tuple, Uint8Array>;
-    jwtService: JwtService;
-    crypto: CryptoService;
-    emailService: EmailService;
+    jwtProvider: JwtProvider;
+    cryptoProvider: CryptoProvider;
+    emailProvider: EmailProvider;
     objectStore: ObjectStore;
     hub: Hub;
     uiUrl: string;
@@ -38,14 +38,14 @@ export class CoordinatorServer {
         this.dataLayer = new DataLayer(
             this.options.kv,
             this.options.hub,
-            this.options.crypto,
-            options.emailService,
-            options.jwtService,
+            this.options.cryptoProvider,
+            options.emailProvider,
+            options.jwtProvider,
             options.uiUrl
         );
         const authenticator = new Authenticator(
             AUTHENTICATOR_PRINCIPAL_CACHE_SIZE,
-            this.options.jwtService
+            this.options.jwtProvider
         );
 
         this.rpcServer = new RpcServer(
@@ -53,9 +53,9 @@ export class CoordinatorServer {
             createCoordinatorApi(),
             {
                 dataLayer: this.dataLayer,
-                jwtService: this.options.jwtService,
-                crypto: this.options.crypto,
-                emailService: this.options.emailService,
+                jwtService: this.options.jwtProvider,
+                crypto: this.options.cryptoProvider,
+                emailProvider: this.options.emailProvider,
                 hub: this.options.hub,
                 objectStore: this.options.objectStore,
                 close: reason => {
@@ -97,12 +97,12 @@ export class CoordinatorServer {
                     accounts: tx.accounts,
                     users: tx.users,
                     email: params.email,
-                    crypto: this.options.crypto,
+                    crypto: this.options.cryptoProvider,
                     fullName: params.fullName,
                     boardService: tx.boardService,
                 });
 
-                return signJwtToken(this.options.jwtService, account);
+                return signJwtToken(this.options.jwtProvider, account);
             }
         );
     }

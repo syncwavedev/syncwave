@@ -15,8 +15,8 @@ import {
     type Card,
     type Message,
 } from '../src/index.js';
-import {NodeCryptoService} from '../src/node-crypto-service.js';
-import {NodeJwtService} from '../src/node-jwt-service.js';
+import {NodeCryptoProvider} from '../src/node-crypto-provider.js';
+import {NodeJwtProvider} from '../src/node-jwt-provider.js';
 
 describe('e2e', () => {
     let subject: E2eFixture;
@@ -24,8 +24,8 @@ describe('e2e', () => {
 
     beforeEach(async () => {
         subject = await E2eFixture.start({
-            jwtService: new NodeJwtService('secret'),
-            cryptoService: NodeCryptoService,
+            jwtProvider: new NodeJwtProvider('secret'),
+            cryptoService: NodeCryptoProvider,
         });
         await subject.signIn();
         vi.useFakeTimers();
@@ -77,6 +77,8 @@ describe('e2e', () => {
             updatedAt: toTimestamp(now),
             pk: [boardId],
             state: expect.any(Object),
+            joinCode: expect.any(String),
+            joinRole: 'reader',
         };
         expect(board).toEqual(expectedBoard);
     });

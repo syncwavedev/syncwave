@@ -6,7 +6,7 @@ import {createRichtext} from '../crdt/richtext.js';
 import {BusinessError} from '../errors.js';
 import {getNow} from '../timestamp.js';
 import {createApi, handler, type InferRpcClient} from '../transport/rpc.js';
-import {whenAll} from '../utils.js';
+import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {BoardService} from './board-service.js';
 import type {DataTx} from './data-layer.js';
@@ -22,23 +22,18 @@ import {
 } from './dto.js';
 import {
     createObjectKey,
-    type CryptoService,
-    type EmailService,
-    type JwtService,
+    type CryptoProvider,
+    type JwtProvider,
     type ObjectMetadata,
     type ObjectStore,
 } from './infrastructure.js';
+import type {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
 import {createAttachmentId} from './repos/attachment-repo.js';
 import {Board, type BoardId} from './repos/board-repo.js';
 import {type Card, type CardId} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
-import {
-    createMemberId,
-    type Member,
-    type MemberId,
-    MemberRole,
-} from './repos/member-repo.js';
+import {type Member, type MemberId, MemberRole} from './repos/member-repo.js';
 import {type Message, type MessageId} from './repos/message-repo.js';
 import {type User, type UserId} from './repos/user-repo.js';
 import {
@@ -53,10 +48,10 @@ export class WriteApiState {
         public readonly tx: DataTx,
         public readonly objectStore: ObjectStore,
         public readonly ps: PermissionService,
-        public readonly crypto: CryptoService,
-        public readonly email: EmailService,
+        public readonly crypto: CryptoProvider,
         public readonly boardService: BoardService,
-        public readonly jwtService: JwtService
+        public readonly jwtService: JwtProvider,
+        public readonly memberService: MemberService
     ) {}
 
     async getBoardRequired(boardId: BoardId): Promise<Board> {
@@ -429,91 +424,41 @@ export function createWriteApi() {
                     );
                 }
 
-                const board = await st.tx.boards.getById(boardId);
-                if (!board) {
-                    throw new BusinessError(
-                        `board with id ${boardId} not found`,
-                        'board_not_found'
-                    );
-                }
-
-                const now = getNow();
-
-                const existingMember =
-                    await st.tx.members.getByUserIdAndBoardId(
-                        account.userId,
-                        boardId,
-                        {includeDeleted: true}
-                    );
-
-                let member: Member;
-                if (existingMember?.deletedAt) {
-                    await st.ps.ensureCanManage(
-                        existingMember.boardId,
-                        existingMember.role
-                    );
-                    member = await st.tx.members.update(
-                        existingMember.id,
-                        x => {
-                            x.deletedAt = undefined;
-                            x.inviteAccepted = false;
-                            x.role = role;
-                        },
-                        {includeDeleted: true}
-                    );
-                } else {
-                    member = await st.tx.members.create({
-                        id: createMemberId(),
-                        boardId,
-                        userId: account.userId,
-                        createdAt: now,
-                        updatedAt: now,
-                        role,
-                        inviteAccepted: false,
-                        // todo: add to the beginning of the user list
-                        position: Math.random(),
-                    });
-                }
-
-                st.boardService.scheduleInviteEmail({
-                    email,
-                    boardName: board.name,
-                    memberId: member.id,
+                const member = await st.memberService.joinBoard({
+                    account,
+                    boardId,
+                    role,
                 });
 
                 return await toMemberDto(st.tx, member.id);
             },
         }),
-        acceptInvite: handler({
+        joinByCode: handler({
             req: Type.Object({
-                inviteToken: Type.String(),
+                code: Type.String(),
             }),
-            res: Type.Object({}),
-            handle: async (st, {inviteToken}) => {
-                const payload = await st.jwtService.verify(inviteToken);
-                if (payload.acceptInviteMemberId === undefined) {
+            res: Type.Object({boardKey: Type.String()}),
+            handle: async (st, {code}) => {
+                const board = await st.tx.boards.getByJoinCode(code);
+                if (!board) {
                     throw new BusinessError(
-                        'invalid invite token',
-                        'invalid_invite_token'
+                        `board with join code ${code} not found`,
+                        'board_not_found'
                     );
                 }
 
-                const member = await st.tx.members.getById(
-                    payload.acceptInviteMemberId,
-                    {includeDeleted: false}
+                const account = await st.tx.accounts.getByUserId(
+                    st.ps.ensureAuthenticated()
                 );
-                if (!member) {
-                    throw new BusinessError(
-                        `member ${payload.acceptInviteMemberId} not found`,
-                        'member_not_found'
-                    );
-                }
+                assert(account !== undefined, 'account not found');
 
-                await st.tx.members.update(member.id, x => {
-                    x.inviteAccepted = true;
+                await st.memberService.joinBoard({
+                    account,
+                    boardId: board.id,
+                    role: board.joinRole,
                 });
 
-                return {};
+                return {boardKey: board.key};
             },
         }),
         declineInvite: handler({

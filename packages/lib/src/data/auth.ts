@@ -1,6 +1,6 @@
 import {LRUCache} from 'lru-cache';
 import {SUPERADMIN_IDS} from '../constants.js';
-import {type JwtService} from './infrastructure.js';
+import {type JwtProvider} from './infrastructure.js';
 import {type AccountId} from './repos/account-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
@@ -27,7 +27,7 @@ export class Authenticator {
 
     constructor(
         cacheSize: number,
-        private readonly jwt: JwtService
+        private readonly jwt: JwtProvider
     ) {
         this.principalCache = new LRUCache<string, Principal>({
             max: cacheSize,

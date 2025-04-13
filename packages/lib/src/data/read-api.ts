@@ -189,7 +189,10 @@ export function createReadApi() {
                         return await st.transact(principal, async tx => {
                             const [nextCard] = await whenAll([
                                 toCardViewDto(tx, cardId),
-                                tx.ps.ensureCardMember(cardId, 'reader'),
+                                tx.permissionService.ensureCardMember(
+                                    cardId,
+                                    'reader'
+                                ),
                             ]);
                             return nextCard;
                         });
@@ -231,7 +234,10 @@ export function createReadApi() {
                         return await st.transact(principal, async tx => {
                             const [nextCard] = await whenAll([
                                 toCardViewDto(tx, card.id),
-                                tx.ps.ensureBoardMember(card.boardId, 'reader'),
+                                tx.permissionService.ensureBoardMember(
+                                    card.boardId,
+                                    'reader'
+                                ),
                             ]);
                             return nextCard;
                         });
@@ -249,7 +255,10 @@ export function createReadApi() {
             res: ObjectEnvelope(),
             async handle(st, {attachmentId}, {principal}) {
                 return await st.transact(principal, async tx => {
-                    await tx.ps.ensureAttachmentMember(attachmentId, 'reader');
+                    await tx.permissionService.ensureAttachmentMember(
+                        attachmentId,
+                        'reader'
+                    );
                     const attachment = await tx.attachments.getById(
                         attachmentId,
                         {includeDeleted: true}
@@ -313,7 +322,10 @@ export function createReadApi() {
                             tx.messages.getByCardId(cardId).toArray(),
                             tx.attachments.getByCardId(cardId).toArray(),
                             getBoardUsers(tx, card.boardId),
-                            tx.ps.ensureCardMember(cardId, 'reader'),
+                            tx.permissionService.ensureCardMember(
+                                cardId,
+                                'reader'
+                            ),
                         ]);
                     }
                 );
@@ -348,7 +360,10 @@ export function createReadApi() {
                 yield* observable({
                     get() {
                         return st.transact(principal, async tx => {
-                            await tx.ps.ensureBoardMember(boardId, 'admin');
+                            await tx.permissionService.ensureBoardMember(
+                                boardId,
+                                'admin'
+                            );
                             return tx.members
                                 .getByBoardId(boardId)
                                 .mapParallel(x => toMemberAdminDto(tx, x.id))
@@ -384,7 +399,10 @@ export function createReadApi() {
                                 tx.boards.getById(boardId, {
                                     includeDeleted: true,
                                 }),
-                                tx.ps.ensureBoardMember(boardId, 'reader'),
+                                tx.permissionService.ensureBoardMember(
+                                    boardId,
+                                    'reader'
+                                ),
                             ]);
                             if (board === undefined) {
                                 throw new BusinessError(
@@ -452,7 +470,10 @@ export function createReadApi() {
                                 })
                             ).toArray(),
                             getBoardUsers(tx, boardId),
-                            tx.ps.ensureBoardMember(boardId, 'reader'),
+                            tx.permissionService.ensureBoardMember(
+                                boardId,
+                                'reader'
+                            ),
                         ]);
                     }
                 );

@@ -14,12 +14,15 @@ import {type Principal, system} from './auth.js';
 import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
 import type {ChangeOptions} from './doc-repo.js';
+import {EmailService} from './email-service.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import type {
-    CryptoService,
-    EmailService,
-    JwtService,
+    CryptoProvider,
+    EmailProvider,
+    JwtProvider,
 } from './infrastructure.js';
+import {createJoinCode} from './join-code.js';
+import {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
 import {
     type Account,
@@ -48,7 +51,9 @@ export interface Config {
 
 export interface DataTx {
     readonly version: Cell<number>;
+    readonly emailService: EmailService;
     readonly awareness: AwarenessStore;
+    readonly memberService: MemberService;
     readonly users: UserRepo;
     readonly members: MemberRepo;
     readonly boards: BoardRepo;
@@ -58,9 +63,9 @@ export interface DataTx {
     readonly attachments: AttachmentRepo;
     readonly accounts: AccountRepo;
     readonly config: Config;
-    readonly tx: AppTransaction;
+    readonly rawTx: AppTransaction;
     readonly events: CollectionManager<ChangeEvent>;
-    readonly ps: PermissionService;
+    readonly permissionService: PermissionService;
     readonly esWriter: EventStoreWriter<ChangeEvent>;
     readonly boardService: BoardService;
     // effects are not guaranteed to run because process might die after transaction is commited
@@ -185,9 +190,9 @@ export class DataLayer {
     constructor(
         private readonly kv: KvStore<Tuple, Uint8Array>,
         private readonly hub: Hub,
-        private readonly crypto: CryptoService,
-        private readonly email: EmailService,
-        private readonly jwtService: JwtService,
+        private readonly crypto: CryptoProvider,
+        private readonly email: EmailProvider,
+        private readonly jwtService: JwtProvider,
         private readonly uiUrl: string
     ) {
         this.esReader = new EventStoreReader(
@@ -300,23 +305,40 @@ export class DataLayer {
                 uiUrl: this.uiUrl,
             };
 
+            const emailService = new EmailService(
+                this.email,
+                scheduleEffect,
+                config
+            );
+
             const boardService = new BoardService({
                 boards,
                 crypto: this.crypto,
                 accounts,
                 members,
                 users,
-                email: this.email,
-                scheduleEffect,
-                jwtService: this.jwtService,
-                config,
+                emailService,
             });
+
+            const permissionService = new PermissionService(
+                principal,
+                () => dataTx
+            );
+
+            const memberService = new MemberService(
+                members,
+                boards,
+                permissionService,
+                emailService,
+                principal
+            );
 
             const version = new Cell(isolate(['version_v2'])(tx), 0);
 
             const dataTx: DataTx = {
                 version,
                 boardService,
+                emailService,
                 awareness,
                 boards,
                 cards,
@@ -328,11 +350,10 @@ export class DataLayer {
                 esWriter,
                 users,
                 members,
-                ps: new PermissionService(principal, () => dataTx),
-                config: {
-                    uiUrl: this.uiUrl,
-                },
-                tx: tx,
+                memberService,
+                permissionService,
+                config,
+                rawTx: tx,
                 scheduleEffect,
             };
 
@@ -386,6 +407,26 @@ export class DataLayer {
             log.info({msg: 'upgrading to version 1'});
             await this.upgradeToV1();
         }
+
+        if (version <= 1) {
+            log.info({msg: 'upgrading to version 2'});
+            await this.upgradeToV2();
+        }
+
+        if (version <= 2) {
+            log.info({msg: 'upgrading to version 3'});
+            await this.upgradeToV3();
+        }
+
+        if (version <= 3) {
+            log.info({msg: 'upgrading to version 4'});
+            await this.upgradeToV4();
+        }
+
+        if (version <= 4) {
+            log.info({msg: 'upgrading to version 5'});
+            await this.upgradeToV5();
+        }
     }
 
     private async upgradeToV1() {
@@ -393,7 +434,7 @@ export class DataLayer {
         await this.transact(system, async tx => {
             for await (const member of tx.members.rawRepo.scan()) {
                 await tx.members.update(member.id, x => {
-                    x.inviteAccepted = true;
+                    (x as Record<string, any>).inviteAccepted = true;
                     if (typeof x.position !== 'number') {
                         x.position = Math.random();
                     }
@@ -406,6 +447,77 @@ export class DataLayer {
 
         await this.transact(system, tx => tx.version.put(1));
         log.info({msg: 'upgrading to version 1 done'});
+    }
+
+    private async upgradeToV2() {
+        let boardsUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const board of tx.boards.rawRepo.scan()) {
+                const joinCode = await createJoinCode(this.crypto);
+                await tx.boards.update(board.id, x => {
+                    x.joinCode = joinCode;
+                });
+                boardsUpdated++;
+            }
+        });
+
+        log.info({msg: `boards updated: ${boardsUpdated}`});
+
+        await this.transact(system, tx => tx.version.put(2));
+        log.info({msg: 'upgrading to version 2 done'});
+    }
+
+    private async upgradeToV3() {
+        let boardsUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const board of tx.boards.rawRepo.scan()) {
+                const joinCode = await createJoinCode(this.crypto);
+                await tx.boards.update(board.id, x => {
+                    x.joinRole = 'reader';
+                });
+                boardsUpdated++;
+            }
+        });
+
+        log.info({msg: `boards updated: ${boardsUpdated}`});
+
+        await this.transact(system, tx => tx.version.put(3));
+        log.info({msg: 'upgrading to version 3 done'});
+    }
+
+    private async upgradeToV4() {
+        let membersUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const member of tx.members.rawRepo.scan()) {
+                await tx.members.update(member.id, x => {
+                    delete (x as Record<string, any>).inviteAccepted;
+                    (x as Record<string, any>).inviteStatus = 'accepted';
+                });
+                membersUpdated++;
+            }
+        });
+
+        log.info({msg: `members updated: ${membersUpdated}`});
+
+        await this.transact(system, tx => tx.version.put(4));
+        log.info({msg: 'upgrading to version 4 done'});
+    }
+
+    private async upgradeToV5() {
+        let membersUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const member of tx.members.rawRepo.scan()) {
+                await tx.members.update(member.id, x => {
+                    delete (x as Record<string, any>).inviteStatus;
+                });
+                membersUpdated++;
+            }
+        });
+
+        log.info({msg: `members updated: ${membersUpdated}`});
+
+        await this.transact(system, tx => tx.version.put(5));
+        log.info({msg: 'upgrading to version 5 done'});
     }
 }
 

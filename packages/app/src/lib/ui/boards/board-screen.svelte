@@ -281,11 +281,12 @@
             draggable
             bind:viewportRef
         >
+            {@const PADDING_X = '0.5rem'}
             <div
                 bind:this={boardRef}
                 bind:this={columnsContainerRef}
-                class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf] pl-2"
-                style={`padding-right: calc(100vw - 0.5rem - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px)`}
+                class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf]"
+                style={`padding-right: calc(100vw - ${PADDING_X} - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px); padding-left: ${PADDING_X}`}
             >
                 {#each board.columns as column, i (column.id)}
                     <div animate:flip={{duration: DND_REORDER_DURATION_MS}}>

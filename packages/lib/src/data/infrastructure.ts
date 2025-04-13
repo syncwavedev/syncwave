@@ -2,23 +2,20 @@ import {Type} from '@sinclair/typebox';
 import {context} from '../context.js';
 import type {Brand} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
-import type {MemberId} from './repos/member-repo.js';
 
 export interface JwtPayload {
     sub: string | undefined;
     uid: string | undefined;
-    acceptInviteMemberId?: MemberId;
     exp: number;
     iat: number;
 }
 
-export interface JwtService {
+export interface JwtProvider {
     verify(token: string): Promise<JwtPayload>;
     sign(payload: JwtPayload): Promise<string>;
 }
 
-export interface CryptoService {
-    sha256(text: string): string;
+export interface CryptoProvider {
     randomBytes(length: number): Promise<Uint8Array>;
 }
 
@@ -29,16 +26,16 @@ export interface EmailMessage {
     html: string;
 }
 
-export interface EmailService {
+export interface EmailProvider {
     send(message: EmailMessage): Promise<void>;
 }
 
-export class InstrumentedEmailService implements EmailService {
-    constructor(private readonly emailService: EmailService) {}
+export class InstrumentedEmailProvider implements EmailProvider {
+    constructor(private readonly emailProvider: EmailProvider) {}
 
     async send(message: EmailMessage): Promise<void> {
         return await context().runChild({span: 'email.send'}, async () => {
-            return await this.emailService.send(message);
+            return await this.emailProvider.send(message);
         });
     }
 }

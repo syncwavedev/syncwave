@@ -1,6 +1,6 @@
 import {assert, context, Context, E2eFixture, type Unsubscribe} from 'syncwave';
-import {NodeCryptoService} from 'syncwave/node-crypto-service.js';
-import {NodeJwtService} from 'syncwave/node-jwt-service.js';
+import {NodeCryptoProvider} from 'syncwave/node-crypto-provider.js';
+import {NodeJwtProvider} from 'syncwave/node-jwt-provider.js';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {AuthManager} from '../../auth-manager';
 import {createMemStorage} from '../../mem-storage';
@@ -31,7 +31,7 @@ describe('agent', () => {
 
         await agent.sendSignInEmail(email);
 
-        const message = coordinatorFixture.emailService.outbox.at(-1);
+        const message = coordinatorFixture.emailProvider.outbox.at(-1);
         assert(message !== undefined, 'message expected');
         const code = message.text
             .split('\n')
@@ -52,8 +52,8 @@ describe('agent', () => {
         vi.setSystemTime(now);
         [ctx, endCtx] = context().createDetached({span: 'test'});
         const coordinatorFixture = await E2eFixture.start({
-            jwtService: NodeJwtService,
-            cryptoService: NodeCryptoService,
+            jwtProvider: new NodeJwtProvider('test-secret'),
+            cryptoService: NodeCryptoProvider,
         });
         agentA = await createAgent(coordinatorFixture);
         agentB = await createAgent(coordinatorFixture);

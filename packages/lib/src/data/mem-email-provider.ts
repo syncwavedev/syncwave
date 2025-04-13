@@ -1,6 +1,6 @@
-import type {EmailMessage, EmailService} from './infrastructure.js';
+import type {EmailMessage, EmailProvider} from './infrastructure.js';
 
-export class MemEmailService implements EmailService {
+export class MemEmailProvider implements EmailProvider {
     outbox: EmailMessage[] = [];
 
     async send(message: EmailMessage): Promise<void> {

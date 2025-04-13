@@ -69,7 +69,7 @@ export class AccountRepo {
                 [EMAIL_INDEX]: {
                     key: x => [[x.email]],
                     unique: true,
-                    include: x => x.email !== undefined,
+                    filter: x => x.email !== undefined,
                 },
                 [USER_ID_INDEX]: {
                     key: x => [[x.userId]],

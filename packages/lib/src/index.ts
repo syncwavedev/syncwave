@@ -15,6 +15,7 @@ export * from './data/data-layer.js';
 export * from './data/doc-repo.js';
 export * from './data/dto.js';
 export * from './data/infrastructure.js';
+export * from './data/join-code.js';
 export * from './data/permission-service.js';
 export * from './data/placement.js';
 export * from './data/repos/account-repo.js';

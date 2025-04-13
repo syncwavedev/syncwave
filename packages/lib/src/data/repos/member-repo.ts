@@ -25,8 +25,6 @@ export function createMemberId(): MemberId {
     return createUuid() as MemberId;
 }
 
-export type MemberRole = 'owner' | 'admin' | 'writer' | 'reader';
-
 export function MemberRole() {
     return Type.Union([
         Type.Literal('owner'),
@@ -35,6 +33,8 @@ export function MemberRole() {
         Type.Literal('reader'),
     ]);
 }
+
+export type MemberRole = Static<ReturnType<typeof MemberRole>>;
 
 export const ROLE_ORDER: Record<MemberRole, number> = {
     owner: 40,
@@ -57,7 +57,6 @@ export function Member() {
             boardId: Uuid<BoardId>(),
             role: MemberRole(),
             position: Type.Number(),
-            inviteAccepted: Type.Boolean(),
         }),
     ]);
 }

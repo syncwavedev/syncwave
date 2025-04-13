@@ -6,8 +6,11 @@
     import UserMinusIcon from '../components/icons/user-minus-icon.svelte';
     import Modal from '../components/modal.svelte';
     import RefreshIcon from '../components/icons/refresh-icon.svelte';
+    import {appConfig} from '../../config';
 
     let {board}: {board: BoardView} = $props();
+
+    const joinLink = $derived(`${appConfig.uiUrl}join/${board.joinCode}`);
 </script>
 
 <Modal title="Manage Members" size="md">
@@ -39,7 +42,7 @@
             autocomplete="off"
             type="text"
             class="input input-block text-ink-detail py-2.5 bg-surface-0 mb-2"
-            value="https://syncwave.dev/b/SYNC/join?code=12312312345qweqwe-123qwe-ewq"
+            value={joinLink}
             disabled
         />
         <div class="flex justify-center">

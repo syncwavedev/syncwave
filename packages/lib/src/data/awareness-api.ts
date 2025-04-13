@@ -158,7 +158,10 @@ export function createAwarenessApi() {
                                     tx.awareness.getAll(
                                         boardAwarenessRoom(board.id)
                                     ),
-                                    tx.ps.ensureBoardMember(board.id, 'reader'),
+                                    tx.permissionService.ensureBoardMember(
+                                        board.id,
+                                        'reader'
+                                    ),
                                 ]);
 
                                 return {states};
@@ -195,7 +198,10 @@ export function createAwarenessApi() {
             async handle(st, {boardId, clientId, state}, {principal}) {
                 await st.dataLayer.transact(principal, async tx => {
                     const [result] = await whenAll([
-                        tx.ps.ensureBoardMember(boardId, 'reader'),
+                        tx.permissionService.ensureBoardMember(
+                            boardId,
+                            'reader'
+                        ),
                         st.putState(principal, boardId, clientId, state),
                     ]);
                     return result;

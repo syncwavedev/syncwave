@@ -47,7 +47,7 @@ export type IndexSpec<T> =
     | {
           readonly unique?: boolean | undefined;
           readonly key: (x: T) => Tuple[];
-          readonly include?: (x: T) => boolean;
+          readonly filter?: (x: T) => boolean;
       }
     | ((x: T) => Tuple[]);
 
@@ -205,6 +205,10 @@ class DocRepoImpl<T extends Doc<Tuple>> {
                             typeof spec === 'function'
                                 ? false
                                 : (spec.unique ?? false),
+                        filter:
+                            typeof spec === 'function'
+                                ? undefined
+                                : spec.filter,
                         indexName,
                     }),
                 ];

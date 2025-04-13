@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import type {JwtPayload, JwtService} from './data/infrastructure.js';
+import type {JwtPayload, JwtProvider} from './data/infrastructure.js';
 import {AppError} from './errors.js';
 
 export class JwtVerificationError extends AppError {
@@ -8,7 +8,7 @@ export class JwtVerificationError extends AppError {
     }
 }
 
-export class NodeJwtService implements JwtService {
+export class NodeJwtProvider implements JwtProvider {
     constructor(private readonly secret: string) {}
 
     verify(token: string): Promise<JwtPayload> {

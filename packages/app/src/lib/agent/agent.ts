@@ -12,6 +12,7 @@ import {
     createClientId,
     createColumnId,
     createCoordinatorApi,
+    createJoinCode,
     createMessageId,
     createRichtext,
     createRpcClient,
@@ -38,6 +39,7 @@ import {
     type ColumnId,
     type CoordinatorRpc,
     type CrdtDoc,
+    type CryptoProvider,
     type Member,
     type Message,
     type MeViewDataDto,
@@ -50,6 +52,7 @@ import type {XmlFragment} from 'yjs';
 
 import type {AuthManager} from '../../auth-manager';
 
+import {WebCryptoProvider} from 'syncwave/web-crypto-provider.js';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import {
@@ -90,6 +93,8 @@ export class Agent {
     private activeBoards: BoardData[] = [];
     private activeMes: MeViewData[] = [];
     private activeCards: CardTreeViewData[] = [];
+
+    private cryptoProvider: CryptoProvider = new WebCryptoProvider();
 
     private syncTargets(): SyncTarget[] {
         return [...this.activeBoards, ...this.activeCards, ...this.activeMes];
@@ -144,6 +149,13 @@ export class Agent {
         if (board.rawAwareness.getLocalState()?.hoverCardId === cardId) {
             board.rawAwareness.setLocalStateField('hoverCardId', undefined);
         }
+    }
+
+    async updateJoinCode(boardId: BoardId) {
+        const code = await createJoinCode(this.cryptoProvider);
+        this.crdtManager.update<Board>(boardId, x => {
+            x.joinCode = code;
+        });
     }
 
     async observeMeAsync(): Promise<MeView> {

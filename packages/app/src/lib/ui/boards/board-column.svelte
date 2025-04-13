@@ -64,7 +64,7 @@
 </script>
 
 <div
-    class="flex flex-shrink-0 flex-col"
+    class="flex flex-shrink-0 flex-col group"
     style={`width: ${COLUMN_WIDTH}`}
     data-column-id={column.id}
 >
@@ -83,12 +83,16 @@
             open={editColumnOpen}
             onClose={() => (editColumnOpen = false)}
         />
-        <button class="btn--icon text-ink-body ml-auto" onclick={onCreateCard}>
-            <PlusIcon class="pointer-events-none" />
-        </button>
-        <button onclick={editColumn} class="btn--icon text-ink-body">
-            <EllipsisIcon class="pointer-events-none" />
-        </button>
+        <div
+            class="opacity-0 group-hover:opacity-100 transition-opacity flex ml-auto"
+        >
+            <button class="btn--icon text-ink-body" onclick={onCreateCard}>
+                <PlusIcon class="pointer-events-none" />
+            </button>
+            <button onclick={editColumn} class="btn--icon text-ink-body">
+                <EllipsisIcon class="pointer-events-none" />
+            </button>
+        </div>
     </div>
 
     <Scrollable

@@ -102,7 +102,7 @@
         </button>
     </div>
     <!-- Scrollable Content Section -->
-    <div class="flex-grow overflow-y-auto">
+    <div class="flex-grow overflow-y-auto no-scrollbar">
         <!-- Task Description -->
         <div class="mx-4 mt-1">
             <div
@@ -149,40 +149,43 @@
         <div class="flex flex-col gap-3 mt-3">
             {#await detailsPromise then details}
                 {#each details.messages as message (message.id)}
-                    <div class="flex flex-col gap-1 mx-4">
-                        <div class="flex items-center gap-1.5 avatar-sm">
-                            <Avatar name={message.author.fullName} />
+                    <div class="flex gap-1 mx-4 avatar-lg">
+                        <Avatar name={message.author.fullName} />
 
-                            <div class="flex items-baseline gap-1.5">
-                                <div class="font-semibold">
-                                    {message.author.fullName}
+                        <div
+                            class="flex flex-col bg-surface-3 p-2.5 rounded-md"
+                        >
+                            <div class="flex items-center gap-1.5 avatar-sm">
+                                <div class="flex items-baseline gap-1.5">
+                                    <div class="font-semibold">
+                                        {message.author.fullName}
+                                    </div>
+
+                                    <span class="text-ink-detail text-xs">
+                                        {new Date(
+                                            message.createdAt
+                                        ).toLocaleDateString(undefined, {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: '2-digit',
+                                        })}
+                                        {new Date(message.createdAt)
+                                            .toLocaleTimeString(undefined, {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: true,
+                                            })
+                                            .toLowerCase()}
+                                    </span>
                                 </div>
-
-                                <span class="text-ink-detail text-xs">
-                                    {new Date(
-                                        message.createdAt
-                                    ).toLocaleDateString(undefined, {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: '2-digit',
-                                    })}
-                                    {new Date(message.createdAt)
-                                        .toLocaleTimeString(undefined, {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                            hour12: true,
-                                        })
-                                        .toLowerCase()}
-                                </span>
+                            </div>
+                            <div class="select-text leading-relaxed">
+                                <RichtextView
+                                    fragment={message.payload.text.__fragment!}
+                                />
                             </div>
                         </div>
-                        <div class="select-text leading-relaxed">
-                            <RichtextView
-                                fragment={message.payload.text.__fragment!}
-                            />
-                        </div>
                     </div>
-                    <hr class="last:hidden" />
                 {/each}
             {/await}
         </div>

@@ -10,7 +10,6 @@
     } from './board-dnd';
     import {getNow} from 'syncwave';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
-    import CheckmarkSolidIcon from '../components/icons/checkmark-solid-icon.svelte';
 
     const {
         card,

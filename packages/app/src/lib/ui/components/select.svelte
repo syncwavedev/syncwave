@@ -4,7 +4,7 @@
     import type {Snippet} from 'svelte';
 
     interface SelectOption {
-        value: string;
+        value?: string;
         label: string;
         disabled?: boolean;
     }
@@ -17,14 +17,14 @@
         children,
     }: {
         options: SelectOption[];
-        value: string;
+        value: string | undefined;
         onValueChange?: (value: string) => void;
         disabled?: boolean;
         children?: Snippet | undefined;
     } = $props();
 </script>
 
-<Select.Root type="single" {disabled} bind:value {onValueChange}>
+<Select.Root type="single" {disabled} value={value ?? ''} {onValueChange}>
     <Select.Trigger>
         {@render children?.()}
     </Select.Trigger>
@@ -40,7 +40,7 @@
             <Select.Viewport>
                 {#each options as option (option.value)}
                     <Select.Item
-                        value={option.value}
+                        value={option.value ?? ''}
                         label={option.label}
                         disabled={option.disabled}
                         class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 py-1 rounded-sm cursor-default outline-none"

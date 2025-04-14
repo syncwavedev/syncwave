@@ -174,8 +174,11 @@
                 </Select>
 
                 <Select
-                    value={card.assignee?.id ?? ''}
-                    options={assigneeOptions}
+                    value={card.assignee?.id}
+                    options={[
+                        {value: undefined, label: 'Assignee'},
+                        ...assigneeOptions,
+                    ]}
                     onValueChange={value =>
                         agent.setCardAssignee(card.id, value as UserId)}
                 >

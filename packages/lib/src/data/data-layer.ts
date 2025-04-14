@@ -14,6 +14,7 @@ import {type Principal, system} from './auth.js';
 import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
 import type {ChangeOptions} from './doc-repo.js';
+import {MemberInfoDto} from './dto.js';
 import {EmailService} from './email-service.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
 import type {
@@ -139,18 +140,17 @@ export function MessageChangeEvent() {
 export interface MessageChangeEvent
     extends Static<ReturnType<typeof MessageChangeEvent>> {}
 
-export function UserEmailChangeEvent() {
+export function MemberInfoChangeEvent() {
     return Type.Object({
-        type: Type.Literal('user_email'),
+        type: Type.Literal('member_info'),
         kind: Type.Literal('snapshot'),
-        userId: Uuid<UserId>(),
-        email: Type.String(),
+        info: MemberInfoDto(),
         ts: Timestamp(),
     });
 }
 
-export interface UserEmailChangeEvent
-    extends Static<ReturnType<typeof UserEmailChangeEvent>> {}
+export interface MemberInfoChangeEvent
+    extends Static<ReturnType<typeof MemberInfoChangeEvent>> {}
 
 export function AttachmentChangeEvent() {
     return BaseChangeEvent<'attachment', AttachmentId, Attachment>(
@@ -183,7 +183,7 @@ export function ChangeEvent() {
         ColumnChangeEvent(),
         MessageChangeEvent(),
         AttachmentChangeEvent(),
-        UserEmailChangeEvent(),
+        MemberInfoChangeEvent(),
     ]);
 }
 
@@ -566,7 +566,16 @@ async function logAccountChange(
     await whenAll([
         tx.esWriter.append(userEvents(account.userId), event),
         ...members.map(member =>
-            tx.esWriter.append(boardEvents(member.boardId), event)
+            tx.esWriter.append(boardEvents(member.boardId), {
+                type: 'member_info',
+                kind: 'snapshot',
+                info: {
+                    email: account.email,
+                    role: member.role,
+                    userId: member.userId,
+                },
+                ts,
+            })
         ),
     ]);
 }

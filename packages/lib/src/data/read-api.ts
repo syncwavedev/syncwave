@@ -493,7 +493,7 @@ export function createReadApi() {
                             columns: columns,
                             cards: cards,
                             users: users,
-                            userEmails: userEmails,
+                            members: userEmails,
                         },
                     };
                 }
@@ -624,14 +624,17 @@ function getBoardUsers(tx: DataTx, boardId: BoardId) {
 
 function getBoardUserEmails(tx: DataTx, boardId: BoardId) {
     return toStream(tx.members.getByBoardId(boardId, {includeDeleted: true}))
-        .mapParallel(x =>
-            tx.users.getById(x.userId, {
-                includeDeleted: true,
-            })
-        )
-        .assert(x => x !== undefined, 'user not found')
-        .mapParallel(x => tx.accounts.getByUserId(x.id))
-        .assert(x => x !== undefined, 'account not found')
-        .map(x => ({userId: x.userId, email: x.email}))
+        .mapParallel(async x => {
+            const account = await tx.accounts.getByUserId(x.userId);
+            assert(
+                account !== undefined,
+                'getBoardUserEmails: account not found'
+            );
+            return {
+                role: x.role,
+                userId: x.userId,
+                email: account.email,
+            };
+        })
         .toArray();
 }

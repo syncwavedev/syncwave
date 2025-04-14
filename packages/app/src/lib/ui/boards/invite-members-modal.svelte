@@ -19,7 +19,9 @@
             <div class="flex items-center py-1">
                 <Avatar name={member.fullName} />
                 <span class="ml-1.5">{member.fullName}</span>
-                <span class="ml-1.5 text-ink-detail">{member.email}</span>
+                <span class="ml-1.5 text-ink-detail"
+                    >{member.email} [{member.role}]</span
+                >
                 <button class="btn--icon ml-auto text-ink-body mr-2">
                     <CrownIcon />
                 </button>

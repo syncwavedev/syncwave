@@ -1,4 +1,4 @@
-import {type Static, Type} from '@sinclair/typebox';
+import {Type, type Static} from '@sinclair/typebox';
 import {CrdtDiff} from '../crdt/crdt.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
@@ -8,7 +8,7 @@ import {Attachment, type AttachmentId} from './repos/attachment-repo.js';
 import {Board, type BoardId} from './repos/board-repo.js';
 import {Card, CardId} from './repos/card-repo.js';
 import {Column, type ColumnId} from './repos/column-repo.js';
-import {Member, type MemberId} from './repos/member-repo.js';
+import {Member, MemberRole, type MemberId} from './repos/member-repo.js';
 import {Message, type MessageId} from './repos/message-repo.js';
 import {User, type UserId} from './repos/user-repo.js';
 
@@ -355,18 +355,19 @@ export function MeViewDataDto() {
 export interface MeViewDataDto
     extends Static<ReturnType<typeof MeViewDataDto>> {}
 
-export function UserEmailDto() {
+export function MemberInfoDto() {
     return Type.Object({
         userId: Uuid<UserId>(),
         email: Type.String(),
+        role: MemberRole(),
     });
 }
 
-export type UserEmailDto = Static<ReturnType<typeof UserEmailDto>>;
+export type MemberInfoDto = Static<ReturnType<typeof MemberInfoDto>>;
 
 export function BoardViewDataDto() {
     return Type.Object({
-        userEmails: Type.Array(UserEmailDto()),
+        members: Type.Array(MemberInfoDto()),
         board: Type.Object({
             state: CrdtDiff<Board>(),
             key: Type.String(),
@@ -411,7 +412,7 @@ export function CardTreeViewDataDto() {
         ),
         card: Type.Object({state: CrdtDiff<Card>(), id: Uuid<CardId>()}),
         boardId: Uuid<BoardId>(),
-        userEmails: Type.Array(UserEmailDto()),
+        userEmails: Type.Array(MemberInfoDto()),
     });
 }
 

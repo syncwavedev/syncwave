@@ -69,10 +69,10 @@
     data-column-id={column.id}
 >
     <div
-        class="flex items-center px-2 mb-1.5"
+        class="flex items-center px-2 mb-2"
         data-disable-scroll-view-drag="true"
     >
-        <div class="flex items-center gap-1.5 font-medium">
+        <div class="flex items-center gap-1.5 font-semibold">
             <ColumnIcon active={columnPosition} total={columnsCount} />
 
             {column.name}

@@ -151,7 +151,7 @@
 
 @layer base {
     [data-theme='light'] {
-        --theme-color-ink: var(--color-gray-950);
+        --theme-color-ink: var(--color-gray-900);
         --theme-color-ink-body: var(--color-gray-600);
         --theme-color-ink-detail: var(--color-gray-500);
         --theme-color-ink-placeholder: var(--color-gray-350);
@@ -200,6 +200,6 @@
         --theme-color-surface-5: var(--color-slate-800);
 
         --theme-color-subtle-active: var(--color-blue-850);
-        --theme-color-divider-active: var(--color-blue-750);
+        --theme-color-divider-active: oklch(0.68 0.135 249.85deg);
     }
 }

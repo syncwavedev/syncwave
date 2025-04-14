@@ -10,6 +10,7 @@
     } from './board-dnd';
     import {getNow} from 'syncwave';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
+    import CheckmarkSolidIcon from '../components/icons/checkmark-solid-icon.svelte';
 
     const {
         card,
@@ -90,35 +91,40 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-            bg-surface-3
-            dark:bg-surface-2
-            dark:hover:bg-surface-3
-            hover:bg-surface-4
-            group
-            data-active:bg-subtle-active
-            flex
-            items-end
-            cursor-default
-            gap-1
-            rounded-md
-            p-2.5
-            select-none
-            content
-        "
+        bg-surface-3
+        dark:bg-surface-2
+        dark:hover:bg-surface-3
+        hover:bg-surface-4
+        group
+        flex
+        items-end
+        cursor-default
+        gap-1
+        rounded-md
+        p-3
+        content
+        outline-offset-[-2px]
+        data-active:outline
+        data-active:outline-3
+        data-active:outline-divider-active
+        focus:outline
+        focus:outline-3
+        focus:outline-divider-active/50
+    "
         class:border-dashed={card.isDraft}
         onclick={onClick}
         onmouseenter={() => agent.handleCardMouseEnter(card.boardId, card.id)}
         onmouseleave={() => agent.handleCardMouseLeave(card.boardId, card.id)}
         onkeydown={e => e.key === 'Enter' && onClick()}
     >
-        <div class="flex w-full flex-col gap-1 truncate">
+        <div class="flex w-full flex-col gap-1.5 truncate">
             <div
                 class="flex items-center"
                 class:h-6={card.isDraft}
                 data-active={active || undefined}
             >
                 {#if !card.isDraft}
-                    <span class="truncate">
+                    <span class="truncate font-medium">
                         {preview}
                     </span>
                 {/if}
@@ -128,7 +134,6 @@
                     {#if card.counter}
                         <HashtagIcon />{card.counter}
                     {/if}
-                    by {card.author.fullName}
                     {#if card.hoverUsers.length > 0}
                         hovers {card.hoverUsers.map(x => x.fullName).join(', ')}
                     {/if}
@@ -138,8 +143,15 @@
                             .join(', ')}
                     {/if}
                     {#if todoStats.total > 0}
-                        <span class="text-ink-detail ml-auto">
-                            {todoStats.checked} / {todoStats.total}
+                        <span
+                            class="text-ink-detail ml-auto text-xs flex items-center gap-1 icon-sm bg-surface-4 dark:bg-surface-3 p-0.5 rounded-sm"
+                        >
+                            <CheckmarkSolidIcon />
+                            {#if todoStats.checked === todoStats.total}
+                                All done
+                            {:else}
+                                {todoStats.total - todoStats.checked} tasks to do
+                            {/if}
                         </span>
                     {/if}
                     <span

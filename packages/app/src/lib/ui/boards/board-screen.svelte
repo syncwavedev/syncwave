@@ -233,7 +233,7 @@
     <div class="bg-surface-0 flex min-w-0 grow flex-col">
         <div class="mt-2 mb-3 flex items-center px-4">
             <button
-                class="btn-ghost font-medium -ml-1"
+                class="btn-ghost font-semibold -ml-1"
                 onclick={() => modalManager.open(boardCommands)}
             >
                 <span>{board.name}</span>

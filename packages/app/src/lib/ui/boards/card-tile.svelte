@@ -143,10 +143,7 @@
                             .join(', ')}
                     {/if}
                     {#if todoStats.total > 0}
-                        <span
-                            class="text-ink-detail ml-auto text-xs flex items-center gap-1 icon-sm bg-surface-4 dark:bg-surface-3 p-0.5 rounded-sm"
-                        >
-                            <CheckmarkSolidIcon />
+                        <span class="text-ink-detail ml-auto text-xs">
                             {#if todoStats.checked === todoStats.total}
                                 All done
                             {:else}

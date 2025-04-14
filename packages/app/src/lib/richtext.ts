@@ -52,6 +52,14 @@ export function yFragmentToHtml(fragment: XmlFragment) {
     return generateHTML(prosemirrorJSON, tiptapExtensions);
 }
 
+export function cloneYFragment(source: XmlFragment) {
+    const clone = source.clone();
+    // integrate fragment clone with a new YDoc
+    new YDoc().getMap().set('content', clone);
+
+    return clone;
+}
+
 export function yFragmentToPlaintext(fragment: XmlFragment) {
     const prosemirrorJSON = yFragmentToJSON(fragment);
     const node = tiptapSchema.nodeFromJSON(prosemirrorJSON);

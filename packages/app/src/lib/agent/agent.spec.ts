@@ -100,7 +100,7 @@ describe('agent', () => {
             expect(details.messages.length).toEqual(0);
 
             agentA.createMessage({
-                fragment: createXmlFragment(),
+                text: createXmlFragment(),
                 boardId: board.id,
                 cardId: card.id,
                 columnId: column.id,

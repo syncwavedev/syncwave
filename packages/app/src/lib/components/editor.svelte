@@ -13,7 +13,7 @@
     import {CollaborationCursor} from '@tiptap/extension-collaboration-cursor';
     import Placeholder from '@tiptap/extension-placeholder';
     import {XmlFragment} from 'yjs';
-    import {Extension} from '@tiptap/core';
+    import {type AnyExtension} from '@tiptap/core';
     import type {Awareness} from 'syncwave';
     import {hashString, type UserId} from 'syncwave';
 
@@ -43,21 +43,6 @@
         class: className,
         onEnter,
     }: Props = $props();
-
-    const SendMessageExtension = Extension.create({
-        addKeyboardShortcuts() {
-            return {
-                Enter: () => {
-                    if (onEnter) {
-                        onEnter();
-                        return true;
-                    }
-
-                    return false;
-                },
-            };
-        },
-    });
 
     const colors = [
         '#958DF1',
@@ -90,7 +75,7 @@
     }
 
     onMount(() => {
-        const extensions = [
+        const extensions: AnyExtension[] = [
             ...tiptapExtensions,
             Collaboration.configure({
                 fragment,
@@ -98,7 +83,6 @@
             Placeholder.configure({
                 placeholder,
             }),
-            ...(onEnter ? [SendMessageExtension] : []),
         ];
         if (awareness) {
             fragment.doc!.clientID = awareness.clientId;
@@ -114,6 +98,17 @@
         }
 
         editor = createEditor({
+            editorProps: {
+                handleKeyDown: (view, event) => {
+                    if (event.key === 'Enter') {
+                        if (onEnter) {
+                            onEnter();
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+            },
             extensions,
             content: '',
         });

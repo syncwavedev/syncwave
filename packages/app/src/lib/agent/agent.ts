@@ -53,7 +53,6 @@ import type {XmlFragment} from 'yjs';
 import type {AuthManager} from '../../auth-manager';
 
 import {WebCryptoProvider} from 'syncwave/web-crypto-provider.js';
-import {yFragmentToPlaintext} from '../richtext';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import {
@@ -375,13 +374,8 @@ export class Agent {
         boardId: BoardId;
         cardId: CardId;
         columnId: ColumnId;
-        fragment: XmlFragment;
+        text: XmlFragment;
     }): Message | undefined {
-        const plaintext = yFragmentToPlaintext(params.fragment);
-        if (plaintext.trim().length === 0) {
-            return undefined;
-        }
-
         const me = this.authManager.ensureAuthorized();
         const now = getNow();
         const messageId = createMessageId();
@@ -396,7 +390,7 @@ export class Agent {
             attachmentIds: [],
             payload: {
                 type: 'text',
-                text: createRichtext(params.fragment.clone()),
+                text: createRichtext(params.text.clone()),
             },
             replyToId: undefined,
             updatedAt: now,

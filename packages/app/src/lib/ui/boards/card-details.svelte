@@ -15,7 +15,11 @@
     import Select from '../components/select.svelte';
     import {getAgent} from '../../agent/agent';
     import RichtextView from '../../components/richtext-view.svelte';
-    import {createXmlFragment, yFragmentToPlaintext} from '../../richtext';
+    import {
+        cloneYFragment,
+        createXmlFragment,
+        yFragmentToPlaintext,
+    } from '../../richtext';
     import ArrowUp from '../components/icons/arrow-up.svelte';
     import Avatar from '../components/avatar.svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
@@ -76,14 +80,20 @@
     const onSendMessage = async (e?: Event) => {
         e?.preventDefault();
 
+        const text = cloneYFragment(fragment);
+        fragment.delete(0, fragment.length);
+
+        const plaintext = yFragmentToPlaintext(text);
+        if (plaintext.trim().length === 0) {
+            return;
+        }
+
         agent.createMessage({
             boardId: card.boardId,
             columnId: card.columnId,
             cardId: card.id,
-            fragment: fragment,
+            text: text,
         });
-
-        fragment.delete(0, fragment.length);
 
         // Wait for DOM to update and then scroll to bottom
         await tick();

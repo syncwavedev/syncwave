@@ -187,11 +187,11 @@
             </div>
         </div>
         <hr />
-        <div class="flex flex-col gap-4 my-4 flex-1">
+        <div class="flex flex-col gap-4 my-4 flex-1 relative">
             {#await detailsPromise then details}
-                {#each details.messages as message (message.id)}
-                    <div class="flex flex-col mx-4">
-                        <div class="flex items-center gap-1.5">
+                {#each details.messages as message, index (message.id)}
+                    <div class="flex flex-col mx-4 relative">
+                        <div class="flex items-center gap-1.5 relative">
                             <Avatar name={message.author.fullName} />
 
                             <div class="flex items-baseline gap-1.5">
@@ -211,8 +211,14 @@
                             </div>
                         </div>
                         <div
-                            class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))]"
+                            class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))] relative"
                         >
+                            <!-- Vertical line extending below avatar -->
+                            {#if index < details.messages.length - 1}
+                                <div
+                                    class="absolute left-[calc((var(--avatar-size)/2)-0.5px)] w-[1px] h-[calc(100%+1rem)] bg-divider-subtle -ml-[calc(var(--avatar-size)+0.375rem)]"
+                                ></div>
+                            {/if}
                             <RichtextView
                                 fragment={message.payload.text.__fragment!}
                             />

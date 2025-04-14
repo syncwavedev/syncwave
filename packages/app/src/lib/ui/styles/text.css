@@ -7,4 +7,6 @@
     --text-sm--line-height: 0.875rem; /* 14px */
     --text-md--line-height: 1.125rem; /* 18px */
     --text-lg--line-height: 1.25rem; /* 20px */
+
+    --leading-relaxed: 1.25rem;
 }

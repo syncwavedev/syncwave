@@ -193,7 +193,7 @@
         <div class="flex flex-col gap-4 my-4 flex-1">
             {#await detailsPromise then details}
                 {#each details.messages as message (message.id)}
-                    <div class="flex flex-col gap-0.5 mx-4">
+                    <div class="flex flex-col mx-4">
                         <div class="flex items-center gap-1.5">
                             <Avatar name={message.author.fullName} />
 

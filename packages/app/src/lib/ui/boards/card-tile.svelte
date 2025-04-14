@@ -10,6 +10,8 @@
     } from './board-dnd';
     import {getNow} from 'syncwave';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
+    import UserIcon from '../components/icons/user-icon.svelte';
+    import UserIconSolid from '../components/icons/user-icon-solid.svelte';
 
     const {
         card,
@@ -100,7 +102,7 @@
         cursor-default
         gap-1
         rounded-md
-        p-3
+        p-2.5
         content
         outline-offset-[-2px]
         data-active:outline
@@ -150,12 +152,21 @@
                             {/if}
                         </span>
                     {/if}
-                    <span
-                        class="ml-2 avatar-sm"
-                        class:ml-auto={todoStats.total == 0}
-                    >
-                        <Avatar name={card.assignee?.fullName ?? 'Unknown'} />
-                    </span>
+                    {#if card.assignee}
+                        <span
+                            class="ml-2 avatar-sm"
+                            class:ml-auto={todoStats.total == 0}
+                        >
+                            <Avatar name={card.assignee.fullName} />
+                        </span>
+                    {:else}
+                        <div
+                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-surface-4 icon-xs"
+                            class:ml-auto={todoStats.total == 0}
+                        >
+                            <UserIconSolid />
+                        </div>
+                    {/if}
                 </div>
             {/if}
         </div>

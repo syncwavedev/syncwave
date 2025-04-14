@@ -14,6 +14,9 @@
     --icon-size: 1em;
 }
 
+.icon-2xs {
+    --icon-size: 0.65rem;
+}
 .icon-xs {
     --icon-size: 0.875rem;
 }

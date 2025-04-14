@@ -315,20 +315,19 @@ export function createReadApi() {
                     startOffset
                 );
 
-                const [messages, attachments, users] = await st.transact(
-                    principal,
-                    async tx => {
+                const [messages, attachments, users, userEmails] =
+                    await st.transact(principal, async tx => {
                         return await whenAll([
                             tx.messages.getByCardId(cardId).toArray(),
                             tx.attachments.getByCardId(cardId).toArray(),
                             getBoardUsers(tx, card.boardId),
+                            getBoardUserEmails(tx, card.boardId),
                             tx.permissionService.ensureCardMember(
                                 cardId,
                                 'reader'
                             ),
                         ]);
-                    }
-                );
+                    });
 
                 if (startOffset === undefined) {
                     yield {
@@ -340,6 +339,7 @@ export function createReadApi() {
                             attachments,
                             users,
                             card,
+                            userEmails,
                         },
                     };
                 }
@@ -454,9 +454,8 @@ export function createReadApi() {
                     startOffset
                 );
 
-                const [board, columns, cards, users] = await st.transact(
-                    principal,
-                    async tx => {
+                const [board, columns, cards, users, userEmails] =
+                    await st.transact(principal, async tx => {
                         return await whenAll([
                             tx.boards.getById(boardId),
                             toStream(
@@ -470,13 +469,13 @@ export function createReadApi() {
                                 })
                             ).toArray(),
                             getBoardUsers(tx, boardId),
+                            getBoardUserEmails(tx, boardId),
                             tx.permissionService.ensureBoardMember(
                                 boardId,
                                 'reader'
                             ),
                         ]);
-                    }
-                );
+                    });
 
                 if (!board) {
                     throw new BusinessError(
@@ -494,6 +493,7 @@ export function createReadApi() {
                             columns: columns,
                             cards: cards,
                             users: users,
+                            userEmails: userEmails,
                         },
                     };
                 }
@@ -619,5 +619,19 @@ function getBoardUsers(tx: DataTx, boardId: BoardId) {
             })
         )
         .assert(x => x !== undefined, 'user not found')
+        .toArray();
+}
+
+function getBoardUserEmails(tx: DataTx, boardId: BoardId) {
+    return toStream(tx.members.getByBoardId(boardId, {includeDeleted: true}))
+        .mapParallel(x =>
+            tx.users.getById(x.userId, {
+                includeDeleted: true,
+            })
+        )
+        .assert(x => x !== undefined, 'user not found')
+        .mapParallel(x => tx.accounts.getByUserId(x.id))
+        .assert(x => x !== undefined, 'account not found')
+        .map(x => ({userId: x.userId, email: x.email}))
         .toArray();
 }

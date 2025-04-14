@@ -355,8 +355,18 @@ export function MeViewDataDto() {
 export interface MeViewDataDto
     extends Static<ReturnType<typeof MeViewDataDto>> {}
 
+export function UserEmailDto() {
+    return Type.Object({
+        userId: Uuid<UserId>(),
+        email: Type.String(),
+    });
+}
+
+export type UserEmailDto = Static<ReturnType<typeof UserEmailDto>>;
+
 export function BoardViewDataDto() {
     return Type.Object({
+        userEmails: Type.Array(UserEmailDto()),
         board: Type.Object({
             state: CrdtDiff<Board>(),
             key: Type.String(),
@@ -401,6 +411,7 @@ export function CardTreeViewDataDto() {
         ),
         card: Type.Object({state: CrdtDiff<Card>(), id: Uuid<CardId>()}),
         boardId: Uuid<BoardId>(),
+        userEmails: Type.Array(UserEmailDto()),
     });
 }
 

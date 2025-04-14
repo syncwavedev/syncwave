@@ -621,6 +621,13 @@ export class Agent {
             }
         } else if (event.kind === 'update') {
             this.crdtManager.applyRemoteChange(event);
+        } else if (event.kind === 'snapshot') {
+            this.syncTargets().forEach(x =>
+                x.newUserEmail({
+                    userId: event.userId,
+                    email: event.email,
+                })
+            );
         } else {
             assertNever(event.kind);
         }

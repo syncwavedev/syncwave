@@ -43,7 +43,7 @@ import {
     type MessageId,
     MessageRepo,
 } from './repos/message-repo.js';
-import {type User, type UserId, UserRepo} from './repos/user-repo.js';
+import {User, type UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
     readonly uiUrl: string;
@@ -139,6 +139,19 @@ export function MessageChangeEvent() {
 export interface MessageChangeEvent
     extends Static<ReturnType<typeof MessageChangeEvent>> {}
 
+export function UserEmailChangeEvent() {
+    return Type.Object({
+        type: Type.Literal('user_email'),
+        kind: Type.Literal('snapshot'),
+        userId: Uuid<UserId>(),
+        email: Type.String(),
+        ts: Timestamp(),
+    });
+}
+
+export interface UserEmailChangeEvent
+    extends Static<ReturnType<typeof UserEmailChangeEvent>> {}
+
 export function AttachmentChangeEvent() {
     return BaseChangeEvent<'attachment', AttachmentId, Attachment>(
         'attachment'
@@ -151,8 +164,13 @@ export interface AttachmentChangeEvent
 type InferCrdtDiffValue<T extends CrdtDiff<any>> =
     T extends CrdtDiff<infer U> ? U : never;
 
+type ExtractChangeEvents<T> =
+    T extends BaseChangeEvent<any, any, any> ? T : never;
+
 export type ChangeEventMapping = {
-    [E in ChangeEvent as E['type']]: InferCrdtDiffValue<E['diff']>;
+    [E in ExtractChangeEvents<ChangeEvent> as E['type']]: InferCrdtDiffValue<
+        E['diff']
+    >;
 };
 
 export function ChangeEvent() {
@@ -165,6 +183,7 @@ export function ChangeEvent() {
         ColumnChangeEvent(),
         MessageChangeEvent(),
         AttachmentChangeEvent(),
+        UserEmailChangeEvent(),
     ]);
 }
 

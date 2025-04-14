@@ -61,20 +61,17 @@
 
     const detailsPromise = agent.observeCardAsync(card.id);
 
-    detailsPromise.then(details => {
-        console.debug('Details:', details);
-    });
-
     const fragment = createXmlFragment();
     let isNewMessageEmpty = $state(true);
     $effect(() => {
-        const observer = () => {
+        const messageLengthObserver = () => {
             isNewMessageEmpty =
                 yFragmentToPlaintext(fragment).trim().length === 0;
         };
+        messageLengthObserver();
 
-        fragment.observeDeep(observer);
-        return () => fragment.unobserveDeep(observer);
+        fragment.observeDeep(messageLengthObserver);
+        return () => fragment.unobserveDeep(messageLengthObserver);
     });
 
     const onSendMessage = async (e?: Event) => {

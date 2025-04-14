@@ -6,6 +6,7 @@ import {
     compareStrings,
     partition,
     uniqBy,
+    UserEmailDto,
     type Account,
     type Attachment,
     type AwarenessState,
@@ -21,9 +22,16 @@ import {
     type MeViewDataDto,
     type Timestamp,
     type User,
+    type UserId,
 } from 'syncwave';
 import {observeAwareness} from './awareness.js';
 import type {CrdtDerivator, CrdtManager} from './crdt-manager.js';
+
+function findRequired<T>(items: T[], predicate: (item: T) => boolean): T {
+    const item = items.find(predicate);
+    assert(item !== undefined, 'findRequired: item is undefined');
+    return item;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lateInit(): any {
@@ -33,9 +41,12 @@ function lateInit(): any {
 export class UserView implements User {
     private user: User = $state.raw(lateInit());
 
-    constructor(user: User) {
+    constructor(user: User, email: string) {
         this.user = user;
+        this.email = email;
     }
+
+    email = $state(lateInit());
 
     deletedAt = $derived(this.user.deletedAt);
     updatedAt = $derived(this.user.updatedAt);
@@ -55,6 +66,7 @@ export interface SyncTarget {
     newMessage(message: Message): void;
     newAccount(account: Account): void;
     newMember(member: Member): void;
+    newUserEmail(userEmail: UserEmailDto): void;
 }
 
 export class MeViewData implements SyncTarget {
@@ -84,6 +96,10 @@ export class MeViewData implements SyncTarget {
 
     private constructor(crdtManager: CrdtManager) {
         this.crdtManager = crdtManager;
+    }
+
+    newUserEmail(): void {
+        // ignore
     }
 
     newAccount(): void {
@@ -159,7 +175,7 @@ export class MeView extends UserView {
     private readonly data!: MeViewData;
 
     constructor(user: User, data: MeViewData) {
-        super(user);
+        super(user, data.account.email);
 
         this.data = data;
     }
@@ -177,6 +193,7 @@ export class BoardData implements SyncTarget {
     private readonly crdtManager!: CrdtManager;
     private board: Board = $state.raw(lateInit());
 
+    rawUserEmails: UserEmailDto[] = $state.raw(lateInit());
     rawMe: User = $state.raw(lateInit());
     rawUsers: User[] = $state.raw(lateInit());
     rawColumns: Column[] = $state.raw(lateInit());
@@ -201,8 +218,12 @@ export class BoardData implements SyncTarget {
     boardTreeView: BoardTreeView = $derived(
         new BoardTreeView(this.board, this, this.crdtManager)
     );
-    userViews: UserView[] = $derived(this.rawUsers.map(x => new UserView(x)));
-    meView: UserView = $derived(new UserView(this.rawMe));
+    userViews: UserView[] = $derived(
+        this.rawUsers.map(x => new UserView(x, this.getUserEmail(x.id)))
+    );
+    meView: UserView = $derived(
+        new UserView(this.rawMe, this.getUserEmail(this.rawMe.id))
+    );
 
     awareness: SvelteMap<number, AwarenessState> = $state(lateInit());
 
@@ -241,6 +262,12 @@ export class BoardData implements SyncTarget {
         this.crdtManager = crdtManager;
         this.awareness = observeAwareness(rawAwareness);
         this.rawMe = me;
+    }
+
+    newUserEmail(userEmail: UserEmailDto): void {
+        this.rawUserEmails = this.rawUserEmails
+            .filter(x => x.userId !== userEmail.userId)
+            .concat([userEmail]);
     }
 
     newAccount(): void {
@@ -291,6 +318,8 @@ export class BoardData implements SyncTarget {
     }
 
     override(board: BoardViewDataDto, derivator: CrdtDerivator) {
+        this.rawUserEmails = board.userEmails;
+
         this.board = derivator.view({
             state: board.board.state,
             id: board.board.id,
@@ -321,6 +350,10 @@ export class BoardData implements SyncTarget {
                 isDraft: false,
             })
         );
+    }
+
+    getUserEmail(userId: UserId): string {
+        return findRequired(this.rawUserEmails, x => x.userId === userId).email;
     }
 }
 
@@ -401,7 +434,10 @@ export class ColumnView implements Column {
     board = $derived(this._data.boardView);
     author = $derived.by(() => {
         const author = this.crdtManager.viewById(this._column.authorId, 'user');
-        return new UserView(author);
+        return new UserView(
+            author,
+            this._data.getUserEmail(this._column.authorId)
+        );
     });
 }
 
@@ -480,7 +516,10 @@ export class CardView implements Card {
 
     author = $derived.by(() => {
         const author = this._crdtManager.viewById(this._card.authorId, 'user');
-        return new UserView(author);
+        return new UserView(
+            author,
+            this._data.getUserEmail(this._card.authorId)
+        );
     });
     board = $derived(this._data.boardView);
     assignee = $derived.by(() => {
@@ -490,7 +529,7 @@ export class CardView implements Card {
             this._card.assigneeId,
             'user'
         );
-        return new UserView(assignee);
+        return new UserView(assignee, this._data.getUserEmail(assignee.id));
     });
     column = $derived.by(() => {
         const column = this._crdtManager.viewById(
@@ -510,6 +549,7 @@ export class CardTreeViewData implements SyncTarget {
 
     private readonly crdtManager!: CrdtManager;
 
+    rawUserEmails: UserEmailDto[] = $state.raw(lateInit());
     rawCard: Card = $state.raw(lateInit());
     rawUsers: User[] = $state.raw(lateInit());
     rawMessages: Message[] = $state.raw(lateInit());
@@ -523,7 +563,13 @@ export class CardTreeViewData implements SyncTarget {
     }
 
     cardView = $derived(new CardTreeView(this, this.crdtManager));
-    userViews: UserView[] = $derived(this.rawUsers.map(x => new UserView(x)));
+    userViews: UserView[] = $derived(
+        this.rawUsers.map(x => new UserView(x, this.getUserEmail(x.id)))
+    );
+
+    newUserEmail(): void {
+        // ignore
+    }
 
     newAccount(): void {
         // ignore
@@ -573,6 +619,7 @@ export class CardTreeViewData implements SyncTarget {
     }
 
     override(dto: CardTreeViewDataDto, derivator: CrdtDerivator) {
+        this.rawUserEmails = dto.userEmails;
         this.rawCard = derivator.view({
             id: dto.card.id,
             type: 'card',
@@ -609,6 +656,10 @@ export class CardTreeViewData implements SyncTarget {
                 isDraft: false,
             })
         );
+    }
+
+    getUserEmail(userId: UserId): string {
+        return findRequired(this.rawUserEmails, x => x.userId === userId).email;
     }
 }
 
@@ -658,7 +709,10 @@ export class MessageView implements Message {
 
     author = $derived.by(() => {
         const author = this.crdtManager.viewById(this.message.authorId, 'user');
-        return new UserView(author);
+        return new UserView(
+            author,
+            this.data.getUserEmail(this.message.authorId)
+        );
     });
     replyTo = $derived.by(() => {
         if (!this.message.replyToId) return undefined;

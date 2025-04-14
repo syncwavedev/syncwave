@@ -6,8 +6,21 @@
     import modalManager from '../modal-manager.svelte';
     import EditColumnsModal from './edit-columns-modal.svelte';
     import type {BoardTreeView} from '../../agent/view.svelte';
+    import {getAgent} from '../../agent/agent';
+    import router from '../../router';
 
     let {board}: {board: BoardTreeView} = $props();
+
+    const agent = getAgent();
+
+    function onDeleteBoard() {
+        const confirmMessage = `Are you sure you want to delete "${board.name}"? This action cannot be undone.`;
+        if (confirm(confirmMessage)) {
+            modalManager.close();
+            agent.deleteBoard(board.id);
+            router.route('/');
+        }
+    }
 </script>
 
 {#snippet inviteForm()}
@@ -52,7 +65,7 @@
     </div>
     <hr />
     <div class="modal-footer mx-4">
-        <button class="btn-ghost mx-auto">
+        <button class="btn-ghost mx-auto" onclick={onDeleteBoard}>
             <TrashIcon /> Delete {board.name}
         </button>
     </div>

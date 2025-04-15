@@ -297,6 +297,8 @@ export class Agent {
                 })
             );
 
+            console.debug('start streaming', startOffset);
+
             for await (const item of items) {
                 nextOffset = item.offset + 1;
                 console.debug({

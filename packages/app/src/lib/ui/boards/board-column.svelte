@@ -72,7 +72,7 @@
         class="flex items-center px-2 mb-2"
         data-disable-scroll-view-drag="true"
     >
-        <div class="flex items-center gap-1.5 font-semibold">
+        <div class="flex items-center gap-1.5 font-semibold text-sm icon-sm">
             <ColumnIcon active={columnPosition} total={columnsCount} />
 
             {column.name}
@@ -83,7 +83,7 @@
             open={editColumnOpen}
             onClose={() => (editColumnOpen = false)}
         />
-        <div class="flex ml-auto">
+        <div class="flex ml-auto icon-sm">
             <button class="btn--icon text-ink-body" onclick={onCreateCard}>
                 <PlusIcon class="pointer-events-none" />
             </button>

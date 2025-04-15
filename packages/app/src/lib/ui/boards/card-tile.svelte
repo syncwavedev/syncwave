@@ -104,10 +104,10 @@
         content
         outline-offset-[-2px]
         data-active:outline
-        data-active:outline-3
+        data-active:outline-2
         data-active:outline-divider-active
         focus:outline
-        focus:outline-3
+        focus:outline-2
         focus:outline-divider-active/50
     "
         class:border-dashed={card.isDraft}

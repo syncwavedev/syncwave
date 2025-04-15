@@ -172,7 +172,7 @@
         --theme-color-surface-5: var(--color-gray-90);
 
         --theme-color-subtle-active: var(--color-blue-100);
-        --theme-color-divider-active: var(--color-blue-200);
+        --theme-color-divider-active: oklch(0.65 0.135 249.85deg);
     }
 
     [data-theme='dark'] {

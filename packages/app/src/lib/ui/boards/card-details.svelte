@@ -105,11 +105,13 @@
     class="border-divider bg-surface-0 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
     <div class="flex items-center px-4 py-2">
-        <div class="flex items-center gap-0.5 icon-base select-text">
+        <div
+            class="flex items-center gap-0.5 icon-base select-text font-medium"
+        >
             {#if card.isDraft}
                 New card
             {:else}
-                <HashtagIcon />
+                <HashtagIcon strokeWidth="2" />
                 <span>{card.counter}</span>
             {/if}
         </div>
@@ -160,7 +162,7 @@
             </div>
 
             <!-- Task Actions -->
-            <div class="flex gap-2 text-ink-body my-3 text-sm icon-sm">
+            <div class="flex gap-2 my-3 text-sm icon-sm text-ink-body">
                 <Select
                     value={card.column.id}
                     options={columnOptions}
@@ -198,7 +200,7 @@
                             <Avatar name={message.author.fullName} />
 
                             <div class="flex items-baseline gap-1.5">
-                                <div class="font-semibold leading-none">
+                                <div class="font-semibold text-sm leading-none">
                                     {message.author.fullName}
                                 </div>
 

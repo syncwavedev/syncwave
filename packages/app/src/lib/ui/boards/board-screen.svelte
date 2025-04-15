@@ -230,8 +230,8 @@
     <BoardSettingsModal {board} />
 {/snippet}
 
-<div class="flex flex-col h-screen">
-    <div class="flex w-full">
+<div class="flex flex-col">
+    <div class="flex w-full h-screen">
         <div class="bg-surface-0 flex min-w-0 grow flex-col">
             <div class="mt-2 mb-3 flex items-center px-4">
                 <button
@@ -302,6 +302,10 @@
                     {/each}
                 </div>
             </Scrollable>
+            <hr />
+            <div class="px-4">
+                <StatusBar />
+            </div>
         </div>
         {#if selectedCard !== null}
             {#key selectedCard.id}
@@ -326,10 +330,5 @@
                 </ResizablePanel>
             {/key}
         {/if}
-    </div>
-    <div
-        class="bg-surface-1 border-divider border-t h-6 items-center flex px-2"
-    >
-        <StatusBar />
     </div>
 </div>

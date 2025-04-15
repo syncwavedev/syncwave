@@ -178,7 +178,7 @@
                 <Select
                     value={card.assignee?.id}
                     options={[
-                        {value: undefined, label: 'Assignee'},
+                        {value: undefined, label: 'No assignee'},
                         ...assigneeOptions,
                     ]}
                     onValueChange={value =>
@@ -186,7 +186,7 @@
                 >
                     <button class="btn-ghost">
                         <UserIcon />
-                        {card.assignee?.fullName ?? 'Assignee'}
+                        {card.assignee?.fullName ?? 'Assign'}
                     </button>
                 </Select>
             </div>

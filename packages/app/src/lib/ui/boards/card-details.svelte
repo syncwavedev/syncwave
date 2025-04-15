@@ -186,7 +186,7 @@
                 >
                     <button class="btn-ghost">
                         <UserIcon />
-                        {card.assignee?.fullName ?? 'Assign'}
+                        {card.assignee?.fullName ?? 'Assignee'}
                     </button>
                 </Select>
             </div>

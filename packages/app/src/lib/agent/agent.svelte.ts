@@ -289,6 +289,7 @@ export class Agent {
         let nextOffset: number | undefined = undefined;
 
         infiniteRetry(async () => {
+            const startOffset = nextOffset;
             const items = toStream(
                 this.rpc.getBoardViewData({
                     key: dto.board.key,
@@ -298,6 +299,11 @@ export class Agent {
 
             for await (const item of items) {
                 nextOffset = item.offset + 1;
+                console.debug({
+                    startOffset,
+                    itemOffset: item.offset,
+                    ts: item.type === 'event' && item.event.ts,
+                });
                 if (item.type === 'snapshot') {
                     data.override(item.data, this.crdtManager);
                 } else if (item.type === 'event') {

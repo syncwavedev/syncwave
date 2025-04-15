@@ -71,6 +71,17 @@ export class ReadApiState {
 
 export function createReadApi() {
     return createApi<ReadApiState>()({
+        echo: handler({
+            req: Type.Object({
+                time: Type.Number(),
+            }),
+            res: Type.Object({
+                time: Type.Number(),
+            }),
+            async handle(_st, {time}) {
+                return {time};
+            },
+        }),
         getMe: streamer({
             req: Type.Object({}),
             item: MeDto(),

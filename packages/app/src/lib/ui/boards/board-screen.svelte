@@ -24,6 +24,7 @@
     import modalManager from '../modal-manager.svelte';
     import BoardSettingsModal from './board-settings-modal.svelte';
     import {COLUMN_WIDTH} from './constants';
+    import StatusBar from './status-bar.svelte';
 
     const {
         board,
@@ -229,99 +230,106 @@
     <BoardSettingsModal {board} />
 {/snippet}
 
-<main class="flex h-screen w-full">
-    <div class="bg-surface-0 flex min-w-0 grow flex-col">
-        <div class="mt-2 mb-3 flex items-center px-4">
-            <button
-                class="btn-ghost font-semibold -ml-1"
-                onclick={() => modalManager.open(boardCommands)}
-            >
-                <span>{board.name}</span>
-                <ChevronDownIcon />
-            </button>
+<div class="flex flex-col h-screen">
+    <div class="flex w-full">
+        <div class="bg-surface-0 flex min-w-0 grow flex-col">
+            <div class="mt-2 mb-3 flex items-center px-4">
+                <button
+                    class="btn-ghost font-semibold -ml-1"
+                    onclick={() => modalManager.open(boardCommands)}
+                >
+                    <span>{board.name}</span>
+                    <ChevronDownIcon />
+                </button>
 
-            <div class="text-2xl text-ink-detail ml-auto flex gap-2">
-                {#each board.onlineUsers as user (user.user.id)}
-                    <div
-                        class={user.state.active ? '' : 'opacity-50'}
-                        animate:flip={{duration: 200}}
-                    >
-                        <Avatar
-                            title={`${user.user.fullName} - ${user.state.active ? 'online' : 'away'}`}
-                            class="border-blue-400 border-2"
-                            name={user.user.fullName}
-                        />
-                    </div>
-                {/each}
-            </div>
-            <button
-                onclick={() => modalManager.open(boardSettings)}
-                class="btn--icon text-ink-body"
-            >
-                <EllipsisIcon />
-            </button>
+                <div class="text-2xl text-ink-detail ml-auto flex gap-2">
+                    {#each board.onlineUsers as user (user.user.id)}
+                        <div
+                            class={user.state.active ? '' : 'opacity-50'}
+                            animate:flip={{duration: 200}}
+                        >
+                            <Avatar
+                                title={`${user.user.fullName} - ${user.state.active ? 'online' : 'away'}`}
+                                class="border-blue-400 border-2"
+                                name={user.user.fullName}
+                            />
+                        </div>
+                    {/each}
+                </div>
+                <button
+                    onclick={() => modalManager.open(boardSettings)}
+                    class="btn--icon text-ink-body"
+                >
+                    <EllipsisIcon />
+                </button>
 
-            <!-- <button onclick={editMyProfile} class="btn--icon">
-                <UserIcon />
-            </button>
-            <EditProfileDialog
-                {me}
-                open={editMyProfileOpen}
-                onClose={() => {
-                    editMyProfileOpen = false;
-                }}
-            /> -->
-        </div>
-        <Scrollable
-            orientation="horizontal"
-            class="flex-grow"
-            type="scroll"
-            draggable
-            bind:viewportRef
-        >
-            {@const PADDING_X = '0.5rem'}
-            <div
-                bind:this={boardRef}
-                bind:this={columnsContainerRef}
-                class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf]"
-                style={`padding-right: calc(100vw - ${PADDING_X} - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px); padding-left: ${PADDING_X}`}
-            >
-                {#each board.columns as column, i (column.id)}
-                    <div animate:flip={{duration: DND_REORDER_DURATION_MS}}>
-                        <BoardColumn
-                            {column}
-                            onCardClick={selectCard}
-                            activeCardId={selectedCard?.id}
-                            onCreateCard={() => createCard(column)}
-                            columnPosition={i}
-                            columnsCount={board.columns.length - 1}
-                        />
-                    </div>
-                {/each}
-            </div>
-        </Scrollable>
-    </div>
-    {#if selectedCard !== null}
-        {#key selectedCard.id}
-            <ResizablePanel
-                freeSide="left"
-                defaultSize={detailsWidth}
-                minWidth={320}
-                maxWidth={1600}
-                onWidthChange={w => {
-                    detailsWidth = w;
-                    PanelSizeManager.saveWidth('right', w);
-                }}
-            >
-                <CardDetails
+                <!-- <button onclick={editMyProfile} class="btn--icon">
+                    <UserIcon />
+                </button>
+                <EditProfileDialog
                     {me}
-                    {awareness}
-                    card={selectedCard}
-                    {columnOptions}
-                    {assigneeOptions}
-                    onDelete={() => deleteCard(selectedCard!)}
-                />
-            </ResizablePanel>
-        {/key}
-    {/if}
-</main>
+                    open={editMyProfileOpen}
+                    onClose={() => {
+                        editMyProfileOpen = false;
+                    }}
+                /> -->
+            </div>
+            <Scrollable
+                orientation="horizontal"
+                class="flex-grow"
+                type="scroll"
+                draggable
+                bind:viewportRef
+            >
+                {@const PADDING_X = '0.5rem'}
+                <div
+                    bind:this={boardRef}
+                    bind:this={columnsContainerRef}
+                    class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf]"
+                    style={`padding-right: calc(100vw - ${PADDING_X} - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px); padding-left: ${PADDING_X}`}
+                >
+                    {#each board.columns as column, i (column.id)}
+                        <div animate:flip={{duration: DND_REORDER_DURATION_MS}}>
+                            <BoardColumn
+                                {column}
+                                onCardClick={selectCard}
+                                activeCardId={selectedCard?.id}
+                                onCreateCard={() => createCard(column)}
+                                columnPosition={i}
+                                columnsCount={board.columns.length - 1}
+                            />
+                        </div>
+                    {/each}
+                </div>
+            </Scrollable>
+        </div>
+        {#if selectedCard !== null}
+            {#key selectedCard.id}
+                <ResizablePanel
+                    freeSide="left"
+                    defaultSize={detailsWidth}
+                    minWidth={320}
+                    maxWidth={1600}
+                    onWidthChange={w => {
+                        detailsWidth = w;
+                        PanelSizeManager.saveWidth('right', w);
+                    }}
+                >
+                    <CardDetails
+                        {me}
+                        {awareness}
+                        card={selectedCard}
+                        {columnOptions}
+                        {assigneeOptions}
+                        onDelete={() => deleteCard(selectedCard!)}
+                    />
+                </ResizablePanel>
+            {/key}
+        {/if}
+    </div>
+    <div
+        class="bg-surface-2 border-divider border-t h-6 items-center flex px-2"
+    >
+        <StatusBar />
+    </div>
+</div>

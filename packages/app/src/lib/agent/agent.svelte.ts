@@ -162,7 +162,7 @@ export class Agent {
                 error,
                 msg: 'agent ping failed',
             });
-            this.persistentConnection.closeBaseConnection(error);
+            this.persistentConnection.disconnect(error);
         } finally {
             if (this.open) {
                 setTimeout(() => this.ping(), RPC_CALL_TIMEOUT_MS / 5);

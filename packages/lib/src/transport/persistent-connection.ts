@@ -51,7 +51,7 @@ export class PersistentConnection<T> implements Connection<T> {
         return this.subject.subscribe(cb);
     }
 
-    closeBaseConnection(reason: unknown): void {
+    disconnect(reason: unknown): void {
         if (this.connection) {
             this.connection.close(reason);
             this.connection = undefined;
@@ -62,7 +62,7 @@ export class PersistentConnection<T> implements Connection<T> {
         if (this.closed) return;
         this.closed = true;
 
-        this.closeBaseConnection(reason);
+        this.disconnect(reason);
 
         this.subject.close(reason);
         this.events.close();

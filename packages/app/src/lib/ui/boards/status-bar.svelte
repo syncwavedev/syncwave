@@ -1,30 +1,22 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
-    let isOnline = navigator.onLine;
+    import {getAgent} from '../../agent/agent.svelte';
 
-    function updateOnlineStatus() {
-        isOnline = navigator.onLine;
-    }
-
-    onMount(() => {
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-
-        return () => {
-            window.removeEventListener('online', updateOnlineStatus);
-            window.removeEventListener('offline', updateOnlineStatus);
-        };
-    });
+    const agent = getAgent();
 </script>
 
 <div class="flex items-center gap-2">
     <div
         class="w-2 h-2 rounded-full"
-        class:bg-green-500={isOnline}
-        class:bg-red-500={!isOnline}
-        class:animate-pulse={isOnline}
+        class:bg-green-500={agent.status === 'online'}
+        class:bg-red-500={agent.status === 'offline'}
+        class:animate-pulse={agent.status === 'online'}
     ></div>
     <span class="text-sm text-gray-600">
-        {isOnline ? 'Online' : 'Offline'}
+        {#if agent.status === 'online'}
+            Online
+        {/if}
+        {#if agent.status === 'offline'}
+            Offline
+        {/if}
     </span>
 </div>

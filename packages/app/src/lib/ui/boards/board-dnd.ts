@@ -9,7 +9,7 @@ import {
     type CardId,
     type ColumnId,
 } from 'syncwave';
-import type {Agent} from '../../agent/agent.js';
+import type {Agent} from '../../agent/agent.svelte.js';
 import type {CardView, ColumnView} from '../../agent/view.svelte.js';
 
 export const DND_REORDER_DURATION_MS = 500;

@@ -1,7 +1,7 @@
 <script lang="ts">
     import Dialog from '../dialog.svelte';
     import TimesIcon from '../icons/times-icon.svelte';
-    import {getAgent} from '../../agent/agent';
+    import {getAgent} from '../../agent/agent.svelte';
     import type {MeView} from '../../agent/view.svelte';
 
     interface Props {

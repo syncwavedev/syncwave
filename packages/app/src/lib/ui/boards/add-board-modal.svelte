@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {getAgent} from '../../agent/agent';
+    import {getAgent} from '../../agent/agent.svelte';
     import router from '../../router';
     import CommandHeader from '../command-center/command-header.svelte';
     import CommandView from '../command-center/command-view.svelte';

@@ -1,7 +1,7 @@
 <script lang="ts">
     import TrashIcon from '../icons/trash-icon.svelte';
     import {ColumnView} from '../../agent/view.svelte';
-    import {getAgent} from '../../agent/agent';
+    import {getAgent} from '../../agent/agent.svelte';
     import type {ColumnId} from 'syncwave';
 
     interface Props {

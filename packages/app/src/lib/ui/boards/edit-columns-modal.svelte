@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {getAgent} from '../../agent/agent';
+    import {getAgent} from '../../agent/agent.svelte';
     import type {ColumnTreeView} from '../../agent/view.svelte';
     import Modal from '../components/modal.svelte';
     import TrashIcon from '../components/icons/trash-icon.svelte';

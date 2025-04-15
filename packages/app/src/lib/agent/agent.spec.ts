@@ -5,7 +5,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {AuthManager} from '../../auth-manager';
 import {createMemStorage} from '../../mem-storage';
 import {createXmlFragment} from '../richtext';
-import {Agent} from './agent';
+import {Agent} from './agent.svelte';
 
 describe('agent', () => {
     const email = 'test@test.com';

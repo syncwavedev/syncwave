@@ -88,6 +88,7 @@ export const SvelteComponentContextManager: ContextManager = {
 export class Agent {
     private crdtManager: CrdtManager;
     private readonly connection: RpcConnection;
+    private readonly persistentConnection: PersistentConnection<unknown>;
     public readonly rpc: CoordinatorRpc;
 
     private activeBoards: BoardData[] = [];
@@ -100,13 +101,19 @@ export class Agent {
         return [...this.activeBoards, ...this.activeCards, ...this.activeMes];
     }
 
+    status: 'online' | 'offline' = $state('offline');
+
     constructor(
         client: TransportClient<unknown>,
         private readonly authManager: AuthManager,
         private readonly contextManager: ContextManager,
         private readonly activityMonitor: ActivityMonitor
     ) {
-        this.connection = new RpcConnection(new PersistentConnection(client));
+        this.persistentConnection = new PersistentConnection(client);
+        this.persistentConnection.events.subscribe(
+            status => (this.status = status)
+        );
+        this.connection = new RpcConnection(this.persistentConnection);
 
         this.rpc = createRpcClient(
             createCoordinatorApi(),

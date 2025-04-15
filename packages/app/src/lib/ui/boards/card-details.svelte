@@ -13,7 +13,7 @@
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
     import Select from '../components/select.svelte';
-    import {getAgent} from '../../agent/agent';
+    import {getAgent} from '../../agent/agent.svelte';
     import RichtextView from '../../components/richtext-view.svelte';
     import {
         cloneYFragment,

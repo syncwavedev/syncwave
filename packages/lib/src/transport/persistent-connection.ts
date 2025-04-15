@@ -1,5 +1,6 @@
 import {context} from '../context.js';
 import {getReadableError} from '../errors.js';
+import {EventEmitter} from '../event-emitter.js';
 import {log} from '../logger.js';
 import {Mutex} from '../mutex.js';
 import {type Observer, Subject} from '../subject.js';
@@ -17,6 +18,8 @@ export class PersistentConnection<T> implements Connection<T> {
     private connectMutex = new Mutex();
     private closed = false;
     private subject = new Subject<T>();
+
+    readonly events = new EventEmitter<'online' | 'offline'>();
 
     constructor(private readonly transport: TransportClient<T>) {}
 
@@ -58,6 +61,7 @@ export class PersistentConnection<T> implements Connection<T> {
         }
 
         this.subject.close(reason);
+        this.events.close();
     }
 
     private async getConnection(): Promise<
@@ -77,9 +81,12 @@ export class PersistentConnection<T> implements Connection<T> {
 
                 const connection = await this.transport.connect();
 
+                this.events.emit('online');
+
                 this.connection = connection;
 
                 const cleanup = (reason: unknown) => {
+                    this.events.emit('offline');
                     this.connection = undefined;
                     connection.close(reason);
                     unsub(reason);

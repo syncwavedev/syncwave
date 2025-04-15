@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {getAgent} from '../lib/agent/agent';
+    import {getAgent} from '../lib/agent/agent.svelte';
     import boardHistoryManager from '../lib/board-history-manager';
     import BoardScreen from '../lib/ui/boards/board-screen.svelte';
     import Loading from '../lib/ui/components/loading.svelte';

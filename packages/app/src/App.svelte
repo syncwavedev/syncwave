@@ -25,7 +25,7 @@
     import {
         createAgent,
         SvelteComponentContextManager,
-    } from './lib/agent/agent';
+    } from './lib/agent/agent.svelte.js';
     import {appConfig} from './lib/config';
     import {WsTransportClient} from './ws-transport-client';
     import {AuthManager} from './auth-manager';

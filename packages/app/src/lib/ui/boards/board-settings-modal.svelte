@@ -6,7 +6,7 @@
     import modalManager from '../modal-manager.svelte';
     import EditColumnsModal from './edit-columns-modal.svelte';
     import type {BoardTreeView} from '../../agent/view.svelte';
-    import {getAgent} from '../../agent/agent';
+    import {getAgent} from '../../agent/agent.svelte';
     import router from '../../router';
 
     let {board}: {board: BoardTreeView} = $props();

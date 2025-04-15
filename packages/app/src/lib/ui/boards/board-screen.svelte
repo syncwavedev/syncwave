@@ -11,7 +11,7 @@
         MeView,
     } from '../../agent/view.svelte';
     import CardDetails from './card-details.svelte';
-    import {getAgent} from '../../agent/agent';
+    import {getAgent} from '../../agent/agent.svelte';
     import router from '../../router';
     import {flip} from 'svelte/animate';
     import {createDndContext, DND_REORDER_DURATION_MS} from './board-dnd';

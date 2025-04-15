@@ -20,7 +20,7 @@
         minWidth,
         maxWidth,
         class: className,
-        resizerClass = 'w-1 cursor-col-resize hover:bg-divider-object hover:dark:bg-divider-object',
+        resizerClass = 'w-1 cursor-col-resize hover:bg-divider-object',
     }: Props = $props();
 
     let width = $state(defaultSize);

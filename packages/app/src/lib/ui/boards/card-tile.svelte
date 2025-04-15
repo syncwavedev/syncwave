@@ -92,10 +92,8 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-        bg-surface-3
-        dark:bg-surface-2
-        dark:hover:bg-surface-3
-        hover:bg-surface-4
+        bg-surface-2
+        hover:bg-surface-3
         group
         flex
         items-end

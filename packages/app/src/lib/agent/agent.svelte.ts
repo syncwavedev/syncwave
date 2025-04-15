@@ -104,6 +104,7 @@ export class Agent {
 
     status: 'online' | 'offline' = $state('offline');
     latency: number | undefined = $state(undefined);
+    latencyProbes = $state(0);
 
     pingInterval: NodeJS.Timeout;
 
@@ -133,6 +134,11 @@ export class Agent {
             try {
                 const {time} = await this.rpc.echo({time: performance.now()});
                 const pingLatency = performance.now() - time;
+                this.latencyProbes += 1;
+                if (this.latencyProbes <= 2) {
+                    return;
+                }
+
                 if (this.latency === undefined) {
                     this.latency = pingLatency;
                 } else {

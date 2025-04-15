@@ -106,7 +106,8 @@ export class Agent {
     latency: number | undefined = $state(undefined);
     latencyProbes = $state(0);
 
-    pingInterval: NodeJS.Timeout;
+    pingTimeout: NodeJS.Timeout | undefined;
+    private open = true;
 
     constructor(
         client: TransportClient<unknown>,
@@ -133,8 +134,6 @@ export class Agent {
         this.crdtManager = new CrdtManager(this.rpc);
 
         this.ping();
-        // todo: use blocking AsyncIterable and faster pace (we can't increase pace with setInterval, because it would close itself)
-        this.pingInterval = setInterval(() => this.ping(), RPC_CALL_TIMEOUT_MS);
     }
 
     private async ping() {
@@ -164,6 +163,10 @@ export class Agent {
                 msg: 'agent ping failed',
             });
             this.persistentConnection.closeBaseConnection(error);
+        } finally {
+            if (this.open) {
+                setTimeout(() => this.ping(), RPC_CALL_TIMEOUT_MS / 5);
+            }
         }
     }
 
@@ -180,10 +183,13 @@ export class Agent {
     }
 
     close(reason: unknown) {
+        if (!this.open) return;
+
+        this.open = false;
         this.rpc.close(reason);
         this.crdtManager.close(reason);
         this.connection.close(reason);
-        clearInterval(this.pingInterval);
+        clearTimeout(this.pingTimeout);
     }
 
     handleCardMouseEnter(boardId: BoardId, cardId: CardId) {

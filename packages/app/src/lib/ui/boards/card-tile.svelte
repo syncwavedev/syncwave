@@ -32,6 +32,7 @@
             todoStats: {
                 checked,
                 total,
+                left: total - checked,
             },
         };
     });
@@ -142,10 +143,11 @@
                     {/if}
                     {#if todoStats.total > 0}
                         <span class="text-ink-detail ml-auto text-xs">
-                            {#if todoStats.checked === todoStats.total}
+                            {#if todoStats.left === 0}
                                 All done
                             {:else}
-                                {todoStats.total - todoStats.checked} tasks to do
+                                {todoStats.left}
+                                {todoStats.left === 1 ? 'task' : 'tasks'} to do
                             {/if}
                         </span>
                     {/if}

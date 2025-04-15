@@ -135,7 +135,9 @@ export class Agent {
                 const {time} = await this.rpc.echo({time: performance.now()});
                 const pingLatency = performance.now() - time;
                 this.latencyProbes += 1;
-                if (this.latencyProbes <= 2) {
+                // first latency prob waits for connection to open, so it's not representative
+                // of the actual latency
+                if (this.latencyProbes <= 1) {
                     return;
                 }
 

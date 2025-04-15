@@ -115,9 +115,11 @@ export class Agent {
         private readonly activityMonitor: ActivityMonitor
     ) {
         this.persistentConnection = new PersistentConnection(client);
-        this.persistentConnection.events.subscribe(
-            status => (this.status = status)
-        );
+        this.persistentConnection.events.subscribe(status => {
+            if (this.status === 'online') {
+                this.status = status;
+            }
+        });
         this.connection = new RpcConnection(this.persistentConnection);
 
         this.rpc = createRpcClient(
@@ -133,6 +135,8 @@ export class Agent {
         this.pingInterval = setInterval(async () => {
             try {
                 const {time} = await this.rpc.echo({time: performance.now()});
+                this.status = 'online';
+
                 const pingLatency = performance.now() - time;
                 this.latencyProbes += 1;
                 // first latency prob waits for connection to open, so it's not representative
@@ -149,6 +153,8 @@ export class Agent {
                         this.latency * (1 - ALPHA) + pingLatency * ALPHA;
                 }
             } catch (error) {
+                this.status = 'offline';
+
                 log.error({
                     error,
                     msg: 'agent ping failed',

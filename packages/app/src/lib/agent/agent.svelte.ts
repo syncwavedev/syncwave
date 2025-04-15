@@ -20,6 +20,7 @@ import {
     infiniteRetry,
     log,
     PersistentConnection,
+    RPC_CALL_TIMEOUT_MS,
     RpcConnection,
     softNever,
     toPosition,
@@ -102,6 +103,9 @@ export class Agent {
     }
 
     status: 'online' | 'offline' = $state('offline');
+    latency: number | undefined = $state(undefined);
+
+    pingInterval: NodeJS.Timeout;
 
     constructor(
         client: TransportClient<unknown>,
@@ -124,6 +128,26 @@ export class Agent {
             })
         );
         this.crdtManager = new CrdtManager(this.rpc);
+
+        this.pingInterval = setInterval(async () => {
+            try {
+                const {time} = await this.rpc.echo({time: performance.now()});
+                const pingLatency = performance.now() - time;
+                if (this.latency === undefined) {
+                    this.latency = pingLatency;
+                } else {
+                    const ALPHA = 0.3;
+                    this.latency =
+                        this.latency * (1 - ALPHA) + pingLatency * ALPHA;
+                }
+            } catch (error) {
+                log.error({
+                    error,
+                    msg: 'agent ping failed',
+                });
+                this.persistentConnection.closeBaseConnection(error);
+            }
+        }, RPC_CALL_TIMEOUT_MS / 5);
     }
 
     async waitSettled() {
@@ -142,6 +166,7 @@ export class Agent {
         this.rpc.close(reason);
         this.crdtManager.close(reason);
         this.connection.close(reason);
+        clearInterval(this.pingInterval);
     }
 
     handleCardMouseEnter(boardId: BoardId, cardId: CardId) {

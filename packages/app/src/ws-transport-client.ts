@@ -94,7 +94,7 @@ export class WsClientConnection<T> implements Connection<T> {
         return this.subject.subscribe(cb);
     }
 
-    close(): void {
+    closeBaseConnection(): void {
         log.info({msg: 'ws client: close'});
         this.ws.close();
     }

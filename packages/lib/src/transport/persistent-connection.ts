@@ -51,14 +51,18 @@ export class PersistentConnection<T> implements Connection<T> {
         return this.subject.subscribe(cb);
     }
 
-    close(reason: unknown): void {
-        if (this.closed) return;
-        this.closed = true;
-
+    closeBaseConnection(reason: unknown): void {
         if (this.connection) {
             this.connection.close(reason);
             this.connection = undefined;
         }
+    }
+
+    close(reason: unknown): void {
+        if (this.closed) return;
+        this.closed = true;
+
+        this.closeBaseConnection(reason);
 
         this.subject.close(reason);
         this.events.close();

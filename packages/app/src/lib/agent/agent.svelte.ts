@@ -103,8 +103,8 @@ export class Agent {
     }
 
     status: 'online' | 'offline' = $state('offline');
-    latency: number | undefined = $state(undefined);
-    latencyProbes = $state(0);
+    pingLatency: number | undefined = $state(undefined);
+    pingProbesCount = $state(0);
 
     pingTimeout: NodeJS.Timeout | undefined;
     private open = true;
@@ -142,18 +142,19 @@ export class Agent {
             this.status = 'online';
 
             const pingLatency = performance.now() - time;
-            this.latencyProbes += 1;
+            this.pingProbesCount += 1;
             // first latency prob waits for connection to open, so it's not representative
             // of the actual latency
-            if (this.latencyProbes <= 1) {
+            if (this.pingProbesCount <= 1) {
                 return;
             }
 
-            if (this.latency === undefined) {
-                this.latency = pingLatency;
+            if (this.pingLatency === undefined) {
+                this.pingLatency = pingLatency;
             } else {
-                const ALPHA = 0.3;
-                this.latency = this.latency * (1 - ALPHA) + pingLatency * ALPHA;
+                const ALPHA = 0.5;
+                this.pingLatency =
+                    this.pingLatency * (1 - ALPHA) + pingLatency * ALPHA;
             }
         } catch (error) {
             this.status = 'offline';

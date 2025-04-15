@@ -22,9 +22,9 @@
             {/if}
         </span>
     </div>
-    {#if agent.latency}
+    {#if agent.pingLatency}
         <div>
-            Latency: ~{Math.round(agent.latency)}ms
+            Ping: ~{Math.round(agent.pingLatency)}ms
         </div>
     {/if}
     <div class="flex-1"></div>

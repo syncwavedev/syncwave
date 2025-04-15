@@ -328,7 +328,7 @@
         {/if}
     </div>
     <div
-        class="bg-surface-2 border-divider border-t h-6 items-center flex px-2"
+        class="bg-surface-1 border-divider border-t h-6 items-center flex px-2"
     >
         <StatusBar />
     </div>

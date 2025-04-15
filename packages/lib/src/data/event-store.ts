@@ -119,6 +119,6 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             })
             .toCursor();
 
-        return {offset: initialOffset, events: stream};
+        return {offset: initialOffset - 1, events: stream};
     }
 }

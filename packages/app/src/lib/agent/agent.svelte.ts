@@ -132,36 +132,39 @@ export class Agent {
         );
         this.crdtManager = new CrdtManager(this.rpc);
 
-        this.pingInterval = setInterval(async () => {
-            try {
-                const {time} = await this.rpc.echo({time: performance.now()});
-                this.status = 'online';
+        this.ping();
+        // todo: use blocking AsyncIterable and faster pace (we can't increase pace with setInterval, because it would close itself)
+        this.pingInterval = setInterval(() => this.ping(), RPC_CALL_TIMEOUT_MS);
+    }
 
-                const pingLatency = performance.now() - time;
-                this.latencyProbes += 1;
-                // first latency prob waits for connection to open, so it's not representative
-                // of the actual latency
-                if (this.latencyProbes <= 1) {
-                    return;
-                }
+    private async ping() {
+        try {
+            const {time} = await this.rpc.echo({time: performance.now()});
+            this.status = 'online';
 
-                if (this.latency === undefined) {
-                    this.latency = pingLatency;
-                } else {
-                    const ALPHA = 0.3;
-                    this.latency =
-                        this.latency * (1 - ALPHA) + pingLatency * ALPHA;
-                }
-            } catch (error) {
-                this.status = 'offline';
-
-                log.error({
-                    error,
-                    msg: 'agent ping failed',
-                });
-                this.persistentConnection.closeBaseConnection(error);
+            const pingLatency = performance.now() - time;
+            this.latencyProbes += 1;
+            // first latency prob waits for connection to open, so it's not representative
+            // of the actual latency
+            if (this.latencyProbes <= 1) {
+                return;
             }
-        }, RPC_CALL_TIMEOUT_MS / 5);
+
+            if (this.latency === undefined) {
+                this.latency = pingLatency;
+            } else {
+                const ALPHA = 0.3;
+                this.latency = this.latency * (1 - ALPHA) + pingLatency * ALPHA;
+            }
+        } catch (error) {
+            this.status = 'offline';
+
+            log.error({
+                error,
+                msg: 'agent ping failed',
+            });
+            this.persistentConnection.closeBaseConnection(error);
+        }
     }
 
     async waitSettled() {

@@ -652,7 +652,22 @@ export function createWriteApi() {
             handle: async (st, {boardId, diff}) => {
                 await whenAll([
                     st.ps.ensureBoardMember(boardId, 'admin'),
-                    st.tx.boards.apply(boardId, diff, writable({name: true})),
+                    st.tx.boards.apply(
+                        boardId,
+                        diff,
+                        writable<Board>({
+                            name: true,
+                            deletedAt: true,
+                            updatedAt: true,
+                            pk: false,
+                            createdAt: false,
+                            id: false,
+                            key: false,
+                            authorId: false,
+                            joinCode: true,
+                            joinRole: true,
+                        })
+                    ),
                 ]);
                 return {x: null};
             },

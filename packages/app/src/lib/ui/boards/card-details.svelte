@@ -192,7 +192,7 @@
             </div>
         </div>
         <hr />
-        <div class="flex flex-col gap-4 my-4 flex-1 relative">
+        <div class="flex flex-col gap-4 py-4 flex-1 relative">
             {#await detailsPromise then details}
                 {#each details.messages as message, index (message.id)}
                     <div class="flex flex-col mx-4 relative">
@@ -233,28 +233,24 @@
             {/await}
         </div>
     </div>
-    <div class="px-4 pb-4 flex gap-2 items-end">
-        <form
-            class="flex items-end bg-surface-0 border border-divider z-10 rounded-md w-full p-1.5"
-            onsubmit={onSendMessage}
+    <div class="px-4 py-3 flex items-end gap-1 border-t border-divider-subtle">
+        <button class="btn--icon bg-surface-2">
+            <PlusIcon />
+        </button>
+        <Editor
+            {fragment}
+            {me}
+            placeholder="Write a message..."
+            class="px-1 py-1 w-full"
+            onEnter={() => onSendMessage()}
+        />
+
+        <button
+            type="submit"
+            class="btn--icon ml-auto bg-surface-2"
+            disabled={isNewMessageEmpty}
         >
-            <button class="btn--icon">
-                <PlusIcon />
-            </button>
-            <Editor
-                {fragment}
-                {me}
-                placeholder="Write a message..."
-                class="px-1 py-1 w-full"
-                onEnter={() => onSendMessage()}
-            />
-            <button
-                type="submit"
-                class="btn--icon"
-                disabled={isNewMessageEmpty}
-            >
-                <ArrowUp />
-            </button>
-        </form>
+            <ArrowUp />
+        </button>
     </div>
 </div>

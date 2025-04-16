@@ -14,49 +14,55 @@
 </script>
 
 <Modal title="Manage Members" size="md">
-    <div class="flex flex-col mx-4 mt-2.5 mb-4">
-        {#each board.members as member (member.id)}
-            <div class="flex items-center py-1">
-                <Avatar name={member.fullName} />
-                <span class="ml-1.5">{member.fullName}</span>
-                <span class="ml-1.5 text-ink-detail"
-                    >{member.email} [{member.role}]</span
-                >
-                <button class="btn--icon ml-auto text-ink-body mr-2">
-                    <CrownIcon />
+    <div class="flex flex-col mx-4 mb-4">
+        <div
+            class="flex flex-col bg-surface-2 px-3 pt-1.5 pb-3 rounded-md mt-1.5"
+        >
+            {#each board.members as member (member.id)}
+                <div class="flex items-center py-1.5">
+                    <Avatar name={member.fullName} />
+                    <span class="ml-1.5">{member.fullName}</span>
+                    <span class="ml-1.5 text-ink-detail"
+                        >{member.email} [{member.role}]</span
+                    >
+                    <button class="btn--icon ml-auto text-ink-body mr-2">
+                        <CrownIcon />
+                    </button>
+                    <button class="btn--icon text-ink-body">
+                        <UserMinusIcon />
+                    </button>
+                </div>
+            {/each}
+            <input
+                name="invite"
+                autocomplete="off"
+                type="email"
+                class="input input-block p-2.5 bg-surface-0 mt-1.5"
+                placeholder="Enter an email address to invite..."
+            />
+        </div>
+
+        <div class="flex flex-col bg-surface-2 p-3 rounded-md mt-3">
+            <p class="text-center mb-2">
+                Anyone with this link can join and edit the board
+            </p>
+            <input
+                autocomplete="off"
+                type="text"
+                class="input input-block text-ink-detail p-2.5 bg-surface-0 mb-2"
+                value={joinLink}
+                disabled
+            />
+            <div class="flex justify-center">
+                <button class="btn-ghost text-ink-body mr-2">
+                    <RefreshIcon />
+                    Refresh Link
                 </button>
-                <button class="btn--icon text-ink-body">
-                    <UserMinusIcon />
+                <button class="btn-ghost text-ink-body">
+                    <ClipboardCopyIcon />
+                    Copy Link
                 </button>
             </div>
-        {/each}
-        <input
-            name="invite"
-            autocomplete="off"
-            type="email"
-            class="input input-block py-2.5 bg-surface-0 mt-2"
-            placeholder="Enter an email address to invite..."
-        />
-        <hr class="my-4" />
-        <p class="text-center mb-2">
-            Anyone with this link can join and edit the board
-        </p>
-        <input
-            autocomplete="off"
-            type="text"
-            class="input input-block text-ink-detail py-2.5 bg-surface-0 mb-2"
-            value={joinLink}
-            disabled
-        />
-        <div class="flex justify-center">
-            <button class="btn-ghost text-ink-body mr-2">
-                <RefreshIcon />
-                Refresh Link
-            </button>
-            <button class="btn-ghost text-ink-body">
-                <ClipboardCopyIcon />
-                Copy Link
-            </button>
         </div>
     </div>
 </Modal>

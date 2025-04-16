@@ -36,34 +36,34 @@
         <input
             autocomplete="off"
             type="title"
-            class="input py-3.5"
+            class="input input-block p-2.5"
             placeholder="Board name"
             value={board.name}
         />
-        <hr />
-        <button
-            class="flex w-full cursor-default items-center gap-2 py-3.5"
-            onclick={() => modalManager.navigate(inviteForm, false)}
-        >
-            <span>Members</span>
-            <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                <span class="text-sm">{board.members.length} members</span>
-                <ChevronIcon />
-            </span>
-        </button>
-        <hr />
-        <button
-            class="flex w-full cursor-default items-center gap-2 py-3.5"
-            onclick={() => modalManager.navigate(manageColumns, false)}
-        >
-            <span>Columns</span>
-            <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                <span class="text-sm">{board.columns.length} columns</span>
-                <ChevronIcon />
-            </span>
-        </button>
+        <div class="flex flex-col bg-surface-2 px-2.5 rounded-md mt-4 mb-2">
+            <button
+                class="flex w-full cursor-default items-center gap-2 py-3.5"
+                onclick={() => modalManager.navigate(inviteForm, false)}
+            >
+                <span>Members</span>
+                <span class="text-ink-body ml-auto flex items-center gap-1.5">
+                    <span class="text-sm">{board.members.length} members</span>
+                    <ChevronIcon />
+                </span>
+            </button>
+            <hr />
+            <button
+                class="flex w-full cursor-default items-center gap-2 py-3.5"
+                onclick={() => modalManager.navigate(manageColumns, false)}
+            >
+                <span>Columns</span>
+                <span class="text-ink-body ml-auto flex items-center gap-1.5">
+                    <span class="text-sm">{board.columns.length} columns</span>
+                    <ChevronIcon />
+                </span>
+            </button>
+        </div>
     </div>
-    <hr />
     <div class="modal-footer mx-4">
         <button class="btn-ghost mx-auto" onclick={onDeleteBoard}>
             <TrashIcon /> Delete {board.name}

@@ -3,7 +3,7 @@
 }
 
 .input-block {
-    @apply px-2 rounded-sm border border-divider-subtle;
+    @apply rounded-sm border border-divider;
 }
 
 .input--bordered {

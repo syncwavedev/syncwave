@@ -1,9 +1,9 @@
 @theme static {
     /* Gray */
     --color-gray-20: oklch(98.4% 0 156deg);
-    --color-gray-40: oklch(96.8% 0.0015 156deg);
-    --color-gray-50: oklch(96% 0.0025 156deg);
-    --color-gray-60: oklch(95.2% 0.0025 156deg);
+    --color-gray-40: oklch(96.8% 0.002 156deg);
+    --color-gray-50: oklch(96% 0.0015 156deg);
+    --color-gray-60: oklch(95.2% 0.001 156deg);
     --color-gray-80: oklch(93.6% 0 156deg);
     --color-gray-100: oklch(92% 0 110deg);
     --color-gray-125: oklch(90% 0 110deg);
@@ -184,7 +184,7 @@
         --theme-color-ink-disabled: var(--color-slate-500);
         --theme-color-ink-danger: var(--color-red-350);
 
-        --theme-color-divider-subtle: var(--color-slate-850);
+        --theme-color-divider-subtle: var(--color-slate-800);
         --theme-color-divider: var(--color-slate-750);
         --theme-color-divider-object: var(--color-slate-750);
 

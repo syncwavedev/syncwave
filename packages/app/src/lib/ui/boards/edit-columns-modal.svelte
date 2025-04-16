@@ -30,10 +30,10 @@
 </script>
 
 <Modal title="Manage Columns" size="md">
-    <div class="flex flex-col mx-4 my-1">
+    <div class="flex flex-col mx-4 mb-4 rounded-md">
         {#each columns as column, index (column.id)}
             <div
-                class="flex items-center -mx-1 px-1 my-0.5 focus-within:bg-surface-3 rounded-sm group"
+                class="flex items-center -mx-1 px-1 my-0.5 focus-within:bg-surface-2 rounded-sm group"
             >
                 <ColumnIcon total={columns.length - 1} active={index} />
                 <input
@@ -52,15 +52,15 @@
                 </span>
                 <button
                     onclick={() => deleteColumn(column)}
-                    class="btn--icon invisible group-focus-within:visible group-hover:visible"
+                    class="text-ink-body btn--icon invisible group-focus-within:visible group-hover:visible"
                 >
                     <TrashIcon />
                 </button>
             </div>
-            <hr />
+            <hr class="border-dashed" />
         {/each}
         <div
-            class="flex items-center my-0.5 -mx-1 px-1 focus-within:bg-surface-3 rounded-sm"
+            class="flex items-center my-0.5 -mx-1 px-1 focus-within:bg-surface-2 rounded-sm"
         >
             <div class="text-ink-detail"><CircleDashedIcon /></div>
             <input

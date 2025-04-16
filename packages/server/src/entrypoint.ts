@@ -312,7 +312,6 @@ async function upgradeKVStore({store, jwtSecret}: Options) {
         new MemHub(),
         NodeCryptoProvider,
         options.emailProvider,
-        new NodeJwtProvider(jwtSecret),
         options.uiUrl
     );
 

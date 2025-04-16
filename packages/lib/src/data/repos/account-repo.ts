@@ -12,6 +12,7 @@ import {
     Doc,
     DocRepo,
     type OnDocChange,
+    type QueryOptions,
     type Recipe,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
@@ -132,7 +133,11 @@ export class AccountRepo {
         }
     }
 
-    update(id: AccountId, recipe: Recipe<Account>): Promise<Account> {
-        return this.rawRepo.update([id], recipe);
+    update(
+        id: AccountId,
+        recipe: Recipe<Account>,
+        options?: QueryOptions
+    ): Promise<Account> {
+        return this.rawRepo.update([id], recipe, options);
     }
 }

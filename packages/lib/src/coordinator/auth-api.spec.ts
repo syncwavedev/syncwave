@@ -6,7 +6,6 @@ import {MemEmailProvider} from '../data/mem-email-provider.js';
 import {MemMvccStore} from '../kv/mem-mvcc-store.js';
 import {TupleStore} from '../kv/tuple-store.js';
 import {NodeCryptoProvider} from '../node-crypto-provider.js';
-import {NodeJwtProvider} from '../node-jwt-provider.js';
 import {MemHub} from '../transport/hub.js';
 import type {RpcMessageId} from '../transport/rpc-message.js';
 import {createUuidV4} from '../uuid.js';
@@ -22,7 +21,6 @@ describe('AccountRepo', () => {
             new MemHub(),
             NodeCryptoProvider,
             new MemEmailProvider(),
-            new NodeJwtProvider('test-jwt-secret'),
             'https://example.com/'
         );
 

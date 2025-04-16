@@ -9,7 +9,7 @@ import {getNow, Timestamp} from '../timestamp.js';
 import type {Hub} from '../transport/hub.js';
 import type {Tuple} from '../tuple.js';
 import {assert, type Brand, whenAll} from '../utils.js';
-import {Uuid} from '../uuid.js';
+import {createUuidV4, Uuid} from '../uuid.js';
 import {type Principal, system} from './auth.js';
 import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
@@ -17,11 +17,7 @@ import type {ChangeOptions} from './doc-repo.js';
 import {MemberInfoDto} from './dto.js';
 import {EmailService} from './email-service.js';
 import {EventStoreReader, EventStoreWriter} from './event-store.js';
-import type {
-    CryptoProvider,
-    EmailProvider,
-    JwtProvider,
-} from './infrastructure.js';
+import type {CryptoProvider, EmailProvider} from './infrastructure.js';
 import {createJoinCode} from './join-code.js';
 import {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
@@ -51,6 +47,8 @@ export interface Config {
 }
 
 export interface DataTx {
+    readonly transactionId: TransactionId;
+    readonly timestamp: Timestamp;
     readonly version: Cell<number>;
     readonly emailService: EmailService;
     readonly awareness: AwarenessStore;
@@ -149,6 +147,29 @@ export function MemberInfoChangeEvent() {
     });
 }
 
+export function createTransactionId() {
+    return createUuidV4() as TransactionId;
+}
+
+export type TransactionId = Brand<Uuid, 'transaction_id'>;
+
+export function TransactionId() {
+    return Uuid<TransactionId>();
+}
+
+// we need transaction events to inform clients when they can discard their optimistic state
+// not all entity modifications emit transaction event, only those who don't use CRDT for sync (e.g. members)
+export function TransactionEvent() {
+    return Type.Object({
+        kind: Type.Literal('transaction'),
+        transactionId: TransactionId(),
+        ts: Timestamp(),
+    });
+}
+
+export interface TransactionEvent
+    extends Static<ReturnType<typeof TransactionEvent>> {}
+
 export interface MemberInfoChangeEvent
     extends Static<ReturnType<typeof MemberInfoChangeEvent>> {}
 
@@ -184,6 +205,7 @@ export function ChangeEvent() {
         MessageChangeEvent(),
         AttachmentChangeEvent(),
         MemberInfoChangeEvent(),
+        TransactionEvent(),
     ]);
 }
 
@@ -211,7 +233,6 @@ export class DataLayer {
         private readonly hub: Hub,
         private readonly crypto: CryptoProvider,
         private readonly email: EmailProvider,
-        private readonly jwtService: JwtProvider,
         private readonly uiUrl: string
     ) {
         this.esReader = new EventStoreReader(
@@ -236,8 +257,10 @@ export class DataLayer {
 
     async transact<T>(
         principal: Principal,
-        fn: (tx: DataTx) => Promise<T>
+        fn: (tx: DataTx) => Promise<T>,
+        overrideTransactionId?: TransactionId
     ): Promise<T> {
+        const transactionId = overrideTransactionId ?? createTransactionId();
         let effects: AsyncCallback[] = [];
         const result = await this.kv.transact(async tx => {
             // clear effects because of transaction retries
@@ -354,6 +377,8 @@ export class DataLayer {
 
             const version = new Cell(isolate(['version_v2'])(tx), 0);
 
+            const timestamp = getNow();
+
             const dataTx: DataTx = {
                 version,
                 boardService,
@@ -374,6 +399,8 @@ export class DataLayer {
                 config,
                 rawTx: tx,
                 scheduleEffect,
+                timestamp,
+                transactionId,
             };
 
             const result = await fn(dataTx);
@@ -561,8 +588,13 @@ async function logAccountChange(
     const members = await tx.members
         .getByUserId(account.userId, {includeDeleted: true})
         .toArray();
-    const ts = getNow();
-    const event: AccountChangeEvent = {type: 'account', id, diff, ts, kind};
+    const event: AccountChangeEvent = {
+        type: 'account',
+        id,
+        diff,
+        ts: tx.timestamp,
+        kind,
+    };
     await whenAll([
         tx.esWriter.append(userEvents(account.userId), event),
         ...members.map(member =>
@@ -574,7 +606,7 @@ async function logAccountChange(
                     role: member.role,
                     userId: member.userId,
                 },
-                ts,
+                ts: tx.timestamp,
             })
         ),
     ]);
@@ -587,8 +619,13 @@ async function logUserChange(
     const members = await tx.members
         .getByUserId(id, {includeDeleted: true})
         .toArray();
-    const ts = getNow();
-    const event: UserChangeEvent = {type: 'user', id, diff, ts, kind};
+    const event: UserChangeEvent = {
+        type: 'user',
+        id,
+        diff,
+        ts: tx.timestamp,
+        kind,
+    };
     await whenAll([
         tx.esWriter.append(userEvents(id), event),
         tx.esWriter.append(profileEvents(id), event),
@@ -602,8 +639,13 @@ async function logBoardChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Board>
 ) {
-    const ts = getNow();
-    const event: BoardChangeEvent = {type: 'board', id, diff, ts, kind};
+    const event: BoardChangeEvent = {
+        type: 'board',
+        id,
+        diff,
+        ts: tx.timestamp,
+        kind,
+    };
     await whenAll([
         tx.esWriter.append(boardEvents(id), event),
         tx.members
@@ -637,11 +679,26 @@ async function logMemberChange(
             kind: 'create',
         });
     }
-    const ts = getNow();
-    const event: MemberChangeEvent = {type: 'member', id, diff, ts, kind};
+    const event: MemberChangeEvent = {
+        type: 'member',
+        id,
+        diff,
+        ts: tx.timestamp,
+        kind,
+    };
     await whenAll([
         tx.esWriter.append(boardEvents(member.boardId), event),
         tx.esWriter.append(userEvents(member.userId), event),
+    ]);
+
+    const transactionEvent: TransactionEvent = {
+        kind: 'transaction',
+        transactionId: tx.transactionId,
+        ts: tx.timestamp,
+    };
+    await whenAll([
+        tx.esWriter.append(boardEvents(member.boardId), transactionEvent),
+        tx.esWriter.append(userEvents(member.userId), transactionEvent),
     ]);
 }
 
@@ -651,8 +708,13 @@ async function logCardChange(
 ) {
     const card = await tx.cards.getById(id, {includeDeleted: true});
     assert(card !== undefined, `logCardChange: card ${id} not found`);
-    const ts = getNow();
-    const event: CardChangeEvent = {type: 'card', id, diff, ts, kind};
+    const event: CardChangeEvent = {
+        type: 'card',
+        id,
+        diff,
+        ts: tx.timestamp,
+        kind,
+    };
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }
 
@@ -662,8 +724,13 @@ async function logColumnChange(
 ) {
     const column = await tx.columns.getById(id, {includeDeleted: true});
     assert(column !== undefined, `logColumnChange: column ${id} not found`);
-    const ts = getNow();
-    const event: ColumnChangeEvent = {type: 'column', id, diff, ts, kind};
+    const event: ColumnChangeEvent = {
+        type: 'column',
+        id,
+        diff,
+        ts: tx.timestamp,
+        kind,
+    };
     await tx.esWriter.append(boardEvents(column.boardId), event);
 }
 
@@ -678,8 +745,13 @@ async function logMessageChange(
         card !== undefined,
         `logMessageChange: card ${message.cardId} not found`
     );
-    const ts = getNow();
-    const event: MessageChangeEvent = {type: 'message', id, diff, ts, kind};
+    const event: MessageChangeEvent = {
+        type: 'message',
+        id,
+        diff,
+        ts: tx.timestamp,
+        kind,
+    };
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }
 
@@ -699,12 +771,11 @@ async function logAttachmentChange(
         card !== undefined,
         `logAttachmentChange: card ${attachment.cardId} not found`
     );
-    const ts = getNow();
     const event: AttachmentChangeEvent = {
         type: 'attachment',
         id,
         diff,
-        ts,
+        ts: tx.timestamp,
         kind,
     };
     await tx.esWriter.append(boardEvents(card.boardId), event);

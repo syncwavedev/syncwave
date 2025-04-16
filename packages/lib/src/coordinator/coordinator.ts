@@ -40,7 +40,6 @@ export class CoordinatorServer {
             this.options.hub,
             this.options.cryptoProvider,
             options.emailProvider,
-            options.jwtProvider,
             options.uiUrl
         );
         const authenticator = new Authenticator(

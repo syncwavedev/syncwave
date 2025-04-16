@@ -9,7 +9,7 @@ import {createApi, handler, type InferRpcClient} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {BoardService} from './board-service.js';
-import type {DataTx} from './data-layer.js';
+import {type DataTx} from './data-layer.js';
 import {
     AttachmentDto,
     ColumnDto,
@@ -33,7 +33,7 @@ import {createAttachmentId} from './repos/attachment-repo.js';
 import {Board, type BoardId} from './repos/board-repo.js';
 import {type Card, type CardId} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
-import {type Member, type MemberId, MemberRole} from './repos/member-repo.js';
+import {MemberRole, type Member, type MemberId} from './repos/member-repo.js';
 import {type Message, type MessageId} from './repos/message-repo.js';
 import {type User, type UserId} from './repos/user-repo.js';
 import {
@@ -461,12 +461,13 @@ export function createWriteApi() {
                 return {boardKey: board.key};
             },
         }),
-        declineInvite: handler({
+        updateMemberRole: handler({
             req: Type.Object({
                 memberId: Uuid<MemberId>(),
+                role: MemberRole(),
             }),
             res: Type.Object({}),
-            handle: async (st, {memberId}) => {
+            handle: async (st, {memberId, role}) => {
                 const member = await st.tx.members.getById(memberId, {
                     includeDeleted: true,
                 });
@@ -478,12 +479,33 @@ export function createWriteApi() {
                     );
                 }
 
-                await st.ps.ensureCanManage(member.boardId, member.role);
+                if (member.role === role) {
+                    return {};
+                }
+
+                await whenAll([
+                    st.ps.ensureCanManage(member.boardId, member.role),
+                    st.ps.ensureCanManage(member.boardId, role),
+                ]);
+
+                if (member.role === 'owner') {
+                    const allMembers = await st.tx.members
+                        .getByBoardId(member.boardId)
+                        .filter(x => x.role === 'owner')
+                        .toArray();
+
+                    if (allMembers.length === 1) {
+                        throw new BusinessError(
+                            'cannot remove the last owner',
+                            'last_owner'
+                        );
+                    }
+                }
 
                 await st.tx.members.update(
                     memberId,
                     x => {
-                        x.deletedAt = getNow();
+                        x.role = role;
                     },
                     {includeDeleted: true}
                 );

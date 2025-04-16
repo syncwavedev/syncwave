@@ -16,9 +16,11 @@ import {
     createMessageId,
     createRichtext,
     createRpcClient,
+    createTransactionId,
     getNow,
     infiniteRetry,
     log,
+    MemberRole,
     PersistentConnection,
     RPC_CALL_TIMEOUT_MS,
     RpcConnection,
@@ -42,6 +44,7 @@ import {
     type CrdtDoc,
     type CryptoProvider,
     type Member,
+    type MemberId,
     type Message,
     type MeViewDataDto,
     type Placement,
@@ -162,7 +165,13 @@ export class Agent {
                 return;
             }
 
-            this.pingLatency = pingLatency;
+            if (this.pingLatency === pingLatency) {
+                // use different value to indicate liveness of the board
+                // otherwise user might assume that something isn't working and ping latency is stuck
+                this.pingLatency = pingLatency + 1;
+            } else {
+                this.pingLatency = pingLatency;
+            }
         } catch (error) {
             this.status = 'offline';
 
@@ -609,6 +618,31 @@ export class Agent {
         return ctx.run(() => this.observeCard(dto));
     }
 
+    createMember(boardId: BoardId, email: string, role: MemberRole) {
+        const transactionId = createTransactionId();
+        this.rpc
+            .createMember({boardId, email, role}, {transactionId})
+            .catch(error => {
+                log.error({error, msg: 'createMember failed'});
+            });
+    }
+
+    updateMemberRole(memberId: MemberId, role: MemberRole) {
+        const transactionId = createTransactionId();
+        this.rpc
+            .updateMemberRole({memberId, role}, {transactionId})
+            .catch(error => {
+                log.error({error, msg: 'updateMemberRole failed'});
+            });
+    }
+
+    deleteMember(memberId: MemberId) {
+        const transactionId = createTransactionId();
+        this.rpc.deleteMember({memberId}, {transactionId}).catch(error => {
+            log.error({error, msg: 'deleteMember failed'});
+        });
+    }
+
     private observeCard(dto: CardTreeViewDataDto): CardTreeView {
         const cardData = CardTreeViewData.create(dto, this.crdtManager);
 
@@ -687,6 +721,8 @@ export class Agent {
             this.crdtManager.applyRemoteChange(event);
         } else if (event.kind === 'snapshot') {
             this.syncTargets().forEach(x => x.upsertMemberInfo(event.info));
+        } else if (event.kind === 'transaction') {
+            // cleanup optimistic state
         } else {
             assertNever(event.kind);
         }

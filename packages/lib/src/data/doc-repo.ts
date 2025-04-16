@@ -1,4 +1,4 @@
-import {Type} from '@sinclair/typebox';
+import {type Static, Type} from '@sinclair/typebox';
 import {context} from '../context.js';
 import {Crdt, CrdtCodec, type CrdtDiff} from '../crdt/crdt.js';
 import {AppError} from '../errors.js';
@@ -27,13 +27,6 @@ export class ConstraintError extends AppError {
     }
 }
 
-export interface Doc<TKey extends Tuple> {
-    readonly pk: TKey;
-    readonly createdAt: Timestamp;
-    updatedAt: Timestamp;
-    deletedAt?: Timestamp;
-}
-
 export function Doc<T extends Tuple>(pk: ToSchema<T>) {
     return Type.Object({
         pk: pk,
@@ -42,6 +35,9 @@ export function Doc<T extends Tuple>(pk: ToSchema<T>) {
         deletedAt: Type.Optional(Timestamp()),
     });
 }
+
+export interface Doc<TKey extends Tuple>
+    extends Static<ReturnType<typeof Doc<TKey>>> {}
 
 export type IndexSpec<T> =
     | {

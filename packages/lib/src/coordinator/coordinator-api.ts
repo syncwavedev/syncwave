@@ -31,19 +31,23 @@ export function createCoordinatorApi() {
     const adaptedWriteApi = applyMiddleware(
         createWriteApi(),
         async (next, state: CoordinatorApiState, ctx) => {
-            await state.dataLayer.transact(ctx.principal, async tx => {
-                await next(
-                    new WriteApiState(
-                        tx,
-                        state.objectStore,
-                        tx.permissionService,
-                        state.crypto,
-                        tx.boardService,
-                        state.jwtService,
-                        tx.memberService
-                    )
-                );
-            });
+            await state.dataLayer.transact(
+                ctx.principal,
+                async tx => {
+                    await next(
+                        new WriteApiState(
+                            tx,
+                            state.objectStore,
+                            tx.permissionService,
+                            state.crypto,
+                            tx.boardService,
+                            state.jwtService,
+                            tx.memberService
+                        )
+                    );
+                },
+                ctx.headers.transactionId
+            );
         }
     );
 

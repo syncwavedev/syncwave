@@ -1,4 +1,5 @@
 import {Type, type Static} from '@sinclair/typebox';
+import {TransactionId} from '../data/data-layer.js';
 import type {Brand} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
 
@@ -15,6 +16,7 @@ export function createRpcMessageId(): RpcMessageId {
 export function RpcMessageHeaders() {
     return Type.Object({
         auth: Type.Optional(Type.String()),
+        transactionId: Type.Optional(TransactionId()),
         traceparent: Type.String(),
         tracestate: Type.String(),
     });

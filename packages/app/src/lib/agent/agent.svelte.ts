@@ -102,7 +102,7 @@ export class Agent {
         return [...this.activeBoards, ...this.activeCards, ...this.activeMes];
     }
 
-    status: 'online' | 'offline' = $state('offline');
+    status: 'online' | 'unstable' | 'offline' = $state('offline');
     pingLatency: number | undefined = $state(undefined);
     pingProbesCount = $state(0);
 
@@ -137,9 +137,22 @@ export class Agent {
     }
 
     private async ping() {
+        const PING_INTERVAL_MS = RPC_CALL_TIMEOUT_MS / 5;
+        let unstable = false;
+        const unstableTimeoutId = setTimeout(() => {
+            unstable = true;
+            if (this.status === 'online') {
+                this.status = 'unstable';
+            }
+        }, PING_INTERVAL_MS);
+
         try {
             const {time} = await this.rpc.echo({time: performance.now()});
-            this.status = 'online';
+            if (unstable) {
+                this.status = 'unstable';
+            } else {
+                this.status = 'online';
+            }
 
             const pingLatency = performance.now() - time;
             this.pingProbesCount += 1;
@@ -149,13 +162,7 @@ export class Agent {
                 return;
             }
 
-            if (this.pingLatency === undefined) {
-                this.pingLatency = pingLatency;
-            } else {
-                const ALPHA = 0.5;
-                this.pingLatency =
-                    this.pingLatency * (1 - ALPHA) + pingLatency * ALPHA;
-            }
+            this.pingLatency = pingLatency;
         } catch (error) {
             this.status = 'offline';
 
@@ -165,8 +172,9 @@ export class Agent {
             });
             this.persistentConnection.disconnect(error);
         } finally {
+            clearTimeout(unstableTimeoutId);
             if (this.open) {
-                setTimeout(() => this.ping(), RPC_CALL_TIMEOUT_MS / 5);
+                setTimeout(() => this.ping(), PING_INTERVAL_MS);
             }
         }
     }

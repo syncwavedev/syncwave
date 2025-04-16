@@ -96,7 +96,7 @@
     <Scrollable
         bind:viewportRef
         orientation="vertical"
-        viewportClass="h-full max-h-[calc(100vh-7.25rem)] min-h-[calc(100vh-7.25rem)] pb-2"
+        viewportClass="h-full max-h-[calc(100vh-7.25rem)] min-h-[calc(100vh-7.25rem)]"
         type="hover"
     >
         <div

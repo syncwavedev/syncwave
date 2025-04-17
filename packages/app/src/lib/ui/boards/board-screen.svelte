@@ -263,7 +263,7 @@
             draggable
             bind:viewportRef
         >
-            {@const PADDING_X = '0.5rem'}
+            {@const PADDING_X = '0.75rem'}
             <div
                 bind:this={boardRef}
                 bind:this={columnsContainerRef}

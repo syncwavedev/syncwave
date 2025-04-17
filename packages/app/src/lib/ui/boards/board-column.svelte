@@ -64,15 +64,15 @@
 </script>
 
 <div
-    class="flex flex-shrink-0 flex-col group"
+    class="flex flex-shrink-0 flex-col h-full"
     style={`width: ${COLUMN_WIDTH}`}
     data-column-id={column.id}
 >
     <div
-        class="flex items-center px-2 mb-2"
+        class="flex items-center px-3 mb-2 flex-shrink-0"
         data-disable-scroll-view-drag="true"
     >
-        <div class="flex items-center gap-1.5 font-semibold text-sm icon-sm">
+        <div class="flex items-center gap-1.5 font-medium text-sm icon-sm">
             <ColumnIcon active={columnPosition} total={columnsCount} />
 
             {column.name}
@@ -95,12 +95,13 @@
 
     <Scrollable
         bind:viewportRef
+        viewportClass="max-h-full"
+        class="flex-grow overflow-y-auto"
         orientation="vertical"
-        viewportClass="h-full max-h-[calc(100vh-7.25rem)] min-h-[calc(100vh-7.25rem)]"
         type="hover"
     >
         <div
-            class="mx-2 flex h-full min-h-10 flex-col gap-1.5"
+            class="mx-3 flex h-full min-h-10 flex-col gap-1.5"
             bind:this={cardsContainerRef}
         >
             <ListAnimator

@@ -33,7 +33,7 @@
     });
 </script>
 
-<div class="flex items-center gap-4 text-xs text-ink-detail w-full h-9">
+<div class="flex items-center gap-4 text-xs text-ink-detail w-full">
     <div title={statusTitle} class="flex items-center gap-1.5">
         {#if agent.status === 'online'}
             <div class="w-2 h-2 rounded-full bg-green-500"></div>

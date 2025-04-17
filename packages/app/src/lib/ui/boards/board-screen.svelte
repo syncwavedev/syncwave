@@ -1,7 +1,6 @@
 <script lang="ts">
     import {compareNumbers, log, type Awareness} from 'syncwave';
     import {onMount, tick} from 'svelte';
-    import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import BoardColumn from './board-column.svelte';
     import Scrollable from '../components/scrollable.svelte';
     import type {
@@ -25,6 +24,7 @@
     import BoardSettingsModal from './board-settings-modal.svelte';
     import {COLUMN_WIDTH} from './constants';
     import StatusBar from './status-bar.svelte';
+    import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 
     const {
         board,
@@ -188,16 +188,6 @@
         }
     });
 
-    // let editMyProfileOpen = $state(false);
-
-    // function editMyProfile() {
-    //     editMyProfileOpen = true;
-
-    //     router.action(() => {
-    //         editMyProfileOpen = false;
-    //     }, true);
-    // }
-
     let columnsContainerRef: HTMLDivElement | null = $state(null);
     let viewportRef: HTMLDivElement | null = $state(null);
 
@@ -230,105 +220,131 @@
     <BoardSettingsModal {board} />
 {/snippet}
 
-<div class="flex flex-col">
-    <div class="flex w-full h-screen">
-        <div class="bg-surface-0 flex min-w-0 grow flex-col">
-            <div class="mt-2 mb-3 flex items-center px-4">
-                <button
-                    class="btn-ghost font-semibold -ml-1"
-                    onclick={() => modalManager.open(boardCommands)}
-                >
-                    <span>{board.name}</span>
-                    <ChevronDownIcon />
-                </button>
-
-                <div class="text-2xl text-ink-detail ml-auto flex gap-2">
-                    {#each board.onlineUsers as user (user.user.id)}
-                        <div
-                            class={user.state.active ? '' : 'opacity-50'}
-                            animate:flip={{duration: 200}}
-                        >
-                            <Avatar
-                                title={`${user.user.fullName} - ${user.state.active ? 'online' : 'away'}`}
-                                class="border-blue-400 border-2"
-                                name={user.user.fullName}
-                            />
-                        </div>
-                    {/each}
-                </div>
-                <button
-                    onclick={() => modalManager.open(boardSettings)}
-                    class="btn--icon text-ink-body"
-                >
-                    <EllipsisIcon />
-                </button>
-
-                <!-- <button onclick={editMyProfile} class="btn--icon">
-                    <UserIcon />
-                </button>
-                <EditProfileDialog
-                    {me}
-                    open={editMyProfileOpen}
-                    onClose={() => {
-                        editMyProfileOpen = false;
-                    }}
-                /> -->
-            </div>
-            <Scrollable
-                orientation="horizontal"
-                class="flex-grow"
-                type="scroll"
-                draggable
-                bind:viewportRef
+<div class="flex w-screen h-screen">
+    <div class="flex min-w-0 flex-col">
+        <div class="board-header">
+            <button
+                class="btn-ghost -ml-1"
+                onclick={() => modalManager.open(boardCommands)}
             >
-                {@const PADDING_X = '0.5rem'}
-                <div
-                    bind:this={boardRef}
-                    bind:this={columnsContainerRef}
-                    class="no-select flex divide-x-[0px] divide-[#dfdfdf] border-y-[0px] border-[#dfdfdf]"
-                    style={`padding-right: calc(100vw - ${PADDING_X} - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px); padding-left: ${PADDING_X}`}
-                >
-                    {#each board.columns as column, i (column.id)}
-                        <div animate:flip={{duration: DND_REORDER_DURATION_MS}}>
-                            <BoardColumn
-                                {column}
-                                onCardClick={selectCard}
-                                activeCardId={selectedCard?.id}
-                                onCreateCard={() => createCard(column)}
-                                columnPosition={i}
-                                columnsCount={board.columns.length - 1}
-                            />
-                        </div>
-                    {/each}
-                </div>
-            </Scrollable>
-            <hr />
-            <div class="px-4">
-                <StatusBar />
+                <span>{board.name}</span>
+                <ChevronDownIcon />
+            </button>
+
+            <div class="text-2xl text-ink-detail ml-auto flex gap-2">
+                {#each board.onlineUsers as user (user.user.id)}
+                    <div
+                        class={user.state.active ? '' : 'opacity-50'}
+                        animate:flip={{duration: 200}}
+                    >
+                        <Avatar
+                            title={`${user.user.fullName} - ${user.state.active ? 'online' : 'away'}`}
+                            class="border-blue-400 border-2"
+                            name={user.user.fullName}
+                        />
+                    </div>
+                {/each}
             </div>
+            <button
+                onclick={() => modalManager.open(boardSettings)}
+                class="btn--icon text-ink-body mr-1.5"
+            >
+                <EllipsisIcon />
+            </button>
+
+            <button class="btn--icon avatar-sm">
+                <Avatar name={me.fullName} />
+            </button>
         </div>
-        {#if selectedCard !== null}
-            {#key selectedCard.id}
-                <ResizablePanel
-                    freeSide="left"
-                    defaultSize={detailsWidth}
-                    minWidth={320}
-                    maxWidth={1600}
-                    onWidthChange={w => {
-                        detailsWidth = w;
-                        PanelSizeManager.saveWidth('right', w);
-                    }}
-                >
-                    <CardDetails
-                        {me}
-                        {awareness}
-                        card={selectedCard}
-                        {columnOptions}
-                        {assigneeOptions}
-                        onDelete={() => deleteCard(selectedCard!)}
-                    />
-                </ResizablePanel>
-            {/key}
-        {/if}
+        <hr />
+        <Scrollable
+            orientation="horizontal"
+            type="scroll"
+            draggable
+            bind:viewportRef
+        >
+            {@const PADDING_X = '0.5rem'}
+            <div
+                bind:this={boardRef}
+                bind:this={columnsContainerRef}
+                class="flex board-content"
+                style={`padding-right: calc(100vw - ${PADDING_X} - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px); padding-left: ${PADDING_X}`}
+            >
+                {#each board.columns as column, i (column.id)}
+                    <div
+                        animate:flip={{duration: DND_REORDER_DURATION_MS}}
+                        class="flex-shrink-0"
+                    >
+                        <BoardColumn
+                            {column}
+                            onCardClick={selectCard}
+                            activeCardId={selectedCard?.id}
+                            onCreateCard={() => createCard(column)}
+                            columnPosition={i}
+                            columnsCount={board.columns.length - 1}
+                        />
+                    </div>
+                {/each}
+            </div>
+        </Scrollable>
+        <hr />
+        <div class="board-footer">
+            <StatusBar />
+        </div>
     </div>
+    {#if selectedCard !== null}
+        {#key selectedCard.id}
+            <ResizablePanel
+                freeSide="left"
+                defaultSize={detailsWidth}
+                minWidth={320}
+                maxWidth={1600}
+                onWidthChange={w => {
+                    detailsWidth = w;
+                    PanelSizeManager.saveWidth('right', w);
+                }}
+            >
+                <CardDetails
+                    {me}
+                    {awareness}
+                    card={selectedCard}
+                    {columnOptions}
+                    {assigneeOptions}
+                    onDelete={() => deleteCard(selectedCard!)}
+                />
+            </ResizablePanel>
+        {/key}
+    {/if}
 </div>
+
+<style>
+    :root {
+        --header-height: 2.5rem;
+        --footer-height: 2.5rem;
+        --content-height: calc(
+            100vh - var(--header-height) - var(--footer-height)
+        );
+    }
+
+    .board-header {
+        height: var(--header-height);
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        padding-inline: 1.25rem;
+    }
+
+    .board-content {
+        height: var(--content-height);
+        overflow-y: auto;
+        padding-block-start: 0.75rem;
+        padding-block-end: 0.25rem;
+    }
+
+    .board-footer {
+        height: var(--footer-height);
+        padding-inline: 1.25rem;
+        display: flex;
+        flex-shrink: 0;
+    }
+</style>

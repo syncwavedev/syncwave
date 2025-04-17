@@ -117,7 +117,7 @@
 <div
     class="border-divider bg-surface-0 dark:bg-surface-1 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
-    <div class="flex items-center px-4 py-2">
+    <div class="flex items-center px-6 h-[2.5rem]">
         <div
             class="flex items-center gap-0.5 icon-base select-text font-medium"
         >
@@ -154,13 +154,14 @@
             <TimesIcon />
         </button>
     </div>
+    <hr />
     <!-- Scrollable Content Section -->
     <div
         bind:this={scrollable}
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="mx-4 mt-1">
+        <div class="mx-6 mt-3">
             <div
                 class="input w-full leading-relaxed transition-colors duration-150"
             >
@@ -168,7 +169,7 @@
                     bind:this={editor}
                     placeholder="Description"
                     fragment={card.text.__fragment!}
-                    class="min-h-15"
+                    class="min-h-50"
                     {awareness}
                     {me}
                 />
@@ -217,7 +218,7 @@
             {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
         </div>
     {/if}
-    <div class="px-4 py-3 flex items-end gap-1 border-t border-divider-subtle">
+    <div class="px-6 py-3 flex items-end gap-1 border-t border-divider-subtle">
         <button class="btn--icon bg-surface-2">
             <PlusIcon />
         </button>

@@ -3,7 +3,7 @@ import {type CrdtDiff} from '../../crdt/crdt.js';
 import {Richtext} from '../../crdt/richtext.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Stream} from '../../stream.js';
-import {getNow} from '../../timestamp.js';
+import {getNow, Timestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
@@ -49,8 +49,21 @@ export function TextMessagePayload() {
 export interface TextMessagePayload
     extends Static<ReturnType<typeof TextMessagePayload>> {}
 
+export function CardCreatedMessagePayload() {
+    return Type.Composite([
+        BaseMessagePayload('card_created'),
+        Type.Object({
+            cardId: Uuid<CardId>(),
+            cardCreatedAt: Timestamp(),
+        }),
+    ]);
+}
+
+export interface CardCreatedMessagePayload
+    extends Static<ReturnType<typeof CardCreatedMessagePayload>> {}
+
 export function MessagePayload() {
-    return Type.Union([TextMessagePayload()]);
+    return Type.Union([TextMessagePayload(), CardCreatedMessagePayload()]);
 }
 
 export type MessagePayload = Static<ReturnType<typeof MessagePayload>>;

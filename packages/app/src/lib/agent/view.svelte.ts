@@ -1,12 +1,15 @@
 import {SvelteMap} from 'svelte/reactivity';
 import {
     assert,
+    assertNever,
     Awareness,
+    CardCreatedMessagePayload,
     compareNumbers,
     compareStrings,
     MemberInfoDto,
     MemberRole,
     partition,
+    TextMessagePayload,
     uniqBy,
     type Account,
     type Attachment,
@@ -742,6 +745,16 @@ export class MessageView implements Message {
         );
     });
 
+    payload = $derived.by(() => {
+        if (this.message.payload.type === 'text') {
+            return new TextMessagePayloadView(this.message.payload);
+        } else if (this.message.payload.type === 'card_created') {
+            return new CardCreatedMessagePayloadView(this.message.payload);
+        } else {
+            assertNever(this.message.payload);
+        }
+    });
+
     deletedAt = $derived(this.message.deletedAt);
     updatedAt = $derived(this.message.updatedAt);
     createdAt = $derived(this.message.createdAt);
@@ -752,7 +765,31 @@ export class MessageView implements Message {
     columnId = $derived(this.message.columnId);
     cardId = $derived(this.message.cardId);
     target = $derived(this.message.target);
-    payload = $derived(this.message.payload);
     replyToId = $derived(this.message.replyToId);
     attachmentIds = $derived(this.message.attachmentIds);
+}
+
+export class CardCreatedMessagePayloadView
+    implements CardCreatedMessagePayload
+{
+    private payload: CardCreatedMessagePayload = $state.raw(lateInit());
+
+    constructor(payload: CardCreatedMessagePayload) {
+        this.payload = payload;
+    }
+
+    cardId = $derived(this.payload.cardId);
+    cardCreatedAt = $derived(this.payload.cardCreatedAt);
+    type = $derived(this.payload.type);
+}
+
+export class TextMessagePayloadView implements TextMessagePayload {
+    private payload: TextMessagePayload = $state.raw(lateInit());
+
+    constructor(payload: TextMessagePayload) {
+        this.payload = payload;
+    }
+
+    text = $derived(this.payload.text);
+    type = $derived(this.payload.type);
 }

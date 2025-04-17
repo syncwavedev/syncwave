@@ -19,6 +19,10 @@ class ExpectOptional<T> {
     constructor(public readonly value: T) {}
 }
 
+class ExpectDiscriminatedUnion {
+    constructor(public readonly values: Record<string, unknown>) {}
+}
+
 function expectAny<T>(ctor: new () => T): T {
     return new ExpectAny(ctor) as T;
 }
@@ -43,6 +47,12 @@ export function expectOptional<T>(value: T): T | undefined {
     return new ExpectOptional(value) as T | undefined;
 }
 
+export function expectUnion<const T extends Record<string, {type: string}>>(
+    values: T
+): T[keyof T] {
+    return new ExpectDiscriminatedUnion(values) as any;
+}
+
 interface ValidationError {
     path: string[];
     message: string;
@@ -65,6 +75,23 @@ function validate<T>(value: T, expected: T): ValidationError[] {
         }
 
         return validate(value, expected.value);
+    } else if (expected instanceof ExpectDiscriminatedUnion) {
+        if (typeof value !== 'object' || value === null) {
+            return [{path: [], message: 'expected object'}];
+        }
+
+        if (!('type' in value) || typeof value.type !== 'string') {
+            return [
+                {
+                    path: ['type'],
+                    message:
+                        'expected type property to be string, but got ' +
+                        typeof (value as Record<string, unknown>).type,
+                },
+            ];
+        }
+
+        return validate(value, expected.values[value.type]);
     } else if (expected instanceof ExpectAny) {
         if (expected.ctor === String) {
             return validateCondition(typeof value === 'string', {
@@ -97,7 +124,7 @@ function validate<T>(value: T, expected: T): ValidationError[] {
             typeof expected === 'symbol'
         ) {
             return validateCondition(value === expected, {
-                message: `expected ${String(expected)}, but got ${String(value)}`,
+                message: `expected ${JSON.stringify(expected)}, but got ${JSON.stringify(value)}`,
                 path: [],
             });
         } else if (Array.isArray(expected)) {

@@ -22,9 +22,9 @@ import {
     log,
     MemberRole,
     PersistentConnection,
-    RPC_CALL_TIMEOUT_MS,
     RpcConnection,
     softNever,
+    Timestamp,
     toPosition,
     toStream,
     whenAll,
@@ -46,6 +46,7 @@ import {
     type Member,
     type MemberId,
     type Message,
+    type MessageId,
     type MeViewDataDto,
     type Placement,
     type TransportClient,
@@ -140,14 +141,13 @@ export class Agent {
     }
 
     private async ping() {
-        const PING_INTERVAL_MS = RPC_CALL_TIMEOUT_MS / 5;
         let unstable = false;
         const unstableTimeoutId = setTimeout(() => {
             unstable = true;
             if (this.status === 'online') {
                 this.status = 'unstable';
             }
-        }, PING_INTERVAL_MS);
+        }, 1000);
 
         try {
             const {time} = await this.rpc.echo({time: performance.now()});
@@ -183,7 +183,7 @@ export class Agent {
         } finally {
             clearTimeout(unstableTimeoutId);
             if (this.open) {
-                setTimeout(() => this.ping(), PING_INTERVAL_MS);
+                setTimeout(() => this.ping(), 500);
             }
         }
     }
@@ -440,7 +440,55 @@ export class Agent {
         this.crdtManager.update<Card>(cardId, x => {
             x.counter = maxCounter + 1;
         });
-        this.crdtManager.commit(cardId);
+        const card: Card = this.crdtManager.commit(cardId);
+
+        this.createCardCreatedMessage({
+            boardId: board.id,
+            cardId,
+            columnId: board.columns[0].id,
+            cardCreatedAt: card.createdAt,
+        });
+    }
+
+    private createCardCreatedMessage(params: {
+        boardId: BoardId;
+        cardId: CardId;
+        columnId: ColumnId;
+        cardCreatedAt: Timestamp;
+    }) {
+        const me = this.authManager.ensureAuthorized();
+        const now = getNow();
+        const messageId = createMessageId();
+        const messageCrdt = Crdt.from<Message>({
+            authorId: me.userId,
+            boardId: params.boardId,
+            cardId: params.cardId,
+            createdAt: now,
+            target: 'card',
+            columnId: params.columnId,
+            id: messageId,
+            attachmentIds: [],
+            payload: {
+                type: 'card_created',
+                cardCreatedAt: params.cardCreatedAt,
+                cardId: params.cardId,
+            },
+            replyToId: undefined,
+            updatedAt: now,
+            pk: [messageId],
+        });
+        const message = this.crdtManager.createDraft({
+            id: messageId,
+            state: messageCrdt.state(),
+            type: 'message',
+            isDraft: true,
+        }).view as Message;
+
+        this.crdtManager.commit(messageId);
+
+        this.syncTargets().forEach(x => {
+            x.newMessage(message);
+        });
     }
 
     createMessage(params: {
@@ -590,6 +638,12 @@ export class Agent {
 
     deleteCard(cardId: CardId): void {
         this.crdtManager.update<Card>(cardId, x => {
+            x.deletedAt = getNow();
+        });
+    }
+
+    deleteMessage(messageId: MessageId): void {
+        this.crdtManager.update<Message>(messageId, x => {
             x.deletedAt = getNow();
         });
     }

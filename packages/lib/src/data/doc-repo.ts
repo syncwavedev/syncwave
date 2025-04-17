@@ -14,7 +14,7 @@ import {Stream, toStream} from '../stream.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {compareTuple, stringifyTuple, type Tuple} from '../tuple.js';
 import {checkValue, type ToSchema} from '../type.js';
-import {pipe, whenAll} from '../utils.js';
+import {assert, pipe, whenAll} from '../utils.js';
 import {type TransitionChecker} from './transition-checker.js';
 
 export class ConstraintError extends AppError {
@@ -71,7 +71,6 @@ export interface DocStoreOptions<T extends Doc<Tuple>> {
     onChange: OnDocChange<T>;
     scheduleTrigger: (effect: () => Promise<void>) => void;
     constraints: readonly Constraint<T>[];
-    upgrade?: Recipe<any>;
 }
 
 export type Recipe<T> = (doc: T) => void | undefined;
@@ -177,11 +176,9 @@ class DocRepoImpl<T extends Doc<Tuple>> {
     // todo: add tests
     private readonly constraints: readonly Constraint<T>[];
     // todo: add tests
-    private readonly upgrade: Recipe<any>;
     private readonly scheduleTrigger: (trigger: () => Promise<void>) => void;
 
     constructor(options: DocStoreOptions<T>) {
-        this.upgrade = options.upgrade ?? (() => {});
         this.indexes = new Map(
             Object.entries(options.indexes).map(([indexName, spec]) => {
                 if (indexName.indexOf('/') !== -1) {
@@ -239,7 +236,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         id: Tuple,
         options?: QueryOptions
     ): Promise<CrdtDoc<T> | undefined> {
-        const doc = await this.getUpgrade(id);
+        const doc = await this.primary.get(id);
         if (!doc) {
             return undefined;
         }
@@ -308,7 +305,6 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         }
 
         const diff = doc.update(draft => {
-            this.upgrade(draft);
             const result = recipe(draft);
 
             (result ?? draft).updatedAt = getNow();
@@ -331,7 +327,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         diff: CrdtDiff<T>,
         transitionChecker: TransitionChecker<T> | undefined
     ) {
-        const existingDoc = await this.getUpgrade(pk);
+        const existingDoc = await this.primary.get(pk);
 
         let prev: T | undefined;
         let next: Crdt<T>;
@@ -344,11 +340,12 @@ class DocRepoImpl<T extends Doc<Tuple>> {
             next = Crdt.load(diff);
         }
 
-        const upgradeDiff = next.update(draft => {
-            this.upgrade(draft);
+        const systemDiff = next.update(draft => {
+            draft.updatedAt = getNow();
         });
+        assert(systemDiff !== undefined, 'system diff should not be undefined');
 
-        const resultDiff = upgradeDiff ? Crdt.merge([upgradeDiff, diff]) : diff;
+        const resultDiff = Crdt.merge([systemDiff, diff]);
 
         if (compareTuple(next.snapshot().pk, pk) !== 0) {
             throw new AppError(
@@ -400,14 +397,6 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         return index;
     }
 
-    private async getUpgrade(pk: Tuple): Promise<Crdt<T> | undefined> {
-        const doc = await this.primary.get(pk);
-
-        // ignore diff, because getUpgrade is a readonly operation
-        doc?.update(this.upgrade);
-        return doc;
-    }
-
     private async _put(params: {
         prev: T | undefined;
         next: Crdt<T>;
@@ -453,7 +442,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         options?: QueryOptions
     ): Stream<CrdtDoc<T>> {
         return toStream(ids)
-            .mapParallel(id => this.getUpgrade(id))
+            .mapParallel(id => this.primary.get(id))
             .assert(x => x !== undefined, message)
             .map(doc => ({...doc.snapshot(), state: doc.state()}))
             .filter(x => options?.includeDeleted || !x.deletedAt);

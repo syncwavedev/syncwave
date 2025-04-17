@@ -160,6 +160,8 @@ export class CrdtManager implements CrdtDerivator {
             entity.crdt.apply(event.diff as CrdtDiff<any>, {
                 origin: REMOTE_ORIGIN,
             });
+        } else if (event.kind === 'transaction' || event.kind === 'snapshot') {
+            // ignore
         } else {
             assertNever(event.kind);
         }
@@ -209,7 +211,7 @@ export class CrdtManager implements CrdtDerivator {
         return box;
     }
 
-    commit(id: Uuid): void {
+    commit(id: Uuid): any {
         const box = this.entities.get(id);
         assert(box !== undefined, 'commit: Crdt not found');
         if (box.entity.isDraft === false) {
@@ -222,6 +224,8 @@ export class CrdtManager implements CrdtDerivator {
                 msg: 'CrdtManager: commit error',
             });
         });
+
+        return box.view;
     }
 
     update<T>(id: Uuid, recipe: Recipe<T>) {

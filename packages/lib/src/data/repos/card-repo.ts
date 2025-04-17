@@ -128,13 +128,6 @@ export class CardRepo {
                     },
                 },
             ],
-            upgrade: doc => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                if (doc.position === undefined) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    doc.position = Math.random();
-                }
-            },
         });
     }
 

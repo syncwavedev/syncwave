@@ -40,6 +40,7 @@ import {
     creatable,
     expectOptional,
     expectTimestamp,
+    expectUnion,
     writable,
 } from './transition-checker.js';
 
@@ -143,10 +144,17 @@ export function createWriteApi() {
                             createdAt: expectTimestamp(),
                             deletedAt: expectOptional(expectTimestamp()),
                             updatedAt: expectTimestamp(),
-                            payload: {
-                                type: 'text',
-                                text: createRichtext(),
-                            },
+                            payload: expectUnion({
+                                text: {
+                                    type: 'text',
+                                    text: createRichtext(),
+                                },
+                                card_created: {
+                                    type: 'card_created',
+                                    cardId: message.cardId,
+                                    cardCreatedAt: expectTimestamp(),
+                                },
+                            }),
                         })
                     );
 

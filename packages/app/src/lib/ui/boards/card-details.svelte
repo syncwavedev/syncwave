@@ -117,7 +117,7 @@
 <div
     class="border-divider bg-surface-0 dark:bg-surface-1 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
-    <div class="flex items-center px-6 h-[2.25rem]">
+    <div class="flex items-center px-6 h-[2.325rem]">
         <div class="flex items-center gap-0.5 icon-base select-text">
             {#if card.isDraft}
                 New card

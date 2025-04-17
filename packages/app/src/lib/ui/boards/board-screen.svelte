@@ -319,8 +319,8 @@
 
 <style>
     :root {
-        --header-height: 2.25rem;
-        --footer-height: 2.25rem;
+        --header-height: 2.325rem;
+        --footer-height: 2.325rem;
         --content-height: calc(
             100vh - var(--header-height) - var(--footer-height)
         );

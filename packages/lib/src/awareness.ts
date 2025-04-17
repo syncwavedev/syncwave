@@ -1,5 +1,6 @@
 import {Type, type Static} from '@sinclair/typebox';
 import {AWARENESS_OFFLINE_TIMEOUT_MS} from './constants.js';
+import {CardId} from './data/repos/card-repo.js';
 import {type UserId} from './data/repos/user-repo.js';
 import type {Entry} from './kv/kv-store.js';
 import {getNow} from './timestamp.js';
@@ -29,6 +30,8 @@ export function AwarenessState() {
         selectedCardId: Type.Optional(Type.String()),
         hoverCardId: Type.Optional(Type.String()),
         active: Type.Boolean(),
+        typingMessageFor: Type.Optional(CardId()),
+        typingMessageEventId: Type.Optional(Type.String()),
         __trigger: Type.Optional(Type.String()),
     });
 }

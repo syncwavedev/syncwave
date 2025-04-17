@@ -529,6 +529,14 @@ export class CardView implements Card {
             x => x.id
         );
     });
+    typingUsers = $derived.by(() => {
+        return uniqBy(
+            this._data.activeClients
+                .filter(x => x.state?.typingMessageFor === this.id)
+                .map(x => x.user),
+            x => x.id
+        );
+    });
 
     author = $derived.by(() => {
         const author = this._crdtManager.viewById(this._card.authorId, 'user');

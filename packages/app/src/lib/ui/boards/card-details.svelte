@@ -98,6 +98,20 @@
             behavior: 'smooth',
         });
     };
+
+    const separator = (idx: number, length: number) => {
+        if (idx === length - 1) {
+            return '';
+        }
+        if (idx === length - 2) {
+            if (length === 2) {
+                return ' and ';
+            } else {
+                return ', and ';
+            }
+        }
+        return ', ';
+    };
 </script>
 
 <div
@@ -195,6 +209,14 @@
             <MessageList messages={details.messages} />
         {/await}
     </div>
+    {#if card.typingUsers.length > 0}
+        <div>
+            {#each card.typingUsers as user, idx (idx)}
+                {user.fullName}{separator(idx, card.typingUsers.length)}
+            {/each}
+            {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
+        </div>
+    {/if}
     <div class="px-4 py-3 flex items-end gap-1 border-t border-divider-subtle">
         <button class="btn--icon bg-surface-2">
             <PlusIcon />
@@ -205,6 +227,9 @@
             placeholder="Write a message..."
             class="px-1 py-1 w-full"
             onEnter={() => onSendMessage()}
+            onKeyDown={() =>
+                agent.handleCardMessageKeyDown(card.boardId, card.id)}
+            onBlur={() => agent.handleCardMessageBlur(card.boardId, card.id)}
         />
 
         <button

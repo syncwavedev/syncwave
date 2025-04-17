@@ -29,6 +29,8 @@
         };
         class?: string;
         onEnter?: () => void;
+        onKeyDown?: () => void;
+        onBlur?: () => void;
     }
 
     export function focus() {
@@ -42,6 +44,8 @@
         me,
         class: className,
         onEnter,
+        onKeyDown,
+        onBlur,
     }: Props = $props();
 
     const colors = [
@@ -100,6 +104,10 @@
         editor = createEditor({
             editorProps: {
                 handleKeyDown: (view, event) => {
+                    if (onKeyDown) {
+                        onKeyDown();
+                    }
+
                     if (event.key === 'Enter' && !event.shiftKey) {
                         if (onEnter) {
                             onEnter();
@@ -108,6 +116,11 @@
                     }
                     return false;
                 },
+            },
+            onBlur: () => {
+                if (onBlur) {
+                    onBlur();
+                }
             },
             extensions,
             content: '',

@@ -17,10 +17,12 @@ import {
     createRichtext,
     createRpcClient,
     createTransactionId,
+    createUuidV4,
     getNow,
     infiniteRetry,
     log,
     MemberRole,
+    MESSAGE_TYPING_AWARENESS_TIMEOUT_MS,
     PersistentConnection,
     RpcConnection,
     softNever,
@@ -211,17 +213,65 @@ export class Agent {
     }
 
     handleCardMouseEnter(boardId: BoardId, cardId: CardId) {
-        const board = this.activeBoards.find(x => x.boardView.id === boardId);
-        assert(board !== undefined, 'board not found');
-        board.rawAwareness.setLocalStateField('hoverCardId', cardId);
+        this.activeBoards
+            .filter(x => x.boardView.id === boardId)
+            .forEach(board => {
+                board.rawAwareness.setLocalStateField('hoverCardId', cardId);
+            });
     }
 
     handleCardMouseLeave(boardId: BoardId, cardId: CardId) {
-        const board = this.activeBoards.find(x => x.boardView.id === boardId);
-        assert(board !== undefined, 'board not found');
-        if (board.rawAwareness.getLocalState()?.hoverCardId === cardId) {
-            board.rawAwareness.setLocalStateField('hoverCardId', undefined);
-        }
+        this.activeBoards
+            .filter(x => x.boardView.id === boardId)
+            .forEach(board => {
+                if (
+                    board.rawAwareness.getLocalState()?.hoverCardId === cardId
+                ) {
+                    board.rawAwareness.setLocalStateField(
+                        'hoverCardId',
+                        undefined
+                    );
+                }
+            });
+    }
+
+    handleCardMessageKeyDown(boardId: BoardId, cardId: CardId) {
+        const eventId = createUuidV4();
+        this.activeBoards
+            .filter(x => x.boardView.id === boardId)
+            .forEach(board => {
+                board.rawAwareness.setLocalStateField(
+                    'typingMessageFor',
+                    cardId
+                );
+                board.rawAwareness.setLocalStateField(
+                    'typingMessageEventId',
+                    eventId
+                );
+                setTimeout(() => {
+                    const localState = board.rawAwareness.getLocalState();
+                    if (localState.typingMessageEventId === eventId) {
+                        board.rawAwareness.setLocalStateField(
+                            'typingMessageFor',
+                            undefined
+                        );
+                    }
+                }, MESSAGE_TYPING_AWARENESS_TIMEOUT_MS);
+            });
+    }
+
+    handleCardMessageBlur(boardId: BoardId, cardId: CardId) {
+        this.activeBoards
+            .filter(x => x.boardView.id === boardId)
+            .forEach(board => {
+                const localState = board.rawAwareness.getLocalState();
+                if (localState.typingMessageFor === cardId) {
+                    board.rawAwareness.setLocalStateField(
+                        'typingMessageFor',
+                        undefined
+                    );
+                }
+            });
     }
 
     async updateJoinCode(boardId: BoardId) {

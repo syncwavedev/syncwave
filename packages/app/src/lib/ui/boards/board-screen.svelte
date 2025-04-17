@@ -224,7 +224,7 @@
     <div class="flex min-w-0 flex-col">
         <div class="board-header">
             <button
-                class="btn-ghost -ml-1"
+                class="btn-ghost font-medium -ml-1"
                 onclick={() => modalManager.open(boardCommands)}
             >
                 <span>{board.name}</span>
@@ -256,7 +256,6 @@
                 <Avatar name={me.fullName} />
             </button>
         </div>
-        <hr />
         <Scrollable
             orientation="horizontal"
             type="scroll"
@@ -287,7 +286,6 @@
                 {/each}
             </div>
         </Scrollable>
-        <hr />
         <div class="board-footer">
             <StatusBar />
         </div>

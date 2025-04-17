@@ -49,6 +49,7 @@
 
     let editor: Editor | null = $state(null);
     let scrollable: HTMLDivElement;
+    let isScrolled = $state(false);
 
     onMount(() => {
         tick().then(() => {
@@ -117,12 +118,17 @@
 <div
     class="border-divider bg-surface-0 dark:bg-surface-1 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
-    <div class="flex items-center px-6 h-[2.325rem]">
-        <div class="flex items-center gap-0.5 icon-base select-text">
+    <div
+        class="flex items-center px-6 h-[2.325rem] border-b border-transparent"
+        class:border-divider-subtle!={isScrolled}
+    >
+        <div
+            class="flex items-center gap-0.5 icon-base select-text font-medium"
+        >
             {#if card.isDraft}
                 New card
             {:else}
-                <HashtagIcon strokeWidth="1.5" />
+                <HashtagIcon strokeWidth="1.75" />
                 <span>{card.counter}</span>
             {/if}
         </div>
@@ -152,14 +158,16 @@
             <TimesIcon />
         </button>
     </div>
-    <hr />
     <!-- Scrollable Content Section -->
     <div
         bind:this={scrollable}
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
+        onscroll={() => {
+            isScrolled = scrollable?.scrollTop > 0;
+        }}
     >
         <!-- Task Description -->
-        <div class="mx-6 mt-3">
+        <div class="mx-6 mt-1">
             <div
                 class="input w-full leading-relaxed transition-colors duration-150"
             >

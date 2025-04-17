@@ -116,7 +116,7 @@
         forceMount
         {orientation}
         data-disable-scroll-view-drag="true"
-        class="flex min-h-3 min-w-2 touch-none transition-all duration-100 select-none data-[state=hidden]:opacity-0 data-[state=visible]:opacity-100"
+        class="flex min-h-3 min-w-2 touch-none transition-all duration-100 select-none data-[state=hidden]:opacity-0 data-[state=visible]:opacity-50"
     >
         <ScrollArea.Thumb
             class="bg-scrollbar relative rounded-full transition-all duration-50 {orientation ===

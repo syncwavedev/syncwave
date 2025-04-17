@@ -69,7 +69,7 @@
     data-column-id={column.id}
 >
     <div
-        class="flex items-center px-3 mb-2 flex-shrink-0"
+        class="flex items-center px-2 mb-2 flex-shrink-0"
         data-disable-scroll-view-drag="true"
     >
         <div class="flex items-center gap-1.5 font-medium text-sm icon-sm">
@@ -101,7 +101,7 @@
         type="hover"
     >
         <div
-            class="mx-3 flex h-full min-h-10 flex-col gap-1.5"
+            class="mx-2 flex h-full min-h-10 flex-col gap-1.5"
             bind:this={cardsContainerRef}
         >
             <ListAnimator

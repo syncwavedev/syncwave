@@ -319,8 +319,8 @@
 
 <style>
     :root {
-        --header-height: 2.5rem;
-        --footer-height: 2.5rem;
+        --header-height: 2.25rem;
+        --footer-height: 2.25rem;
         --content-height: calc(
             100vh - var(--header-height) - var(--footer-height)
         );
@@ -337,7 +337,7 @@
     .board-content {
         height: var(--content-height);
         overflow-y: auto;
-        padding-block-start: 0.75rem;
+        padding-block-start: 0.5rem;
         padding-block-end: 0.25rem;
     }
 

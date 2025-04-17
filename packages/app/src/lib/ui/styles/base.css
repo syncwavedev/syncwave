@@ -1,6 +1,6 @@
 html,
 body {
-    @apply text-ink bg-surface-0 overscroll-none font-sans select-none;
+    @apply text-ink bg-surface-0 overscroll-none font-sans antialiased select-none;
 }
 
 body {

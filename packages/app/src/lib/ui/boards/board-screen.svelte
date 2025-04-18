@@ -286,6 +286,7 @@
                 {/each}
             </div>
         </Scrollable>
+        <hr />
         <div class="board-footer">
             <StatusBar />
         </div>
@@ -318,7 +319,7 @@
 <style>
     :root {
         --header-height: 2.325rem;
-        --footer-height: 2.325rem;
+        --footer-height: 2rem;
         --content-height: calc(
             100vh - var(--header-height) - var(--footer-height)
         );

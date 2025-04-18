@@ -1,0 +1,7 @@
+{
+    "name": "Syncwave",
+    "short_name": "Syncwave",
+    "start_url": "/",
+    "display": "standalone",
+    "theme_color": "#509de8"
+}

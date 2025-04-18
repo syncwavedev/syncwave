@@ -31,6 +31,5 @@
 }
 
 .btn-block {
-    @apply h-[3em] px-[0.5em] rounded-sm gap-1.5 flex items-center justify-center text-ink-body
-	hover:text-ink border border-divider-subtle;
+    @apply h-[2em] px-[0.5em] rounded-md gap-1.5 flex items-center justify-center bg-surface-2;
 }

@@ -20,7 +20,6 @@
         yFragmentToPlaintext,
     } from '../../richtext';
     import ArrowUp from '../components/icons/arrow-up.svelte';
-    import PlusIcon from '../components/icons/plus-icon.svelte';
     import MessageList from './message-list.svelte';
 
     const {
@@ -119,7 +118,7 @@
     class="border-divider bg-surface-0 z-10 flex w-full flex-shrink-0 flex-col border-l"
 >
     <div
-        class="flex items-center px-6 h-[2.325rem] border-b border-transparent"
+        class="flex items-center px-4 h-[2.325rem] border-b border-transparent"
         class:border-divider-subtle!={isScrolled}
     >
         <div
@@ -128,7 +127,7 @@
             {#if card.isDraft}
                 New card
             {:else}
-                <HashtagIcon strokeWidth="1.75" />
+                <HashtagIcon strokeWidth="2" />
                 <span>{card.counter}</span>
             {/if}
         </div>
@@ -149,7 +148,10 @@
                     },
                 ]}
             >
-                <button class="btn--icon text-ink-body" id="ellipsis-button">
+                <button
+                    class="btn--icon text-ink-body mr-1"
+                    id="ellipsis-button"
+                >
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
@@ -167,54 +169,57 @@
         }}
     >
         <!-- Task Description -->
-        <div class="mx-6 mt-1">
-            <div
-                class="input w-full leading-relaxed transition-colors duration-150"
-            >
+        <div class="mx-5 mt-2">
+            <div class="input w-full leading-relaxed">
                 <Editor
                     bind:this={editor}
                     placeholder="Description"
                     fragment={card.text.__fragment!}
-                    class="min-h-50"
+                    class="min-h-30"
                     {awareness}
                     {me}
                 />
             </div>
-
-            <!-- Task Actions -->
-            <div class="flex gap-2 my-3 text-sm icon-sm text-ink-body">
-                <Select
-                    value={card.column.id}
-                    options={columnOptions}
-                    onValueChange={value =>
-                        agent.setCardColumn(card.id, value as ColumnId)}
-                >
-                    <button class="btn-ghost">
-                        <CircleDashedIcon />
-                        {card.column.name}
-                    </button>
-                </Select>
-
-                <Select
-                    value={card.assignee?.id}
-                    options={[
-                        {value: undefined, label: 'No assignee'},
-                        ...assigneeOptions,
-                    ]}
-                    onValueChange={value =>
-                        agent.setCardAssignee(card.id, value as UserId)}
-                >
-                    <button class="btn-ghost">
-                        <UserIcon />
-                        {card.assignee?.fullName ?? 'Assignee'}
-                    </button>
-                </Select>
-            </div>
         </div>
-        <hr />
-        {#await detailsPromise then details}
-            <MessageList messages={details.messages} />
-        {/await}
+        <!-- Task Actions -->
+        <div class="flex gap-2 mx-4 mt-3 mb-2 text-sm icon-sm items-center">
+            <Select
+                value={card.column.id}
+                options={columnOptions}
+                onValueChange={value =>
+                    agent.setCardColumn(card.id, value as ColumnId)}
+            >
+                <button class="btn-ghost">
+                    <CircleDashedIcon />
+                    {card.column.name}
+                </button>
+            </Select>
+
+            <Select
+                value={card.assignee?.id}
+                options={[
+                    {value: undefined, label: 'No assignee'},
+                    ...assigneeOptions,
+                ]}
+                onValueChange={value =>
+                    agent.setCardAssignee(card.id, value as UserId)}
+            >
+                <button class="btn-ghost">
+                    <UserIcon />
+                    {card.assignee?.fullName ?? 'Assignee'}
+                </button>
+            </Select>
+        </div>
+        <hr class="" />
+        <!-- <div class="flex mx-6 mt-4 items-center gap-1.5">
+            <span class="text-ink-detail text-sm leading-none">1 Message</span>
+            <hr class="flex-grow" />
+        </div> -->
+        <div class="py-4">
+            {#await detailsPromise then details}
+                <MessageList messages={details.messages} />
+            {/await}
+        </div>
     </div>
     {#if card.typingUsers.length > 0}
         <div>
@@ -224,15 +229,12 @@
             {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
         </div>
     {/if}
-    <div class="px-6 py-3 flex items-end gap-1 border-t border-divider-subtle">
-        <button class="btn--icon bg-surface-2">
-            <PlusIcon />
-        </button>
+    <div class="mx-5 bg-surface-2 mb-4 p-1.5 rounded-md flex items-end">
         <Editor
             {fragment}
             {me}
             placeholder="Write a message..."
-            class="px-1 py-1 w-full"
+            class="px-1 mb-0.75 w-full leading-relaxed"
             onEnter={() => onSendMessage()}
             onKeyDown={() =>
                 agent.handleCardMessageKeyDown(card.boardId, card.id)}

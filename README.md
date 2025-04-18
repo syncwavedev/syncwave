@@ -24,7 +24,7 @@ Open your browser at `http://localhost:8080/`
 
 ## Cloud
 
-If you don't want host SyncWave yourself, we already did it for your at [app.syncwave.dev](https://app.syncwave.dev).
+If you don't want to host SyncWave yourself, we already did it for your at [app.syncwave.dev](https://app.syncwave.dev).
 
 ## Documentation
 
@@ -35,12 +35,13 @@ For full documentation, visit [syncwave.dev/docs](https://www.syncwave.dev/docs)
 - [Plane](http://github.com/makeplane/plane/) - JIRA alternative, better suited for enterprises.
 - [OpenProject](https://github.com/opf/openproject) - if Plane for some reason doesn't work for your organization.
 - [Vikunja](https://github.com/go-vikunja/vikunja/tree/main) - a todo-app for personal use.
+- [Planka](https://github.com/plankanban/planka) - realtime kanban board for workgroups.
 
 ## License
 
 SyncWave is open source under the GNU Affero General Public License Version 3 (AGPLv3) or any later version. You can [find it here](./LICENSE).
 
-## Acknowledgement
+## Acknowledgements
 
 This project wouldn't be possible without open-source technologies like:
 

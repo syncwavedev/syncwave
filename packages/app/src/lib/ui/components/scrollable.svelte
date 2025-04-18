@@ -1,7 +1,6 @@
 <script lang="ts">
     import {ScrollArea, type ScrollAreaType} from 'bits-ui';
     import type {Snippet} from 'svelte';
-    import {on} from 'ws';
 
     // Define props with proper typing and bindable variables
     let {

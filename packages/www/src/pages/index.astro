@@ -2,7 +2,6 @@
 import '../styles/global.css';
 import '../styles/landing.css';
 
-import ScreenshotLight from '../assets/syncwave-screenshot-light.png';
 import ScreenshotDark from '../assets/syncwave-screenshot-dark.png';
 import {Image} from 'astro:assets';
 ---
@@ -11,7 +10,7 @@ import {Image} from 'astro:assets';
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>SaaSy Dark</title>
+        <title>SyncWave | Kanban board for developers</title>
         <meta name="description" content="" />
         <link
             rel="shortcut icon"
@@ -53,11 +52,16 @@ import {Image} from 'astro:assets';
                 <div
                     class="flex h-full w-max gap-5 text-base max-lg:mt-[30px] max-lg:flex-col max-lg:place-items-end max-lg:gap-5 lg:mx-auto lg:place-items-center"
                 >
-                    <a class="header-links" href=""> About us </a>
+                    <a class="header-links" href="#features"> Features </a>
                     <a class="header-links" href="#pricing"> Pricing </a>
-                    <a class="header-links" href=""> Solutions </a>
-                    <a class="header-links" href=""> Features </a>
-                    <a class="header-links" href=""> Company </a>
+                    <a
+                        class="header-links"
+                        href="https://github.com/syncwavedev/syncwave"
+                        target="_blank"
+                    >
+                        Github
+                        <i class="bi bi-box-arrow-up-right ml-2 text-sm"></i>
+                    </a>
                 </div>
                 <div
                     class="mx-4 flex place-items-center gap-[20px] text-base max-md:w-full max-md:flex-col max-md:place-content-center"
@@ -200,6 +204,7 @@ import {Image} from 'astro:assets';
         </section> -->
         <section
             class="relative flex w-full max-w-[100vw] flex-col place-content-center place-items-center overflow-hidden p-6"
+            id="features"
         >
             <div class="mt-8 flex flex-col place-items-center gap-5">
                 <!-- <div class="reveal-up mt-5 flex flex-col gap-3 text-center">

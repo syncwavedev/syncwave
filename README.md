@@ -1,4 +1,4 @@
-# SyncWave - Kanban Board for Friends
+# SyncWave - Kanban Board for Developers
 
 SyncWave is a communications tool that lets you build great software with your friends.
 

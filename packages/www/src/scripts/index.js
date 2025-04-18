@@ -39,6 +39,8 @@ function toggleHeader() {
     }
 }
 
+window.toggleHeader = toggleHeader;
+
 function responsive() {
     if (window.innerWidth > RESPONSIVE_WIDTH) {
         collapseHeaderItems.style.width = '';

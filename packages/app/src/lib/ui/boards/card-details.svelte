@@ -115,7 +115,7 @@
 </script>
 
 <div
-    class="border-divider bg-surface-0 z-10 flex w-full flex-shrink-0 flex-col border-l"
+    class="border-divider bg-surface-0 z-10 flex w-full flex-shrink-0 flex-col border-l rounded-r-sm"
 >
     <div
         class="flex items-center px-4 h-[2.325rem] border-b border-transparent"

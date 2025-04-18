@@ -220,7 +220,7 @@
     <BoardSettingsModal {board} />
 {/snippet}
 
-<div class="flex w-screen h-screen">
+<div class="flex bg-surface-0 app">
     <div class="flex min-w-0 flex-col">
         <div class="board-header">
             <button
@@ -321,7 +321,7 @@
         --header-height: 2.325rem;
         --footer-height: 2rem;
         --content-height: calc(
-            100vh - var(--header-height) - var(--footer-height)
+            var(--app-height) - var(--header-height) - var(--footer-height)
         );
     }
 

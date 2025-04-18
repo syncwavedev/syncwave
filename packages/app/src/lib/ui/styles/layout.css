@@ -1,0 +1,16 @@
+:root {
+    --app-margin: 0.5rem;
+    --app-width: calc(100vw - var(--app-margin) * 2);
+    --app-height: calc(100vh - var(--app-margin) * 2);
+}
+
+.app {
+    box-sizing: border-box;
+
+    height: var(--app-height);
+    width: var(--app-width);
+    margin: var(--app-margin);
+
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+}

@@ -1,6 +1,10 @@
 ---
 import '../styles/global.css';
 import '../styles/landing.css';
+
+import ScreenshotLight from '../assets/syncwave-screenshot-light.png';
+import ScreenshotDark from '../assets/syncwave-screenshot-dark.png';
+import {Image} from 'astro:assets';
 ---
 
 <html lang="en">
@@ -76,7 +80,7 @@ import '../styles/landing.css';
         </header>
 
         <section
-            class="hero-section relative flex min-h-[100vh] w-full max-w-[100vw] flex-col overflow-hidden max-md:mt-[50px]"
+            class="hero-section relative flex min-h-[100vh] w-full max-w-[100vw] flex-col overflow-hidden max-md:mt-[50px] mt-28"
             id="hero-section"
         >
             <div
@@ -86,15 +90,14 @@ import '../styles/landing.css';
                     <div
                         class="reveal-up gradient-text text-center text-6xl font-semibold uppercase leading-[80px] max-lg:text-4xl max-md:leading-snug"
                     >
-                        <span class=""> Ship more </span>
-                        <br />
-                        <span class=""> with SaaS templates </span>
+                        <span>Build amazing software</span>
                     </div>
                     <div
-                        class="reveal-up mt-10 max-w-[450px] p-2 text-center text-gray-300 max-lg:max-w-full"
+                        class="text-lg reveal-up mt-10 max-w-[650px] p-2 text-center text-gray-300 max-lg:max-w-full"
                     >
-                        Lorem ipsum dolor sit amet consectetur, adipisicing elit
-                        Lorem ipsum dolor sit amet.
+                        SyncWave is a kanban board for small dev teams. Realtime
+                        collaboration, rich messaging, and powerful task
+                        management – all in one tool.
                     </div>
 
                     <div class="reveal-up mt-10 flex place-items-center gap-4">
@@ -109,7 +112,7 @@ import '../styles/landing.css';
                             href=""
                         >
                             <i class="bi bi-play-circle-fill"></i>
-                            <span>Learn more</span>
+                            <span>Live demo</span>
                         </a>
                     </div>
                 </div>
@@ -122,11 +125,7 @@ import '../styles/landing.css';
                         class="relative max-w-[80%] overflow-hidden rounded-xl bg-transparent max-md:max-w-full"
                         id="dashboard"
                     >
-                        <img
-                            src="/assets/images/home/dashboard.png"
-                            alt="dashboard"
-                            class="h-full w-full object-cover opacity-90 max-lg:object-contain"
-                        />
+                        <Image src={ScreenshotDark} alt="SyncWave screenshot" />
                     </div>
 
                     <div
@@ -137,7 +136,7 @@ import '../styles/landing.css';
             </div>
         </section>
 
-        <section
+        <!-- <section
             class="relative flex w-full max-w-[100vw] flex-col place-content-center place-items-center overflow-hidden p-8"
         >
             <h2 class="reveal-up text-3xl max-md:text-xl">
@@ -148,7 +147,6 @@ import '../styles/landing.css';
                 <div
                     class="carousel lg:w-place-content-center mt-6 flex w-full gap-5 max-md:gap-2"
                 >
-                    <!-- add the brands using your app  -->
                     <div class="carousel-img h-[30px] w-[150px]">
                         <img
                             src="/assets/images/brand-logos/google.svg"
@@ -199,19 +197,18 @@ import '../styles/landing.css';
                     </div>
                 </div>
             </div>
-        </section>
-
+        </section> -->
         <section
             class="relative flex w-full max-w-[100vw] flex-col place-content-center place-items-center overflow-hidden p-6"
         >
             <div class="mt-8 flex flex-col place-items-center gap-5">
-                <div class="reveal-up mt-5 flex flex-col gap-3 text-center">
-                    <h2
-                        class="text-4xl font-medium text-gray-200 max-md:text-3xl"
-                    >
-                        Key benifits
-                    </h2>
-                </div>
+                <!-- <div class="reveal-up mt-5 flex flex-col gap-3 text-center">
+                <h2
+                class="text-4xl font-medium text-gray-200 max-md:text-3xl"
+                >
+                Key benifits
+                </h2>
+            </div> -->
                 <div
                     class="mt-6 flex max-w-[80%] flex-wrap place-content-center gap-8 max-lg:flex-col"
                 >
@@ -225,7 +222,7 @@ import '../styles/landing.css';
                                 class="flex h-full w-full place-content-center place-items-end p-2"
                             >
                                 <i
-                                    class="bi bi-rocket-takeoff-fill text-7xl text-gray-200 max-md:text-5xl"
+                                    class="bi bi-people-fill text-7xl text-gray-200 max-md:text-5xl"
                                 ></i>
                             </div>
                         </div>
@@ -233,11 +230,12 @@ import '../styles/landing.css';
                             <h3
                                 class="mt-8 text-2xl font-normal max-md:text-xl"
                             >
-                                Minimize hours spent
+                                See updates as they happen
                             </h3>
                             <div class="text-gray-300">
-                                Lorem ipsum dolor sit amet consectetur,
-                                adipisicing elit.
+                                Our realtime collaboration shows edits, cursors,
+                                and typing indicators syncing live for all team
+                                members.
                             </div>
                         </div>
                     </div>
@@ -251,7 +249,7 @@ import '../styles/landing.css';
                                 class="flex h-full w-full place-content-center place-items-end p-2"
                             >
                                 <i
-                                    class="bi bi-layout-sidebar-inset text-7xl text-gray-200 max-md:text-5xl"
+                                    class="bi bi-chat-text-fill text-7xl text-gray-200 max-md:text-5xl"
                                 ></i>
                             </div>
                         </div>
@@ -259,11 +257,11 @@ import '../styles/landing.css';
                             <h3
                                 class="mt-8 text-2xl font-normal max-md:text-xl"
                             >
-                                Simple to use
+                                Fast, informal communication
                             </h3>
                             <div class="text-gray-300">
-                                Lorem ipsum dolor sit amet consectetur,
-                                adipisicing elit.
+                                Each card has built-in chat, keeping team
+                                discussions focused and contextual.
                             </div>
                         </div>
                     </div>
@@ -277,7 +275,7 @@ import '../styles/landing.css';
                                 class="flex h-full w-full place-content-center place-items-end p-2"
                             >
                                 <i
-                                    class="bi bi-lightning-charge-fill text-7xl text-gray-200 max-md:text-5xl"
+                                    class="bi bi-kanban-fill text-7xl text-gray-200 max-md:text-5xl"
                                 ></i>
                             </div>
                         </div>
@@ -285,11 +283,91 @@ import '../styles/landing.css';
                             <h3
                                 class="mt-8 text-2xl font-normal max-md:text-xl"
                             >
-                                Speed up your development
+                                Board without distractions
                             </h3>
                             <div class="text-gray-300">
-                                Lorem ipsum dolor sit amet consectetur,
-                                adipisicing elit.
+                                Drag-and-drop kanban for organized, clear task
+                                management.
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="reveal-up flex h-[400px] w-[450px] flex-col gap-3 text-center max-md:w-[320px]"
+                    >
+                        <div
+                            class="border-gradient h-[200px] w-full overflow-hidden max-md:h-[150px]"
+                        >
+                            <div
+                                class="flex h-full w-full place-content-center place-items-end p-2"
+                            >
+                                <i
+                                    class="bi bi-activity text-7xl text-gray-200 max-md:text-5xl"
+                                ></i>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-4 p-2">
+                            <h3
+                                class="mt-8 text-2xl font-normal max-md:text-xl"
+                            >
+                                Stay in the loop instantly
+                            </h3>
+                            <div class="text-gray-300">
+                                Real-time activity tracking and instant change
+                                notifications.
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="reveal-up flex h-[400px] w-[450px] flex-col gap-3 text-center max-md:w-[320px]"
+                    >
+                        <div
+                            class="border-gradient h-[200px] w-full overflow-hidden max-md:h-[150px]"
+                        >
+                            <div
+                                class="flex h-full w-full place-content-center place-items-end p-2"
+                            >
+                                <i
+                                    class="bi bi-circle-half text-7xl text-gray-200 max-md:text-5xl"
+                                ></i>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-4 p-2">
+                            <h3
+                                class="mt-8 text-2xl font-normal max-md:text-xl"
+                            >
+                                Work comfortably any time of day
+                            </h3>
+                            <div class="text-gray-300">
+                                Light and dark themes with seamless switching
+                                between modes to match your environment and
+                                reduce eye strain.
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="reveal-up flex h-[400px] w-[450px] flex-col gap-3 text-center max-md:w-[320px]"
+                    >
+                        <div
+                            class="border-gradient h-[200px] w-full overflow-hidden max-md:h-[150px]"
+                        >
+                            <div
+                                class="flex h-full w-full place-content-center place-items-end p-2"
+                            >
+                                <i
+                                    class="bi bi-code-slash text-7xl text-gray-200 max-md:text-5xl"
+                                ></i>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-4 p-2">
+                            <h3
+                                class="mt-8 text-2xl font-normal max-md:text-xl"
+                            >
+                                Maintain your flow state
+                            </h3>
+                            <div class="text-gray-300">
+                                Designed for developers with keyboard shortcuts
+                                that help you move quickly without
+                                interruptions.
                             </div>
                         </div>
                     </div>

@@ -1,7 +1,13 @@
 {
     "name": "Syncwave",
     "short_name": "Syncwave",
+    "description": "Fast, collaborative kanban board",
+    "categories": ["social", "business", "productivity"],
+    "lang": "en",
     "start_url": "/",
+    "scope": "/",
+    "display_override": ["minimal-ui"],
     "display": "standalone",
-    "theme_color": "#509de8"
+    "theme_color": "#ffffff",
+    "background_color": "#ffffff"
 }

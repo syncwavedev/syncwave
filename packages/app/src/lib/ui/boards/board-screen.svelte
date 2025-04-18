@@ -286,7 +286,6 @@
                 {/each}
             </div>
         </Scrollable>
-        <hr />
         <div class="board-footer">
             <StatusBar />
         </div>

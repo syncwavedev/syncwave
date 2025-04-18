@@ -1,6 +1,7 @@
 <script lang="ts">
     import {ScrollArea, type ScrollAreaType} from 'bits-ui';
     import type {Snippet} from 'svelte';
+    import {on} from 'ws';
 
     // Define props with proper typing and bindable variables
     let {
@@ -90,9 +91,9 @@
     function handlePointerMove(event: PointerEvent) {
         const dx = event.clientX - startX;
         const dy = event.clientY - startY;
-        if (ref) {
-            (ref.firstElementChild as HTMLElement).scrollLeft = scrollLeft - dx;
-            (ref.firstElementChild as HTMLElement).scrollTop = scrollTop - dy;
+        if (viewportRef) {
+            viewportRef.scrollLeft = scrollLeft - dx;
+            viewportRef.scrollTop = scrollTop - dy;
         }
     }
 
@@ -105,9 +106,20 @@
         viewportRef.removeEventListener('pointercancel', handlePointerUp);
     }
 
-    // Effect to update bindings on content or size changes
     $effect(() => {
-        handleScroll();
+        if (viewportRef) {
+            const resizeObserver = new ResizeObserver(() => {
+                handleScroll();
+            });
+
+            resizeObserver.observe(viewportRef);
+
+            return () => {
+                resizeObserver.disconnect();
+            };
+        }
+
+        return;
     });
 </script>
 
@@ -116,7 +128,7 @@
         forceMount
         {orientation}
         data-disable-scroll-view-drag="true"
-        class="flex min-h-3 min-w-2 touch-none transition-all duration-100 select-none data-[state=hidden]:opacity-0 data-[state=visible]:opacity-50"
+        class="flex min-h-3 min-w-2 touch-none transition-all duration-100 select-none data-[state=hidden]:opacity-0 data-[state=visible]:opacity-50 z-100"
     >
         <ScrollArea.Thumb
             class="bg-scrollbar relative rounded-full transition-all duration-50 {orientation ===

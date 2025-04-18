@@ -61,6 +61,9 @@
 
         return undefined;
     });
+
+    let hasTopScroll = $state(false);
+    let hasBottomScroll = $state(false);
 </script>
 
 <div
@@ -96,10 +99,20 @@
     <Scrollable
         bind:viewportRef
         viewportClass="max-h-full"
-        class="flex-grow overflow-y-auto"
+        class="flex-grow overflow-y-auto relative"
         orientation="vertical"
         type="hover"
+        bind:hasTopScroll
+        bind:hasBottomScroll
     >
+        <div
+            class="absolute top-0 left-0 bg-gradient-to-b from-surface-0/80 to-transparent h-8 w-full z-20"
+            class:invisible={!hasTopScroll}
+        ></div>
+        <div
+            class="absolute bottom-0 left-0 bg-gradient-to-t from-surface-0/80 to-transparent h-8 w-full z-20"
+            class:invisible={!hasBottomScroll}
+        ></div>
         <div
             class="mx-2 flex h-full min-h-10 flex-col gap-1.5"
             bind:this={cardsContainerRef}

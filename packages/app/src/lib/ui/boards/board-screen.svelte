@@ -335,7 +335,7 @@
     .board-content {
         height: var(--content-height);
         overflow-y: auto;
-        padding-block-start: 0.25rem;
+        padding-block-start: 0.5rem;
         padding-block-end: 0rem;
     }
 

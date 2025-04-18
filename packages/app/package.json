@@ -1,5 +1,5 @@
 {
-    "name": "syncwave-web",
+    "name": "syncwave-app",
     "private": true,
     "version": "0.0.1",
     "type": "module",

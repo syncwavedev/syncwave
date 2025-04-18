@@ -1,0 +1,96 @@
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/www/**
+      - .github/workflows/www.yml
+      - tsconfig.json
+  workflow_dispatch:
+    inputs:
+      STAGE:
+        description: 'Stage to deploy (dev|prod)'
+        required: true
+        default: 'prod'
+
+name: www
+concurrency: ${{ github.workflow }}_${{ github.event.inputs.STAGE || 'dev' }}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Evaluate stage config
+        id: config
+        run: |
+          if [ -z "${{ github.event.inputs.STAGE }}" ]; then
+            STAGE=dev
+          else
+            STAGE=${{ github.event.inputs.STAGE }}
+          fi
+
+          echo "STAGE=$STAGE" >> $GITHUB_OUTPUT
+          echo "TAG=${{ github.run_number }}-${{ github.run_attempt }}-$STAGE" >> $GITHUB_OUTPUT
+
+          if [ "dev" == "$STAGE" ]; then
+            echo "PORT=7312" >> $GITHUB_OUTPUT
+          elif [ "prod" == "$STAGE" ]; then
+            echo "PORT=7311" >> $GITHUB_OUTPUT
+          else
+            echo "Unknown STAGE: $STAGE"
+            exit 1
+          fi
+
+      - name: Setup docker
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ghcr.io/syncwavedev/syncwave-www:${{ steps.config.outputs.TAG }}
+          context: '.'
+          file: ./packages/www/Dockerfile
+          build-args: STAGE=${{ steps.config.outputs.STAGE }}
+          cache-from: type=registry,ref=ghcr.io/syncwavedev/syncwave-www:cache
+          cache-to: type=registry,mode=max,ref=ghcr.io/syncwavedev/syncwave-www:cache
+
+      - name: Deploy containers
+        if: success()
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.HOST_USERNAME }}
+          key: ${{ secrets.HOST_KEY }}
+          port: 22
+          script_stop: true
+          script: |
+            docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
+            docker pull ghcr.io/syncwavedev/syncwave-www:${{ steps.config.outputs.TAG }}
+
+            docker stop syncwave-www-${{ steps.config.outputs.STAGE }} || true
+            docker rm syncwave-www-${{ steps.config.outputs.STAGE }} || true
+            docker run \
+              --name syncwave-www-${{ steps.config.outputs.STAGE }} \
+              -p ${{ steps.config.outputs.PORT }}:8080 \
+              -e NODE_ENV=production \
+              -e PUBLIC_STATE=${{ steps.config.outputs.STAGE }} \
+              -d \
+              --restart unless-stopped \
+              ghcr.io/syncwavedev/syncwave-www:${{ steps.config.outputs.TAG }}

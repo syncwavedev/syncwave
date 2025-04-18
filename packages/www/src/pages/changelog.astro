@@ -1,0 +1,20 @@
+---
+const EXT_LENGTH = '.md'.length;
+const DATE_LENGTH = 'YYYY-MM-DD'.length;
+
+const releaseDates = Object.keys(
+    import.meta.glob('./changelog/*.md', {eager: true})
+)
+    .map(fileName => fileName.slice(-DATE_LENGTH - EXT_LENGTH, -EXT_LENGTH))
+    .sort((a, b) => (a > b ? -1 : 1));
+---
+
+<ul>
+    {
+        releaseDates.map(releaseDate => (
+            <li>
+                <a href={`/changelog/${releaseDate}`}>{releaseDate}</a>
+            </li>
+        ))
+    }
+</ul>

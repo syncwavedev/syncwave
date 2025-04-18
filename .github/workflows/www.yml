@@ -33,7 +33,7 @@ jobs:
         id: config
         run: |
           if [ -z "${{ github.event.inputs.STAGE }}" ]; then
-            STAGE=dev
+            STAGE=prod
           else
             STAGE=${{ github.event.inputs.STAGE }}
           fi

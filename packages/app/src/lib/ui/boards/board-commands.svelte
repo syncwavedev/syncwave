@@ -47,7 +47,7 @@
 
 <CommandView>
     <CommandHeader placeholder="Search boards..." bind:filter />
-    <div class="flex flex-col py-1 px-1">
+    <div class="flex flex-col p-1">
         {#each filtered as item (item.id)}
             <CommandCenterItem
                 icon={item.icon}

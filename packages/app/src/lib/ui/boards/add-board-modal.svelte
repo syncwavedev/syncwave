@@ -11,7 +11,7 @@
     const agent = getAgent();
 
     async function onCreateBoard() {
-        if (name.length < 3) {
+        if (name.length < 1) {
             return;
         }
 
@@ -23,15 +23,15 @@
 
 <CommandView>
     <CommandHeader placeholder="Enter board name..." bind:filter={name} />
-    <div class="modal-footer mx-2">
+    <div class="flex justify-end mr-3 py-2">
         <button
             type="submit"
-            class="btn-ghost ml-auto"
+            class="btn-ghost"
             onclick={onCreateBoard}
-            disabled={name.length < 3}
+            disabled={name.length < 1}
         >
             <PlusIcon />
-            Create
+            Create New Board
         </button>
     </div>
 </CommandView>

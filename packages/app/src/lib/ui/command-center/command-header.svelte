@@ -10,7 +10,7 @@
     } = $props();
 </script>
 
-<div class="modal-header" {onsubmit}>
+<div class="p-3" {onsubmit}>
     <!-- svelte-ignore a11y_autofocus -->
     <form class="h-full w-full">
         <input
@@ -23,4 +23,4 @@
         />
     </form>
 </div>
-<hr />
+<hr class="divider" />

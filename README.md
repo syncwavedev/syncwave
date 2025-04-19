@@ -3,9 +3,9 @@
 SyncWave is a communications tool that lets you build great software with your friends.
 
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./packages/www/src/assets/syncwave-screenshot-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="./packages/www/src/assets/syncwave-screenshot-light.png">
-    <img alt="SyncWave Screenshot" src="./packages/www/src/assets/syncwave-screenshot-light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="./packages/www/src/assets/syncwave-window-screenshot-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="./packages/www/src/assets/syncwave-window-screenshot-light.png">
+    <img alt="SyncWave Screenshot" src="./packages/www/src/assets/syncwave-window-screenshot-light.png">
 </picture>
 
 ## Features

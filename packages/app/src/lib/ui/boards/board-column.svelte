@@ -8,9 +8,7 @@
     } from '../../agent/view.svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
-    import EditColumnDialog from '../../components/edit-column-dialog/edit-column-dialog.svelte';
     import {DND_CARD_GAP, getDndBoardContext, type Ref} from './board-dnd';
-    import router from '../../router';
     import ListAnimator from '../components/list-animator.svelte';
     import ColumnIcon from '../components/column-icon.svelte';
 
@@ -18,6 +16,7 @@
         column,
         onCardClick,
         onCreateCard,
+        onEditColumn,
         activeCardId,
         columnsCount,
         columnPosition,
@@ -26,19 +25,10 @@
         onCardClick: (card: CardView) => void;
         activeCardId?: string;
         onCreateCard: () => void;
+        onEditColumn: () => void;
         columnsCount: number;
         columnPosition: number;
     } = $props();
-
-    let editColumnOpen = $state(false);
-
-    function editColumn() {
-        editColumnOpen = true;
-
-        router.action(() => {
-            editColumnOpen = false;
-        }, true);
-    }
 
     let cardsContainerRef: HTMLDivElement | null = $state(null);
     let viewportRef: HTMLDivElement | null = $state(null);
@@ -73,16 +63,11 @@
             {column.name}
         </div>
 
-        <EditColumnDialog
-            {column}
-            open={editColumnOpen}
-            onClose={() => (editColumnOpen = false)}
-        />
         <div class="flex ml-auto text-ink-body">
             <button class="btn--icon" onclick={onCreateCard}>
                 <PlusIcon class="pointer-events-none" />
             </button>
-            <button onclick={editColumn} class="btn--icon">
+            <button onclick={onEditColumn} class="btn--icon">
                 <EllipsisIcon class="pointer-events-none" />
             </button>
         </div>

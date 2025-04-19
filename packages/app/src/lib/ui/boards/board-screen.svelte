@@ -25,6 +25,7 @@
     import StatusBar from './status-bar.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
+    import EditColumnsModal from './edit-columns-modal.svelte';
 
     const {
         board,
@@ -224,6 +225,10 @@
     <ProfileModal {me} />
 {/snippet}
 
+{#snippet columnSettings()}
+    <EditColumnsModal {board} />
+{/snippet}
+
 <div class="flex app">
     <div class="flex min-w-0 flex-col">
         <div class="panel-header avatar-sm">
@@ -281,6 +286,8 @@
                             onCardClick={selectCard}
                             activeCardId={selectedCard?.id}
                             onCreateCard={() => createCard(column)}
+                            onEditColumn={() =>
+                                modalManager.open(columnSettings)}
                             columnPosition={i}
                             columnsCount={board.columns.length - 1}
                         />

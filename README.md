@@ -2,12 +2,10 @@
   <h1 align="center">Syncwave</h1>
 
   <p align="center">
-    Kanban board for developers
+    Kanban board that helps your build software people love.
 </p>
 <p align="center">
-    <a href="https://discord.com/invite/FzQjQVFdQz">
-        <img alt="Discord online members" src="https://img.shields.io/discord/1363049127663108156?color=5865F2&label=Discord&style=for-the-badge" />
-    </a>
+    <a href="https://discord.com/invite/FzQjQVFdQz"><img alt="Discord online members" src="https://img.shields.io/discord/1363049127663108156?color=5865F2&label=Discord&style=for-the-badge" /></a>
     <img alt="Commit activity per month" src="https://img.shields.io/github/commit-activity/m/syncwavedev/syncwave?style=for-the-badge" />
     </p>
     <p align="center">

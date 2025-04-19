@@ -1,8 +1,17 @@
 :root {
-    --header-height: 2.5rem;
-    --footer-height: 2rem;
+    --board-height: calc(
+        var(--app-height) - var(--panel-header-height) -
+            var(--panel-footer-height)
+    );
 
-    --content-height: calc(
-        var(--app-height) - var(--header-height) - var(--footer-height)
+    --column-width: 20.5rem;
+    --column-padding-inline: 0.5rem;
+
+    --board-padding-inline-start: calc(
+        var(--panel-padding-inline) - var(--column-padding-inline)
+    );
+    --board-padding-inline-end: calc(
+        var(--app-width) - var(--column-width) -
+            var(--board-padding-inline-start)
     );
 }

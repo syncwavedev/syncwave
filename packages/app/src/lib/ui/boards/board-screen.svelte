@@ -22,7 +22,6 @@
     import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
     import modalManager from '../modal-manager.svelte';
     import BoardSettingsModal from './board-settings-modal.svelte';
-    import {COLUMN_WIDTH} from './constants';
     import StatusBar from './status-bar.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
 
@@ -220,39 +219,33 @@
     <BoardSettingsModal {board} />
 {/snippet}
 
-<div class="flex bg-surface-0 app">
+<div class="flex app">
     <div class="flex min-w-0 flex-col">
-        <div class="board-header">
+        <div class="panel-header avatar-sm">
             <button
-                class="btn-ghost font-medium -ml-1"
+                class="btn-ghost font-medium"
                 onclick={() => modalManager.open(boardCommands)}
             >
                 <span>{board.name}</span>
                 <ChevronDownIcon />
             </button>
 
-            <div class="text-2xl text-ink-detail ml-auto flex gap-2">
+            <div class="ml-2 flex">
                 {#each board.onlineUsers as user (user.user.id)}
-                    <div
-                        class={user.state.active ? '' : 'opacity-50'}
-                        animate:flip={{duration: 200}}
-                    >
-                        <Avatar
-                            title={`${user.user.fullName} - ${user.state.active ? 'online' : 'away'}`}
-                            class="border-blue-400 border-2"
-                            name={user.user.fullName}
-                        />
-                    </div>
+                    <Avatar
+                        name={`${user.user.fullName}`}
+                        class="outline-surface-0 outline-2"
+                    />
                 {/each}
             </div>
             <button
                 onclick={() => modalManager.open(boardSettings)}
-                class="btn--icon text-ink-body mr-1.5"
+                class="btn--icon text-ink-body mr-1 ml-auto"
             >
                 <EllipsisIcon />
             </button>
 
-            <button class="btn--icon avatar-sm">
+            <button class="btn--icon">
                 <Avatar name={me.fullName} />
             </button>
         </div>
@@ -262,12 +255,13 @@
             draggable
             bind:viewportRef
         >
-            {@const PADDING_X = '0.75rem'}
             <div
                 bind:this={boardRef}
                 bind:this={columnsContainerRef}
-                class="flex board-content"
-                style={`padding-right: calc(100vw - ${PADDING_X} - ${COLUMN_WIDTH} - ${selectedCard ? detailsWidth : 0}px); padding-left: ${PADDING_X}`}
+                class="board-content"
+                style="padding-inline-end: {selectedCard
+                    ? `calc(var(--board-padding-inline-end) - ${detailsWidth}px)`
+                    : 'var(--board-padding-inline-end)'}"
             >
                 {#each board.columns as column, i (column.id)}
                     <div
@@ -286,7 +280,7 @@
                 {/each}
             </div>
         </Scrollable>
-        <div class="board-footer">
+        <div class="panel-footer">
             <StatusBar />
         </div>
     </div>
@@ -316,25 +310,13 @@
 </div>
 
 <style>
-    .board-header {
-        height: var(--header-height);
-        display: flex;
-        flex-shrink: 0;
-        align-items: center;
-        padding-inline: 1.25rem;
-    }
-
     .board-content {
-        height: var(--content-height);
+        height: var(--board-height);
         overflow-y: auto;
         padding-block-start: 0.5rem;
         padding-block-end: 0rem;
-    }
-
-    .board-footer {
-        height: var(--footer-height);
-        padding-inline: 1.25rem;
         display: flex;
-        flex-shrink: 0;
+
+        padding-inline-start: var(--board-padding-inline-start);
     }
 </style>

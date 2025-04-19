@@ -12,7 +12,7 @@
 
 <div class="flex flex-col gap-4 flex-1 relative">
     {#each messages as message, index (message.id)}
-        <div class="flex flex-col mx-5 relative">
+        <div class="flex flex-col panel-padding-inline relative">
             <div class="flex items-center gap-1.5 relative">
                 <Avatar name={message.author.fullName} />
 

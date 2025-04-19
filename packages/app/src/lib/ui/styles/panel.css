@@ -1,0 +1,32 @@
+:root {
+    --panel-header-height: 2.5rem;
+    --panel-footer-height: 2rem;
+    --panel-padding-inline: 1.25rem;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+
+    height: var(--panel-header-height);
+
+    padding-inline: var(--panel-padding-inline);
+}
+
+.panel-footer {
+    display: flex;
+    flex-shrink: 0;
+
+    height: var(--panel-footer-height);
+
+    padding-inline: var(--panel-padding-inline);
+}
+
+.panel-margin-inline {
+    margin-inline: var(--panel-padding-inline);
+}
+
+.panel-padding-inline {
+    padding-inline: var(--panel-padding-inline);
+}

@@ -1,7 +1,9 @@
 <script lang="ts">
     import {assertNever} from 'syncwave';
     import {getAgent} from '../../agent/agent.svelte';
-    import ChatBubbleOvalLeftIcon from '../components/icons/chat-bubble-oval-left-icon.svelte';
+    import ChatBubbleSolidIcon from '../components/icons/chat-bubble-solid-icon.svelte';
+    import SignalSolidIcon from '../components/icons/signal-solid-icon.svelte';
+    import NoSignalSolidIcon from '../components/icons/no-signal-solid-icon.svelte';
 
     const agent = getAgent();
 
@@ -35,26 +37,18 @@
 </script>
 
 <div class="flex items-center gap-4 text-xs icon-sm w-full">
-    <div title={statusTitle} class="flex items-center gap-1.5">
-        {#if agent.status === 'online'}
-            <div class="w-2 h-2 rounded-full bg-green-500"></div>
-
-            <div>Online</div>
-        {/if}
-        {#if agent.status === 'unstable'}
-            <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
-
-            <div>Online</div>
+    <div
+        title={statusTitle}
+        class="flex items-center gap-1.5"
+        class:text-yellow-500={agent.status === 'unstable'}
+        class:text-red-500={agent.status === 'offline'}
+    >
+        {#if agent.status === 'online' || agent.status === 'unstable'}
+            <SignalSolidIcon />
+            <span>Online</span>
         {/if}
         {#if agent.status === 'offline'}
-            <div class="w-2 h-2 relative">
-                <div
-                    class="absolute inset-0 w-2 h-2 rounded-full animate-ping bg-red-500"
-                ></div>
-                <div
-                    class="absolute inset-0 w-2 h-2 rounded-full bg-red-500"
-                ></div>
-            </div>
+            <NoSignalSolidIcon />
             <div
                 title="Trying to reconnect to the server, hold on! This may take up to a minute."
             >
@@ -70,11 +64,13 @@
             Ping: ~{pingLatency}ms
         </div>
     {/if}
-    <a
-        href="https://discord.gg/FzQjQVFdQz"
-        class="ml-auto btn-ghost"
-        target="_blank"
-    >
-        <ChatBubbleOvalLeftIcon /> Leave Feedback
-    </a>
+    <div class="ml-auto">
+        <a
+            href="https://discord.gg/FzQjQVFdQz"
+            class="btn-ghost"
+            target="_blank"
+        >
+            <ChatBubbleSolidIcon /> Leave Feedback
+        </a>
+    </div>
 </div>

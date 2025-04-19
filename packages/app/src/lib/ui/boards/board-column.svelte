@@ -13,7 +13,6 @@
     import router from '../../router';
     import ListAnimator from '../components/list-animator.svelte';
     import ColumnIcon from '../components/column-icon.svelte';
-    import {COLUMN_WIDTH} from './constants';
 
     const {
         column,
@@ -63,16 +62,12 @@
     });
 </script>
 
-<div
-    class="flex flex-shrink-0 flex-col h-full"
-    style={`width: ${COLUMN_WIDTH}`}
-    data-column-id={column.id}
->
+<div class="column" data-column-id={column.id}>
     <div
-        class="flex items-center px-2 mb-2 flex-shrink-0"
+        class="flex items-center column-padding-inline mb-2 flex-shrink-0 icon-sm"
         data-disable-scroll-view-drag="true"
     >
-        <div class="flex items-center gap-1.5 font-medium icon-sm">
+        <div class="flex items-center gap-1.5 font-medium">
             <ColumnIcon active={columnPosition} total={columnsCount} />
 
             {column.name}
@@ -83,11 +78,11 @@
             open={editColumnOpen}
             onClose={() => (editColumnOpen = false)}
         />
-        <div class="flex ml-auto icon-sm">
-            <button class="btn--icon text-ink-body" onclick={onCreateCard}>
+        <div class="flex ml-auto text-ink-body">
+            <button class="btn--icon" onclick={onCreateCard}>
                 <PlusIcon class="pointer-events-none" />
             </button>
-            <button onclick={editColumn} class="btn--icon text-ink-body">
+            <button onclick={editColumn} class="btn--icon">
                 <EllipsisIcon class="pointer-events-none" />
             </button>
         </div>
@@ -101,7 +96,7 @@
         type="hover"
     >
         <div
-            class="mx-2 flex h-full min-h-10 flex-col gap-1.5"
+            class="column-padding-inline flex h-full min-h-10 flex-col gap-1.5"
             bind:this={cardsContainerRef}
         >
             <ListAnimator
@@ -122,3 +117,18 @@
         </div>
     </Scrollable>
 </div>
+
+<style>
+    .column {
+        display: flex;
+        flex-shrink: 0;
+        flex-direction: column;
+
+        height: 100%;
+        width: var(--column-width);
+    }
+
+    .column-padding-inline {
+        margin-inline: var(--column-padding-inline);
+    }
+</style>

@@ -19,7 +19,6 @@
         createXmlFragment,
         yFragmentToPlaintext,
     } from '../../richtext';
-    import ArrowUp from '../components/icons/arrow-up.svelte';
     import MessageList from './message-list.svelte';
 
     const {
@@ -61,17 +60,6 @@
     const detailsPromise = agent.observeCardAsync(card.id);
 
     const fragment = createXmlFragment();
-    let isNewMessageEmpty = $state(true);
-    $effect(() => {
-        const messageLengthObserver = () => {
-            isNewMessageEmpty =
-                yFragmentToPlaintext(fragment).trim().length === 0;
-        };
-        messageLengthObserver();
-
-        fragment.observeDeep(messageLengthObserver);
-        return () => fragment.unobserveDeep(messageLengthObserver);
-    });
 
     const onSendMessage = async (e?: Event) => {
         e?.preventDefault();
@@ -115,15 +103,13 @@
 </script>
 
 <div
-    class="border-divider bg-surface-0 z-10 flex w-full flex-shrink-0 flex-col border-l rounded-r-sm"
+    class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l rounded-r-sm"
 >
     <div
-        class="flex items-center px-4 h-[2.5rem] border-b border-transparent"
+        class="panel-header border-b border-transparent"
         class:border-divider-subtle!={isScrolled}
     >
-        <div
-            class="flex items-center gap-0.5 icon-base select-text font-medium"
-        >
+        <div class="flex items-center gap-0.5 icon-base font-medium">
             {#if card.isDraft}
                 New card
             {:else}
@@ -169,7 +155,7 @@
         }}
     >
         <!-- Task Description -->
-        <div class="mx-5 mt-2">
+        <div class="panel-margin-inline mt-2">
             <div class="input w-full leading-relaxed">
                 <Editor
                     bind:this={editor}
@@ -182,7 +168,9 @@
             </div>
         </div>
         <!-- Task Actions -->
-        <div class="flex gap-2 mx-4 mt-3 mb-2 text-sm icon-sm items-center">
+        <div
+            class="flex gap-4 panel-margin-inline mt-4 mb-2 text-sm icon-sm items-center"
+        >
             <Select
                 value={card.column.id}
                 options={columnOptions}
@@ -210,7 +198,7 @@
                 </button>
             </Select>
         </div>
-        <hr class="" />
+        <hr />
         <!-- <div class="flex mx-6 mt-4 items-center gap-1.5">
             <span class="text-ink-detail text-sm leading-none">1 Message</span>
             <hr class="flex-grow" />
@@ -230,7 +218,7 @@
         </div>
     {/if}
     <div
-        class="mx-5 border-[1.5px] border-divider-object mb-2 p-2 rounded-md flex items-end"
+        class="panel-margin-inline border-[1.5px] border-divider-object mb-2 p-2 rounded-md"
     >
         <Editor
             {fragment}

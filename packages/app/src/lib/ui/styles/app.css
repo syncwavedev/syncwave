@@ -4,7 +4,7 @@
     --app-border-radius: 0px;
 
     --app-width: calc(100vw - (var(--app-margin) * 2));
-    --app-height: calc(100vh - (var(--app-margin) * 2));
+    --app-height: calc(100vh - var(--app-margin));
 }
 
 .app {
@@ -13,7 +13,8 @@
     height: var(--app-height);
     width: var(--app-width);
 
-    margin: var(--app-margin);
+    margin-inline: var(--app-margin);
+    margin-block-end: var(--app-margin);
 
     border: var(--app-border) solid var(--color-divider);
     border-radius: var(--app-border-radius);

@@ -318,7 +318,7 @@
 
 <style>
     :root {
-        --header-height: 2.325rem;
+        --header-height: 2.5rem;
         --footer-height: 2rem;
         --content-height: calc(
             var(--app-height) - var(--header-height) - var(--footer-height)

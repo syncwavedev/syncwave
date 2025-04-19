@@ -1,9 +1,3 @@
-import gsap from 'gsap';
-
-import {ScrollTrigger} from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
-
 const RESPONSIVE_WIDTH = 1024;
 
 let isHeaderCollapsed = window.innerWidth < RESPONSIVE_WIDTH;
@@ -55,39 +49,6 @@ window.addEventListener('resize', responsive);
  * Animations
  */
 
-gsap.registerPlugin(ScrollTrigger);
-
-gsap.to('.reveal-up', {
-    opacity: 0,
-    y: '100%',
-});
-
-gsap.to('#dashboard', {
-    boxShadow: '0px 15px 25px -5px #7e22ceaa',
-    duration: 0.3,
-    scrollTrigger: {
-        trigger: '#hero-section',
-        start: '60% 60%',
-        end: '80% 80%',
-        // markers: true
-    },
-});
-
-// straightens the slanting image
-gsap.to('#dashboard', {
-    scale: 1,
-    translateY: 0,
-    // translateY: "0%",
-    rotateX: '0deg',
-    scrollTrigger: {
-        trigger: '#hero-section',
-        start: window.innerWidth > RESPONSIVE_WIDTH ? 'top 95%' : 'top 70%',
-        end: 'bottom bottom',
-        scrub: 1,
-        // markers: true,
-    },
-});
-
 const faqAccordion = document.querySelectorAll('.faq-accordion');
 
 faqAccordion.forEach(function (btn) {
@@ -105,29 +66,5 @@ faqAccordion.forEach(function (btn) {
             content.style.maxHeight = '200px';
             content.style.padding = '20px 18px';
         }
-    });
-});
-
-// ------------- reveal section animations ---------------
-
-const sections = gsap.utils.toArray('section');
-
-sections.forEach(sec => {
-    const revealUptimeline = gsap.timeline({
-        paused: true,
-        scrollTrigger: {
-            trigger: sec,
-            start: '10% 80%', // top of trigger hits the top of viewport
-            end: '20% 90%',
-            // markers: true,
-            // scrub: 1,
-        },
-    });
-
-    revealUptimeline.to(sec.querySelectorAll('.reveal-up'), {
-        opacity: 1,
-        duration: 0.8,
-        y: '0%',
-        stagger: 0.2,
     });
 });

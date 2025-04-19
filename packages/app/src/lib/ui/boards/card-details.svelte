@@ -229,24 +229,18 @@
             {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
         </div>
     {/if}
-    <div class="mx-5 bg-surface-2 mb-4 p-1.5 rounded-md flex items-end">
+    <div
+        class="mx-5 border-[1.5px] border-divider-object mb-2 p-2 rounded-md flex items-end"
+    >
         <Editor
             {fragment}
             {me}
             placeholder="Write a message..."
-            class="px-1 mb-0.75 w-full leading-relaxed"
+            class="px-1 w-full leading-relaxed"
             onEnter={() => onSendMessage()}
             onKeyDown={() =>
                 agent.handleCardMessageKeyDown(card.boardId, card.id)}
             onBlur={() => agent.handleCardMessageBlur(card.boardId, card.id)}
         />
-
-        <button
-            type="submit"
-            class="btn--icon ml-auto bg-surface-2"
-            disabled={isNewMessageEmpty}
-        >
-            <ArrowUp />
-        </button>
     </div>
 </div>

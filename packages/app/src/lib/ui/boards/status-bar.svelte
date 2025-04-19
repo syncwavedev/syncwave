@@ -1,6 +1,7 @@
 <script lang="ts">
     import {assertNever} from 'syncwave';
     import {getAgent} from '../../agent/agent.svelte';
+    import ChatBubbleOvalLeftIcon from '../components/icons/chat-bubble-oval-left-icon.svelte';
 
     const agent = getAgent();
 
@@ -33,7 +34,7 @@
     });
 </script>
 
-<div class="flex items-center gap-4 text-xs text-ink-detail w-full">
+<div class="flex items-center gap-4 text-xs icon-sm w-full">
     <div title={statusTitle} class="flex items-center gap-1.5">
         {#if agent.status === 'online'}
             <div class="w-2 h-2 rounded-full bg-green-500"></div>
@@ -69,4 +70,11 @@
             Ping: ~{pingLatency}ms
         </div>
     {/if}
+    <a
+        href="https://discord.gg/FzQjQVFdQz"
+        class="ml-auto btn-ghost"
+        target="_blank"
+    >
+        <ChatBubbleOvalLeftIcon /> Leave Feedback
+    </a>
 </div>

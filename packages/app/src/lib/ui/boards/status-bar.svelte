@@ -58,7 +58,7 @@
             </div>
         {/if}
     </div>
-    {#if agent.pingLatency}
+    {#if agent.pingLatency && agent.status !== 'offline'}
         {@const pingLatency = Math.round(agent.pingLatency)}
         <div title={`Ping latency is ${pingLatency}ms`}>
             Ping: ~{pingLatency}ms

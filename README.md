@@ -1,11 +1,11 @@
-# SyncWave - Kanban Board for Developers
+# Syncwave - Kanban Board for Developers
 
-SyncWave is a communications tool that lets you build great software with your friends.
+Syncwave is a communications tool that lets you build great software with your friends.
 
 <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./packages/www/src/assets/syncwave-window-screenshot-dark-v2.png">
     <source media="(prefers-color-scheme: light)" srcset="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
-    <img alt="SyncWave Screenshot" src="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
+    <img alt="Syncwave Screenshot" src="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
 </picture>
 
 ## Features
@@ -20,7 +20,7 @@ SyncWave is a communications tool that lets you build great software with your f
 
 ## Self-Hosted
 
-SyncWave is available as a Docker image [syncwave/syncwave](http://hub.docker.com/r/syncwave/syncwave) that you can run on your own server:
+Syncwave is available as a Docker image [syncwave/syncwave](http://hub.docker.com/r/syncwave/syncwave) that you can run on your own server:
 
 ```sh
 docker run -p 8080:80 -v ./syncwave-data:/data -d syncwave/syncwave
@@ -30,7 +30,7 @@ Open your browser at `http://localhost:8080/`
 
 ## Cloud
 
-If you don't want to host SyncWave yourself, we already did it for your at [app.syncwave.dev](https://app.syncwave.dev).
+If you don't want to host Syncwave yourself, we already did it for your at [app.syncwave.dev](https://app.syncwave.dev).
 
 ## Documentation
 
@@ -41,7 +41,7 @@ For full documentation, visit [syncwave.dev/docs](https://www.syncwave.dev/docs)
 If you have questions or need assistance, you can:
 
 - Ask in our [GitHub Discussions](https://github.com/syncwavedev/syncwave/discussions)
-- Join our Discord server SyncWave for real-time support
+- Join our Discord server Syncwave for real-time support
 - File an [issue on GitHub](https://github.com/syncwavedev/syncwave/issues) to report problems
 
 ## Alternatives
@@ -53,7 +53,7 @@ If you have questions or need assistance, you can:
 
 ## License
 
-SyncWave is open source under the GNU Affero General Public License Version 3 (AGPLv3) or any later version. You can [find it here](./LICENSE).
+Syncwave is open source under the GNU Affero General Public License Version 3 (AGPLv3) or any later version. You can [find it here](./LICENSE).
 
 ## Acknowledgements
 

@@ -15,23 +15,23 @@ export class EmailService {
                 html: `<p>
                             Hi there!<br />
                             <br />
-                            We noticed a request to sign into your SyncWave account.<br />
+                            We noticed a request to sign into your Syncwave account.<br />
                             If this wasn't you, no worries—just ignore this email.<br />
                             <br />
                             Your one-time code is: <strong>${params.code}</strong><br />
                             <br />
                             Have a great day!<br />
-                            The SyncWave Team
+                            The Syncwave Team
                         </p>`,
-                subject: 'Your SyncWave Account Sign-In Code',
+                subject: 'Your Syncwave Account Sign-In Code',
                 text: `Hi there!
             
-We noticed a request to sign into your SyncWave account. If this wasn't you, no worries—just ignore this email.
+We noticed a request to sign into your Syncwave account. If this wasn't you, no worries—just ignore this email.
 
 Your one-time code is: ${params.code}
 
 Have a great day!
-The SyncWave Team`,
+The Syncwave Team`,
             });
         });
     }
@@ -49,8 +49,8 @@ The SyncWave Team`,
                 recipient: params.email,
                 subject,
                 // todo: generate capability link
-                text: `You have been invited to join the board ${params.boardName} in SyncWave. Click on the link to accept the invitation: ${boardUrl}`,
-                html: `<p>You have been invited to join the board ${params.boardName} in SyncWave. Click on the link to accept the invitation: <a href="${boardUrl}">${boardUrl}</a></p>`,
+                text: `You have been invited to join the board ${params.boardName} in Syncwave. Click on the link to accept the invitation: ${boardUrl}`,
+                html: `<p>You have been invited to join the board ${params.boardName} in Syncwave. Click on the link to accept the invitation: <a href="${boardUrl}">${boardUrl}</a></p>`,
             });
         });
     }

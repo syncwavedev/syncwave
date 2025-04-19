@@ -24,7 +24,7 @@ export class SesEmailProvider implements EmailProvider {
                 Destination: {
                     ToAddresses: [recipient],
                 },
-                Source: 'SyncWave <noreply@syncwave.dev>',
+                Source: 'Syncwave <noreply@syncwave.dev>',
                 Message: {
                     Subject: {
                         Data: subject,

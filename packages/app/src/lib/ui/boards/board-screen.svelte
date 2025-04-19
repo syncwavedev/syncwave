@@ -313,8 +313,6 @@
     .board-content {
         height: var(--board-height);
         overflow-y: auto;
-        padding-block-start: 0.5rem;
-        padding-block-end: 0rem;
         display: flex;
 
         padding-inline-start: var(--board-padding-inline-start);

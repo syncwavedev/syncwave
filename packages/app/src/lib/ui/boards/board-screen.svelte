@@ -24,6 +24,7 @@
     import BoardSettingsModal from './board-settings-modal.svelte';
     import StatusBar from './status-bar.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
+    import ProfileModal from '../profiles/profile-modal.svelte';
 
     const {
         board,
@@ -219,6 +220,10 @@
     <BoardSettingsModal {board} />
 {/snippet}
 
+{#snippet profileSettings()}
+    <ProfileModal {me} />
+{/snippet}
+
 <div class="flex app">
     <div class="flex min-w-0 flex-col">
         <div class="panel-header avatar-sm">
@@ -245,7 +250,10 @@
                 <EllipsisIcon />
             </button>
 
-            <button class="btn--icon">
+            <button
+                class="btn--icon"
+                onclick={() => modalManager.open(profileSettings)}
+            >
                 <Avatar name={me.fullName} />
             </button>
         </div>

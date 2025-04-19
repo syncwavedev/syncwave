@@ -1,18 +1,8 @@
-<!-- [![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![AGPL-3.0][license-shield]][license-url]
-<br /> -->
-
 <div align="center">
-  <a href="https://github.com/syncwavedev/syncwave">
-    <img src="packages/www/public/assets/logo/logo.png" alt="Logo" width="80" height="80">
-  </a>
-
-  <h3 align="center">Syncwave</h3>
+  <h1 align="center">Syncwave</h1>
 
   <p align="center">
-    Kanban Board for Developers
+    Kanban board for developers
 </p>
 <p align="center">
     <a href="https://discord.com/invite/FzQjQVFdQz">
@@ -32,15 +22,20 @@
   </p>
 </div>
 
-<!-- TABLE OF CONTENTS -->
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./packages/www/src/assets/syncwave-window-screenshot-dark-v2.png">
+    <source media="(prefers-color-scheme: light)" srcset="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
+    <img alt="Syncwave Screenshot" src="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
+</picture>
+
+Syncwave emerged from a simple need: a project management tool that developers would actually enjoy using. Created out of frustration with overly complex alternatives, we combined the simplicity of kanban boards with the familiarity of IDEs.
+
+Our focus remains on developer ergonomics, seamless collaboration, and performance. Built by developers for developers, Syncwave streamlines project management with a clean, distraction-free interface.
+
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
+    <li><a href="#built-with">Built With</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#quick-start">Quick start</a></li>
     <li><a href="#self-hosted">Self-Hosted</a></li>
@@ -53,19 +48,7 @@
   </ol>
 </details>
 
-## About The Project
-
-<picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./packages/www/src/assets/syncwave-window-screenshot-dark-v2.png">
-    <source media="(prefers-color-scheme: light)" srcset="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
-    <img alt="Syncwave Screenshot" src="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
-</picture>
-
-Syncwave emerged from a simple need: a project management tool that developers would actually enjoy using. Created out of frustration with overly complex alternatives, we combined the simplicity of kanban boards with the familiarity of IDEs.
-
-Our focus remains on developer ergonomics, seamless collaboration, and performance. Built by developers for developers, Syncwave streamlines project management with a clean, distraction-free interface.
-
-### Built With
+## Built With
 
 [![Svelte][Svelte.dev]][Svelte-url]
 [![Node.js][Node.js]][Node-url]
@@ -73,7 +56,7 @@ Our focus remains on developer ergonomics, seamless collaboration, and performan
 [![Astro][Astro]][Astro-url]
 [![TypeScript][TypeScript]][TypeScript-url]
 
-Syncwave is built with modern web technologies that prioritize performance, developer experience, and user interface quality. Our core technology stack includes:
+Syncwave is built with modern web technologies that prioritize performance, developer experience, and user interface quality.
 
 ## Features
 

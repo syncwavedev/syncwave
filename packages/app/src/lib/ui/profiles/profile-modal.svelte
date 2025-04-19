@@ -1,5 +1,4 @@
 <script lang="ts">
-    import TrashIcon from '../components/icons/trash-icon.svelte';
     import Modal from '../components/modal.svelte';
 
     import {getAgent} from '../../agent/agent.svelte';
@@ -36,7 +35,10 @@
         />
     </div>
     <div class="flex justify-center">
-        <button class="btn-ghost" onclick={() => authManager.logOut(true)}>
+        <button
+            class="btn-ghost"
+            onclick={() => authManager.logOut({pageReload: true})}
+        >
             <LogOutIcon /> Log out
         </button>
     </div>

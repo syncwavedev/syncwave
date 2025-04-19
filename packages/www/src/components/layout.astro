@@ -1,0 +1,170 @@
+---
+import '../styles/global.css';
+import '../styles/landing.css';
+
+interface Props {
+    title: string;
+    description: string;
+    url: string;
+}
+const {title, description, url}: Props = Astro.props;
+---
+
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        <link
+            rel="shortcut icon"
+            href="/assets/logo/logo.png"
+            type="image/x-icon"
+        />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:title" content="SyncWave" />
+        <meta property="og:description" content={description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={url} />
+        <!-- <meta property="og:image" content="" /> -->
+
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"
+            integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        />
+    </head>
+    <body class="flex min-h-[100vh] flex-col bg-black text-white">
+        <header
+            class="fixed bg-black max-w-lg:px-4 max-w-lg:mr-auto top-0 z-20 flex h-[60px] w-full bg-opacity-0 px-[5%] lg:justify-around"
+        >
+            <a class="h-[50px] w-[50px] p-[4px]" href="/">
+                <img
+                    src="/assets/logo/logo.png"
+                    alt="logo"
+                    class="object h-full w-full"
+                />
+            </a>
+            <div
+                class="collapsible-header animated-collapse max-lg:shadow-md"
+                id="collapsed-header-items"
+            >
+                <div
+                    class="flex h-full w-max gap-5 text-base max-lg:mt-[30px] max-lg:flex-col max-lg:place-items-end max-lg:gap-5 lg:mx-auto lg:place-items-center"
+                >
+                    <a class="header-links" href="/#features"> Features </a>
+                    <a class="header-links" href="/#pricing"> Pricing </a>
+                    <a
+                        class="header-links"
+                        href="https://github.com/syncwavedev/syncwave"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        GitHub
+                        <i class="bi bi-box-arrow-up-right ml-2 text-sm"></i>
+                    </a>
+                </div>
+                <div
+                    class="mx-4 flex place-items-center gap-[20px] text-base max-md:w-full max-md:flex-col max-md:place-content-center"
+                >
+                    <a
+                        href="https://app.syncwave.dev/"
+                        aria-label="signup"
+                        class="rounded-full bg-white px-3 py-2 text-black transition-transform duration-[0.3s] hover:translate-x-2"
+                    >
+                        <span>Get started</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <button
+                class="bi bi-list absolute right-3 top-3 z-50 text-3xl text-white lg:hidden"
+                onclick="toggleHeader()"
+                aria-label="menu"
+                id="collapse-btn"></button>
+        </header>
+
+        <div class="mt-28">
+            <slot />
+        </div>
+
+        <footer
+            class="mt-auto flex w-full place-content-around gap-3 p-[5%] px-[10%] text-white max-md:flex-col"
+        >
+            <div
+                class="flex h-full w-[250px] flex-col place-items-center gap-6 max-md:w-full"
+            >
+                <img
+                    src="/assets/logo/logo.png"
+                    alt="logo"
+                    srcset=""
+                    class="max-w-[60px]"
+                />
+                <!-- <div>
+                    <div
+                        class="text-gray-300 text-sm text-center flex items-center gap-2 max-w-[220px]"
+                    >
+                        <span>
+                            Registered in Harju county, Estonia<br />
+                            Tallinn, Kesklinna linnaosa<br />
+                            Tornimäe tn 5, 10145
+                        </span>
+                    </div>
+                </div> -->
+                <div class="mt-3 text-xl font-semibold">Connect with us</div>
+                <div class="flex gap-4 text-2xl">
+                    <a
+                        href="https://github.com/syncwavedev/syncwave"
+                        aria-label="GitHub"
+                    >
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a href="https://x.com/d3wittx" aria-label="X">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    <a
+                        href="https://discord.gg/FzQjQVFdQz"
+                        class="h-[40px] w-[40px]"
+                        aria-label="Discord"
+                    >
+                        <i class="bi bi-discord"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- <div class="flex h-full w-[250px] flex-col gap-4">
+                <h2 class="text-3xl max-md:text-xl">Social</h2>
+                <div class="flex flex-col gap-3 max-md:text-sm">
+                    <a href="/#features" class="footer-link"> GitHub</a>
+                    <a href="/#pricing" class="footer-link"> X (Twitter)</a>
+                    <a href="/changelog" class="footer-link"> Discord</a>
+                </div>
+            </div> -->
+
+            <div class="flex h-full w-[250px] flex-col gap-4">
+                <h2 class="text-3xl max-md:text-xl">Resources</h2>
+                <div class="flex flex-col gap-3 max-md:text-sm">
+                    <a href="/#features" class="footer-link">Features</a>
+                    <a href="/#pricing" class="footer-link">Pricing</a>
+                    <a href="/changelog" class="footer-link">Changelog</a>
+                </div>
+            </div>
+
+            <div class="flex h-full w-[250px] flex-col gap-4">
+                <h2 class="text-3xl max-md:text-xl">Company</h2>
+                <div class="flex flex-col gap-3 max-md:text-sm">
+                    <a href="/privacy" class="footer-link">Privacy policy</a>
+                    <a href="/terms" class="footer-link">Terms of service</a>
+                    <a href="mailto:arey@hey.com" class="footer-link">
+                        Contact us
+                    </a>
+                </div>
+            </div>
+        </footer>
+
+        <script src="../scripts/index.js"></script>
+    </body>
+</html>

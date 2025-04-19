@@ -9,6 +9,7 @@
     import {getAgent} from '../../agent/agent.svelte';
     import router from '../../router';
     import ManageInviteLinkModal from './manage-invite-link-modal.svelte';
+    import BoardHistoryManager from '../../board-history-manager';
 
     let {board}: {board: BoardTreeView} = $props();
 
@@ -18,6 +19,7 @@
         const confirmMessage = `Are you sure you want to delete "${board.name}"? This action cannot be undone.`;
         if (confirm(confirmMessage)) {
             modalManager.close();
+            BoardHistoryManager.clear();
             agent.deleteBoard(board.id);
             router.route('/');
         }

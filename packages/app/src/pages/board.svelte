@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {log} from 'syncwave';
     import {getAgent} from '../lib/agent/agent.svelte';
     import boardHistoryManager from '../lib/board-history-manager';
     import BoardScreen from '../lib/ui/boards/board-screen.svelte';
@@ -14,7 +15,15 @@
         throw new Error('User ID not found');
     }
 
-    const boardPromise = agent.observeBoardAsync(key);
+    const boardPromise = agent.observeBoardAsync(key).catch(error => {
+        log.error({msg: 'Error loading board', error});
+
+        boardHistoryManager.clear();
+
+        window.location.href = '/';
+
+        return Promise.reject(error);
+    });
     const mePromise = agent.observeMeAsync();
 
     // todo: add user role (internal, external, etc.) and use it instead of board key
@@ -34,4 +43,6 @@
         {me}
         counter={counter ? parseInt(counter) : undefined}
     />
+{:catch}
+    <div>Board not found. Redirecting to home page...</div>
 {/await}

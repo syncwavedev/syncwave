@@ -2,14 +2,20 @@
   <h1 align="center">Syncwave</h1>
 
   <p align="center">
-    Kanban board that helps your build software people love.
+    Kanban board that helps you build software people love.
 </p>
-<p align="center">
-    <a href="https://discord.com/invite/FzQjQVFdQz"><img alt="Discord online members" src="https://img.shields.io/discord/1363049127663108156?color=5865F2&label=Discord&style=for-the-badge" /></a>
+  <p align="center">
+    <a href="https://github.com/syncwavedev/syncwave/blob/main/LICENSE">
+      <img src="https://img.shields.io/badge/license-AGPL--v3-green?style=for-the-badge" alt="Syncwave is released under the AGPLv3 license." />
+    </a>
+    <a href="https://discord.com/invite/FzQjQVFdQz">
+      <!-- <img alt="Discord online members" src="https://img.shields.io/discord/1363049127663108156?color=5865F2&label=Discord&style=for-the-badge" /> -->
+      <img src="https://img.shields.io/badge/Chat%20on-Discord-%235766f2?style=for-the-badge" alt="Discord community" />
+    </a>
     <img alt="Commit activity per month" src="https://img.shields.io/github/commit-activity/m/syncwavedev/syncwave?style=for-the-badge" />
-    </p>
-    <p align="center">
-    <a href="https://app.syncwave.dev/demo">View Demo</a>
+  </p>
+  <p align="center">
+    <a href="https://app.syncwave.dev/demo">Demo</a>
     &middot;
     <a href="https://www.syncwave.dev/docs">Docs</a>
     &middot;
@@ -91,7 +97,7 @@ For full documentation, visit [syncwave.dev/docs](https://www.syncwave.dev/docs)
 If you have questions or need assistance, you can:
 
 - Ask in our [GitHub Discussions](https://github.com/syncwavedev/syncwave/discussions)
-- Join our Discord server Syncwave for real-time support
+- Join our [Discord server](https://discord.com/invite/FzQjQVFdQz) Syncwave for real-time support
 - File an [issue on GitHub](https://github.com/syncwavedev/syncwave/issues) to report problems
 
 ## Alternatives

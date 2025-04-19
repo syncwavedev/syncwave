@@ -2,6 +2,12 @@
 
 SyncWave is a communications tool that lets you build great software with your friends.
 
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./packages/www/src/assets/syncwave-screenshot-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="./packages/www/src/assets/syncwave-screenshot-light.png">
+    <img alt="SyncWave Screenshot" src="./packages/www/src/assets/syncwave-screenshot-light.png">
+</picture>
+
 ## Features
 
 - **Realtime** collaboration.
@@ -29,6 +35,14 @@ If you don't want to host SyncWave yourself, we already did it for your at [app.
 ## Documentation
 
 For full documentation, visit [syncwave.dev/docs](https://www.syncwave.dev/docs).
+
+## Help
+
+If you have questions or need assistance, you can:
+
+- Ask in our [GitHub Discussions](https://github.com/syncwavedev/syncwave/discussions)
+- Join our Discord server SyncWave for real-time support
+- File an [issue on GitHub](https://github.com/syncwavedev/syncwave/issues) to report problems
 
 ## Alternatives
 

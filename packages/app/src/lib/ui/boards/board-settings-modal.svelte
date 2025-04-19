@@ -8,6 +8,7 @@
     import type {BoardTreeView} from '../../agent/view.svelte';
     import {getAgent} from '../../agent/agent.svelte';
     import router from '../../router';
+    import ManageInviteLinkModal from './manage-invite-link-modal.svelte';
 
     let {board}: {board: BoardTreeView} = $props();
 
@@ -28,11 +29,15 @@
 {/snippet}
 
 {#snippet manageColumns()}
-    <EditColumnsModal columns={board.columns} />
+    <EditColumnsModal {board} />
+{/snippet}
+
+{#snippet manageInviteLink()}
+    <ManageInviteLinkModal {board} />
 {/snippet}
 
 <Modal title="Board Settings" size="md">
-    <div class="flex flex-col mx-4">
+    <div class="flex flex-col my-4 gap-4">
         <input
             autocomplete="off"
             type="title"
@@ -40,7 +45,7 @@
             placeholder="Board name"
             value={board.name}
         />
-        <div class="flex flex-col bg-surface-2 px-2.5 rounded-md mt-4 mb-2">
+        <div class="flex flex-col bg-surface-2 px-2.5 rounded-md">
             <button
                 class="flex w-full cursor-default items-center gap-2 py-3.5"
                 onclick={() => modalManager.navigate(inviteForm, false)}
@@ -51,7 +56,7 @@
                     <ChevronIcon />
                 </span>
             </button>
-            <hr />
+            <hr class="divider" />
             <button
                 class="flex w-full cursor-default items-center gap-2 py-3.5"
                 onclick={() => modalManager.navigate(manageColumns, false)}
@@ -62,10 +67,21 @@
                     <ChevronIcon />
                 </span>
             </button>
+            <hr class="divider" />
+            <button
+                class="flex w-full cursor-default items-center gap-2 py-3.5"
+                onclick={() => modalManager.navigate(manageInviteLink, false)}
+            >
+                <span>Invite Link</span>
+                <span class="text-ink-body ml-auto flex items-center gap-1.5">
+                    <span class="text-sm">Manage</span>
+                    <ChevronIcon />
+                </span>
+            </button>
         </div>
     </div>
-    <div class="modal-footer mx-4">
-        <button class="btn-ghost mx-auto" onclick={onDeleteBoard}>
+    <div class="flex justify-center">
+        <button class="btn-ghost" onclick={onDeleteBoard}>
             <TrashIcon /> Delete {board.name}
         </button>
     </div>

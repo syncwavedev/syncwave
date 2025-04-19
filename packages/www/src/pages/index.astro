@@ -617,7 +617,6 @@ import {Image} from 'astro:assets';
             <h3 class="text-4xl font-medium text-gray-200 max-md:text-2xl">
                 You're in good hands
             </h3>
-            <!-- Testimonials -->
         <div
             class="mt-8 gap-10 space-y-8 max-md:columns-1 lg:columns-2 xl:columns-3"
         >
@@ -759,18 +758,18 @@ import {Image} from 'astro:assets';
         </div>
     </body> -->
 
-    <section
-        class="mt-5 flex w-full flex-col place-items-center p-[2%]"
-        id="pricing"
-    >
-        <h3 class="text-3xl font-medium text-gray-300 max-md:text-2xl">
-            Pricing
-        </h3>
-        <!-- pricing -->
-        <div
-            class="mt-10 flex flex-wrap place-content-center gap-8 max-lg:flex-col"
+        <section
+            class="mt-5 flex w-full flex-col place-items-center p-[2%]"
+            id="pricing"
         >
-            <!-- <div
+            <h3 class="text-3xl font-medium text-gray-300 max-md:text-2xl">
+                Pricing
+            </h3>
+            <!-- pricing -->
+            <div
+                class="mt-10 flex flex-wrap place-content-center gap-8 max-lg:flex-col"
+            >
+                <!-- <div
                     class="reveal-up flex w-[380px] flex-col place-items-center gap-2 rounded-lg border-[1px] border-outlineColor bg-secondary p-8 shadow-xl max-lg:w-[320px]"
                 >
                     <h3 class="">
@@ -797,94 +796,96 @@ import {Image} from 'astro:assets';
                         Get now
                     </a>
                 </div> -->
-            <div
-                class="reveal-up flex w-[380px] flex-col place-items-center gap-2 rounded-lg border-[1px] border-outlineColor bg-secondary p-8 shadow-xl max-lg:w-[320px]"
-            >
-                <h3 class="text-center text-2xl font-medium">Self-hosted</h3>
-                <h4 class="mt-2">
-                    <span class="text-5xl font-semibold">Free</span>
-                </h4>
-                <p class="mt-3 text-center text-gray-300">
-                    Run SyncWave on your own infrastructure with complete
-                    control and privacy.
-                </p>
-                <hr />
-                <ul
-                    class="mt-4 flex flex-col gap-2 text-center text-lg text-gray-200"
+                <div
+                    class="reveal-up flex w-[380px] flex-col place-items-center gap-2 rounded-lg border-[1px] border-outlineColor bg-secondary p-8 shadow-xl max-lg:w-[320px]"
                 >
-                    <li>Full source code access</li>
-                    <li>Self-managed updates</li>
-                    <li>Unlimited seats</li>
-                    <li>Community support</li>
-                </ul>
-                <a
-                    href="https://github.com/syncwavedev/syncwave"
-                    class="btn mt-8 !w-full transition-transform duration-[0.3s] hover:scale-x-[1.02]"
-                    target="_blank"
-                    rel="noopener"
+                    <h3 class="text-center text-2xl font-medium">
+                        Self-hosted
+                    </h3>
+                    <h4 class="mt-2">
+                        <span class="text-5xl font-semibold">Free</span>
+                    </h4>
+                    <p class="mt-3 text-center text-gray-300">
+                        Run SyncWave on your own infrastructure with complete
+                        control and privacy.
+                    </p>
+                    <hr />
+                    <ul
+                        class="mt-4 flex flex-col gap-2 text-center text-lg text-gray-200"
+                    >
+                        <li>Full source code access</li>
+                        <li>Self-managed updates</li>
+                        <li>Unlimited seats</li>
+                        <li>Community support</li>
+                    </ul>
+                    <a
+                        href="https://github.com/syncwavedev/syncwave"
+                        class="btn mt-8 !w-full transition-transform duration-[0.3s] hover:scale-x-[1.02]"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        <i class="bi bi-github mr-2"></i>
+                        View on GitHub
+                    </a>
+                </div>
+                <div
+                    class="reveal-up flex w-[380px] flex-col place-items-center gap-2 rounded-lg border-2 border-primary bg-secondary p-8 shadow-xl max-lg:w-[320px]"
                 >
-                    <i class="bi bi-github mr-2"></i>
-                    View on GitHub
-                </a>
+                    <h3 class="text-center text-2xl font-medium">Indie</h3>
+                    <h4 class="mt-2">
+                        <span class="text-5xl font-semibold">Free</span>
+                    </h4>
+                    <p class="mt-3 text-center text-gray-300">
+                        Perfect for small teams and indie developers looking for
+                        a hosted solution.
+                    </p>
+                    <hr />
+                    <ul
+                        class="mt-4 flex flex-col gap-2 text-center text-lg text-gray-200"
+                    >
+                        <li>Hosted in the cloud</li>
+                        <li>Automatic updates</li>
+                        <li>Unlimited seats</li>
+                        <li>Basic support</li>
+                    </ul>
+                    <a
+                        href="https://app.syncwave.dev/"
+                        class="btn mt-8 !w-full transition-transform duration-[0.3s] hover:scale-x-[1.02]"
+                    >
+                        Get started
+                    </a>
+                </div>
+                <div
+                    class="reveal-up flex w-[380px] flex-col place-items-center gap-2 rounded-lg border-[1px] border-outlineColor bg-secondary p-8 shadow-xl max-lg:w-[320px]"
+                >
+                    <h3 class="text-center text-2xl font-medium">Enterprise</h3>
+                    <h4 class="mt-2">
+                        <span class="text-5xl font-semibold">Contact us</span>
+                    </h4>
+                    <p class="mt-3 text-center text-gray-300">
+                        Tailored solutions for larger teams with custom
+                        requirements and support.
+                    </p>
+                    <hr />
+                    <ul
+                        class="mt-4 flex flex-col gap-2 text-center text-lg text-gray-200"
+                    >
+                        <li>Unlimited seats</li>
+                        <li>Priority support</li>
+                        <li>Custom integrations</li>
+                        <li>Dedicated resources</li>
+                    </ul>
+                    <a
+                        href="mailto:arey@hey.com"
+                        class="btn mt-8 !w-full transition-transform duration-[0.3s] hover:scale-x-[1.02]"
+                    >
+                        Contact sales
+                    </a>
+                </div>
             </div>
-            <div
-                class="reveal-up flex w-[380px] flex-col place-items-center gap-2 rounded-lg border-2 border-primary bg-secondary p-8 shadow-xl max-lg:w-[320px]"
-            >
-                <h3 class="text-center text-2xl font-medium">Indie</h3>
-                <h4 class="mt-2">
-                    <span class="text-5xl font-semibold">Free</span>
-                </h4>
-                <p class="mt-3 text-center text-gray-300">
-                    Perfect for small teams and indie developers looking for a
-                    hosted solution.
-                </p>
-                <hr />
-                <ul
-                    class="mt-4 flex flex-col gap-2 text-center text-lg text-gray-200"
-                >
-                    <li>Hosted in the cloud</li>
-                    <li>Automatic updates</li>
-                    <li>Unlimited seats</li>
-                    <li>Basic support</li>
-                </ul>
-                <a
-                    href="https://app.syncwave.dev/"
-                    class="btn mt-8 !w-full transition-transform duration-[0.3s] hover:scale-x-[1.02]"
-                >
-                    Get started
-                </a>
-            </div>
-            <div
-                class="reveal-up flex w-[380px] flex-col place-items-center gap-2 rounded-lg border-[1px] border-outlineColor bg-secondary p-8 shadow-xl max-lg:w-[320px]"
-            >
-                <h3 class="text-center text-2xl font-medium">Enterprise</h3>
-                <h4 class="mt-2">
-                    <span class="text-5xl font-semibold">Contact us</span>
-                </h4>
-                <p class="mt-3 text-center text-gray-300">
-                    Tailored solutions for larger teams with custom requirements
-                    and support.
-                </p>
-                <hr />
-                <ul
-                    class="mt-4 flex flex-col gap-2 text-center text-lg text-gray-200"
-                >
-                    <li>Unlimited seats</li>
-                    <li>Priority support</li>
-                    <li>Custom integrations</li>
-                    <li>Dedicated resources</li>
-                </ul>
-                <a
-                    href="mailto:arey@hey.com"
-                    class="btn mt-8 !w-full transition-transform duration-[0.3s] hover:scale-x-[1.02]"
-                >
-                    Contact sales
-                </a>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- <section
+        <!-- <section
             class="mt-5 flex min-h-[80vh] w-full flex-col place-content-center place-items-center p-[2%] max-lg:p-3"
         >
             <h3
@@ -969,173 +970,182 @@ import {Image} from 'astro:assets';
                 </a>
             </div>
         </section> -->
-    <section
-        class="flex w-full flex-col place-content-center place-items-center gap-[10%] p-[5%] px-[10%]"
-    >
-        <h3 class="text-4xl font-medium text-gray-300 max-md:text-2xl">FAQ</h3>
-        <div
-            class="mt-5 flex min-h-[300px] w-full max-w-[850px] flex-col gap-4"
+
+        <section
+            class="flex w-full flex-col place-content-center place-items-center gap-[10%] p-[5%] px-[10%]"
         >
+            <h3 class="text-4xl font-medium text-gray-300 max-md:text-2xl">
+                FAQ
+            </h3>
             <div
-                class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
+                class="mt-5 flex min-h-[300px] w-full max-w-[850px] flex-col gap-4"
             >
                 <div
-                    class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
+                    class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
                 >
-                    <span>What license is SyncWave released under?</span>
-                    <i class="bi bi-plus ml-auto font-semibold"></i>
-                </div>
-                <div class="content">
-                    <p class="mb-2"><strong>License:</strong> AGPL 3</p>
-                    <p>This license allows you to:</p>
-                    <ul class="list-disc pl-5 mt-2 space-y-1">
-                        <li>Use the software freely</li>
-                        <li>Modify the source code</li>
-                        <li>Self-host on your own infrastructure</li>
-                        <li>
-                            Distribute your modifications (under the same
-                            license)
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div
-                class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
-            >
-                <div
-                    class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
-                >
-                    <span>How much does SyncWave cost?</span>
-                    <i class="bi bi-plus ml-auto font-semibold"></i>
-                </div>
-                <div class="content">
-                    <p class="mb-2">SyncWave is free for everyone!</p>
-                    <p>You have two options:</p>
-                    <ul class="list-disc pl-5 mt-2 space-y-1">
-                        <li>
-                            <strong>Cloud version:</strong> Use our hosted solution
-                            at no cost
-                        </li>
-                        <li>
-                            <strong>Self-hosted:</strong> Run on your own infrastructure
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div
-                class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
-            >
-                <div
-                    class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
-                >
-                    <span>What technologies is SyncWave built with?</span>
-                    <i class="bi bi-plus ml-auto font-semibold"></i>
-                </div>
-                <div class="content">
-                    <p class="mb-2">Our tech stack includes:</p>
-                    <ul class="list-disc pl-5 mt-2 space-y-1">
-                        <li>
-                            <strong>Frontend:</strong> Svelte, TypeScript
-                        </li>
-                        <li>
-                            <strong>Backend:</strong> NodeJS, WebSockets
-                        </li>
-                        <li>
-                            <strong>Database:</strong> SQLite (self-hosted), FoundationDB
-                            (cloud)
-                        </li>
-                        <li>
-                            <strong>Real-time features:</strong> Yjs for collaboration
-                        </li>
-                        <li><strong>Rich text:</strong> TipTap editor</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div
-                class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
-            >
-                <div
-                    class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
-                >
-                    <span>How does user management work in SyncWave?</span>
-                    <i class="bi bi-plus ml-auto font-semibold"></i>
-                </div>
-                <div class="content">
-                    <p class="mb-2">SyncWave has four user roles:</p>
-                    <ul class="list-disc pl-5 mt-2 space-y-2 mb-2">
-                        <li>
-                            <strong>Reader:</strong> View-only access to boards
-                        </li>
-                        <li>
-                            <strong>Writer:</strong> Can view and edit cards
-                        </li>
-                        <li>
-                            <strong>Admin:</strong> Can manage board settings and
-                            members
-                        </li>
-                        <li>
-                            <strong>Owner:</strong> Has full control over the board
-                        </li>
-                    </ul>
-                    <p>
-                        You can be a member of multiple boards with different
-                        roles on each.
-                    </p>
-                </div>
-            </div>
-
-            <div
-                class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
-            >
-                <div
-                    class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
-                >
-                    <span
-                        >What makes SyncWave different from other kanban tools?</span
+                    <div
+                        class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
                     >
-                    <i class="bi bi-plus ml-auto font-semibold"></i>
+                        <span>What license is SyncWave released under?</span>
+                        <i class="bi bi-plus ml-auto font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        <p class="mb-2"><strong>License:</strong> AGPL 3</p>
+                        <p>This license allows you to:</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li>Use the software freely</li>
+                            <li>Modify the source code</li>
+                            <li>Self-host on your own infrastructure</li>
+                            <li>
+                                Distribute your modifications (under the same
+                                license)
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="content">
-                    <p class="mb-2">SyncWave offers several unique features:</p>
-                    <ul class="list-disc pl-5 mt-2 space-y-2">
-                        <li>
-                            <strong>True real-time collaboration:</strong> See cursor
-                            tracking, typing indicators, and live updates
-                        </li>
-                        <li>
-                            <strong>Chat-like messaging:</strong> Similar to Telegram/WhatsApp
-                            rather than traditional comments
-                        </li>
-                        <li>
-                            <strong>Developer-focused:</strong> Extensive keyboard
-                            shortcuts
-                        </li>
-                        <li>
-                            <strong>Distraction-free:</strong> Clean interface designed
-                            specifically for development teams
-                        </li>
-                    </ul>
+
+                <div
+                    class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
+                >
+                    <div
+                        class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
+                    >
+                        <span>How much does SyncWave cost?</span>
+                        <i class="bi bi-plus ml-auto font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        <p class="mb-2">SyncWave is free for everyone!</p>
+                        <p>You have two options:</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li>
+                                <strong>Cloud version:</strong> Use our hosted solution
+                                at no cost
+                            </li>
+                            <li>
+                                <strong>Self-hosted:</strong> Run on your own infrastructure
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div
+                    class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
+                >
+                    <div
+                        class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
+                    >
+                        <span>What technologies is SyncWave built with?</span>
+                        <i class="bi bi-plus ml-auto font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        <p class="mb-2">Our tech stack includes:</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li>
+                                <strong>Frontend:</strong> Svelte, TypeScript
+                            </li>
+                            <li>
+                                <strong>Backend:</strong> NodeJS, WebSockets
+                            </li>
+                            <li>
+                                <strong>Database:</strong> SQLite (self-hosted),
+                                FoundationDB (cloud)
+                            </li>
+                            <li>
+                                <strong>Real-time features:</strong> Yjs for collaboration
+                            </li>
+                            <li><strong>Rich text:</strong> TipTap editor</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div
+                    class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
+                >
+                    <div
+                        class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
+                    >
+                        <span>How does user management work in SyncWave?</span>
+                        <i class="bi bi-plus ml-auto font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        <p class="mb-2">SyncWave has four user roles:</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-2 mb-2">
+                            <li>
+                                <strong>Reader:</strong> View-only access to boards
+                            </li>
+                            <li>
+                                <strong>Writer:</strong> Can view and edit cards
+                            </li>
+                            <li>
+                                <strong>Admin:</strong> Can manage board settings
+                                and members
+                            </li>
+                            <li>
+                                <strong>Owner:</strong> Has full control over the
+                                board
+                            </li>
+                        </ul>
+                        <p>
+                            You can be a member of multiple boards with
+                            different roles on each.
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    class="faq w-full rounded-md border-[1px] border-solid border-[#1F2123] bg-[#080808]"
+                >
+                    <div
+                        class="faq-accordion flex w-full select-none text-xl max-md:text-lg"
+                    >
+                        <span
+                            >What makes SyncWave different from other kanban
+                            tools?</span
+                        >
+                        <i class="bi bi-plus ml-auto font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        <p class="mb-2">
+                            SyncWave offers several unique features:
+                        </p>
+                        <ul class="list-disc pl-5 mt-2 space-y-2">
+                            <li>
+                                <strong>True real-time collaboration:</strong> See
+                                cursor tracking, typing indicators, and live updates
+                            </li>
+                            <li>
+                                <strong>Chat-like messaging:</strong> Similar to
+                                Telegram/WhatsApp rather than traditional comments
+                            </li>
+                            <li>
+                                <strong>Developer-focused:</strong> Extensive keyboard
+                                shortcuts
+                            </li>
+                            <li>
+                                <strong>Distraction-free:</strong> Clean interface
+                                designed specifically for development teams
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="mt-20 flex flex-col place-items-center gap-4">
-            <div class="text-3xl max-md:text-2xl">Still have questions?</div>
-            <a
-                href="https://github.com/syncwavedev/syncwave/discussions/categories/q-a"
-                class="btn !rounded-full !border-[1px] !border-solid !border-gray-300 !bg-transparent transition-colors duration-[0.3s]"
-                target="_blank"
-                rel="noopener"
-            >
-                Ask on GitHub
-            </a>
-        </div>
-    </section>
+            <div class="mt-20 flex flex-col place-items-center gap-4">
+                <div class="text-3xl max-md:text-2xl">
+                    Still have questions?
+                </div>
+                <a
+                    href="https://github.com/syncwavedev/syncwave/discussions/categories/q-a"
+                    class="btn !rounded-full !border-[1px] !border-solid !border-gray-300 !bg-transparent transition-colors duration-[0.3s]"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Ask on GitHub
+                </a>
+            </div>
+        </section>
 
-    <!-- <section
+        <!-- <section
             class="flex w-full flex-col place-content-center place-items-center gap-[10%] p-[5%] px-[10%] max-md:px-2"
         >
             <div
@@ -1166,72 +1176,73 @@ import {Image} from 'astro:assets';
             </div>
         </section> -->
 
-    <footer
-        class="mt-auto flex w-full place-content-around gap-3 p-[5%] px-[10%] text-white max-md:flex-col"
-    >
-        <div
-            class="flex h-full w-[250px] flex-col place-items-center gap-6 max-md:w-full"
+        <footer
+            class="mt-auto flex w-full place-content-around gap-3 p-[5%] px-[10%] text-white max-md:flex-col"
         >
-            <img
-                src="/assets/logo/logo.png"
-                alt="logo"
-                srcset=""
-                class="max-w-[120px]"
-            />
-            <div>
-                <div
-                    class="text-gray-300 text-sm text-center flex items-center gap-2 max-w-[220px]"
-                >
-                    <span>
-                        Registered in Harju county, Estonia<br />
-                        Tallinn, Kesklinna linnaosa<br />
-                        Tornimäe tn 5, 10145
-                    </span>
+            <div
+                class="flex h-full w-[250px] flex-col place-items-center gap-6 max-md:w-full"
+            >
+                <img
+                    src="/assets/logo/logo.png"
+                    alt="logo"
+                    srcset=""
+                    class="max-w-[120px]"
+                />
+                <div>
+                    <div
+                        class="text-gray-300 text-sm text-center flex items-center gap-2 max-w-[220px]"
+                    >
+                        <span>
+                            Registered in Harju county, Estonia<br />
+                            Tallinn, Kesklinna linnaosa<br />
+                            Tornimäe tn 5, 10145
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-3 text-lg font-semibold">Connect with us</div>
+                <div class="flex gap-4 text-2xl">
+                    <a
+                        href="https://github.com/syncwavedev/syncwave"
+                        aria-label="GitHub"
+                    >
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a href="https://x.com/d3wittx" aria-label="X">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    <a
+                        href="https://discord.gg/FzQjQVFdQz"
+                        class="h-[40px] w-[40px]"
+                        aria-label="Discord"
+                    >
+                        <i class="bi bi-discord"></i>
+                    </a>
                 </div>
             </div>
-            <div class="mt-3 text-lg font-semibold">Connect with us</div>
-            <div class="flex gap-4 text-2xl">
-                <a
-                    href="https://github.com/syncwavedev/syncwave"
-                    aria-label="GitHub"
-                >
-                    <i class="bi bi-github"></i>
-                </a>
-                <a href="https://x.com/d3wittx" aria-label="X">
-                    <i class="bi bi-twitter-x"></i>
-                </a>
-                <a
-                    href="https://discord.gg/FzQjQVFdQz"
-                    class="h-[40px] w-[40px]"
-                    aria-label="Discord"
-                >
-                    <i class="bi bi-discord"></i>
-                </a>
-            </div>
-        </div>
 
-        <div class="flex h-full w-[250px] flex-col gap-4">
-            <h2 class="text-3xl max-md:text-xl">Company</h2>
-            <div class="flex flex-col gap-3 max-md:text-sm">
-                <a href="" class="footer-link">Use cases</a>
-                <a href="" class="footer-link">Integrations</a>
-                <a href="" class="footer-link">Change logs</a>
-                <a href="" class="footer-link">Blogs</a>
-                <a href="" class="footer-link">Contact</a>
+            <div class="flex h-full w-[250px] flex-col gap-4">
+                <h2 class="text-3xl max-md:text-xl">Company</h2>
+                <div class="flex flex-col gap-3 max-md:text-sm">
+                    <a href="" class="footer-link">Use cases</a>
+                    <a href="" class="footer-link">Integrations</a>
+                    <a href="" class="footer-link">Change logs</a>
+                    <a href="" class="footer-link">Blogs</a>
+                    <a href="" class="footer-link">Contact</a>
+                </div>
             </div>
-        </div>
 
-        <div class="flex h-full w-[250px] flex-col gap-4">
-            <h2 class="text-3xl max-md:text-xl">Resources</h2>
-            <div class="flex flex-col gap-3 max-md:text-sm">
-                <a href="" class="footer-link">About us</a>
-                <a href="" class="footer-link">FAQ</a>
-                <a href="" class="footer-link">Contact Us</a>
-                <a href="" class="footer-link">Blogs</a>
-                <a href="" class="footer-link">Privacy policy</a>
+            <div class="flex h-full w-[250px] flex-col gap-4">
+                <h2 class="text-3xl max-md:text-xl">Resources</h2>
+                <div class="flex flex-col gap-3 max-md:text-sm">
+                    <a href="" class="footer-link">About us</a>
+                    <a href="" class="footer-link">FAQ</a>
+                    <a href="" class="footer-link">Contact Us</a>
+                    <a href="" class="footer-link">Blogs</a>
+                    <a href="" class="footer-link">Privacy policy</a>
+                </div>
             </div>
-        </div>
-    </footer>
+        </footer>
+    </body>
+
+    <script src="../scripts/index.js"></script>
 </html>
-
-<script src="../scripts/index.js"></script>

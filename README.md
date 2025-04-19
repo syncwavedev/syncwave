@@ -13,15 +13,22 @@
 
   <p align="center">
     Kanban Board for Developers
-    <br />
-    <a href="https://github.com/syncwavedev/syncwave"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
+</p>
+<p align="center">
+    <a href="https://discord.com/invite/FzQjQVFdQz">
+        <img alt="Discord online members" src="https://img.shields.io/discord/1363049127663108156?color=5865F2&label=Discord&style=for-the-badge" />
+    </a>
+    <img alt="Commit activity per month" src="https://img.shields.io/github/commit-activity/m/syncwavedev/syncwave?style=for-the-badge" />
+    </p>
+    <p align="center">
     <a href="https://app.syncwave.dev/demo">View Demo</a>
+    &middot;
+    <a href="https://www.syncwave.dev/docs">Docs</a>
     &middot;
     <a href="https://github.com/syncwavedev/syncwave/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     &middot;
     <a href="https://github.com/syncwavedev/syncwave/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+
   </p>
 </div>
 

@@ -127,6 +127,8 @@
 
     --color-scrollbar: var(--theme-color-scrollbar);
 
+    --color-app-bg: var(--theme-color-app-bg);
+
     --color-surface-0: var(--theme-color-surface-0);
     --color-surface-1: var(--theme-color-surface-1);
     --color-surface-2: var(--theme-color-surface-2);
@@ -164,6 +166,8 @@
 
         --theme-color-scrollbar: var(--color-gray-350);
 
+        --theme-color-app-bg: var(--color-gray-20);
+
         --theme-color-surface-0: var(--color-white);
         --theme-color-surface-1: var(--color-gray-20);
         --theme-color-surface-2: var(--color-gray-40);
@@ -189,6 +193,8 @@
         --theme-color-divider-object: var(--color-slate-750);
 
         --theme-color-scrollbar: var(--color-slate-750);
+
+        --theme-color-app-bg: var(--color-slate-950);
 
         --theme-color-surface-0: var(--color-slate-925);
         --theme-color-surface-1: var(--color-slate-900);

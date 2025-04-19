@@ -1,0 +1,31 @@
+:root {
+    --app-margin: 0px;
+    --app-border: 0px;
+    --app-border-radius: 0px;
+
+    --app-width: calc(100vw - (var(--app-margin) * 2));
+    --app-height: calc(100vh - (var(--app-margin) * 2));
+}
+
+.app {
+    box-sizing: border-box;
+
+    height: var(--app-height);
+    width: var(--app-width);
+
+    margin: var(--app-margin);
+
+    border: var(--app-border) solid var(--color-divider);
+    border-radius: var(--app-border-radius);
+
+    background: var(--bg-surface-0);
+}
+
+/* Styles for PWA modes (standalone, minimal-ui) */
+@media all and (display-mode: standalone), all and (display-mode: minimal-ui) {
+    :root {
+        --app-margin: 0.5rem;
+        --app-border: 1px;
+        --app-border-radius: var(--radius-md);
+    }
+}

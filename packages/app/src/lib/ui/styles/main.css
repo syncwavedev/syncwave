@@ -3,7 +3,8 @@
 @import './colors.css';
 @import './text.css';
 @import './base.css';
-@import './layout.css';
+@import './app.css';
+@import './board.css';
 @import './button.css';
 @import './input.css';
 @import './icons.css';

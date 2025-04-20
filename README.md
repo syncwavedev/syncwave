@@ -96,7 +96,7 @@ For full documentation, visit [syncwave.dev/docs](https://www.syncwave.dev/docs)
 
 If you have questions or need assistance, you can:
 
-- Ask in our [GitHub Discussions](https://github.com/syncwavedev/syncwave/discussions)
+- Ask in our [GitHub Discussions](https://github.com/syncwavedev/syncwave/discussions/new/choose)
 - Join our [Discord server](https://discord.com/invite/FzQjQVFdQz) Syncwave for real-time support
 - File an [issue on GitHub](https://github.com/syncwavedev/syncwave/issues) to report problems
 

@@ -9,11 +9,10 @@
         '#5a8ac8',
         '#b04a47',
         '#a88563',
-        '#9b61ae',
         '#57979f',
         '#c06065',
-        '#c8ae69',
         '#7fa064',
+        '#8a7cb4',
     ];
 
     function getStringHash(str: string): number {

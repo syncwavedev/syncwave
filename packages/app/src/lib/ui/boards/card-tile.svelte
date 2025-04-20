@@ -28,7 +28,11 @@
         );
 
         return {
-            preview: text.split('\n')[0]?.trim() || 'Untitled',
+            preview:
+                text
+                    .split('\n')
+                    .map(x => x.trim())
+                    .find(x => x.length > 0) ?? 'Untitled',
             todoStats: {
                 checked,
                 total,

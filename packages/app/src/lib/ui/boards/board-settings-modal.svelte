@@ -45,6 +45,11 @@
             type="title"
             class="input input-block p-2.5"
             placeholder="Board name"
+            oninput={e =>
+                agent.setBoardName(
+                    board.id,
+                    (e.target as HTMLInputElement).value
+                )}
             value={board.name}
         />
         <div class="flex flex-col bg-surface-2 px-2.5 rounded-md">

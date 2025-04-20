@@ -49,6 +49,7 @@
         "vitest": "^3.0.8"
     },
     "dependencies": {
+        "@fontsource/inter": "^5.2.5",
         "@opentelemetry/api": "^1.9.0",
         "@opentelemetry/exporter-logs-otlp-http": "^0.200.0",
         "@opentelemetry/exporter-trace-otlp-http": "^0.200.0",

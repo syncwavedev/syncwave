@@ -19,7 +19,7 @@
         createXmlFragment,
         yFragmentToPlaintext,
     } from '../../richtext';
-    import MessageList from './message-list.svelte';
+    import MessageList from '../messages/message-list.svelte';
 
     const {
         card,

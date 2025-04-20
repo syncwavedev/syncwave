@@ -2,6 +2,7 @@
     import RichtextView from '../../components/richtext-view.svelte';
     import type {MessageView} from '../../agent/view.svelte';
     import Avatar from '../components/avatar.svelte';
+    import TimeAgo from '../components/time-ago.svelte';
 
     interface Props {
         messages: MessageView[];
@@ -22,13 +23,7 @@
                     </div>
 
                     <span class="text-ink-detail text-xs">
-                        {new Date(message.createdAt)
-                            .toLocaleTimeString(undefined, {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: true,
-                            })
-                            .toLowerCase()}
+                        <TimeAgo time={message.createdAt} />
                     </span>
                 </div>
             </div>

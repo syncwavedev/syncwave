@@ -19,11 +19,7 @@ import {AuthManager} from '../auth-manager';
 import {WsTransportClient} from '../ws-transport-client';
 import {appConfig} from './config';
 
-import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
 import {UploadManager} from './upload-manager.svelte';
-
-TimeAgo.addDefaultLocale(en);
 
 export type Rpc = <R extends AsyncIterable<unknown> | Promise<unknown>>(
     fn: (rpc: CoordinatorRpc) => R
@@ -157,12 +153,6 @@ export async function useRpc<T>(
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function showErrorToast(_error: unknown) {
     unimplemented();
-}
-
-const timeAgo = new TimeAgo('en-US');
-
-export function timeSince(ts: Timestamp) {
-    return timeAgo.format(new Date(ts));
 }
 
 export function markErrorAsHandled(error: unknown) {

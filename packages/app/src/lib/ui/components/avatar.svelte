@@ -6,14 +6,14 @@
     }: {name: string; class?: string; title?: string} = $props();
 
     const avatarColors = [
-        '#74ade8', // blue
-        '#be5046', // red
-        '#bf956a', // beige
-        '#b477cf', // purple
-        '#6eb4bf', // teal
-        '#d07277', // pink
-        '#dec184', // yellow
-        '#a1c181', // green
+        '#5a8ac8',
+        '#b04a47',
+        '#a88563',
+        '#9b61ae',
+        '#57979f',
+        '#c06065',
+        '#c8ae69',
+        '#7fa064',
     ];
 
     function getStringHash(str: string): number {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import {XmlFragment} from 'yjs';
-    import {yFragmentToHtml} from '../richtext';
+    import {yFragmentToHtml} from '../../richtext';
 
     interface Props {
         fragment: XmlFragment;

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import SpinnerIcon from './icons/spinner-icon.svelte';
+    import SpinnerIcon from '../../components/icons/spinner-icon.svelte';
     import TimesIcon from './icons/times-icon.svelte';
 
     interface Props {

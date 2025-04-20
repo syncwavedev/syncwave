@@ -11,7 +11,6 @@ import {
     type ColumnId,
 } from 'syncwave';
 import {getAgent} from '../../agent/agent.svelte';
-import type {State} from '../../agent/state';
 import type {
     BoardTreeView,
     CardView,
@@ -31,7 +30,7 @@ export interface DndColumn {
     cards: DndCard[];
 }
 
-export function useBoardView(board: State<BoardTreeView>) {
+export function useBoardView(board: {value: BoardTreeView}) {
     const dndColumns = $state({value: applyOrder(board.value.columns)});
 
     $effect(() => {

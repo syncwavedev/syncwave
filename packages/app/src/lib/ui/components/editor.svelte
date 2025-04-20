@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {tiptapExtensions} from '../richtext';
+    import {tiptapExtensions} from '../../richtext';
     import {onMount} from 'svelte';
     import cx from 'clsx';
     import {get, type Readable} from 'svelte/store';

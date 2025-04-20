@@ -1,5 +1,5 @@
 <script lang="ts">
-    import RichtextView from '../../components/richtext-view.svelte';
+    import RichtextView from '../components/richtext-view.svelte';
     import type {MessageView} from '../../agent/view.svelte';
     import Avatar from '../components/avatar.svelte';
     import TimeAgo from '../components/time-ago.svelte';

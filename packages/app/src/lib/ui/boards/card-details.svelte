@@ -5,7 +5,7 @@
     import TimesIcon from '../components/icons/times-icon.svelte';
     import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
     import UserIcon from '../components/icons/user-icon.svelte';
-    import Editor from '../../components/editor.svelte';
+    import Editor from '../components/editor.svelte';
     import type {CardView} from '../../agent/view.svelte';
     import type {Awareness} from 'syncwave';
     import type {ColumnId, User, UserId} from 'syncwave';

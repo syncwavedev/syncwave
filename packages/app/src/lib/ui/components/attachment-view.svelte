@@ -1,7 +1,7 @@
 <script lang="ts">
     import {log, type AttachmentDto} from 'syncwave';
     import Loading from './loading.svelte';
-    import {getRpc} from '../utils';
+    import {getRpc} from '../../utils';
 
     interface Props {
         attachment: AttachmentDto;

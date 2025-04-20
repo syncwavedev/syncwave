@@ -19,7 +19,7 @@
         setAuthManager,
         setUploadManager,
     } from './lib/utils.js';
-    import ErrorCard from './lib/components/error-card.svelte';
+    import ErrorCard from './lib/ui/components/error-card.svelte';
     import {UploadManager} from './lib/upload-manager.svelte';
     import {createThemeManager} from './lib/ui/theme-manager.svelte.js';
     import {

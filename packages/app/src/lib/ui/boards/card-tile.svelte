@@ -104,7 +104,7 @@
             cursor-default
             gap-1
             rounded-md
-            p-2.5
+            p-2.25
             content
             outline-offset-[-2px]
             data-active:outline
@@ -113,6 +113,8 @@
             focus:outline
             focus:outline-2
             focus:outline-divider-active/50
+            border
+            border-divider
         "
         class:border-dashed={card.isDraft}
         onclick={onClick}

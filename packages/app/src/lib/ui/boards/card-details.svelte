@@ -203,7 +203,7 @@
             <span class="text-ink-detail text-sm leading-none">1 Message</span>
             <hr class="flex-grow" />
         </div> -->
-        <div class="py-4">
+        <div class="my-2">
             {#await detailsPromise then details}
                 <MessageList messages={details.messages} />
             {/await}

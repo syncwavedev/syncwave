@@ -11,9 +11,11 @@
     const {messages}: Props = $props();
 </script>
 
-<div class="flex flex-col gap-4 flex-1 relative">
+<div class="flex flex-col flex-1 relative">
     {#each messages as message, index (message.id)}
-        <div class="flex flex-col panel-padding-inline relative">
+        <div
+            class="flex flex-col panel-padding-inline py-2 relative hover:bg-surface-1"
+        >
             <div class="flex items-center gap-1.5 relative avatar-sm">
                 <Avatar name={message.author.fullName} />
 

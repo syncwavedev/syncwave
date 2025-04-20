@@ -37,7 +37,7 @@ export class MemberService {
         const existingMember = await this.members.getByUserIdAndBoardId(
             params.account.userId,
             params.boardId,
-            {includeDeleted: true}
+            {excludeDeleted: false}
         );
 
         const now = getNow();
@@ -54,6 +54,7 @@ export class MemberService {
                 );
                 member = await this.members.update(
                     existingMember.id,
+                    {excludeDeleted: false},
                     x => {
                         if (x.deletedAt) {
                             x.deletedAt = undefined;
@@ -61,8 +62,7 @@ export class MemberService {
                         if (!canManageRole(existingMember.role, params.role)) {
                             x.role = params.role;
                         }
-                    },
-                    {includeDeleted: true}
+                    }
                 );
             } else {
                 member = existingMember;

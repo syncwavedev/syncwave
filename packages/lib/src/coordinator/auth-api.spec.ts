@@ -41,7 +41,7 @@ describe('AccountRepo', () => {
             expect(account.email).toEqual('test@email.com');
 
             const members = await tx.members
-                .getByUserId(account.userId)
+                .getByUserId(account.userId, {excludeDeleted: true})
                 .toArray();
 
             expect(members).toHaveLength(1);

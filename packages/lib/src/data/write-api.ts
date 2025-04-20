@@ -10,16 +10,7 @@ import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {BoardService} from './board-service.js';
 import {type DataTx} from './data-layer.js';
-import {
-    AttachmentDto,
-    ColumnDto,
-    MemberDto,
-    MessageDto,
-    toAttachmentDto,
-    toColumnDto,
-    toMemberDto,
-    toMessageDto,
-} from './dto.js';
+import {AttachmentDto, toAttachmentDto} from './dto.js';
 import {
     createObjectKey,
     type CryptoProvider,
@@ -77,10 +68,7 @@ export function createWriteApi() {
             }),
             res: Type.Object({}),
             handle: async (st, {messageId, diff}) => {
-                const existingMessage = await st.tx.messages.getById(
-                    messageId,
-                    {includeDeleted: true}
-                );
+                const existingMessage = await st.tx.messages.getById(messageId);
                 if (existingMessage) {
                     throw new BusinessError(
                         'message edit is not allowed',
@@ -95,9 +83,7 @@ export function createWriteApi() {
                     await st.ps.ensureColumnMember(message.columnId, 'writer');
                     await st.ps.ensureCardMember(message.cardId, 'writer');
 
-                    const card = await st.tx.cards.getById(message.cardId, {
-                        includeDeleted: true,
-                    });
+                    const card = await st.tx.cards.getById(message.cardId);
                     if (!card) {
                         throw new BusinessError(
                             `card not found: ${message.cardId}`,
@@ -112,8 +98,7 @@ export function createWriteApi() {
                     }
 
                     const column = await st.tx.columns.getById(
-                        message.columnId,
-                        {includeDeleted: true}
+                        message.columnId
                     );
                     if (!column) {
                         throw new BusinessError(
@@ -169,9 +154,7 @@ export function createWriteApi() {
             }),
             res: Type.Object({}),
             handle: async (st, {cardId, diff}) => {
-                const existingCard = await st.tx.cards.getById(cardId, {
-                    includeDeleted: true,
-                });
+                const existingCard = await st.tx.cards.getById(cardId);
                 if (existingCard) {
                     await whenAll([
                         st.ps.ensureCardMember(cardId, 'writer'),
@@ -210,9 +193,7 @@ export function createWriteApi() {
                     const meId = st.ps.ensureAuthenticated();
                     await st.ps.ensureBoardMember(card.boardId, 'writer');
                     await st.ps.ensureColumnMember(card.columnId, 'writer');
-                    const column = await st.tx.columns.getById(card.columnId, {
-                        includeDeleted: true,
-                    });
+                    const column = await st.tx.columns.getById(card.columnId);
                     if (!column) {
                         throw new BusinessError(
                             `column not found: ${card.columnId}`,
@@ -230,7 +211,7 @@ export function createWriteApi() {
                             await st.tx.members.getByUserIdAndBoardId(
                                 card.assigneeId,
                                 card.boardId,
-                                {includeDeleted: true}
+                                {excludeDeleted: true}
                             );
 
                         if (!assigneeMember) {
@@ -283,9 +264,7 @@ export function createWriteApi() {
             handle: async (st, {cardId, data, contentType}) => {
                 const meId = st.ps.ensureAuthenticated();
                 await st.ps.ensureCardMember(cardId, 'writer');
-                const card = await st.tx.cards.getById(cardId, {
-                    includeDeleted: true,
-                });
+                const card = await st.tx.cards.getById(cardId);
                 if (!card) {
                     throw new BusinessError(
                         `card not found: ${cardId}`,
@@ -313,106 +292,13 @@ export function createWriteApi() {
                 return toAttachmentDto(st.tx, attachment.id);
             },
         }),
-        createMessage: handler({
-            req: Type.Object({
-                diff: CrdtDiff<Message>(),
-            }),
-            res: MessageDto(),
-            handle: async (st, {diff}) => {
-                const crdt = Crdt.load(diff);
-                const message = crdt.snapshot();
-
-                const meId = st.ps.ensureAuthenticated();
-
-                await whenAll([
-                    ...message.attachmentIds.map(id =>
-                        st.ps.ensureAttachmentMember(id, 'reader')
-                    ),
-                    st.ps.ensureCardMember(message.cardId, 'writer'),
-                ]);
-
-                const card = await st.tx.cards.getById(message.cardId, {
-                    includeDeleted: true,
-                });
-                if (!card) {
-                    throw new BusinessError(
-                        `card not found: ${message.cardId}`,
-                        'card_not_found'
-                    );
-                }
-
-                if (card.boardId !== message.boardId) {
-                    throw new BusinessError(
-                        `card ${message.columnId} doesn't belong to column ${card.columnId}`,
-                        'forbidden'
-                    );
-                }
-
-                if (card.columnId !== message.columnId) {
-                    throw new BusinessError(
-                        `card ${message.cardId} doesn't belong to board ${card.boardId}`,
-                        'forbidden'
-                    );
-                }
-
-                if (message.replyToId) {
-                    const replyTo = await st.tx.messages.getById(
-                        message.replyToId,
-                        {includeDeleted: true}
-                    );
-                    if (!replyTo) {
-                        throw new BusinessError(
-                            `message ${message.replyToId} not found`,
-                            'message_not_found'
-                        );
-                    }
-                    if (replyTo.boardId !== message.boardId) {
-                        throw new BusinessError(
-                            `message ${message.replyToId} doesn't belong to board ${message.boardId}`,
-                            'forbidden'
-                        );
-                    }
-                    if (replyTo.cardId !== message.cardId) {
-                        throw new BusinessError(
-                            `message ${message.replyToId} doesn't belong to card ${message.cardId}`,
-                            'forbidden'
-                        );
-                    }
-                }
-
-                const {after} = await st.tx.messages.apply(
-                    message.id,
-                    crdt.state(),
-                    creatable<Message>({
-                        id: message.id,
-                        pk: [message.id],
-                        authorId: meId,
-                        cardId: message.cardId,
-                        createdAt: expectTimestamp(),
-                        deletedAt: expectOptional(expectTimestamp()),
-                        updatedAt: expectTimestamp(),
-                        target: 'card',
-                        columnId: message.columnId,
-                        payload: {
-                            type: 'text',
-                            text: createRichtext(),
-                        },
-                        boardId: card.boardId,
-                        replyToId: message.replyToId,
-                        attachmentIds: [],
-                    })
-                );
-
-                return await toMessageDto(st.tx, after.id);
-            },
-        }),
         createMember: handler({
             req: Type.Object({
                 boardId: Uuid<BoardId>(),
                 email: Type.String(),
                 role: MemberRole(),
             }),
-            res: MemberDto(),
+            res: Type.Object({}),
             handle: async (st, {boardId, email, role}) => {
                 await st.ps.ensureCanManage(boardId, role);
 
@@ -438,7 +324,7 @@ export function createWriteApi() {
                     role,
                 });
 
-                return await toMemberDto(st.tx, member.id);
+                return {};
             },
         }),
         joinByCode: handler({
@@ -477,7 +363,7 @@ export function createWriteApi() {
             res: Type.Object({}),
             handle: async (st, {memberId, role}) => {
                 const member = await st.tx.members.getById(memberId, {
-                    includeDeleted: true,
+                    excludeDeleted: true,
                 });
 
                 if (!member) {
@@ -498,7 +384,7 @@ export function createWriteApi() {
 
                 if (member.role === 'owner') {
                     const allMembers = await st.tx.members
-                        .getByBoardId(member.boardId)
+                        .getByBoardId(member.boardId, {excludeDeleted: true})
                         .filter(x => x.role === 'owner')
                         .toArray();
 
@@ -512,10 +398,10 @@ export function createWriteApi() {
 
                 await st.tx.members.update(
                     memberId,
+                    {excludeDeleted: true},
                     x => {
                         x.role = role;
-                    },
-                    {includeDeleted: true}
+                    }
                 );
 
                 return {};
@@ -526,7 +412,7 @@ export function createWriteApi() {
             res: Type.Object({}),
             handle: async (st, {memberId}) => {
                 const member = await st.tx.members.getById(memberId, {
-                    includeDeleted: true,
+                    excludeDeleted: true,
                 });
 
                 if (!member) {
@@ -539,7 +425,7 @@ export function createWriteApi() {
                 await st.ps.ensureCanManage(member.boardId, member.role);
                 if (member.role === 'owner') {
                     const allMembers = await st.tx.members
-                        .getByBoardId(member.boardId)
+                        .getByBoardId(member.boardId, {excludeDeleted: true})
                         .filter(x => x.role === 'owner')
                         .toArray();
 
@@ -553,39 +439,13 @@ export function createWriteApi() {
 
                 await st.tx.members.update(
                     memberId,
+                    {excludeDeleted: true},
                     x => {
                         x.deletedAt = getNow();
-                    },
-                    {includeDeleted: true}
+                    }
                 );
 
                 return {};
-            },
-        }),
-        createColumn: handler({
-            req: Type.Object({
-                columnId: Uuid<ColumnId>(),
-                boardId: Uuid<BoardId>(),
-                name: Type.String(),
-                position: Type.Number(),
-            }),
-            res: ColumnDto(),
-            handle: async (st, {boardId, columnId, name, position}) => {
-                const meId = st.ps.ensureAuthenticated();
-                await st.ps.ensureBoardMember(boardId, 'writer');
-                const now = getNow();
-
-                const column = await st.tx.columns.create({
-                    id: columnId,
-                    authorId: meId,
-                    boardId: boardId,
-                    createdAt: now,
-                    updatedAt: now,
-                    name: name,
-                    position,
-                });
-
-                return await toColumnDto(st.tx, column.id);
             },
         }),
         deleteColumn: handler({
@@ -593,13 +453,9 @@ export function createWriteApi() {
             res: Type.Object({}),
             handle: async (st, {columnId}) => {
                 await st.ps.ensureColumnMember(columnId, 'writer');
-                await st.tx.columns.update(
-                    columnId,
-                    x => {
-                        x.deletedAt = getNow();
-                    },
-                    {includeDeleted: true}
-                );
+                await st.tx.columns.update(columnId, x => {
+                    x.deletedAt = getNow();
+                });
 
                 return {};
             },
@@ -609,13 +465,9 @@ export function createWriteApi() {
             res: Type.Object({}),
             handle: async (st, {cardId}) => {
                 await st.ps.ensureCardMember(cardId, 'writer');
-                await st.tx.cards.update(
-                    cardId,
-                    x => {
-                        x.deletedAt = getNow();
-                    },
-                    {includeDeleted: true}
-                );
+                await st.tx.cards.update(cardId, x => {
+                    x.deletedAt = getNow();
+                });
 
                 return {};
             },
@@ -707,9 +559,7 @@ export function createWriteApi() {
             }),
             res: Type.Object({}),
             handle: async (st, {columnId, diff}) => {
-                const existingColumn = await st.tx.columns.getById(columnId, {
-                    includeDeleted: true,
-                });
+                const existingColumn = await st.tx.columns.getById(columnId);
                 if (existingColumn) {
                     await whenAll([
                         st.ps.ensureColumnMember(columnId, 'writer'),
@@ -762,13 +612,9 @@ export function createWriteApi() {
             res: Type.Object({}),
             handle: async (st, {messageId}) => {
                 await st.ps.ensureMessageMember(messageId, 'writer');
-                await st.tx.messages.update(
-                    messageId,
-                    x => {
-                        x.deletedAt = getNow();
-                    },
-                    {includeDeleted: true}
-                );
+                await st.tx.messages.update(messageId, x => {
+                    x.deletedAt = getNow();
+                });
 
                 return {};
             },

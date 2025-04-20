@@ -79,7 +79,11 @@ export type CrdtDoc<T> = T & {state: CrdtDiff<T>};
 
 export interface QueryOptions {
     // false by default
-    includeDeleted?: boolean;
+    excludeDeleted?: boolean;
+}
+
+export interface QueryOptionsRequired {
+    excludeDeleted: boolean;
 }
 
 export class DocRepo<T extends Doc<Tuple>> {
@@ -242,7 +246,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         }
 
         const snapshot = doc.snapshot();
-        if (!options?.includeDeleted && snapshot?.deletedAt) {
+        if (options?.excludeDeleted && snapshot?.deletedAt) {
             return undefined;
         }
 
@@ -300,7 +304,7 @@ class DocRepoImpl<T extends Doc<Tuple>> {
         options?: QueryOptions
     ): Promise<T> {
         const doc = await this.primary.get(id);
-        if (!doc || (!options?.includeDeleted && doc.snapshot().deletedAt)) {
+        if (!doc || (options?.excludeDeleted && doc.snapshot().deletedAt)) {
             throw new AppError('doc not found: ' + stringifyTuple(id));
         }
 
@@ -445,6 +449,6 @@ class DocRepoImpl<T extends Doc<Tuple>> {
             .mapParallel(id => this.primary.get(id))
             .assert(x => x !== undefined, message)
             .map(doc => ({...doc.snapshot(), state: doc.state()}))
-            .filter(x => options?.includeDeleted || !x.deletedAt);
+            .filter(x => !options?.excludeDeleted || !x.deletedAt);
     }
 }

@@ -12,7 +12,7 @@ import {
     Doc,
     DocRepo,
     type OnDocChange,
-    type QueryOptions,
+    type QueryOptionsRequired,
     type Recipe,
 } from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
@@ -90,8 +90,7 @@ export class MemberRepo {
                     name: 'member.userId fk',
                     verify: async member => {
                         const user = await params.userRepo.getById(
-                            member.userId,
-                            {includeDeleted: true}
+                            member.userId
                         );
                         if (user === undefined) {
                             return `user not found: ${member.userId}`;
@@ -115,20 +114,20 @@ export class MemberRepo {
         });
     }
 
-    async getById(id: MemberId, options?: QueryOptions) {
+    async getById(id: MemberId, options: QueryOptionsRequired) {
         return await this.rawRepo.getById([id], options);
     }
 
     getByUserId(
         userId: UserId,
-        options?: QueryOptions
+        options: QueryOptionsRequired
     ): Stream<CrdtDoc<Member>> {
         return this.rawRepo.get(USER_ID_BOARD_ID_INDEX, [userId], options);
     }
 
     getByBoardId(
         boardId: BoardId,
-        options?: QueryOptions
+        options: QueryOptionsRequired
     ): Stream<CrdtDoc<Member>> {
         return this.rawRepo.get(BOARD_ID_INDEX, [boardId], options);
     }
@@ -136,7 +135,7 @@ export class MemberRepo {
     async getByUserIdAndBoardId(
         userId: UserId,
         boardId: BoardId,
-        options?: QueryOptions
+        options: QueryOptionsRequired
     ): Promise<Member | undefined> {
         const result = await this.rawRepo.getUnique(
             USER_ID_BOARD_ID_INDEX,
@@ -179,8 +178,8 @@ export class MemberRepo {
 
     async update(
         id: MemberId,
-        recipe: Recipe<Member>,
-        options?: QueryOptions
+        options: QueryOptionsRequired,
+        recipe: Recipe<Member>
     ): Promise<Member> {
         return await this.rawRepo.update([id], recipe, options);
     }

@@ -84,8 +84,7 @@ export class AccountRepo {
                     name: 'account.userId fk',
                     verify: async account => {
                         const user = await params.userRepo.getById(
-                            account.userId,
-                            {includeDeleted: true}
+                            account.userId
                         );
                         if (user === undefined) {
                             return `user with userId ${account.userId} does not exist`;

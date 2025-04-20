@@ -479,12 +479,16 @@ export class DataLayer {
         let membersUpdated = 0;
         await this.transact(system, async tx => {
             for await (const member of tx.members.rawRepo.scan()) {
-                await tx.members.update(member.id, x => {
-                    (x as Record<string, any>).inviteAccepted = true;
-                    if (typeof x.position !== 'number') {
-                        x.position = Math.random();
+                await tx.members.update(
+                    member.id,
+                    {excludeDeleted: false},
+                    x => {
+                        (x as Record<string, any>).inviteAccepted = true;
+                        if (typeof x.position !== 'number') {
+                            x.position = Math.random();
+                        }
                     }
-                });
+                );
                 membersUpdated++;
             }
         });
@@ -535,10 +539,14 @@ export class DataLayer {
         let membersUpdated = 0;
         await this.transact(system, async tx => {
             for await (const member of tx.members.rawRepo.scan()) {
-                await tx.members.update(member.id, x => {
-                    delete (x as Record<string, any>).inviteAccepted;
-                    (x as Record<string, any>).inviteStatus = 'accepted';
-                });
+                await tx.members.update(
+                    member.id,
+                    {excludeDeleted: false},
+                    x => {
+                        delete (x as Record<string, any>).inviteAccepted;
+                        (x as Record<string, any>).inviteStatus = 'accepted';
+                    }
+                );
                 membersUpdated++;
             }
         });
@@ -553,9 +561,13 @@ export class DataLayer {
         let membersUpdated = 0;
         await this.transact(system, async tx => {
             for await (const member of tx.members.rawRepo.scan()) {
-                await tx.members.update(member.id, x => {
-                    delete (x as Record<string, any>).inviteStatus;
-                });
+                await tx.members.update(
+                    member.id,
+                    {excludeDeleted: false},
+                    x => {
+                        delete (x as Record<string, any>).inviteStatus;
+                    }
+                );
                 membersUpdated++;
             }
         });
@@ -586,7 +598,7 @@ async function logAccountChange(
     const account = await tx.accounts.getById(id);
     assert(account !== undefined, `logAccountChange: account ${id} not found`);
     const members = await tx.members
-        .getByUserId(account.userId, {includeDeleted: true})
+        .getByUserId(account.userId, {excludeDeleted: false})
         .toArray();
     const event: AccountChangeEvent = {
         type: 'account',
@@ -617,7 +629,7 @@ async function logUserChange(
     {pk: [id], diff, kind}: ChangeOptions<User>
 ) {
     const members = await tx.members
-        .getByUserId(id, {includeDeleted: true})
+        .getByUserId(id, {excludeDeleted: false})
         .toArray();
     const event: UserChangeEvent = {
         type: 'user',
@@ -649,7 +661,7 @@ async function logBoardChange(
     await whenAll([
         tx.esWriter.append(boardEvents(id), event),
         tx.members
-            .getByBoardId(id)
+            .getByBoardId(id, {excludeDeleted: true})
             .mapParallel(async member => {
                 await tx.esWriter.append(userEvents(member.userId), event);
             })
@@ -661,12 +673,12 @@ async function logMemberChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Member>
 ) {
-    const member = await tx.members.getById(id, {includeDeleted: true});
+    const member = await tx.members.getById(id, {
+        excludeDeleted: false,
+    });
     assert(member !== undefined, `logMemberChange: member ${id} not found`);
     if (kind === 'create') {
-        const board = await tx.boards.getById(member.boardId, {
-            includeDeleted: true,
-        });
+        const board = await tx.boards.getById(member.boardId);
         assert(
             board !== undefined,
             `logMemberChange: board ${member.boardId} not found`
@@ -706,7 +718,7 @@ async function logCardChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Card>
 ) {
-    const card = await tx.cards.getById(id, {includeDeleted: true});
+    const card = await tx.cards.getById(id);
     assert(card !== undefined, `logCardChange: card ${id} not found`);
     const event: CardChangeEvent = {
         type: 'card',
@@ -722,7 +734,7 @@ async function logColumnChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Column>
 ) {
-    const column = await tx.columns.getById(id, {includeDeleted: true});
+    const column = await tx.columns.getById(id);
     assert(column !== undefined, `logColumnChange: column ${id} not found`);
     const event: ColumnChangeEvent = {
         type: 'column',
@@ -738,9 +750,9 @@ async function logMessageChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Message>
 ) {
-    const message = await tx.messages.getById(id, {includeDeleted: true});
+    const message = await tx.messages.getById(id);
     assert(message !== undefined, `logMessageChange: message ${id} not found`);
-    const card = await tx.cards.getById(message.cardId, {includeDeleted: true});
+    const card = await tx.cards.getById(message.cardId);
     assert(
         card !== undefined,
         `logMessageChange: card ${message.cardId} not found`
@@ -759,14 +771,12 @@ async function logAttachmentChange(
     tx: DataTx,
     {pk: [id], diff, kind}: ChangeOptions<Attachment>
 ) {
-    const attachment = await tx.attachments.getById(id, {includeDeleted: true});
+    const attachment = await tx.attachments.getById(id);
     assert(
         attachment !== undefined,
         `logAttachmentChange: attachment ${id} not found`
     );
-    const card = await tx.cards.getById(attachment.cardId, {
-        includeDeleted: true,
-    });
+    const card = await tx.cards.getById(attachment.cardId);
     assert(
         card !== undefined,
         `logAttachmentChange: card ${attachment.cardId} not found`

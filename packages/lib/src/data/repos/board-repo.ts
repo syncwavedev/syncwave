@@ -80,10 +80,7 @@ export class BoardRepo {
                 {
                     name: 'board.ownerId fk',
                     verify: async board => {
-                        const user = await params.users.getById(
-                            board.authorId,
-                            {includeDeleted: true}
-                        );
+                        const user = await params.users.getById(board.authorId);
                         if (user === undefined) {
                             return `user with id ${board.authorId} does not exist`;
                         }

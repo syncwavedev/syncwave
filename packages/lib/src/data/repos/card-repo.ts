@@ -89,8 +89,7 @@ export class CardRepo {
                     name: 'card.authorId fk',
                     verify: async card => {
                         const user = await params.userRepo.getById(
-                            card.authorId,
-                            {includeDeleted: true}
+                            card.authorId
                         );
                         if (user === undefined) {
                             return `author not found: ${card.authorId}`;
@@ -118,8 +117,7 @@ export class CardRepo {
                         }
 
                         const user = await params.userRepo.getById(
-                            card.assigneeId,
-                            {includeDeleted: true}
+                            card.assigneeId
                         );
                         if (user === undefined) {
                             return `assignee not found: ${card.authorId}`;

@@ -1,6 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {BusinessError} from '../errors.js';
-import {observable, toStream} from '../stream.js';
+import {toStream} from '../stream.js';
 import {
     createApi,
     handler,
@@ -15,24 +15,9 @@ import {
     ChangeEvent,
     DataLayer,
     type DataTx,
-    profileEvents,
     userEvents,
 } from './data-layer.js';
-import {
-    BoardDto,
-    BoardViewDataDto,
-    CardTreeViewDataDto,
-    CardViewDto,
-    MeDto,
-    MemberAdminDto,
-    MemberDto,
-    MeViewDataDto,
-    toCardViewDto,
-    toMemberAdminDto,
-    toMemberDto,
-    toUserDto,
-    UserDataDto,
-} from './dto.js';
+import {BoardViewDataDto, CardTreeViewDataDto, MeViewDataDto} from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {ObjectEnvelope, type ObjectStore} from './infrastructure.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
@@ -82,183 +67,6 @@ export function createReadApi() {
                 return {time};
             },
         }),
-        getMe: streamer({
-            req: Type.Object({}),
-            item: MeDto(),
-            async *stream(state, {}, {principal}) {
-                const userId = state.ensureAuthenticated(principal);
-
-                yield* observable({
-                    async get() {
-                        return await state.transact(principal, async tx => {
-                            const user = await toUserDto(tx, userId);
-                            assert(user !== undefined, 'getMe: user not found');
-                            const account =
-                                await tx.accounts.getByUserId(userId);
-                            assert(
-                                account !== undefined,
-                                'getMe: account not found'
-                            );
-                            return {user, account};
-                        });
-                    },
-                    update$: state.esReader
-                        .subscribe(userEvents(userId))
-                        .then(x => x.events.map(() => undefined)),
-                });
-            },
-        }),
-        getProfileData: streamer({
-            req: Type.Object({
-                userId: Uuid<UserId>(),
-            }),
-            item: Type.Union([
-                Type.Object({
-                    type: Type.Literal('snapshot'),
-                    data: UserDataDto(),
-                }),
-                Type.Object({
-                    type: Type.Literal('event'),
-                    event: ChangeEvent(),
-                }),
-            ]),
-            async *stream(st, {userId}, {principal}) {
-                const {offset, events} = await st.esReader.subscribe(
-                    profileEvents(userId)
-                );
-
-                const [user] = await st.transact(principal, async tx => {
-                    return await whenAll([
-                        tx.users.getById(userId, {includeDeleted: true}),
-                    ]);
-                });
-
-                if (!user) {
-                    throw new BusinessError(
-                        `user with id ${userId} not found`,
-                        'user_not_found'
-                    );
-                }
-
-                yield {
-                    type: 'snapshot' as const,
-                    offset,
-                    data: {
-                        user,
-                    },
-                };
-
-                for await (const {event} of events) {
-                    yield {
-                        type: 'event' as const,
-                        event,
-                    };
-                }
-            },
-        }),
-        getMyMembers: streamer({
-            req: Type.Object({}),
-            item: Type.Array(MemberDto()),
-            async *stream(st, {}, {principal}) {
-                const userId = st.ensureAuthenticated(principal);
-
-                yield* observable({
-                    async get() {
-                        return st.transact(principal, async tx => {
-                            const members = tx.members.getByUserId(userId, {
-                                includeDeleted: false,
-                            });
-                            return await toStream(members)
-                                .mapParallel(member =>
-                                    toMemberDto(tx, member.id)
-                                )
-                                .filter(x => !x.deletedAt && !x.board.deletedAt)
-                                .toArray();
-                        });
-                    },
-                    update$: st.esReader
-                        .subscribe(userEvents(userId))
-                        .then(x => x.events.map(() => undefined)),
-                });
-            },
-        }),
-        getCardView: streamer({
-            req: Type.Object({cardId: Uuid<CardId>()}),
-            item: CardViewDto(),
-            async *stream(st, {cardId}, {principal}) {
-                const card = await st.transact(principal, tx =>
-                    tx.cards.getById(cardId, {includeDeleted: false})
-                );
-                if (!card) {
-                    throw new BusinessError(
-                        `card with id ${cardId} not found`,
-                        'card_not_found'
-                    );
-                }
-                yield* observable({
-                    async get() {
-                        return await st.transact(principal, async tx => {
-                            const [nextCard] = await whenAll([
-                                toCardViewDto(tx, cardId),
-                                tx.permissionService.ensureCardMember(
-                                    cardId,
-                                    'reader'
-                                ),
-                            ]);
-                            return nextCard;
-                        });
-                    },
-                    update$: st.esReader
-                        .subscribe(boardEvents(card.boardId))
-                        .then(x => x.events.map(() => undefined)),
-                });
-            },
-        }),
-        getCardViewByKey: streamer({
-            req: Type.Object({
-                boardKey: Type.String(),
-                counter: Type.Number(),
-            }),
-            item: CardViewDto(),
-            async *stream(st, {boardKey, counter}, {principal}) {
-                const board = await st.transact(principal, tx =>
-                    tx.boards.getByKey(boardKey)
-                );
-                if (board === undefined) {
-                    throw new BusinessError(
-                        `board with key ${boardKey} not found`,
-                        'board_not_found'
-                    );
-                }
-                const card = await st.transact(principal, tx =>
-                    tx.cards.getByBoardIdAndCounter(board.id, counter)
-                );
-                if (card === undefined) {
-                    throw new BusinessError(
-                        `card with counter ${counter} not found`,
-                        'card_not_found'
-                    );
-                }
-                const boardId = board.id;
-                yield* observable({
-                    async get() {
-                        return await st.transact(principal, async tx => {
-                            const [nextCard] = await whenAll([
-                                toCardViewDto(tx, card.id),
-                                tx.permissionService.ensureBoardMember(
-                                    card.boardId,
-                                    'reader'
-                                ),
-                            ]);
-                            return nextCard;
-                        });
-                    },
-                    update$: st.esReader
-                        .subscribe(boardEvents(boardId))
-                        .then(x => x.events.map(() => undefined)),
-                });
-            },
-        }),
         getAttachmentObject: handler({
             req: Type.Object({
                 attachmentId: Uuid<AttachmentId>(),
@@ -270,10 +78,8 @@ export function createReadApi() {
                         attachmentId,
                         'reader'
                     );
-                    const attachment = await tx.attachments.getById(
-                        attachmentId,
-                        {includeDeleted: true}
-                    );
+                    const attachment =
+                        await tx.attachments.getById(attachmentId);
                     if (attachment === undefined) {
                         throw new BusinessError(
                             `attachment with id ${attachmentId} not found`,
@@ -312,7 +118,7 @@ export function createReadApi() {
             ]),
             async *stream(st, {cardId, startOffset}, {principal}) {
                 const card = await st.transact(principal, tx =>
-                    tx.cards.getById(cardId, {includeDeleted: true})
+                    tx.cards.getById(cardId)
                 );
                 if (!card) {
                     throw new BusinessError(
@@ -364,73 +170,6 @@ export function createReadApi() {
                 }
             },
         }),
-        getBoardMembers: streamer({
-            req: Type.Object({boardId: Uuid<BoardId>()}),
-            item: Type.Array(MemberAdminDto()),
-            async *stream(st, {boardId}, {principal}) {
-                yield* observable({
-                    get() {
-                        return st.transact(principal, async tx => {
-                            await tx.permissionService.ensureBoardMember(
-                                boardId,
-                                'admin'
-                            );
-                            return tx.members
-                                .getByBoardId(boardId)
-                                .mapParallel(x => toMemberAdminDto(tx, x.id))
-                                .toArray();
-                        });
-                    },
-                    update$: st.esReader
-                        .subscribe(boardEvents(boardId))
-                        .then(x => x.events.map(() => undefined)),
-                });
-            },
-        }),
-        getBoard: streamer({
-            req: Type.Object({
-                key: Type.String(),
-            }),
-            item: BoardDto(),
-            async *stream(st, {key}, {principal}) {
-                const board = await st.transact(principal, tx =>
-                    tx.boards.getByKey(key)
-                );
-                if (board === undefined) {
-                    throw new BusinessError(
-                        `board with key ${key} not found`,
-                        'board_not_found'
-                    );
-                }
-                const boardId = board.id;
-                yield* observable({
-                    async get() {
-                        return await st.transact(principal, async tx => {
-                            const [board] = await whenAll([
-                                tx.boards.getById(boardId, {
-                                    includeDeleted: true,
-                                }),
-                                tx.permissionService.ensureBoardMember(
-                                    boardId,
-                                    'reader'
-                                ),
-                            ]);
-                            if (board === undefined) {
-                                throw new BusinessError(
-                                    `board with key ${key} not found`,
-                                    'board_not_found'
-                                );
-                            }
-
-                            return board;
-                        });
-                    },
-                    update$: st.esReader
-                        .subscribe(boardEvents(boardId))
-                        .then(x => x.events.map(() => undefined)),
-                });
-            },
-        }),
         getBoardViewData: streamer({
             req: Type.Object({
                 key: Type.String(),
@@ -470,15 +209,9 @@ export function createReadApi() {
                         return await whenAll([
                             tx.boards.getById(boardId),
                             toStream(
-                                tx.columns.getByBoardId(boardId, {
-                                    includeDeleted: true,
-                                })
+                                tx.columns.getByBoardId(boardId)
                             ).toArray(),
-                            toStream(
-                                tx.cards.getByBoardId(boardId, {
-                                    includeDeleted: true,
-                                })
-                            ).toArray(),
+                            toStream(tx.cards.getByBoardId(boardId)).toArray(),
                             getBoardUsers(tx, boardId),
                             getBoardUserEmails(tx, boardId),
                             tx.permissionService.ensureBoardMember(
@@ -546,15 +279,13 @@ export function createReadApi() {
                     principal,
                     async tx => {
                         return await whenAll([
-                            tx.users
-                                .getById(profileId, {includeDeleted: true})
-                                .then(user => {
-                                    assert(
-                                        user !== undefined,
-                                        `user with id ${profileId} not found`
-                                    );
-                                    return user;
-                                }),
+                            tx.users.getById(profileId).then(user => {
+                                assert(
+                                    user !== undefined,
+                                    `user with id ${profileId} not found`
+                                );
+                                return user;
+                            }),
                             tx.accounts.getByUserId(profileId).then(account => {
                                 assert(
                                     account !== undefined,
@@ -565,13 +296,13 @@ export function createReadApi() {
                             (async () => {
                                 const pairs = await tx.members
                                     .getByUserId(profileId, {
-                                        includeDeleted: false,
+                                        excludeDeleted: true,
                                     })
                                     .mapParallel(async member => {
                                         const board = await tx.boards.getById(
                                             member.boardId,
                                             {
-                                                includeDeleted: true,
+                                                excludeDeleted: true,
                                             }
                                         );
                                         assert(
@@ -621,12 +352,12 @@ export type ReadApiRpc = InferRpcClient<ReturnType<typeof createReadApi>>;
 function getBoardUsers(tx: DataTx, boardId: BoardId) {
     return toStream(
         tx.members.getByBoardId(boardId, {
-            includeDeleted: true,
+            excludeDeleted: false,
         })
     )
         .mapParallel(x =>
             tx.users.getById(x.userId, {
-                includeDeleted: true,
+                excludeDeleted: false,
             })
         )
         .assert(x => x !== undefined, 'user not found')
@@ -634,7 +365,7 @@ function getBoardUsers(tx: DataTx, boardId: BoardId) {
 }
 
 function getBoardUserEmails(tx: DataTx, boardId: BoardId) {
-    return toStream(tx.members.getByBoardId(boardId, {includeDeleted: true}))
+    return toStream(tx.members.getByBoardId(boardId, {excludeDeleted: false}))
         .mapParallel(async x => {
             const account = await tx.accounts.getByUserId(x.userId);
             assert(

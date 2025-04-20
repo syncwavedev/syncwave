@@ -7,6 +7,7 @@ import {
     Context,
     context,
     Crdt,
+    CrdtDiff,
     createBoardId,
     createCardId,
     createClientId,
@@ -43,7 +44,6 @@ import {
     type Column,
     type ColumnId,
     type CoordinatorRpc,
-    type CrdtDoc,
     type CryptoProvider,
     type Member,
     type MemberId,
@@ -339,8 +339,9 @@ export class Agent {
                 .map(x => x.data)
                 .first(),
             this.rpc
-                .getMe({})
-                .map(x => x.user)
+                .getMeViewData({})
+                .filter(x => x.type === 'snapshot')
+                .map(x => x.data.profile)
                 .first(),
         ]);
 
@@ -349,19 +350,19 @@ export class Agent {
 
     private observeBoard(
         dto: BoardViewDataDto,
-        initialMe: CrdtDoc<User>
+        initialMe: {id: UserId; state: CrdtDiff<User>}
     ): [BoardTreeView, Awareness] {
-        const awareness = this.createBoardAwareness(
-            dto.board.id,
-            initialMe,
-            this.activityMonitor
-        );
-        const me = this.crdtManager.view({
+        const me: User = this.crdtManager.view({
             id: initialMe.id,
             isDraft: false,
             state: initialMe.state,
             type: 'user',
         });
+        const awareness = this.createBoardAwareness(
+            dto.board.id,
+            me,
+            this.activityMonitor
+        );
         const data = BoardData.create(awareness, me, dto, this.crdtManager);
 
         this.activeBoards.push(data);
@@ -398,7 +399,7 @@ export class Agent {
 
     private createBoardAwareness(
         boardId: BoardId,
-        initialMe: CrdtDoc<User>,
+        initialMe: User,
         activityMonitor: ActivityMonitor
     ) {
         const awareness = new Awareness(createClientId(), activityMonitor);
@@ -666,6 +667,7 @@ export class Agent {
             type: 'column',
             isDraft: true,
         }).view as Column;
+        this.crdtManager.commit(columnId);
 
         this.syncTargets().forEach(x => {
             x.newColumn(column);

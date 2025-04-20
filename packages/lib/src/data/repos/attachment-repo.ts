@@ -87,8 +87,7 @@ export class AttachmentRepo {
                     name: 'message.authorId fk',
                     verify: async message => {
                         const user = await params.userRepo.getById(
-                            message.authorId,
-                            {includeDeleted: true}
+                            message.authorId
                         );
                         if (user === undefined) {
                             return `user not found: ${message.authorId}`;
@@ -100,8 +99,7 @@ export class AttachmentRepo {
                     name: 'message.cardId fk',
                     verify: async message => {
                         const card = await params.cardRepo.getById(
-                            message.cardId,
-                            {includeDeleted: true}
+                            message.cardId
                         );
                         if (card === undefined) {
                             return `card not found: ${message.cardId}`;
@@ -113,8 +111,7 @@ export class AttachmentRepo {
                     name: 'message.boardId fk',
                     verify: async message => {
                         const board = await params.boardRepo.getById(
-                            message.boardId,
-                            {includeDeleted: true}
+                            message.boardId
                         );
                         if (board === undefined) {
                             return `board not found: ${message.boardId}`;

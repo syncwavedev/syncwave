@@ -141,8 +141,7 @@ export class MessageRepo {
                     name: 'message.authorId fk',
                     verify: async message => {
                         const user = await params.userRepo.getById(
-                            message.authorId,
-                            {includeDeleted: true}
+                            message.authorId
                         );
                         if (user === undefined) {
                             return `user not found: ${message.authorId}`;
@@ -154,8 +153,7 @@ export class MessageRepo {
                     name: 'message.cardId fk',
                     verify: async message => {
                         const card = await params.cardRepo.getById(
-                            message.cardId,
-                            {includeDeleted: true}
+                            message.cardId
                         );
                         if (card === undefined) {
                             return `card not found: ${message.cardId}`;
@@ -167,8 +165,7 @@ export class MessageRepo {
                     name: 'message.columnId fk',
                     verify: async message => {
                         const column = await params.columnRepo.getById(
-                            message.columnId,
-                            {includeDeleted: true}
+                            message.columnId
                         );
                         if (column === undefined) {
                             return `column not found: ${message.columnId}`;
@@ -180,8 +177,7 @@ export class MessageRepo {
                     name: 'message.boardId fk',
                     verify: async message => {
                         const board = await params.boardRepo.getById(
-                            message.boardId,
-                            {includeDeleted: true}
+                            message.boardId
                         );
                         if (board === undefined) {
                             return `board not found: ${message.boardId}`;
@@ -195,9 +191,7 @@ export class MessageRepo {
                         if (!message.replyToId) {
                             return;
                         }
-                        const replyTo = await this.getById(message.replyToId, {
-                            includeDeleted: true,
-                        });
+                        const replyTo = await this.getById(message.replyToId);
                         if (replyTo === undefined) {
                             return `replyTo not found: ${message.replyToId}`;
                         }

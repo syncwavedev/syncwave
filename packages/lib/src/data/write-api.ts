@@ -21,7 +21,7 @@ import {
 import type {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
 import {createAttachmentId} from './repos/attachment-repo.js';
-import {Board, type BoardId} from './repos/board-repo.js';
+import {Board, BoardId} from './repos/board-repo.js';
 import {type Card, type CardId} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
 import {MemberRole, type Member, type MemberId} from './repos/member-repo.js';
@@ -331,7 +331,7 @@ export function createWriteApi() {
             req: Type.Object({
                 code: Type.String(),
             }),
-            res: Type.Object({boardKey: Type.String()}),
+            res: Type.Object({boardId: BoardId()}),
             handle: async (st, {code}) => {
                 const board = await st.tx.boards.getByJoinCode(code);
                 if (!board) {
@@ -352,7 +352,7 @@ export function createWriteApi() {
                     role: board.joinRole,
                 });
 
-                return {boardKey: board.key};
+                return {boardId: board.id};
             },
         }),
         updateMemberRole: handler({
@@ -484,7 +484,6 @@ export function createWriteApi() {
                 return await st.tx.boardService.createBoard({
                     authorId: st.ps.ensureAuthenticated(),
                     name: req.name,
-                    key: req.key,
                     members: req.members,
                     boardId: req.boardId,
                 });
@@ -522,7 +521,6 @@ export function createWriteApi() {
                             pk: false,
                             createdAt: false,
                             id: false,
-                            key: false,
                             authorId: false,
                             joinCode: true,
                             joinRole: true,

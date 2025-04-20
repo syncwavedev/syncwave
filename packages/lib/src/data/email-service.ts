@@ -39,10 +39,10 @@ The Syncwave Team`,
     scheduleInviteEmail(params: {
         email: string;
         boardName: string;
-        boardKey: string;
+        boardId: string;
     }) {
         this.scheduleEffect(async () => {
-            const boardUrl = `${this.config.uiUrl}b/${params.boardKey}`;
+            const boardUrl = `${this.config.uiUrl}b/${params.boardId}`;
 
             const subject = `You got invited to the board ${params.boardName}!`;
             await this.emailProvider.send({

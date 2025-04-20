@@ -21,7 +21,7 @@ import {BoardViewDataDto, CardTreeViewDataDto, MeViewDataDto} from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {ObjectEnvelope, type ObjectStore} from './infrastructure.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
-import {type BoardId} from './repos/board-repo.js';
+import {BoardId} from './repos/board-repo.js';
 import {type CardId} from './repos/card-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
@@ -172,7 +172,7 @@ export function createReadApi() {
         }),
         getBoardViewData: streamer({
             req: Type.Object({
-                key: Type.String(),
+                boardId: BoardId(),
                 startOffset: Type.Optional(Type.Number()),
             }),
             item: Type.Union([
@@ -187,18 +187,7 @@ export function createReadApi() {
                     offset: Type.Number(),
                 }),
             ]),
-            async *stream(st, {key, startOffset}, {principal}) {
-                const boardByKey = await st.transact(principal, tx =>
-                    tx.boards.getByKey(key.toUpperCase())
-                );
-                if (!boardByKey) {
-                    throw new BusinessError(
-                        `board with key ${key} not found`,
-                        'board_not_found'
-                    );
-                }
-
-                const boardId = boardByKey.id;
+            async *stream(st, {boardId, startOffset}, {principal}) {
                 const {offset, events} = await st.esReader.subscribe(
                     boardEvents(boardId),
                     startOffset
@@ -223,7 +212,7 @@ export function createReadApi() {
 
                 if (!board) {
                     throw new BusinessError(
-                        `board with key ${key} not found`,
+                        `board with id ${boardId} not found`,
                         'board_not_found'
                     );
                 }

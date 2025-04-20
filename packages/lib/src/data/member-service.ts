@@ -83,7 +83,7 @@ export class MemberService {
             this.emailService.scheduleInviteEmail({
                 email: params.account.email,
                 boardName: board.name,
-                boardKey: board.key,
+                boardId: board.id,
             });
         }
 

@@ -75,7 +75,6 @@ export function BoardViewDataDto() {
         members: Type.Array(MemberInfoDto()),
         board: Type.Object({
             state: CrdtDiff<Board>(),
-            key: Type.String(),
             id: Uuid<BoardId>(),
         }),
         columns: Type.Array(

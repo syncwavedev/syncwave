@@ -281,7 +281,7 @@ export class Agent {
         });
     }
 
-    async joinViaCode(code: string): Promise<{boardKey: string}> {
+    async joinViaCode(code: string): Promise<{boardId: BoardId}> {
         return await this.rpc.joinByCode({code});
     }
 
@@ -329,12 +329,12 @@ export class Agent {
         return data.userView;
     }
 
-    async observeBoardAsync(key: string) {
+    async observeBoardAsync(boardId: BoardId) {
         const ctx = this.contextManager.use();
 
         const [board, me] = await whenAll([
             this.rpc
-                .getBoardViewData({key})
+                .getBoardViewData({boardId})
                 .filter(x => x.type === 'snapshot')
                 .map(x => x.data)
                 .first(),
@@ -375,7 +375,7 @@ export class Agent {
         infiniteRetry(async () => {
             const items = toStream(
                 this.rpc.getBoardViewData({
-                    key: dto.board.key,
+                    boardId: dto.board.id,
                     startOffset: nextOffset,
                 })
             );

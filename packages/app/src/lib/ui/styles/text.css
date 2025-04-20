@@ -9,4 +9,6 @@
     --text-lg--line-height: 1.25rem; /* 20px */
 
     --leading-relaxed: 1.5;
+
+    --font-sans: 'Inter', sans-serif;
 }

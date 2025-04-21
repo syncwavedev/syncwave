@@ -216,6 +216,10 @@ export class Agent {
         clearTimeout(this.pingTimeout);
     }
 
+    getDemoData() {
+        return this.rpc.createDemoBoard({});
+    }
+
     handleCardMouseEnter(boardId: BoardId, cardId: CardId) {
         this.activeBoards
             .filter(x => x.boardView.id === boardId)

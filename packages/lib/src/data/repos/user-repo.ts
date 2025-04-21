@@ -27,6 +27,7 @@ export function User() {
             id: Uuid<UserId>(),
             fullName: Type.String(),
             avatarKey: Type.Optional(ObjectKey()),
+            isDemo: Type.Boolean(),
         }),
     ]);
 }

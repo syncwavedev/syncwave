@@ -1,5 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {Base64, encodeBase64} from '../base64.js';
+import {ONE_YEAR_MS} from '../constants.js';
 import {getAccount} from '../coordinator/auth-api.js';
 import {Crdt, CrdtDiff} from '../crdt/crdt.js';
 import {createRichtext} from '../crdt/richtext.js';
@@ -27,6 +28,7 @@ import {type Column, type ColumnId} from './repos/column-repo.js';
 import {MemberId, MemberRole, type Member} from './repos/member-repo.js';
 import {type Message, type MessageId} from './repos/message-repo.js';
 import {type User, type UserId} from './repos/user-repo.js';
+import {BOARD_DEMO_TEMPLATE, BOARD_ONBOARDING_TEMPLATE} from './template.js';
 import {
     creatable,
     expectOptional,
@@ -474,6 +476,7 @@ export function createWriteApi() {
                     name: req.name,
                     members: req.members,
                     boardId: req.boardId,
+                    template: BOARD_ONBOARDING_TEMPLATE,
                 });
             },
         }),
@@ -646,6 +649,44 @@ export function createWriteApi() {
                     x.avatarKey = avatarKey;
                 });
                 return {};
+            },
+        }),
+        createDemoBoard: handler({
+            req: Type.Object({}),
+            res: Type.Object({
+                boardId: Uuid<BoardId>(),
+                jwt: Type.String(),
+            }),
+            handle: async st => {
+                const account = await getAccount({
+                    email: `demo.${Math.random().toString(36).slice(2)}@syncwave.dev`,
+                    accounts: st.tx.accounts,
+                    users: st.tx.users,
+                    crypto: st.crypto,
+                    boardService: st.tx.boardService,
+                    fullName: 'Demo User',
+                    skipBoardCreation: true,
+                    isDemo: true,
+                });
+
+                const board = await st.tx.boardService.createBoard({
+                    authorId: account.userId,
+                    members: [],
+                    name: 'Demo Board',
+                    template: BOARD_DEMO_TEMPLATE,
+                });
+
+                const jwt = await st.jwtService.sign({
+                    exp: st.tx.timestamp + ONE_YEAR_MS * 100,
+                    iat: st.tx.timestamp,
+                    sub: account.id,
+                    uid: account.userId,
+                });
+
+                return {
+                    boardId: board.id,
+                    jwt,
+                };
             },
         }),
     });

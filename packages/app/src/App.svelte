@@ -37,6 +37,7 @@
     import LoginFailed from './pages/login-failed.svelte';
     import Testbed from './pages/testbed.svelte';
     import Index from './pages/index.svelte';
+    import Demo from './pages/demo.svelte';
     import {DocumentActivityMonitor} from './document-activity.js';
     import ModalContainer from './lib/ui/components/modal-container.svelte';
 
@@ -81,6 +82,9 @@
     onMount(() => {
         router.on('/', () => {
             Page = Index;
+        });
+        router.on('/demo', () => {
+            Page = Demo;
         });
         router.on('/login', () => {
             Page = LoginPage;

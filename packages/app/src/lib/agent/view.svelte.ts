@@ -53,6 +53,7 @@ export class UserView implements User {
         this.user = user;
     }
 
+    isDemo = $derived(this.user.isDemo);
     deletedAt = $derived(this.user.deletedAt);
     updatedAt = $derived(this.user.updatedAt);
     createdAt = $derived(this.user.createdAt);

@@ -22,6 +22,7 @@ import {
 import {createMemberId, MemberRepo} from './repos/member-repo.js';
 import {createMessageId, type MessageRepo} from './repos/message-repo.js';
 import type {UserId, UserRepo} from './repos/user-repo.js';
+import type {BoardTemplate, CardTemplate} from './template.js';
 
 export class BoardService {
     private readonly boards: BoardRepo;
@@ -63,10 +64,11 @@ export class BoardService {
         authorId: UserId;
         name: string;
         members: string[];
+        template: BoardTemplate;
         boardId?: BoardId;
     }): Promise<Board> {
         const now = getNow();
-        console.log('board name', params.name);
+
         const board = await this.boards.create({
             id: params.boardId ?? createBoardId(),
             createdAt: now,
@@ -87,7 +89,7 @@ export class BoardService {
                 role: 'owner',
                 position: Math.random(),
             }),
-            this.initBoard(board),
+            this.initBoard(board, params.template),
             ...params.members.map(async member => {
                 const account = await getAccount({
                     accounts: this.accounts,
@@ -125,13 +127,13 @@ export class BoardService {
         return board;
     }
 
-    private async initBoard(board: Board) {
+    private async initBoard(board: Board, template: BoardTemplate) {
         const onboardGuide = await getAccount({
             accounts: this.accounts,
             boardService: this,
             crypto: this.crypto,
-            email: 'onboarding@syncwave.dev',
-            fullName: 'Syncwave Onboarding Guide',
+            email: 'bot@syncwave.dev',
+            fullName: 'Syncwave',
             users: this.users,
             skipBoardCreation: true,
         });
@@ -146,9 +148,8 @@ export class BoardService {
             position: Math.random(),
         });
 
-        let cardCounter = 1;
         await whenAll(
-            ONBOARDING_TEMPLATE.columns.map(async (column, idx) => {
+            template.columns.map(async (column, idx) => {
                 const columnId = createColumnId();
                 await this.columns.create({
                     authorId: onboardGuide.userId,
@@ -168,7 +169,6 @@ export class BoardService {
                             columnId,
                             card,
                             cardIndex: cardIdx,
-                            cardCounter: cardCounter++,
                         });
                     })
                 );
@@ -180,9 +180,8 @@ export class BoardService {
         onboardGuide: Account;
         board: Board;
         columnId: ColumnId;
-        card: OnboardingCard;
+        card: CardTemplate;
         cardIndex: number;
-        cardCounter: number;
     }) {
         const cardId = createCardId();
         await this.cards.create({
@@ -192,7 +191,7 @@ export class BoardService {
             createdAt: this.timestamp,
             text: createRichtext(htmlToYFragment(params.card.html)),
             id: cardId,
-            counter: params.cardCounter,
+            counter: await this.boards.incrementBoardCounter(params.board.id),
             position: params.cardIndex,
             updatedAt: this.timestamp,
         });
@@ -235,87 +234,3 @@ export class BoardService {
         }
     }
 }
-
-interface OnboardingCard {
-    html: string;
-    messages: OnboardingMessage[];
-}
-
-interface OnboardingColumn {
-    name: string;
-    cards: OnboardingCard[];
-}
-
-interface OnboardingTemplate {
-    columns: OnboardingColumn[];
-}
-
-interface OnboardingMessage {
-    html: string;
-}
-
-const ONBOARDING_TEMPLATE: OnboardingTemplate = {
-    columns: [
-        {
-            name: 'Backlog',
-            cards: [
-                {
-                    html: `
-                        <p>Welcome to Syncwave!</p>
-                        <ul>
-                            <li><b>Syncwave</b> is a collaborative tool for managing your projects.</li>
-                            <li>Use it to track tasks, share ideas, and collaborate with your team.</li>
-                            <li>Get started by creating a new board or joining an existing one.</li>
-                            <li>Invite your team members to collaborate with you.</li>
-                        </ul>
-                        <p>Click on the <i>"Create Board"</i> button to get started.</p>
-                    `,
-                    messages: [
-                        {
-                            html: '<p>We are glad to have you here.</p>',
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            name: 'To Do',
-            cards: [
-                {
-                    html: "<p>Let's get started!</p>",
-                    messages: [
-                        {
-                            html: '<p>Here are some tips to get you started.</p>',
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            name: 'In Progress',
-            cards: [
-                {
-                    html: '<p>Keep going!</p>',
-                    messages: [
-                        {
-                            html: '<p>You are doing great!</p>',
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            name: 'Done',
-            cards: [
-                {
-                    html: '<p>Congratulations!</p>',
-                    messages: [
-                        {
-                            html: '<p>You have completed the onboarding process.</p>',
-                        },
-                    ],
-                },
-            ],
-        },
-    ],
-};

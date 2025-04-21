@@ -27,6 +27,7 @@
     import ProfileModal from '../profiles/profile-modal.svelte';
     import EditColumnsModal from './edit-columns-modal.svelte';
     import UserMinusIcon from '../components/icons/user-minus-icon.svelte';
+    import DemoBanner from './demo-banner.svelte';
 
     const {
         board,
@@ -240,7 +241,7 @@
 {/snippet}
 
 <div class="flex app">
-    <div class="flex min-w-0 flex-col">
+    <div class="relative flex min-w-0 flex-col">
         <div class="panel-header avatar-sm">
             <button
                 class="btn-ghost font-medium"
@@ -314,6 +315,12 @@
                 {/each}
             </div>
         </Scrollable>
+
+        {#if me.isDemo}
+            <div class="absolute left-8 right-8 bottom-12">
+                <DemoBanner />
+            </div>
+        {/if}
         <div class="panel-footer">
             <StatusBar />
         </div>

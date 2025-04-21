@@ -10,6 +10,7 @@ import {
     type VerificationCode,
 } from '../data/repos/account-repo.js';
 import {createUserId, UserRepo, type UserId} from '../data/repos/user-repo.js';
+import {BOARD_ONBOARDING_TEMPLATE} from '../data/template.js';
 import {AppError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {whenAll} from '../utils.js';
@@ -193,6 +194,7 @@ export async function getAccount(params: {
     fullName: string | undefined;
     boardService: BoardService;
     skipBoardCreation?: boolean;
+    isDemo?: boolean;
 }): Promise<Account> {
     const existingAccount = await params.accounts.getByEmail(params.email);
     if (existingAccount) {
@@ -217,6 +219,7 @@ export async function getAccount(params: {
             createdAt: now,
             updatedAt: now,
             fullName: params.fullName ?? 'Anonymous',
+            isDemo: params.isDemo ?? false,
         }),
     ]);
 
@@ -227,6 +230,7 @@ export async function getAccount(params: {
             authorId: userId,
             name: DEFAULT_BOARD_NAME,
             members: [],
+            template: BOARD_ONBOARDING_TEMPLATE,
         });
     }
 

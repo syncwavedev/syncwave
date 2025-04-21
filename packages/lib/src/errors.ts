@@ -1,9 +1,10 @@
 import {v4} from 'uuid';
-import type {NestedAttributeMap} from './context.js';
+import {context, type NestedAttributeMap} from './context.js';
 
 // eslint-disable-next-line no-restricted-globals
 export class AppError extends Error {
     public readonly id = v4();
+    public readonly traceId = context().traceId;
 
     constructor(message: string, options?: {cause?: unknown}) {
         super(message, options);
@@ -12,6 +13,7 @@ export class AppError extends Error {
     toJSON(): NestedAttributeMap {
         let result: NestedAttributeMap = {
             errorId: this.id,
+            traceId: this.traceId,
             message: `${this.constructor.name} (${this.name}): ${this.message}`,
         };
         if (this.stack) {

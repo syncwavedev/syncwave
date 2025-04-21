@@ -353,6 +353,8 @@ export class DataLayer {
                 config
             );
 
+            const timestamp = getNow();
+
             const boardService = new BoardService({
                 boards,
                 crypto: this.crypto,
@@ -360,6 +362,10 @@ export class DataLayer {
                 members,
                 users,
                 emailService,
+                cards,
+                columns,
+                messages,
+                timestamp,
             });
 
             const permissionService = new PermissionService(
@@ -376,8 +382,6 @@ export class DataLayer {
             );
 
             const version = new Cell(isolate(['version_v2'])(tx), 0);
-
-            const timestamp = getNow();
 
             const dataTx: DataTx = {
                 version,

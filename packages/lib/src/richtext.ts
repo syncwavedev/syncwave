@@ -16,9 +16,12 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import Text from '@tiptap/extension-text';
 import Underline from '@tiptap/extension-underline';
-import {generateHTML} from '@tiptap/html';
+import {generateHTML, generateJSON} from '@tiptap/html';
 import type {Node} from '@tiptap/pm/model';
-import {yXmlFragmentToProsemirrorJSON} from 'y-prosemirror';
+import {
+    prosemirrorJSONToYXmlFragment,
+    yXmlFragmentToProsemirrorJSON,
+} from 'y-prosemirror';
 import {XmlFragment, Doc as YDoc} from 'yjs';
 
 export const tiptapExtensions = [
@@ -42,6 +45,12 @@ export const tiptapExtensions = [
 ];
 
 const tiptapSchema = getSchema(tiptapExtensions);
+
+export function htmlToYFragment(html: string) {
+    const prosemirrorJSON = generateJSON(html, tiptapExtensions);
+
+    return prosemirrorJSONToYXmlFragment(tiptapSchema, prosemirrorJSON);
+}
 
 export function yFragmentToJSON(fragment: XmlFragment) {
     return yXmlFragmentToProsemirrorJSON(fragment);

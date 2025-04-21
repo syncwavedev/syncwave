@@ -1,6 +1,6 @@
 <script lang="ts">
     import {XmlFragment} from 'yjs';
-    import {yFragmentToHtml} from '../../richtext';
+    import {yFragmentToHtml} from 'syncwave';
 
     interface Props {
         fragment: XmlFragment;

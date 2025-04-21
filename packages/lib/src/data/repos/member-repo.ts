@@ -171,7 +171,7 @@ export class MemberRepo {
                 error.indexName === USER_ID_BOARD_ID_INDEX
             ) {
                 throw new BusinessError(
-                    `member with userId ${member.userId} and boardId ${member.boardId} already exists`,
+                    `member with userId ${member.userId} and boardId ${member.boardId} already exists. Conflict key: ${error.conflictKey}, conflict value: ${error.conflictValue}`,
                     'member_exists'
                 );
             }

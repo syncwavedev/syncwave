@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {yFragmentToPlaintextAndTaskList} from '../../richtext';
+    import {yFragmentToPlaintextAndTaskList} from 'syncwave';
     import Avatar from '../components/avatar.svelte';
     import type {CardView} from '../../agent/view.svelte';
     import {getAgent} from '../../agent/agent.svelte';

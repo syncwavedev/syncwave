@@ -14,7 +14,7 @@
     import router from '../../router';
     import {flip} from 'svelte/animate';
     import {createDndContext, DND_REORDER_DURATION_MS} from './board-dnd';
-    import {yFragmentToPlaintext} from '../../richtext';
+    import {yFragmentToPlaintext} from 'syncwave';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import PanelSizeManager from '../../panel-size-manager';
     import Avatar from '../components/avatar.svelte';

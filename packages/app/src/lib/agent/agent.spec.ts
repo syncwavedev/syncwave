@@ -1,10 +1,16 @@
-import {assert, context, Context, E2eFixture, type Unsubscribe} from 'syncwave';
+import {
+    assert,
+    context,
+    Context,
+    createXmlFragment,
+    E2eFixture,
+    type Unsubscribe,
+} from 'syncwave';
 import {NodeCryptoProvider} from 'syncwave/node-crypto-provider.js';
 import {NodeJwtProvider} from 'syncwave/node-jwt-provider.js';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {AuthManager} from '../../auth-manager';
 import {createMemStorage} from '../../mem-storage';
-import {createXmlFragment} from '../richtext';
 import {Agent} from './agent.svelte';
 
 describe('agent', () => {
@@ -75,7 +81,6 @@ describe('agent', () => {
     it.only('should observe card', async () => {
         try {
             const boardId = await agentA.createBoard({
-                key: 'TEST',
                 memberEmails: [],
                 name: 'Test board',
             });

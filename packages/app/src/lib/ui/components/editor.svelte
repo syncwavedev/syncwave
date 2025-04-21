@@ -1,5 +1,17 @@
+<script module>
+    declare module '@tiptap/core' {
+        interface Commands<ReturnType> {
+            syncwave: {
+                toggleItalic: () => ReturnType;
+                toggleStrike: () => ReturnType;
+                toggleBold: () => ReturnType;
+            };
+        }
+    }
+</script>
+
 <script lang="ts">
-    import {tiptapExtensions} from '../../richtext';
+    import {tiptapExtensions} from 'syncwave';
     import {onMount} from 'svelte';
     import cx from 'clsx';
     import {get, type Readable} from 'svelte/store';

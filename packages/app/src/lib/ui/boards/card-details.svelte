@@ -18,7 +18,7 @@
         cloneYFragment,
         createXmlFragment,
         yFragmentToPlaintext,
-    } from '../../richtext';
+    } from 'syncwave';
     import MessageList from '../messages/message-list.svelte';
 
     const {

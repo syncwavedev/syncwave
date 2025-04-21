@@ -39,7 +39,11 @@ export interface IndexOptions<TValue> {
 }
 
 export class UniqueError extends AppError {
-    constructor(public readonly indexName: string) {
+    constructor(
+        public readonly indexName: string,
+        public readonly conflictKey: Tuple,
+        public readonly conflictValue: Tuple
+    ) {
         super('Unique index constraint violation. Index name: ' + indexName);
     }
 }
@@ -150,7 +154,11 @@ export function createIndex<TValue>({
                 if (unique) {
                     const existing = await tx.get(key);
                     if (existing) {
-                        throw new UniqueError(indexName);
+                        throw new UniqueError(
+                            indexName,
+                            key,
+                            decodeTuple(existing)
+                        );
                     }
 
                     await tx.put(key, encodeTuple(id));

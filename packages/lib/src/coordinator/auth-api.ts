@@ -192,6 +192,7 @@ export async function getAccount(params: {
     crypto: CryptoProvider;
     fullName: string | undefined;
     boardService: BoardService;
+    skipBoardCreation?: boolean;
 }): Promise<Account> {
     const existingAccount = await params.accounts.getByEmail(params.email);
     if (existingAccount) {
@@ -219,13 +220,15 @@ export async function getAccount(params: {
         }),
     ]);
 
-    // we can't call createBoard in parallel to account creation, because createBoard fetches
-    // author info from the account. we need to ensure that the account is created first.
-    await params.boardService.createBoard({
-        authorId: userId,
-        name: DEFAULT_BOARD_NAME,
-        members: [],
-    });
+    if (!params.skipBoardCreation) {
+        // we can't call createBoard in parallel to account creation, because createBoard fetches
+        // author info from the account. we need to ensure that the account is created first.
+        await params.boardService.createBoard({
+            authorId: userId,
+            name: DEFAULT_BOARD_NAME,
+            members: [],
+        });
+    }
 
     return account;
 }

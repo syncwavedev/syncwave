@@ -40,6 +40,7 @@ export * from './kv/rw-mvcc-adapter.js';
 export * from './kv/tuple-store.js';
 export * from './logger.js';
 export * from './mutex.js';
+export * from './richtext.js';
 export * from './rw-lock.js';
 export * from './stream.js';
 export * from './subject.js';

@@ -1,3 +1,5 @@
+import type {BoardId} from './data/repos/board-repo.js';
+
 export const RPC_CALL_TIMEOUT_MS = 5_000;
 export const MAX_LOOKAHEAD_COUNT = 124;
 export const PULL_WAIT_MS = 1000;
@@ -29,3 +31,5 @@ export const AUTHENTICATOR_PRINCIPAL_CACHE_SIZE = 1024;
 export const AWARENESS_OFFLINE_TIMEOUT_MS = 30_000;
 export const USER_INACTIVITY_TIMEOUT_MS = 5 * 60_000; // 5 min
 export const MESSAGE_TYPING_AWARENESS_TIMEOUT_MS = 3_000;
+export const ONBOARDING_BOARD_TEMPLATE_ID =
+    '0824716a-41c3-4240-ab80-618792e48459' as BoardId;

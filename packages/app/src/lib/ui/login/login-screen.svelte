@@ -224,12 +224,15 @@
         {/if}
         <div class="mt-8 mx-auto text-ink-detail text-center">
             By continuing, you acknowledge and accept our <a
-                href="/terms"
+                href="https://www.syncwave.dev/terms"
+                target="_blank"
                 class="text-primary hover:underline">Terms of Service</a
             >
             and
-            <a href="/privacy" class="text-primary hover:underline"
-                >Privacy Policy</a
+            <a
+                href="https://www.syncwave.dev/privacy"
+                target="_blank"
+                class="text-primary hover:underline">Privacy Policy</a
             >.
         </div>
     </div>

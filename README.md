@@ -27,14 +27,11 @@
     <img alt="Syncwave Screenshot" src="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
 </picture>
 
-Syncwave emerged from a simple need: a project management tool that developers would actually enjoy using. Created out of frustration with overly complex alternatives, we combined the simplicity of kanban boards with the familiarity of IDEs.
-
-Our focus remains on developer ergonomics, seamless collaboration, and performance. Built by developers for developers, Syncwave streamlines project management with a clean, distraction-free interface.
+We built Syncwave because we were tired of project management tools that get in your way. As developers ourselves, we wanted something that feels familiar (like our IDEs) but keeps things simple with a kanban approach. No unnecessary features, no clutter—just a fast, collaborative tool that lets you focus on building great software. We've stripped away all the distractions to create something we actually enjoy using ourselves.
 
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li><a href="#built-with">Built With</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#quick-start">Quick start</a></li>
     <li><a href="#self-hosted">Self-Hosted</a></li>
@@ -46,16 +43,6 @@ Our focus remains on developer ergonomics, seamless collaboration, and performan
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
-
-## Built With
-
-[![Svelte][Svelte.dev]][Svelte-url]
-[![Node.js][Node.js]][Node-url]
-[![Tailwind CSS][Tailwind-CSS]][Tailwind-CSS-url]
-[![Astro][Astro]][Astro-url]
-[![TypeScript][TypeScript]][TypeScript-url]
-
-Syncwave is built with modern web technologies that prioritize performance, developer experience, and user interface quality.
 
 ## Features
 
@@ -123,29 +110,3 @@ This project wouldn't be possible without open-source technologies like:
 - [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) makes the UI beautiful.
 - [Astro](https://github.com/withastro/astro) is the build tool for our static (landing, docs).
 - [TypeScript](https://github.com/microsoft/TypeScript) - the whole app is written in TypeScript.
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-
-[contributors-shield]: https://img.shields.io/github/contributors/syncwavedev/syncwave.svg?style=for-the-badge
-[contributors-url]: https://github.com/syncwavedev/syncwave/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/syncwavedev/syncwave.svg?style=for-the-badge
-[forks-url]: https://github.com/syncwavedev/syncwave/network/members
-[stars-shield]: https://img.shields.io/github/stars/syncwavedev/syncwave.svg?style=for-the-badge
-[stars-url]: https://github.com/syncwavedev/syncwave/stargazers
-[issues-shield]: https://img.shields.io/github/issues/syncwavedev/syncwave.svg?style=for-the-badge
-[issues-url]: https://github.com/syncwavedev/syncwave/issues
-[license-shield]: https://img.shields.io/github/license/syncwavedev/syncwave.svg?style=for-the-badge
-[license-url]: https://github.com/syncwavedev/syncwave/blob/master/LICENSE
-[product-screenshot]: images/screenshot.png
-[Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
-[Svelte.dev]: https://img.shields.io/badge/Svelte-4A4A55?style=for-the-badge&logo=svelte&logoColor=FF3E00
-[Svelte-url]: https://svelte.dev/
-[Node.js]: https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white
-[Node-url]: https://nodejs.org/
-[Tailwind-CSS]: https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white
-[Tailwind-CSS-url]: https://tailwindcss.com/
-[Astro]: https://img.shields.io/badge/Astro-FF5C00?style=for-the-badge&logo=astro&logoColor=white
-[Astro-url]: https://astro.build/
-[TypeScript]: https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white
-[TypeScript-url]: https://www.typescriptlang.org/

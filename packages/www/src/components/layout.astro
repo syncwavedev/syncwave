@@ -36,6 +36,21 @@ const {title, description, url}: Props = Astro.props;
             crossorigin="anonymous"
             referrerpolicy="no-referrer"
         />
+
+        <script
+            defer
+            data-domain="syncwave.dev"
+            src="https://plausible.bridgex.dev/js/script.outbound-links.js"
+        ></script>
+        <script>
+            localStorage.plausible_ignore = true;
+            (window as any).plausible =
+                (window as any).plausible ||
+                function () {
+                    ((window as any).plausible.q =
+                        (window as any).plausible.q || []).push(arguments);
+                };
+        </script>
     </head>
     <body class="flex min-h-[100vh] flex-col bg-black text-white">
         <header

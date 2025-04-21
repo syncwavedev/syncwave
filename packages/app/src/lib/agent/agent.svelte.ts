@@ -129,12 +129,14 @@ export class Agent {
         });
         this.connection = new RpcConnection(this.persistentConnection);
 
+        const jwt = this.authManager.getJwt() ?? undefined;
+
         this.rpc = createRpcClient(
             createCoordinatorApi(),
             this.connection,
             () => ({
                 ...context().extract(),
-                auth: this.authManager.getJwt() ?? undefined,
+                auth: jwt,
             })
         );
         this.crdtManager = new CrdtManager(this.rpc);

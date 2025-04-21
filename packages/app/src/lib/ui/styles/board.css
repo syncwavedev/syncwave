@@ -1,7 +1,7 @@
 :root {
     --board-height: calc(
         var(--app-height) - var(--panel-header-height) -
-            var(--panel-footer-height)
+            var(--panel-footer-height) - 2 * var(--panel-border-width)
     );
 
     --column-width: 21.25rem;

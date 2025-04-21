@@ -1,7 +1,8 @@
 :root {
-    --panel-header-height: 2.5rem;
+    --panel-header-height: 2.4rem;
     --panel-footer-height: 2rem;
     --panel-padding-inline: 1.25rem;
+    --panel-border-width: 1px;
 }
 
 .panel-header {
@@ -12,6 +13,7 @@
     height: var(--panel-header-height);
 
     padding-inline: var(--panel-padding-inline);
+    border-bottom: var(--panel-border-width) solid var(--color-divider);
 }
 
 .panel-footer {
@@ -21,6 +23,8 @@
     height: var(--panel-footer-height);
 
     padding-inline: var(--panel-padding-inline);
+
+    border-top: var(--panel-border-width) solid var(--color-divider);
 }
 
 .panel-margin-inline {

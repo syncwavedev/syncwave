@@ -105,10 +105,7 @@
 <div
     class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l rounded-r-sm"
 >
-    <div
-        class="panel-header border-b border-transparent"
-        class:border-divider-subtle!={isScrolled}
-    >
+    <div class="panel-header">
         <div class="flex items-center gap-0.5 icon-base font-medium">
             {#if card.isDraft}
                 New card
@@ -217,9 +214,7 @@
             {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
         </div>
     {/if}
-    <div
-        class="panel-margin-inline border-[1.5px] border-divider-object mb-2 p-2 rounded-md"
-    >
+    <div class="panel-margin-inline bg-surface-3 mb-4 p-2 rounded-md">
         <Editor
             {fragment}
             {me}

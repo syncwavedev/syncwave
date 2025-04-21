@@ -96,15 +96,15 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-            bg-surface-2
-            hover:bg-surface-3
+            bg-surface-3
+            hover:bg-surface-4
             group
             flex
             items-end
             cursor-default
             gap-1
             rounded-md
-            p-2.25
+            p-2
             content
             outline-offset-[-2px]
             data-active:outline
@@ -113,8 +113,6 @@
             focus:outline
             focus:outline-2
             focus:outline-divider-active/50
-            border
-            border-divider
         "
         class:border-dashed={card.isDraft}
         onclick={onClick}

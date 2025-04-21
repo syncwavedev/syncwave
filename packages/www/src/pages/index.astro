@@ -2,6 +2,7 @@
 import ScreenshotDark from '../assets/syncwave-screenshot-dark.png';
 import {Image} from 'astro:assets';
 import Layout from '../components/layout.astro';
+import TilyupoPhoto from '../assets/people/tilyupo.jpg';
 ---
 
 <Layout
@@ -517,6 +518,58 @@ import Layout from '../components/layout.astro';
         </div>
     </div>
 </section> -->
+
+    <section
+        class="relative flex w-full max-w-[100vw] flex-col place-content-center place-items-center overflow-hidden p-6 my-14"
+        id="testimonial"
+    >
+        <div class="flex flex-col items-center max-w-3xl mx-auto text-center">
+            <p
+                class="text-2xl text-gray-200 font-light leading-relaxed mb-6 px-4 relative"
+            >
+                <span class="relative z-10 block pt-4">
+                    As a developer, I wanted something clean and fast that just
+                    works. Syncwave helped me to stay focused and ship better
+                    software. Give it a try!
+                </span>
+            </p>
+            <div class="flex items-center mt-4">
+                <div
+                    class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center"
+                >
+                    <Image
+                        src={TilyupoPhoto}
+                        alt="Dmitry Tilyupo"
+                        width={64}
+                        height={64}
+                        class="rounded-full object-cover"
+                    />
+                </div>
+                <div class="ml-4 text-left">
+                    <div class="text-lg font-medium">Dmitry Tilyupo</div>
+                    <div class="text-sm text-gray-400">Creator of Syncwave</div>
+                    <div class="flex gap-3 mt-1">
+                        <a
+                            href="https://github.com/tilyupo"
+                            target="_blank"
+                            rel="noopener"
+                            class="text-gray-400 hover:text-primary transition-colors"
+                        >
+                            <i class="bi bi-github"></i>
+                        </a>
+                        <a
+                            href="https://linkedin.com/in/tilyupo"
+                            target="_blank"
+                            rel="noopener"
+                            class="text-gray-400 hover:text-primary transition-colors"
+                        >
+                            <i class="bi bi-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- <section
     class="mt-5 flex min-h-[80vh] w-full flex-col place-content-center place-items-center p-[2%]"

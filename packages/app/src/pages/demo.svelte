@@ -3,6 +3,17 @@
     import {getAuthManager} from '../lib/utils';
 
     const authManager = getAuthManager();
+
+    if (authManager.authorized) {
+        if (
+            !confirm(
+                'You are already logged in. Do you want to log out and start a demo?'
+            )
+        ) {
+            window.location.href = '/';
+        }
+    }
+
     getAgent()
         .getDemoData()
         .then(x => {

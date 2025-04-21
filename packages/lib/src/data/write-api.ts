@@ -626,7 +626,11 @@ export function createWriteApi() {
             handle: async (st, {userId, diff}) => {
                 await whenAll([
                     st.ps.ensureUser(userId),
-                    st.tx.users.apply(userId, diff, writable({fullName: true})),
+                    st.tx.users.apply(
+                        userId,
+                        diff,
+                        writable({fullName: true, updatedAt: true})
+                    ),
                 ]);
                 return {};
             },

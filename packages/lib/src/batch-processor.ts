@@ -30,11 +30,15 @@ export class BatchProcessor<T> {
         );
     }
 
+    isSettled(): boolean {
+        return this.queue.length === 0 && !this.inProgress;
+    }
+
     waitSettled() {
         const result = new Deferred<void>();
 
         const interval = setInterval(() => {
-            if (this.queue.length === 0 && !this.inProgress) {
+            if (this.isSettled()) {
                 result.resolve();
                 clearInterval(interval);
             }

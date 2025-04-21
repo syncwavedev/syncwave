@@ -44,6 +44,10 @@ class DiffSender<T> {
         });
     }
 
+    isSettled(): boolean {
+        return this.batchProcessor.isSettled();
+    }
+
     waitSettled() {
         return this.batchProcessor.waitSettled();
     }
@@ -165,6 +169,12 @@ export class CrdtManager implements CrdtDerivator {
         } else {
             assertNever(event.kind);
         }
+    }
+
+    isSettled(): boolean {
+        return [...this.entities.values()].every(entity =>
+            entity.observer.sender.isSettled()
+        );
     }
 
     async waitSettled() {

@@ -190,6 +190,10 @@ export class Agent {
         }
     }
 
+    isSettled(): boolean {
+        return this.crdtManager.isSettled();
+    }
+
     async waitSettled() {
         return await this.crdtManager.waitSettled();
     }
@@ -850,6 +854,21 @@ export function createAgent(
     );
     setContext(Agent, agent);
     onDestroy(() => agent.close('agent.close: component destroyed'));
+
+    $effect(() => {
+        const listener = (e: BeforeUnloadEvent) => {
+            alert('unload');
+            if (!agent.isSettled()) {
+                e.preventDefault();
+                e.returnValue = ''; // old Chrome requires returnValue to be set
+            }
+        };
+        window.addEventListener('beforeunload', listener);
+
+        return () => {
+            window.removeEventListener('beforeunload', listener);
+        };
+    });
 }
 
 export function getAgent() {

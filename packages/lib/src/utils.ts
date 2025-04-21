@@ -232,11 +232,18 @@ export function pipe<T>(x: T, ...fns: ((x: any) => any)[]): any {
 }
 
 export function concatBuffers(a: Uint8Array, b: Uint8Array): Uint8Array {
-    const mergedArray = new Uint8Array(a.length + b.length);
-    mergedArray.set(a);
-    mergedArray.set(b, a.length);
+    return joinBuffers([a, b]);
+}
 
-    return mergedArray;
+export function joinBuffers(buffers: Uint8Array[]): Uint8Array {
+    const totalLength = buffers.reduce((sum, buffer) => sum + buffer.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const buffer of buffers) {
+        result.set(buffer, offset);
+        offset += buffer.length;
+    }
+    return result;
 }
 
 export function distinct<T>(items: T[]): T[] {

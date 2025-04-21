@@ -289,10 +289,7 @@ export function createReadApi() {
                                     })
                                     .mapParallel(async member => {
                                         const board = await tx.boards.getById(
-                                            member.boardId,
-                                            {
-                                                excludeDeleted: true,
-                                            }
+                                            member.boardId
                                         );
                                         assert(
                                             board !== undefined,

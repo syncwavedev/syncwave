@@ -17,7 +17,10 @@
             class="flex flex-col panel-padding-inline py-2 relative hover:bg-surface-1"
         >
             <div class="flex items-center gap-1.5 relative avatar-sm">
-                <Avatar name={message.author.fullName} />
+                <Avatar
+                    userId={message.author.id}
+                    name={message.author.fullName}
+                />
 
                 <div class="flex items-baseline gap-1.5">
                     <div class="font-semibold text-sm leading-none">

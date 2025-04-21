@@ -1,9 +1,17 @@
 <script lang="ts">
+    import type {UserId} from 'syncwave';
+
     let {
         name,
         class: className,
         title,
-    }: {name: string; class?: string; title?: string} = $props();
+        userId,
+    }: {
+        userId: UserId;
+        name: string;
+        class?: string;
+        title?: string;
+    } = $props();
 
     const avatarColors = [
         '#5a8ac8',
@@ -28,8 +36,8 @@
         return Math.abs(hash);
     }
 
-    const nameHash = getStringHash(name);
-    const avatarColor = avatarColors[nameHash % avatarColors.length];
+    const idHash = getStringHash(userId);
+    const avatarColor = avatarColors[idHash % avatarColors.length];
 </script>
 
 <div

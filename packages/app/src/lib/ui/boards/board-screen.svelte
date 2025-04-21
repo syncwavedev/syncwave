@@ -243,6 +243,7 @@
             <div class="ml-2 flex">
                 {#each board.onlineUsers as user (user.user.id)}
                     <Avatar
+                        userId={user.user.id}
                         name={`${user.user.fullName}`}
                         class="outline-surface-0 outline-2"
                     />
@@ -259,7 +260,7 @@
                 class="btn--icon"
                 onclick={() => modalManager.open(profileSettings)}
             >
-                <Avatar name={me.fullName} />
+                <Avatar userId={me.id} name={me.fullName} />
             </button>
         </div>
         <Scrollable

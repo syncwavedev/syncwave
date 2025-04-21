@@ -162,7 +162,10 @@
                             class="ml-2 avatar-sm"
                             class:ml-auto={todoStats.total == 0}
                         >
-                            <Avatar name={card.assignee.fullName} />
+                            <Avatar
+                                userId={card.assignee.id}
+                                name={card.assignee.fullName}
+                            />
                         </span>
                     {:else}
                         <div

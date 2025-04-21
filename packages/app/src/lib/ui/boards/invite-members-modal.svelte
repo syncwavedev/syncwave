@@ -12,7 +12,7 @@
     <div class="flex flex-col mt-2">
         {#each board.members as member (member.id)}
             <div class="flex items-center py-2">
-                <Avatar name={member.fullName} />
+                <Avatar userId={member.id} name={member.fullName} />
                 <span class="ml-1.5">{member.fullName}</span>
                 <span class="ml-1.5 text-ink-detail"
                     >{member.email} [{member.role}]</span

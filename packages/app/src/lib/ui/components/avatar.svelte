@@ -14,13 +14,13 @@
     } = $props();
 
     const avatarColors = [
-        '#5a8ac8',
-        '#b04a47',
-        '#a88563',
-        '#57979f',
-        '#c06065',
-        '#7fa064',
-        '#8a7cb4',
+        'oklch(60% 0.115 255deg)',
+        'oklch(60% 0.11 151deg)',
+        'oklch(60% 0.10 270deg)',
+        'oklch(60% 0.12 200deg)',
+        'oklch(60% 0.12 180deg)',
+        'oklch(60% 0.12 290deg)',
+        'oklch(60% 0.12 240deg)',
     ];
 
     function getStringHash(str: string): number {
@@ -46,7 +46,7 @@
     style={`background-color: ${avatarColor};`}
 >
     <div
-        class="font-bold text-[calc(var(--avatar-size)*0.55)] flex items-center justify-center h-full w-full"
+        class="font-semibold text-[calc(var(--avatar-size)*0.55)] flex items-center justify-center h-full w-full"
     >
         {name[0]?.toUpperCase() ?? 'U'}
     </div>

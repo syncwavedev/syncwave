@@ -1,14 +1,7 @@
 on:
-  schedule:
-    - cron: '0 10 * * *'
   push:
-    branches:
-      - '**'
     tags:
       - 'v*.*.*'
-  pull_request:
-    branches:
-      - 'main'
 
 name: release
 
@@ -34,13 +27,9 @@ jobs:
             syncwave/syncwave
             ghcr.io/syncwavedev/syncwave
           tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -68,8 +57,8 @@ jobs:
         with:
           context: .
           file: ./packages/self-hosted/Dockerfile
-          cache-from: type=registry,ref=ghcr.io/syncwavedev/syncwave:cache
-          cache-to: type=registry,mode=max,ref=ghcr.io/syncwavedev/syncwave:cache
+          cache-from: type=registry,ref=ghcr.io/syncwavedev/syncwave-self:self-cache
+          cache-to: type=registry,mode=max,ref=ghcr.io/syncwavedev/syncwave-self:self-cache
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

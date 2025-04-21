@@ -226,13 +226,13 @@
             By continuing, you acknowledge and accept our <a
                 href="https://www.syncwave.dev/terms"
                 target="_blank"
-                class="text-primary hover:underline">Terms of Service</a
+                class="text-primary underline">Terms of Service</a
             >
             and
             <a
                 href="https://www.syncwave.dev/privacy"
                 target="_blank"
-                class="text-primary hover:underline">Privacy Policy</a
+                class="text-primary underline">Privacy Policy</a
             >.
         </div>
     </div>

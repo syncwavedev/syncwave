@@ -31,7 +31,7 @@
             class="input input-block p-2.5"
             placeholder="Profile name"
             value={me.fullName}
-            onchange={handleNameChange}
+            oninput={handleNameChange}
         />
     </div>
     <div class="flex justify-center">

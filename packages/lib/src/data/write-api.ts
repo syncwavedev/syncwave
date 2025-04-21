@@ -548,7 +548,10 @@ export function createWriteApi() {
                 const existingColumn = await st.tx.columns.getById(columnId);
                 if (existingColumn) {
                     await whenAll([
-                        st.ps.ensureColumnMember(columnId, 'writer'),
+                        st.ps.ensureBoardMember(
+                            existingColumn.boardId,
+                            'admin'
+                        ),
                         st.tx.columns.apply(
                             columnId,
                             diff,
@@ -561,7 +564,7 @@ export function createWriteApi() {
                                 boardId: false,
                                 pk: false,
                                 createdAt: false,
-                                updatedAt: false,
+                                updatedAt: true,
                             })
                         ),
                     ]);
@@ -570,7 +573,7 @@ export function createWriteApi() {
                     const column = crdt.snapshot();
 
                     const meId = st.ps.ensureAuthenticated();
-                    await st.ps.ensureBoardMember(column.boardId, 'writer');
+                    await st.ps.ensureBoardMember(column.boardId, 'admin');
 
                     await st.tx.columns.apply(
                         column.id,

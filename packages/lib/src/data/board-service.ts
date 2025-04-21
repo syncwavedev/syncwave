@@ -142,7 +142,7 @@ export class BoardService {
             createdAt: this.timestamp,
             updatedAt: this.timestamp,
             userId: onboardGuide.userId,
-            role: 'admin',
+            role: 'writer',
             position: Math.random(),
         });
 

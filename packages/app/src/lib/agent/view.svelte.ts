@@ -6,6 +6,7 @@ import {
     CardCreatedMessagePayload,
     compareNumbers,
     compareStrings,
+    MemberId,
     MemberInfoDto,
     MemberRole,
     partition,
@@ -206,6 +207,7 @@ interface ClientInfo {
 export class BoardData implements SyncTarget {
     private readonly crdtManager!: CrdtManager;
     private board: Board = $state.raw(lateInit());
+    public memberId: MemberId = $state.raw(lateInit());
 
     rawMembers: MemberInfoDto[] = $state.raw(lateInit());
     rawMe: User = $state.raw(lateInit());
@@ -336,6 +338,8 @@ export class BoardData implements SyncTarget {
     }
 
     override(board: BoardViewDataDto, derivator: CrdtDerivator) {
+        this.memberId = board.memberId;
+
         this.rawMembers = board.members;
 
         this.board = derivator.view({
@@ -382,6 +386,8 @@ export class BoardView implements Board {
     protected readonly _board!: Board;
 
     members = $derived(this._data.memberViews.filter(x => !x.deletedAt));
+
+    memberId = $derived(this._data.memberId);
 
     authorId = $derived(this._board.authorId);
     deletedAt = $derived(this._board.deletedAt);

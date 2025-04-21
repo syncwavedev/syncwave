@@ -26,6 +26,7 @@
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
     import EditColumnsModal from './edit-columns-modal.svelte';
+    import UserMinusIcon from '../components/icons/user-minus-icon.svelte';
 
     const {
         board,
@@ -211,6 +212,15 @@
     );
 
     let detailsWidth = $state(PanelSizeManager.getWidth('right') ?? 424);
+
+    function leaveBoard() {
+        if (!confirm('Are you sure you want to leave the board?')) {
+            return;
+        }
+
+        agent.deleteMember(board.memberId);
+        router.route('/');
+    }
 </script>
 
 {#snippet boardCommands()}
@@ -238,6 +248,14 @@
             >
                 <span>{board.name}</span>
                 <ChevronDownIcon />
+            </button>
+            <!-- leave board button -->
+            <button
+                class="btn--ghost ml-auto hover:bg-surface-2"
+                onclick={leaveBoard}
+            >
+                <UserMinusIcon />
+                Leave board
             </button>
 
             <div class="ml-2 flex">

@@ -8,7 +8,7 @@ import {Attachment, type AttachmentId} from './repos/attachment-repo.js';
 import {Board, type BoardId} from './repos/board-repo.js';
 import {Card, CardId} from './repos/card-repo.js';
 import {Column, type ColumnId} from './repos/column-repo.js';
-import {Member, MemberRole, type MemberId} from './repos/member-repo.js';
+import {Member, MemberId, MemberRole} from './repos/member-repo.js';
 import {Message, type MessageId} from './repos/message-repo.js';
 import {User, type UserId} from './repos/user-repo.js';
 
@@ -73,6 +73,7 @@ export type MemberInfoDto = Static<ReturnType<typeof MemberInfoDto>>;
 export function BoardViewDataDto() {
     return Type.Object({
         members: Type.Array(MemberInfoDto()),
+        memberId: MemberId(),
         board: Type.Object({
             state: CrdtDiff<Board>(),
             id: Uuid<BoardId>(),

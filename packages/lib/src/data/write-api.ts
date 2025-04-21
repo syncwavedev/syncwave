@@ -24,7 +24,7 @@ import {createAttachmentId} from './repos/attachment-repo.js';
 import {Board, BoardId} from './repos/board-repo.js';
 import {type Card, type CardId} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
-import {MemberRole, type Member, type MemberId} from './repos/member-repo.js';
+import {MemberId, MemberRole, type Member} from './repos/member-repo.js';
 import {type Message, type MessageId} from './repos/message-repo.js';
 import {type User, type UserId} from './repos/user-repo.js';
 import {
@@ -318,7 +318,7 @@ export function createWriteApi() {
                     );
                 }
 
-                const member = await st.memberService.joinBoard({
+                await st.memberService.joinBoard({
                     account,
                     boardId,
                     role,
@@ -422,19 +422,8 @@ export function createWriteApi() {
                     );
                 }
 
-                await st.ps.ensureCanManage(member.boardId, member.role);
-                if (member.role === 'owner') {
-                    const allMembers = await st.tx.members
-                        .getByBoardId(member.boardId, {excludeDeleted: true})
-                        .filter(x => x.role === 'owner')
-                        .toArray();
-
-                    if (allMembers.length === 1) {
-                        throw new BusinessError(
-                            'cannot remove the last owner',
-                            'last_owner'
-                        );
-                    }
+                if (member.userId !== st.ps.ensureAuthenticated()) {
+                    await st.ps.ensureCanManage(member.boardId, member.role);
                 }
 
                 await st.tx.members.update(
@@ -476,7 +465,6 @@ export function createWriteApi() {
             req: Type.Object({
                 boardId: Uuid<BoardId>(),
                 name: Type.String(),
-                key: Type.String(),
                 members: Type.Array(Type.String()),
             }),
             res: Board(),

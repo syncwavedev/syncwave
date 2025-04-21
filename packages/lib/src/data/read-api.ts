@@ -193,7 +193,7 @@ export function createReadApi() {
                     startOffset
                 );
 
-                const [board, columns, cards, users, userEmails] =
+                const [board, columns, cards, users, userEmails, member] =
                     await st.transact(principal, async tx => {
                         return await whenAll([
                             tx.boards.getById(boardId),
@@ -222,6 +222,7 @@ export function createReadApi() {
                         type: 'snapshot' as const,
                         offset,
                         data: {
+                            memberId: member.id,
                             board: board,
                             columns: columns,
                             cards: cards,

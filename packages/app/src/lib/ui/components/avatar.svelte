@@ -36,8 +36,8 @@
         return Math.abs(hash);
     }
 
-    const idHash = getStringHash(userId);
-    const avatarColor = avatarColors[idHash % avatarColors.length];
+    const idHash = $derived(getStringHash(userId));
+    const avatarColor = $derived(avatarColors[idHash % avatarColors.length]);
 </script>
 
 <div

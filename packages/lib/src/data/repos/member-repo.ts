@@ -21,6 +21,10 @@ import {type UserId, UserRepo} from './user-repo.js';
 
 export type MemberId = Brand<Uuid, 'member_id'>;
 
+export function MemberId() {
+    return Type.Unsafe<MemberId>(Uuid<MemberId>());
+}
+
 export function createMemberId(): MemberId {
     return createUuid() as MemberId;
 }

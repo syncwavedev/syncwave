@@ -430,13 +430,11 @@ export class Agent {
     }
 
     async createBoard(options: {
-        key: string;
         name: string;
         memberEmails: string[];
     }): Promise<BoardId> {
         const board = await this.rpc.createBoard({
             boardId: createBoardId(),
-            key: options.name,
             name: options.name,
             members: options.memberEmails,
         });

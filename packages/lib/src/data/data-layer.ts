@@ -477,6 +477,11 @@ export class DataLayer {
             log.info({msg: 'upgrading to version 5'});
             await this.upgradeToV5();
         }
+
+        if (version <= 5) {
+            log.info({msg: 'upgrading to version 6'});
+            await this.upgradeToV6();
+        }
     }
 
     private async upgradeToV1() {
@@ -580,6 +585,22 @@ export class DataLayer {
 
         await this.transact(system, tx => tx.version.put(5));
         log.info({msg: 'upgrading to version 5 done'});
+    }
+
+    async upgradeToV6() {
+        // sets isDemo = false for all users
+        let usersUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const user of tx.users.rawRepo.scan()) {
+                await tx.users.update(user.id, x => {
+                    (x as Record<string, any>).isDemo = false;
+                });
+                usersUpdated++;
+            }
+        });
+        log.info({msg: `users updated: ${usersUpdated}`});
+        await this.transact(system, tx => tx.version.put(6));
+        log.info({msg: 'upgrading to version 6 done'});
     }
 }
 

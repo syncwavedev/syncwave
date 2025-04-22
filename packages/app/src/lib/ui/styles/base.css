@@ -8,7 +8,7 @@ body {
 }
 
 hr {
-    @apply border-divider-subtle;
+    @apply border-divider;
 
     &.divider {
         @apply border-divider;

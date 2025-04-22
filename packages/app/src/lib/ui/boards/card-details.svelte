@@ -105,12 +105,12 @@
 <div
     class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l rounded-r-sm"
 >
-    <div class="panel-header">
+    <div class="panel-header border-0!">
         <div class="flex items-center gap-0.5 icon-base">
             {#if card.isDraft}
                 New card
             {:else}
-                <HashtagIcon strokeWidth="2" />
+                <HashtagIcon strokeWidth="1.5" />
                 <span>{card.counter}</span>
             {/if}
         </div>
@@ -195,7 +195,7 @@
                 </button>
             </Select>
         </div>
-        <hr />
+        <hr class="panel-margin-inline" />
         <!-- <div class="flex mx-6 mt-4 items-center gap-1.5">
             <span class="text-ink-detail text-sm leading-none">1 Message</span>
             <hr class="flex-grow" />
@@ -214,7 +214,9 @@
             {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
         </div>
     {/if}
-    <div class="panel-margin-inline bg-surface-3 mb-4 p-2 rounded-md">
+    <div
+        class="panel-margin-inline border border-divider-object mb-4 p-2 rounded-md"
+    >
         <Editor
             {fragment}
             {me}

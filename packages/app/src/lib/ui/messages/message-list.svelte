@@ -38,7 +38,7 @@
                 <!-- Vertical line extending below avatar -->
                 {#if index < messages.length - 1}
                     <div
-                        class="absolute left-[calc((var(--avatar-size)/2)-0.5px)] w-[1px] h-[calc(100%+1rem)] bg-divider-subtle -ml-[calc(var(--avatar-size)+0.375rem)]"
+                        class="absolute left-[calc((var(--avatar-size)/2)-0.5px)] w-[1px] h-[calc(100%+1rem)] bg-divider -ml-[calc(var(--avatar-size)+0.375rem)]"
                     ></div>
                 {/if}
                 {#if message.payload.type === 'text'}

@@ -298,6 +298,14 @@
                     {/each}
                 </div>
             </Scrollable>
+            {#if me.isDemo}
+                <div class="absolute left-8 right-8 bottom-12">
+                    <DemoBanner />
+                </div>
+            {/if}
+            <div class="panel-footer">
+                <StatusBar />
+            </div>
         </div>
         {#if selectedCard !== null}
             {#key selectedCard.id}
@@ -323,16 +331,6 @@
                 </ResizablePanel>
             {/key}
         {/if}
-    </div>
-    <div class="flex-shrink-0">
-        {#if me.isDemo}
-            <div class="absolute left-8 right-8 bottom-12">
-                <DemoBanner />
-            </div>
-        {/if}
-        <div class="panel-footer">
-            <StatusBar />
-        </div>
     </div>
 </div>
 

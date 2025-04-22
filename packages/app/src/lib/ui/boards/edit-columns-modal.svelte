@@ -43,7 +43,7 @@
                   items-center
                   px-1
                   -mx-1
-                  my-1
+                  my-0.5
                   focus-within:bg-surface-2
                   rounded-sm
                   group
@@ -86,7 +86,7 @@
             <hr class="border-dashed divider" />
         {/each}
         <form
-            class="flex items-center my-1 -mx-1 px-1 focus-within:bg-surface-2 rounded-sm text-ink-detail"
+            class="flex items-center my-0.5 -mx-1 px-1 focus-within:bg-surface-2 rounded-sm text-ink-detail"
             onsubmit={onNewColumnSubmit}
         >
             <CircleDashedIcon />

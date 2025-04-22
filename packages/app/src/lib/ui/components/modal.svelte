@@ -50,9 +50,9 @@
               rounded-lg
               shadow-lg
               dark:border
-              border-divider-subtle
+              border-divider
               py-3
-              px-5
+              px-4
             "
             class:max-w-[20rem]={size === 'xs'}
             class:max-w-sm={size === 'sm'}

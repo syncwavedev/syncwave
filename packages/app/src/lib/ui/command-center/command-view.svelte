@@ -41,7 +41,7 @@
           rounded-lg
           shadow-lg
           border
-          border-divider-subtle
+          border-divider
         "
     >
         {@render children()}

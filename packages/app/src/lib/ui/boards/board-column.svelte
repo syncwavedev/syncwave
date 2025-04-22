@@ -54,10 +54,10 @@
 
 <div class="column" data-column-id={column.id}>
     <div
-        class="flex items-center column-padding-inline my-2 flex-shrink-0 icon-sm"
+        class="flex items-center column-padding-inline my-2 flex-shrink-0 icon-sm text-sm font-semibold"
         data-disable-scroll-view-drag="true"
     >
-        <div class="flex items-center gap-1.5 font-medium">
+        <div class="flex items-center gap-1.5 leading-none">
             <ColumnIcon active={columnPosition} total={columnsCount} />
 
             {column.name}

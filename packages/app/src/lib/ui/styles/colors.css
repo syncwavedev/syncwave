@@ -1,10 +1,9 @@
 @theme static {
     /* Gray */
-    --color-gray-20: oklch(98.4% 0 156deg);
-    --color-gray-40: oklch(96.8% 0.002 156deg);
+    --color-gray-10: oklch(99.2% 0 156deg);
+    --color-gray-25: oklch(98% 0.002 156deg);
     --color-gray-50: oklch(96% 0.0015 156deg);
-    --color-gray-60: oklch(95.2% 0.001 156deg);
-    --color-gray-80: oklch(93.6% 0 156deg);
+    --color-gray-75: oklch(94% 0.001 156deg);
     --color-gray-100: oklch(92% 0 110deg);
     --color-gray-125: oklch(90% 0 110deg);
     --color-gray-150: oklch(88% 0 110deg);
@@ -121,7 +120,6 @@
     --color-ink-reverse: var(--theme-color-ink-reverse);
     --color-ink-danger: var(--theme-color-ink-danger);
 
-    --color-divider-subtle: var(--theme-color-divider-subtle);
     --color-divider: var(--theme-color-divider);
     --color-divider-object: var(--theme-color-divider-object);
 
@@ -160,19 +158,18 @@
         --theme-color-ink-reverse: var(--color-white);
         --theme-color-ink-danger: var(--color-red-450);
 
-        --theme-color-divider-subtle: var(--color-gray-40);
-        --theme-color-divider: var(--color-gray-80);
-        --theme-color-divider-object: var(--color-gray-150);
+        --theme-color-divider: var(--color-gray-75);
+        --theme-color-divider-object: var(--color-gray-200);
 
         --theme-color-scrollbar: var(--color-gray-350);
 
-        --theme-color-app-bg: var(--color-gray-20);
+        --theme-color-app-bg: var(--color-gray-10);
 
         --theme-color-surface-0: var(--color-white);
-        --theme-color-surface-1: var(--color-gray-20);
-        --theme-color-surface-2: var(--color-gray-40);
-        --theme-color-surface-3: var(--color-gray-60);
-        --theme-color-surface-4: var(--color-gray-80);
+        --theme-color-surface-1: var(--color-gray-10);
+        --theme-color-surface-2: var(--color-gray-25);
+        --theme-color-surface-3: var(--color-gray-50);
+        --theme-color-surface-4: var(--color-gray-75);
         --theme-color-surface-5: var(--color-gray-100);
 
         --theme-color-subtle-active: var(--color-blue-100);
@@ -188,13 +185,12 @@
         --theme-color-ink-disabled: var(--color-slate-500);
         --theme-color-ink-danger: var(--color-red-350);
 
-        --theme-color-divider-subtle: var(--color-slate-850);
-        --theme-color-divider: var(--color-slate-825);
-        --theme-color-divider-object: var(--color-slate-750);
+        --theme-color-divider: var(--color-slate-800);
+        --theme-color-divider-object: var(--color-slate-700);
 
         --theme-color-scrollbar: var(--color-slate-750);
 
-        --theme-color-app-bg: var(--color-slate-950);
+        --theme-color-app-bg: var(--color-slate-925);
 
         --theme-color-surface-0: var(--color-slate-900);
         --theme-color-surface-1: var(--color-slate-875);

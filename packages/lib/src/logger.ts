@@ -7,6 +7,10 @@ import {
 } from './context.js';
 import {AppError, toError} from './errors.js';
 import {assertNever} from './utils.js';
+import {createUuidV4} from './uuid.js';
+
+export const SESSION_ID = createUuidV4();
+globalThis.SESSION_ID = SESSION_ID;
 
 export type LogLevel =
     | 'trace'
@@ -51,7 +55,7 @@ export interface Logger {
 }
 
 abstract class BaseLogger implements Logger {
-    private logLevel: LogLevel = 'info';
+    private logLevel: LogLevel = 'debug';
 
     protected abstract _log(level: LogLevel, message: LogMessage): void;
 
@@ -110,15 +114,6 @@ class OtelLogger extends BaseLogger {
 
     _log(level: LogLevel, message: LogMessage) {
         const ctx = context();
-        const log: NestedAttributeMap = {};
-
-        if (LogLevelValues[level] >= LogLevelValues['error']) {
-            const stack = new AppError('log stack').stack;
-
-            if (stack) {
-                log['stack'] = stack.split('\n').slice(1).join('\n');
-            }
-        }
 
         const body: Record<string, AnyValue> = {};
         for (const [key, value] of Object.entries({
@@ -137,7 +132,16 @@ class OtelLogger extends BaseLogger {
             }
         }
 
+        if (LogLevelValues[level] >= LogLevelValues['error']) {
+            const stack = new AppError('log stack').stack;
+
+            if (stack) {
+                body['stack'] = stack.split('\n').slice(1).join('\n');
+            }
+        }
+
         this.logger.emit({
+            timestamp: getMonotonicTime(),
             severityNumber: LogLevelValues[level],
             severityText: level.toUpperCase(),
             body: {
@@ -145,9 +149,39 @@ class OtelLogger extends BaseLogger {
                 traceId: ctx.traceId,
                 spanId: ctx.spanId,
                 level,
+                sessionId: SESSION_ID,
             },
         });
     }
+}
+
+function getHrTime() {
+    if (globalThis.process?.hrtime) {
+        return globalThis.process?.hrtime();
+    }
+
+    const now = Date.now();
+    return [Math.trunc(now / 1000), now % 1000] as [number, number];
+}
+
+// new need this, because multiple log events might happen in the same ms in browser
+// otel logger doesn't do that, so we have to do it ourselves
+let lastTime = getHrTime();
+function getMonotonicTime(): [number, number] {
+    let now = getHrTime();
+    if (
+        now[0] < lastTime[0] ||
+        (now[0] === lastTime[0] && now[1] < lastTime[1])
+    ) {
+        now = lastTime;
+    }
+
+    if (now[0] === lastTime[0] && now[1] === lastTime[1]) {
+        // grafana supports microsecond level precision
+        now[1] += 1000;
+    }
+    lastTime = now;
+    return now;
 }
 
 class ConsoleLogger extends BaseLogger {

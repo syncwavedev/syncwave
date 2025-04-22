@@ -95,16 +95,13 @@
         router.on('/login/callback/google', () => {
             Page = LoginCallback;
         });
-        router.on('/b/:boardId', params => {
+        router.on('/b/:key', params => {
             Page = BoardPage;
-            pageProps = {boardId: params.boardId ?? ''};
+            pageProps = {key: params.key ?? ''};
         });
-        router.on('/b/:boardId/c/:counter', params => {
+        router.on('/b/:key/c/:counter', params => {
             Page = BoardPage;
-            pageProps = {
-                boardId: params.boardId ?? '',
-                counter: params.counter ?? '',
-            };
+            pageProps = {key: params.key ?? '', counter: params.counter ?? ''};
         });
         router.on('/testbed', () => {
             Page = Testbed;

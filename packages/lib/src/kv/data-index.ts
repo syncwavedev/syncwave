@@ -142,6 +142,7 @@ export function createIndex<TValue>({
 
                 assert(prevId !== undefined, 'prevId is undefined');
                 if (unique) {
+                    console.log('delete', key, prevId);
                     await tx.delete(key);
                 } else {
                     await tx.delete([...key, ...prevId]);
@@ -160,6 +161,7 @@ export function createIndex<TValue>({
                             decodeTuple(existing)
                         );
                     }
+                    console.log('add', key, prevId);
 
                     await tx.put(key, encodeTuple(id));
                 } else {

@@ -1,12 +1,12 @@
 <script lang="ts">
-    import {BoardId, BusinessError, log} from 'syncwave';
+    import {log} from 'syncwave';
     import {getAgent} from '../lib/agent/agent.svelte';
     import boardHistoryManager from '../lib/board-history-manager';
     import BoardScreen from '../lib/ui/boards/board-screen.svelte';
     import Loading from '../lib/ui/components/loading.svelte';
     import {getAuthManager} from '../lib/utils';
 
-    const {boardId, counter}: {boardId: BoardId; counter?: string} = $props();
+    const {key, counter}: {key: string; counter?: string} = $props();
 
     const agent = getAgent();
     const authManager = getAuthManager();
@@ -15,25 +15,23 @@
         throw new Error('User ID not found');
     }
 
-    const boardPromise = agent.observeBoardAsync(boardId).catch(error => {
-        if (
-            error instanceof BusinessError &&
-            (error.code === 'board_not_found' || error.code === 'forbidden')
-        ) {
-            log.error({msg: 'Error loading board', error});
+    const boardPromise = agent.observeBoardAsync(key).catch(error => {
+        log.error({msg: 'Error loading board', error});
 
-            boardHistoryManager.clear();
+        boardHistoryManager.clear();
 
-            window.location.href = '/';
-        }
+        window.location.href = '/';
 
         return Promise.reject(error);
     });
     const mePromise = agent.observeMeAsync();
 
-    // todo: add user role (internal, external, etc.) and use it for plausible ignore
+    // todo: add user role (internal, external, etc.) and use it instead of board key
+    if (key.toUpperCase() === 'SYNC') {
+        localStorage.setItem('plausible_ignore', 'true');
+    }
 
-    boardHistoryManager.save(boardId);
+    boardHistoryManager.save(key);
 </script>
 
 {#await Promise.all([boardPromise, mePromise])}
@@ -46,6 +44,5 @@
         counter={counter ? parseInt(counter) : undefined}
     />
 {:catch}
-    <!-- todo: add error screen -->
-    <div>Error happened...</div>
+    <div>Board not found. Redirecting to home page...</div>
 {/await}

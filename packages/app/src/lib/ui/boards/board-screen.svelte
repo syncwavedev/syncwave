@@ -54,7 +54,7 @@
         if (selectedCard) {
             router.action(() => {
                 selectedCard = null;
-                router.route(`/b/${board.id}`, {replace: true, shallow: true});
+                router.route(`/b/${board.key}`, {replace: true, shallow: true});
             }, true);
         }
     });
@@ -79,7 +79,7 @@
         }
 
         if (card) {
-            router.route(`/b/${board.id}/c/${card.counter}`, {
+            router.route(`/b/${board.key}/c/${card.counter}`, {
                 replace,
                 shallow: true,
                 onBack: () => {
@@ -88,7 +88,7 @@
                 onEscape: true,
             });
         } else {
-            router.route(`/b/${board.id}`, {
+            router.route(`/b/${board.key}`, {
                 replace: true,
                 shallow: true,
             });
@@ -178,7 +178,7 @@
             const text = yFragmentToPlaintext(selectedCard.text.__fragment!);
             if (text.length > 0) {
                 agent.commitCardDraft(board, selectedCard.id);
-                router.route(`/b/${board.id}/c/${selectedCard.counter}`, {
+                router.route(`/b/${board.key}/c/${selectedCard.counter}`, {
                     replace: true,
                     shallow: true,
                     onBack: () => {

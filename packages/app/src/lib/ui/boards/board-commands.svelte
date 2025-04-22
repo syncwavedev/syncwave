@@ -25,13 +25,13 @@
                 modalManager.navigate(newBoard, true);
             },
         },
-        ...boards.map(board => ({
-            id: board.id,
+        ...boards.map(x => ({
+            id: x.id,
             icon: HashtagIcon,
-            label: board.name,
+            label: x.name,
             onclick: () => {
                 modalManager.close();
-                router.route(`/b/${board.id}`);
+                router.route(`/b/${x.key}`);
             },
         })),
     ]);

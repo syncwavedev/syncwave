@@ -394,6 +394,7 @@ export class BoardView implements Board {
     deletedAt = $derived(this._board.deletedAt);
     updatedAt = $derived(this._board.updatedAt);
     createdAt = $derived(this._board.createdAt);
+    key = $derived(this._board.key);
     name = $derived(this._board.name);
     id = $derived(this._board.id);
     pk = $derived(this._board.pk);

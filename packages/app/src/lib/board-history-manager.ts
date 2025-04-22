@@ -1,21 +1,19 @@
-import type {BoardId} from 'syncwave';
-
 class BoardHistoryManager {
-    private static readonly STORAGE_KEY = 'board_id';
+    private static readonly STORAGE_KEY = 'board_key';
 
     /**
      * Saves a board key to local storage
-     * @param boardId The key to save
+     * @param boardKey The key to save
      */
-    public static save(boardId: BoardId): void {
-        if (!boardId) {
+    public static save(boardKey: string): void {
+        if (!boardKey) {
             console.error('Cannot save empty board key');
             return;
         }
 
         try {
-            localStorage.setItem(this.STORAGE_KEY, boardId);
-            console.log(`Board key "${boardId}" saved successfully`);
+            localStorage.setItem(this.STORAGE_KEY, boardKey);
+            console.log(`Board key "${boardKey}" saved successfully`);
         } catch (error: unknown) {
             console.error('Failed to save board key to local storage:', error);
         }
@@ -25,9 +23,9 @@ class BoardHistoryManager {
      * Retrieves the latest board key from local storage
      * @returns The latest board key or null if none exists
      */
-    public static last(): BoardId | null {
+    public static last(): string | null {
         try {
-            return localStorage.getItem(this.STORAGE_KEY) as BoardId | null;
+            return localStorage.getItem(this.STORAGE_KEY);
         } catch (error: unknown) {
             console.error(
                 'Failed to retrieve board key from local storage:',

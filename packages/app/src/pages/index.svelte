@@ -20,7 +20,7 @@
         } else {
             agent.observeMeAsync().then(x => {
                 if (x.boards.length > 0) {
-                    router.route(`/b/${x.boards[0].id}`, {replace: true});
+                    router.route(`/b/${x.boards[0].key}`, {replace: true});
                 }
             });
         }

@@ -482,6 +482,16 @@ export class DataLayer {
             log.info({msg: 'upgrading to version 6'});
             await this.upgradeToV6();
         }
+
+        if (version <= 6) {
+            log.info({msg: 'upgrading to version 7'});
+            await this.upgradeToV7();
+        }
+
+        if (version <= 7) {
+            log.info({msg: 'upgrading to version 8'});
+            await this.upgradeToV8();
+        }
     }
 
     private async upgradeToV1() {
@@ -587,7 +597,7 @@ export class DataLayer {
         log.info({msg: 'upgrading to version 5 done'});
     }
 
-    async upgradeToV6() {
+    private async upgradeToV6() {
         // sets isDemo = false for all users
         let usersUpdated = 0;
         await this.transact(system, async tx => {
@@ -601,6 +611,43 @@ export class DataLayer {
         log.info({msg: `users updated: ${usersUpdated}`});
         await this.transact(system, tx => tx.version.put(6));
         log.info({msg: 'upgrading to version 6 done'});
+    }
+
+    private async upgradeToV7() {
+        let boardsUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const board of tx.boards.rawRepo.scan()) {
+                await tx.boards.update(board.id, x => {
+                    (x as Record<string, any>).key = createUuidV4();
+                });
+                boardsUpdated++;
+            }
+        });
+
+        log.info({msg: `boards updated: ${boardsUpdated}`});
+
+        await this.transact(system, tx => tx.version.put(7));
+        log.info({msg: 'upgrading to version 7 done'});
+    }
+
+    private async upgradeToV8() {
+        let boardsUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const board of tx.boards.rawRepo.scan()) {
+                await tx.boards.update(board.id, x => {
+                    (x as Record<string, any>).key = createUuidV4().replaceAll(
+                        '-',
+                        ''
+                    );
+                });
+                boardsUpdated++;
+            }
+        });
+
+        log.info({msg: `boards updated: ${boardsUpdated}`});
+
+        await this.transact(system, tx => tx.version.put(8));
+        log.info({msg: 'upgrading to version 8 done'});
     }
 }
 

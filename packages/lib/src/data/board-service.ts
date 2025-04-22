@@ -63,6 +63,7 @@ export class BoardService {
     async createBoard(params: {
         authorId: UserId;
         name: string;
+        key: string;
         members: string[];
         template: BoardTemplate;
         boardId?: BoardId;
@@ -75,6 +76,7 @@ export class BoardService {
             updatedAt: now,
             name: params.name,
             authorId: params.authorId,
+            key: params.key.toUpperCase(),
             joinCode: await createJoinCode(this.crypto),
             joinRole: 'admin',
         });
@@ -119,7 +121,7 @@ export class BoardService {
                 this.emailService.scheduleInviteEmail({
                     email: member,
                     boardName: params.name,
-                    boardId: board.id,
+                    boardKey: params.key,
                 });
             }),
         ]);

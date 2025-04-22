@@ -4,8 +4,8 @@
 import 'dotenv/config';
 
 import {
+    catchConnectionClosed,
     CoordinatorClient,
-    createBoardId,
     MsgpackCodec,
     PersistentConnection,
 } from 'syncwave';
@@ -21,36 +21,16 @@ const client = new CoordinatorClient(
     process.env.JWT_TOKEN
 );
 
-async function getMyBoard() {
-    const members = await client.rpc.getMyMembers({}).first();
-
-    console.log(members.map(x => x.board.name).join('\n'));
-}
-
-async function createMember() {
-    const members = await client.rpc.getMyMembers({}).first();
-    const boardId = members[0].board.id;
-
-    await client.rpc.createMember({
-        boardId,
-        email: 'tilyupo@gmail.com',
-        role: 'admin',
-    });
-}
-
-async function createBoard() {
-    await client.rpc.createBoard({
-        name: 'test board #2',
-        boardId: createBoardId(),
-        key: 'test-new-board-2',
-        members: [],
-    });
-}
-
 async function main() {
-    await createBoard();
+    const data = await client.rpc
+        .getBoardViewData({key: 'sdfiweew'})
+        .filter(x => x.type === 'snapshot')
+        .first();
+
+    console.log('data', data);
 }
 
-main().finally(() => {
+catchConnectionClosed(main()).finally(() => {
+    console.log('end of main');
     client.close('end of main');
 });

@@ -8,7 +8,7 @@ import {BusinessError} from '../errors.js';
 import {getNow} from '../timestamp.js';
 import {createApi, handler, type InferRpcClient} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
-import {Uuid} from '../uuid.js';
+import {createUuidV4, Uuid} from '../uuid.js';
 import type {BoardService} from './board-service.js';
 import {type DataTx} from './data-layer.js';
 import {AttachmentDto, toAttachmentDto} from './dto.js';
@@ -22,7 +22,7 @@ import {
 import type {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
 import {createAttachmentId} from './repos/attachment-repo.js';
-import {Board, BoardId} from './repos/board-repo.js';
+import {Board, type BoardId} from './repos/board-repo.js';
 import {type Card, type CardId} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
 import {MemberId, MemberRole, type Member} from './repos/member-repo.js';
@@ -329,11 +329,27 @@ export function createWriteApi() {
                 return {};
             },
         }),
+        check: handler({
+            req: Type.Object({}),
+            res: Type.Object({}),
+            handle: async st => {
+                console.log('update');
+                const board = await st.tx.boards.getByKey('sdfiweew');
+                console.log('board', board);
+                await st.tx.boards.update(
+                    '0195d761-dfba-76bd-8890-cc942c8be111' as BoardId,
+                    x => {
+                        x.key = 'sdfiweew';
+                    }
+                );
+                return {};
+            },
+        }),
         joinByCode: handler({
             req: Type.Object({
                 code: Type.String(),
             }),
-            res: Type.Object({boardId: BoardId()}),
+            res: Type.Object({boardKey: Type.String()}),
             handle: async (st, {code}) => {
                 const board = await st.tx.boards.getByJoinCode(code);
                 if (!board) {
@@ -354,7 +370,7 @@ export function createWriteApi() {
                     role: board.joinRole,
                 });
 
-                return {boardId: board.id};
+                return {boardKey: board.key};
             },
         }),
         updateMemberRole: handler({
@@ -474,6 +490,7 @@ export function createWriteApi() {
                 return await st.tx.boardService.createBoard({
                     authorId: st.ps.ensureAuthenticated(),
                     name: req.name,
+                    key: createUuidV4(),
                     members: req.members,
                     boardId: req.boardId,
                     template: BOARD_ONBOARDING_TEMPLATE,
@@ -512,6 +529,7 @@ export function createWriteApi() {
                             pk: false,
                             createdAt: false,
                             id: false,
+                            key: false,
                             authorId: false,
                             joinCode: true,
                             joinRole: true,
@@ -673,6 +691,7 @@ export function createWriteApi() {
                     authorId: account.userId,
                     members: [],
                     name: 'Demo Board',
+                    key: createUuidV4(),
                     template: BOARD_DEMO_TEMPLATE,
                 });
 

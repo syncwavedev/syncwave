@@ -71,7 +71,7 @@ export class CoordinatorServer {
 
     async status() {
         await this.dataLayer.transact(anonymous, async tx => {
-            // pass
+            await tx.boards.getByKey('SYNC');
         });
 
         return {status: 'ok'};

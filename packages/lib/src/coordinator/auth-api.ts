@@ -14,6 +14,7 @@ import {BOARD_ONBOARDING_TEMPLATE} from '../data/template.js';
 import {AppError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {whenAll} from '../utils.js';
+import {createUuidV4} from '../uuid.js';
 import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_HOURS,
@@ -184,7 +185,7 @@ export async function signJwtToken(jwt: JwtProvider, account: Account) {
     } satisfies JwtPayload);
 }
 
-export const DEFAULT_BOARD_NAME = 'My Board';
+export const DEFAULT_BOARD_NAME = 'My First Board';
 
 export async function getAccount(params: {
     accounts: AccountRepo;
@@ -230,6 +231,7 @@ export async function getAccount(params: {
             authorId: userId,
             name: DEFAULT_BOARD_NAME,
             members: [],
+            key: createUuidV4(),
             template: BOARD_ONBOARDING_TEMPLATE,
         });
     }

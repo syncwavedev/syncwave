@@ -1,6 +1,8 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {type CrdtDiff} from '../../crdt/crdt.js';
+import {BusinessError} from '../../errors.js';
 import {Counter} from '../../kv/counter.js';
+import {UniqueError} from '../../kv/data-index.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Registry} from '../../kv/registry.js';
 import {type Brand} from '../../utils.js';
@@ -19,14 +21,11 @@ import type {UserId, UserRepo} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
 
-export function BoardId() {
-    return Type.Unsafe<BoardId>(Uuid<BoardId>());
-}
-
 export function createBoardId(): BoardId {
     return createUuid() as BoardId;
 }
 
+const BOARD_KEY_INDEX = 'key';
 const AUTHOR_ID_INDEX = 'author_id';
 const JOIN_CODE_INDEX = 'join_code';
 
@@ -35,6 +34,7 @@ export function Board() {
         Doc(Type.Tuple([Uuid<BoardId>()])),
         Type.Object({
             id: Uuid<BoardId>(),
+            key: Type.String(),
             name: Type.String(),
             authorId: Uuid<UserId>(),
             joinCode: Type.String(),
@@ -60,6 +60,11 @@ export class BoardRepo {
             onChange: params.onChange,
             scheduleTrigger: params.scheduleTrigger,
             indexes: {
+                [BOARD_KEY_INDEX]: {
+                    key: x => [[x.key]],
+                    unique: true,
+                    filter: x => x.key !== undefined,
+                },
                 [AUTHOR_ID_INDEX]: {
                     key: x => [[x.authorId, x.createdAt]],
                     filter: x => x.authorId !== undefined,
@@ -95,11 +100,23 @@ export class BoardRepo {
         return await this.rawRepo.getById([id], options);
     }
 
+    async getByKey(key: string): Promise<Board | undefined> {
+        return await this.rawRepo.getUnique(BOARD_KEY_INDEX, [key]);
+    }
+
     async getByJoinCode(
         code: string,
         options?: QueryOptions
     ): Promise<Board | undefined> {
         return await this.rawRepo.getUnique(JOIN_CODE_INDEX, [code], options);
+    }
+
+    async checkKeyAvailable(key: string): Promise<boolean> {
+        const existingBoard = await this.rawRepo.getUnique(BOARD_KEY_INDEX, [
+            key,
+        ]);
+
+        return existingBoard === undefined;
     }
 
     async apply(
@@ -115,7 +132,22 @@ export class BoardRepo {
     }
 
     async create(board: Omit<Board, 'pk'>): Promise<Board> {
-        return await this.rawRepo.create({pk: [board.id], ...board});
+        try {
+            return await this.rawRepo.create({pk: [board.id], ...board});
+        } catch (err) {
+            // todo: map errors in AggregateError
+            if (
+                err instanceof UniqueError &&
+                err.indexName === BOARD_KEY_INDEX
+            ) {
+                throw new BusinessError(
+                    `board with key ${board.key} already exists`,
+                    'board_key_taken'
+                );
+            }
+
+            throw err;
+        }
     }
 
     async update(
@@ -123,6 +155,20 @@ export class BoardRepo {
         recipe: Recipe<Board>,
         options?: QueryOptions
     ): Promise<Board> {
-        return await this.rawRepo.update([id], recipe, options);
+        try {
+            return await this.rawRepo.update([id], recipe, options);
+        } catch (err) {
+            if (
+                err instanceof UniqueError &&
+                err.indexName === BOARD_KEY_INDEX
+            ) {
+                throw new BusinessError(
+                    'board with key already exists',
+                    'board_key_taken'
+                );
+            }
+
+            throw err;
+        }
     }
 }

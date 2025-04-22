@@ -90,7 +90,7 @@ describe('agent', () => {
                 name: 'Test column',
             });
 
-            const [board] = await agentA.observeBoardAsync(boardId);
+            const [board] = await agentA.observeBoardAsync('TEST');
 
             const card = agentA.createCardDraft(board, {
                 columnId: column.id,

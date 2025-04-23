@@ -8,6 +8,7 @@
     height: var(--icon-size);
     vertical-align: middle;
     flex-shrink: 0;
+    stroke-width: 1.75;
 }
 
 .icon-base {

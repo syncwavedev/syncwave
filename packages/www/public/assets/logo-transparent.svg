@@ -1,52 +1,32 @@
-<svg width="100%" height="100%" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"
-    style="min-width: 32px; min-height: 32px;">
-    <!-- <rect width="32" height="32" rx="4" fill="#181818" /> -->
-    <path d="M22.89 22.887C19.083 26.695 12.91 26.695 9.102 22.887" stroke="#DADADA"
-        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-    <path
-        d="M20.769 20.766C20.1422 21.3928 19.3981 21.89 18.5791 22.2292C17.7602 22.5685 16.8824 22.7431 15.996 22.7431C15.1096 22.7431 14.2318 22.5685 13.4129 22.2292C12.5939 21.89 11.8498 21.3928 11.223 20.766"
-        stroke="url(#paint0_radial_1_2)" stroke-width="1.5" stroke-linecap="round"
-        stroke-linejoin="round" />
-    <path
-        d="M18.648 18.645C18.2998 18.9933 17.8863 19.2696 17.4313 19.4582C16.9763 19.6467 16.4885 19.7437 15.996 19.7437C15.5035 19.7437 15.0157 19.6467 14.5607 19.4582C14.1057 19.2696 13.6922 18.9933 13.344 18.645"
-        stroke="url(#paint1_radial_1_2)" stroke-width="1.5" stroke-linecap="round"
-        stroke-linejoin="round" />
-    <path
-        d="M15.7308 16.2632C15.8012 16.3335 15.8965 16.373 15.996 16.373C16.0955 16.373 16.1908 16.3335 16.2612 16.2632C16.3315 16.1928 16.371 16.0975 16.371 15.998C16.371 15.8985 16.3315 15.8032 16.2612 15.7328C16.1908 15.6625 16.0955 15.623 15.996 15.623C15.8965 15.623 15.8012 15.6625 15.7308 15.7328C15.6605 15.8032 15.621 15.8985 15.621 15.998C15.621 16.0975 15.6605 16.1928 15.7308 16.2632Z"
-        stroke="white" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"
-        stroke-linejoin="round" />
-    <path d="M9.102 9.11C12.909 5.29667 19.082 5.29667 22.89 9.11" stroke="#DADADA"
-        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-    <path
-        d="M11.223 11.227C11.8498 10.6002 12.5939 10.103 13.4129 9.76376C14.2318 9.42454 15.1096 9.24994 15.996 9.24994C16.8824 9.24994 17.7602 9.42454 18.5791 9.76376C19.3981 10.103 20.1422 10.6002 20.769 11.227"
-        stroke="url(#paint2_radial_1_2)" stroke-width="1.5" stroke-linecap="round"
-        stroke-linejoin="round" />
-    <path
-        d="M13.344 13.348C13.6922 12.9997 14.1057 12.7234 14.5607 12.5348C15.0157 12.3463 15.5035 12.2493 15.996 12.2493C16.4885 12.2493 16.9763 12.3463 17.4313 12.5348C17.8863 12.7234 18.2998 12.9997 18.648 13.348"
-        stroke="url(#paint3_radial_1_2)" stroke-width="1.5" stroke-linecap="round"
-        stroke-linejoin="round" />
-    <!-- <rect x="1.25" y="1.25" width="29.5" height="29.5" rx="3.75" stroke="#1C1C1C"
-    stroke-width="0.5" /> -->
-    <defs>
-        <radialGradient id="paint0_radial_1_2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
-            gradientTransform="translate(21.5 20.5) rotate(180) scale(11 4.5813)">
-            <stop stop-color="#DADADA" />
-            <stop offset="1" stop-color="white" stop-opacity="0.1" />
-        </radialGradient>
-        <radialGradient id="paint1_radial_1_2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
-            gradientTransform="translate(19.5 18.5) rotate(179.02) scale(6.89901 2.72813)">
-            <stop stop-color="#DADADA" />
-            <stop offset="1" stop-color="white" stop-opacity="0.1" />
-        </radialGradient>
-        <radialGradient id="paint2_radial_1_2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
-            gradientTransform="translate(10.5 11) scale(11 4.82404)">
-            <stop stop-color="#DADADA" />
-            <stop offset="1" stop-color="white" stop-opacity="0.1" />
-        </radialGradient>
-        <radialGradient id="paint3_radial_1_2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
-            gradientTransform="translate(12.5 13.5) scale(7 2.30068)">
-            <stop stop-color="#DADADA" />
-            <stop offset="1" stop-color="white" stop-opacity="0.1" />
-        </radialGradient>
-    </defs>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_15_18)">
+<path d="M25.1875 25.1875C20.114 30.4375 11.8873 30.4375 6.8125 25.1875" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22.2593 22.2554C21.4366 23.078 20.46 23.7306 19.3851 24.1758C18.3103 24.6212 17.1582 24.8503 15.9948 24.8503C14.8314 24.8503 13.6792 24.6212 12.6044 24.1758C11.5295 23.7306 10.5529 23.078 9.73019 22.2554" stroke="url(#paint0_linear_15_18)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.4755 19.4716C19.0185 19.9287 18.4758 20.2913 17.8786 20.5389C17.2814 20.7863 16.6412 20.9136 15.9948 20.9136C15.3484 20.9136 14.7081 20.7863 14.1109 20.5389C13.5137 20.2913 12.971 19.9287 12.514 19.4716" stroke="url(#paint1_linear_15_18)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.8125 6.8125C11.886 1.5625 20.1127 1.5625 25.1875 6.8125" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.73019 9.73544C10.5529 8.91277 11.5295 8.26019 12.6044 7.81494C13.6792 7.36971 14.8314 7.14055 15.9948 7.14055C17.1582 7.14055 18.3103 7.36971 19.3851 7.81494C20.46 8.26019 21.4366 8.91277 22.2593 9.73544" stroke="url(#paint2_linear_15_18)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.514 12.5193C12.971 12.0621 13.5137 11.6995 14.1109 11.4519C14.7081 11.2045 15.3484 11.0772 15.9948 11.0772C16.6412 11.0772 17.2814 11.2045 17.8786 11.4519C18.4758 11.6995 19.0185 12.0621 19.4755 12.5193" stroke="url(#paint3_linear_15_18)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.9392 17.0608C15.2208 17.342 15.602 17.5 16 17.5C16.398 17.5 16.7792 17.342 17.0608 17.0608C17.342 16.7792 17.5 16.398 17.5 16C17.5 15.602 17.342 15.2208 17.0608 14.9392C16.7792 14.658 16.398 14.5 16 14.5C15.602 14.5 15.2208 14.658 14.9392 14.9392C14.658 15.2208 14.5 15.602 14.5 16C14.5 16.398 14.658 16.7792 14.9392 17.0608Z" fill="white" fill-opacity="0.5"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_15_18" x1="21.25" y1="23.2187" x2="10.0938" y2="22.5625" gradientUnits="userSpaceOnUse">
+<stop offset="0.2" stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0.1"/>
+</linearGradient>
+<linearGradient id="paint1_linear_15_18" x1="18.625" y1="19.9375" x2="12.0625" y2="19.9375" gradientUnits="userSpaceOnUse">
+<stop offset="0.2" stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0.1"/>
+</linearGradient>
+<linearGradient id="paint2_linear_15_18" x1="10.75" y1="8.78125" x2="22.5625" y2="9.4375" gradientUnits="userSpaceOnUse">
+<stop offset="0.2" stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0.1"/>
+</linearGradient>
+<linearGradient id="paint3_linear_15_18" x1="13.375" y1="12.0625" x2="19.9375" y2="12.0625" gradientUnits="userSpaceOnUse">
+<stop offset="0.2" stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0.1"/>
+</linearGradient>
+<clipPath id="clip0_15_18">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
 </svg>

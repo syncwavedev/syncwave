@@ -195,7 +195,6 @@ export class DndBoardContext {
             dragId,
             cardId: card.card.value.id,
         });
-        console.debug('hello');
         const draggable: Draggable = {
             element: card.container.cloneNode(true) as HTMLDivElement,
             targetX: card.container.getBoundingClientRect().left,

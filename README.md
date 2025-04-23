@@ -68,8 +68,8 @@ Syncwave is available as a Docker image [syncwave/syncwave](http://hub.docker.co
 docker run \
   -it -p 8080:80 --rm \
   -e BASE_URL=http://localhost:8080 \
-  -e JWT_SECRET=long-unguessable-jwt-secret \
-  -v ./syncwave-data:/data \
+  -e JWT_SECRET=replace-with-long-unguessable-string \
+  -v syncwave-data:/data \
   syncwave/syncwave
 ```
 

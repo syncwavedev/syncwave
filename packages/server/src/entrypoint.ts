@@ -9,7 +9,7 @@ import Koa from 'koa';
 import helmet from 'koa-helmet';
 import {cpus} from 'os';
 import {collectDefaultMetrics} from 'prom-client';
-import type {EmailProvider, Hub, Tuple} from 'syncwave';
+import type {EmailProvider, Hub, ObjectStore, Tuple} from 'syncwave';
 import {
     AppError,
     assertDefined,
@@ -58,6 +58,7 @@ interface Options {
     uiPath: string | undefined;
     jwtSecret: string;
     store: KvStore<Tuple, Uint8Array>;
+    objectStore: ObjectStore;
     hub: Hub;
     emailProvider: EmailProvider;
     launchCluster: boolean;
@@ -139,11 +140,16 @@ async function getOptions(): Promise<Options> {
         .with('self', () => `${uiUrl}/api`)
         .exhaustive();
 
+    const objectStore = await FsObjectStore.create({
+        basePath: stage === 'local' ? './dev-object-store' : '/data/objects',
+    });
+
     const google = getGoogleOptions(apiUrl);
     const uiPath = stage === 'self' ? './ui' : undefined;
 
     return {
         uiUrl,
+        objectStore,
         logLevel,
         workersCount: stage === 'prod' ? cpus().length : 1,
         emailProvider: new SesEmailProvider(awsRegion),
@@ -359,9 +365,7 @@ async function launchApp(options: Options) {
         jwtProvider: new NodeJwtProvider(options.jwtSecret),
         cryptoProvider: NodeCryptoProvider,
         emailProvider: options.emailProvider,
-        objectStore: await FsObjectStore.create({
-            basePath: './dev-object-store',
-        }),
+        objectStore: options.objectStore,
         hub: options.hub,
         uiUrl: options.uiUrl,
     });

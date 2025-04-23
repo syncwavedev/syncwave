@@ -18,9 +18,29 @@ const {title, description, url}: Props = Astro.props;
         <meta name="description" content={description} />
         <link
             rel="shortcut icon"
-            href="/assets/logo/logo.png"
+            href="/assets/logo-transparent.svg"
             type="image/x-icon"
         />
+
+        <!-- favicon -->
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="/apple-touch-icon.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="32x32"
+            href="/favicon-32x32.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="16x16"
+            href="/favicon-16x16.png"
+        />
+        <link rel="manifest" href="/site.webmanifest" />
 
         <!-- Open Graph / Facebook -->
         <meta property="og:title" content="Syncwave" />
@@ -60,7 +80,7 @@ const {title, description, url}: Props = Astro.props;
         >
             <a class="h-[50px] w-[50px] p-[4px]" href="/">
                 <img
-                    src="/assets/logo/logo.png"
+                    src="/assets/logo-transparent.svg"
                     alt="logo"
                     class="object h-full w-full"
                 />
@@ -115,7 +135,7 @@ const {title, description, url}: Props = Astro.props;
                 class="flex h-full w-[250px] flex-col place-items-center gap-6 max-md:w-full"
             >
                 <img
-                    src="/assets/logo/logo.png"
+                    src="/assets/logo-transparent.svg"
                     alt="logo"
                     srcset=""
                     class="max-w-[60px]"

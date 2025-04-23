@@ -8,6 +8,7 @@ import {
     CancelledError,
     type ErrorCode,
     getErrorCode,
+    getErrorId,
     getReadableError,
     toError,
 } from '../errors.js';
@@ -21,6 +22,7 @@ import {
 } from '../transport/transport.js';
 import {checkValue} from '../type.js';
 import {assertNever, type Unsubscribe, wait} from '../utils.js';
+import type {Uuid} from '../uuid.js';
 import {createRpcMessageId, type MessageHeaders} from './rpc-message.js';
 import {stringifyLogPart} from './rpc-streamer.js';
 import {RpcConnection} from './rpc-transport.js';
@@ -114,6 +116,7 @@ export function launchRpcHandlerServer<T>(
                                         type: 'error',
                                         message: getReadableError(error),
                                         code: getErrorCode(error),
+                                        errorId: getErrorId(error),
                                     },
                                 })
                             );
@@ -247,6 +250,7 @@ async function proxyRequest(
                             message: msg.payload.message,
                             code: msg.payload.code,
                             method: name,
+                            errorId: msg.payload.errorId,
                         })
                     );
                 } else {
@@ -376,16 +380,19 @@ export function reconstructError(params: {
     message: string;
     code: string;
     method: string;
+    errorId: Uuid;
 }): AppError {
     if (params.code === 'unknown') {
         return new RpcError(params.message, params.method);
     } else if (params.code === 'cancelled') {
         return new CancelledError(params.message, 'remote rpc cancelled');
     } else {
-        return new BusinessError(
+        const error = new BusinessError(
             params.message,
             params.code as ErrorCode,
             params
         );
+        error.id = params.errorId;
+        return error;
     }
 }

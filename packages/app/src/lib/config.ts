@@ -1,9 +1,7 @@
-import {assertDefined} from 'syncwave';
-
 const PUBLIC_STAGE = import.meta.env.VITE_PUBLIC_STAGE;
 
 export interface AppConfig {
-    googleClientId: string;
+    googleClientId: string | undefined;
     apiUrl: string;
     uiUrl: string;
     serverWsUrl: string;
@@ -57,11 +55,9 @@ export const appConfig: AppConfig = (() => {
             apiUrl: window.location.origin + '/api',
             uiUrl,
             stage: PUBLIC_STAGE,
-            googleClientId: assertDefined(
-                (window as unknown as Record<string, string>)
-                    .CONFIG_GOOGLE_CLIENT_ID,
-                'window.CONFIG_GOOGLE_CLIENT_ID must be defined in self-hosted mode'
-            ),
+            googleClientId: (
+                window as unknown as Record<string, string | undefined>
+            ).CONFIG_GOOGLE_CLIENT_ID,
         };
     } else {
         throw new Error(`unknown stage: ${PUBLIC_STAGE}`);

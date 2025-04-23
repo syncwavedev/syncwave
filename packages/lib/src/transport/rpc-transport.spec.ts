@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {MsgpackCodec} from '../codec.js';
 import {AppError} from '../errors.js';
+import {createUuidV4} from '../uuid.js';
 import {MemTransportClient, MemTransportServer} from './mem-transport.js';
 import {createRpcMessageId, type RpcMessage} from './rpc-message.js';
 import {
@@ -80,6 +81,7 @@ describe('RpcTransport', () => {
                     type: 'error',
                     code: 'some',
                     message: 'hello world',
+                    errorId: createUuidV4(),
                 },
             },
         },

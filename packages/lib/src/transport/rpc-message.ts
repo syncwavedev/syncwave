@@ -89,6 +89,7 @@ export function RpcErrorResponsePayload() {
         Type.Object({
             message: Type.String(),
             code: Type.String(),
+            errorId: Uuid(),
         }),
     ]);
 }

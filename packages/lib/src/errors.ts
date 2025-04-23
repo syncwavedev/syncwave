@@ -1,9 +1,10 @@
 import {v4} from 'uuid';
 import {context, type NestedAttributeMap} from './context.js';
+import type {Uuid} from './uuid.js';
 
 // eslint-disable-next-line no-restricted-globals
 export class AppError extends Error {
-    public readonly id = v4();
+    public id: Uuid = v4() as Uuid;
     public readonly traceId = context().traceId;
 
     constructor(message: string, options?: {cause?: unknown}) {
@@ -198,6 +199,14 @@ export function getErrorCode(error: unknown): ErrorCode {
     }
 
     return 'unknown';
+}
+
+export function getErrorId(error: unknown): Uuid {
+    if (error instanceof AppError) {
+        return error.id;
+    }
+
+    return v4() as Uuid;
 }
 
 export function checkError(

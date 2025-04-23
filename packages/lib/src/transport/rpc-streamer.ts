@@ -5,6 +5,7 @@ import {
     AppError,
     CancelledError,
     getErrorCode,
+    getErrorId,
     getReadableError,
     toError,
 } from '../errors.js';
@@ -229,6 +230,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                             message: getReadableError(error),
                                             code: getErrorCode(error),
                                             counter: counter++,
+                                            errorId: getErrorId(error),
                                         })
                                     );
                                 }
@@ -326,6 +328,7 @@ class RpcStreamerClientApiState {
         code: string;
         message: string;
         counter: number;
+        errorId: Uuid;
     }) {
         const sub = this.getSub(params.streamId, params.counter);
         sub?.context.addEvent('info', 'throw', {
@@ -337,6 +340,7 @@ class RpcStreamerClientApiState {
                 message: params.message,
                 code: params.code,
                 method: sub.method,
+                errorId: params.errorId,
             })
         );
     }
@@ -424,10 +428,14 @@ function createRpcStreamerClientApi() {
                 message: Type.String(),
                 code: Type.String(),
                 counter: Type.Number(),
+                errorId: Uuid(),
             }),
             res: Type.Object({}),
-            handle: async (state, {streamId, message, code, counter}) => {
-                await state.throw({streamId, message, code, counter});
+            handle: async (
+                state,
+                {streamId, message, code, counter, errorId}
+            ) => {
+                await state.throw({streamId, message, code, counter, errorId});
 
                 return {};
             },

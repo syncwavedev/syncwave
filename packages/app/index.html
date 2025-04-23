@@ -1,80 +1,112 @@
 <!doctype html>
 <html lang="en" data-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+        />
+        <meta
+            name="theme-color"
+            content="#fafafa"
+            media="(prefers-color-scheme: light)"
+        />
+        <meta
+            name="theme-color"
+            content="#1d1f24"
+            media="(prefers-color-scheme: dark)"
+        />
+        <link rel="manifest" href="/manifest.json" />
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1d1f24" media="(prefers-color-scheme: dark)" />
-    <link rel="manifest" href="/manifest.json" />
+        <!-- favicon -->
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="/apple-touch-icon.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="32x32"
+            href="/favicon-32x32.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="16x16"
+            href="/favicon-16x16.png"
+        />
 
-
-    <!-- favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-
-    <title>Syncwave</title>
-    <script>
-        (function () {
-            try {
-                let theme = localStorage.getItem('theme');
-                if (theme === 'system' || !theme) {
-                    const prefersLight = window.matchMedia(
-                        '(prefers-color-scheme: light)'
-                    ).matches;
-                    theme = prefersLight ? 'light' : 'dark';
+        <title>Syncwave</title>
+        <script>
+            (function () {
+                try {
+                    let theme = localStorage.getItem('theme');
+                    if (theme === 'system' || !theme) {
+                        const prefersLight = window.matchMedia(
+                            '(prefers-color-scheme: light)'
+                        ).matches;
+                        theme = prefersLight ? 'light' : 'dark';
+                    }
+                    document.documentElement.setAttribute('data-theme', theme);
+                } catch (e) {
+                    console.error('Failed to set theme:', e);
                 }
-                document.documentElement.setAttribute('data-theme', theme);
-            } catch (e) {
-                console.error('Failed to set theme:', e);
-            }
-        })();
-    </script>
-    <script defer data-domain="app.syncwave.dev"
-        src="https://plausible.bridgex.dev/js/script.file-downloads.outbound-links.js"></script>
-    <script>
-        window.plausible =
-            window.plausible ||
-            function () {
-                (window.plausible.q = window.plausible.q || []).push(
-                    arguments
-                );
-            };
-    </script>
-</head>
+            })();
+        </script>
+        <script
+            defer
+            data-domain="app.syncwave.dev"
+            src="https://plausible.bridgex.dev/js/script.file-downloads.outbound-links.js"
+        ></script>
+        <script>
+            window.plausible =
+                window.plausible ||
+                function () {
+                    (window.plausible.q = window.plausible.q || []).push(
+                        arguments
+                    );
+                };
+        </script>
+    </head>
 
-<body>
-    <noscript>
-        <div class="fixed inset-0 flex items-center justify-center bg-gray-100 z-[9999] font-sans p-8 text-center">
+    <body>
+        <noscript>
+            <div
+                class="fixed inset-0 flex items-center justify-center bg-gray-100 z-[9999] font-sans p-8 text-center"
+            >
+                <div class="max-w-xl text-gray-800">
+                    <h1 class="text-3xl mb-4 text-gray-700">
+                        JavaScript Required
+                    </h1>
+                    <p class="text-lg leading-relaxed text-gray-600">
+                        This app requires JavaScript to function properly.<br />
+                        Please
+                        <a
+                            target="_blank"
+                            rel="noopener"
+                            href="https://www.enable-javascript.com/"
+                            class="text-blue-500 underline"
+                            >enable JavaScript</a
+                        >
+                        in your browser settings and refresh the page.
+                    </p>
+                </div>
+            </div>
+        </noscript>
+
+        <div
+            class="sm:hidden fixed inset-0 flex items-center justify-center bg-gray-100 z-[9999] font-sans p-8 text-center"
+        >
             <div class="max-w-xl text-gray-800">
-                <h1 class="text-3xl mb-4 text-gray-700">
-                    JavaScript Required
-                </h1>
-                <p class="text-lg leading-relaxed text-gray-600">
-                    This app requires JavaScript to function properly.<br />
-                    Please
-                    <a target="_blank" rel="noopener" href="https://www.enable-javascript.com/"
-                        class="text-blue-500 underline">enable JavaScript</a>
-                    in your browser settings and refresh the page.
+                <p class="text-lg leading-relaxed">
+                    Unfortunately, this app is not supported on mobile devices.
+                    Please use a desktop browser for the best experience.
                 </p>
             </div>
         </div>
-    </noscript>
 
-    <div
-        class="sm:hidden fixed inset-0 flex items-center justify-center bg-gray-100 z-[9999] font-sans p-8 text-center">
-        <div class="max-w-xl text-gray-800">
-            <p class="text-lg leading-relaxed">
-                Unfortunately, this app is not supported on mobile devices.
-                Please use a desktop browser for the best experience.
-            </p>
-        </div>
-    </div>
-
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-</body>
-
+        <div id="app"></div>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
 </html>

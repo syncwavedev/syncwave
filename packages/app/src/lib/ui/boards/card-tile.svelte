@@ -96,8 +96,8 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-            bg-surface-3
-            hover:bg-surface-4
+            bg-surface-4
+            hover:bg-surface-5
             group
             flex
             items-end
@@ -146,7 +146,7 @@
                             .join(', ')}
                     {/if}
                     {#if todoStats.total > 0}
-                        <span class="text-ink-detail ml-auto text-xs">
+                        <span class="text-ink-detail ml-auto text-sm">
                             {#if todoStats.left === 0}
                                 All done
                             {:else}

@@ -25,28 +25,28 @@
     --color-gray-950: oklch(24% 0 110deg);
 
     /* Slate */
-    --color-slate-50: oklch(96% 0.003 251deg);
-    --color-slate-100: oklch(92% 0.004 251deg);
-    --color-slate-150: oklch(88% 0.005 251deg);
-    --color-slate-200: oklch(84% 0.006 251deg);
-    --color-slate-250: oklch(80% 0.007 251deg);
-    --color-slate-300: oklch(76% 0.008 251deg);
-    --color-slate-350: oklch(72% 0.009 251deg);
-    --color-slate-400: oklch(68% 0.01 251deg);
-    --color-slate-450: oklch(64% 0.011 251deg);
-    --color-slate-500: oklch(60% 0.012 251deg);
-    --color-slate-550: oklch(56% 0.013 251deg);
-    --color-slate-600: oklch(52% 0.014 251deg);
-    --color-slate-650: oklch(48% 0.015 251deg);
-    --color-slate-700: oklch(44% 0.016 251deg);
-    --color-slate-750: oklch(40% 0.017 251deg);
-    --color-slate-800: oklch(36% 0.016 251deg);
-    --color-slate-825: oklch(34% 0.015 251deg);
-    --color-slate-850: oklch(32% 0.014 251deg);
-    --color-slate-875: oklch(30% 0.013 251deg);
-    --color-slate-900: oklch(28% 0.012 251deg);
-    --color-slate-925: oklch(26% 0.011 251deg);
-    --color-slate-950: oklch(24% 0.01 251deg);
+    --color-slate-50: oklch(96% 0.003 256deg);
+    --color-slate-100: oklch(92% 0.004 256deg);
+    --color-slate-150: oklch(88% 0.005 256deg);
+    --color-slate-200: oklch(84% 0.006 256deg);
+    --color-slate-250: oklch(80% 0.007 256deg);
+    --color-slate-300: oklch(76% 0.008 256deg);
+    --color-slate-350: oklch(72% 0.009 256deg);
+    --color-slate-400: oklch(68% 0.01 256deg);
+    --color-slate-450: oklch(64% 0.011 256deg);
+    --color-slate-500: oklch(60% 0.012 256deg);
+    --color-slate-550: oklch(56% 0.013 256deg);
+    --color-slate-600: oklch(52% 0.014 256deg);
+    --color-slate-650: oklch(48% 0.015 256deg);
+    --color-slate-700: oklch(44% 0.016 256deg);
+    --color-slate-750: oklch(40% 0.017 256deg);
+    --color-slate-800: oklch(36% 0.016 256deg);
+    --color-slate-825: oklch(34% 0.015 256deg);
+    --color-slate-850: oklch(32% 0.014 256deg);
+    --color-slate-875: oklch(30% 0.013 256deg);
+    --color-slate-900: oklch(28% 0.012 256deg);
+    --color-slate-925: oklch(26% 0.011 256deg);
+    --color-slate-950: oklch(24% 0.01 256deg);
 
     /* Blue */
     --color-blue-50: oklch(96% 0.01 255deg);
@@ -185,7 +185,7 @@
         --theme-color-ink-disabled: var(--color-slate-500);
         --theme-color-ink-danger: var(--color-red-350);
 
-        --theme-color-divider: var(--color-slate-800);
+        --theme-color-divider: var(--color-slate-850);
         --theme-color-divider-object: var(--color-slate-700);
 
         --theme-color-scrollbar: var(--color-slate-750);
@@ -197,7 +197,7 @@
         --theme-color-surface-2: var(--color-slate-850);
         --theme-color-surface-3: var(--color-slate-825);
         --theme-color-surface-4: var(--color-slate-800);
-        --theme-color-surface-5: var(--color-slate-775);
+        --theme-color-surface-5: var(--color-slate-750);
 
         --theme-color-subtle-active: var(--color-blue-850);
         --theme-color-divider-active: oklch(0.68 0.135 249.85deg);

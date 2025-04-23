@@ -23,17 +23,17 @@
                 />
 
                 <div class="flex items-baseline gap-1.5">
-                    <div class="font-semibold text-sm leading-none">
+                    <div class="font-medium text-md leading-none">
                         {message.author.fullName}
                     </div>
 
-                    <span class="text-ink-detail text-xs">
+                    <span class="text-ink-detail text-sm">
                         <TimeAgo time={message.createdAt} />
                     </span>
                 </div>
             </div>
             <div
-                class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))] relative"
+                class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))] relative avatar-sm"
             >
                 <!-- Vertical line extending below avatar -->
                 {#if index < messages.length - 1}

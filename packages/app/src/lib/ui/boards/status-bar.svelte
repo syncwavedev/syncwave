@@ -36,7 +36,7 @@
     });
 </script>
 
-<div class="flex items-center gap-4 text-xs icon-sm w-full">
+<div class="flex items-center gap-4 text-sm icon-sm w-full">
     <div
         title={statusTitle}
         class="flex items-center gap-1.5"

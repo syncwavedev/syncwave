@@ -153,7 +153,7 @@
     >
         <!-- Task Description -->
         <div class="panel-margin-inline mt-2">
-            <div class="input w-full leading-relaxed">
+            <div class="input w-full leading-relaxed text-lg">
                 <Editor
                     bind:this={editor}
                     placeholder="Description"
@@ -165,9 +165,7 @@
             </div>
         </div>
         <!-- Task Actions -->
-        <div
-            class="flex gap-4 panel-margin-inline mt-4 mb-2 text-sm icon-sm items-center"
-        >
+        <div class="flex gap-4 panel-margin-inline mt-4 mb-2 items-center">
             <Select
                 value={card.column.id}
                 options={columnOptions}
@@ -195,12 +193,12 @@
                 </button>
             </Select>
         </div>
-        <hr class="panel-margin-inline" />
+        <hr />
         <!-- <div class="flex mx-6 mt-4 items-center gap-1.5">
             <span class="text-ink-detail text-sm leading-none">1 Message</span>
             <hr class="flex-grow" />
         </div> -->
-        <div class="my-2">
+        <div class="my-2 text-lg">
             {#await detailsPromise then details}
                 <MessageList messages={details.messages} />
             {/await}
@@ -215,7 +213,7 @@
         </div>
     {/if}
     <div
-        class="panel-margin-inline border border-divider-object mb-4 p-2 rounded-md"
+        class="panel-margin-inline border border-divider-object mb-4 p-2 rounded-md text-lg"
     >
         <Editor
             {fragment}

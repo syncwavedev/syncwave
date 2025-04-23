@@ -235,7 +235,7 @@
         <div class="relative flex min-w-0 flex-col flex-1">
             <div class="panel-header avatar-sm">
                 <button
-                    class="btn-ghost"
+                    class="btn-ghost font-medium"
                     onclick={() => modalManager.open(boardCommands)}
                 >
                     <span>{board.name}</span>

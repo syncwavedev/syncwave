@@ -4,7 +4,7 @@
             var(--panel-footer-height) - 2 * var(--panel-border-width)
     );
 
-    --column-width: 21rem;
+    --column-width: 20.5rem;
     --column-padding-inline: 0.6125rem;
 
     --board-padding-inline-start: calc(

@@ -150,6 +150,15 @@ export class BoardService {
             position: Math.random(),
         });
 
+        await this.boards.incrementBoardCounter(
+            board.id,
+            template.columns.reduce(
+                (acc, column) => acc + column.cards.length,
+                0
+            )
+        );
+
+        let counter = 0;
         await whenAll(
             template.columns.map(async (column, idx) => {
                 const columnId = createColumnId();
@@ -171,6 +180,7 @@ export class BoardService {
                             columnId,
                             card,
                             cardIndex: cardIdx,
+                            counter: counter++,
                         });
                     })
                 );
@@ -184,6 +194,7 @@ export class BoardService {
         columnId: ColumnId;
         card: CardTemplate;
         cardIndex: number;
+        counter: number;
     }) {
         const cardId = createCardId();
         await this.cards.create({
@@ -193,7 +204,7 @@ export class BoardService {
             createdAt: this.timestamp,
             text: createRichtext(htmlToYFragment(params.card.html)),
             id: cardId,
-            counter: await this.boards.incrementBoardCounter(params.board.id),
+            counter: params.counter,
             position: params.cardIndex,
             updatedAt: this.timestamp,
         });

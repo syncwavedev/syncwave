@@ -6,6 +6,7 @@ import 'dotenv/config';
 import {
     catchConnectionClosed,
     CoordinatorClient,
+    createBoardId,
     MsgpackCodec,
     PersistentConnection,
 } from 'syncwave';
@@ -22,12 +23,13 @@ const client = new CoordinatorClient(
 );
 
 async function main() {
-    const data = await client.rpc
-        .getBoardViewData({key: 'sdfiweew'})
-        .filter(x => x.type === 'snapshot')
-        .first();
+    const b = await client.rpc.createBoard({
+        boardId: createBoardId(),
+        name: 'test',
+        members: [],
+    });
 
-    console.log('data', data);
+    console.log('board created', b);
 }
 
 catchConnectionClosed(main()).finally(() => {

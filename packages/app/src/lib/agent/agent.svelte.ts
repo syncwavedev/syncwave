@@ -442,14 +442,14 @@ export class Agent {
     async createBoard(options: {
         name: string;
         memberEmails: string[];
-    }): Promise<BoardId> {
+    }): Promise<Board> {
         const board = await this.rpc.createBoard({
             boardId: createBoardId(),
             name: options.name,
             members: options.memberEmails,
         });
 
-        return board.id;
+        return board;
     }
 
     createCardDraft(

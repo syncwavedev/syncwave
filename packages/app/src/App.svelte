@@ -110,7 +110,11 @@
 
     onMount(() => {
         const userId = authManager.getTokenInfo()?.userId;
-        if (!userId) {
+        if (
+            !userId &&
+            (window.location.pathname.startsWith('/b/') ||
+                window.location.pathname === '/')
+        ) {
             router.route(
                 `/login?redirect_url=${encodeURIComponent(window.location.href)}`,
                 {replace: true}

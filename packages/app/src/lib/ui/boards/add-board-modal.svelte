@@ -15,9 +15,9 @@
             return;
         }
 
-        const boardId = await agent.createBoard({name: name, memberEmails: []});
+        const board = await agent.createBoard({name: name, memberEmails: []});
         modalManager.close();
-        router.route(`/b/${boardId}`);
+        router.route(`/b/${board.key}`);
     }
 </script>
 

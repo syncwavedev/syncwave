@@ -127,8 +127,8 @@ export class BoardRepo {
         return await this.rawRepo.apply([id], diff, checker);
     }
 
-    async incrementBoardCounter(boardId: BoardId): Promise<number> {
-        return await this.counters.get(boardId.toString()).increment();
+    async incrementBoardCounter(boardId: BoardId, delta = 1): Promise<number> {
+        return await this.counters.get(boardId.toString()).increment(delta);
     }
 
     async create(board: Omit<Board, 'pk'>): Promise<Board> {

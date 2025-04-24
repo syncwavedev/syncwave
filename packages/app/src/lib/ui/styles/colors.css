@@ -1,117 +1,39 @@
 @theme static {
     /* Gray */
-    --color-gray-10: oklch(99.2% 0 156deg);
-    --color-gray-20: oklch(98.4% 0.002 156deg);
-    --color-gray-35: oklch(97.2% 0.0025 156deg);
-    --color-gray-50: oklch(96% 0.0015 156deg);
-    --color-gray-65: oklch(94.8% 0.001 156deg);
-    --color-gray-75: oklch(94% 0.001 156deg);
-    --color-gray-100: oklch(92% 0 110deg);
-    --color-gray-125: oklch(90% 0 110deg);
-    --color-gray-150: oklch(88% 0 110deg);
-    --color-gray-200: oklch(84% 0 110deg);
-    --color-gray-250: oklch(80% 0 110deg);
-    --color-gray-300: oklch(76% 0 110deg);
-    --color-gray-350: oklch(72% 0 110deg);
-    --color-gray-400: oklch(68% 0 110deg);
-    --color-gray-450: oklch(64% 0 110deg);
-    --color-gray-500: oklch(60% 0 110deg);
-    --color-gray-550: oklch(56% 0 110deg);
-    --color-gray-600: oklch(52% 0 110deg);
-    --color-gray-650: oklch(48% 0 110deg);
-    --color-gray-700: oklch(44% 0 110deg);
-    --color-gray-750: oklch(40% 0 110deg);
-    --color-gray-800: oklch(36% 0 110deg);
-    --color-gray-850: oklch(32% 0 110deg);
-    --color-gray-900: oklch(28% 0 110deg);
-    --color-gray-950: oklch(24% 0 110deg);
+    --color-gray-10: oklch(99.2% 0 0deg);
+    --color-gray-20: oklch(98.4% 0 0deg);
+    --color-gray-30: oklch(97.6% 0 0deg);
+    --color-gray-40: oklch(96.8% 0 0deg);
+    --color-gray-50: oklch(96% 0 0deg);
+    --color-gray-60: oklch(95.2% 0 0deg);
+    --color-gray-70: oklch(94.4% 0 0deg);
+    --color-gray-80: oklch(93.6% 0 0deg);
+    --color-gray-90: oklch(92.8% 0 0deg);
+    --color-gray-100: oklch(92% 0 0deg);
+    --color-gray-125: oklch(90% 0 0deg);
+    --color-gray-150: oklch(88% 0 0deg);
+    --color-gray-200: oklch(84% 0 0deg);
+    --color-gray-250: oklch(80% 0 0deg);
+    --color-gray-300: oklch(76% 0 0deg);
+    --color-gray-350: oklch(72% 0 0deg);
+    --color-gray-400: oklch(68% 0 0deg);
+    --color-gray-450: oklch(64% 0 0deg);
+    --color-gray-500: oklch(60% 0 0deg);
+    --color-gray-550: oklch(56% 0 0deg);
+    --color-gray-600: oklch(52% 0 0deg);
+    --color-gray-650: oklch(48% 0 0deg);
+    --color-gray-700: oklch(44% 0 0deg);
+    --color-gray-750: oklch(40% 0 0deg);
+    --color-gray-775: oklch(38% 0 0deg);
+    --color-gray-800: oklch(36% 0 0deg);
+    --color-gray-825: oklch(34% 0 0deg);
+    --color-gray-850: oklch(32% 0 0deg);
+    --color-gray-875: oklch(30% 0 0deg);
+    --color-gray-900: oklch(28% 0 0deg);
+    --color-gray-925: oklch(26% 0 0deg);
+    --color-gray-950: oklch(24% 0 0deg);
 
-    /* Slate */
-    --color-slate-50: oklch(96% 0.003 256deg);
-    --color-slate-100: oklch(92% 0.004 256deg);
-    --color-slate-150: oklch(88% 0.005 256deg);
-    --color-slate-200: oklch(84% 0.006 256deg);
-    --color-slate-250: oklch(80% 0.007 256deg);
-    --color-slate-300: oklch(76% 0.008 256deg);
-    --color-slate-350: oklch(72% 0.009 256deg);
-    --color-slate-400: oklch(68% 0.01 256deg);
-    --color-slate-450: oklch(64% 0.011 256deg);
-    --color-slate-500: oklch(60% 0.012 256deg);
-    --color-slate-550: oklch(56% 0.013 256deg);
-    --color-slate-600: oklch(52% 0.014 256deg);
-    --color-slate-650: oklch(48% 0.015 256deg);
-    --color-slate-700: oklch(44% 0.016 256deg);
-    --color-slate-750: oklch(40% 0.017 256deg);
-    --color-slate-800: oklch(36% 0.016 256deg);
-    --color-slate-825: oklch(34% 0.015 256deg);
-    --color-slate-850: oklch(32% 0.014 256deg);
-    --color-slate-875: oklch(30% 0.013 256deg);
-    --color-slate-900: oklch(28% 0.012 256deg);
-    --color-slate-925: oklch(26% 0.011 256deg);
-    --color-slate-950: oklch(24% 0.01 256deg);
-
-    /* Blue */
-    --color-blue-50: oklch(96% 0.01 255deg);
-    --color-blue-100: oklch(92% 0.02 255deg);
-    --color-blue-150: oklch(88% 0.04 255deg);
-    --color-blue-200: oklch(84% 0.06 255deg);
-    --color-blue-250: oklch(80% 0.08 255deg);
-    --color-blue-300: oklch(76% 0.1 255deg);
-    --color-blue-350: oklch(72% 0.12 255deg);
-    --color-blue-400: oklch(68% 0.14 255deg);
-    --color-blue-450: oklch(64% 0.165 255deg);
-    --color-blue-500: oklch(60% 0.145 255deg);
-    --color-blue-550: oklch(56% 0.13 255deg);
-    --color-blue-600: oklch(52% 0.115 255deg);
-    --color-blue-650: oklch(48% 0.1 255deg);
-    --color-blue-700: oklch(44% 0.085 255deg);
-    --color-blue-750: oklch(40% 0.07 255deg);
-    --color-blue-800: oklch(36% 0.055 255deg);
-    --color-blue-850: oklch(32% 0.045 255deg);
-    --color-blue-900: oklch(28% 0.035 255deg);
-    --color-blue-950: oklch(24% 0.025 255deg);
-
-    /* Yellow */
-    --color-yellow-50: oklch(96% 0.04 94deg);
-    --color-yellow-100: oklch(92% 0.07 94deg);
-    --color-yellow-150: oklch(88% 0.09 94deg);
-    --color-yellow-200: oklch(84% 0.11 94deg);
-    --color-yellow-250: oklch(80% 0.14 94deg);
-    --color-yellow-300: oklch(76% 0.17 94deg);
-    --color-yellow-350: oklch(72% 0.19 94deg);
-    --color-yellow-400: oklch(68% 0.22 94deg);
-    --color-yellow-450: oklch(64% 0.24 94deg);
-    --color-yellow-500: oklch(60% 0.23 94deg);
-    --color-yellow-550: oklch(56% 0.22 94deg);
-    --color-yellow-600: oklch(52% 0.21 94deg);
-    --color-yellow-650: oklch(48% 0.2 94deg);
-    --color-yellow-700: oklch(44% 0.19 94deg);
-    --color-yellow-750: oklch(40% 0.18 94deg);
-    --color-yellow-800: oklch(36% 0.16 94deg);
-    --color-yellow-850: oklch(32% 0.14 94deg);
-    --color-yellow-900: oklch(28% 0.12 94deg);
-    --color-yellow-950: oklch(24% 0.11 94deg);
-
-    /* Green */
-    --color-green-50: oklch(96% 0.02 151deg);
-    --color-green-100: oklch(92% 0.03 151deg);
-    --color-green-150: oklch(88% 0.05 151deg);
-    --color-green-200: oklch(84% 0.07 151deg);
-    --color-green-250: oklch(80% 0.09 151deg);
-    --color-green-300: oklch(76% 0.11 151deg);
-    --color-green-350: oklch(72% 0.13 151deg);
-    --color-green-400: oklch(68% 0.15 151deg);
-    --color-green-450: oklch(64% 0.175 151deg);
-    --color-green-500: oklch(60% 0.155 151deg);
-    --color-green-550: oklch(56% 0.14 151deg);
-    --color-green-600: oklch(52% 0.11 151deg);
-    --color-green-650: oklch(48% 0.11 151deg);
-    --color-green-700: oklch(44% 0.095 151deg);
-    --color-green-750: oklch(40% 0.08 151deg);
-    --color-green-800: oklch(36% 0.065 151deg);
-    --color-green-850: oklch(32% 0.055 151deg);
-    --color-green-900: oklch(28% 0.045 151deg);
-    --color-green-950: oklch(24% 0.035 151deg);
+    --color-primary: oklch(0.65 0.135 249.85deg);
 
     /* Semantics */
     --color-ink: var(--theme-color-ink);
@@ -119,30 +41,26 @@
     --color-ink-detail: var(--theme-color-ink-detail);
     --color-ink-placeholder: var(--theme-color-ink-placeholder);
     --color-ink-disabled: var(--theme-color-ink-disabled);
-    --color-ink-reverse: var(--theme-color-ink-reverse);
     --color-ink-danger: var(--theme-color-ink-danger);
 
     --color-divider: var(--theme-color-divider);
     --color-divider-object: var(--theme-color-divider-object);
+    --color-divider-active: var(--theme-color-divider-active);
 
     --color-scrollbar: var(--theme-color-scrollbar);
 
-    --color-surface-0: var(--theme-color-surface-0);
-    --color-surface-1: var(--theme-color-surface-1);
-    --color-surface-2: var(--theme-color-surface-2);
-    --color-surface-3: var(--theme-color-surface-3);
-    --color-surface-4: var(--theme-color-surface-4);
-    --color-surface-5: var(--theme-color-surface-5);
-
-    --color-ink-contrast: var(--theme-color-ink-contrast);
-    --color-ink-danger-contrast: var(--theme-color-ink-danger-contrast);
-    --color-subtle-contrast: var(--theme-color-subtle-contrast);
-    --color-object-contrast-highlight: var(
-        --theme-color-object-contrast-highlight
+    --color-material-elevated: var(--theme-color-material-elevated);
+    --color-material-elevated-hover: var(--theme-color-material-elevated-hover);
+    --color-material-elevated-highlight: var(
+        --theme-color-material-elevated-highlight
     );
+    --color-divider-elevated: var(--theme-color-divider-elevated);
 
-    --color-subtle-active: var(--theme-color-subtle-active);
-    --color-divider-active: var(--theme-color-divider-active);
+    --color-material-base: var(--theme-color-material-base);
+    --color-material-base-hover: var(--theme-color-material-base-hover);
+
+    --color-material-1: var(--theme-color-material-1);
+    --color-material-1-hover: var(--theme-color-material-1-hover);
 }
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -154,48 +72,49 @@
         --theme-color-ink-detail: var(--color-gray-500);
         --theme-color-ink-placeholder: var(--color-gray-350);
         --theme-color-ink-disabled: var(--color-gray-450);
+        --theme-color-ink-danger: var(--color-red-500);
 
-        --theme-color-ink-reverse: var(--color-white);
-        --theme-color-ink-danger: var(--color-red-450);
+        --theme-color-divider: var(--color-gray-60);
+        --theme-color-divider-object: var(--color-gray-125);
+        --theme-color-divider-active: var(--color-primary);
 
-        --theme-color-divider: var(--color-gray-50);
-        --theme-color-divider-object: var(--color-gray-150);
+        --theme-color-scrollbar: var(--color-gray-200);
 
-        --theme-color-scrollbar: var(--color-gray-350);
+        --theme-color-material-elevated: var(--color-gray-10);
+        --theme-color-material-elevated-hover: var(--color-gray-50);
+        --theme-color-material-elevated-highlight: var(--color-gray-20);
+        --theme-color-divider-elevated: var(--color-gray-60);
 
-        --theme-color-surface-0: var(--color-white);
-        --theme-color-surface-1: var(--color-gray-10);
-        --theme-color-surface-2: var(--color-gray-20);
-        --theme-color-surface-3: var(--color-gray-35);
-        --theme-color-surface-4: var(--color-gray-50);
-        --theme-color-surface-5: var(--color-gray-65);
+        --theme-color-material-base: white;
+        --theme-color-material-base-hover: var(--color-gray-30);
 
-        --theme-color-subtle-active: var(--color-blue-100);
-        --theme-color-divider-active: oklch(0.65 0.135 249.85deg);
+        --theme-color-material-1: var(--color-gray-20);
+        --theme-color-material-1-hover: var(--color-gray-50);
     }
 
     [data-theme='dark'] {
-        --theme-color-ink: var(--color-slate-50);
-        --theme-color-ink-body: var(--color-slate-200);
-        --theme-color-ink-reverse: var(--color-black);
-        --theme-color-ink-detail: var(--color-slate-450);
-        --theme-color-ink-placeholder: var(--color-slate-550);
-        --theme-color-ink-disabled: var(--color-slate-500);
+        --theme-color-ink: var(--color-gray-50);
+        --theme-color-ink-body: var(--color-gray-200);
+        --theme-color-ink-detail: var(--color-gray-400);
+        --theme-color-ink-placeholder: var(--color-gray-450);
+        --theme-color-ink-disabled: var(--color-gray-500);
         --theme-color-ink-danger: var(--color-red-350);
 
-        --theme-color-divider: var(--color-slate-850);
-        --theme-color-divider-object: var(--color-slate-750);
+        --theme-color-divider: var(--color-gray-850);
+        --theme-color-divider-object: var(--color-gray-750);
+        --theme-color-divider-active: var(--color-primary);
 
-        --theme-color-scrollbar: var(--color-slate-750);
+        --theme-color-scrollbar: var(--color-gray-750);
 
-        --theme-color-surface-0: var(--color-slate-925);
-        --theme-color-surface-1: var(--color-slate-900);
-        --theme-color-surface-2: var(--color-slate-875);
-        --theme-color-surface-3: var(--color-slate-850);
-        --theme-color-surface-4: var(--color-slate-825);
-        --theme-color-surface-5: var(--color-slate-800);
+        --theme-color-material-elevated: var(--color-gray-850);
+        --theme-color-material-elevated-hover: var(--color-gray-800);
+        --theme-color-material-elevated-highlight: var(--color-gray-825);
+        --theme-color-divider-elevated: var(--color-gray-800);
 
-        --theme-color-subtle-active: var(--color-blue-850);
-        --theme-color-divider-active: oklch(0.68 0.135 249.85deg);
+        --theme-color-material-base: var(--color-gray-900);
+        --theme-color-material-base-hover: var(--color-gray-850);
+
+        --theme-color-material-1: var(--color-gray-875);
+        --theme-color-material-1-hover: var(--color-gray-825);
     }
 }

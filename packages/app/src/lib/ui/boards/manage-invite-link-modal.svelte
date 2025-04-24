@@ -21,7 +21,7 @@
             disabled
         />
 
-        <div class="flex gap-4">
+        <div class="flex gap-4 text-ink-body">
             <button class="btn-ghost">
                 <RefreshIcon />
                 Refresh Link

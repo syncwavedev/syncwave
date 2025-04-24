@@ -30,7 +30,7 @@
     </Select.Trigger>
     <Select.Portal>
         <Select.Content
-            class="z-100 bg-surface-2 p-1 rounded-md min-w-40 border border-divider-object outline-none"
+            class="z-100 bg-material-elevated p-1 rounded-md min-w-40 border border-divider-elevated outline-none"
             side="bottom"
             sideOffset={0}
             align="end"
@@ -43,7 +43,7 @@
                         value={option.value ?? ''}
                         label={option.label}
                         disabled={option.disabled}
-                        class="flex items-center dark:hover:bg-slate-750 hover:bg-gray-100 px-2 py-1 rounded-sm cursor-default outline-none"
+                        class="flex items-center hover:bg-material-elevated-hover px-2 py-1.25 rounded-sm cursor-default outline-none"
                     >
                         {#snippet children({selected})}
                             <span class="truncate">{option.label}</span>

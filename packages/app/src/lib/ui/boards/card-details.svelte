@@ -47,7 +47,6 @@
 
     let editor: Editor | null = $state(null);
     let scrollable: HTMLDivElement;
-    let isScrolled = $state(false);
 
     onMount(() => {
         tick().then(() => {
@@ -131,10 +130,7 @@
                     },
                 ]}
             >
-                <button
-                    class="btn--icon text-ink-body mr-1"
-                    id="ellipsis-button"
-                >
+                <button class="btn--icon text-ink-body" id="ellipsis-button">
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
@@ -147,9 +143,6 @@
     <div
         bind:this={scrollable}
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
-        onscroll={() => {
-            isScrolled = scrollable?.scrollTop > 0;
-        }}
     >
         <!-- Task Description -->
         <div class="panel-margin-inline mt-2">

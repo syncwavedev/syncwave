@@ -23,4 +23,4 @@
         />
     </form>
 </div>
-<hr class="divider" />
+<hr class="material-elevated" />

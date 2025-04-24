@@ -52,9 +52,11 @@
                 )}
             value={board.name}
         />
-        <div class="flex flex-col bg-surface-2 px-2.5 rounded-md">
+        <div
+            class="flex flex-col bg-material-elevated-highlight rounded-md border border-divider-elevated"
+        >
             <button
-                class="flex w-full cursor-default items-center gap-2 py-3.5"
+                class="flex w-full cursor-default items-center gap-2 py-3 px-2.5"
                 onclick={() => modalManager.navigate(inviteForm, false)}
             >
                 <span>Members</span>
@@ -63,9 +65,9 @@
                     <ChevronIcon />
                 </span>
             </button>
-            <hr class="divider" />
+            <hr class="material-elevated" />
             <button
-                class="flex w-full cursor-default items-center gap-2 py-3.5"
+                class="flex w-full cursor-default items-center gap-2 py-3 px-2.5"
                 onclick={() => modalManager.navigate(manageColumns, false)}
             >
                 <span>Columns</span>
@@ -74,9 +76,9 @@
                     <ChevronIcon />
                 </span>
             </button>
-            <hr class="divider" />
+            <hr class="material-elevated" />
             <button
-                class="flex w-full cursor-default items-center gap-2 py-3.5"
+                class="flex w-full cursor-default items-center gap-2 py-3 px-2.5"
                 onclick={() => modalManager.navigate(manageInviteLink, false)}
             >
                 <span>Invite Link</span>

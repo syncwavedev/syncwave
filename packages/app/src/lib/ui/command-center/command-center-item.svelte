@@ -23,7 +23,7 @@
       gap-1.5
       px-2
       py-2.5
-      hover:bg-surface-3
+      hover:bg-material-elevated-hover
       rounded-md
       cursor-default
     "

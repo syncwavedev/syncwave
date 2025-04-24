@@ -246,7 +246,7 @@
                     <Avatar
                         userId={user.user.id}
                         name={`${user.user.fullName}`}
-                        class="outline-surface-0 outline-2"
+                        class="outline-material-base outline-2"
                     />
                 {/each}
             </div>

@@ -44,7 +44,7 @@
                   px-1
                   -mx-1
                   my-0.5
-                  focus-within:bg-surface-2
+                  focus-within:bg-material-elevated-hover
                   rounded-sm
                   group
                 "
@@ -83,10 +83,10 @@
                     </button>
                 </div>
             </div>
-            <hr class="border-dashed divider" />
+            <hr class="border-dashed material-elevated" />
         {/each}
         <form
-            class="flex items-center my-0.5 -mx-1 px-1 focus-within:bg-surface-2 rounded-sm text-ink-detail"
+            class="flex items-center my-0.5 -mx-1 px-1 focus-within:bg-material-elevated-hover rounded-sm text-ink-detail"
             onsubmit={onNewColumnSubmit}
         >
             <CircleDashedIcon />

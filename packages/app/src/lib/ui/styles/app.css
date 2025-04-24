@@ -19,7 +19,7 @@
     border: var(--app-border) solid var(--color-divider);
     border-radius: var(--app-border-radius);
 
-    background: var(--color-surface-0);
+    background: var(--color-material-base);
 }
 
 /* Styles for PWA modes (standalone, minimal-ui) */

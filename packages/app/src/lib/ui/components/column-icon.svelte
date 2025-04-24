@@ -6,8 +6,8 @@
     const innerRadius = 6;
 
     const getActiveColor = () => {
-        if (active === total) return 'text-green-400';
-        if (active > 0) return 'text-blue-450';
+        if (active === total) return 'text-green-500';
+        if (active > 0) return 'text-blue-500';
         return 'text-[var(--color-ink-detail)]';
     };
     const activeColorClass = getActiveColor();

@@ -31,16 +31,15 @@
               w-screen
               items-center
               justify-center
-              backdrop-blur-xs
-              bg-black/10
-              dark:bg-black/25
+              bg-black/8
+              dark:bg-black/20
             "
             onclick={() => modalManager.close()}
         ></div>
 
         <div
             class="
-              bg-surface-0
+              bg-material-elevated
               fixed
               top-12
               left-1/2
@@ -48,21 +47,21 @@
               w-full
               -translate-x-1/2
               rounded-lg
-              shadow-lg
-              dark:border
-              border-divider
+              shadow-xl
               py-3
-              px-4
+              px-5
+              dark:border
+              border-divider-elevated
             "
             class:max-w-[20rem]={size === 'xs'}
             class:max-w-sm={size === 'sm'}
-            class:max-w-[28rem]={size === 'md'}
+            class:max-w-[29rem]={size === 'md'}
             class:max-w-lg={size === 'lg'}
         >
             <div class="flex items-center">
-                <p class="font-semibold text-lg">{title}</p>
+                <p class="font-medium text-lg">{title}</p>
                 <button
-                    class="btn--icon ml-auto text-ink-body bg-surface-2"
+                    class="btn--icon ml-auto text-ink-body"
                     onclick={() => modalManager.close()}
                 >
                     <TimesIcon />

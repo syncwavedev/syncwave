@@ -96,10 +96,10 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-            bg-surface-3
-            hover:bg-surface-4
-            dark:bg-surface-4
-            dark:hover:bg-surface-5
+            bg-gray-40
+            dark:bg-gray-825
+            hover:bg-gray-75
+            dark:hover:bg-gray-775
             group
             flex
             items-end
@@ -129,7 +129,7 @@
                 data-active={active || undefined}
             >
                 {#if !card.isDraft}
-                    <span class="truncate font-medium">
+                    <span class="truncate">
                         {preview}
                     </span>
                 {/if}

@@ -30,7 +30,7 @@
 
     <div
         class="
-          bg-surface-1
+          bg-material-elevated
           fixed
           top-12
           left-1/2
@@ -41,7 +41,7 @@
           rounded-lg
           shadow-lg
           border
-          border-divider
+          border-divider-elevated
         "
     >
         {@render children()}

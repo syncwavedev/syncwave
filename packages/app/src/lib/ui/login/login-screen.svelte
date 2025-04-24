@@ -87,7 +87,7 @@
 </script>
 
 <div
-    class="bg-gradient-to-b from-surface-0 to-surface-1 flex min-h-screen flex-col"
+    class="bg-gradient-to-b from-material-base to-material-1 flex min-h-screen flex-col"
 >
     <h1 class="ml-4 mt-2 font-semibold">Syncwave</h1>
     <div class="w-full max-w-2xs text-center mt-[23vh] mx-auto">

@@ -7,5 +7,5 @@
 }
 
 .input--bordered {
-    @apply border-divider-object bg-surface-0 bg-surface-0 h-[2.6em] rounded-md border px-2;
+    @apply border-divider-object bg-material-base h-[2.6em] rounded-md border px-2;
 }

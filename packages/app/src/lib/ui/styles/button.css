@@ -1,16 +1,16 @@
 .btn--icon {
-    @apply hover:bg-surface-2
+    @apply hover:bg-material-base-hover
     hover:text-ink
     grid
     aspect-square
-    h-[1.85em]
+    h-[2em]
     place-items-center
     rounded-full
     disabled:text-ink-disabled;
 }
 
 .btn--block {
-    @apply text-ink-body hover:bg-surface-2 hover:text-ink flex h-[2em] items-center justify-center rounded-2xl px-[0.5em];
+    @apply text-ink-body hover:bg-material-1-hover hover:text-ink flex h-[2em] items-center justify-center rounded-2xl px-[0.5em];
 
     &.btn--block--danger {
         @apply text-ink-danger;
@@ -18,18 +18,18 @@
 }
 
 .btn--normal {
-    @apply bg-surface-0 hover:bg-surface-2 dark:bg-surface-3 dark:hover:bg-surface-4 border-divider-object flex h-[2.6em] items-center justify-center rounded-md border px-[0.5em];
+    @apply bg-material-base hover:bg-material-1-hover border-divider-object flex h-[2.6em] items-center justify-center rounded-md border px-[0.5em];
 }
 
 .btn-ghost {
-    @apply p-1 rounded-sm gap-1.5 flex items-center hover:bg-surface-2 hover:text-ink  disabled:text-ink-disabled -mx-1;
+    @apply p-1 rounded-sm gap-1.5 flex items-center hover:bg-material-base-hover hover:text-ink  disabled:text-ink-disabled -mx-1;
 }
 
 .btn-tinted {
     @apply h-[2em] px-[0.5em] rounded-sm gap-1.5 flex items-center  text-ink-body
-	hover:bg-surface-1 hover:text-ink bg-surface-2;
+	hover:bg-material-1 hover:text-ink bg-material-1;
 }
 
 .btn-block {
-    @apply h-[2em] px-[0.5em] rounded-md gap-1.5 flex items-center justify-center bg-surface-2;
+    @apply h-[2em] px-[0.5em] rounded-md gap-1.5 flex items-center justify-center bg-material-1;
 }

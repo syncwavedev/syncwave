@@ -14,7 +14,7 @@
 <div class="flex flex-col flex-1 relative">
     {#each messages as message, index (message.id)}
         <div
-            class="flex flex-col panel-padding-inline py-2 relative hover:bg-surface-1"
+            class="flex flex-col panel-padding-inline py-2 relative hover:bg-material-base-hover"
         >
             <div class="flex items-center gap-1.5 relative avatar-sm">
                 <Avatar

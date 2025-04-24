@@ -1,8 +1,10 @@
 @theme static {
     /* Gray */
     --color-gray-10: oklch(99.2% 0 156deg);
-    --color-gray-25: oklch(98% 0.002 156deg);
+    --color-gray-20: oklch(98.4% 0.002 156deg);
+    --color-gray-35: oklch(97.2% 0.0025 156deg);
     --color-gray-50: oklch(96% 0.0015 156deg);
+    --color-gray-65: oklch(94.8% 0.001 156deg);
     --color-gray-75: oklch(94% 0.001 156deg);
     --color-gray-100: oklch(92% 0 110deg);
     --color-gray-125: oklch(90% 0 110deg);
@@ -147,7 +149,7 @@
 
 @layer base {
     [data-theme='light'] {
-        --theme-color-ink: var(--color-gray-900);
+        --theme-color-ink: var(--color-gray-750);
         --theme-color-ink-body: var(--color-gray-600);
         --theme-color-ink-detail: var(--color-gray-500);
         --theme-color-ink-placeholder: var(--color-gray-350);
@@ -156,17 +158,17 @@
         --theme-color-ink-reverse: var(--color-white);
         --theme-color-ink-danger: var(--color-red-450);
 
-        --theme-color-divider: var(--color-gray-75);
-        --theme-color-divider-object: var(--color-gray-200);
+        --theme-color-divider: var(--color-gray-50);
+        --theme-color-divider-object: var(--color-gray-150);
 
         --theme-color-scrollbar: var(--color-gray-350);
 
         --theme-color-surface-0: var(--color-white);
         --theme-color-surface-1: var(--color-gray-10);
-        --theme-color-surface-2: var(--color-gray-25);
-        --theme-color-surface-3: var(--color-gray-50);
-        --theme-color-surface-4: var(--color-gray-75);
-        --theme-color-surface-5: var(--color-gray-100);
+        --theme-color-surface-2: var(--color-gray-20);
+        --theme-color-surface-3: var(--color-gray-35);
+        --theme-color-surface-4: var(--color-gray-50);
+        --theme-color-surface-5: var(--color-gray-65);
 
         --theme-color-subtle-active: var(--color-blue-100);
         --theme-color-divider-active: oklch(0.65 0.135 249.85deg);

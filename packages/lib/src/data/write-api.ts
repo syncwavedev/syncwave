@@ -28,7 +28,7 @@ import {type Column, type ColumnId} from './repos/column-repo.js';
 import {MemberId, MemberRole, type Member} from './repos/member-repo.js';
 import {type Message, type MessageId} from './repos/message-repo.js';
 import {type User, type UserId} from './repos/user-repo.js';
-import {BOARD_DEMO_TEMPLATE, BOARD_ONBOARDING_TEMPLATE} from './template.js';
+import {BOARD_DEMO_TEMPLATE, NEW_BOARD_TEMPLATE} from './template.js';
 import {
     creatable,
     expectOptional,
@@ -493,7 +493,7 @@ export function createWriteApi() {
                     key: createUuidV4(),
                     members: req.members,
                     boardId: req.boardId,
-                    template: BOARD_ONBOARDING_TEMPLATE,
+                    template: NEW_BOARD_TEMPLATE,
                 });
             },
         }),

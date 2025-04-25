@@ -72,10 +72,31 @@ export function createWriteApi() {
             handle: async (st, {messageId, diff}) => {
                 const existingMessage = await st.tx.messages.getById(messageId);
                 if (existingMessage) {
-                    throw new BusinessError(
-                        'message edit is not allowed',
-                        'forbidden'
-                    );
+                    await whenAll([
+                        st.ps.ensureMessageAuthorOrBoardOwner(messageId),
+                        (async () => {
+                            await st.tx.messages.apply(
+                                messageId,
+                                diff,
+                                writable<Message>({
+                                    id: false,
+                                    pk: false,
+                                    authorId: false,
+                                    boardId: false,
+                                    columnId: false,
+                                    cardId: false,
+                                    replyToId: false,
+                                    attachmentIds: false,
+                                    target: false,
+                                    createdAt: false,
+                                    updatedAt: true,
+                                    payload: false,
+                                    deletedAt: true,
+                                })
+                            );
+                        })(),
+                    ]);
+                    return {};
                 } else {
                     const crdt = Crdt.load(diff);
                     const message = crdt.snapshot();

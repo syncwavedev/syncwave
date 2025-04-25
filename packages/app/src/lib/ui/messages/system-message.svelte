@@ -11,7 +11,7 @@
     {#if message.payload.type === 'card_created'}
         <span>
             <span class="font-medium">{message.author.fullName}</span>
-            created card
+            created the card
             <TimeAgo time={message.payload.cardCreatedAt} />
         </span>
     {/if}

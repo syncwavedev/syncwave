@@ -717,6 +717,7 @@ export class CardTreeView implements Card {
 
     messages: MessageView[] = $derived(
         this.data.rawMessages
+            .filter(x => !x.deletedAt)
             .map(x => new MessageView(x, this.data, this.crdtManager))
             .sort((a, b) => compareNumbers(a.createdAt, b.createdAt))
     );

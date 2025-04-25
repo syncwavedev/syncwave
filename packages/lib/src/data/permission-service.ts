@@ -165,4 +165,21 @@ export class PermissionService {
         }
         return await this.ensureBoardMember(card.boardId, minimum);
     }
+
+    async ensureMessageAuthorOrBoardOwner(messageId: MessageId): Promise<void> {
+        const message = await this.tx().messages.getById(messageId);
+
+        if (!message) {
+            throw new BusinessError(
+                `message ${messageId} doesn't exist`,
+                'message_not_found'
+            );
+        }
+
+        if (message.authorId === this.ensureAuthenticated()) {
+            return;
+        }
+
+        await this.ensureCardMember(message.cardId, 'owner');
+    }
 }

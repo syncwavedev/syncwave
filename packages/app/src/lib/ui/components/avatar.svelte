@@ -42,12 +42,8 @@
 
 <div
     title={title ?? name}
-    class={`avatar shrink-0 grid place-items-center rounded-full text-white ${className ?? ''}`}
+    class="avatar text-[calc(var(--avatar-size)*0.55)] text-white font-semibold"
     style={`background-color: ${avatarColor};`}
 >
-    <div
-        class="font-semibold text-[calc(var(--avatar-size)*0.55)] flex items-center justify-center h-full w-full"
-    >
-        {name[0]?.toUpperCase() ?? 'U'}
-    </div>
+    {name[0]?.toUpperCase() ?? 'U'}
 </div>

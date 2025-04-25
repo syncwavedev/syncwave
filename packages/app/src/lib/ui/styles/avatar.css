@@ -3,8 +3,22 @@
 }
 
 .avatar {
+    display: inline-block;
+
     block-size: var(--avatar-size);
     inline-size: var(--avatar-size);
+    line-height: var(--avatar-size);
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    vertical-align: middle;
+    text-align: center;
+}
+
+.avatar-xs {
+    --avatar-size: 1rem;
 }
 
 .avatar-sm {

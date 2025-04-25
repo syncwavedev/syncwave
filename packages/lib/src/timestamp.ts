@@ -11,6 +11,12 @@ export function getNow(): Timestamp {
     return toTimestamp(new Date());
 }
 
+export function addMinutes(timestamp: Timestamp, minutes: number): Timestamp {
+    const date = new Date(timestamp);
+    date.setMinutes(date.getMinutes() + minutes);
+    return date.getTime() as Timestamp;
+}
+
 export function addHours(timestamp: Timestamp, hours: number): Timestamp {
     const date = new Date(timestamp);
     date.setHours(date.getHours() + hours);

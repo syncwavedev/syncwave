@@ -17,9 +17,9 @@ import {whenAll} from '../utils.js';
 import {createUuidV4} from '../uuid.js';
 import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
-    AUTH_ACTIVITY_WINDOW_HOURS,
+    AUTH_ACTIVITY_WINDOW_MINUTES,
 } from './../constants.js';
-import {addHours, getNow} from './../timestamp.js';
+import {addMinutes, getNow} from './../timestamp.js';
 import {type VerifySignInCodeResponse} from './coordinator.js';
 
 export interface AuthApiState {
@@ -140,13 +140,18 @@ export type AuthApi = ReturnType<typeof createAuthApi>;
 export async function createVerificationCode(
     crypto: CryptoProvider
 ): Promise<VerificationCode> {
-    const buf = await crypto.randomBytes(6);
+    let digits: number[];
+
+    do {
+        digits = Array.from(await crypto.randomBytes(16))
+            .filter(x => x < 250)
+            .slice(0, 6)
+            .map(x => x % 10);
+    } while (digits.length < 6);
+
     return {
-        code: Array.from(buf)
-            .map(x => x % 10)
-            .join(''),
-        // verification token expires after one hour
-        expires: addHours(getNow(), 1),
+        code: digits.join(''),
+        expires: addMinutes(getNow(), 15),
     };
 }
 
@@ -158,7 +163,7 @@ interface JwtPayload {
 }
 
 async function needsCooldown(account: Account): Promise<boolean> {
-    const cutoff = addHours(getNow(), -AUTH_ACTIVITY_WINDOW_HOURS);
+    const cutoff = addMinutes(getNow(), -AUTH_ACTIVITY_WINDOW_MINUTES);
     const actions = account.authActivityLog.filter(x => x > cutoff);
     return actions.length >= AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT;
 }

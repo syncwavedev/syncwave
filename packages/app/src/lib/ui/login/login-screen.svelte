@@ -78,7 +78,7 @@
     }
 
     const errorMessage: Record<string, string | undefined> = {
-        cooldown: 'Too many attempts. Please try again later.',
+        cooldown: 'Too many attempts. Please try again in 15 minutes.',
         invalid_code: 'That code doesn’t seem right. Please try again.',
         code_expired: 'The code has expired. Please request a new one.',
         unknown_error: 'An unknown error occurred. Please try again later.',

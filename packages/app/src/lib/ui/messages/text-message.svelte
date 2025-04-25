@@ -1,19 +1,28 @@
 <script lang="ts">
+    import {getAgent} from '../../agent/agent.svelte';
     import type {
         MessageView,
         TextMessagePayloadView,
     } from '../../agent/view.svelte';
     import Avatar from '../components/avatar.svelte';
+    import TrashIcon from '../components/icons/trash-icon.svelte';
     import RichtextView from '../components/richtext-view.svelte';
     import TimeAgo from '../components/time-ago.svelte';
 
     const {message}: {message: MessageView} = $props();
+
+    const agent = getAgent();
+
+    function onDeleteMessage() {
+        const confirmMessage = `Are you sure you want to delete message? This action cannot be undone.`;
+        if (confirm(confirmMessage)) {
+            agent.deleteMessage(message.id);
+        }
+    }
 </script>
 
-<div
-    class="flex flex-col panel-padding-inline py-2 relative hover:bg-material-base-hover"
->
-    <div class="flex items-center gap-1.5 relative avatar-sm">
+<div class="flex flex-col panel-padding-inline py-2 relative group">
+    <div class="flex items-center gap-1.5 relative avatar-sm icon-sm">
         <Avatar userId={message.author.id} name={message.author.fullName} />
 
         <div class="flex items-baseline gap-1.5">
@@ -25,9 +34,16 @@
                 <TimeAgo time={message.createdAt} />
             </span>
         </div>
+
+        <button
+            class="ml-auto btn--icon invisible group-hover:visible"
+            onclick={onDeleteMessage}
+        >
+            <TrashIcon />
+        </button>
     </div>
     <div
-        class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))] relative avatar-sm mt-0.5"
+        class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))] relative avatar-sm"
     >
         <RichtextView
             fragment={(message.payload as TextMessagePayloadView).text

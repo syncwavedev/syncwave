@@ -632,12 +632,49 @@ export class Agent {
         });
     }
 
+    // todo: this logic seems shit
+    finalizeColumnPosition(columnId: ColumnId): void {
+        const board = this.activeBoards.find(x =>
+            x.considerColumnPosition.has(columnId)
+        );
+        assert(
+            board !== undefined,
+            'finalize column position: board not found'
+        );
+        const position = board.considerColumnPosition.get(columnId);
+        assert(
+            position !== undefined,
+            'finalize column position: position not found'
+        );
+
+        this.crdtManager.update<Column>(columnId, x => {
+            x.position = position;
+        });
+
+        this.clearColumnConsider(columnId);
+    }
+
+    clearColumnConsider(columnId: ColumnId) {
+        this.activeBoards.forEach(x => {
+            x.columnDragSettledAt.delete(columnId);
+            x.considerColumnPosition.delete(columnId);
+        });
+    }
+
     considerCardPosition(cardId: CardId, columnId: ColumnId, position: number) {
         const now = getNow();
         this.activeBoards.forEach(board => {
             board.considerColumnId.set(cardId, columnId);
             board.considerCardPosition.set(cardId, position);
             board.cardDragSettledAt.set(cardId, now);
+        });
+    }
+
+    considerColumnPosition(columnId: ColumnId, position: number) {
+        const now = getNow();
+        this.activeBoards.forEach(board => {
+            board.considerColumnPosition.set(columnId, position);
+            board.columnDragSettledAt.set(columnId, now);
         });
     }
 

@@ -220,6 +220,9 @@ export class BoardData implements SyncTarget {
     readonly considerCardPosition = new SvelteMap<CardId, number>();
     readonly considerColumnId = new SvelteMap<CardId, ColumnId>();
 
+    readonly columnDragSettledAt = new SvelteMap<ColumnId, Timestamp>();
+    readonly considerColumnPosition = new SvelteMap<ColumnId, number>();
+
     cardViews: CardView[] = $derived(
         this.rawCards.map(x => new CardView(x, this, this.crdtManager))
     );
@@ -454,7 +457,14 @@ export class ColumnView implements Column {
     id = $derived(this._column.id);
     pk = $derived(this._column.pk);
     boardId = $derived(this._column.boardId);
-    position = $derived(this._column.position);
+    position = $derived.by(() => {
+        const dndPosition = this._data.considerColumnPosition.get(this.id);
+        if (dndPosition) {
+            return dndPosition;
+        }
+
+        return this._column.position;
+    });
 
     board = $derived(this._data.boardView);
     author = $derived.by(() => {
@@ -462,6 +472,13 @@ export class ColumnView implements Column {
         const memberInfo = this._data.getMemberInfo(this._column.authorId);
         return new MemberView(author, memberInfo.email, memberInfo.role);
     });
+
+    dndLastChangeAt = $derived.by(() =>
+        this._data.columnDragSettledAt.get(this.id)
+    );
+    dndInProgress = $derived.by(
+        () => this._data.columnDragSettledAt.get(this.id) !== undefined
+    );
 }
 
 export class ColumnTreeView extends ColumnView {

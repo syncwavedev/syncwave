@@ -1,11 +1,10 @@
 <script lang="ts">
     import {getAgent} from '../../agent/agent.svelte';
-    import type {BoardTreeView, ColumnTreeView} from '../../agent/view.svelte';
+    import type {BoardTreeView} from '../../agent/view.svelte';
     import Modal from '../components/modal.svelte';
-    import TrashIcon from '../components/icons/trash-icon.svelte';
-    import GripHorizontalIcon from '../components/icons/grip-horizontal-icon.svelte';
-    import ColumnIcon from '../components/column-icon.svelte';
     import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
+    import {createDndColumnListContext} from './column-dnd';
+    import EditColumnsModalColumn from './edit-columns-modal-column.svelte';
 
     let {board}: {board: BoardTreeView} = $props();
 
@@ -13,16 +12,21 @@
 
     const agent = getAgent();
 
-    function deleteColumn(column: ColumnTreeView) {
-        if (
-            !confirm(
-                `Are you sure you want to delete this column ${column.name}?`
-            )
-        ) {
-            return;
+    let columnsContainerRef: HTMLDivElement | null = $state(null);
+    let viewportRef: HTMLDivElement | null = $state(null);
+
+    const dndContext = createDndColumnListContext(agent);
+
+    $effect(() => {
+        if (columnsContainerRef && viewportRef) {
+            return dndContext.registerColumnList(
+                columnsContainerRef,
+                viewportRef
+            );
         }
-        agent.deleteColumn(column.id);
-    }
+
+        return undefined;
+    });
 
     function onNewColumnSubmit(event: Event) {
         event.preventDefault();
@@ -35,55 +39,13 @@
 </script>
 
 <Modal title="Manage Columns" size="md">
-    <div class="flex flex-col mt-1">
+    <div
+        bind:this={columnsContainerRef}
+        bind:this={viewportRef}
+        class="flex flex-col mt-1"
+    >
         {#each board.columns as column, index (column.id)}
-            <div
-                class="
-                  flex
-                  items-center
-                  px-1
-                  -mx-1
-                  my-0.5
-                  focus-within:bg-material-elevated-hover
-                  rounded-sm
-                  group
-                "
-            >
-                <ColumnIcon total={board.columns.length - 1} active={index} />
-                <input
-                    type="text"
-                    class="input py-2 ml-1.5"
-                    required
-                    value={column.name}
-                    oninput={e =>
-                        agent.setColumnName(column.id, e.currentTarget.value)}
-                    placeholder="Column name"
-                />
-                <div
-                    class="
-                    ml-auto
-                    icon-sm
-                    flex
-                    items-center
-                    gap-1
-                    text-ink-body
-                    invisible
-                    group-focus-within:visible
-                    group-hover:visible
-                    "
-                >
-                    <span>
-                        <GripHorizontalIcon />
-                    </span>
-                    <button
-                        onclick={() => deleteColumn(column)}
-                        class="btn--icon"
-                    >
-                        <TrashIcon />
-                    </button>
-                </div>
-            </div>
-            <hr class="border-dashed material-elevated" />
+            <EditColumnsModalColumn {board} {column} {index} />
         {/each}
         <form
             class="flex items-center my-0.5 -mx-1 px-1 focus-within:bg-material-elevated-hover rounded-sm text-ink-detail"

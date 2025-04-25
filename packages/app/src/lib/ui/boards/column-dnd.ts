@@ -7,15 +7,14 @@ import {
     log,
     runAll,
     toPosition,
-    type CardId,
     type ColumnId,
 } from 'syncwave';
 import type {Agent} from '../../agent/agent.svelte.js';
-import type {CardView, ColumnView} from '../../agent/view.svelte.js';
+import type {ColumnView} from '../../agent/view.svelte.js';
 
 export const DND_REORDER_DURATION_MS = 500;
 export const DND_DROP_DURATION_MS = 150;
-export const DND_CARD_GAP = 8;
+export const DND_COLUMN_GAP = 1;
 
 type Cleanup = () => void;
 
@@ -27,29 +26,22 @@ interface CleanupContext {
     cleanups: Cleanup[];
 }
 
-export interface DndCardContext extends CleanupContext {
-    card: Ref<CardView>;
-    container: HTMLDivElement;
-}
-
 export interface DndColumnContext extends CleanupContext {
     column: Ref<ColumnView>;
     container: HTMLDivElement;
-    scrollable: HTMLDivElement;
+    handle: HTMLElement;
 }
 
 interface Draggable {
     element: HTMLElement;
     targetX: number;
     targetY: number;
-    targetColumnId: ColumnId;
 }
 
-export class DndBoardContext {
+export class DndColumnListContext {
     container!: HTMLDivElement;
     scrollable!: HTMLDivElement;
     private columns: DndColumnContext[] = [];
-    private cards: DndCardContext[] = [];
     public cleanups: Cleanup[] = [];
 
     private scrollEmitter = new EventEmitter<void>();
@@ -74,7 +66,7 @@ export class DndBoardContext {
                 eventName,
                 e => {
                     log.debug({
-                        msg: '[board-dnd] cancelDragEmitter.emit',
+                        msg: '[column-list-dnd] cancelDragEmitter.emit',
                         eventName,
                     });
                     this.cancelDragEmitter.emit({pointerId: e.pointerId});
@@ -84,7 +76,7 @@ export class DndBoardContext {
         });
     }
 
-    registerBoard(container: HTMLDivElement, scrollable: HTMLDivElement) {
+    registerColumnList(container: HTMLDivElement, scrollable: HTMLDivElement) {
         this.container = container;
         this.scrollable = scrollable;
 
@@ -98,29 +90,29 @@ export class DndBoardContext {
         };
     }
 
-    registerCard(card: DndCardContext): Cleanup {
-        this.cards.push(card);
+    registerColumn(column: DndColumnContext): Cleanup {
+        this.columns.push(column);
 
-        this.addListener(card, card.container, 'pointerdown', downEvent => {
+        this.addListener(column, column.handle, 'pointerdown', downEvent => {
             log.debug({
-                msg: '[board-dnd] pointerdown',
+                msg: '[column-list-dnd] pointerdown',
                 eventName: 'pointerdown',
                 pointerId: downEvent.pointerId,
             });
             const cleanupDown = () => {
-                log.debug({msg: '[board-dnd] cleanupDown'});
+                log.debug({msg: '[column-list-dnd] cleanupDown'});
                 cancelPointerMoveListener();
                 cancelDragSub('registerCard pointerdown cleanup');
             };
 
             const cancelDragSub = this.cancelDragEmitter.subscribe(e => {
-                log.debug({msg: '[board-dnd] cancelDragEmitter', e});
+                log.debug({msg: '[column-list-dnd] cancelDragEmitter', e});
                 if (
                     e.pointerId !== undefined ||
                     e.pointerId === downEvent.pointerId
                 ) {
                     log.debug({
-                        msg: '[board-dnd] cancelDragEmitter cleanup',
+                        msg: '[column-list-dnd] cancelDragEmitter cleanup',
                         eventName: 'cancelDragEmitter',
                         pointerId: e.pointerId,
                     });
@@ -129,12 +121,12 @@ export class DndBoardContext {
             });
 
             const cancelPointerMoveListener = this.addListener(
-                card,
+                column,
                 this.container,
                 'pointermove',
                 moveEvent => {
                     log.debug({
-                        msg: '[board-dnd] pointermove',
+                        msg: '[column-list-dnd] pointermove',
                         eventName: 'pointermove',
                         movePointerId: moveEvent.pointerId,
                         downPointerId: downEvent.pointerId,
@@ -146,79 +138,63 @@ export class DndBoardContext {
                             Math.pow(downEvent.pageY - moveEvent.pageY, 2)
                     );
                     log.debug({
-                        msg: '[board-dnd] pointermove distance: ' + distance,
+                        msg:
+                            '[column-list-dnd] pointermove distance: ' +
+                            distance,
                     });
                     if (distance < 10) return;
 
                     cleanupDown();
-                    this.startDrag(moveEvent, card);
+                    this.startDrag(moveEvent, column);
                 }
             );
         });
 
         return () => {
-            this.cards = this.cards.filter(x => x !== card);
-            runAll(card?.cleanups ?? []);
-        };
-    }
-
-    registerColumn(column: DndColumnContext) {
-        this.columns.push(column);
-        const scrollListener = () => this.scrollEmitter.emit();
-        this.addListener(column, column.scrollable, 'scroll', scrollListener, {
-            passive: true,
-        });
-
-        return () => {
             this.columns = this.columns.filter(x => x !== column);
-            runAll(column.cleanups ?? []);
+            runAll(column?.cleanups ?? []);
         };
     }
 
     destroy() {
         runAll(
             this.cleanups
-                .concat(this.cards.flatMap(x => x.cleanups))
                 .concat(this.columns.flatMap(x => x.cleanups))
                 .concat([() => this.scrollEmitter.close()])
         );
 
-        this.cards = [];
         this.columns = [];
         this.cleanups = [];
     }
 
-    private startDrag(downEvent: PointerEvent, card: DndCardContext) {
+    private startDrag(downEvent: PointerEvent, column: DndColumnContext) {
         const dragId = createUuidV4();
         log.debug({
-            msg: '[board-dnd] startDrag',
+            msg: '[column-list-dnd] startDrag',
             dragId,
-            cardId: card.card.value.id,
+            columnId: column.column.value.id,
         });
-
         const draggable: Draggable = {
-            element: card.container.cloneNode(true) as HTMLDivElement,
-            targetX: card.container.getBoundingClientRect().left,
-            targetY: card.container.getBoundingClientRect().top,
-            targetColumnId: card.card.value.columnId,
+            element: column.container.cloneNode(true) as HTMLDivElement,
+            targetX: column.container.getBoundingClientRect().left,
+            targetY: column.container.getBoundingClientRect().top,
         };
         document.body.appendChild(draggable.element);
 
-        this.agent.considerCardPosition(
-            card.card.value.id,
-            card.card.value.columnId,
-            card.card.value.position
+        this.agent.considerColumnPosition(
+            column.column.value.id,
+            column.column.value.position
         );
 
         draggable.element.style.position = 'absolute';
         draggable.element.style.pointerEvents = 'none';
         draggable.element.style.zIndex = '1000';
         draggable.element.style.userSelect = 'none';
-        draggable.element.style.width = `${card.container.clientWidth}px`;
-        draggable.element.style.height = `${card.container.clientHeight}px`;
+        draggable.element.style.width = `${column.container.clientWidth}px`;
+        draggable.element.style.height = `${column.container.clientHeight}px`;
 
-        const startDraggableX = card.container.getBoundingClientRect().left;
-        const startDraggableY = card.container.getBoundingClientRect().top;
+        const startDraggableX = column.container.getBoundingClientRect().left;
+        const startDraggableY = column.container.getBoundingClientRect().top;
 
         draggable.element.style.left = `${startDraggableX}px`;
         draggable.element.style.top = `${startDraggableY}px`;
@@ -234,7 +210,7 @@ export class DndBoardContext {
             'pointermove',
             moveEvent => {
                 log.debug({
-                    msg: '[board-dnd] pointermove',
+                    msg: '[column-list-dnd] pointermove',
                     eventName: 'pointermove',
                     dragId,
                     movePointerId: moveEvent.pointerId,
@@ -263,12 +239,12 @@ export class DndBoardContext {
                 draggable.element.style.left = `${nextX}px`;
                 draggable.element.style.top = `${nextY}px`;
 
-                this.handlePlacement(draggable, card.card.value.id);
+                this.handlePlacement(draggable, column.column.value.id);
             }
         );
 
         const cancelScrollListener = this.scrollEmitter.subscribe(() => {
-            this.handlePlacement(draggable, card.card.value.id);
+            this.handlePlacement(draggable, column.column.value.id);
         });
 
         const cancelAutoscroll = this.monitorAutoscroll(draggable);
@@ -276,7 +252,10 @@ export class DndBoardContext {
         let cleanedUp = false;
         const cleanup = () => {
             if (cleanedUp) {
-                log.debug({msg: '[board-dnd] cleanup already called', dragId});
+                log.debug({
+                    msg: '[column-list-dnd] cleanup already called',
+                    dragId,
+                });
                 return;
             }
             cleanedUp = true;
@@ -285,7 +264,7 @@ export class DndBoardContext {
 
             draggable.element.releasePointerCapture(downEvent.pointerId);
 
-            this.handleDrop(card.card.value.id, draggable, dragId);
+            this.handleDrop(column.column.value.id, draggable, dragId);
 
             cancelAutoscroll();
             cancelPointerUp();
@@ -314,7 +293,6 @@ export class DndBoardContext {
     }
 
     private monitorAutoscroll(draggable: Draggable) {
-        const AUTOSCROLL_THRESHOLD_X = 20;
         const AUTOSCROLL_THRESHOLD_Y = 100;
 
         const scroller = new Scroller(this.scrollable);
@@ -325,58 +303,23 @@ export class DndBoardContext {
             'pointermove',
             () => {
                 const draggableRect = draggable.element.getBoundingClientRect();
-                const draggableCenterX =
-                    draggableRect.left + draggable.element.clientWidth / 2;
 
-                scroller.direction = 'none';
-
-                const boardRect = this.scrollable.getBoundingClientRect();
+                const draggableCenterY =
+                    draggableRect.top + draggable.element.clientHeight / 2;
                 if (
-                    this.scrollable.scrollLeft > 0 &&
-                    draggableRect.left < boardRect.left + AUTOSCROLL_THRESHOLD_X
+                    draggableCenterY <
+                    this.scrollable.getBoundingClientRect().top +
+                        AUTOSCROLL_THRESHOLD_Y
                 ) {
-                    scroller.direction = 'left';
-                    scroller.target = this.scrollable;
+                    scroller.direction = 'up';
                 } else if (
-                    this.scrollable.scrollLeft <
-                        this.scrollable.clientWidth +
-                            this.scrollable.scrollWidth &&
-                    draggableRect.right >
-                        boardRect.right - AUTOSCROLL_THRESHOLD_X
+                    draggableCenterY >
+                    this.scrollable.getBoundingClientRect().bottom -
+                        AUTOSCROLL_THRESHOLD_Y
                 ) {
-                    scroller.direction = 'right';
-                    scroller.target = this.scrollable;
+                    scroller.direction = 'down';
                 } else {
-                    const column = this.columns.find(column => {
-                        const rect = column.scrollable.getBoundingClientRect();
-                        return (
-                            draggableCenterX >= rect.left &&
-                            draggableCenterX <= rect.right
-                        );
-                    });
-
-                    if (!column) {
-                        return;
-                    }
-
-                    const draggableCenterY =
-                        draggableRect.top + draggable.element.clientHeight / 2;
-
-                    if (
-                        draggableCenterY <
-                        column.scrollable.getBoundingClientRect().top +
-                            AUTOSCROLL_THRESHOLD_Y
-                    ) {
-                        scroller.direction = 'up';
-                        scroller.target = column.scrollable;
-                    } else if (
-                        draggableCenterY >
-                        column.scrollable.getBoundingClientRect().bottom -
-                            AUTOSCROLL_THRESHOLD_Y
-                    ) {
-                        scroller.direction = 'down';
-                        scroller.target = column.scrollable;
-                    }
+                    scroller.direction = 'none';
                 }
             }
         );
@@ -389,15 +332,19 @@ export class DndBoardContext {
         return cleanup;
     }
 
-    private handleDrop(cardId: CardId, draggable: Draggable, dragId: string) {
+    private handleDrop(
+        columnId: ColumnId,
+        draggable: Draggable,
+        dragId: string
+    ) {
         log.debug({
-            msg: '[board-dnd] handleDrop',
+            msg: '[column-list-dnd] handleDrop',
             dragId,
         });
-        const card = this.cards.find(x => x.card.value.id === cardId);
+        const column = this.columns.find(x => x.column.value.id === columnId);
 
-        if (!card || !card.container.isConnected) {
-            log.warn({msg: `card ${cardId} not found for DnD drop`});
+        if (!column || !column.container.isConnected) {
+            log.warn({msg: `card ${columnId} not found for DnD drop`});
             if (draggable.element.isConnected) {
                 log.debug({
                     msg: `removing dnd draggable element from DOM`,
@@ -411,15 +358,15 @@ export class DndBoardContext {
                 });
             }
 
-            if (card) {
-                this.agent.finalizeCardPosition(card.card.value.id);
+            if (column) {
+                this.agent.finalizeColumnPosition(column.column.value.id);
             }
 
             return;
         }
 
         log.debug({
-            msg: `dnd drop: card ${cardId} found`,
+            msg: `dnd drop: card ${columnId} found`,
             dragId,
         });
 
@@ -437,11 +384,11 @@ export class DndBoardContext {
                 });
             }
 
-            this.agent.finalizeCardPosition(card.card.value.id);
+            this.agent.finalizeColumnPosition(column.column.value.id);
         }, DND_DROP_DURATION_MS);
 
         // find final placement
-        this.handlePlacement(draggable, cardId);
+        this.handlePlacement(draggable, columnId);
 
         const transition = `transform ${DND_DROP_DURATION_MS}ms ease`;
         draggable.element.style.transition = draggable.element.style.transition
@@ -455,78 +402,42 @@ export class DndBoardContext {
         draggable.element.style.transform = `translate(${animateToX}px, ${animateToY}px)`;
     }
 
-    private getClosestColumn(draggable: Draggable) {
-        const draggableRect = draggable.element.getBoundingClientRect();
-        const boardRect = this.scrollable.getBoundingClientRect();
-        const draggableCenterX = clip({
-            value: draggableRect.left + draggable.element.clientWidth / 2,
-            min: boardRect.x,
-            max: boardRect.x + boardRect.width,
-        });
-
-        return this.columns
-            .filter(x => x.container.isConnected)
-            .map(column => {
-                const rect = column.scrollable.getBoundingClientRect();
-                return {
-                    column,
-                    distance: Math.abs(
-                        rect.x + rect.width / 2 - draggableCenterX
-                    ),
-                };
-            })
-            .sort((a, b) => a.distance - b.distance)
-            .at(0)?.column;
-    }
-
-    private handlePlacement(draggable: Draggable, cardId: CardId) {
-        const targetColumn = this.getClosestColumn(draggable);
-        if (!targetColumn) {
-            log.error({msg: 'No target column for DnD found'});
-            return;
-        }
-
-        const card = this.cards.find(x => x.card.value.id === cardId);
-        if (!card) {
-            log.error({msg: 'No card for DnD found'});
+    private handlePlacement(draggable: Draggable, columnId: ColumnId) {
+        const column = this.columns.find(x => x.column.value.id === columnId);
+        if (!column) {
+            log.error({msg: 'No column for DnD found'});
             return;
         }
 
         const draggableRect = draggable.element.getBoundingClientRect();
         const draggableCenterY =
             draggableRect.top + draggable.element.clientHeight / 2;
-        const cardHeight = card.container.clientHeight;
+        const columnHeight = column.container.clientHeight;
 
-        const columnCards = this.cards
-            .filter(
-                x =>
-                    x.card.value.columnId === targetColumn.column.value.id &&
-                    x.container.isConnected
-            )
-            .sort((a, b) =>
-                compareNumbers(a.card.value.position, b.card.value.position)
-            );
-
-        const oldIndexInTargetColumn = columnCards.findIndex(
-            x => x.card.value.id === card.card.value.id
+        const columns = this.columns.sort((a, b) =>
+            compareNumbers(a.column.value.position, b.column.value.position)
         );
 
-        let oldPrev: DndCardContext | undefined = undefined;
-        let oldNext: DndCardContext | undefined = undefined;
-        if (oldIndexInTargetColumn !== -1) {
-            oldPrev = columnCards[oldIndexInTargetColumn - 1];
-            oldNext = columnCards[oldIndexInTargetColumn + 1];
+        const oldIndex = columns.findIndex(
+            x => x.column.value.id === column.column.value.id
+        );
+
+        let oldPrev: DndColumnContext | undefined = undefined;
+        let oldNext: DndColumnContext | undefined = undefined;
+        if (oldIndex !== -1) {
+            oldPrev = columns[oldIndex - 1];
+            oldNext = columns[oldIndex + 1];
         }
 
-        let prev: DndCardContext | undefined = undefined;
-        let next: DndCardContext | undefined = undefined;
+        let prev: DndColumnContext | undefined = undefined;
+        let next: DndColumnContext | undefined = undefined;
 
-        let offsetTop = targetColumn.container.getBoundingClientRect().top;
-        for (const neighbor of columnCards) {
+        let offsetTop = this.container.getBoundingClientRect().top;
+        for (const neighbor of columns) {
             const neighborRectNative =
                 neighbor.container.getBoundingClientRect();
             const combinedHeight =
-                neighborRectNative.height + DND_CARD_GAP + cardHeight;
+                neighborRectNative.height + DND_COLUMN_GAP + columnHeight;
             const combinedTop = offsetTop;
             const combinedCenterY = combinedTop + combinedHeight / 2;
 
@@ -537,33 +448,32 @@ export class DndBoardContext {
             }
 
             prev = neighbor;
-            if (neighbor.card.value.id !== card.card.value.id) {
-                offsetTop += DND_CARD_GAP + neighborRectNative.height;
+            if (neighbor.column.value.id !== column.column.value.id) {
+                offsetTop += DND_COLUMN_GAP + neighborRectNative.height;
             }
         }
 
-        draggable.targetX = targetColumn.container.getBoundingClientRect().left;
+        draggable.targetX = this.container.getBoundingClientRect().left;
         draggable.targetY = offsetTop;
 
-        const columnChanged = oldIndexInTargetColumn === -1;
-        const selfPrevAnchor = prev?.card.value.id === card.card.value.id;
-        const selfNextAnchor = next?.card.value.id === card.card.value.id;
-        const prevChanged = oldPrev?.card.value.id !== prev?.card.value.id;
-        const nextChanged = oldNext?.card.value.id !== next?.card.value.id;
+        const columnChanged = oldIndex === -1;
+        const selfPrevAnchor = prev?.column.value.id === column.column.value.id;
+        const selfNextAnchor = next?.column.value.id === column.column.value.id;
+        const prevChanged = oldPrev?.column.value.id !== prev?.column.value.id;
+        const nextChanged = oldNext?.column.value.id !== next?.column.value.id;
 
         if (
             (columnChanged || prevChanged || nextChanged) &&
             !selfPrevAnchor &&
             !selfNextAnchor
         ) {
-            const newCardPosition = toPosition({
-                prev: prev?.card.value.position,
-                next: next?.card.value.position,
+            const newColumnPosition = toPosition({
+                prev: prev?.column.value.position,
+                next: next?.column.value.position,
             });
-            this.agent.considerCardPosition(
-                card.card.value.id,
-                targetColumn.column.value.id,
-                newCardPosition
+            this.agent.considerColumnPosition(
+                column.column.value.id,
+                newColumnPosition
             );
         }
     }
@@ -597,16 +507,16 @@ export class DndBoardContext {
     }
 }
 
-const DND_CONTEXT = Symbol('DndContext');
+const DND_COLUMN_LIST_CONTEXT = Symbol('DndColumnListContext');
 
-export function createDndContext(agent: Agent): DndBoardContext {
-    const existingContext = getContext(DND_CONTEXT);
+export function createDndColumnListContext(agent: Agent): DndColumnListContext {
+    const existingContext = getContext(DND_COLUMN_LIST_CONTEXT);
     if (existingContext) {
-        throw new Error('DndContext already exists');
+        throw new Error('DndColumnListContext already exists');
     }
 
-    const context = new DndBoardContext(agent);
-    setContext(DND_CONTEXT, context);
+    const context = new DndColumnListContext(agent);
+    setContext(DND_COLUMN_LIST_CONTEXT, context);
 
     onDestroy(() => {
         context.destroy();
@@ -615,12 +525,12 @@ export function createDndContext(agent: Agent): DndBoardContext {
     return context;
 }
 
-export function getDndBoardContext(): DndBoardContext {
-    const context = getContext(DND_CONTEXT);
+export function getDndColumnListContext(): DndColumnListContext {
+    const context = getContext(DND_COLUMN_LIST_CONTEXT);
     if (!context) {
-        throw new Error('DndContext not found');
+        throw new Error('DndColumnListContext not found');
     }
-    return context as DndBoardContext;
+    return context as DndColumnListContext;
 }
 
 class Scroller {
@@ -628,7 +538,7 @@ class Scroller {
     public direction: 'left' | 'right' | 'up' | 'down' | 'none' = 'none';
     private lastTick = performance.now() - 1000 / 60;
 
-    constructor(public target: HTMLElement) {
+    constructor(private readonly target: HTMLElement) {
         const animation = () => {
             if (this.isCancelled) return;
             this.tick();
@@ -663,7 +573,7 @@ class Scroller {
         const SPEED = 500;
         const adjustment = SPEED * elapsedSeconds;
 
-        // 2025-03-25: we con't use scrollBy, because Safari will report incorrect DOMRect.top for cards inside the scrollable
+        // 2025-03-25: we con't use scrollBy, because Safari will report incorrect DOMRect.top for columns inside the scrollable
         this.target.scrollTo({
             left: dx * adjustment + this.target.scrollLeft,
             top: dy * adjustment + this.target.scrollTop,

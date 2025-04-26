@@ -24,6 +24,16 @@
             router.route('/');
         }
     }
+
+    function onLeaveBoard() {
+        const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
+        if (confirm(confirmMessage)) {
+            modalManager.close();
+            BoardHistoryManager.clear();
+            // TODO: add agent.leaveBoard(board.id);
+            router.route('/');
+        }
+    }
 </script>
 
 {#snippet inviteForm()}
@@ -57,16 +67,7 @@
     <div role="menu" class="flex flex-col">
         <button
             role="menuitem"
-            class="
-              flex
-              items-center
-              w-full
-              cursor-default
-              gap-2
-              py-3
-              modal-padding-inline
-              hover:bg-material-elevated-hover
-            "
+            class="menu__item"
             onclick={() => modalManager.navigate(inviteForm, false)}
         >
             <span>Members</span>
@@ -76,16 +77,8 @@
             </span>
         </button>
         <button
-            class="
-            flex
-            items-center
-            w-full
-            cursor-default
-            gap-2
-            py-3
-            modal-padding-inline
-            hover:bg-material-elevated-hover
-          "
+            role="menuitem"
+            class="menu__item"
             onclick={() => modalManager.navigate(manageColumns, false)}
         >
             <span>Columns</span>
@@ -95,16 +88,8 @@
             </span>
         </button>
         <button
-            class="
-            flex
-            items-center
-            w-full
-            cursor-default
-            gap-2
-            py-3
-            modal-padding-inline
-            hover:bg-material-elevated-hover
-          "
+            role="menuitem"
+            class="menu__item"
             onclick={() => modalManager.navigate(manageInviteLink, false)}
         >
             <span>Invite Link</span>
@@ -115,19 +100,15 @@
         </button>
     </div>
     <hr class="my-1 material-elevated" />
+    <button role="menuitem" class="menu__item" onclick={onLeaveBoard}>
+        Leave Board
+        <span class="text-ink-body ml-auto flex items-center gap-1.5">
+            <span class="text-sm">You'll lose access to this board</span>
+        </span>
+    </button>
     <button
-        class="
-        flex
-        items-center
-        w-full
-        cursor-default
-        gap-2
-        py-3
-        mb-1
-        modal-padding-inline
-        hover:bg-material-elevated-hover
-        text-ink-danger
-      "
+        role="menuitem"
+        class="menu__item mb-1 text-ink-danger"
         onclick={onDeleteBoard}
     >
         Delete Board
@@ -136,3 +117,19 @@
         </span>
     </button>
 </Modal>
+
+<style>
+    .menu__item {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        cursor: default;
+        gap: 0.5rem;
+        padding-inline: var(--modal-padding-inline);
+        padding-block: 0.75rem;
+
+        &:hover {
+            background: var(--color-material-elevated-hover);
+        }
+    }
+</style>

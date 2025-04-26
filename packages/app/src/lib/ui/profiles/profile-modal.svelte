@@ -24,7 +24,7 @@
 </script>
 
 <Modal title="Profile Settings" size="sm">
-    <div class="flex flex-col my-4 gap-4">
+    <div class="modal-padding-inline mt-3 flex">
         <input
             autocomplete="off"
             type="title"
@@ -34,12 +34,13 @@
             oninput={handleNameChange}
         />
     </div>
-    <div class="flex justify-center">
+
+    <div class="flex justify-center my-4">
         <button
-            class="btn-ghost"
+            class="btn--icon btn--icon--bordered btn--icon--lg icon-lg"
             onclick={() => authManager.logOut({pageReload: true})}
         >
-            <LogOutIcon /> Log out
+            <LogOutIcon />
         </button>
     </div>
 </Modal>

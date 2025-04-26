@@ -9,6 +9,14 @@
     rounded-full
     disabled:text-ink-disabled;
 
+    &.btn--icon--bordered {
+        @apply border border-divider-object;
+    }
+
+    &.btn--icon--lg {
+        @apply w-[3em] h-[3em];
+    }
+
     &.btn--icon--sm {
         @apply w-[1.85em] h-[1.85em];
     }

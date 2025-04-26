@@ -3,12 +3,10 @@
 }
 
 .icon {
-    display: inline-block;
-    width: var(--icon-size);
-    height: var(--icon-size);
-    vertical-align: middle;
-    flex-shrink: 0;
-    stroke-width: 1.75;
+    inline-size: var(--icon-size);
+    block-size: var(--icon-size);
+    object-fit: contain;
+    display: block;
 }
 
 .icon-base {
@@ -16,11 +14,11 @@
 }
 
 .icon-sm {
-    --icon-size: 0.875rem;
+    --icon-size: 0.9375rem;
 }
 .icon-md {
-    --icon-size: 1rem;
+    --icon-size: 1.0625rem;
 }
 .icon-lg {
-    --icon-size: 1.125rem;
+    --icon-size: 1.1875rem;
 }

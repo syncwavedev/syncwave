@@ -21,14 +21,12 @@
             disabled
         />
 
-        <div class="flex gap-4 text-ink-body">
-            <button class="btn-ghost">
+        <div class="flex gap-4 icon-lg">
+            <button class="btn--icon btn--icon--bordered btn--icon--lg">
                 <RefreshIcon />
-                Refresh Link
             </button>
-            <button class="btn-ghost">
+            <button class="btn--icon btn--icon--bordered btn--icon--lg">
                 <ClipboardCopyIcon />
-                Copy Link
             </button>
         </div>
     </div>

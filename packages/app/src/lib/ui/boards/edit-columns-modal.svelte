@@ -42,7 +42,7 @@
     <div
         bind:this={columnsContainerRef}
         bind:this={viewportRef}
-        class="flex flex-col mt-1"
+        class="flex flex-col modal-padding-inline mt-1 mb-2"
     >
         {#each board.columns as column, index (column.id)}
             <EditColumnsModalColumn {board} {column} {index} />

@@ -11,7 +11,7 @@
 </script>
 
 <Modal title="Manage Invite Link" size="md">
-    <div class="flex flex-col items-center gap-3 mt-4">
+    <div class="flex flex-col items-center gap-3 my-4 modal-padding-inline">
         <p>Anyone with this link can join and edit the board</p>
         <input
             autocomplete="off"

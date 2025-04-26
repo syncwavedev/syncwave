@@ -1,6 +1,5 @@
 <script lang="ts">
     import ChevronIcon from '../components/icons/chevron-icon.svelte';
-    import TrashIcon from '../components/icons/trash-icon.svelte';
     import Modal from '../components/modal.svelte';
     import InviteMembersModal from './invite-members-modal.svelte';
     import modalManager from '../modal-manager.svelte';

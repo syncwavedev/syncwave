@@ -33,7 +33,7 @@
     --color-gray-925: oklch(26% 0 0deg);
     --color-gray-950: oklch(24% 0 0deg);
 
-    --color-primary: oklch(0.65 0.135 249.85deg);
+    --color-primary: oklch(0.65 0.155 249.85deg);
     --color-danger: oklch(0.65 0.19 29.9);
 
     /* Semantics */

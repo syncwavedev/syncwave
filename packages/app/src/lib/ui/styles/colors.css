@@ -76,7 +76,7 @@
         --theme-color-ink-danger: var(--color-danger);
 
         --theme-color-divider: var(--color-gray-60);
-        --theme-color-divider-object: var(--color-gray-125);
+        --theme-color-divider-object: var(--color-gray-150);
         --theme-color-divider-active: var(--color-primary);
 
         --theme-color-scrollbar: var(--color-gray-200);
@@ -102,7 +102,7 @@
         --theme-color-ink-danger: var(--color-danger);
 
         --theme-color-divider: var(--color-gray-850);
-        --theme-color-divider-object: var(--color-gray-750);
+        --theme-color-divider-object: var(--color-gray-700);
         --theme-color-divider-active: var(--color-primary);
 
         --theme-color-scrollbar: var(--color-gray-750);

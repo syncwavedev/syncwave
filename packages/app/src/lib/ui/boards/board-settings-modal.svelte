@@ -39,7 +39,7 @@
 {/snippet}
 
 <Modal title="Board Settings" size="md">
-    <div class="flex flex-col my-4 gap-4">
+    <div class="flex modal-padding-inline mt-3">
         <input
             autocomplete="off"
             type="title"
@@ -52,46 +52,87 @@
                 )}
             value={board.name}
         />
-        <div
-            class="flex flex-col bg-material-elevated-highlight rounded-md border border-divider-elevated"
-        >
-            <button
-                class="flex w-full cursor-default items-center gap-2 py-3 px-2.5"
-                onclick={() => modalManager.navigate(inviteForm, false)}
-            >
-                <span>Members</span>
-                <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                    <span class="text-sm">{board.members.length} members</span>
-                    <ChevronIcon />
-                </span>
-            </button>
-            <hr class="material-elevated" />
-            <button
-                class="flex w-full cursor-default items-center gap-2 py-3 px-2.5"
-                onclick={() => modalManager.navigate(manageColumns, false)}
-            >
-                <span>Columns</span>
-                <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                    <span class="text-sm">{board.columns.length} columns</span>
-                    <ChevronIcon />
-                </span>
-            </button>
-            <hr class="material-elevated" />
-            <button
-                class="flex w-full cursor-default items-center gap-2 py-3 px-2.5"
-                onclick={() => modalManager.navigate(manageInviteLink, false)}
-            >
-                <span>Invite Link</span>
-                <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                    <span class="text-sm">Manage</span>
-                    <ChevronIcon />
-                </span>
-            </button>
-        </div>
     </div>
-    <div class="flex justify-center">
-        <button class="btn-ghost" onclick={onDeleteBoard}>
-            <TrashIcon /> Delete {board.name}
+    <hr class="mt-4 mb-1 material-elevated" />
+    <div role="menu" class="flex flex-col">
+        <button
+            role="menuitem"
+            class="
+              flex
+              items-center
+              w-full
+              cursor-default
+              gap-2
+              py-3
+              modal-padding-inline
+              hover:bg-material-elevated-hover
+            "
+            onclick={() => modalManager.navigate(inviteForm, false)}
+        >
+            <span>Members</span>
+            <span class="text-ink-body ml-auto flex items-center gap-1.5">
+                <span class="text-sm">{board.members.length} members</span>
+                <ChevronIcon />
+            </span>
+        </button>
+        <button
+            class="
+            flex
+            items-center
+            w-full
+            cursor-default
+            gap-2
+            py-3
+            modal-padding-inline
+            hover:bg-material-elevated-hover
+          "
+            onclick={() => modalManager.navigate(manageColumns, false)}
+        >
+            <span>Columns</span>
+            <span class="text-ink-body ml-auto flex items-center gap-1.5">
+                <span class="text-sm">{board.columns.length} columns</span>
+                <ChevronIcon />
+            </span>
+        </button>
+        <button
+            class="
+            flex
+            items-center
+            w-full
+            cursor-default
+            gap-2
+            py-3
+            modal-padding-inline
+            hover:bg-material-elevated-hover
+          "
+            onclick={() => modalManager.navigate(manageInviteLink, false)}
+        >
+            <span>Invite Link</span>
+            <span class="text-ink-body ml-auto flex items-center gap-1.5">
+                <span class="text-sm">Manage</span>
+                <ChevronIcon />
+            </span>
         </button>
     </div>
+    <hr class="my-1 material-elevated" />
+    <button
+        class="
+        flex
+        items-center
+        w-full
+        cursor-default
+        gap-2
+        py-3
+        mb-1
+        modal-padding-inline
+        hover:bg-material-elevated-hover
+        text-ink-danger
+      "
+        onclick={onDeleteBoard}
+    >
+        Delete Board
+        <span class="text-ink-body ml-auto flex items-center gap-1.5">
+            <span class="text-sm">This action cannot be undone</span>
+        </span>
+    </button>
 </Modal>

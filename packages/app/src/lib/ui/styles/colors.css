@@ -34,6 +34,7 @@
     --color-gray-950: oklch(24% 0 0deg);
 
     --color-primary: oklch(0.65 0.135 249.85deg);
+    --color-danger: oklch(0.65 0.19 29.9);
 
     /* Semantics */
     --color-ink: var(--theme-color-ink);
@@ -72,7 +73,7 @@
         --theme-color-ink-detail: var(--color-gray-500);
         --theme-color-ink-placeholder: var(--color-gray-350);
         --theme-color-ink-disabled: var(--color-gray-450);
-        --theme-color-ink-danger: var(--color-red-500);
+        --theme-color-ink-danger: var(--color-danger);
 
         --theme-color-divider: var(--color-gray-60);
         --theme-color-divider-object: var(--color-gray-125);
@@ -98,7 +99,7 @@
         --theme-color-ink-detail: var(--color-gray-400);
         --theme-color-ink-placeholder: var(--color-gray-450);
         --theme-color-ink-disabled: var(--color-gray-500);
-        --theme-color-ink-danger: var(--color-red-350);
+        --theme-color-ink-danger: var(--color-danger);
 
         --theme-color-divider: var(--color-gray-850);
         --theme-color-divider-object: var(--color-gray-750);

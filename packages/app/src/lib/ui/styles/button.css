@@ -4,9 +4,14 @@
     grid
     aspect-square
     h-[2em]
+    w-[2em]
     place-items-center
     rounded-full
     disabled:text-ink-disabled;
+
+    &.btn--icon--sm {
+        @apply w-[1.85em] h-[1.85em];
+    }
 }
 
 .btn--block {

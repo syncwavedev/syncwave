@@ -21,8 +21,10 @@
     }
 </script>
 
-<div class="flex flex-col panel-padding-inline py-2 relative group">
-    <div class="flex items-center gap-1.5 relative avatar-sm icon-sm">
+<div
+    class="flex flex-col panel-padding-inline py-2 relative group avatar-sm icon-sm"
+>
+    <div class="flex items-center gap-1.5 relative">
         <Avatar userId={message.author.id} name={message.author.fullName} />
 
         <div class="flex items-baseline gap-1.5">
@@ -36,14 +38,14 @@
         </div>
 
         <button
-            class="ml-auto btn--icon invisible group-hover:visible"
+            class="ml-auto btn--icon btn--icon--sm invisible group-hover:visible"
             onclick={onDeleteMessage}
         >
             <TrashIcon />
         </button>
     </div>
     <div
-        class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))] relative avatar-sm"
+        class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))] relative"
     >
         <RichtextView
             fragment={(message.payload as TextMessagePayloadView).text

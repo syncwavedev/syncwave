@@ -13,11 +13,7 @@
     height: var(--app-height);
     width: var(--app-width);
 
-    margin-inline: var(--app-margin);
-    margin-block-end: var(--app-margin);
-
-    border: var(--app-border) solid var(--color-divider);
-    border-radius: var(--app-border-radius);
+    border-top: var(--app-border) solid var(--color-divider);
 
     background: var(--color-material-base);
 }
@@ -25,8 +21,6 @@
 /* Styles for PWA modes (standalone, minimal-ui) */
 @media all and (display-mode: standalone), all and (display-mode: minimal-ui) {
     :root {
-        --app-margin: 0.5rem;
         --app-border: 1px;
-        --app-border-radius: var(--radius-md);
     }
 }

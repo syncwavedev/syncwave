@@ -9,7 +9,7 @@
 </script>
 
 <Modal title="Manage Members" size="md">
-    <div class="flex flex-col mt-2">
+    <div class="flex flex-col mt-2 modal-padding-inline mb-4">
         {#each board.members as member (member.id)}
             <div class="flex items-center py-2">
                 <Avatar userId={member.id} name={member.fullName} />

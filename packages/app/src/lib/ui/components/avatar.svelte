@@ -1,4 +1,5 @@
 <script lang="ts">
+    import clsx from 'clsx';
     import type {UserId} from 'syncwave';
 
     let {
@@ -42,7 +43,10 @@
 
 <div
     title={title ?? name}
-    class="avatar text-[calc(var(--avatar-size)*0.55)] text-white font-semibold"
+    class={clsx(
+        'avatar text-[calc(var(--avatar-size)*0.55)] text-white font-semibold',
+        className
+    )}
     style={`background-color: ${avatarColor};`}
 >
     {name[0]?.toUpperCase() ?? 'U'}

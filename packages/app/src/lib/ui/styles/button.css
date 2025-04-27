@@ -1,3 +1,13 @@
+.btn {
+    align-items: center;
+    cursor: pointer;
+
+    font-size: 1em;
+
+    display: inline-flex;
+    justify-content: center;
+}
+
 .btn--icon {
     @apply hover:bg-material-base-hover
     hover:text-ink
@@ -22,27 +32,6 @@
     }
 }
 
-.btn--block {
-    @apply text-ink-body hover:bg-material-1-hover hover:text-ink flex h-[2em] items-center justify-center rounded-2xl px-[0.5em];
-
-    &.btn--block--danger {
-        @apply text-ink-danger;
-    }
-}
-
-.btn--normal {
-    @apply bg-material-base hover:bg-material-1-hover border-divider-object flex h-[2.6em] items-center justify-center rounded-md border px-[0.5em];
-}
-
-.btn-ghost {
+.btn--ghost {
     @apply p-1 rounded-sm gap-1.5 flex items-center hover:bg-material-base-hover hover:text-ink  disabled:text-ink-disabled -mx-1;
-}
-
-.btn-tinted {
-    @apply h-[2em] px-[0.5em] rounded-sm gap-1.5 flex items-center  text-ink-body
-	hover:bg-material-1 hover:text-ink bg-material-1;
-}
-
-.btn-block {
-    @apply h-[2em] px-[0.5em] rounded-md gap-1.5 flex items-center justify-center bg-material-1;
 }

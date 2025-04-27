@@ -165,7 +165,7 @@
                 onValueChange={value =>
                     agent.setCardColumn(card.id, value as ColumnId)}
             >
-                <button class="btn-ghost">
+                <button class="btn--ghost">
                     <CircleDashedIcon />
                     {card.column.name}
                 </button>
@@ -180,7 +180,7 @@
                 onValueChange={value =>
                     agent.setCardAssignee(card.id, value as UserId)}
             >
-                <button class="btn-ghost">
+                <button class="btn--ghost">
                     <UserIcon />
                     {card.assignee?.fullName ?? 'Assignee'}
                 </button>

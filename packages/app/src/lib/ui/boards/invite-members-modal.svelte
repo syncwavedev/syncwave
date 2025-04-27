@@ -29,7 +29,7 @@
             name="invite"
             autocomplete="off"
             type="email"
-            class="input input-block p-2.5 mt-2"
+            class="input input--block p-2.5 mt-2"
             placeholder="Enter an email address to invite..."
         />
     </div>

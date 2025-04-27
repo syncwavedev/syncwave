@@ -16,7 +16,7 @@
         <input
             autocomplete="off"
             type="text"
-            class="input input-block text-ink-detail p-2.5 w-full"
+            class="input input--block text-ink-detail p-2.5 w-full"
             value={joinLink}
             disabled
         />

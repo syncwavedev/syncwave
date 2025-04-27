@@ -28,7 +28,7 @@
         <input
             autocomplete="off"
             type="title"
-            class="input input-block p-2.5"
+            class="input input--block p-2.5"
             placeholder="Profile name"
             value={me.fullName}
             oninput={handleNameChange}

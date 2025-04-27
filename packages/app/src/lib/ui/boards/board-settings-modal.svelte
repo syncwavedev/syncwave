@@ -52,7 +52,7 @@
         <input
             autocomplete="off"
             type="title"
-            class="input input-block p-2.5"
+            class="input input--block p-2.5"
             placeholder="Board name"
             oninput={e =>
                 agent.setBoardName(

@@ -26,7 +26,7 @@
     <div class="flex justify-end mr-3 py-2">
         <button
             type="submit"
-            class="btn-ghost"
+            class="btn--ghost"
             onclick={onCreateBoard}
             disabled={name.length < 1}
         >

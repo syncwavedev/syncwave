@@ -2,10 +2,6 @@
     @apply placeholder:text-ink-placeholder flex-grow focus-visible:outline-none;
 }
 
-.input-block {
+.input--block {
     @apply rounded-sm border border-divider-object;
-}
-
-.input--bordered {
-    @apply border-divider-object bg-material-base h-[2.6em] rounded-md border px-2;
 }

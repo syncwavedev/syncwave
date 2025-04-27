@@ -86,13 +86,11 @@
     };
 </script>
 
-<div
-    class="bg-gradient-to-b from-material-base to-material-1 flex min-h-screen flex-col"
->
-    <h1 class="ml-4 mt-2 font-semibold">Syncwave</h1>
-    <div class="w-full max-w-2xs text-center mt-[23vh] mx-auto">
+<div class="flex min-h-screen flex-col bg-material-base">
+    <h1 class="ml-4 mt-2 font-semibold text-lg">Syncwave</h1>
+    <div class="w-full max-w-2xs text-center mx-auto mt-[23vh]">
         {#if !showCodeInput}
-            <h1 class="mb-1 font-extrabold text-2xl">Let's get started!</h1>
+            <h1 class="mb-1 font-extrabold text-xl">Let's get started!</h1>
             <p class="text-ink-detail mb-8">
                 {#if googleSignInUrl}
                     Please enter your email to log in or sign up, or continue
@@ -106,7 +104,7 @@
                     <!-- Google Sign-In Button -->
                     <button
                         onclick={() => (window.location.href = googleSignInUrl)}
-                        class="btn--normal w-full gap-2"
+                        class="btn form-button"
                         type="button"
                         disabled={isLoading}
                         aria-label="Continue with Google"
@@ -160,7 +158,7 @@
                             placeholder="Email address"
                             required
                             bind:value={email}
-                            class="input input--bordered"
+                            class="input input--block form-input"
                             autocapitalize="none"
                             autocomplete="email"
                             autocorrect="off"
@@ -172,7 +170,7 @@
                     </div>
                     <button
                         type="submit"
-                        class="btn--normal w-full gap-2"
+                        class="btn form-button"
                         disabled={isLoading}
                         aria-label="Continue with email"
                     >
@@ -208,7 +206,7 @@
                         maxlength={6}
                         id="code-input"
                         bind:value={code}
-                        class="input input--bordered w-full text-center"
+                        class="input input--block form-input text-center"
                         autoFocus
                         disabled={isLoading}
                         placeholder="••••••"
@@ -216,7 +214,7 @@
                 </div>
                 <button
                     type="submit"
-                    class="btn--normal w-full"
+                    class="btn form-button"
                     disabled={isLoading}
                     aria-label="Verify code"
                 >
@@ -246,3 +244,23 @@
         </div>
     </div>
 </div>
+
+<style>
+    .form-input {
+        width: 100%;
+        padding-block: 0.625rem;
+        padding-inline: 0.5rem;
+    }
+
+    .form-button {
+        width: 100%;
+        background: var(--color-material-1);
+        gap: 0.5rem;
+        padding-block: 0.6875rem;
+        border-radius: var(--radius-sm);
+
+        &:hover {
+            background: var(--color-material-1-hover);
+        }
+    }
+</style>

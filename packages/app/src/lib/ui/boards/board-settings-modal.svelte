@@ -29,7 +29,7 @@
         if (confirm(confirmMessage)) {
             modalManager.close();
             BoardHistoryManager.clear();
-            // TODO: add agent.leaveBoard(board.id);
+            agent.deleteMember(board.memberId);
             router.route('/');
         }
     }

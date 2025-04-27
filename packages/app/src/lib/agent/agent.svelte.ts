@@ -141,7 +141,7 @@ export class Agent {
         );
         this.crdtManager = new CrdtManager(this.rpc);
 
-        this.ping();
+        // this.ping();
     }
 
     private async ping() {

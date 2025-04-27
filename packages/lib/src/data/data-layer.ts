@@ -492,6 +492,11 @@ export class DataLayer {
             log.info({msg: 'upgrading to version 8'});
             await this.upgradeToV8();
         }
+
+        if (version <= 8) {
+            log.info({msg: 'upgrading to version 9'});
+            await this.upgradeToV9();
+        }
     }
 
     private async upgradeToV1() {
@@ -648,6 +653,26 @@ export class DataLayer {
 
         await this.transact(system, tx => tx.version.put(8));
         log.info({msg: 'upgrading to version 8 done'});
+    }
+
+    private async upgradeToV9() {
+        let accountsUpdated = 0;
+        await this.transact(system, async tx => {
+            for await (const account of tx.accounts.rawRepo.scan()) {
+                await tx.accounts.update(account.id, x => {
+                    x.verificationCode = {
+                        codeHash: 'invalid',
+                        expires: getNow(),
+                    };
+                });
+                accountsUpdated++;
+            }
+        });
+
+        log.info({msg: `accounts updated: ${accountsUpdated}`});
+
+        await this.transact(system, tx => tx.version.put(9));
+        log.info({msg: 'upgrading to version 9 done'});
     }
 }
 

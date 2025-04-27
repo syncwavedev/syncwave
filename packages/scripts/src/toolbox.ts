@@ -6,10 +6,10 @@ import 'dotenv/config';
 import {
     catchConnectionClosed,
     CoordinatorClient,
-    createBoardId,
     MsgpackCodec,
     PersistentConnection,
 } from 'syncwave';
+import {NodeCryptoProvider} from 'syncwave/node-crypto-provider.js';
 import {WsTransportClient} from '../../app/src/ws-transport-client.js';
 
 const client = new CoordinatorClient(
@@ -22,14 +22,14 @@ const client = new CoordinatorClient(
     process.env.JWT_TOKEN
 );
 
-async function main() {
-    const b = await client.rpc.createBoard({
-        boardId: createBoardId(),
-        name: 'test',
-        members: [],
-    });
+const crypto = NodeCryptoProvider;
 
-    console.log('board created', b);
+async function main() {
+    const hash = await crypto.bcryptHash('123456');
+    console.log(
+        'result',
+        await crypto.bcryptCompare({hash, password: '1234456'})
+    );
 }
 
 catchConnectionClosed(main()).finally(() => {

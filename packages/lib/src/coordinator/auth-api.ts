@@ -7,7 +7,6 @@ import {
     createAccountId,
     type Account,
     type AccountRepo,
-    type VerificationCode,
 } from '../data/repos/account-repo.js';
 import {createUserId, UserRepo, type UserId} from '../data/repos/user-repo.js';
 import {BOARD_ONBOARDING_TEMPLATE} from '../data/template.js';
@@ -19,7 +18,7 @@ import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_MINUTES,
 } from './../constants.js';
-import {addMinutes, getNow} from './../timestamp.js';
+import {addMinutes, getNow, Timestamp} from './../timestamp.js';
 import {type VerifySignInCodeResponse} from './coordinator.js';
 
 export interface AuthApiState {
@@ -65,8 +64,14 @@ export function createAuthApi() {
                 }
 
                 const verificationCode = await createVerificationCode(crypto);
+                const verificationCodeHash = await crypto.bcryptHash(
+                    verificationCode.code
+                );
                 await accounts.update(account.id, doc => {
-                    doc.verificationCode = verificationCode;
+                    doc.verificationCode = {
+                        codeHash: verificationCodeHash,
+                        expires: verificationCode.expires,
+                    };
                     pushActivityLog(doc);
                 });
 
@@ -117,13 +122,24 @@ export function createAuthApi() {
                     pushActivityLog(x);
                 });
 
-                if (code !== account.verificationCode.code) {
+                const codeMatches = await crypto.bcryptCompare({
+                    hash: account.verificationCode.codeHash,
+                    password: code,
+                });
+
+                if (!codeMatches) {
                     return {type: 'invalid_code'};
                 }
 
                 const verificationCode = await createVerificationCode(crypto);
+                const verificationCodeHash = await crypto.bcryptHash(
+                    verificationCode.code
+                );
                 await accounts.update(account.id, x => {
-                    x.verificationCode = verificationCode;
+                    x.verificationCode = {
+                        codeHash: verificationCodeHash,
+                        expires: verificationCode.expires,
+                    };
                 });
 
                 return {
@@ -139,7 +155,7 @@ export type AuthApi = ReturnType<typeof createAuthApi>;
 
 export async function createVerificationCode(
     crypto: CryptoProvider
-): Promise<VerificationCode> {
+): Promise<{code: string; expires: Timestamp}> {
     let digits: number[];
 
     do {
@@ -210,6 +226,11 @@ export async function getAccount(params: {
     const now = getNow();
     const userId = createUserId();
 
+    const verificationCode = await createVerificationCode(params.crypto);
+    const verificationCodeHash = await params.crypto.bcryptHash(
+        verificationCode.code
+    );
+
     const [account] = await whenAll([
         params.accounts.create({
             id: createAccountId(),
@@ -217,7 +238,10 @@ export async function getAccount(params: {
             updatedAt: now,
             email: params.email,
             userId,
-            verificationCode: await createVerificationCode(params.crypto),
+            verificationCode: {
+                codeHash: verificationCodeHash,
+                expires: verificationCode.expires,
+            },
             authActivityLog: [],
         }),
         params.users.create({

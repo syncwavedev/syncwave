@@ -17,6 +17,8 @@ export interface JwtProvider {
 
 export interface CryptoProvider {
     randomBytes(length: number): Promise<Uint8Array>;
+    bcryptHash(password: string): Promise<string>;
+    bcryptCompare(params: {hash: string; password: string}): Promise<boolean>;
 }
 
 export interface EmailMessage {

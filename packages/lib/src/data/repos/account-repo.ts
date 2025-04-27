@@ -31,7 +31,7 @@ export class EmailTakenAccountRepoError extends BusinessError {}
 
 export function VerificationCode() {
     return Type.Object({
-        code: Type.String(),
+        codeHash: Type.String(),
         expires: Timestamp(),
     });
 }

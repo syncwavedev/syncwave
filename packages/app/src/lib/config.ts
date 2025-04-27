@@ -1,6 +1,9 @@
+import type {SelfHostedClientConfig} from 'syncwave';
+
 const PUBLIC_STAGE = import.meta.env.VITE_PUBLIC_STAGE;
 
 export interface AppConfig {
+    passwordsEnabled: boolean;
     googleClientId: string | undefined;
     apiUrl: string;
     uiUrl: string;
@@ -20,6 +23,7 @@ export const appConfig: AppConfig = (() => {
             uiUrl,
             serverWsUrl: 'ws://localhost:4567',
             stage: PUBLIC_STAGE,
+            passwordsEnabled: true,
         };
     } else if (PUBLIC_STAGE === 'dev') {
         return {
@@ -29,6 +33,7 @@ export const appConfig: AppConfig = (() => {
             uiUrl,
             serverWsUrl: 'wss://api-dev.syncwave.dev',
             stage: PUBLIC_STAGE,
+            passwordsEnabled: false,
         };
     } else if (PUBLIC_STAGE === 'prod') {
         return {
@@ -38,6 +43,7 @@ export const appConfig: AppConfig = (() => {
             uiUrl,
             serverWsUrl: 'wss://api.syncwave.dev',
             stage: PUBLIC_STAGE,
+            passwordsEnabled: false,
         };
     } else if (PUBLIC_STAGE === 'dev_self') {
         const origin = 'https://self.syncwave.dev';
@@ -48,16 +54,20 @@ export const appConfig: AppConfig = (() => {
             uiUrl,
             googleClientId:
                 '848724615154-dt9ejfs9rfu1vfhkvlk19pg6rbvnue9u.apps.googleusercontent.com',
+            passwordsEnabled: true,
         };
     } else if (PUBLIC_STAGE === 'self') {
+        const serverConfig: SelfHostedClientConfig = (
+            window as unknown as Record<string, SelfHostedClientConfig>
+        ).SELF_HOSTED_CONFIG;
+
         return {
             serverWsUrl: window.location.origin,
             apiUrl: window.location.origin + '/api',
             uiUrl,
             stage: PUBLIC_STAGE,
-            googleClientId: (
-                window as unknown as Record<string, string | undefined>
-            ).CONFIG_GOOGLE_CLIENT_ID,
+            googleClientId: serverConfig.googleClientId,
+            passwordsEnabled: serverConfig.passwordsEnabled,
         };
     } else {
         throw new Error(`unknown stage: ${PUBLIC_STAGE}`);

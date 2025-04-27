@@ -66,7 +66,8 @@ export type ErrorCode =
     | 'unknown'
     | 'member_exists'
     | 'last_owner'
-    | 'invalid_invite_token';
+    | 'invalid_invite_token'
+    | 'password_auth_disabled';
 
 export class BusinessError extends AppError {
     constructor(

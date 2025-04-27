@@ -9,7 +9,6 @@ import {
     MsgpackCodec,
     PersistentConnection,
 } from 'syncwave';
-import {NodeCryptoProvider} from 'syncwave/node-crypto-provider.js';
 import {WsTransportClient} from '../../app/src/ws-transport-client.js';
 
 const client = new CoordinatorClient(
@@ -22,14 +21,13 @@ const client = new CoordinatorClient(
     process.env.JWT_TOKEN
 );
 
-const crypto = NodeCryptoProvider;
-
 async function main() {
-    const hash = await crypto.bcryptHash('123456');
-    console.log(
-        'result',
-        await crypto.bcryptCompare({hash, password: '1234456'})
-    );
+    const result = await client.rpc.signIn({
+        email: 'test-3password@gmail.com',
+        password: '123',
+    });
+
+    console.log(result);
 }
 
 catchConnectionClosed(main()).finally(() => {

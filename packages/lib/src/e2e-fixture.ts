@@ -37,6 +37,7 @@ export class E2eFixture {
             objectStore: new MemObjectStore(),
             hub: new MemHub(),
             uiUrl: 'http://localhost:3000',
+            passwordsEnabled: true,
         });
 
         drop(coordinator.launch());

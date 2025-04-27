@@ -16,13 +16,14 @@ describe('AccountRepo', () => {
     let authApi: ReturnType<typeof createAuthApi>;
 
     beforeEach(() => {
-        data = new DataLayer(
-            new TupleStore(new MemMvccStore()),
-            new MemHub(),
-            NodeCryptoProvider,
-            new MemEmailProvider(),
-            'https://example.com/'
-        );
+        data = new DataLayer({
+            kv: new TupleStore(new MemMvccStore()),
+            hub: new MemHub(),
+            crypto: NodeCryptoProvider,
+            email: new MemEmailProvider(),
+            uiUrl: 'https://example.com/',
+            passwordsEnabled: true,
+        });
 
         authApi = createAuthApi();
     });

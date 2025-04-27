@@ -48,6 +48,7 @@ export function Account() {
             email: Type.String(),
             authActivityLog: Type.Array(Timestamp()),
             verificationCode: VerificationCode(),
+            passwordHash: Type.Optional(Type.String()),
         }),
     ]);
 }

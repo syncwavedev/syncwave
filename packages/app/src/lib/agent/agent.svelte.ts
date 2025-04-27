@@ -141,7 +141,7 @@ export class Agent {
         );
         this.crdtManager = new CrdtManager(this.rpc);
 
-        // this.ping();
+        this.ping();
     }
 
     private async ping() {
@@ -220,6 +220,26 @@ export class Agent {
 
     getDemoData() {
         return this.rpc.createDemoBoard({});
+    }
+
+    // use config.passwordsEnabled to conditionally render UI
+    async register(params: {
+        email: string;
+        fullName: string;
+        password: string;
+    }) {
+        return await this.rpc.register({
+            email: params.email,
+            fullName: params.fullName,
+            password: params.password,
+        });
+    }
+
+    async signIn(params: {email: string; password: string}) {
+        return await this.rpc.signIn({
+            email: params.email,
+            password: params.password,
+        });
     }
 
     handleCardMouseEnter(boardId: BoardId, cardId: CardId) {

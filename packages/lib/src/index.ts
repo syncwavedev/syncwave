@@ -42,6 +42,7 @@ export * from './logger.js';
 export * from './mutex.js';
 export * from './richtext.js';
 export * from './rw-lock.js';
+export * from './self-hosted-client-config.js';
 export * from './stream.js';
 export * from './subject.js';
 export * from './timestamp.js';

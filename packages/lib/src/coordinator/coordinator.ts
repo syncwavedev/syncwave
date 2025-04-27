@@ -28,6 +28,7 @@ export interface CoordinatorServerOptions {
     objectStore: ObjectStore;
     hub: Hub;
     uiUrl: string;
+    passwordsEnabled: boolean;
 }
 
 export class CoordinatorServer {
@@ -35,13 +36,14 @@ export class CoordinatorServer {
     private readonly rpcServer: RpcServer<CoordinatorApiState>;
 
     constructor(private readonly options: CoordinatorServerOptions) {
-        this.dataLayer = new DataLayer(
-            this.options.kv,
-            this.options.hub,
-            this.options.cryptoProvider,
-            options.emailProvider,
-            options.uiUrl
-        );
+        this.dataLayer = new DataLayer({
+            kv: this.options.kv,
+            hub: this.options.hub,
+            crypto: this.options.cryptoProvider,
+            email: options.emailProvider,
+            uiUrl: options.uiUrl,
+            passwordsEnabled: options.passwordsEnabled,
+        });
         const authenticator = new Authenticator(
             AUTHENTICATOR_PRINCIPAL_CACHE_SIZE,
             this.options.jwtProvider

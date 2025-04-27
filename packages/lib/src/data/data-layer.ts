@@ -44,6 +44,7 @@ import {User, type UserId, UserRepo} from './repos/user-repo.js';
 
 export interface Config {
     readonly uiUrl: string;
+    readonly passwordsEnabled: boolean;
 }
 
 export interface DataTx {
@@ -225,16 +226,33 @@ export type Transact = <T>(fn: (tx: DataTx) => Promise<T>) => Promise<T>;
 
 const mainEventStoreId = 'main';
 
+export interface DataLayerOptions {
+    kv: KvStore<Tuple, Uint8Array>;
+    hub: Hub;
+    crypto: CryptoProvider;
+    email: EmailProvider;
+    uiUrl: string;
+    passwordsEnabled: boolean;
+}
+
 export class DataLayer {
     public readonly esReader: EventStoreReader<ChangeEvent>;
 
-    constructor(
-        private readonly kv: KvStore<Tuple, Uint8Array>,
-        private readonly hub: Hub,
-        private readonly crypto: CryptoProvider,
-        private readonly email: EmailProvider,
-        private readonly uiUrl: string
-    ) {
+    private readonly kv: KvStore<Tuple, Uint8Array>;
+    private readonly hub: Hub;
+    private readonly crypto: CryptoProvider;
+    private readonly email: EmailProvider;
+    private readonly uiUrl: string;
+    private readonly passwordsEnabled: boolean;
+
+    constructor(options: DataLayerOptions) {
+        this.kv = options.kv;
+        this.hub = options.hub;
+        this.crypto = options.crypto;
+        this.email = options.email;
+        this.uiUrl = options.uiUrl;
+        this.passwordsEnabled = options.passwordsEnabled;
+
         this.esReader = new EventStoreReader(
             fn =>
                 this.transact(
@@ -246,7 +264,7 @@ export class DataLayer {
                     data => fn(data.events)
                 ),
             mainEventStoreId,
-            hub
+            options.hub
         );
     }
 
@@ -345,6 +363,7 @@ export class DataLayer {
 
             const config: Config = {
                 uiUrl: this.uiUrl,
+                passwordsEnabled: this.passwordsEnabled,
             };
 
             const emailService = new EmailService(

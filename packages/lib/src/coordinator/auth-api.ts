@@ -10,7 +10,7 @@ import {
 } from '../data/repos/account-repo.js';
 import {createUserId, UserRepo, type UserId} from '../data/repos/user-repo.js';
 import {BOARD_ONBOARDING_TEMPLATE} from '../data/template.js';
-import {AppError} from '../errors.js';
+import {AppError, BusinessError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {whenAll} from '../utils.js';
 import {createUuidV4} from '../uuid.js';
@@ -36,6 +36,84 @@ export function createAuthApi() {
             res: Type.Object({}),
             handle: async () => {
                 return {};
+            },
+        }),
+        register: handler({
+            req: Type.Object({
+                email: Type.String(),
+                password: Type.String(),
+                fullName: Type.String(),
+            }),
+            res: Type.Union([
+                Type.Object({type: Type.Literal('account_email_taken')}),
+                Type.Object({type: Type.Literal('success')}),
+            ]),
+            handle: async (
+                {tx: {accounts, users, config}, crypto, boardService},
+                {email, password, fullName}
+            ) => {
+                if (!config.passwordsEnabled) {
+                    throw new BusinessError(
+                        'Passwords auth is disabled',
+                        'password_auth_disabled'
+                    );
+                }
+
+                const existingAccount = await accounts.getByEmail(email);
+                if (existingAccount) {
+                    return {type: 'account_email_taken'};
+                }
+
+                await getAccount({
+                    accounts,
+                    boardService,
+                    crypto,
+                    email,
+                    fullName,
+                    users,
+                    passwordHash: await crypto.bcryptHash(password),
+                });
+
+                return {type: 'success'};
+            },
+        }),
+        signIn: handler({
+            req: Type.Object({
+                email: Type.String(),
+                password: Type.String(),
+            }),
+            res: Type.Union([
+                Type.Object({
+                    type: Type.Literal('success'),
+                    token: Type.String(),
+                }),
+                Type.Object({type: Type.Literal('invalid_password')}),
+            ]),
+            handle: async (
+                {tx: {accounts}, crypto, jwt},
+                {email, password}
+            ) => {
+                const account = await accounts.getByEmail(email);
+                if (!account) {
+                    return {type: 'invalid_password' as const};
+                }
+
+                if (!account.passwordHash) {
+                    return {type: 'invalid_password' as const};
+                }
+
+                const passwordMatches = await crypto.bcryptCompare({
+                    hash: account.passwordHash,
+                    password,
+                });
+                if (!passwordMatches) {
+                    return {type: 'invalid_password' as const};
+                }
+
+                return {
+                    type: 'success' as const,
+                    token: await signJwtToken(jwt, account),
+                };
             },
         }),
         sendSignInEmail: handler({
@@ -217,6 +295,7 @@ export async function getAccount(params: {
     boardService: BoardService;
     skipBoardCreation?: boolean;
     isDemo?: boolean;
+    passwordHash?: string;
 }): Promise<Account> {
     const existingAccount = await params.accounts.getByEmail(params.email);
     if (existingAccount) {
@@ -243,6 +322,7 @@ export async function getAccount(params: {
                 expires: verificationCode.expires,
             },
             authActivityLog: [],
+            passwordHash: params.passwordHash,
         }),
         params.users.create({
             id: userId,

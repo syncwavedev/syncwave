@@ -64,6 +64,7 @@ interface Options {
     launchCluster: boolean;
     appPort: number;
     metricsPort: number;
+    passwordsEnabled: boolean;
 }
 
 function getGoogleOptions(apiUrl: string): GoogleOptions | undefined {
@@ -161,6 +162,7 @@ async function getOptions(): Promise<Options> {
         launchCluster: stage !== 'local' && stage !== 'self',
         appPort: stage === 'self' ? 80 : 4567,
         metricsPort: 5678,
+        passwordsEnabled: stage === 'local' || stage === 'self',
     };
 }
 
@@ -222,7 +224,7 @@ async function getKvStore(
     };
 }
 
-async function upgradeKVStore({store, jwtSecret}: Options) {
+async function upgradeKVStore({store}: Options) {
     const versionKey = ['version'];
     log.info({msg: 'Retrieving KV store version...'});
     let version = await store.transact(async tx => {
@@ -313,13 +315,14 @@ async function upgradeKVStore({store, jwtSecret}: Options) {
         version = 3;
     }
 
-    const dataLayer = new DataLayer(
-        store,
-        new MemHub(),
-        NodeCryptoProvider,
-        options.emailProvider,
-        options.uiUrl
-    );
+    const dataLayer = new DataLayer({
+        kv: store,
+        hub: new MemHub(),
+        crypto: NodeCryptoProvider,
+        email: options.emailProvider,
+        uiUrl: options.uiUrl,
+        passwordsEnabled: options.passwordsEnabled,
+    });
 
     await dataLayer.upgrade();
 }
@@ -350,6 +353,7 @@ async function launchApp(options: Options) {
         const uiRouter = await createUiRouter({
             staticPath: options.uiPath,
             googleClientId: options.google?.clientId,
+            passwordsEnabled: options.passwordsEnabled,
         });
         app.use(uiRouter.routes()).use(uiRouter.allowedMethods());
     }
@@ -368,6 +372,7 @@ async function launchApp(options: Options) {
         objectStore: options.objectStore,
         hub: options.hub,
         uiUrl: options.uiUrl,
+        passwordsEnabled: options.passwordsEnabled,
     });
 
     async function shutdown() {

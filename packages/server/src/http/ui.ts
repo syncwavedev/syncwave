@@ -2,13 +2,19 @@ import Router from '@koa/router';
 import fs from 'fs/promises';
 import type {Context as KoaContext} from 'koa';
 import serveStatic from 'koa-static';
-import {createUuidV4} from 'syncwave';
+import {createUuidV4, type SelfHostedClientConfig} from 'syncwave';
 
 export async function createUiRouter(options: {
     staticPath: string;
     googleClientId: string | undefined;
+    passwordsEnabled: boolean;
 }) {
     const router = new Router();
+
+    const clientConfig: SelfHostedClientConfig = {
+        googleClientId: options.googleClientId,
+        passwordsEnabled: options.passwordsEnabled,
+    };
 
     const indexHtml = await fs
         .readFile(`${options.staticPath}/index.html`, 'utf-8')
@@ -17,7 +23,7 @@ export async function createUiRouter(options: {
                 '</head>',
                 `
                 <script>
-                    window.CONFIG_GOOGLE_CLIENT_ID = ${JSON.stringify(options.googleClientId)};
+                    window.SELF_HOSTED_CONFIG = ${JSON.stringify(clientConfig)};
                 </script></head>`
             );
         });

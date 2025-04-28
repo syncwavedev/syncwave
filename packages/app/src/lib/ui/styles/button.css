@@ -33,5 +33,5 @@
 }
 
 .btn--ghost {
-    @apply p-1 rounded-sm gap-1.5 flex items-center hover:bg-material-base-hover hover:text-ink  disabled:text-ink-disabled -mx-1;
+    @apply px-1 h-[2em] rounded-sm gap-1.5 flex items-center hover:bg-material-base-hover hover:text-ink  disabled:text-ink-disabled -mx-1;
 }

@@ -139,13 +139,16 @@
                     {#if card.counter}
                         <HashtagIcon />{card.counter}
                     {/if}
-                    {#if card.hoverUsers.length > 0}
-                        hovers {card.hoverUsers.map(x => x.fullName).join(', ')}
-                    {/if}
                     {#if card.viewerUsers.length > 0}
-                        viewers {card.viewerUsers
-                            .map(x => x.fullName)
-                            .join(', ')}
+                        <div class="ml-2 flex avatar-sm">
+                            {#each card.viewerUsers as user (user.id)}
+                                <Avatar
+                                    userId={user.id}
+                                    name={`${user.fullName}`}
+                                    class="outline-gray-75 dark:outline-gray-825 outline-2"
+                                />
+                            {/each}
+                        </div>
                     {/if}
                     {#if todoStats.total > 0}
                         <span class="text-ink-detail ml-auto text-sm">

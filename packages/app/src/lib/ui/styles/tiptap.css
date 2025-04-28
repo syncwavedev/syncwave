@@ -88,8 +88,8 @@
                     -webkit-appearance: none;
                     -moz-appearance: none;
                     appearance: none;
-                    width: 1.25em;
-                    height: 1.25em;
+                    width: 1.15em;
+                    height: 1.15em;
                     border: 1px solid var(--color-divider-object);
                     border-radius: 50%;
                     background-color: transparent;

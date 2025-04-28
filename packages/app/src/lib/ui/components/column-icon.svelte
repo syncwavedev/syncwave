@@ -7,7 +7,7 @@
 
     const getActiveColor = () => {
         if (active === total) return 'text-green-500';
-        if (active > 0) return 'text-blue-500';
+        if (active > 0) return 'text-primary';
         return 'text-[var(--color-ink-detail)]';
     };
     const activeColorClass = getActiveColor();

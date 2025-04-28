@@ -18,7 +18,7 @@ export class EmailService {
                             We noticed a request to sign into your Syncwave account.<br />
                             If this wasn't you, no worries—just ignore this email.<br />
                             <br />
-                            Your one-time code is: <strong>${params.code}</strong><br />
+                            Your one-time code is (expires in 10 minutes): <strong>${params.code}</strong><br />
                             <br />
                             Have a great day!<br />
                             The Syncwave Team
@@ -28,7 +28,7 @@ export class EmailService {
             
 We noticed a request to sign into your Syncwave account. If this wasn't you, no worries—just ignore this email.
 
-Your one-time code is: ${params.code}
+Your one-time code is (expires in 10 minutes): ${params.code}
 
 Have a great day!
 The Syncwave Team`,

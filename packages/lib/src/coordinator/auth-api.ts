@@ -13,10 +13,10 @@ import {BOARD_ONBOARDING_TEMPLATE} from '../data/template.js';
 import {AppError, BusinessError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {whenAll} from '../utils.js';
-import {createUuidV4} from '../uuid.js';
 import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_MINUTES,
+    AUTH_CODE_LENGTH,
 } from './../constants.js';
 import {addMinutes, getNow, Timestamp} from './../timestamp.js';
 import {type VerifySignInCodeResponse} from './coordinator.js';
@@ -237,15 +237,15 @@ export async function createVerificationCode(
     let digits: number[];
 
     do {
-        digits = Array.from(await crypto.randomBytes(16))
+        digits = Array.from(await crypto.randomBytes(AUTH_CODE_LENGTH * 2))
             .filter(x => x < 250)
-            .slice(0, 6)
+            .slice(0, AUTH_CODE_LENGTH)
             .map(x => x % 10);
-    } while (digits.length < 6);
+    } while (digits.length < AUTH_CODE_LENGTH);
 
     return {
         code: digits.join(''),
-        expires: addMinutes(getNow(), 15),
+        expires: addMinutes(getNow(), 10),
     };
 }
 
@@ -340,7 +340,6 @@ export async function getAccount(params: {
             authorId: userId,
             name: DEFAULT_BOARD_NAME,
             members: [],
-            key: createUuidV4(),
             template: BOARD_ONBOARDING_TEMPLATE,
         });
     }

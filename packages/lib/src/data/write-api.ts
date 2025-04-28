@@ -8,7 +8,7 @@ import {BusinessError} from '../errors.js';
 import {getNow} from '../timestamp.js';
 import {createApi, handler, type InferRpcClient} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
-import {createUuidV4, Uuid} from '../uuid.js';
+import {Uuid} from '../uuid.js';
 import type {BoardService} from './board-service.js';
 import {type DataTx} from './data-layer.js';
 import {AttachmentDto, toAttachmentDto} from './dto.js';
@@ -511,7 +511,6 @@ export function createWriteApi() {
                 return await st.tx.boardService.createBoard({
                     authorId: st.ps.ensureAuthenticated(),
                     name: req.name,
-                    key: createUuidV4(),
                     members: req.members,
                     boardId: req.boardId,
                     template: NEW_BOARD_TEMPLATE,
@@ -712,7 +711,6 @@ export function createWriteApi() {
                     authorId: account.userId,
                     members: [],
                     name: 'Demo Board',
-                    key: createUuidV4(),
                     template: BOARD_DEMO_TEMPLATE,
                 });
 

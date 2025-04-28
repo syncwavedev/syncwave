@@ -3,6 +3,7 @@ import {createRichtext} from '../crdt/richtext.js';
 import {htmlToYFragment} from '../richtext.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import {whenAll} from '../utils.js';
+import {createUuidV4} from '../uuid.js';
 import type {EmailService} from './email-service.js';
 import type {CryptoProvider} from './infrastructure.js';
 import {createJoinCode} from './join-code.js';
@@ -63,12 +64,19 @@ export class BoardService {
     async createBoard(params: {
         authorId: UserId;
         name: string;
-        key: string;
         members: string[];
         template: BoardTemplate;
         boardId?: BoardId;
     }): Promise<Board> {
         const now = getNow();
+
+        let boardKey: string;
+        let boardExists = false;
+        do {
+            boardKey = createUuidV4().replaceAll('-', '').slice(-8);
+            boardKey = boardKey.slice(0, 4) + '-' + boardKey.slice(4);
+            boardExists = await this.boards.getByKey(boardKey).then(x => !!x);
+        } while (boardExists);
 
         const board = await this.boards.create({
             id: params.boardId ?? createBoardId(),
@@ -76,7 +84,7 @@ export class BoardService {
             updatedAt: now,
             name: params.name,
             authorId: params.authorId,
-            key: params.key.toUpperCase(),
+            key: boardKey,
             joinCode: await createJoinCode(this.crypto),
             joinRole: 'admin',
         });
@@ -121,7 +129,7 @@ export class BoardService {
                 this.emailService.scheduleInviteEmail({
                     email: member,
                     boardName: params.name,
-                    boardKey: params.key,
+                    boardKey: boardKey,
                 });
             }),
         ]);
@@ -167,7 +175,7 @@ export class BoardService {
                     boardId: board.id,
                     id: columnId,
                     name: column.name,
-                    position: idx,
+                    position: idx + Math.random() / 2,
                     updatedAt: this.timestamp,
                     createdAt: this.timestamp,
                 });
@@ -205,7 +213,7 @@ export class BoardService {
             text: createRichtext(htmlToYFragment(params.card.html)),
             id: cardId,
             counter: params.counter,
-            position: params.cardIndex,
+            position: params.cardIndex + Math.random() + 1,
             updatedAt: this.timestamp,
         });
 

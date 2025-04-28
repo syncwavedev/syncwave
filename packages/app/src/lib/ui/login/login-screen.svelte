@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {AUTH_CODE_LENGTH} from 'syncwave';
     import {getAgent} from '../../agent/agent.svelte';
     import {appConfig} from '../../config.js';
     import router from '../../router';
@@ -189,9 +190,8 @@
         {:else}
             <h1 class="mb-1 font-extrabold text-2xl">Check your email</h1>
             <p class="text-ink-detail mb-6">
-                Enter the 6-digit code sent to <span class="font-medium"
-                    >{email}</span
-                >
+                Enter the {AUTH_CODE_LENGTH}-digit code sent to
+                <span class="font-medium">{email}</span>
             </p>
             <form onsubmit={onCodeSubmit} class="space-y-6">
                 <div class="mx-auto">
@@ -203,13 +203,13 @@
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
-                        maxlength={6}
+                        maxlength={AUTH_CODE_LENGTH}
                         id="code-input"
                         bind:value={code}
                         class="input input--block form-input text-center"
                         autoFocus
                         disabled={isLoading}
-                        placeholder="••••••"
+                        placeholder={'•'.repeat(AUTH_CODE_LENGTH)}
                     />
                 </div>
                 <button

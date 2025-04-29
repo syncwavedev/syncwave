@@ -129,7 +129,7 @@
                 data-active={active || undefined}
             >
                 {#if !card.isDraft}
-                    <span class="truncate">
+                    <span class="truncate font-medium">
                         {preview}
                     </span>
                 {/if}

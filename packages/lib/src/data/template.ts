@@ -279,6 +279,28 @@ export const BOARD_DEMO_TEMPLATE: BoardTemplate = {
             },
           ],
         },
+        {
+          html: '<p>Design Privacy-Preserving Analytics</p><p>&nbsp;</p><p>Create optional analytics system that respects user privacy while providing useful development insights.</p><p>&nbsp;</p><p>Requirements:</p><ul data-type="taskList"><li data-checked="false" data-type="taskItem"><label><input type="checkbox" /></label><div><p>Make all data collection opt-in only</p></div></li><li data-checked="false" data-type="taskItem"><label><input type="checkbox" /></label><div><p>Implement local data aggregation before sending</p></div></li><li data-checked="false" data-type="taskItem"><label><input type="checkbox" /></label><div><p>Create transparent reporting of what\'s collected</p></div></li><li data-checked="false" data-type="taskItem"><label><input type="checkbox" /></label><div><p>Provide offline submission option</p></div></li></ul><p>&nbsp;</p><p>We need to understand usage patterns to improve the app, but must do so while maintaining our commitment to privacy and local-first principles.</p>',
+          messages: [
+            {
+              html: "<p>Sarah: This is tricky but important. We should show users exactly what data would be sent before they agree. The most privacy-preserving analytics is no analytics, but we'd miss valuable improvement opportunities.</p>",
+            },
+            {
+              html: "<p>Rob: Agreed. Let's design it so data is aggregated locally first, stripping any potentially identifying information. Users should be able to review the exact payload before it's sent. Trust requires transparency.</p>",
+            },
+          ],
+        },
+        {
+          html: '<p>Optimize Model Performance</p><p>&nbsp;</p><p>Implement advanced optimizations to improve inference speed on consumer hardware. Focus on real-world performance improvements.</p><p>&nbsp;</p><p>Approaches to explore:</p><ul data-type="taskList"><li data-checked="false" data-type="taskItem"><label><input type="checkbox" /></label><div><p>Explore SIMD instruction utilization</p></div></li><li data-checked="false" data-type="taskItem"><label><input type="checkbox" /></label><div><p>Implement adaptive batch sizes</p></div></li><li data-checked="false" data-type="taskItem"><label><input type="checkbox" /></label><div><p>Research memory access patterns</p></div></li><li data-checked="false" data-type="taskItem"><label><input type="checkbox" /></label><div><p>Create hardware-specific optimizations</p></div></li></ul><p>&nbsp;</p><p>Performance directly impacts user experience. Every speed improvement expands the practical utility of local AI and makes the tradeoff versus cloud solutions more compelling.</p>',
+          messages: [
+            {
+              html: "<p>Jen: I've been benchmarking some approaches. Early results suggest we can get another 15-20% speedup with better use of SIMD instructions. The challenge is doing this while maintaining compatibility across various CPU architectures.</p>",
+            },
+            {
+              html: "<p>Tom: Let's prioritize optimizations that benefit older hardware the most. Cloud AI has inherent advantages for cutting-edge use cases, but we can win by making AI accessible on hardware people already own.</p>",
+            },
+          ],
+        },
       ],
     },
     {
@@ -440,6 +462,76 @@ export const BOARD_DEMO_TEMPLATE: BoardTemplate = {
             },
             {
               html: "<p>Rob: There's a fascinating tension between our technical users who want to see and control everything, and mainstream users who want simplicity. But both groups united around wanting to know their data was staying local. Perhaps that's our solution - make the privacy aspects completely transparent while keeping the technical complexity progressive.</p>",
+            },
+          ],
+        },
+        {
+          html: '<p>Develop Installation Process</p><p>&nbsp;</p><p>Create a streamlined installation experience to minimize friction for new users. Design for multiple platforms with consistent experience.</p><p>&nbsp;</p><p>Requirements:</p><ul data-type="taskList"><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Create Windows installer package</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Build macOS application bundle</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Package for Linux distributions</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Implement dependency checking</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Add first-run experience</p></div></li></ul><p>&nbsp;</p><p>Update: Installation packages complete for all platforms! Testing showed average setup time under 3 minutes. The first-run wizard guides users through model selection and download, significantly reducing confusion.</p>',
+          messages: [
+            {
+              html: "<p>Jen: Installers for all three platforms are ready. I'm particularly proud of the dependency checker - it elegantly handles edge cases like missing libraries on Linux or security settings on macOS. Installation difficulties are often where we lose non-technical users.</p>",
+            },
+            {
+              html: "<p>Tom: The first-run experience is excellent. It's remarkable how much difference it makes to have the app immediately suggest a small model download rather than presenting users with an empty state and expecting them to figure it out.</p>",
+            },
+            {
+              html: "<p>Rob: Great work! Installation friction was our biggest concern from user research, and this addresses it directly. I especially like how we've made the entire process work offline after the initial download - aligns perfectly with our local-first principles.</p>",
+            },
+          ],
+        },
+        {
+          html: '<p>Create Resource Monitoring Dashboard</p><p>&nbsp;</p><p>Develop an interface for users to understand and control system resource usage during model operation. Vital for transparency and performance management.</p><p>&nbsp;</p><p>Dashboard elements:</p><ul data-type="taskList"><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Real-time memory usage visualization</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>CPU utilization tracking</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Batch size adjustment controls</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Thread allocation settings</p></div></li></ul><p>&nbsp;</p><p>Update: Dashboard completed with an elegant, minimal design that conveys vital information without overwhelming users. The visualizations help users understand resource tradeoffs and optimize settings for their specific hardware.</p>',
+          messages: [
+            {
+              html: '<p>Sarah: The resource dashboard is ready! I tried to strike a balance between technical accuracy and visual clarity. Even non-technical users can understand the basic indicators, while power users get detailed metrics if they want them.</p>',
+            },
+            {
+              html: "<p>Jen: This is exactly what we needed. Being transparent about resource usage builds trust - users can see exactly what's happening on their system. The auto-adjust feature that optimizes settings based on available resources is particularly clever.</p>",
+            },
+            {
+              html: "<p>Rob: I've been testing this on various machines, and it's incredibly useful. When the model slows down, users can see why and make informed decisions about adjustments instead of just experiencing unexplained lag. Converting technical metrics into actionable insights is the key innovation here.</p>",
+            },
+          ],
+        },
+        {
+          html: '<p>Implement Chat History System</p><p>&nbsp;</p><p>Develop functionality to reliably save, search, and restore conversation history. Critical for long-term value and user experience.</p><p>&nbsp;</p><p>Features implemented:</p><ul data-type="taskList"><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Automatic conversation saving</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Search across all chat history</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Conversation categorization</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Selective deletion options</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Export functionality</p></div></li></ul><p>&nbsp;</p><p>Update: Chat history system complete with robust SQLite backend. The implementation maintains full text search capabilities while keeping queries fast even with thousands of stored conversations.</p>',
+          messages: [
+            {
+              html: "<p>Tom: The chat history system is done! The search function works remarkably well - we're using SQLite FTS for full-text indexing which gives us both speed and relevance ranking. Being able to find past conversations transforms the utility of the app.</p>",
+            },
+            {
+              html: "<p>Rob: I'm impressed with how we've balanced completeness with simplicity. All data is stored locally in standard formats, which reinforces our approach of giving users genuine ownership. The ability to categorize conversations emerged as a crucial organizing principle.</p>",
+            },
+            {
+              html: "<p>Sarah: The export options make me particularly happy. Users can take their conversation history anywhere - as plain text, markdown, JSON, or HTML. It's a small feature but represents our philosophy that users should never be locked in to our specific implementation.</p>",
+            },
+          ],
+        },
+        {
+          html: '<p>Complete Cross-Platform Testing</p><p>&nbsp;</p><p>Conduct comprehensive testing across all target platforms to ensure consistent behavior and performance. Essential for quality assurance before broader release.</p><p>&nbsp;</p><p>Testing scope:</p><ul data-type="taskList"><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Verify Windows compatibility (10/11)</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Test on macOS (Intel and Apple Silicon)</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Validate Linux distributions (Ubuntu, Fedora)</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Check different hardware configurations</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Test accessibility compliance</p></div></li></ul><p>&nbsp;</p><p>Update: Testing complete across all platforms! Found and fixed several platform-specific issues. Performance is consistent with expected variations based on hardware capabilities. Accessibility testing revealed improvement areas that have been addressed.</p>',
+          messages: [
+            {
+              html: '<p>Jen: The cross-platform testing is complete. Most interesting finding: Apple Silicon Macs perform exceptionally well, often matching much more expensive hardware. The optimization we did for ARM architectures really paid off.</p>',
+            },
+            {
+              html: '<p>Tom: I was surprised by how well it runs on Linux. The memory management improvements we made for constrained environments have unexpected benefits even on high-end systems - everything just feels more responsive and stable.</p>',
+            },
+            {
+              html: "<p>Sarah: The accessibility testing was eye-opening. We found several issues with screen reader compatibility that weren't obvious to us. The fixes were straightforward once identified, but this reinforces why dedicated testing across different user needs is so important.</p>",
+            },
+          ],
+        },
+        {
+          html: '<p>Set Up Development Environment</p><p>&nbsp;</p><p>Create standardized development environment to streamline onboarding for new contributors. Documentation and automation are key for maintainable development processes.</p><p>&nbsp;</p><p>Implementation:</p><ul data-type="taskList"><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Develop containerized dev environment</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Create comprehensive setup guide</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Configure dev tools and linters</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Set up test data and fixtures</p></div></li><li data-checked="true" data-type="taskItem"><label><input checked="checked" type="checkbox" /></label><div><p>Document coding standards</p></div></li></ul><p>&nbsp;</p><p>Update: Development environment complete with Docker configuration for consistent setup across all platforms. The onboarding documentation enables new contributors to have a working environment in under 15 minutes.</p>',
+          messages: [
+            {
+              html: "<p>Rob: Just finished documenting the development environment. We've created a Docker setup that guarantees consistency regardless of host OS. This solves the 'works on my machine' problem that often plagues cross-platform development.</p>",
+            },
+            {
+              html: '<p>Jen: The containerized approach is excellent. I was able to completely recreate my development environment on a new machine in minutes instead of hours. This will be particularly valuable as we bring in new contributors.</p>',
+            },
+            {
+              html: "<p>Tom: The test fixtures are comprehensive too. Having consistent test data means we're all working against the same baseline, which helps prevent subtle bugs when integrating work from different contributors. It's these foundational elements that often determine a project's long-term success.</p>",
             },
           ],
         },

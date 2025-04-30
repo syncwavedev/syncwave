@@ -12,7 +12,7 @@
 
 <div class="p-3" {onsubmit}>
     <!-- svelte-ignore a11y_autofocus -->
-    <form class="h-full w-full">
+    <div class="h-full w-full">
         <input
             autocomplete="off"
             type="text"
@@ -21,6 +21,6 @@
             {placeholder}
             autofocus
         />
-    </form>
+    </div>
 </div>
 <hr class="material-elevated" />

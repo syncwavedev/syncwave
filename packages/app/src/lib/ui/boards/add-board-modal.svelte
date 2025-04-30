@@ -10,28 +10,42 @@
 
     const agent = getAgent();
 
-    async function onCreateBoard() {
+    let isSubmitting = $state(false);
+
+    async function onCreateBoard(event: Event) {
+        event.preventDefault();
+
         if (name.length < 1) {
             return;
         }
 
-        const board = await agent.createBoard({name: name, memberEmails: []});
-        modalManager.close();
-        router.route(`/b/${board.key}`);
+        try {
+            isSubmitting = true;
+
+            const board = await agent.createBoard({
+                name: name,
+                memberEmails: [],
+            });
+            modalManager.close();
+            router.route(`/b/${board.key}`);
+        } finally {
+            isSubmitting = false;
+        }
     }
 </script>
 
 <CommandView>
-    <CommandHeader placeholder="Enter board name..." bind:filter={name} />
-    <div class="flex justify-end mr-3 py-2">
-        <button
-            type="submit"
-            class="btn--ghost"
-            onclick={onCreateBoard}
-            disabled={name.length < 1}
-        >
-            <PlusIcon />
-            Create New Board
-        </button>
-    </div>
+    <form onsubmit={onCreateBoard}>
+        <CommandHeader placeholder="Enter board name..." bind:filter={name} />
+        <div class="flex justify-end mr-3 py-2">
+            <button
+                type="submit"
+                class="btn--ghost"
+                disabled={name.length < 1 || isSubmitting}
+            >
+                <PlusIcon />
+                Create New Board
+            </button>
+        </div>
+    </form>
 </CommandView>

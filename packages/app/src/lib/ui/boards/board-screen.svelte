@@ -26,7 +26,6 @@
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
     import EditColumnsModal from './edit-columns-modal.svelte';
-    import DemoBanner from './demo-banner.svelte';
 
     const {
         board,
@@ -250,19 +249,31 @@
                     />
                 {/each}
             </div>
-            <button
-                onclick={() => modalManager.open(boardSettings)}
-                class="btn--icon text-ink-body mr-1 ml-auto"
-            >
-                <EllipsisIcon />
-            </button>
 
-            <button
-                class="btn--icon"
-                onclick={() => modalManager.open(profileSettings)}
-            >
-                <Avatar userId={me.id} name={me.fullName} />
-            </button>
+            {#if !me.isDemo}
+                <div
+                    class="ml-2 text-orange-600 dark:text-orange-400 font-medium"
+                >
+                    Showcase Board
+                </div>
+                <a href="/login" class="ml-auto">
+                    <button class="btn--ghost">Sign In</button>
+                </a>
+            {:else}
+                <button
+                    onclick={() => modalManager.open(boardSettings)}
+                    class="btn--icon text-ink-body mr-1 ml-auto"
+                >
+                    <EllipsisIcon />
+                </button>
+
+                <button
+                    class="btn--icon"
+                    onclick={() => modalManager.open(profileSettings)}
+                >
+                    <Avatar userId={me.id} name={me.fullName} />
+                </button>
+            {/if}
         </div>
         <Scrollable
             orientation="horizontal"
@@ -297,11 +308,6 @@
                 {/each}
             </div>
         </Scrollable>
-        {#if me.isDemo}
-            <div class="absolute left-8 right-8 bottom-12">
-                <DemoBanner />
-            </div>
-        {/if}
         <div class="panel-footer">
             <StatusBar />
         </div>

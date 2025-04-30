@@ -250,7 +250,7 @@
                 {/each}
             </div>
 
-            {#if !me.isDemo}
+            {#if me.isDemo}
                 <div
                     class="ml-2 text-orange-600 dark:text-orange-400 font-medium"
                 >

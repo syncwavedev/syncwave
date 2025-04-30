@@ -541,4 +541,24 @@ export const BOARD_DEMO_TEMPLATE: BoardTemplate = {
 };
 
 export const BOARD_ONBOARDING_TEMPLATE = BOARD_DEMO_TEMPLATE;
-export const NEW_BOARD_TEMPLATE = BOARD_ONBOARDING_TEMPLATE;
+
+export const NEW_BOARD_TEMPLATE = {
+  columns: [
+    {
+      name: 'Backlog',
+      cards: [],
+    },
+    {
+      name: 'Next Week',
+      cards: [],
+    },
+    {
+      name: 'In Progress',
+      cards: [],
+    },
+    {
+      name: 'Done',
+      cards: [],
+    },
+  ],
+};

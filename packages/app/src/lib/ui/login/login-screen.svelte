@@ -5,6 +5,7 @@
     import router from '../../router';
     import {getRpc, getAuthManager} from '../../utils.js';
     import Envelope from '../components/icons/envelope.svelte';
+    import {untrack} from 'svelte';
 
     const googleSignInUrl = (() => {
         if (!appConfig.googleClientId) {
@@ -47,11 +48,60 @@
                     showCodeInput = false;
                 });
                 showCodeInput = true;
+                startCooldown();
             } else {
                 error = result.type;
             }
         } catch (err) {
             console.error('Failed to send sign-in email:', err);
+            error = 'unknown_error';
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    const RESEND_COOLDOWN = 60; // 60 seconds cooldown
+    let remainingCooldown = $state(RESEND_COOLDOWN);
+    let cooldownInterval: number | undefined = $state(undefined);
+
+    function startCooldown() {
+        console.debug('Starting cooldown');
+        remainingCooldown = RESEND_COOLDOWN;
+        clearInterval(cooldownInterval);
+        cooldownInterval = setInterval(() => {
+            remainingCooldown--;
+            if (remainingCooldown <= 0) {
+                clearInterval(cooldownInterval);
+            }
+        }, 1000) as unknown as number;
+    }
+
+    // Start cooldown when component is initialized
+    $effect(() => {
+        if (showCodeInput) {
+            untrack(() => startCooldown());
+            return () => clearInterval(cooldownInterval);
+        }
+
+        return () => {};
+    });
+
+    async function resendCode() {
+        if (isLoading || remainingCooldown > 0) return;
+
+        isLoading = true;
+        error = undefined;
+        try {
+            const result = await agent.sendSignInEmail(email.trim());
+            if (result.type === 'success') {
+                // Reset cooldown timer
+                startCooldown();
+                code = '';
+            } else {
+                error = result.type;
+            }
+        } catch (err) {
+            console.error('Failed to resend sign-in email:', err);
             error = 'unknown_error';
         } finally {
             isLoading = false;
@@ -220,6 +270,7 @@
                 >
                     Verify code and continue
                 </button>
+
                 {#if error}
                     <div id="email-error">
                         <div class="text-ink-error text-center text-sm">
@@ -227,6 +278,23 @@
                         </div>
                     </div>
                 {/if}
+
+                <div class="text-center">
+                    {#if remainingCooldown > 0}
+                        <p class="text-sm text-ink-detail">
+                            Resend code in {remainingCooldown}s
+                        </p>
+                    {:else}
+                        <button
+                            type="button"
+                            class="text-primary text-sm underline cursor-pointer"
+                            onclick={resendCode}
+                            disabled={isLoading}
+                        >
+                            Didn't receive a code? Send again
+                        </button>
+                    {/if}
+                </div>
             </form>
         {/if}
         <div class="mt-8 mx-auto text-ink-detail text-center">

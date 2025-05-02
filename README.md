@@ -100,7 +100,7 @@ Syncwave is open source under the GNU Affero General Public License Version 3 (A
 
 ## Contact
 
-Dmitry Tilyupo - [@tilyupo](https://x.com/dmitrytilyupo) - tilyupo@gmail.com
+Dmitry Tilyupo - tilyupo@gmail.com
 
 Project Link: [https://github.com/syncwavedev/syncwave](https://github.com/syncwavedev/syncwave)
 

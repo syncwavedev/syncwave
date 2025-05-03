@@ -7,6 +7,7 @@
         BoardTreeView,
         CardView,
         ColumnTreeView,
+        MemberView,
         MeView,
     } from '../../agent/view.svelte';
     import CardDetails from './card-details.svelte';
@@ -30,12 +31,14 @@
     const {
         board,
         awareness,
+        boardMeView,
         me,
         counter,
     }: {
         board: BoardTreeView;
         awareness: Awareness;
         me: MeView;
+        boardMeView: MemberView;
         counter?: number;
     } = $props();
 
@@ -326,7 +329,7 @@
                 }}
             >
                 <CardDetails
-                    {me}
+                    me={boardMeView}
                     {awareness}
                     card={selectedCard}
                     {columnOptions}

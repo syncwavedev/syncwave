@@ -36,11 +36,12 @@
 
 {#await Promise.all([boardPromise, mePromise])}
     <Loading />
-{:then [[board, awareness], me]}
+{:then [[board, awareness, boardMeView], me]}
     <BoardScreen
         {board}
         {awareness}
         {me}
+        {boardMeView}
         counter={counter ? parseInt(counter) : undefined}
     />
 {:catch}

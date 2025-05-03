@@ -1,5 +1,6 @@
 import {type Static, Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
+import {getAccount} from '../coordinator/auth-api.js';
 import {CrdtDiff} from '../crdt/crdt.js';
 import {Cell} from '../kv/cell.js';
 import {CollectionManager} from '../kv/collection-manager.js';
@@ -462,6 +463,20 @@ export class DataLayer {
         }
 
         return result;
+    }
+
+    async createInstanceAdmin(params: {email: string; password: string}) {
+        await this.transact(system, async tx => {
+            await getAccount({
+                accounts: tx.accounts,
+                email: params.email,
+                passwordHash: await this.crypto.bcryptHash(params.password),
+                boardService: tx.boardService,
+                users: tx.users,
+                crypto: this.crypto,
+                fullName: 'Admin',
+            });
+        });
     }
 
     async upgrade() {

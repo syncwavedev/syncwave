@@ -65,7 +65,6 @@
     let cooldownInterval: number | undefined = $state(undefined);
 
     function startCooldown() {
-        console.debug('Starting cooldown');
         remainingCooldown = RESEND_COOLDOWN;
         clearInterval(cooldownInterval);
         cooldownInterval = setInterval(() => {

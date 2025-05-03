@@ -6,9 +6,9 @@
     import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
     import UserIcon from '../components/icons/user-icon.svelte';
     import Editor from '../components/editor.svelte';
-    import type {CardView} from '../../agent/view.svelte';
+    import type {CardView, MemberView} from '../../agent/view.svelte';
     import type {Awareness} from 'syncwave';
-    import type {ColumnId, User, UserId} from 'syncwave';
+    import type {ColumnId, UserId} from 'syncwave';
     import {onMount, tick} from 'svelte';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
@@ -31,7 +31,7 @@
     }: {
         card: CardView;
         awareness: Awareness;
-        me: User;
+        me: MemberView;
         columnOptions: {
             value: string;
             label: string;
@@ -153,7 +153,10 @@
                     fragment={card.text.__fragment!}
                     class="min-h-30"
                     {awareness}
-                    {me}
+                    me={{
+                        fullName: me.fullName,
+                        color: me.color,
+                    }}
                 />
             </div>
         </div>

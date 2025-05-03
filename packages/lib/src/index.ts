@@ -4,6 +4,7 @@ export * from './batch-processor.js';
 export * from './codec.js';
 export * from './constants.js';
 export * from './context.js';
+export * from './coordinator/auth-api.js';
 export * from './coordinator/coordinator-api.js';
 export * from './coordinator/coordinator-client.js';
 export * from './coordinator/coordinator.js';

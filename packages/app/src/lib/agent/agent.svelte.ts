@@ -68,6 +68,7 @@ import {
     CardTreeView,
     CardTreeViewData,
     CardView,
+    MemberView,
     MeView,
     MeViewData,
     type SyncTarget,
@@ -381,7 +382,7 @@ export class Agent {
     private observeBoard(
         dto: BoardViewDataDto,
         initialMe: {id: UserId; state: CrdtDiff<User>}
-    ): [BoardTreeView, Awareness] {
+    ): [BoardTreeView, Awareness, MemberView] {
         const me: User = this.crdtManager.view({
             id: initialMe.id,
             isDraft: false,
@@ -424,7 +425,7 @@ export class Agent {
             log.error({error, msg: 'observeBoard failed'});
         });
 
-        return [data.boardTreeView, awareness];
+        return [data.boardTreeView, awareness, data.meView];
     }
 
     private createBoardAwareness(

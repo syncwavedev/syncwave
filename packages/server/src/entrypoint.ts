@@ -65,6 +65,7 @@ interface Options {
     appPort: number;
     metricsPort: number;
     passwordsEnabled: boolean;
+    instanceAdmin: InstanceAdminOptions | undefined;
 }
 
 function getGoogleOptions(apiUrl: string): GoogleOptions | undefined {
@@ -86,6 +87,29 @@ function getGoogleOptions(apiUrl: string): GoogleOptions | undefined {
             'GOOGLE_CLIENT_SECRET is not required for Google OAuth'
         ),
         redirectUri: `${apiUrl}/callbacks/google`,
+    };
+}
+
+interface InstanceAdminOptions {
+    email: string;
+    password: string;
+}
+
+function getInstanceAdminOptions(): InstanceAdminOptions | undefined {
+    const INSTANCE_ADMIN_EMAIL = process.env.INSTANCE_ADMIN_EMAIL;
+    const INSTANCE_ADMIN_PASSWORD = process.env.INSTANCE_ADMIN_PASSWORD;
+    if (!INSTANCE_ADMIN_EMAIL && !INSTANCE_ADMIN_PASSWORD) {
+        return undefined;
+    }
+    return {
+        email: assertDefined(
+            INSTANCE_ADMIN_EMAIL,
+            'INSTANCE_ADMIN_EMAIL is not required for instance admin'
+        ),
+        password: assertDefined(
+            INSTANCE_ADMIN_PASSWORD,
+            'INSTANCE_ADMIN_PASSWORD is not required for instance admin'
+        ),
     };
 }
 
@@ -163,6 +187,7 @@ async function getOptions(): Promise<Options> {
         appPort: stage === 'self' ? 80 : 4567,
         metricsPort: 5678,
         passwordsEnabled: stage === 'local' || stage === 'self',
+        instanceAdmin: getInstanceAdminOptions(),
     };
 }
 
@@ -224,7 +249,7 @@ async function getKvStore(
     };
 }
 
-async function upgradeKVStore({store}: Options) {
+async function upgradeKVStore({store, instanceAdmin}: Options) {
     const versionKey = ['version'];
     log.info({msg: 'Retrieving KV store version...'});
     let version = await store.transact(async tx => {
@@ -325,6 +350,11 @@ async function upgradeKVStore({store}: Options) {
     });
 
     await dataLayer.upgrade();
+
+    if (instanceAdmin) {
+        log.info({msg: 'Creating instance admin...'});
+        await dataLayer.createInstanceAdmin(instanceAdmin);
+    }
 }
 
 function getKoaCallback(app: Koa) {

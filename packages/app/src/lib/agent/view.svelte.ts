@@ -67,7 +67,8 @@ export class MemberView extends UserView {
     constructor(
         user: User,
         email: string,
-        public readonly role: MemberRole
+        public readonly role: MemberRole,
+        public readonly color: string
     ) {
         super(user, email);
     }
@@ -205,6 +206,32 @@ interface ClientInfo {
     user: UserView;
 }
 
+const USER_COLORS = [
+    '#958DF1',
+    '#F98181',
+    '#FBBC88',
+    '#FAF594',
+    '#70CFF8',
+    '#94FADB',
+    '#B9F18D',
+    '#C3E2C2',
+    '#EAECCC',
+    '#AFC8AD',
+    '#EEC759',
+    '#9BB8CD',
+    '#FF90BC',
+    '#FFC0D9',
+    '#DC8686',
+    '#7ED7C1',
+    '#F3EEEA',
+    '#89B9AD',
+    '#D0BFFF',
+    '#FFF8C9',
+    '#CBFFA9',
+    '#9BABB8',
+    '#E3F4F4',
+];
+
 export class BoardData implements SyncTarget {
     private readonly crdtManager!: CrdtManager;
     private board: Board = $state.raw(lateInit());
@@ -239,16 +266,31 @@ export class BoardData implements SyncTarget {
         new BoardTreeView(this.board, this, this.crdtManager)
     );
     memberViews: MemberView[] = $derived(
-        this.rawUsers.map(x => {
-            const memberInfo = this.getMemberInfo(x.id);
-            return new MemberView(x, memberInfo.email, memberInfo.role);
-        })
+        this.rawUsers
+            .slice()
+            .sort((a, b) => {
+                if (a.id < b.id) return -1;
+                if (a.id > b.id) return 1;
+                return 0;
+            })
+            .map((x, idx) => {
+                const memberInfo = this.getMemberInfo(x.id);
+                const memberColor = USER_COLORS[idx % USER_COLORS.length];
+                return new MemberView(
+                    x,
+                    memberInfo.email,
+                    memberInfo.role,
+                    memberColor
+                );
+            })
     );
     meView: MemberView = $derived.by(() => {
-        const memberInfo = this.getMemberInfo(this.rawMe.id);
-        return new MemberView(this.rawMe, memberInfo.email, memberInfo.role);
-    });
+        const me = this.memberViews.find(x => x.id === this.rawMe.id);
 
+        assert(me !== undefined, 'me is not part of the board members');
+
+        return me;
+    });
     awareness: SvelteMap<number, AwarenessState> = $state(lateInit());
 
     clients = $derived(
@@ -468,9 +510,10 @@ export class ColumnView implements Column {
 
     board = $derived(this._data.boardView);
     author = $derived.by(() => {
-        const author = this.crdtManager.viewById(this._column.authorId, 'user');
-        const memberInfo = this._data.getMemberInfo(this._column.authorId);
-        return new MemberView(author, memberInfo.email, memberInfo.role);
+        return findRequired(
+            this._data.memberViews,
+            x => x.id === this._column.authorId
+        );
     });
 
     dndLastChangeAt = $derived.by(() =>
@@ -563,20 +606,19 @@ export class CardView implements Card {
     });
 
     author = $derived.by(() => {
-        const author = this._crdtManager.viewById(this._card.authorId, 'user');
-        const memberInfo = this._data.getMemberInfo(this._card.authorId);
-        return new MemberView(author, memberInfo.email, memberInfo.role);
+        return findRequired(
+            this._data.memberViews,
+            x => x.id === this._card.authorId
+        );
     });
     board = $derived(this._data.boardView);
     assignee = $derived.by(() => {
         if (!this._card.assigneeId) return undefined;
 
-        const assignee = this._crdtManager.viewById(
-            this._card.assigneeId,
-            'user'
+        return findRequired(
+            this._data.memberViews,
+            x => x.id === this._card.assigneeId
         );
-        const assigneeInfo = this._data.getMemberInfo(assignee.id);
-        return new MemberView(assignee, assigneeInfo.email, assigneeInfo.role);
     });
     column = $derived.by(() => {
         const column = this._crdtManager.viewById(

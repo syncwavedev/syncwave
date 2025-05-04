@@ -356,7 +356,9 @@ export class Agent {
         return data.userView;
     }
 
-    async observeBoardAsync(key: string) {
+    async observeBoardAsync(
+        key: string
+    ): Promise<[BoardTreeView, Awareness, MemberView]> {
         const ctx = this.contextManager.use();
 
         const activeBoard = this.activeBoards.find(
@@ -383,9 +385,9 @@ export class Agent {
                 .first(),
         ]);
 
-        return ctx.detach({span: 'observeBoard'}, async () => {
-            return this.observeBoard(board, me);
-        });
+        return ctx.detach({span: 'observeBoard'}, () =>
+            this.observeBoard(board, me)
+        );
     }
 
     private observeBoard(

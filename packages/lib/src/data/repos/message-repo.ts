@@ -116,7 +116,7 @@ export class MessageRepo {
                     key: x => [[x.cardId, x.createdAt]],
                 },
                 [BOARD_ID_INDEX]: {
-                    key: x => [[x.cardId, x.createdAt]],
+                    key: x => [[x.boardId, x.createdAt]],
                 },
                 [AUTHOR_ID_INDEX]: {
                     key: x => [[x.authorId, x.createdAt]],

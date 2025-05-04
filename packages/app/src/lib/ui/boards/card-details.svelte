@@ -6,7 +6,7 @@
     import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
     import UserIcon from '../components/icons/user-icon.svelte';
     import Editor from '../components/editor.svelte';
-    import type {CardView, MemberView} from '../../agent/view.svelte';
+    import type {CardTreeView, MemberView} from '../../agent/view.svelte';
     import type {Awareness} from 'syncwave';
     import type {ColumnId, UserId} from 'syncwave';
     import {onMount, tick} from 'svelte';
@@ -29,7 +29,7 @@
         assigneeOptions,
         onDelete,
     }: {
-        card: CardView;
+        card: CardTreeView;
         awareness: Awareness;
         me: MemberView;
         columnOptions: {
@@ -55,8 +55,6 @@
             }
         });
     });
-
-    const detailsPromise = agent.observeCardAsync(card.id);
 
     const fragment = createXmlFragment();
 
@@ -195,9 +193,7 @@
             <hr class="flex-grow" />
         </div> -->
         <div class="my-2 text-lg">
-            {#await detailsPromise then details}
-                <MessageList messages={details.messages} />
-            {/await}
+            <MessageList messages={card.messages} />
         </div>
     </div>
     {#if card.typingUsers.length > 0}

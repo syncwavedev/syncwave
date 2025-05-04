@@ -88,6 +88,15 @@ export function BoardViewDataDto() {
         users: Type.Array(
             Type.Object({state: CrdtDiff<User>(), id: Uuid<UserId>()})
         ),
+        messages: Type.Array(
+            Type.Object({state: CrdtDiff<Message>(), id: Uuid<MessageId>()})
+        ),
+        attachments: Type.Array(
+            Type.Object({
+                state: CrdtDiff<Attachment>(),
+                id: Uuid<AttachmentId>(),
+            })
+        ),
     });
 }
 
@@ -101,26 +110,3 @@ export function UserDataDto() {
 }
 
 export interface UserDataDto extends Static<ReturnType<typeof UserDataDto>> {}
-
-export function CardTreeViewDataDto() {
-    return Type.Object({
-        messages: Type.Array(
-            Type.Object({state: CrdtDiff<Message>(), id: Uuid<MessageId>()})
-        ),
-        attachments: Type.Array(
-            Type.Object({
-                state: CrdtDiff<Attachment>(),
-                id: Uuid<AttachmentId>(),
-            })
-        ),
-        users: Type.Array(
-            Type.Object({state: CrdtDiff<User>(), id: Uuid<UserId>()})
-        ),
-        card: Type.Object({state: CrdtDiff<Card>(), id: Uuid<CardId>()}),
-        boardId: Uuid<BoardId>(),
-        userEmails: Type.Array(MemberInfoDto()),
-    });
-}
-
-export interface CardTreeViewDataDto
-    extends Static<ReturnType<typeof CardTreeViewDataDto>> {}

@@ -1,7 +1,7 @@
 <script lang="ts">
     import {yFragmentToPlaintextAndTaskList} from 'syncwave';
     import Avatar from '../components/avatar.svelte';
-    import type {CardView} from '../../agent/view.svelte';
+    import type {CardTreeView} from '../../agent/view.svelte';
     import {getAgent} from '../../agent/agent.svelte';
     import {
         DND_REORDER_DURATION_MS,
@@ -17,7 +17,7 @@
         onClick,
         active,
     }: {
-        card: CardView;
+        card: CardTreeView;
         onClick: () => void;
         active: boolean;
     } = $props();
@@ -44,7 +44,7 @@
     const agent = getAgent();
 
     let containerRef: HTMLDivElement | null = $state(null);
-    let cardRef: Ref<CardView> = {value: card};
+    let cardRef: Ref<CardTreeView> = {value: card};
     $effect(() => {
         cardRef.value = card;
     });

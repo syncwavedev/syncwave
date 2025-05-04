@@ -11,7 +11,7 @@ import {
     type ColumnId,
 } from 'syncwave';
 import type {Agent} from '../../agent/agent.svelte.js';
-import type {CardView, ColumnView} from '../../agent/view.svelte.js';
+import type {CardTreeView, ColumnView} from '../../agent/view.svelte.js';
 
 export const DND_REORDER_DURATION_MS = 500;
 export const DND_DROP_DURATION_MS = 150;
@@ -28,7 +28,7 @@ interface CleanupContext {
 }
 
 export interface DndCardContext extends CleanupContext {
-    card: Ref<CardView>;
+    card: Ref<CardTreeView>;
     container: HTMLDivElement;
 }
 

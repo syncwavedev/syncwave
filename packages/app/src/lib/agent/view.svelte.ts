@@ -19,7 +19,6 @@ import {
     type BoardViewDataDto,
     type Card,
     type CardId,
-    type CardTreeViewDataDto,
     type Column,
     type ColumnId,
     type Member,
@@ -242,6 +241,8 @@ export class BoardData implements SyncTarget {
     rawUsers: User[] = $state.raw(lateInit());
     rawColumns: Column[] = $state.raw(lateInit());
     rawCards: Card[] = $state.raw(lateInit());
+    rawMessages: Message[] = $state.raw(lateInit());
+    rawAttachments: Attachment[] = $state.raw(lateInit());
 
     readonly cardDragSettledAt = new SvelteMap<CardId, Timestamp>();
     readonly considerCardPosition = new SvelteMap<CardId, number>();
@@ -250,8 +251,11 @@ export class BoardData implements SyncTarget {
     readonly columnDragSettledAt = new SvelteMap<ColumnId, Timestamp>();
     readonly considerColumnPosition = new SvelteMap<ColumnId, number>();
 
-    cardViews: CardView[] = $derived(
-        this.rawCards.map(x => new CardView(x, this, this.crdtManager))
+    cardViews: CardTreeView[] = $derived(
+        this.rawCards.map(x => new CardTreeView(x, this, this.crdtManager))
+    );
+    messageViews: MessageView[] = $derived(
+        this.rawMessages.map(x => new MessageView(x, this))
     );
     columnViews: ColumnView[] = $derived(
         this.rawColumns.map(x => new ColumnView(x, this, this.crdtManager))
@@ -348,12 +352,24 @@ export class BoardData implements SyncTarget {
         // ignore
     }
 
-    newAttachment(): void {
-        // ignore
+    newAttachment(attachment: Attachment) {
+        if (
+            this.rawAttachments.some(x => x.id === attachment.id) ||
+            this.board.id !== attachment.boardId
+        ) {
+            return;
+        }
+        this.rawAttachments = [...this.rawAttachments, attachment];
     }
 
-    newMessage(): void {
-        // ignore
+    newMessage(message: Message) {
+        if (
+            this.rawMessages.some(x => x.id === message.id) ||
+            this.board.id !== message.boardId
+        ) {
+            return;
+        }
+        this.rawMessages = [...this.rawMessages, message];
     }
 
     newCard(card: Card) {
@@ -414,6 +430,22 @@ export class BoardData implements SyncTarget {
             derivator.view({
                 id: x.id,
                 type: 'card',
+                state: x.state,
+                isDraft: false,
+            })
+        );
+        this.rawMessages = board.messages.map(x =>
+            derivator.view({
+                id: x.id,
+                type: 'message',
+                state: x.state,
+                isDraft: false,
+            })
+        );
+        this.rawAttachments = board.attachments.map(x =>
+            derivator.view({
+                id: x.id,
+                type: 'attachment',
                 state: x.state,
                 isDraft: false,
             })
@@ -533,7 +565,7 @@ export class ColumnTreeView extends ColumnView {
     );
 }
 
-export class CardView implements Card {
+export class CardTreeView implements Card {
     private readonly _card!: Card;
     private readonly _data!: BoardData;
     private readonly _crdtManager!: CrdtManager;
@@ -627,221 +659,66 @@ export class CardView implements Card {
         );
         return new ColumnView(column, this._data, this._crdtManager);
     });
-}
-
-export class CardTreeViewData implements SyncTarget {
-    static create(dto: CardTreeViewDataDto, crdtManager: CrdtManager) {
-        const result = new CardTreeViewData(dto.card.id, crdtManager);
-        result.override(dto, crdtManager);
-        return result;
-    }
-
-    private readonly crdtManager!: CrdtManager;
-
-    rawUserEmails: MemberInfoDto[] = $state.raw(lateInit());
-    rawCard: Card = $state.raw(lateInit());
-    rawUsers: User[] = $state.raw(lateInit());
-    rawMessages: Message[] = $state.raw(lateInit());
-    rawAttachments: Attachment[] = $state.raw(lateInit());
-
-    private constructor(
-        public readonly cardId: CardId,
-        crdtManager: CrdtManager
-    ) {
-        this.crdtManager = crdtManager;
-    }
-
-    cardView = $derived(new CardTreeView(this, this.crdtManager));
-    userViews: UserView[] = $derived(
-        this.rawUsers.map(x => new UserView(x, this.getUserEmail(x.id)))
-    );
-
-    upsertMemberInfo(): void {
-        // ignore
-    }
-
-    newAccount(): void {
-        // ignore
-    }
-
-    newMember(): void {
-        // ignore
-    }
-
-    newBoard(): void {
-        // ignore
-    }
-
-    newCard(): void {
-        // ignore
-    }
-
-    newColumn(): void {
-        // ignore
-    }
-
-    newAttachment(attachment: Attachment) {
-        if (
-            this.rawAttachments.some(x => x.id === attachment.id) ||
-            this.cardView.id !== attachment.cardId
-        ) {
-            return;
-        }
-        this.rawAttachments = [...this.rawAttachments, attachment];
-    }
-
-    newMessage(message: Message) {
-        if (
-            this.rawMessages.some(x => x.id === message.id) ||
-            this.cardView.id !== message.cardId
-        ) {
-            return;
-        }
-        this.rawMessages = [...this.rawMessages, message];
-    }
-
-    newUser(user: User) {
-        if (this.rawUsers.some(x => x.id === user.id)) {
-            return;
-        }
-        this.rawUsers = [...this.rawUsers, user];
-    }
-
-    override(dto: CardTreeViewDataDto, derivator: CrdtDerivator) {
-        this.rawUserEmails = dto.userEmails;
-        this.rawCard = derivator.view({
-            id: dto.card.id,
-            type: 'card',
-            state: dto.card.state,
-            isDraft: false,
-        });
-        this.cardView = derivator.view({
-            id: dto.card.id,
-            type: 'card',
-            state: dto.card.state,
-            isDraft: false,
-        });
-        this.rawMessages = dto.messages.map(x =>
-            derivator.view({
-                id: x.id,
-                type: 'message',
-                state: x.state,
-                isDraft: false,
-            })
-        );
-        this.rawAttachments = dto.attachments.map(x =>
-            derivator.view({
-                id: x.id,
-                type: 'attachment',
-                state: x.state,
-                isDraft: false,
-            })
-        );
-        this.rawUsers = dto.users.map(x =>
-            derivator.view({
-                id: x.id,
-                type: 'user',
-                state: x.state,
-                isDraft: false,
-            })
-        );
-    }
-
-    getUserEmail(userId: UserId): string {
-        return findRequired(this.rawUserEmails, x => x.userId === userId).email;
-    }
-}
-
-export class CardTreeView implements Card {
-    private data: CardTreeViewData = $state.raw(lateInit());
-    private crdtManager!: CrdtManager;
-
-    constructor(data: CardTreeViewData, crdtManager: CrdtManager) {
-        this.data = data;
-        this.crdtManager = crdtManager;
-    }
-
-    deletedAt = $derived(this.data.rawCard.deletedAt);
-    updatedAt = $derived(this.data.rawCard.updatedAt);
-    createdAt = $derived(this.data.rawCard.createdAt);
-    id = $derived(this.data.rawCard.id);
-    pk = $derived(this.data.rawCard.pk);
-    boardId = $derived(this.data.rawCard.boardId);
-    columnId = $derived(this.data.rawCard.columnId);
-    position = $derived(this.data.rawCard.position);
-    counter = $derived(this.data.rawCard.counter);
-    text = $derived(this.data.rawCard.text);
-    authorId = $derived(this.data.rawCard.authorId);
-    assigneeId = $derived(this.data.rawCard.assigneeId);
 
     messages: MessageView[] = $derived(
-        this.data.rawMessages
-            .filter(x => !x.deletedAt)
-            .map(x => new MessageView(x, this.data, this.crdtManager))
+        this._data.rawMessages
+            .filter(x => !x.deletedAt && x.cardId === this._card.id)
+            .map(x => new MessageView(x, this._data))
             .sort((a, b) => compareNumbers(a.createdAt, b.createdAt))
     );
 }
 
 export class MessageView implements Message {
-    private message: Message = $state.raw(lateInit());
-    private data: CardTreeViewData = $state.raw(lateInit());
-    private crdtManager!: CrdtManager;
+    private _message: Message = $state.raw(lateInit());
+    private _data: BoardData = $state.raw(lateInit());
 
-    constructor(
-        message: Message,
-        data: CardTreeViewData,
-        crdtManager: CrdtManager
-    ) {
-        this.crdtManager = crdtManager;
-        this.message = message;
-        this.data = data;
+    constructor(message: Message, data: BoardData) {
+        this._message = message;
+        this._data = data;
     }
 
     author = $derived.by(() => {
-        const author = this.crdtManager.viewById(this.message.authorId, 'user');
-        return new UserView(
-            author,
-            this.data.getUserEmail(this.message.authorId)
+        return findRequired(
+            this._data.memberViews,
+            x => x.id === this._message.authorId
         );
     });
     replyTo = $derived.by(() => {
-        if (!this.message.replyToId) return undefined;
+        if (!this._message.replyToId) return undefined;
 
-        const replyTo = this.crdtManager.viewById(
-            this.message.replyToId,
-            'message'
+        return findRequired(
+            this._data.messageViews,
+            x => x.id === this._message.authorId
         );
-
-        return new MessageView(replyTo, this.data, this.crdtManager);
     });
     attachments = $derived.by(() => {
-        return this.data.rawAttachments.filter(x =>
+        return this._data.rawAttachments.filter(x =>
             this.attachmentIds.includes(x.id)
         );
     });
 
     payload = $derived.by(() => {
-        if (this.message.payload.type === 'text') {
-            return new TextMessagePayloadView(this.message.payload);
-        } else if (this.message.payload.type === 'card_created') {
-            return new CardCreatedMessagePayloadView(this.message.payload);
+        if (this._message.payload.type === 'text') {
+            return new TextMessagePayloadView(this._message.payload);
+        } else if (this._message.payload.type === 'card_created') {
+            return new CardCreatedMessagePayloadView(this._message.payload);
         } else {
-            assertNever(this.message.payload);
+            assertNever(this._message.payload);
         }
     });
 
-    deletedAt = $derived(this.message.deletedAt);
-    updatedAt = $derived(this.message.updatedAt);
-    createdAt = $derived(this.message.createdAt);
-    id = $derived(this.message.id);
-    pk = $derived(this.message.pk);
-    authorId = $derived(this.message.authorId);
-    boardId = $derived(this.message.boardId);
-    columnId = $derived(this.message.columnId);
-    cardId = $derived(this.message.cardId);
-    target = $derived(this.message.target);
-    replyToId = $derived(this.message.replyToId);
-    attachmentIds = $derived(this.message.attachmentIds);
+    deletedAt = $derived(this._message.deletedAt);
+    updatedAt = $derived(this._message.updatedAt);
+    createdAt = $derived(this._message.createdAt);
+    id = $derived(this._message.id);
+    pk = $derived(this._message.pk);
+    authorId = $derived(this._message.authorId);
+    boardId = $derived(this._message.boardId);
+    columnId = $derived(this._message.columnId);
+    cardId = $derived(this._message.cardId);
+    target = $derived(this._message.target);
+    replyToId = $derived(this._message.replyToId);
+    attachmentIds = $derived(this._message.attachmentIds);
 }
 
 export class CardCreatedMessagePayloadView

@@ -210,6 +210,10 @@ export class MessageRepo {
         return this.rawRepo.get(CARD_ID_INDEX, [cardId]);
     }
 
+    getByBoardId(boardId: BoardId): Stream<CrdtDoc<Message>> {
+        return this.rawRepo.get(BOARD_ID_INDEX, [boardId]);
+    }
+
     async apply(
         id: Uuid,
         diff: CrdtDiff<Message>,

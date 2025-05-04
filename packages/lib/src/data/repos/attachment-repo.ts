@@ -131,7 +131,7 @@ export class AttachmentRepo {
         return this.rawRepo.get(CARD_ID_INDEX, [cardId]);
     }
 
-    getByBoardId(cardId: BoardId): Stream<Attachment> {
+    getByBoardId(cardId: BoardId): Stream<CrdtDoc<Attachment>> {
         return this.rawRepo.get(CARD_ID_INDEX, [cardId]);
     }
 

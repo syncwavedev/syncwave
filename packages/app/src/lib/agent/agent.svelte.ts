@@ -39,7 +39,6 @@ import {
     type BoardViewDataDto,
     type Card,
     type CardId,
-    type CardTreeViewDataDto,
     type ChangeEvent,
     type Column,
     type ColumnId,
@@ -66,8 +65,6 @@ import {
     BoardData,
     BoardTreeView,
     CardTreeView,
-    CardTreeViewData,
-    CardView,
     MemberView,
     MeView,
     MeViewData,
@@ -101,12 +98,11 @@ export class Agent {
 
     private activeBoards: BoardData[] = [];
     private activeMes: MeViewData[] = [];
-    private activeCards: CardTreeViewData[] = [];
 
     private cryptoProvider: CryptoProvider = new WebCryptoProvider();
 
     private syncTargets(): SyncTarget[] {
-        return [...this.activeBoards, ...this.activeCards, ...this.activeMes];
+        return [...this.activeBoards, ...this.activeMes];
     }
 
     status: 'online' | 'unstable' | 'offline' = $state('offline');
@@ -476,7 +472,7 @@ export class Agent {
     createCardDraft(
         board: BoardTreeView,
         options: {columnId: ColumnId; placement: Placement}
-    ): CardView {
+    ): CardTreeView {
         const me = this.authManager.ensureAuthorized();
         const now = getNow();
         const cardId = createCardId();
@@ -778,18 +774,6 @@ export class Agent {
         });
     }
 
-    async observeCardAsync(cardId: CardId) {
-        const ctx = this.contextManager.use();
-
-        const dto = await this.rpc
-            .getCardViewData({cardId})
-            .filter(x => x.type === 'snapshot')
-            .map(x => x.data)
-            .first();
-
-        return ctx.run(() => this.observeCard(dto));
-    }
-
     createMember(boardId: BoardId, email: string, role: MemberRole) {
         const transactionId = createTransactionId();
         this.rpc
@@ -813,42 +797,6 @@ export class Agent {
         this.rpc.deleteMember({memberId}, {transactionId}).catch(error => {
             log.error({error, msg: 'deleteMember failed'});
         });
-    }
-
-    private observeCard(dto: CardTreeViewDataDto): CardTreeView {
-        const cardData = CardTreeViewData.create(dto, this.crdtManager);
-
-        this.activeCards.push(cardData);
-        context().onEnd(() => {
-            this.activeCards = this.activeCards.filter(x => x !== cardData);
-        });
-
-        let nextOffset: number | undefined = undefined;
-
-        infiniteRetry(async () => {
-            const items = toStream(
-                this.rpc.getCardViewData({
-                    cardId: dto.card.id,
-                    startOffset: nextOffset,
-                })
-            );
-
-            for await (const item of items) {
-                nextOffset = item.offset + 1;
-                if (item.type === 'snapshot') {
-                    cardData.override(item.data, this.crdtManager);
-                } else if (item.type === 'event') {
-                    this.handleEvent(item.event);
-                } else {
-                    softNever(item, 'observeBoard got an unknown event');
-                }
-            }
-        }, 'observeMe').catch(error => {
-            console.error(error);
-            log.error({error, msg: 'observeCard failed'});
-        });
-
-        return cardData.cardView;
     }
 
     private handleEvent(event: ChangeEvent) {

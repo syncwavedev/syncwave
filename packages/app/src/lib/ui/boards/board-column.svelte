@@ -2,7 +2,7 @@
     import CardTile from './card-tile.svelte';
     import Scrollable from '../components/scrollable.svelte';
     import type {
-        CardView,
+        CardTreeView,
         ColumnView,
         ColumnTreeView,
     } from '../../agent/view.svelte';
@@ -22,7 +22,7 @@
         columnPosition,
     }: {
         column: ColumnTreeView;
-        onCardClick: (card: CardView) => void;
+        onCardClick: (card: CardTreeView) => void;
         activeCardId?: string;
         onCreateCard: () => void;
         onEditColumn: () => void;

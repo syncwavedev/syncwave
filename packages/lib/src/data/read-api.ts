@@ -17,12 +17,11 @@ import {
     type DataTx,
     userEvents,
 } from './data-layer.js';
-import {BoardViewDataDto, CardTreeViewDataDto, MeViewDataDto} from './dto.js';
+import {BoardViewDataDto, MeViewDataDto} from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {ObjectEnvelope, type ObjectStore} from './infrastructure.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
 import {type BoardId} from './repos/board-repo.js';
-import {type CardId} from './repos/card-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
@@ -99,77 +98,6 @@ export function createReadApi() {
                 });
             },
         }),
-        getCardViewData: streamer({
-            req: Type.Object({
-                cardId: Uuid<CardId>(),
-                startOffset: Type.Optional(Type.Number()),
-            }),
-            item: Type.Union([
-                Type.Object({
-                    type: Type.Literal('snapshot'),
-                    data: CardTreeViewDataDto(),
-                    offset: Type.Number(),
-                }),
-                Type.Object({
-                    type: Type.Literal('event'),
-                    event: ChangeEvent(),
-                    offset: Type.Number(),
-                }),
-            ]),
-            async *stream(st, {cardId, startOffset}, {principal}) {
-                const card = await st.transact(principal, tx =>
-                    tx.cards.getById(cardId)
-                );
-                if (!card) {
-                    throw new BusinessError(
-                        `card with id ${cardId} not found`,
-                        'card_not_found'
-                    );
-                }
-
-                const {offset, events} = await st.esReader.subscribe(
-                    boardEvents(card.boardId),
-                    startOffset
-                );
-
-                const [messages, attachments, users, userEmails] =
-                    await st.transact(principal, async tx => {
-                        return await whenAll([
-                            tx.messages.getByCardId(cardId).toArray(),
-                            tx.attachments.getByCardId(cardId).toArray(),
-                            getBoardUsers(tx, card.boardId),
-                            getBoardUserEmails(tx, card.boardId),
-                            tx.permissionService.ensureCardMember(
-                                cardId,
-                                'reader'
-                            ),
-                        ]);
-                    });
-
-                if (startOffset === undefined) {
-                    yield {
-                        type: 'snapshot' as const,
-                        offset,
-                        data: {
-                            boardId: card.boardId,
-                            messages,
-                            attachments,
-                            users,
-                            card,
-                            userEmails,
-                        },
-                    };
-                }
-
-                for await (const {event, offset} of events) {
-                    yield {
-                        type: 'event' as const,
-                        event,
-                        offset,
-                    };
-                }
-            },
-        }),
         getBoardViewData: streamer({
             req: Type.Object({
                 key: Type.String(),
@@ -204,22 +132,30 @@ export function createReadApi() {
                     startOffset
                 );
 
-                const [board, columns, cards, users, userEmails, member] =
-                    await st.transact(principal, async tx => {
-                        return await whenAll([
-                            tx.boards.getById(boardId),
-                            toStream(
-                                tx.columns.getByBoardId(boardId)
-                            ).toArray(),
-                            toStream(tx.cards.getByBoardId(boardId)).toArray(),
-                            getBoardUsers(tx, boardId),
-                            getBoardUserEmails(tx, boardId),
-                            tx.permissionService.ensureBoardMember(
-                                boardId,
-                                'reader'
-                            ),
-                        ]);
-                    });
+                const [
+                    board,
+                    columns,
+                    cards,
+                    users,
+                    userEmails,
+                    messages,
+                    attachments,
+                    member,
+                ] = await st.transact(principal, async tx => {
+                    return await whenAll([
+                        tx.boards.getById(boardId),
+                        toStream(tx.columns.getByBoardId(boardId)).toArray(),
+                        toStream(tx.cards.getByBoardId(boardId)).toArray(),
+                        getBoardUsers(tx, boardId),
+                        getBoardUserEmails(tx, boardId),
+                        tx.messages.getByBoardId(boardId).toArray(),
+                        tx.attachments.getByBoardId(boardId).toArray(),
+                        tx.permissionService.ensureBoardMember(
+                            boardId,
+                            'reader'
+                        ),
+                    ]);
+                });
 
                 if (!board) {
                     throw new BusinessError(
@@ -239,6 +175,8 @@ export function createReadApi() {
                             cards: cards,
                             users: users,
                             members: userEmails,
+                            messages,
+                            attachments,
                         },
                     };
                 }

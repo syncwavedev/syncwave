@@ -5,7 +5,7 @@
     import Scrollable from '../components/scrollable.svelte';
     import type {
         BoardTreeView,
-        CardView,
+        CardTreeView,
         ColumnTreeView,
         MemberView,
         MeView,
@@ -44,7 +44,7 @@
 
     const agent = getAgent();
 
-    let selectedCard = $state<CardView | null>(
+    let selectedCard = $state<CardTreeView | null>(
         counter
             ? (board.columns
                   .flatMap(column => column.cards)
@@ -61,7 +61,7 @@
         }
     });
 
-    function selectCard(card: CardView | null) {
+    function selectCard(card: CardTreeView | null) {
         if (selectedCard?.id === card?.id) {
             return;
         }
@@ -170,7 +170,7 @@
         selectCard(draft);
     }
 
-    async function deleteCard(card: CardView) {
+    async function deleteCard(card: CardTreeView) {
         agent.deleteCard(card.id);
         selectCard(null);
     }

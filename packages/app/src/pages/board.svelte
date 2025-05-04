@@ -26,6 +26,11 @@
     });
     const mePromise = agent.observeMeAsync();
 
+    // todo: add user role (internal, external, etc.) and use it instead of board key
+    if (key.toLowerCase() === '767e719e9b3b4b52b0aaa8c64eca539f') {
+        localStorage.setItem('plausible_ignore', 'true');
+    }
+
     boardHistoryManager.save(key);
 </script>
 

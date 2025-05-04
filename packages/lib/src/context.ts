@@ -259,9 +259,9 @@ export class Context {
         ];
     }
 
-    detach(options: ContextOptions, fn: () => void): void {
+    detach<T>(options: ContextOptions, fn: () => T): T {
         const [ctx] = this.createDetached(options);
-        ctx.run(fn);
+        return ctx.run(fn);
     }
 
     createDetached(options: ContextOptions): [Context, Cancel] {

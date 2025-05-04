@@ -359,6 +359,17 @@ export class Agent {
     async observeBoardAsync(key: string) {
         const ctx = this.contextManager.use();
 
+        const activeBoard = this.activeBoards.find(
+            x => x.boardView.key === key
+        );
+        if (activeBoard !== undefined) {
+            return [
+                activeBoard.boardTreeView,
+                activeBoard.rawAwareness,
+                activeBoard.meView,
+            ];
+        }
+
         const [board, me] = await whenAll([
             this.rpc
                 .getBoardViewData({key})
@@ -372,7 +383,9 @@ export class Agent {
                 .first(),
         ]);
 
-        return ctx.run(() => this.observeBoard(board, me));
+        return ctx.detach({span: 'observeBoard'}, async () => {
+            return this.observeBoard(board, me);
+        });
     }
 
     private observeBoard(
@@ -393,9 +406,6 @@ export class Agent {
         const data = BoardData.create(awareness, me, dto, this.crdtManager);
 
         this.activeBoards.push(data);
-        context().onEnd(() => {
-            this.activeBoards = this.activeBoards.filter(x => x !== data);
-        });
 
         let nextOffset: number | undefined = undefined;
 

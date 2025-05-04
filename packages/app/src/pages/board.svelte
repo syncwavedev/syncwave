@@ -26,11 +26,6 @@
     });
     const mePromise = agent.observeMeAsync();
 
-    // todo: add user role (internal, external, etc.) and use it instead of board key
-    if (key.toUpperCase() === 'SYNC') {
-        localStorage.setItem('plausible_ignore', 'true');
-    }
-
     boardHistoryManager.save(key);
 </script>
 

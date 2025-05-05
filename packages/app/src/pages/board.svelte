@@ -5,6 +5,7 @@
     import BoardScreen from '../lib/ui/boards/board-screen.svelte';
     import Loading from '../lib/ui/components/loading.svelte';
     import {getAuthManager} from '../lib/utils';
+    import PermissionBoundary from '../lib/ui/components/permission-boundary.svelte';
 
     const {key, counter}: {key: string; counter?: string} = $props();
 
@@ -37,13 +38,15 @@
 {#await Promise.all([boardPromise, mePromise])}
     <Loading />
 {:then [[board, awareness, boardMeView], me]}
-    <BoardScreen
-        {board}
-        {awareness}
-        {me}
-        {boardMeView}
-        counter={counter ? parseInt(counter) : undefined}
-    />
+    <PermissionBoundary member={boardMeView}>
+        <BoardScreen
+            {board}
+            {awareness}
+            {me}
+            {boardMeView}
+            counter={counter ? parseInt(counter) : undefined}
+        />
+    </PermissionBoundary>
 {:catch}
     <div>Board not found. Redirecting to home page...</div>
 {/await}

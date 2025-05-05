@@ -11,6 +11,7 @@
     import {DND_CARD_GAP, getDndBoardContext, type Ref} from './board-dnd';
     import ListAnimator from '../components/list-animator.svelte';
     import ColumnIcon from '../components/column-icon.svelte';
+    import permissionManager from '../../../permission-manager';
 
     const {
         column,
@@ -63,14 +64,18 @@
             {column.name}
         </div>
 
-        <div class="flex ml-auto text-ink-body">
-            <button class="btn--icon" onclick={onCreateCard}>
-                <PlusIcon class="pointer-events-none" />
-            </button>
-            <button onclick={onEditColumn} class="btn--icon">
-                <EllipsisIcon class="pointer-events-none" />
-            </button>
-        </div>
+        {#if permissionManager.hasPermission('write:card')}
+            <div class="flex ml-auto text-ink-body">
+                <button class="btn--icon" onclick={onCreateCard}>
+                    <PlusIcon class="pointer-events-none" />
+                </button>
+                {#if permissionManager.hasPermission('write:board')}
+                    <button onclick={onEditColumn} class="btn--icon">
+                        <EllipsisIcon class="pointer-events-none" />
+                    </button>
+                {/if}
+            </div>
+        {/if}
     </div>
 
     <Scrollable

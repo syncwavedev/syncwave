@@ -9,6 +9,7 @@
     import router from '../../router';
     import ManageInviteLinkModal from './manage-invite-link-modal.svelte';
     import BoardHistoryManager from '../../board-history-manager';
+    import permissionManager from '../../../permission-manager';
 
     let {board}: {board: BoardTreeView} = $props();
 
@@ -105,16 +106,18 @@
             <span class="text-sm">You'll lose access to this board</span>
         </span>
     </button>
-    <button
-        role="menuitem"
-        class="menu__item mb-1 text-ink-danger"
-        onclick={onDeleteBoard}
-    >
-        Delete Board
-        <span class="text-ink-body ml-auto flex items-center gap-1.5">
-            <span class="text-sm">This action cannot be undone</span>
-        </span>
-    </button>
+    {#if permissionManager.hasPermission('delete:board')}
+        <button
+            role="menuitem"
+            class="menu__item mb-1 text-ink-danger"
+            onclick={onDeleteBoard}
+        >
+            Delete Board
+            <span class="text-ink-body ml-auto flex items-center gap-1.5">
+                <span class="text-sm">This action cannot be undone</span>
+            </span>
+        </button>
+    {/if}
 </Modal>
 
 <style>

@@ -27,6 +27,7 @@
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
     import EditColumnsModal from './edit-columns-modal.svelte';
+    import permissionManager from '../../../permission-manager';
 
     const {
         board,
@@ -263,19 +264,23 @@
                     <button class="btn--ghost">Sign In</button>
                 </a>
             {:else}
-                <button
-                    onclick={() => modalManager.open(boardSettings)}
-                    class="btn--icon text-ink-body mr-1 ml-auto"
-                >
-                    <EllipsisIcon />
-                </button>
+                <div class="ml-auto flex gap-1">
+                    {#if permissionManager.hasPermission('write:board')}
+                        <button
+                            onclick={() => modalManager.open(boardSettings)}
+                            class="btn--icon text-ink-body"
+                        >
+                            <EllipsisIcon />
+                        </button>
+                    {/if}
 
-                <button
-                    class="btn--icon"
-                    onclick={() => modalManager.open(profileSettings)}
-                >
-                    <Avatar userId={me.id} name={me.fullName} />
-                </button>
+                    <button
+                        class="btn--icon"
+                        onclick={() => modalManager.open(profileSettings)}
+                    >
+                        <Avatar userId={me.id} name={me.fullName} />
+                    </button>
+                </div>
             {/if}
         </div>
         <Scrollable

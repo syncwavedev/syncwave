@@ -65,6 +65,7 @@ export function createObjectKey() {
 export interface ObjectEnvelope {
     readonly data: Uint8Array;
     readonly metadata: ObjectMetadata;
+    readonly size: number;
 }
 
 export function ObjectEnvelope() {
@@ -74,8 +75,15 @@ export function ObjectEnvelope() {
     });
 }
 
+export interface ObjectStreamEnvelope {
+    readonly data: ReadableStream<Uint8Array>;
+    readonly metadata: ObjectMetadata;
+    readonly size: number;
+}
+
 export interface ObjectStore {
     get(key: ObjectKey): Promise<ObjectEnvelope | undefined>;
+    getStream(key: ObjectKey): Promise<ObjectStreamEnvelope | undefined>;
     put(
         key: ObjectKey,
         data: Uint8Array,
@@ -95,12 +103,30 @@ export class MemObjectStore implements ObjectStore {
         return this.store.get(key);
     }
 
+    async getStream(key: ObjectKey): Promise<ObjectStreamEnvelope | undefined> {
+        const envelope = this.store.get(key);
+        if (!envelope) {
+            return undefined;
+        }
+
+        return {
+            metadata: envelope.metadata,
+            size: envelope.data.byteLength,
+            data: new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.enqueue(envelope.data);
+                    controller.close();
+                },
+            }),
+        };
+    }
+
     async put(
         key: ObjectKey,
         data: Uint8Array,
         options: ObjectMetadata
     ): Promise<void> {
-        this.store.set(key, {data, metadata: options});
+        this.store.set(key, {data, metadata: options, size: data.byteLength});
     }
 
     async delete(key: ObjectKey): Promise<void> {

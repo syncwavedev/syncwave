@@ -4,6 +4,7 @@ import 'dotenv/config';
 
 import Router from '@koa/router';
 import {
+    type AttachmentId,
     context,
     CoordinatorServer,
     getGoogleUser,
@@ -41,8 +42,52 @@ export function createApiRouter(
         );
     });
 
+    router.get('/attachment/:id', async ctx => {
+        const {id} = ctx.params;
+        if (typeof id !== 'string') {
+            ctx.status = 400;
+            ctx.body = {
+                error: 'id must be a string',
+            };
+            return;
+        }
+        const jwt = ctx.query['access_token'];
+        if (typeof jwt !== 'string' && typeof jwt !== 'undefined') {
+            ctx.status = 400;
+            ctx.body = {
+                error: 'access_token must be a string',
+            };
+            return;
+        }
+        if (typeof jwt === 'undefined') {
+            ctx.status = 401;
+            ctx.body = {
+                error: 'access_token is required',
+            };
+            return;
+        }
+        const object = await coordinator().getAttachment({
+            attachmentId: id as AttachmentId,
+            jwt: jwt,
+        });
+        if (object === undefined) {
+            ctx.status = 404;
+            ctx.body = {
+                error: 'attachment not found',
+            };
+            return;
+        }
+        ctx.status = 200;
+        ctx.body = object.data;
+        ctx.type = object.metadata.contentType;
+        ctx.set('Content-Disposition', `attachment; filename=${id}`);
+        ctx.set('Content-Length', object.size.toString());
+    });
+
     router.get(`/health`, async ctx => {
-        ctx.body = await coordinator().status();
+        const status = await coordinator().status();
+        ctx.status = status.status === 'ok' ? 200 : 500;
+        ctx.body = status;
     });
 
     if (options.google) {

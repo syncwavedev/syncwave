@@ -7,6 +7,7 @@ import {
     type ObjectKey,
     type ObjectMetadata,
     type ObjectStore,
+    type ObjectStreamEnvelope,
 } from 'syncwave';
 
 export class FsObjectStore implements ObjectStore {
@@ -44,6 +45,23 @@ export class FsObjectStore implements ObjectStore {
         return res;
     }
 
+    async getStream(key: ObjectKey): Promise<ObjectStreamEnvelope | undefined> {
+        const envelope = await this.get(key);
+        if (!envelope) {
+            return undefined;
+        }
+        return {
+            metadata: envelope.metadata,
+            data: new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.enqueue(envelope.data);
+                    controller.close();
+                },
+            }),
+            size: envelope.data.byteLength,
+        };
+    }
+
     async put(
         key: ObjectKey,
         data: Uint8Array,
@@ -52,6 +70,7 @@ export class FsObjectStore implements ObjectStore {
         const envelope: ObjectEnvelope = {
             data,
             metadata,
+            size: data.byteLength,
         };
         await new Promise(resolve => setTimeout(resolve, 1000));
         await writeFile(this.getFilePath(key), encodeMsgpack(envelope));

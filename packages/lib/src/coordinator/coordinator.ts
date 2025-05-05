@@ -7,12 +7,15 @@ import type {
     JwtProvider,
     ObjectStore,
 } from '../data/infrastructure.js';
+import type {AttachmentId} from '../data/repos/attachment-repo.js';
+import {BusinessError} from '../errors.js';
 import type {KvStore} from '../kv/kv-store.js';
 import type {Hub} from '../transport/hub.js';
 import type {RpcMessage} from '../transport/rpc-message.js';
 import {RpcServer} from '../transport/rpc.js';
 import type {TransportServer} from '../transport/transport.js';
 import type {Tuple} from '../tuple.js';
+import {assert} from '../utils.js';
 import {getAccount, signJwtToken} from './auth-api.js';
 import {
     createCoordinatorApi,
@@ -34,6 +37,7 @@ export interface CoordinatorServerOptions {
 export class CoordinatorServer {
     private readonly dataLayer: DataLayer;
     private readonly rpcServer: RpcServer<CoordinatorApiState>;
+    private readonly authenticator: Authenticator;
 
     constructor(private readonly options: CoordinatorServerOptions) {
         this.dataLayer = new DataLayer({
@@ -44,7 +48,7 @@ export class CoordinatorServer {
             uiUrl: options.uiUrl,
             passwordsEnabled: options.passwordsEnabled,
         });
-        const authenticator = new Authenticator(
+        this.authenticator = new Authenticator(
             AUTHENTICATOR_PRINCIPAL_CACHE_SIZE,
             this.options.jwtProvider
         );
@@ -67,16 +71,21 @@ export class CoordinatorServer {
                     }, 800); // give some time to finish pending requests
                 },
             },
-            authenticator
+            this.authenticator
         );
     }
 
     async status() {
-        await this.dataLayer.transact(anonymous, async tx => {
-            await tx.boards.getByKey('SYNC');
-        });
+        try {
+            await this.dataLayer.transact(anonymous, async tx => {
+                const board = await tx.boards.rawRepo.scan().first();
+                assert(board !== undefined, 'board not found');
+            });
 
-        return {status: 'ok'};
+            return {status: 'ok' as const};
+        } catch (error) {
+            return {status: 'error' as const, error: (error as Error).message};
+        }
     }
 
     async launch(): Promise<void> {
@@ -106,6 +115,25 @@ export class CoordinatorServer {
                 return signJwtToken(this.options.jwtProvider, account);
             }
         );
+    }
+
+    async getAttachment(params: {attachmentId: AttachmentId; jwt: string}) {
+        const principal = await this.authenticator.authenticate(params.jwt);
+        const objectKey = await this.dataLayer.transact(principal, async tx => {
+            const attachment = await tx.attachments.getById(
+                params.attachmentId
+            );
+            if (attachment === undefined) {
+                throw new BusinessError(
+                    'Attachment not found',
+                    'attachment_not_found'
+                );
+            }
+
+            return attachment.objectKey;
+        });
+
+        return await this.options.objectStore.getStream(objectKey);
     }
 }
 

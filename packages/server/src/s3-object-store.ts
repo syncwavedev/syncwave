@@ -6,7 +6,13 @@ import {
     S3Client,
     type S3ClientConfig,
 } from '@aws-sdk/client-s3';
-import type {ObjectKey, ObjectMetadata, ObjectStore} from 'syncwave';
+import type {
+    ObjectEnvelope,
+    ObjectKey,
+    ObjectMetadata,
+    ObjectStore,
+    ObjectStreamEnvelope,
+} from 'syncwave';
 import {assert} from 'syncwave';
 
 export interface S3ObjectStoreOptions {
@@ -36,9 +42,7 @@ export class S3ObjectStore implements ObjectStore {
         this.s3Client = new S3Client(clientConfig);
     }
 
-    async get(
-        key: ObjectKey
-    ): Promise<{data: Uint8Array; metadata: ObjectMetadata} | undefined> {
+    async get(key: ObjectKey): Promise<ObjectEnvelope | undefined> {
         try {
             const command = new GetObjectCommand({
                 Bucket: this.bucketName,
@@ -57,7 +61,7 @@ export class S3ObjectStore implements ObjectStore {
                 contentType: response.ContentType ?? 'application/octet-stream',
             };
 
-            return {data, metadata};
+            return {data, metadata, size: data.byteLength};
         } catch (error: unknown) {
             if (error instanceof NoSuchKey) {
                 return undefined;
@@ -65,6 +69,24 @@ export class S3ObjectStore implements ObjectStore {
 
             throw error;
         }
+    }
+
+    async getStream(key: ObjectKey): Promise<ObjectStreamEnvelope | undefined> {
+        const envelope = await this.get(key);
+        if (!envelope) {
+            return undefined;
+        }
+
+        return {
+            metadata: envelope.metadata,
+            size: envelope.data.byteLength,
+            data: new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.enqueue(envelope.data);
+                    controller.close();
+                },
+            }),
+        };
     }
 
     async put(

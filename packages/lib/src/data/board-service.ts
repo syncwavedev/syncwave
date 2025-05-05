@@ -2,12 +2,12 @@ import {getAccount} from '../coordinator/auth-api.js';
 import {createRichtext} from '../crdt/richtext.js';
 import {htmlToYFragment} from '../richtext.js';
 import {getNow, Timestamp} from '../timestamp.js';
-import {whenAll} from '../utils.js';
+import {uniqBy, whenAll} from '../utils.js';
 import {createUuidV4} from '../uuid.js';
 import type {EmailService} from './email-service.js';
 import type {CryptoProvider} from './infrastructure.js';
 import {createJoinCode} from './join-code.js';
-import type {Account, AccountRepo} from './repos/account-repo.js';
+import type {AccountRepo} from './repos/account-repo.js';
 import {
     createBoardId,
     type Board,
@@ -138,25 +138,33 @@ export class BoardService {
     }
 
     private async initBoard(board: Board, template: BoardTemplate) {
-        const onboardGuide = await getAccount({
-            accounts: this.accounts,
-            boardService: this,
-            crypto: this.crypto,
-            email: 'bot@syncwave.dev',
-            fullName: 'Syncwave',
-            users: this.users,
-            skipBoardCreation: true,
-        });
+        const userIds = uniqBy(
+            template.columns
+                .flatMap(column => [
+                    column.authorId,
+                    ...column.cards.flatMap(card => [
+                        card.assigneeId,
+                        card.authorId,
+                        ...card.messages.map(x => x.authorId),
+                    ]),
+                ])
+                .filter(x => x !== undefined),
+            x => x
+        );
 
-        await this.members.create({
-            id: createMemberId(),
-            boardId: board.id,
-            createdAt: this.timestamp,
-            updatedAt: this.timestamp,
-            userId: onboardGuide.userId,
-            role: 'writer',
-            position: Math.random(),
-        });
+        await whenAll(
+            userIds.map(async userId =>
+                this.members.create({
+                    id: createMemberId(),
+                    boardId: board.id,
+                    createdAt: this.timestamp,
+                    updatedAt: this.timestamp,
+                    userId: userId,
+                    role: 'writer',
+                    position: Math.random(),
+                })
+            )
+        );
 
         await this.boards.incrementBoardCounter(
             board.id,
@@ -171,7 +179,7 @@ export class BoardService {
             template.columns.map(async (column, idx) => {
                 const columnId = createColumnId();
                 await this.columns.create({
-                    authorId: onboardGuide.userId,
+                    authorId: column.authorId,
                     boardId: board.id,
                     id: columnId,
                     name: column.name,
@@ -183,7 +191,6 @@ export class BoardService {
                 await whenAll(
                     column.cards.map(async (card, cardIdx) => {
                         await this.createCard({
-                            onboardGuide,
                             board,
                             columnId,
                             card,
@@ -197,7 +204,6 @@ export class BoardService {
     }
 
     private async createCard(params: {
-        onboardGuide: Account;
         board: Board;
         columnId: ColumnId;
         card: CardTemplate;
@@ -206,8 +212,9 @@ export class BoardService {
     }) {
         const cardId = createCardId();
         await this.cards.create({
-            authorId: params.onboardGuide.userId,
+            authorId: params.card.authorId,
             boardId: params.board.id,
+            assigneeId: params.card.assigneeId,
             columnId: params.columnId,
             createdAt: this.timestamp,
             text: createRichtext(htmlToYFragment(params.card.html)),
@@ -220,7 +227,7 @@ export class BoardService {
         await this.messages.create({
             id: createMessageId(),
             attachmentIds: [],
-            authorId: params.onboardGuide.userId,
+            authorId: params.card.authorId,
             boardId: params.board.id,
             cardId,
             columnId: params.columnId,
@@ -237,7 +244,7 @@ export class BoardService {
 
         for (const [messageIdx, message] of params.card.messages.entries()) {
             await this.messages.create({
-                authorId: params.onboardGuide.userId,
+                authorId: message.authorId,
                 boardId: params.board.id,
                 cardId,
                 columnId: params.columnId,

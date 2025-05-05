@@ -354,9 +354,6 @@ export function createWriteApi() {
             req: Type.Object({}),
             res: Type.Object({}),
             handle: async st => {
-                console.log('update');
-                const board = await st.tx.boards.getByKey('sdfiweew');
-                console.log('board', board);
                 await st.tx.boards.update(
                     '0195d761-dfba-76bd-8890-cc942c8be111' as BoardId,
                     x => {

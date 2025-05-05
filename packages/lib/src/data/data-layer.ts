@@ -42,6 +42,7 @@ import {
     MessageRepo,
 } from './repos/message-repo.js';
 import {User, type UserId, UserRepo} from './repos/user-repo.js';
+import {BOARD_DEMO_USERS} from './template.js';
 
 export interface Config {
     readonly uiUrl: string;
@@ -531,6 +532,29 @@ export class DataLayer {
             log.info({msg: 'upgrading to version 9'});
             await this.upgradeToV9();
         }
+
+        await this.initDemoUsers();
+    }
+
+    private async initDemoUsers() {
+        log.info({msg: 'init demo users...'});
+
+        await this.transact(system, async tx => {
+            for (const user of BOARD_DEMO_USERS) {
+                await getAccount({
+                    accounts: tx.accounts,
+                    email: user.email,
+                    boardService: tx.boardService,
+                    users: tx.users,
+                    crypto: this.crypto,
+                    fullName: user.name,
+                    skipBoardCreation: true,
+                    userId: user.id,
+                });
+            }
+        });
+
+        log.info({msg: 'init demo users done'});
     }
 
     private async upgradeToV1() {

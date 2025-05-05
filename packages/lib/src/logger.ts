@@ -60,9 +60,7 @@ abstract class BaseLogger implements Logger {
     protected abstract _log(level: LogLevel, message: LogMessage): void;
 
     setLogLevel(level: LogLevel): void {
-        console.debug('inside setLogLevel');
         this.logLevel = level;
-        console.debug('end setLogLevel');
     }
 
     log(level: LogLevel, message: LogMessage | (() => LogMessage)): void {

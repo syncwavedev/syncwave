@@ -296,6 +296,7 @@ export async function getAccount(params: {
     skipBoardCreation?: boolean;
     isDemo?: boolean;
     passwordHash?: string;
+    userId?: UserId;
 }): Promise<Account> {
     const existingAccount = await params.accounts.getByEmail(params.email);
     if (existingAccount) {
@@ -303,7 +304,7 @@ export async function getAccount(params: {
     }
 
     const now = getNow();
-    const userId = createUserId();
+    const userId = params.userId ?? createUserId();
 
     const verificationCode = await createVerificationCode(params.crypto);
     const verificationCodeHash = await params.crypto.bcryptHash(

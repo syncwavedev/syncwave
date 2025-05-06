@@ -162,6 +162,11 @@ export function createWriteApi() {
                                     cardId: message.cardId,
                                     cardCreatedAt: expectTimestamp(),
                                 },
+                                card_deleted: {
+                                    type: 'card_deleted',
+                                    cardId: message.cardId,
+                                    cardDeletedAt: expectTimestamp(),
+                                },
                             }),
                         })
                     );

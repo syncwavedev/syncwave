@@ -15,4 +15,12 @@
             <TimeAgo time={message.payload.cardCreatedAt} />
         </span>
     {/if}
+
+    {#if message.payload.type === 'card_deleted'}
+        <span>
+            <span class="font-medium">{message.author.fullName}</span>
+            deleted the card
+            <TimeAgo time={message.payload.cardDeletedAt} />
+        </span>
+    {/if}
 </div>

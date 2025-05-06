@@ -579,6 +579,47 @@ export class Agent {
         });
     }
 
+    private createCardDeletedMessage(params: {
+        boardId: BoardId;
+        cardId: CardId;
+        columnId: ColumnId;
+        cardDeletedAt: Timestamp;
+    }) {
+        const me = this.authManager.ensureAuthorized();
+        const now = getNow();
+        const messageId = createMessageId();
+        const messageCrdt = Crdt.from<Message>({
+            authorId: me.userId,
+            boardId: params.boardId,
+            cardId: params.cardId,
+            createdAt: now,
+            target: 'card',
+            columnId: params.columnId,
+            id: messageId,
+            attachmentIds: [],
+            payload: {
+                type: 'card_deleted',
+                cardDeletedAt: params.cardDeletedAt,
+                cardId: params.cardId,
+            },
+            replyToId: undefined,
+            updatedAt: now,
+            pk: [messageId],
+        });
+        const message = this.crdtManager.createDraft({
+            id: messageId,
+            state: messageCrdt.state(),
+            type: 'message',
+            isDraft: true,
+        }).view as Message;
+
+        this.crdtManager.commit(messageId);
+
+        this.syncTargets().forEach(x => {
+            x.newMessage(message);
+        });
+    }
+
     createMessage(params: {
         boardId: BoardId;
         cardId: CardId;
@@ -763,8 +804,16 @@ export class Agent {
     }
 
     deleteCard(cardId: CardId): void {
+        const deletedAt = getNow();
         this.crdtManager.update<Card>(cardId, x => {
-            x.deletedAt = getNow();
+            x.deletedAt = deletedAt;
+        });
+        const card = this.crdtManager.viewById(cardId, 'card') as Card;
+        this.createCardDeletedMessage({
+            boardId: card.boardId,
+            cardId: card.id,
+            columnId: card.columnId,
+            cardDeletedAt: deletedAt,
         });
     }
 

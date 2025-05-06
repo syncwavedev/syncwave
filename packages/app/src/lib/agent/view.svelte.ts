@@ -4,6 +4,7 @@ import {
     assertNever,
     Awareness,
     CardCreatedMessagePayload,
+    CardDeletedMessagePayload,
     compareNumbers,
     compareStrings,
     MemberId,
@@ -702,6 +703,8 @@ export class MessageView implements Message {
             return new TextMessagePayloadView(this._message.payload);
         } else if (this._message.payload.type === 'card_created') {
             return new CardCreatedMessagePayloadView(this._message.payload);
+        } else if (this._message.payload.type === 'card_deleted') {
+            return new CardDeletedMessagePayloadView(this._message.payload);
         } else {
             assertNever(this._message.payload);
         }
@@ -732,6 +735,20 @@ export class CardCreatedMessagePayloadView
 
     cardId = $derived(this.payload.cardId);
     cardCreatedAt = $derived(this.payload.cardCreatedAt);
+    type = $derived(this.payload.type);
+}
+
+export class CardDeletedMessagePayloadView
+    implements CardDeletedMessagePayload
+{
+    private payload: CardDeletedMessagePayload = $state.raw(lateInit());
+
+    constructor(payload: CardDeletedMessagePayload) {
+        this.payload = payload;
+    }
+
+    cardId = $derived(this.payload.cardId);
+    cardDeletedAt = $derived(this.payload.cardDeletedAt);
     type = $derived(this.payload.type);
 }
 

@@ -14,7 +14,7 @@
     {#each messages as message (message.id)}
         {#if message.payload.type === 'text'}
             <TextMessage {message} />
-        {:else if message.payload.type === 'card_created' || message.payload.type === 'card_deleted'}
+        {:else}
             <SystemMessage {message} />
         {/if}
     {/each}

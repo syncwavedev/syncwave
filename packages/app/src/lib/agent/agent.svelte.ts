@@ -762,7 +762,11 @@ export class Agent {
         });
     }
 
-    createColumn(options: {boardId: BoardId; name: string}): Column {
+    createColumn(options: {
+        boardId: BoardId;
+        name: string;
+        placement: Placement;
+    }): Column {
         const me = this.authManager.ensureAuthorized();
         const now = getNow();
         const columnId = createColumnId();
@@ -772,7 +776,7 @@ export class Agent {
             createdAt: now,
             id: columnId,
             name: options.name,
-            position: 0,
+            position: toPosition(options.placement),
             pk: [columnId],
             updatedAt: now,
         });

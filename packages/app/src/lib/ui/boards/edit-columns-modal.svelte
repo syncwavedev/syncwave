@@ -33,7 +33,13 @@
 
         if (!newColumn) return;
 
-        agent.createColumn({boardId: board.id, name: newColumn});
+        agent.createColumn({
+            boardId: board.id,
+            name: newColumn,
+            placement: {
+                prev: board.columns[board.columns.length - 1].position,
+            },
+        });
         newColumn = '';
     }
 </script>

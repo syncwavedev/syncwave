@@ -749,8 +749,40 @@ export class Agent {
     }
 
     setCardColumn(cardId: CardId, columnId: ColumnId): void {
+        const card = this.crdtManager.viewById(cardId, 'card');
+        const board = this.activeBoards.find(
+            x => x.boardView.id === card.boardId
+        );
+        assert(board !== undefined, 'set card column: board not found');
+        const targetColumnIndex = board.columnTreeViews.findIndex(
+            x => x.id === columnId
+        );
+        assert(
+            targetColumnIndex !== -1,
+            'set card column: columnId not found in board'
+        );
+        const sourceColumnIndex = board.columnTreeViews.findIndex(
+            x => x.id === card.columnId
+        );
+        assert(
+            sourceColumnIndex !== -1,
+            'set card column: source columnId not found in board'
+        );
+
         this.crdtManager.update<Card>(cardId, x => {
             x.columnId = columnId;
+            if (sourceColumnIndex > targetColumnIndex) {
+                x.position = toPosition({
+                    next: board.columnTreeViews[targetColumnIndex].cards.at(0)
+                        ?.position,
+                });
+            }
+            if (sourceColumnIndex < targetColumnIndex) {
+                x.position = toPosition({
+                    next: board.columnTreeViews[targetColumnIndex].cards.at(0)
+                        ?.position,
+                });
+            }
         });
 
         this.clearCardConsider(cardId);

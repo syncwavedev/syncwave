@@ -262,7 +262,9 @@ export class BoardData implements SyncTarget {
         this.rawColumns.map(x => new ColumnView(x, this, this.crdtManager))
     );
     columnTreeViews: ColumnTreeView[] = $derived(
-        this.rawColumns.map(x => new ColumnTreeView(x, this, this.crdtManager))
+        this.rawColumns
+            .map(x => new ColumnTreeView(x, this, this.crdtManager))
+            .sort((a, b) => compareNumbers(a.position, b.position))
     );
     boardView: BoardView = $derived(
         new BoardView(this.board, this, this.crdtManager)

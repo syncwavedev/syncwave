@@ -887,6 +887,16 @@ export class Agent {
             }
         });
 
+        this.createCardColumnChangedMessage({
+            boardId: card.boardId,
+            cardColumnChangedAt: getNow(),
+            cardId,
+            fromColumnId: card.columnId,
+            toColumnId: columnId,
+            fromColumnName: board.columnTreeViews[sourceColumnIndex].name,
+            toColumnName: board.columnTreeViews[targetColumnIndex].name,
+        });
+
         this.clearCardConsider(cardId);
     }
 

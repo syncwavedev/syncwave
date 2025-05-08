@@ -92,12 +92,32 @@ export function CardColumnChangedMessagePayload() {
 export interface CardColumnChangedMessagePayload
     extends Static<ReturnType<typeof CardColumnChangedMessagePayload>> {}
 
+export function CardAssigneeChangedMessagePayload() {
+    return Type.Composite([
+        BaseMessagePayload('card_assignee_changed'),
+        Type.Object({
+            cardId: Uuid<CardId>(),
+            cardAssigneeChangedAt: Timestamp(),
+            fromAssigneeId: Type.Optional(
+                Type.Union([Uuid<UserId>(), Type.Undefined()])
+            ),
+            toAssigneeId: Type.Optional(
+                Type.Union([Uuid<UserId>(), Type.Undefined()])
+            ),
+        }),
+    ]);
+}
+
+export interface CardAssigneeChangedMessagePayload
+    extends Static<ReturnType<typeof CardAssigneeChangedMessagePayload>> {}
+
 export function MessagePayload() {
     return Type.Union([
         TextMessagePayload(),
         CardCreatedMessagePayload(),
         CardDeletedMessagePayload(),
         CardColumnChangedMessagePayload(),
+        CardAssigneeChangedMessagePayload(),
     ]);
 }
 

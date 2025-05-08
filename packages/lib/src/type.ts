@@ -34,6 +34,7 @@ export function checkValue<T>(
 
         const errors = [...typeCheck.Errors(x)];
 
+        console.log('arg:', x);
         throw new AppError(
             `${message}: validation failed:\n - ` +
                 errors.map(e => e.message).join('\n - ') +

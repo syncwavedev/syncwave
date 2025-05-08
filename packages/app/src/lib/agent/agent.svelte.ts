@@ -579,6 +579,51 @@ export class Agent {
         });
     }
 
+    private createCardAssigneeChangedMessage(params: {
+        boardId: BoardId;
+        cardId: CardId;
+        columnId: ColumnId;
+        fromAssigneeId: UserId | undefined;
+        toAssigneeId: UserId | undefined;
+        cardAssigneeChangedAt: Timestamp;
+    }) {
+        const me = this.authManager.ensureAuthorized();
+        const now = getNow();
+        const messageId = createMessageId();
+        const messageCrdt = Crdt.from<Message>({
+            authorId: me.userId,
+            boardId: params.boardId,
+            cardId: params.cardId,
+            createdAt: now,
+            target: 'card',
+            columnId: params.columnId,
+            id: messageId,
+            attachmentIds: [],
+            payload: {
+                type: 'card_assignee_changed',
+                cardAssigneeChangedAt: params.cardAssigneeChangedAt,
+                cardId: params.cardId,
+                fromAssigneeId: params.fromAssigneeId,
+                toAssigneeId: params.toAssigneeId,
+            },
+            replyToId: undefined,
+            updatedAt: now,
+            pk: [messageId],
+        });
+        const message = this.crdtManager.createDraft({
+            id: messageId,
+            state: messageCrdt.state(),
+            type: 'message',
+            isDraft: true,
+        }).view as Message;
+
+        this.crdtManager.commit(messageId);
+
+        this.syncTargets().forEach(x => {
+            x.newMessage(message);
+        });
+    }
+
     private createCardColumnChangedMessage(params: {
         boardId: BoardId;
         cardId: CardId;
@@ -842,22 +887,23 @@ export class Agent {
             }
         });
 
-        this.createCardColumnChangedMessage({
-            boardId: card.boardId,
-            cardColumnChangedAt: getNow(),
-            cardId,
-            fromColumnId: card.columnId,
-            toColumnId: columnId,
-            fromColumnName: board.columnTreeViews[sourceColumnIndex].name,
-            toColumnName: board.columnTreeViews[targetColumnIndex].name,
-        });
-
         this.clearCardConsider(cardId);
     }
 
     setCardAssignee(cardId: CardId, assigneeId: UserId | undefined): void {
+        const card = this.crdtManager.viewById(cardId, 'card');
+        const fromAssigneeId = card.assigneeId;
         this.crdtManager.update<Card>(cardId, x => {
             x.assigneeId = assigneeId;
+        });
+
+        this.createCardAssigneeChangedMessage({
+            boardId: card.boardId,
+            cardId,
+            columnId: card.columnId,
+            fromAssigneeId,
+            toAssigneeId: assigneeId,
+            cardAssigneeChangedAt: getNow(),
         });
     }
 

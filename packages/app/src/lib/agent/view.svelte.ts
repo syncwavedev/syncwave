@@ -3,6 +3,7 @@ import {
     assert,
     assertNever,
     Awareness,
+    CardAssigneeChangedMessagePayload,
     CardColumnChangedMessagePayload,
     CardCreatedMessagePayload,
     CardDeletedMessagePayload,
@@ -713,6 +714,11 @@ export class MessageView implements Message {
             return new CardColumnChangedMessagePayloadView(
                 this._message.payload
             );
+        } else if (this._message.payload.type === 'card_assignee_changed') {
+            return new CardAssigneeChangedMessagePayloadView(
+                this._message.payload,
+                this._data
+            );
         } else {
             assertNever(this._message.payload);
         }
@@ -776,6 +782,41 @@ export class CardColumnChangedMessagePayloadView
     toColumnId = $derived(this.payload.toColumnId);
     fromColumnName = $derived(this.payload.fromColumnName);
     toColumnName = $derived(this.payload.toColumnName);
+}
+
+export class CardAssigneeChangedMessagePayloadView
+    implements CardAssigneeChangedMessagePayload
+{
+    private payload: CardAssigneeChangedMessagePayload = $state.raw(lateInit());
+
+    constructor(
+        payload: CardAssigneeChangedMessagePayload,
+        private readonly _data: BoardData
+    ) {
+        this.payload = payload;
+    }
+
+    cardId = $derived(this.payload.cardId);
+    cardAssigneeChangedAt = $derived(this.payload.cardAssigneeChangedAt);
+    type = $derived(this.payload.type);
+    fromAssigneeId = $derived(this.payload.fromAssigneeId);
+    toAssigneeId = $derived(this.payload.toAssigneeId);
+    fromAssignee = $derived.by(() => {
+        if (!this.payload.fromAssigneeId) return undefined;
+
+        return findRequired(
+            this._data.allMemberViews,
+            x => x.id === this.payload.fromAssigneeId
+        );
+    });
+    toAssignee = $derived.by(() => {
+        if (!this.payload.toAssigneeId) return undefined;
+
+        return findRequired(
+            this._data.allMemberViews,
+            x => x.id === this.payload.toAssigneeId
+        );
+    });
 }
 
 export class TextMessagePayloadView implements TextMessagePayload {

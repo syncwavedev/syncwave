@@ -171,6 +171,38 @@ export function createWriteApi() {
                         }
                     }
 
+                    if (message.payload.type === 'card_assignee_changed') {
+                        if (message.payload.toAssigneeId) {
+                            const toAssignee =
+                                await st.tx.members.getByUserIdAndBoardId(
+                                    message.payload.toAssigneeId,
+                                    message.boardId,
+                                    {excludeDeleted: false}
+                                );
+
+                            if (!toAssignee) {
+                                throw new BusinessError(
+                                    `user ${message.payload.toAssigneeId} is not a member of board ${message.boardId}`,
+                                    'forbidden'
+                                );
+                            }
+                        }
+                        if (message.payload.fromAssigneeId) {
+                            const fromAssignee =
+                                await st.tx.members.getByUserIdAndBoardId(
+                                    message.payload.fromAssigneeId,
+                                    message.boardId,
+                                    {excludeDeleted: false}
+                                );
+                            if (!fromAssignee) {
+                                throw new BusinessError(
+                                    `user ${message.payload.fromAssigneeId} is not a member of board ${message.boardId}`,
+                                    'forbidden'
+                                );
+                            }
+                        }
+                    }
+
                     await st.tx.messages.apply(
                         message.id,
                         crdt.state(),
@@ -210,6 +242,15 @@ export function createWriteApi() {
                                     fromColumnName: expectString(),
                                     toColumnName: expectString(),
                                     cardColumnChangedAt: expectTimestamp(),
+                                },
+                                card_assignee_changed: {
+                                    type: 'card_assignee_changed',
+                                    cardId: message.cardId,
+                                    fromAssigneeId:
+                                        expectOptional(expectString<UserId>()),
+                                    toAssigneeId:
+                                        expectOptional(expectString<UserId>()),
+                                    cardAssigneeChangedAt: expectTimestamp(),
                                 },
                             }),
                         })

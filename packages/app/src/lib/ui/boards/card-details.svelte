@@ -179,7 +179,10 @@
                     ...assigneeOptions,
                 ]}
                 onValueChange={value =>
-                    agent.setCardAssignee(card.id, value as UserId)}
+                    agent.setCardAssignee(
+                        card.id,
+                        (value as UserId) || undefined // select doesn't support undefined, it will return '' instead
+                    )}
             >
                 <button class="btn--ghost">
                     <UserIcon />

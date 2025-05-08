@@ -34,4 +34,19 @@
             <TimeAgo time={message.payload.cardColumnChangedAt} />
         </span>
     {/if}
+
+    {#if message.payload.type === 'card_assignee_changed'}
+        <span>
+            <span class="font-medium">{message.author.fullName}</span>
+            changed the card assignee from
+            <span class="font-medium"
+                >{message.payload.fromAssignee?.fullName ?? 'Unassigned'}</span
+            >
+            to
+            <span class="font-medium"
+                >{message.payload.toAssignee?.fullName ?? 'Unassigned'}</span
+            >
+            <TimeAgo time={message.payload.cardAssigneeChangedAt} />
+        </span>
+    {/if}
 </div>

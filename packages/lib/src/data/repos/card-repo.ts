@@ -44,7 +44,9 @@ export function Card() {
             authorId: Uuid<UserId>(),
             boardId: Uuid<BoardId>(),
             counter: Type.Union([Type.Number(), Type.Null()]),
-            assigneeId: Type.Optional(Uuid<UserId>()),
+            assigneeId: Type.Optional(
+                Type.Union([Uuid<UserId>(), Type.Undefined()])
+            ),
             text: Richtext(),
             columnId: Uuid<ColumnId>(),
             position: Type.Number(),

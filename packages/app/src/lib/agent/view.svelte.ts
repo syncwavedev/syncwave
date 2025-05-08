@@ -3,6 +3,7 @@ import {
     assert,
     assertNever,
     Awareness,
+    CardColumnChangedMessagePayload,
     CardCreatedMessagePayload,
     CardDeletedMessagePayload,
     compareNumbers,
@@ -272,7 +273,7 @@ export class BoardData implements SyncTarget {
     boardTreeView: BoardTreeView = $derived(
         new BoardTreeView(this.board, this, this.crdtManager)
     );
-    memberViews: MemberView[] = $derived(
+    allMemberViews: MemberView[] = $derived(
         this.rawUsers
             .slice()
             .sort((a, b) => {
@@ -291,8 +292,9 @@ export class BoardData implements SyncTarget {
                 );
             })
     );
+    activeMemberViews = $derived(this.allMemberViews.filter(x => !x.deletedAt));
     meView: MemberView = $derived.by(() => {
-        const me = this.memberViews.find(x => x.id === this.rawMe.id);
+        const me = this.allMemberViews.find(x => x.id === this.rawMe.id);
 
         assert(me !== undefined, 'me is not part of the board members');
 
@@ -466,7 +468,7 @@ export class BoardView implements Board {
     protected readonly _data!: BoardData;
     protected readonly _board!: Board;
 
-    members = $derived(this._data.memberViews.filter(x => !x.deletedAt));
+    members = $derived(this._data.allMemberViews.filter(x => !x.deletedAt));
 
     memberId = $derived(this._data.memberId);
 
@@ -546,7 +548,7 @@ export class ColumnView implements Column {
     board = $derived(this._data.boardView);
     author = $derived.by(() => {
         return findRequired(
-            this._data.memberViews,
+            this._data.allMemberViews,
             x => x.id === this._column.authorId
         );
     });
@@ -642,7 +644,7 @@ export class CardTreeView implements Card {
 
     author = $derived.by(() => {
         return findRequired(
-            this._data.memberViews,
+            this._data.allMemberViews,
             x => x.id === this._card.authorId
         );
     });
@@ -651,7 +653,7 @@ export class CardTreeView implements Card {
         if (!this._card.assigneeId) return undefined;
 
         return findRequired(
-            this._data.memberViews,
+            this._data.allMemberViews,
             x => x.id === this._card.assigneeId
         );
     });
@@ -682,7 +684,7 @@ export class MessageView implements Message {
 
     author = $derived.by(() => {
         return findRequired(
-            this._data.memberViews,
+            this._data.allMemberViews,
             x => x.id === this._message.authorId
         );
     });
@@ -707,6 +709,10 @@ export class MessageView implements Message {
             return new CardCreatedMessagePayloadView(this._message.payload);
         } else if (this._message.payload.type === 'card_deleted') {
             return new CardDeletedMessagePayloadView(this._message.payload);
+        } else if (this._message.payload.type === 'card_column_changed') {
+            return new CardColumnChangedMessagePayloadView(
+                this._message.payload
+            );
         } else {
             assertNever(this._message.payload);
         }
@@ -752,6 +758,24 @@ export class CardDeletedMessagePayloadView
     cardId = $derived(this.payload.cardId);
     cardDeletedAt = $derived(this.payload.cardDeletedAt);
     type = $derived(this.payload.type);
+}
+
+export class CardColumnChangedMessagePayloadView
+    implements CardColumnChangedMessagePayload
+{
+    private payload: CardColumnChangedMessagePayload = $state.raw(lateInit());
+
+    constructor(payload: CardColumnChangedMessagePayload) {
+        this.payload = payload;
+    }
+
+    cardId = $derived(this.payload.cardId);
+    cardColumnChangedAt = $derived(this.payload.cardColumnChangedAt);
+    type = $derived(this.payload.type);
+    fromColumnId = $derived(this.payload.fromColumnId);
+    toColumnId = $derived(this.payload.toColumnId);
+    fromColumnName = $derived(this.payload.fromColumnName);
+    toColumnName = $derived(this.payload.toColumnName);
 }
 
 export class TextMessagePayloadView implements TextMessagePayload {

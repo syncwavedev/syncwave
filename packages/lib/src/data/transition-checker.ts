@@ -35,8 +35,8 @@ export function expectNumber() {
     return expectAny(Number) as number;
 }
 
-export function expectString() {
-    return expectAny(String) as string;
+export function expectString<T extends string = string>() {
+    return expectAny(String) as T;
 }
 
 export function expectTimestamp() {

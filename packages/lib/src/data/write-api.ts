@@ -32,6 +32,7 @@ import {BOARD_DEMO_TEMPLATE, NEW_BOARD_TEMPLATE} from './template.js';
 import {
     creatable,
     expectOptional,
+    expectString,
     expectTimestamp,
     expectUnion,
     writable,
@@ -136,6 +137,40 @@ export function createWriteApi() {
                         );
                     }
 
+                    if (message.payload.type === 'card_column_changed') {
+                        const fromColumn = await st.tx.columns.getById(
+                            message.payload.fromColumnId
+                        );
+                        if (!fromColumn) {
+                            throw new BusinessError(
+                                `column not found: ${message.payload.fromColumnId}`,
+                                'column_not_found'
+                            );
+                        }
+                        if (fromColumn.boardId !== message.boardId) {
+                            throw new BusinessError(
+                                `column ${message.payload.fromColumnId} doesn't belong to board ${message.boardId}`,
+                                'forbidden'
+                            );
+                        }
+
+                        const toColumn = await st.tx.columns.getById(
+                            message.payload.toColumnId
+                        );
+                        if (!toColumn) {
+                            throw new BusinessError(
+                                `column not found: ${message.payload.toColumnId}`,
+                                'column_not_found'
+                            );
+                        }
+                        if (toColumn.boardId !== message.boardId) {
+                            throw new BusinessError(
+                                `column ${message.payload.toColumnId} doesn't belong to board ${message.boardId}`,
+                                'forbidden'
+                            );
+                        }
+                    }
+
                     await st.tx.messages.apply(
                         message.id,
                         crdt.state(),
@@ -166,6 +201,15 @@ export function createWriteApi() {
                                     type: 'card_deleted',
                                     cardId: message.cardId,
                                     cardDeletedAt: expectTimestamp(),
+                                },
+                                card_column_changed: {
+                                    type: 'card_column_changed',
+                                    cardId: message.cardId,
+                                    fromColumnId: expectString<ColumnId>(),
+                                    toColumnId: expectString<ColumnId>(),
+                                    fromColumnName: expectString(),
+                                    toColumnName: expectString(),
+                                    cardColumnChangedAt: expectTimestamp(),
                                 },
                             }),
                         })

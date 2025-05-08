@@ -579,6 +579,54 @@ export class Agent {
         });
     }
 
+    private createCardColumnChangedMessage(params: {
+        boardId: BoardId;
+        cardId: CardId;
+        fromColumnId: ColumnId;
+        toColumnId: ColumnId;
+        fromColumnName: string;
+        toColumnName: string;
+        cardColumnChangedAt: Timestamp;
+    }) {
+        const me = this.authManager.ensureAuthorized();
+        const now = getNow();
+        const messageId = createMessageId();
+        const messageCrdt = Crdt.from<Message>({
+            authorId: me.userId,
+            boardId: params.boardId,
+            cardId: params.cardId,
+            createdAt: now,
+            target: 'card',
+            columnId: params.toColumnId,
+            id: messageId,
+            attachmentIds: [],
+            payload: {
+                type: 'card_column_changed',
+                cardColumnChangedAt: params.cardColumnChangedAt,
+                cardId: params.cardId,
+                fromColumnId: params.fromColumnId,
+                toColumnId: params.toColumnId,
+                fromColumnName: params.fromColumnName,
+                toColumnName: params.toColumnName,
+            },
+            replyToId: undefined,
+            updatedAt: now,
+            pk: [messageId],
+        });
+        const message = this.crdtManager.createDraft({
+            id: messageId,
+            state: messageCrdt.state(),
+            type: 'message',
+            isDraft: true,
+        }).view as Message;
+
+        this.crdtManager.commit(messageId);
+
+        this.syncTargets().forEach(x => {
+            x.newMessage(message);
+        });
+    }
+
     private createCardDeletedMessage(params: {
         boardId: BoardId;
         cardId: CardId;
@@ -662,12 +710,6 @@ export class Agent {
         return message;
     }
 
-    setColumnPosition(columnId: ColumnId, position: number): void {
-        this.crdtManager.update<Column>(columnId, x => {
-            x.position = position;
-        });
-    }
-
     finalizeCardPosition(cardId: CardId): void {
         const board = this.activeBoards.find(
             x =>
@@ -675,9 +717,9 @@ export class Agent {
                 x.considerColumnId.has(cardId)
         );
         assert(board !== undefined, 'finalize card position: board not found');
-        const columnId = board.considerColumnId.get(cardId);
+        const toColumnId = board.considerColumnId.get(cardId);
         assert(
-            columnId !== undefined,
+            toColumnId !== undefined,
             'finalize card position: columnId not found'
         );
         const position = board.considerCardPosition.get(cardId);
@@ -686,9 +728,24 @@ export class Agent {
             'finalize card position: position not found'
         );
 
+        const card = this.crdtManager.viewById(cardId, 'card');
+        const fromColumnId = card.columnId;
+        const fromColumn = this.crdtManager.viewById(fromColumnId, 'column');
+        const toColumn = this.crdtManager.viewById(toColumnId, 'column');
+
         this.crdtManager.update<Card>(cardId, x => {
             x.position = position;
-            x.columnId = columnId;
+            x.columnId = toColumnId;
+        });
+
+        this.createCardColumnChangedMessage({
+            boardId: card.boardId,
+            cardColumnChangedAt: getNow(),
+            cardId,
+            fromColumnId,
+            toColumnId,
+            fromColumnName: fromColumn.name,
+            toColumnName: toColumn.name,
         });
 
         this.clearCardConsider(cardId);
@@ -783,6 +840,16 @@ export class Agent {
                         ?.position,
                 });
             }
+        });
+
+        this.createCardColumnChangedMessage({
+            boardId: card.boardId,
+            cardColumnChangedAt: getNow(),
+            cardId,
+            fromColumnId: card.columnId,
+            toColumnId: columnId,
+            fromColumnName: board.columnTreeViews[sourceColumnIndex].name,
+            toColumnName: board.columnTreeViews[targetColumnIndex].name,
         });
 
         this.clearCardConsider(cardId);

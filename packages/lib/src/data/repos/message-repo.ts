@@ -75,11 +75,29 @@ export function CardDeletedMessagePayload() {
 export interface CardDeletedMessagePayload
     extends Static<ReturnType<typeof CardDeletedMessagePayload>> {}
 
+export function CardColumnChangedMessagePayload() {
+    return Type.Composite([
+        BaseMessagePayload('card_column_changed'),
+        Type.Object({
+            cardId: Uuid<CardId>(),
+            cardColumnChangedAt: Timestamp(),
+            fromColumnId: Uuid<ColumnId>(),
+            toColumnId: Uuid<ColumnId>(),
+            fromColumnName: Type.String(),
+            toColumnName: Type.String(),
+        }),
+    ]);
+}
+
+export interface CardColumnChangedMessagePayload
+    extends Static<ReturnType<typeof CardColumnChangedMessagePayload>> {}
+
 export function MessagePayload() {
     return Type.Union([
         TextMessagePayload(),
         CardCreatedMessagePayload(),
         CardDeletedMessagePayload(),
+        CardColumnChangedMessagePayload(),
     ]);
 }
 

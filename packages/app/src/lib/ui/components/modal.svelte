@@ -5,13 +5,11 @@
     import modalManager from '../modal-manager.svelte';
 
     let {
-        title,
         children,
         size = 'md',
     }: {
-        title: string;
         children: Snippet;
-        size?: 'sm' | 'md' | 'lg';
+        size?: 'sm' | 'md' | 'lg' | 'xl';
     } = $props();
 </script>
 
@@ -26,15 +24,6 @@
         ></div>
 
         <div class={`modal modal--${size}`}>
-            <div class="flex items-center modal-padding-inline">
-                <p class="font-medium text-lg">{title}</p>
-                <button
-                    class="btn--icon ml-auto text-ink-body"
-                    onclick={() => modalManager.close()}
-                >
-                    <TimesIcon />
-                </button>
-            </div>
             {@render children()}
         </div>
     </Portal>

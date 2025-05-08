@@ -5,3 +5,9 @@
 .input--block {
     @apply rounded-sm border border-divider-object;
 }
+
+.input--avatar {
+    input[type='file'] {
+        display: none;
+    }
+}

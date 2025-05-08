@@ -26,7 +26,6 @@
     import StatusBar from './status-bar.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
-    import EditColumnsModal from './edit-columns-modal.svelte';
     import permissionManager from '../../../permission-manager';
 
     const {
@@ -222,15 +221,11 @@
 {/snippet}
 
 {#snippet boardSettings()}
-    <BoardSettingsModal {board} />
+    <BoardSettingsModal {board} {me} />
 {/snippet}
 
 {#snippet profileSettings()}
     <ProfileModal {me} />
-{/snippet}
-
-{#snippet columnSettings()}
-    <EditColumnsModal {board} />
 {/snippet}
 
 <div class="app flex">
@@ -307,8 +302,7 @@
                             onCardClick={selectCard}
                             activeCardId={selectedCard?.id}
                             onCreateCard={() => createCard(column)}
-                            onEditColumn={() =>
-                                modalManager.open(columnSettings)}
+                            onEditColumn={() => {}}
                             columnPosition={i}
                             columnsCount={board.columns.length - 1}
                         />

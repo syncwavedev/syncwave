@@ -1,7 +1,6 @@
 <script lang="ts">
     import {getAgent} from '../../agent/agent.svelte';
     import type {BoardTreeView} from '../../agent/view.svelte';
-    import Modal from '../components/modal.svelte';
     import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
     import {createDndColumnListContext} from './column-dnd';
     import EditColumnsModalColumn from './edit-columns-modal-column.svelte';
@@ -44,27 +43,31 @@
     }
 </script>
 
-<Modal title="Manage Columns" size="md">
-    <div
-        bind:this={columnsContainerRef}
-        bind:this={viewportRef}
-        class="flex flex-col modal-padding-inline mt-1 mb-2"
-    >
-        {#each board.columns as column, index (column.id)}
-            <EditColumnsModalColumn {board} {column} {index} />
-        {/each}
-        <form
-            class="flex items-center my-0.5 -mx-1 px-1 focus-within:bg-material-elevated-hover rounded-sm text-ink-detail"
-            onsubmit={onNewColumnSubmit}
-        >
-            <CircleDashedIcon />
-            <input
-                type="text"
-                class="input py-2 ml-1.5 text-ink"
-                bind:value={newColumn}
-                required
-                placeholder="New Column"
-            />
-        </form>
+<div
+    bind:this={columnsContainerRef}
+    bind:this={viewportRef}
+    class="flex flex-col modal-padding-inline mt-6 mb-8"
+>
+    <div class="flex flex-col gap-1 flex-1 mb-2">
+        <p class="font-medium">Manage columns</p>
+        <p class="font-detail text-ink-detail text-xs">
+            Add, edit, or reorder columns to organize your board layout
+        </p>
     </div>
-</Modal>
+    {#each board.columns as column, index (column.id)}
+        <EditColumnsModalColumn {board} {column} {index} />
+    {/each}
+    <form
+        class="flex items-center my-0.5 -mx-1 px-1 focus-within:bg-material-elevated-hover rounded-sm text-ink-detail"
+        onsubmit={onNewColumnSubmit}
+    >
+        <CircleDashedIcon />
+        <input
+            type="text"
+            class="input py-2 ml-1.5 text-ink"
+            bind:value={newColumn}
+            required
+            placeholder="New Column"
+        />
+    </form>
+</div>

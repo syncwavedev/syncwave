@@ -1,137 +1,68 @@
 <script lang="ts">
-    import ChevronIcon from '../components/icons/chevron-icon.svelte';
     import Modal from '../components/modal.svelte';
-    import InviteMembersModal from './invite-members-modal.svelte';
-    import modalManager from '../modal-manager.svelte';
-    import EditColumnsModal from './edit-columns-modal.svelte';
-    import type {BoardTreeView} from '../../agent/view.svelte';
-    import {getAgent} from '../../agent/agent.svelte';
-    import router from '../../router';
-    import ManageInviteLinkModal from './manage-invite-link-modal.svelte';
-    import BoardHistoryManager from '../../board-history-manager';
-    import permissionManager from '../../../permission-manager';
+    import type {BoardTreeView, MeView} from '../../agent/view.svelte';
+    import UsersIcon from '../components/icons/users-icon.svelte';
+    import ColumnsIcon from '../components/icons/columns-icon.svelte';
+    import CogIcon from '../components/icons/cog-icon.svelte';
+    import CogSolidIcon from '../components/icons/cog-solid-icon.svelte';
+    import UsersSolidIcon from '../components/icons/users-solid-icon.svelte';
+    import ColumnsSolidIcon from '../components/icons/columns-solid-icon.svelte';
+    import BoardSettingsGeneral from './board-settings-general.svelte';
+    import BoardSettingsMembers from './board-settings-members.svelte';
+    import BoardSettingsColumns from './board-settings-columns.svelte';
 
-    let {board}: {board: BoardTreeView} = $props();
+    let {board, me}: {board: BoardTreeView; me: MeView} = $props();
 
-    const agent = getAgent();
-
-    function onDeleteBoard() {
-        const confirmMessage = `Are you sure you want to delete "${board.name}"? This action cannot be undone.`;
-        if (confirm(confirmMessage)) {
-            modalManager.close();
-            BoardHistoryManager.clear();
-            agent.deleteBoard(board.id);
-            router.route('/');
-        }
-    }
-
-    function onLeaveBoard() {
-        const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
-        if (confirm(confirmMessage)) {
-            modalManager.close();
-            BoardHistoryManager.clear();
-            agent.deleteMember(board.memberId);
-            router.route('/');
-        }
-    }
+    let selectedTab: 'general' | 'members' | 'columns' = $state('general');
 </script>
 
-{#snippet inviteForm()}
-    <InviteMembersModal {board} />
-{/snippet}
-
-{#snippet manageColumns()}
-    <EditColumnsModal {board} />
-{/snippet}
-
-{#snippet manageInviteLink()}
-    <ManageInviteLinkModal {board} />
-{/snippet}
-
-<Modal title="Board Settings" size="md">
-    <div class="flex modal-padding-inline mt-3">
-        <input
-            autocomplete="off"
-            type="title"
-            class="input input--block p-2.5"
-            placeholder="Board name"
-            oninput={e =>
-                agent.setBoardName(
-                    board.id,
-                    (e.target as HTMLInputElement).value
-                )}
-            value={board.name}
-        />
-    </div>
-    <hr class="mt-4 mb-1 material-elevated" />
-    <div role="menu" class="flex flex-col">
+<Modal size="xl">
+    <p class="mt-3 mb-4 font-semibold text-center">Board Settings</p>
+    <div class="flex justify-center items-center">
         <button
-            role="menuitem"
-            class="menu__item"
-            onclick={() => modalManager.navigate(inviteForm, false)}
+            class="flex flex-col items-center gap-0.5 icon-lg py-2 px-4 rounded-md hover:bg-material-elevated-hover"
+            onclick={() => (selectedTab = 'general')}
+            class:text-ink-body={selectedTab !== 'general'}
         >
-            <span>Members</span>
-            <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                <span class="text-sm">{board.members.length} members</span>
-                <ChevronIcon />
-            </span>
+            {#if selectedTab === 'general'}
+                <CogSolidIcon />
+            {:else}
+                <CogIcon />
+            {/if}
+
+            <span class="text-xs">General</span>
         </button>
         <button
-            role="menuitem"
-            class="menu__item"
-            onclick={() => modalManager.navigate(manageColumns, false)}
+            class="flex flex-col items-center gap-0.5 icon-lg py-2 px-4 rounded-md hover:bg-material-elevated-hover"
+            onclick={() => (selectedTab = 'members')}
+            class:text-ink-body={selectedTab !== 'members'}
         >
-            <span>Columns</span>
-            <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                <span class="text-sm">{board.columns.length} columns</span>
-                <ChevronIcon />
-            </span>
+            {#if selectedTab === 'members'}
+                <UsersSolidIcon />
+            {:else}
+                <UsersIcon />
+            {/if}
+            <span class="text-xs">Members</span>
         </button>
         <button
-            role="menuitem"
-            class="menu__item"
-            onclick={() => modalManager.navigate(manageInviteLink, false)}
+            class="flex flex-col items-center gap-0.5 icon-lg py-2 px-4 rounded-md hover:bg-material-elevated-hover"
+            onclick={() => (selectedTab = 'columns')}
+            class:text-ink-body={selectedTab !== 'columns'}
         >
-            <span>Invite Link</span>
-            <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                <span class="text-sm">Manage</span>
-                <ChevronIcon />
-            </span>
+            {#if selectedTab === 'columns'}
+                <ColumnsSolidIcon />
+            {:else}
+                <ColumnsIcon />
+            {/if}
+            <span class="text-xs">Columns</span>
         </button>
     </div>
-    <hr class="my-1 material-elevated" />
-    <button role="menuitem" class="menu__item" onclick={onLeaveBoard}>
-        Leave Board
-        <span class="text-ink-body ml-auto flex items-center gap-1.5">
-            <span class="text-sm">You'll lose access to this board</span>
-        </span>
-    </button>
-    {#if permissionManager.hasPermission('delete:board')}
-        <button
-            role="menuitem"
-            class="menu__item mb-1 text-ink-danger"
-            onclick={onDeleteBoard}
-        >
-            Delete Board
-            <span class="text-ink-body ml-auto flex items-center gap-1.5">
-                <span class="text-sm">This action cannot be undone</span>
-            </span>
-        </button>
+    <hr class="mt-1 material-elevated" />
+    {#if selectedTab === 'general'}
+        <BoardSettingsGeneral {board} />
+    {:else if selectedTab === 'members'}
+        <BoardSettingsMembers {board} {me} />
+    {:else if selectedTab === 'columns'}
+        <BoardSettingsColumns {board} />
     {/if}
 </Modal>
-
-<style>
-    .menu__item {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        cursor: default;
-        gap: 0.5rem;
-        padding-inline: var(--modal-padding-inline);
-        padding-block: 0.75rem;
-
-        &:hover {
-            background: var(--color-material-elevated-hover);
-        }
-    }
-</style>

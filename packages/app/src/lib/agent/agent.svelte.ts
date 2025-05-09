@@ -633,6 +633,10 @@ export class Agent {
         toColumnName: string;
         cardColumnChangedAt: Timestamp;
     }) {
+        if (params.fromColumnId === params.toColumnId) {
+            return;
+        }
+
         const me = this.authManager.ensureAuthorized();
         const now = getNow();
         const messageId = createMessageId();

@@ -40,7 +40,7 @@
         <div class="flex justify-end mr-3 py-2">
             <button
                 type="submit"
-                class="btn--ghost"
+                class="btn--ghost hover:bg-material-elevated-hover"
                 disabled={name.length < 1 || isSubmitting}
             >
                 <PlusIcon />

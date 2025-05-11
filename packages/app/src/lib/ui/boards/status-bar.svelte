@@ -67,7 +67,7 @@
     <div class="ml-auto">
         <a
             href="https://discord.gg/FzQjQVFdQz"
-            class="btn--ghost"
+            class="btn--ghost hover:bg-material-base-hover"
             target="_blank"
         >
             <ChatBubbleSolidIcon /> Leave Feedback

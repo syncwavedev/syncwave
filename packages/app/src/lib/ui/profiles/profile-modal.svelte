@@ -4,8 +4,6 @@
     import {getAgent} from '../../agent/agent.svelte';
     import type {MeView} from '../../agent/view.svelte';
     import AvatarInput from '../components/avatar-input.svelte';
-    import TimesIcon from '../components/icons/times-icon.svelte';
-    import modalManager from '../modal-manager.svelte';
 
     let {me}: {me: MeView} = $props();
 

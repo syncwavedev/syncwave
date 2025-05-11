@@ -38,6 +38,7 @@
     import Demo from './pages/demo.svelte';
     import {DocumentActivityMonitor} from './document-activity.js';
     import ModalContainer from './lib/ui/components/modal-container.svelte';
+    import Join from './pages/join.svelte';
 
     const documentActivity = new DocumentActivityMonitor();
 
@@ -103,6 +104,17 @@
         });
         router.on('/testbed', () => {
             Page = Testbed;
+        });
+        router.on('/join/:code', params => {
+            const code = params.code;
+
+            if (code === undefined) {
+                router.route('/');
+                return;
+            }
+
+            Page = Join;
+            pageProps = {code};
         });
 
         router.listen();

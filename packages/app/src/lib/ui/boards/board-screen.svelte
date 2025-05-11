@@ -13,8 +13,7 @@
     import CardDetails from './card-details.svelte';
     import {getAgent} from '../../agent/agent.svelte';
     import router from '../../router';
-    import {flip} from 'svelte/animate';
-    import {createDndContext, DND_REORDER_DURATION_MS} from './board-dnd';
+    import {createDndContext} from './board-dnd';
     import {yFragmentToPlaintext} from 'syncwave';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import PanelSizeManager from '../../panel-size-manager';
@@ -27,6 +26,8 @@
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
     import permissionManager from '../../../permission-manager';
+    import {flip} from 'svelte/animate';
+    import {DND_REORDER_DURATION_MS} from './board-dnd';
 
     const {
         board,
@@ -294,8 +295,8 @@
             >
                 {#each board.columns as column, i (column.id)}
                     <div
+                        class="flex"
                         animate:flip={{duration: DND_REORDER_DURATION_MS}}
-                        class="flex-shrink-0"
                     >
                         <BoardColumn
                             {column}
@@ -343,8 +344,8 @@
 <style>
     .board-content {
         height: var(--board-height);
-        overflow-y: auto;
         display: flex;
+        overflow-y: auto;
 
         padding-inline-start: var(--board-padding-inline-start);
     }

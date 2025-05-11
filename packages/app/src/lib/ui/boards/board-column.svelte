@@ -80,13 +80,13 @@
 
     <Scrollable
         bind:viewportRef
+        class="relative min-h-0 flex-grow"
         viewportClass="max-h-full"
-        class="flex-grow overflow-y-auto relative"
         orientation="vertical"
         type="hover"
     >
         <div
-            class="column-padding-inline flex h-full min-h-10 flex-col gap-1.5"
+            class="column-padding-inline min-h-10 overflow-hidden"
             bind:this={cardsContainerRef}
         >
             <ListAnimator
@@ -114,7 +114,7 @@
         flex-shrink: 0;
         flex-direction: column;
 
-        height: 100%;
+        max-height: 100%;
         width: var(--column-width);
     }
 

@@ -159,7 +159,7 @@
             </div>
         </div>
         <!-- Task Actions -->
-        <div class="flex gap-4 panel-margin-inline mt-4 mb-2 items-center">
+        <div class="flex gap-2 panel-margin-inline mt-4 mb-2 items-center">
             <Select
                 value={card.column.id}
                 options={columnOptions}

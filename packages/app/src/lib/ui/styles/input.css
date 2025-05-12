@@ -1,3 +1,7 @@
+:root {
+    --input--avatar-size: 4rem;
+}
+
 .input {
     @apply placeholder:text-ink-placeholder flex-grow focus-visible:outline-none;
 }
@@ -7,7 +11,42 @@
 }
 
 .input--avatar {
+    position: relative;
+
+    display: grid;
+    aspect-ratio: 1 / 1;
+    place-items: center;
+
+    height: var(--input--avatar-size);
+    width: var(--input--avatar-size);
+
+    border: 1px solid var(--color-divider-object);
+    border-radius: 100%;
+
     input[type='file'] {
         display: none;
     }
+
+    img {
+        border-radius: 100%;
+
+        object-fit: cover;
+
+        height: calc(var(--input--avatar-size) - 2px);
+        width: calc(var(--input--avatar-size) - 2px);
+    }
+}
+
+.input--avatar__icon {
+    --icon-size: calc(var(--input--avatar-size) / 3);
+}
+
+.input--avatar__remove-btn {
+    position: absolute;
+
+    right: 0;
+
+    border: 1px solid var(--color-divider-object);
+
+    transform: translateX(50%);
 }

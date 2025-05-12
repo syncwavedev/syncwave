@@ -24,7 +24,7 @@
 <Modal size="xl">
     <p class="mt-3 mb-6 font-semibold text-center">Profile Settings</p>
     <div class="modal-padding-inline flex gap-8">
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col items-center gap-3">
             <p class="font-medium">Profile Picture</p>
             <AvatarInput />
         </div>

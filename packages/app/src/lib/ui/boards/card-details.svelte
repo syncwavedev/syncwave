@@ -9,7 +9,7 @@
     import type {CardTreeView, MemberView} from '../../agent/view.svelte';
     import type {Awareness} from 'syncwave';
     import type {ColumnId, UserId} from 'syncwave';
-    import {onMount, tick} from 'svelte';
+    import {onDestroy, onMount, tick} from 'svelte';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
     import Select from '../components/select.svelte';
@@ -83,6 +83,53 @@
             behavior: 'smooth',
         });
     };
+
+    let wasAtBottom = false;
+    const THRESHOLD = 5; // px
+    let smoothScrollTimeout: number | null = null;
+    function setSmoothScrollTimeout() {
+        if (smoothScrollTimeout) {
+            clearTimeout(smoothScrollTimeout);
+        }
+        // if there are no scroll events for 100ms, we can assume that the smooth scroll has finished
+        smoothScrollTimeout = setTimeout(() => {
+            smoothScrollTimeout = null;
+        }, 100) as unknown as number;
+    }
+    function handleScroll() {
+        if (smoothScrollTimeout) {
+            // prolong the timeout
+            setSmoothScrollTimeout();
+            return;
+        }
+
+        const {scrollTop, scrollHeight, clientHeight} = scrollable;
+        wasAtBottom = scrollHeight - (scrollTop + clientHeight) < THRESHOLD;
+    }
+
+    onMount(() => {
+        wasAtBottom =
+            scrollable.scrollTop + scrollable.clientHeight >=
+            scrollable.scrollHeight;
+        scrollable.addEventListener('scroll', handleScroll, {passive: true});
+    });
+
+    onDestroy(() => {
+        scrollable.removeEventListener('scroll', handleScroll);
+    });
+
+    $effect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _trackedMessagesCount = card.messages.length;
+
+        if (wasAtBottom) {
+            scrollable.scrollTo({
+                top: scrollable.scrollHeight,
+                behavior: 'smooth',
+            });
+            setSmoothScrollTimeout();
+        }
+    });
 
     const separator = (idx: number, length: number) => {
         if (idx === length - 1) {

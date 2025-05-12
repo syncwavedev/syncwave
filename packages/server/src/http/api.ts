@@ -3,6 +3,8 @@ import '../instrumentation.js';
 import 'dotenv/config';
 
 import Router from '@koa/router';
+import Busboy from 'busboy';
+import {Readable} from 'stream';
 import {
     type AttachmentId,
     context,
@@ -10,6 +12,9 @@ import {
     getGoogleUser,
     type GoogleOptions,
     log,
+    ObjectKey,
+    ObjectMetadata,
+    validateUuid,
 } from 'syncwave';
 
 export interface ApiRouterOptions {
@@ -42,12 +47,49 @@ export function createApiRouter(
         );
     });
 
+    router.get('/objects/:key', async ctx => {
+        const {key} = ctx.params;
+        if (typeof key !== 'string') {
+            ctx.status = 400;
+            ctx.body = {
+                error: 'id must be a string',
+            };
+            return;
+        }
+        if (!validateUuid(key)) {
+            ctx.status = 400;
+            ctx.body = {
+                error: 'object key must be a valid UUID',
+            };
+            return;
+        }
+        const object = await coordinator().getObject(key as ObjectKey);
+        if (object === undefined) {
+            ctx.status = 404;
+            ctx.body = {
+                error: 'object not found',
+            };
+            return;
+        }
+        console.log('object', object);
+        ctx.status = 200;
+        ctx.type = object.metadata.contentType;
+        ctx.body = Readable.fromWeb(object.data as any);
+    });
+
     router.get('/attachment/:id', async ctx => {
         const {id} = ctx.params;
         if (typeof id !== 'string') {
             ctx.status = 400;
             ctx.body = {
                 error: 'id must be a string',
+            };
+            return;
+        }
+        if (!validateUuid(id)) {
+            ctx.status = 400;
+            ctx.body = {
+                error: 'id must be a valid UUID',
             };
             return;
         }
@@ -82,6 +124,74 @@ export function createApiRouter(
         ctx.type = object.metadata.contentType;
         ctx.set('Content-Disposition', `attachment; filename=${id}`);
         ctx.set('Content-Length', object.size.toString());
+    });
+
+    router.post('/objects', async ctx => {
+        // Wrap Busboy in a Promise so we can await the upload stream
+        await new Promise<void>((resolve, reject) => {
+            const busboy = Busboy({headers: ctx.req.headers});
+            let handled = false;
+
+            busboy.on('file', (_fieldname, file, {mimeType}) => {
+                if (handled) {
+                    // we only allow one file
+                    file.resume();
+                    return;
+                }
+                handled = true;
+
+                const chunks: Buffer[] = [];
+                file.on('data', (chunk: Buffer) => {
+                    chunks.push(chunk);
+                });
+
+                file.on('end', async () => {
+                    try {
+                        const buffer = Buffer.concat(chunks);
+                        const data = new Uint8Array(buffer);
+
+                        // Build your metadata however you need it
+                        const metadata: ObjectMetadata = {
+                            contentType: mimeType,
+                        };
+
+                        // Store it
+                        const objectKey = await coordinator().createAttachment({
+                            contentType: mimeType,
+                            stream: new ReadableStream<Uint8Array>({
+                                start(controller) {
+                                    controller.enqueue(data);
+                                    controller.close();
+                                },
+                            }),
+                            jwt: ctx.query['access_token'] as string,
+                        });
+
+                        ctx.status = 201;
+                        ctx.body = {
+                            objectKey,
+                            size: data.length,
+                            metadata,
+                        };
+                        resolve();
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+
+                file.on('error', reject);
+            });
+
+            busboy.on('finish', () => {
+                if (!handled) {
+                    ctx.throw(400, 'No file field named "file" found');
+                }
+            });
+
+            busboy.on('error', reject);
+
+            ctx.req.pipe(busboy);
+        });
     });
 
     router.get(`/health`, async ctx => {

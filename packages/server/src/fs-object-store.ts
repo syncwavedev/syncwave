@@ -3,6 +3,7 @@ import path from 'path';
 import {
     decodeMsgpack,
     encodeMsgpack,
+    joinBuffers,
     type ObjectEnvelope,
     type ObjectKey,
     type ObjectMetadata,
@@ -74,6 +75,25 @@ export class FsObjectStore implements ObjectStore {
         };
         await new Promise(resolve => setTimeout(resolve, 1000));
         await writeFile(this.getFilePath(key), encodeMsgpack(envelope));
+    }
+
+    async putStream(
+        key: ObjectKey,
+        data: ReadableStream<Uint8Array>,
+        metadata: ObjectMetadata
+    ): Promise<void> {
+        const reader = data.getReader();
+        const chunks: Uint8Array[] = [];
+
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) {
+                break;
+            }
+            chunks.push(value);
+        }
+
+        await this.put(key, joinBuffers(chunks), metadata);
     }
 
     async delete(key: ObjectKey): Promise<void> {

@@ -24,6 +24,7 @@ import {
     log,
     MemberRole,
     MESSAGE_TYPING_AWARENESS_TIMEOUT_MS,
+    ObjectKey,
     PersistentConnection,
     RpcConnection,
     softNever,
@@ -59,6 +60,7 @@ import type {XmlFragment} from 'yjs';
 import type {AuthManager} from '../../auth-manager';
 
 import {WebCryptoProvider} from 'syncwave/web-crypto-provider.js';
+import {appConfig} from '../config';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import {
@@ -904,6 +906,26 @@ export class Agent {
         this.clearCardConsider(cardId);
     }
 
+    async uploadObject(file: File): Promise<ObjectKey> {
+        const formData = new FormData();
+        formData.append('file', file, file.name);
+
+        const response = await fetch(`${appConfig.apiUrl}/objects`, {
+            method: 'POST',
+            body: formData,
+        });
+        const {objectKey} = await response.json();
+
+        return objectKey as ObjectKey;
+    }
+
+    setMyAvatar(objectKey: ObjectKey): void {
+        const me = this.authManager.ensureAuthorized();
+        this.crdtManager.update<User>(me.userId, x => {
+            x.avatarKey = objectKey;
+        });
+    }
+
     setCardAssignee(cardId: CardId, assigneeId: UserId | undefined): void {
         const card = this.crdtManager.viewById(cardId, 'card');
         const fromAssigneeId = card.assigneeId;
@@ -1115,4 +1137,8 @@ export function getAgent() {
         'Syncwave agent must be an instance of Agent class'
     );
     return agent;
+}
+
+export function getObjectUrl(objectKey: ObjectKey): string {
+    return `${appConfig.apiUrl}/objects/${objectKey}`;
 }

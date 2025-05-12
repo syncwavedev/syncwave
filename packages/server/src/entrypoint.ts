@@ -2,6 +2,7 @@ import './instrumentation.js';
 
 import 'dotenv/config';
 
+import cors from '@koa/cors';
 import cluster from 'cluster';
 import {createServer, IncomingMessage, ServerResponse} from 'http';
 import type {Http2ServerRequest, Http2ServerResponse} from 'http2';
@@ -372,6 +373,8 @@ function getKoaCallback(app: Koa) {
 
 async function launchApp(options: Options) {
     const app = new Koa();
+
+    app.use(cors());
 
     const apiRouter = createApiRouter(() => coordinator, {
         appUrl: options.uiUrl,

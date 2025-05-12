@@ -1,6 +1,6 @@
 import {Type} from '@sinclair/typebox';
 import {context} from '../context.js';
-import type {Brand} from '../utils.js';
+import {joinBuffers, type Brand} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
 
 export interface JwtPayload {
@@ -89,6 +89,11 @@ export interface ObjectStore {
         data: Uint8Array,
         metadata: ObjectMetadata
     ): Promise<void>;
+    putStream(
+        key: ObjectKey,
+        data: ReadableStream<Uint8Array>,
+        metadata: ObjectMetadata
+    ): Promise<void>;
     delete(key: ObjectKey): Promise<void>;
 }
 
@@ -127,6 +132,26 @@ export class MemObjectStore implements ObjectStore {
         options: ObjectMetadata
     ): Promise<void> {
         this.store.set(key, {data, metadata: options, size: data.byteLength});
+    }
+
+    async putStream(
+        key: ObjectKey,
+        data: ReadableStream<Uint8Array>,
+        metadata: ObjectMetadata
+    ): Promise<void> {
+        const reader = data.getReader();
+        const chunks: Uint8Array[] = [];
+
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) {
+                break;
+            }
+            chunks.push(value);
+        }
+
+        const result = joinBuffers(chunks);
+        await this.put(key, result, metadata);
     }
 
     async delete(key: ObjectKey): Promise<void> {

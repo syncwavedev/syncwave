@@ -27,7 +27,7 @@ import {type Card, type CardId} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
 import {MemberId, MemberRole, type Member} from './repos/member-repo.js';
 import {type Message, type MessageId} from './repos/message-repo.js';
-import {type User, type UserId} from './repos/user-repo.js';
+import {User, type UserId} from './repos/user-repo.js';
 import {BOARD_DEMO_TEMPLATE, NEW_BOARD_TEMPLATE} from './template.js';
 import {
     creatable,
@@ -748,7 +748,16 @@ export function createWriteApi() {
                     st.tx.users.apply(
                         userId,
                         diff,
-                        writable({fullName: true, updatedAt: true})
+                        writable<User>({
+                            fullName: true,
+                            updatedAt: true,
+                            avatarKey: true,
+                            deletedAt: false,
+                            pk: false,
+                            createdAt: false,
+                            id: false,
+                            isDemo: false,
+                        })
                     ),
                 ]);
                 return {};

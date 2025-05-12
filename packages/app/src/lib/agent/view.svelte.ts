@@ -31,6 +31,7 @@ import {
     type User,
     type UserId,
 } from 'syncwave';
+import {getObjectUrl} from './agent.svelte.js';
 import {observeAwareness} from './awareness.js';
 import type {CrdtDerivator, CrdtManager} from './crdt-manager.js';
 
@@ -63,6 +64,12 @@ export class UserView implements User {
     pk = $derived(this.user.pk);
     fullName = $derived(this.user.fullName);
     avatarKey = $derived(this.user.avatarKey);
+    avatarUrl = $derived.by(() => {
+        if (this.user.avatarKey) {
+            return getObjectUrl(this.user.avatarKey);
+        }
+        return undefined;
+    });
 }
 
 export class MemberView extends UserView {

@@ -13,7 +13,7 @@ import type {
     ObjectStore,
     ObjectStreamEnvelope,
 } from 'syncwave';
-import {assert} from 'syncwave';
+import {assert, joinBuffers} from 'syncwave';
 
 export interface S3ObjectStoreOptions {
     bucketName: string;
@@ -101,6 +101,25 @@ export class S3ObjectStore implements ObjectStore {
             ContentType: options.contentType,
         });
         await this.s3Client.send(command);
+    }
+
+    async putStream(
+        key: ObjectKey,
+        data: ReadableStream<Uint8Array>,
+        metadata: ObjectMetadata
+    ): Promise<void> {
+        const reader = data.getReader();
+        const chunks: Uint8Array[] = [];
+
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) {
+                break;
+            }
+            chunks.push(value);
+        }
+
+        await this.put(key, joinBuffers(chunks), metadata);
     }
 
     async delete(key: ObjectKey): Promise<void> {

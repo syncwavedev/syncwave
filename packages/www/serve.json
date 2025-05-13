@@ -1,6 +1,0 @@
-{
-    "public": "./dist",
-    "trailingSlash": false,
-
-    "rewrites": [{"source": "!/assets/**", "destination": "/index.html"}]
-}

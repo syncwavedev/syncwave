@@ -1,6 +1,17 @@
 {
     "public": "./dist",
     "trailingSlash": false,
+    "headers": [
+        {
+            "source": "/assets/**",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "max-age=31536000, immutable, public"
+                }
+            ]
+        }
+    ],
 
     "rewrites": [{"source": "!/assets/**", "destination": "/index.html"}]
 }

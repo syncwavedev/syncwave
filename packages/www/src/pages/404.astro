@@ -1,18 +1,36 @@
 ---
-// Welcome to Astro! Everything between these triple-dash code fences
-// is your "component frontmatter". It never runs in the browser.
-console.log('This runs in your terminal, not the browser!');
+import Layout from '../components/layout.astro';
 ---
 
-<!-- Below is your "component template." It's just HTML, but with
-    some magic sprinkled in to help you build great templates. -->
-<html>
-    <body>
-        <h1>404 - Not Found</h1>
-    </body>
-</html>
-<style>
-    h1 {
-        color: orange;
-    }
-</style>
+<Layout
+    title="404 - Page Not Found | Syncwave"
+    description="The page you are looking for could not be found. Let's get you back on track."
+    url="https://www.syncwave.dev/404"
+>
+    <section
+        class="flex min-h-[calc(100vh-100px)] w-full flex-col items-center justify-center p-6 text-center"
+    >
+        <div class="max-w-md">
+            <h1
+                class="gradient-text text-6xl font-semibold uppercase leading-tight max-md:text-4xl"
+            >
+                404
+            </h1>
+            <p class="mt-4 text-2xl text-gray-200 max-md:text-xl">
+                Oops! Page Not Found
+            </p>
+            <p class="mt-4 text-lg text-gray-300">
+                The page you're looking for doesn't seem to exist. It might have
+                been moved, deleted, or maybe you just mistyped the URL.
+            </p>
+            <div class="mt-10">
+                <a
+                    href="/"
+                    class="mx-auto btn bg-[#7e22ce85] px-8 py-3 text-lg shadow-lg shadow-primary transition-transform duration-[0.3s] hover:scale-x-[1.03]"
+                >
+                    Go to Homepage
+                </a>
+            </div>
+        </div>
+    </section>
+</Layout>

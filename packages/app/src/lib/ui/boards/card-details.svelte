@@ -84,6 +84,7 @@
         });
     };
 
+    // don't autoscroll after loading the card
     let wasAtBottom = false;
     const THRESHOLD = 5; // px
     let smoothScrollTimeout: number | null = null;
@@ -108,9 +109,6 @@
     }
 
     onMount(() => {
-        wasAtBottom =
-            scrollable.scrollTop + scrollable.clientHeight >=
-            scrollable.scrollHeight;
         scrollable.addEventListener('scroll', handleScroll, {passive: true});
     });
 

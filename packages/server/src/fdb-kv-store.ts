@@ -4,7 +4,7 @@ import {
     type Condition,
     createUuidV4,
     Cursor,
-    encodeString,
+    encodeTuple,
     type Entry,
     type GtCondition,
     type GteCondition,
@@ -146,6 +146,6 @@ export class FoundationDBUint8KvStore implements Uint8KvStore, Hub {
     }
 
     private toTopicKey(topic: string) {
-        return Buffer.from(encodeString(`${this.options.topicPrefix}${topic}`));
+        return Buffer.from(encodeTuple([this.options.topicPrefix, topic]));
     }
 }

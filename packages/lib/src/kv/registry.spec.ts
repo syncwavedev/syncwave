@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {encodeString} from '../codec.js';
+import {encodeMsgpack} from '../codec.js';
 import type {AppStore, AppTransaction} from './kv-store.js';
 import {MemMvccStore} from './mem-mvcc-store.js';
 import {Registry} from './registry.js';
@@ -10,7 +10,7 @@ const sampleFactory = (tx: AppTransaction) => ({
         return tx.get([key]);
     },
     async putKey(key: string, value: string): Promise<void> {
-        await tx.put([key], encodeString(value));
+        await tx.put([key], encodeMsgpack(value));
     },
 });
 
@@ -49,7 +49,7 @@ describe('Registry', () => {
             await instance.putKey('key1', 'value1');
             const value = await instance.getKey('key1');
 
-            expect(value).toEqual(encodeString('value1'));
+            expect(value).toEqual(encodeMsgpack('value1'));
         });
     });
 
@@ -65,8 +65,8 @@ describe('Registry', () => {
             const value1 = await instance1.getKey('key');
             const value2 = await instance2.getKey('key');
 
-            expect(value1).toEqual(encodeString('value1'));
-            expect(value2).toEqual(encodeString('value2'));
+            expect(value1).toEqual(encodeMsgpack('value1'));
+            expect(value2).toEqual(encodeMsgpack('value2'));
         });
     });
 

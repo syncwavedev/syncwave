@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {encodeString} from '../codec.js';
+import {encodeMsgpack} from '../codec.js';
 import {toStream} from '../stream.js';
 import {KvStoreIsolator, TransactionIsolator} from './kv-store-isolator.js';
 import type {AppEntry} from './kv-store.js';
@@ -10,13 +10,13 @@ describe('TransactionIsolator', () => {
     it('should get a value with the correct prefixed key', async () => {
         const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
-            await tx.put(['key1'], encodeString('value1'));
-            await tx.put(['key3'], encodeString('value3'));
+            await tx.put(['key1'], encodeMsgpack('value1'));
+            await tx.put(['key3'], encodeMsgpack('value3'));
         });
 
         await store.transact(async tx => {
             const prefixedTxn = new TransactionIsolator(tx, ['prefix:']);
-            await prefixedTxn.put(['key2'], encodeString('value2'));
+            await prefixedTxn.put(['key2'], encodeMsgpack('value2'));
 
             const value1 = await prefixedTxn.get(['key1']);
             const value2 = await prefixedTxn.get(['key2']);
@@ -36,12 +36,12 @@ describe('TransactionIsolator', () => {
             const all = [
                 {
                     key: ['key2'],
-                    value: encodeString('value2'),
+                    value: encodeMsgpack('value2'),
                 },
             ];
 
             expect(value1).toBeUndefined();
-            expect(value2).toEqual(encodeString('value2'));
+            expect(value2).toEqual(encodeMsgpack('value2'));
             expect(gte).toEqual(all);
             expect(gt).toEqual(all);
             expect(lt).toEqual(all);
@@ -53,19 +53,19 @@ describe('TransactionIsolator', () => {
         const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
             const prefixedTxn = new TransactionIsolator(tx, ['pre', 'fix']);
-            await prefixedTxn.put(['key'], encodeString('value'));
+            await prefixedTxn.put(['key'], encodeMsgpack('value'));
         });
 
         await store.transact(async tx => {
             const value = await tx.get(['pre', 'fix', 'key']);
-            expect(value).toEqual(encodeString('value'));
+            expect(value).toEqual(encodeMsgpack('value'));
         });
     });
 
     it('should delete a value with the correct prefixed key', async () => {
         const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
-            await tx.put(['prefix', 'key'], encodeString('value'));
+            await tx.put(['prefix', 'key'], encodeMsgpack('value'));
         });
 
         await store.transact(async tx => {
@@ -82,9 +82,9 @@ describe('TransactionIsolator', () => {
     it('should query with a prefixed condition', async () => {
         const store = new TupleStore(new MemMvccStore());
         await store.transact(async tx => {
-            await tx.put(['prefix', 'key1'], encodeString('value1'));
-            await tx.put(['prefix', 'key2'], encodeString('value2'));
-            await tx.put(['other', 'key3'], encodeString('value3'));
+            await tx.put(['prefix', 'key1'], encodeMsgpack('value1'));
+            await tx.put(['prefix', 'key2'], encodeMsgpack('value2'));
+            await tx.put(['other', 'key3'], encodeMsgpack('value3'));
         });
 
         await store.transact(async tx => {
@@ -101,11 +101,11 @@ describe('TransactionIsolator', () => {
             expect(results).toEqual([
                 {
                     key: ['key1'],
-                    value: encodeString('value1'),
+                    value: encodeMsgpack('value1'),
                 },
                 {
                     key: ['key2'],
-                    value: encodeString('value2'),
+                    value: encodeMsgpack('value2'),
                 },
             ]);
         });
@@ -118,14 +118,14 @@ describe('PrefixedKVStore', () => {
         const prefixedStore = new KvStoreIsolator(store, ['prefix']);
 
         await prefixedStore.transact(async tx => {
-            await tx.put(['key1'], encodeString('value1'));
+            await tx.put(['key1'], encodeMsgpack('value1'));
             const value = await tx.get(['key1']);
-            expect(value).toEqual(encodeString('value1'));
+            expect(value).toEqual(encodeMsgpack('value1'));
         });
 
         await store.transact(async tx => {
             const value = await tx.get(['prefix', 'key1']);
-            expect(value).toEqual(encodeString('value1'));
+            expect(value).toEqual(encodeMsgpack('value1'));
         });
     });
 
@@ -135,7 +135,7 @@ describe('PrefixedKVStore', () => {
         const prefixedStore2 = new KvStoreIsolator(store, ['prefix2']);
 
         await prefixedStore1.transact(async tx => {
-            await tx.put(['key'], encodeString('value1'));
+            await tx.put(['key'], encodeMsgpack('value1'));
         });
 
         await prefixedStore2.transact(async tx => {

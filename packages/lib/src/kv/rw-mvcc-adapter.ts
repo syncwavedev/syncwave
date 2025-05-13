@@ -1,4 +1,4 @@
-import {MsgpackCodec, NumberCodec} from '../codec.js';
+import {MsgpackCodec} from '../codec.js';
 import {AppError} from '../errors.js';
 import {log} from '../logger.js';
 import {toStream} from '../stream.js';
@@ -685,7 +685,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     tx,
                     isolateSnapshot(['version']),
                     withSnapshotPacker(new VersionKeyPacker()),
-                    withSnapshotCodec(new NumberCodec())
+                    withSnapshotCodec(new MsgpackCodec<number>())
                 ),
                 gcScanOffset: pipe(
                     tx,
@@ -702,7 +702,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     tx,
                     isolateSnapshot(['active']),
                     withSnapshotPacker(new RunningTransactionKeyPacker()),
-                    withSnapshotCodec(new NumberCodec<Timestamp>())
+                    withSnapshotCodec(new MsgpackCodec<Timestamp>())
                 ),
             };
 
@@ -733,7 +733,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     tx,
                     isolate(['version']),
                     withPacker(new VersionKeyPacker()),
-                    withCodec(new NumberCodec())
+                    withCodec(new MsgpackCodec<number>())
                 ),
                 gcScanOffset: pipe(
                     tx,
@@ -745,7 +745,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     tx,
                     isolate(['active']),
                     withPacker(new RunningTransactionKeyPacker()),
-                    withCodec(new NumberCodec<Timestamp>())
+                    withCodec(new MsgpackCodec<Timestamp>())
                 ),
             };
 

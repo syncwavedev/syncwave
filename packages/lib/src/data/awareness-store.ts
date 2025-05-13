@@ -1,5 +1,5 @@
 import type {AwarenessState} from '../awareness.js';
-import {MsgpackCodec, NumberCodec} from '../codec.js';
+import {MsgpackCodec} from '../codec.js';
 import {AWARENESS_OFFLINE_TIMEOUT_MS} from '../constants.js';
 import {AppError} from '../errors.js';
 import {
@@ -96,9 +96,9 @@ class AwarenessRoom {
         );
         this.updatedAt = pipe(
             tx,
-            isolate(['updatedAt_1']),
+            isolate(['updatedAt_2']),
             withPacker(new NumberPacker()),
-            withCodec<Timestamp>(new NumberCodec<Timestamp>())
+            withCodec<Timestamp>(new MsgpackCodec<Timestamp>())
         );
     }
 

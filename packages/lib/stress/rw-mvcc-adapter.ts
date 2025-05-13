@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {unreachable} from '../dist/esm/src/utils.js';
 import {Deferred} from '../src/deferred.js';
 import {AppError} from '../src/errors.js';
-import {KvStoreMapper, log, NumberCodec} from '../src/index.js';
+import {KvStoreMapper, log, MsgpackCodec} from '../src/index.js';
 import type {Condition, Entry, KvStore} from '../src/kv/kv-store.js';
 import {MemMvccStore, MvccConflictError} from '../src/kv/mem-mvcc-store.js';
 import {MemRwStore} from '../src/kv/mem-rw-store.js';
@@ -358,13 +358,13 @@ function createStressState(options: StressTestOptions): StressTestState {
     });
     const subject = new KvStoreMapper(
         mvccAdapter,
-        new NumberCodec(),
-        new NumberCodec()
+        new MsgpackCodec<number>(),
+        new MsgpackCodec<number>()
     );
     const target = new KvStoreMapper(
         new MemMvccStore({conflictRetryCount: 0}),
-        new NumberCodec(),
-        new NumberCodec()
+        new MsgpackCodec<number>(),
+        new MsgpackCodec<number>()
     );
 
     const state: StressTestState = {

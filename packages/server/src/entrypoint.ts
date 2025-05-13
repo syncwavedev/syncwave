@@ -19,9 +19,8 @@ import {
     context,
     CoordinatorServer,
     DataLayer,
-    decodeNumber,
+    decodeMsgpack,
     Deferred,
-    encodeNumber,
     type GoogleOptions,
     type KvStore,
     KvStoreIsolator,
@@ -30,7 +29,6 @@ import {
     MemHub,
     MsgpackCodec,
     MvccAdapter,
-    toStream,
     TupleStore,
     type Uint8KvStore,
 } from 'syncwave';
@@ -251,95 +249,19 @@ async function getKvStore(
 }
 
 async function upgradeKVStore({store, instanceAdmin}: Options) {
-    const versionKey = ['version'];
+    const versionKey = ['version_v2'];
     log.info({msg: 'Retrieving KV store version...'});
     let version = await store.transact(async tx => {
         log.info({msg: 'Running tx.get(versionKey)...'});
         const version = await tx.get(versionKey);
         if (version) {
-            try {
-                return decodeNumber(version);
-            } catch {
-                await tx.put(versionKey, encodeNumber(2));
-                return 2;
-            }
+            return decodeMsgpack(version);
         } else {
             return 0;
         }
     });
+
     log.info({msg: 'KV store version: ' + version});
-
-    if (!version || version === 1) {
-        log.info({msg: "KV store doesn't have a version, upgrading..."});
-        await store.transact(async tx => {
-            const keys = await toStream(tx.query({gte: []}))
-                .map(entry => entry.key)
-                .toArray();
-
-            log.info({msg: `Store has ${keys.length} keys, removing them...`});
-
-            if (keys.length > 1000) {
-                throw new AppError('too many keys to truncate the database');
-            }
-
-            for (const key of keys) {
-                await tx.delete(key);
-            }
-
-            log.info({msg: 'Set KV store version to 1...'});
-            await tx.put(versionKey, encodeNumber(2));
-            version = 2;
-        });
-    }
-
-    if (version === 2) {
-        log.info({
-            msg: 'start upgrading KV store from version 2 to version 3...',
-        });
-        let processedEntries = 0;
-        let lastKey: Tuple = ['identities'];
-        while (true) {
-            log.info({
-                msg: `Processing entries to upgrade from version 2 to version 3... (processed: ${processedEntries})`,
-            });
-            const done = await store.transact(async tx => {
-                const entries = await toStream(tx.query({gt: lastKey}))
-                    .take(100)
-                    .while(x => x.key[0] === 'identities')
-                    .toArray();
-
-                if (entries.length === 0) {
-                    return true;
-                }
-
-                lastKey = entries[entries.length - 1].key;
-                processedEntries += entries.length;
-
-                for (const {
-                    key: [, ...suffix],
-                    value,
-                } of entries) {
-                    await tx.put(['accounts', ...suffix], value);
-                }
-
-                return false;
-            });
-
-            if (done) {
-                break;
-            }
-        }
-
-        log.info({
-            msg: `Finished upgrading KV store from version 2 to version 3. Processed ${processedEntries} entries.`,
-        });
-
-        await store.transact(async tx => {
-            log.info({msg: 'Setting KV store version to 3...'});
-            await tx.put(versionKey, encodeNumber(3));
-        });
-        version = 3;
-    }
 
     const dataLayer = new DataLayer({
         kv: store,

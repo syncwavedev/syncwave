@@ -117,14 +117,16 @@ export class IdMapper<T> implements Mapper<T, T> {
     }
 }
 
-function createPackerMapper<TData>(codec: Packer<TData>): Mapper<Tuple, TData> {
+export function createPackerMapper<TData>(
+    codec: Packer<TData>
+): Mapper<Tuple, TData> {
     return {
         encode: codec.pack.bind(codec),
         decode: codec.unpack.bind(codec),
     };
 }
 
-function createCodecMapper<TData>(
+export function createCodecMapper<TData>(
     codec: Codec<TData>
 ): Mapper<Uint8Array, TData> {
     return {

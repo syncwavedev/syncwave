@@ -1,13 +1,13 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {type Codec, decodeString, encodeString} from '../codec.js';
+import {type Codec, decodeMsgpack, encodeMsgpack} from '../codec.js';
 import {Collection, type CollectionEntry} from './collection.js';
 import type {AppStore} from './kv-store.js';
 import {MemMvccStore} from './mem-mvcc-store.js';
 import {TupleStore} from './tuple-store.js';
 
 const jsonCodec: Codec<any> = {
-    encode: data => encodeString(JSON.stringify(data)),
-    decode: bytes => JSON.parse(decodeString(bytes)),
+    encode: data => encodeMsgpack(JSON.stringify(data)),
+    decode: bytes => JSON.parse(decodeMsgpack(bytes) as string),
 };
 
 describe('Collection', () => {

@@ -39,6 +39,8 @@ export async function createUiRouter(options: {
     router.use(
         serveStatic(options.staticPath, {
             index: createUuidV4(),
+            immutable: true,
+            maxage: 365 * 24 * 60 * 60 * 1000, // 1 year
         })
     );
 

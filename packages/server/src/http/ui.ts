@@ -31,6 +31,7 @@ export async function createUiRouter(options: {
     async function serveIndexHtml(ctx: KoaContext) {
         ctx.body = indexHtml;
         ctx.set('Content-Type', 'text/html; charset=UTF-8');
+        ctx.set('Cache-Control', 'no-store');
         ctx.header['X-Content-Type-Options'] = 'nosniff';
     }
 

@@ -45,7 +45,7 @@ jobs:
           if [ "dev" == "$STAGE" ]; then
             echo "APP_PORT=7202" >> $GITHUB_OUTPUT
             echo "METRICS_PORT=7204" >> $GITHUB_OUTPUT
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET_DEV }}" >> $GITHUB_OUTPUT
+            echo "SECRET_KEY=${{ secrets.JWT_SECRET_DEV }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_DEV }}" >> $GITHUB_OUTPUT
 
@@ -55,7 +55,7 @@ jobs:
           elif [ "prod" == "$STAGE" ]; then
             echo "APP_PORT=7201" >> $GITHUB_OUTPUT
             echo "METRICS_PORT=7203" >> $GITHUB_OUTPUT
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}" >> $GITHUB_OUTPUT
+            echo "SECRET_KEY=${{ secrets.JWT_SECRET_PROD }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PROD }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}" >> $GITHUB_OUTPUT
 
@@ -108,7 +108,7 @@ jobs:
               -p ${{ steps.config.outputs.METRICS_PORT }}:5678 \
               -e NODE_ENV=production \
               -e STAGE=${{ steps.config.outputs.STAGE }} \
-              -e JWT_SECRET=${{ steps.config.outputs.JWT_SECRET }} \
+              -e SECRET_KEY=${{ steps.config.outputs.SECRET_KEY }} \
               -e GOOGLE_CLIENT_ID=${{ steps.config.outputs.GOOGLE_CLIENT_ID }} \
               -e GOOGLE_CLIENT_SECRET=${{ steps.config.outputs.GOOGLE_CLIENT_SECRET }} \
               -e AWS_DEFAULT_REGION=${{ steps.config.outputs.AWS_DEFAULT_REGION }} \

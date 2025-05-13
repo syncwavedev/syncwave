@@ -4,11 +4,14 @@ import 'dotenv/config';
 
 import cors from '@koa/cors';
 import cluster from 'cluster';
+import {randomBytes} from 'crypto';
+import {existsSync, readFileSync, writeFileSync} from 'fs';
 import {createServer, IncomingMessage, ServerResponse} from 'http';
 import type {Http2ServerRequest, Http2ServerResponse} from 'http2';
 import Koa from 'koa';
 import helmet from 'koa-helmet';
 import {cpus} from 'os';
+import path from 'path';
 import {collectDefaultMetrics} from 'prom-client';
 import type {EmailProvider, Hub, ObjectStore, Tuple} from 'syncwave';
 import {
@@ -67,7 +70,7 @@ interface Options {
     instanceAdmin: InstanceAdminOptions | undefined;
 }
 
-function getGoogleOptions(apiUrl: string): GoogleOptions | undefined {
+function getGoogleOptions(stage: Stage): GoogleOptions | undefined {
     const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
     const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
@@ -75,6 +78,14 @@ function getGoogleOptions(apiUrl: string): GoogleOptions | undefined {
     if (!GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_SECRET) {
         return undefined;
     }
+    let baseUrl = assertDefined(process.env.BASE_URL, 'BASE_URL is required');
+
+    const apiUrl = match(stage)
+        .with('local', () => 'http://localhost:4567')
+        .with('dev', () => 'https://api-dev.syncwave.dev')
+        .with('prod', () => 'https://api.syncwave.dev')
+        .with('self', () => `${getBaseUrl()}/api`)
+        .exhaustive();
 
     return {
         clientId: assertDefined(
@@ -112,6 +123,16 @@ function getInstanceAdminOptions(): InstanceAdminOptions | undefined {
     };
 }
 
+const DATA_DIR = '/data';
+
+function getBaseUrl(): string {
+    let baseUrl = assertDefined(process.env.BASE_URL, 'BASE_URL is required');
+    while (baseUrl.endsWith('/')) {
+        baseUrl = baseUrl.slice(0, -1);
+    }
+    return baseUrl;
+}
+
 async function getOptions(): Promise<Options> {
     const FORCE_FOUNDATIONDB = process.env.FORCE_FOUNDATIONDB === 'true';
     const stage: Stage = assertOneOf(
@@ -123,10 +144,23 @@ async function getOptions(): Promise<Options> {
         process.env.AWS_DEFAULT_REGION,
         'AWS_DEFAULT_REGION is required for SES email service'
     );
-    const jwtSecret = assertDefined(
-        process.env.JWT_SECRET,
-        'JWT_SECRET is not required'
-    );
+    let jwtSecret: string;
+    if (process.env.SECRET_KEY) {
+        jwtSecret = process.env.SECRET_KEY;
+    } else if (stage === 'self') {
+        const secretPath = path.join(DATA_DIR, 'secret.key');
+
+        if (existsSync(secretPath)) {
+            jwtSecret = readFileSync(secretPath, 'utf-8').trim();
+            log.info({msg: 'Loaded existing JWT secret.'});
+        } else {
+            jwtSecret = randomBytes(64).toString('hex');
+            writeFileSync(secretPath, jwtSecret, {mode: 0o600});
+            log.info({msg: 'Generated and saved new JWT secret.'});
+        }
+    } else {
+        throw new Error('SECRET_KEY is required');
+    }
 
     const {store, hub} = await getKvStore(
         stage,
@@ -145,30 +179,17 @@ async function getOptions(): Promise<Options> {
         .with('local', () => 'http://localhost:5173')
         .with('dev', () => 'https://dev.syncwave.dev')
         .with('prod', () => 'https://app.syncwave.dev')
-        .with('self', () => {
-            let baseUrl = assertDefined(
-                process.env.BASE_URL,
-                'BASE_URL is required'
-            );
-            while (baseUrl.endsWith('/')) {
-                baseUrl = baseUrl.slice(0, -1);
-            }
-            return baseUrl;
-        })
-        .exhaustive();
-
-    const apiUrl = match(stage)
-        .with('local', () => 'http://localhost:4567')
-        .with('dev', () => 'https://api-dev.syncwave.dev')
-        .with('prod', () => 'https://api.syncwave.dev')
-        .with('self', () => `${uiUrl}/api`)
+        .with('self', () => getBaseUrl())
         .exhaustive();
 
     const objectStore = await FsObjectStore.create({
-        basePath: stage === 'local' ? './dev-object-store' : '/data/objects',
+        basePath:
+            stage === 'local'
+                ? './dev-object-store'
+                : path.join(DATA_DIR, 'objects'),
     });
 
-    const google = getGoogleOptions(apiUrl);
+    const google = getGoogleOptions(stage);
     const uiPath = stage === 'self' ? './ui' : undefined;
 
     return {

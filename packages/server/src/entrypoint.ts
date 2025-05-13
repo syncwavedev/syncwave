@@ -78,7 +78,6 @@ function getGoogleOptions(stage: Stage): GoogleOptions | undefined {
     if (!GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_SECRET) {
         return undefined;
     }
-    let baseUrl = assertDefined(process.env.BASE_URL, 'BASE_URL is required');
 
     const apiUrl = match(stage)
         .with('local', () => 'http://localhost:4567')

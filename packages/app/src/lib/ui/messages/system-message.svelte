@@ -6,7 +6,7 @@
 </script>
 
 <div
-    class="flex items-center justify-center gap-1.5 relative text-sm panel-padding-inline py-2"
+    class="flex items-center justify-center gap-1.5 relative text-sm panel-padding-inline py-2 text-center max-w-xs mx-auto leading-relaxed"
 >
     {#if message.payload.type === 'card_created'}
         <span>

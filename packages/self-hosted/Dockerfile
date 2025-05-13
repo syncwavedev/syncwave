@@ -45,7 +45,8 @@ COPY --from=builder /app/packages/lib/dist ./packages/lib/dist
 COPY --from=builder /app/packages/server/dist ./packages/server/dist
 COPY --from=builder /app/packages/app/dist ./packages/server/ui/
 
-EXPOSE 80
+ENV PORT=8080
+EXPOSE 8080
 
 ENV STAGE=self
 ENV AWS_DEFAULT_REGION=us-east-1

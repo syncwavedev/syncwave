@@ -212,7 +212,7 @@ async function getOptions(): Promise<Options> {
         store,
         google,
         launchCluster: stage !== 'local' && stage !== 'self',
-        appPort: stage === 'self' ? 80 : 4567,
+        appPort: stage === 'self' ? 8080 : 4567,
         metricsPort: 5678,
         passwordsEnabled: stage === 'local' || stage === 'self',
         instanceAdmin: getInstanceAdminOptions(),

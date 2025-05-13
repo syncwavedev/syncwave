@@ -38,7 +38,6 @@ export async function createUiRouter(options: {
 
     router.use(
         serveStatic(options.staticPath, {
-            gzip: true,
             index: createUuidV4(),
         })
     );

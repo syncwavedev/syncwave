@@ -60,7 +60,7 @@ jobs:
             docker stop syncwave-self || true
             docker rm syncwave-self || true
             docker run \
-              -v syncwave-data:/data \
+              -v syncwave-data-self:/data \
               --name syncwave-self \
               -p 7301:80 \
               -e BASE_URL=https://self.syncwave.dev \

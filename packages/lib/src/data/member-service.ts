@@ -25,6 +25,7 @@ export class MemberService {
         account: Account;
         boardId: BoardId;
         role: MemberRole;
+        uiUrl: string;
     }) {
         const board = await this.boards.getById(params.boardId);
         if (!board) {
@@ -84,6 +85,7 @@ export class MemberService {
                 email: params.account.email,
                 boardName: board.name,
                 boardKey: board.key,
+                uiUrl: params.uiUrl,
             });
         }
 

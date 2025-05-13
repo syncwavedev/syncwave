@@ -43,6 +43,7 @@ export function createAuthApi() {
                 email: Type.String(),
                 password: Type.String(),
                 fullName: Type.String(),
+                uiUrl: Type.String(),
             }),
             res: Type.Union([
                 Type.Object({type: Type.Literal('account_email_taken')}),
@@ -119,6 +120,7 @@ export function createAuthApi() {
         sendSignInEmail: handler({
             req: Type.Object({
                 email: Type.String(),
+                uiUrl: Type.String(),
             }),
             res: Type.Union([
                 Type.Object({type: Type.Literal('success')}),
@@ -342,6 +344,7 @@ export async function getAccount(params: {
             name: DEFAULT_BOARD_NAME,
             members: [],
             template: BOARD_ONBOARDING_TEMPLATE,
+            invite: false,
         });
     }
 

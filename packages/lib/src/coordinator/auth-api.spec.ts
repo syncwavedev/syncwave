@@ -21,7 +21,6 @@ describe('AccountRepo', () => {
             hub: new MemHub(),
             crypto: NodeCryptoProvider,
             email: new MemEmailProvider(),
-            uiUrl: 'https://example.com/',
             passwordsEnabled: true,
         });
 
@@ -95,7 +94,7 @@ describe('AccountRepo', () => {
                     },
                     tx: tx,
                 },
-                {email: 'test@email.com'},
+                {email: 'test@email.com', uiUrl: 'http://localhost:3000'},
                 {
                     method: 'auth',
                     headers: {

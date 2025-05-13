@@ -67,6 +67,7 @@ export class BoardService {
         members: string[];
         template: BoardTemplate;
         boardId?: BoardId;
+        invite: false | {uiUrl: string};
     }): Promise<Board> {
         const now = getNow();
 
@@ -126,11 +127,14 @@ export class BoardService {
                     userId: account.userId,
                 });
 
-                this.emailService.scheduleInviteEmail({
-                    email: member,
-                    boardName: params.name,
-                    boardKey: boardKey,
-                });
+                if (params.invite) {
+                    this.emailService.scheduleInviteEmail({
+                        email: member,
+                        boardName: params.name,
+                        boardKey: boardKey,
+                        uiUrl: params.invite.uiUrl,
+                    });
+                }
             }),
         ]);
 

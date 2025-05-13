@@ -36,7 +36,6 @@ export class E2eFixture {
             emailProvider,
             objectStore: new MemObjectStore(),
             hub: new MemHub(),
-            uiUrl: 'http://localhost:3000',
             passwordsEnabled: true,
         });
 
@@ -66,7 +65,10 @@ export class E2eFixture {
     ) {}
 
     async signIn() {
-        await this.client.rpc.sendSignInEmail({email: 'test@test.com'});
+        await this.client.rpc.sendSignInEmail({
+            email: 'test@test.com',
+            uiUrl: 'http://localhost:3000',
+        });
         const message = this.emailProvider.outbox.at(-1);
         assert(message !== undefined, 'message expected');
         const code = message.text

@@ -1,6 +1,8 @@
 import {log} from '../logger.js';
 
 export interface GoogleOptions {
+    readonly appUrl: string;
+
     readonly clientId: string;
     readonly clientSecret: string;
     readonly redirectUri: string;
@@ -22,13 +24,8 @@ export async function getGoogleUser(
     code: string,
     options: GoogleOptions
 ): Promise<GetGoogleUserResult> {
-    const {clientId, clientSecret, redirectUri} = options;
     try {
-        const tokens = await getTokens(code, {
-            clientId,
-            clientSecret,
-            redirectUri,
-        });
+        const tokens = await getTokens(code, options);
         const user = await fetch(
             `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${tokens.access_token}`,
             {

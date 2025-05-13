@@ -410,9 +410,10 @@ export function createWriteApi() {
                 boardId: Uuid<BoardId>(),
                 email: Type.String(),
                 role: MemberRole(),
+                uiUrl: Type.String(),
             }),
             res: Type.Object({}),
-            handle: async (st, {boardId, email, role}) => {
+            handle: async (st, {boardId, email, role, uiUrl}) => {
                 await st.ps.ensureCanManage(boardId, role);
 
                 const account = await getAccount({
@@ -435,6 +436,7 @@ export function createWriteApi() {
                     account,
                     boardId,
                     role,
+                    uiUrl,
                 });
 
                 return {};
@@ -456,9 +458,10 @@ export function createWriteApi() {
         joinByCode: handler({
             req: Type.Object({
                 code: Type.String(),
+                uiUrl: Type.String(),
             }),
             res: Type.Object({boardKey: Type.String()}),
-            handle: async (st, {code}) => {
+            handle: async (st, {code, uiUrl}) => {
                 const board = await st.tx.boards.getByJoinCode(code);
                 if (!board) {
                     throw new BusinessError(
@@ -476,6 +479,7 @@ export function createWriteApi() {
                     account,
                     boardId: board.id,
                     role: board.joinRole,
+                    uiUrl,
                 });
 
                 return {boardKey: board.key};
@@ -592,6 +596,7 @@ export function createWriteApi() {
                 boardId: Uuid<BoardId>(),
                 name: Type.String(),
                 members: Type.Array(Type.String()),
+                uiUrl: Type.String(),
             }),
             res: Board(),
             handle: async (st, req) => {
@@ -601,6 +606,7 @@ export function createWriteApi() {
                     members: req.members,
                     boardId: req.boardId,
                     template: NEW_BOARD_TEMPLATE,
+                    invite: {uiUrl: req.uiUrl},
                 });
             },
         }),
@@ -808,6 +814,7 @@ export function createWriteApi() {
                     members: [],
                     name: 'Demo Board',
                     template: BOARD_DEMO_TEMPLATE,
+                    invite: false,
                 });
 
                 const jwt = await st.jwtService.sign({

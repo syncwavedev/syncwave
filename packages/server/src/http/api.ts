@@ -18,7 +18,6 @@ import {
 } from 'syncwave';
 
 export interface ApiRouterOptions {
-    appUrl: string;
     google: GoogleOptions | undefined;
 }
 
@@ -208,19 +207,19 @@ export function createApiRouter(
                 const {code, state} = ctx.query;
 
                 if (typeof code !== 'string') {
-                    return ctx.redirect(`${options.appUrl}/login/failed`);
+                    return ctx.redirect(`${googleOptions.appUrl}/login/failed`);
                 }
 
                 const result = await getGoogleUser(code, googleOptions);
                 if (result.type === 'error') {
-                    return ctx.redirect(`${options.appUrl}/login/failed`);
+                    return ctx.redirect(`${googleOptions.appUrl}/login/failed`);
                 }
 
                 if (!result.user.verified_email || !result.user.email) {
                     log.warn({
                         msg: `Google user has unverified email: ${result.user.email}`,
                     });
-                    return ctx.redirect(`${options.appUrl}/login/failed`);
+                    return ctx.redirect(`${googleOptions.appUrl}/login/failed`);
                 }
 
                 const jwtToken = await coordinator().issueJwtByUserEmail({
@@ -238,11 +237,11 @@ export function createApiRouter(
                 );
 
                 return ctx.redirect(
-                    `${options.appUrl}/login/callback/google?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
+                    `${googleOptions.appUrl}/login/callback/google?redirectUrl=${redirectUrlComponent}&token=${jwtTokenComponent}`
                 );
             } catch (error) {
                 log.error({error, msg: 'failed to handle google callback'});
-                return ctx.redirect(`${options.appUrl}/login/failed`);
+                return ctx.redirect(`${googleOptions.appUrl}/login/failed`);
             }
         });
     }

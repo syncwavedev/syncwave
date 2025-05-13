@@ -53,7 +53,6 @@ eventLoopMonitor.enable();
 type Stage = 'prod' | 'dev' | 'local' | 'self';
 
 interface Options {
-    uiUrl: string;
     google?: GoogleOptions;
     logLevel: LogLevel;
     workersCount: number;
@@ -70,6 +69,24 @@ interface Options {
     instanceAdmin: InstanceAdminOptions | undefined;
 }
 
+function getApiUrl(stage: Stage, message: string): string {
+    return match(stage)
+        .with('local', () => 'http://localhost:4567')
+        .with('dev', () => 'https://api-dev.syncwave.dev')
+        .with('prod', () => 'https://api.syncwave.dev')
+        .with('self', () => `${getBaseUrl(message)}/api`)
+        .exhaustive();
+}
+
+function getAppUrl(stage: Stage, message: string): string {
+    return match(stage)
+        .with('local', () => 'http://localhost:4567')
+        .with('dev', () => 'https://app-dev.syncwave.dev')
+        .with('prod', () => 'https://app.syncwave.dev')
+        .with('self', () => getBaseUrl(message))
+        .exhaustive();
+}
+
 function getGoogleOptions(stage: Stage): GoogleOptions | undefined {
     const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
     const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -79,12 +96,8 @@ function getGoogleOptions(stage: Stage): GoogleOptions | undefined {
         return undefined;
     }
 
-    const apiUrl = match(stage)
-        .with('local', () => 'http://localhost:4567')
-        .with('dev', () => 'https://api-dev.syncwave.dev')
-        .with('prod', () => 'https://api.syncwave.dev')
-        .with('self', () => `${getBaseUrl()}/api`)
-        .exhaustive();
+    const apiUrl = getApiUrl(stage, 'Google OAuth');
+    const appUrl = getAppUrl(stage, 'Google OAuth');
 
     return {
         clientId: assertDefined(
@@ -96,6 +109,7 @@ function getGoogleOptions(stage: Stage): GoogleOptions | undefined {
             'GOOGLE_CLIENT_SECRET is not required for Google OAuth'
         ),
         redirectUri: `${apiUrl}/callbacks/google`,
+        appUrl,
     };
 }
 
@@ -124,8 +138,11 @@ function getInstanceAdminOptions(): InstanceAdminOptions | undefined {
 
 const DATA_DIR = '/data';
 
-function getBaseUrl(): string {
-    let baseUrl = assertDefined(process.env.BASE_URL, 'BASE_URL is required');
+function getBaseUrl(message: string): string {
+    let baseUrl = assertDefined(
+        process.env.BASE_URL,
+        `BASE_URL is required for ${message}`
+    );
     while (baseUrl.endsWith('/')) {
         baseUrl = baseUrl.slice(0, -1);
     }
@@ -174,13 +191,6 @@ async function getOptions(): Promise<Options> {
         .with('self', () => 'info' as const)
         .exhaustive();
 
-    const uiUrl = match(stage)
-        .with('local', () => 'http://localhost:5173')
-        .with('dev', () => 'https://dev.syncwave.dev')
-        .with('prod', () => 'https://app.syncwave.dev')
-        .with('self', () => getBaseUrl())
-        .exhaustive();
-
     const objectStore = await FsObjectStore.create({
         basePath:
             stage === 'local'
@@ -192,7 +202,6 @@ async function getOptions(): Promise<Options> {
     const uiPath = stage === 'self' ? './ui' : undefined;
 
     return {
-        uiUrl,
         objectStore,
         logLevel,
         workersCount: stage === 'prod' ? cpus().length : 1,
@@ -288,7 +297,6 @@ async function upgradeKVStore({store, instanceAdmin}: Options) {
         hub: new MemHub(),
         crypto: NodeCryptoProvider,
         email: options.emailProvider,
-        uiUrl: options.uiUrl,
         passwordsEnabled: options.passwordsEnabled,
     });
 
@@ -319,7 +327,6 @@ async function launchApp(options: Options) {
     app.use(cors());
 
     const apiRouter = createApiRouter(() => coordinator, {
-        appUrl: options.uiUrl,
         google: options.google,
     }).prefix(options.uiPath ? '/api' : '');
     app.use(apiRouter.routes());
@@ -346,7 +353,6 @@ async function launchApp(options: Options) {
         emailProvider: options.emailProvider,
         objectStore: options.objectStore,
         hub: options.hub,
-        uiUrl: options.uiUrl,
         passwordsEnabled: options.passwordsEnabled,
     });
 

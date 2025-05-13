@@ -65,7 +65,7 @@ If you don't want to host Syncwave yourself, we already did it for your at [app.
 Syncwave is available as a Docker image [syncwave/syncwave](http://hub.docker.com/r/syncwave/syncwave) that you can run on your own server:
 
 ```sh
-docker run -it -p 8080:80 -e BASE_URL=http://localhost:8080 -v syncwave-data:/data syncwave/syncwave
+docker run --name syncwave -d -p 8080:80 -v syncwave-data:/data syncwave/syncwave
 ```
 
 Open your browser at `http://localhost:8080/`

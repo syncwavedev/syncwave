@@ -200,7 +200,7 @@ export class Agent {
     }
 
     async sendSignInEmail(email: string) {
-        return await this.rpc.sendSignInEmail({email});
+        return await this.rpc.sendSignInEmail({email, uiUrl: appConfig.uiUrl});
     }
 
     async verifySignInCode(options: {email: string; code: string}) {
@@ -231,6 +231,7 @@ export class Agent {
             email: params.email,
             fullName: params.fullName,
             password: params.password,
+            uiUrl: appConfig.uiUrl,
         });
     }
 
@@ -311,7 +312,7 @@ export class Agent {
     }
 
     async joinViaCode(code: string): Promise<{boardKey: string}> {
-        return await this.rpc.joinByCode({code});
+        return await this.rpc.joinByCode({code, uiUrl: appConfig.uiUrl});
     }
 
     async observeMeAsync(): Promise<MeView> {
@@ -478,6 +479,7 @@ export class Agent {
             boardId: createBoardId(),
             name: options.name,
             members: options.memberEmails,
+            uiUrl: appConfig.uiUrl,
         });
 
         return board;
@@ -1023,7 +1025,10 @@ export class Agent {
     createMember(boardId: BoardId, email: string, role: MemberRole) {
         const transactionId = createTransactionId();
         this.rpc
-            .createMember({boardId, email, role}, {transactionId})
+            .createMember(
+                {boardId, email, role, uiUrl: appConfig.uiUrl},
+                {transactionId}
+            )
             .catch(error => {
                 log.error({error, msg: 'createMember failed'});
             });

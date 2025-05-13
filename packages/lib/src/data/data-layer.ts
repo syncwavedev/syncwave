@@ -45,7 +45,6 @@ import {User, type UserId, UserRepo} from './repos/user-repo.js';
 import {BOARD_DEMO_USERS} from './template.js';
 
 export interface Config {
-    readonly uiUrl: string;
     readonly passwordsEnabled: boolean;
 }
 
@@ -233,7 +232,6 @@ export interface DataLayerOptions {
     hub: Hub;
     crypto: CryptoProvider;
     email: EmailProvider;
-    uiUrl: string;
     passwordsEnabled: boolean;
 }
 
@@ -244,7 +242,6 @@ export class DataLayer {
     private readonly hub: Hub;
     private readonly crypto: CryptoProvider;
     private readonly email: EmailProvider;
-    private readonly uiUrl: string;
     private readonly passwordsEnabled: boolean;
 
     constructor(options: DataLayerOptions) {
@@ -252,7 +249,6 @@ export class DataLayer {
         this.hub = options.hub;
         this.crypto = options.crypto;
         this.email = options.email;
-        this.uiUrl = options.uiUrl;
         this.passwordsEnabled = options.passwordsEnabled;
 
         this.esReader = new EventStoreReader(
@@ -364,7 +360,6 @@ export class DataLayer {
             const awareness = new AwarenessStore(isolate(['awareness'])(tx));
 
             const config: Config = {
-                uiUrl: this.uiUrl,
                 passwordsEnabled: this.passwordsEnabled,
             };
 

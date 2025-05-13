@@ -32,7 +32,6 @@ export interface CoordinatorServerOptions {
     emailProvider: EmailProvider;
     objectStore: ObjectStore;
     hub: Hub;
-    uiUrl: string;
     passwordsEnabled: boolean;
 }
 
@@ -47,7 +46,6 @@ export class CoordinatorServer {
             hub: this.options.hub,
             crypto: this.options.cryptoProvider,
             email: options.emailProvider,
-            uiUrl: options.uiUrl,
             passwordsEnabled: options.passwordsEnabled,
         });
         this.authenticator = new Authenticator(

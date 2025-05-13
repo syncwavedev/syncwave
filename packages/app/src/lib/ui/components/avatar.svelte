@@ -4,11 +4,13 @@
 
     let {
         name,
+        imageUrl,
         class: className,
         title,
         userId,
     }: {
         userId: UserId;
+        imageUrl?: string;
         name: string;
         class?: string;
         title?: string;
@@ -41,13 +43,19 @@
     const avatarColor = $derived(avatarColors[idHash % avatarColors.length]);
 </script>
 
-<div
-    title={title ?? name}
-    class={clsx(
-        'avatar text-[calc(var(--avatar-size)*0.55)] text-white font-semibold',
-        className
-    )}
-    style={`background-color: ${avatarColor};`}
->
-    {name[0]?.toUpperCase() ?? 'U'}
-</div>
+{#if !imageUrl}
+    <div
+        title={title ?? name}
+        class={clsx(
+            'avatar text-[calc(var(--avatar-size)*0.55)] text-white font-semibold',
+            className
+        )}
+        style={`background-color: ${avatarColor};`}
+    >
+        {name[0]?.toUpperCase() ?? 'U'}
+    </div>
+{:else}
+    <div class="avatar">
+        <img class="rounded-full object-cover" alt={name} src={imageUrl} />
+    </div>
+{/if}

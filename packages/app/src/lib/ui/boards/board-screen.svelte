@@ -244,6 +244,7 @@
                 {#each board.onlineUsers as user (user.user.id)}
                     <Avatar
                         userId={user.user.id}
+                        imageUrl={user.user.avatarUrl}
                         name={`${user.user.fullName}`}
                         class="outline-material-base outline-2"
                     />
@@ -274,7 +275,11 @@
                         class="btn--icon"
                         onclick={() => modalManager.open(profileSettings)}
                     >
-                        <Avatar userId={me.id} name={me.fullName} />
+                        <Avatar
+                            userId={me.id}
+                            imageUrl={me.avatarUrl}
+                            name={me.fullName}
+                        />
                     </button>
                 </div>
             {/if}

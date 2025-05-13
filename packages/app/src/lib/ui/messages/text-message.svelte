@@ -25,7 +25,11 @@
     class="flex flex-col panel-padding-inline py-2 relative group avatar-sm icon-sm"
 >
     <div class="flex items-center gap-1.5 relative">
-        <Avatar userId={message.author.id} name={message.author.fullName} />
+        <Avatar
+            userId={message.author.id}
+            name={message.author.fullName}
+            imageUrl={message.author.avatarUrl}
+        />
 
         <div class="flex items-baseline gap-1.5">
             <div class="font-medium text-md">

@@ -1,8 +1,21 @@
 <script lang="ts">
+    import type {ObjectKey} from 'syncwave';
+    import {getAgent, getObjectUrl} from '../../agent/agent.svelte';
     import Loader from './icons/loader.svelte';
     import MinusIcon from './icons/minus-icon.svelte';
 
-    let imageUrl = $state<string | null>(null);
+    let {
+        objectKey,
+        onRemove,
+        onChange,
+    }: {
+        objectKey: ObjectKey | undefined;
+        onRemove: () => void;
+        onChange: (value: ObjectKey) => void;
+    } = $props();
+
+    const agent = getAgent();
+
     let isLoading = $state<boolean>(false);
 
     function handleFileSelect(event: Event) {
@@ -18,25 +31,14 @@
 
         isLoading = true;
 
-        const reader = new FileReader();
-        reader.onload = (e: ProgressEvent<FileReader>) => {
-            setTimeout(() => {
-                if (e.target?.result) {
-                    if (e.target.result instanceof ArrayBuffer) {
-                        const blob = new Blob([e.target.result]);
-                        imageUrl = URL.createObjectURL(blob);
-                    } else {
-                        imageUrl = e.target.result as string;
-                    }
-                }
-                isLoading = false;
-            }, 800);
-        };
-        reader.readAsDataURL(file);
+        agent
+            .uploadObject(file)
+            .then(onChange)
+            .finally(() => (isLoading = false));
     }
 </script>
 
-{#if !imageUrl}
+{#if !objectKey}
     <label class="input--avatar">
         <input type="file" accept="image/*" onchange={handleFileSelect} />
         <div class="input--avatar__icon relative overflow-hidden">
@@ -65,10 +67,11 @@
     </label>
 {:else}
     <div class="input--avatar">
-        <img alt="avatar" src={imageUrl} />
+        <img alt="avatar" src={getObjectUrl(objectKey)} />
         <button
             class="btn--icon input--avatar__remove-btn bg-material-elevated-element"
             aria-label="Remove avatar"
+            onclick={onRemove}
         >
             <MinusIcon />
         </button>

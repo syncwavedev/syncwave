@@ -4,6 +4,7 @@
     import {getAgent} from '../../agent/agent.svelte';
     import type {MeView} from '../../agent/view.svelte';
     import AvatarInput from '../components/avatar-input.svelte';
+    import type {ObjectKey} from 'syncwave';
 
     let {me}: {me: MeView} = $props();
 
@@ -19,6 +20,14 @@
             (event.target as HTMLInputElement).value
         );
     }
+
+    function onAvatarChange(objectKey: ObjectKey) {
+        agent.setMyAvatar(objectKey);
+    }
+
+    function onAvatarRemove() {
+        // TODO
+    }
 </script>
 
 <Modal size="xl">
@@ -26,7 +35,11 @@
     <div class="modal-padding-inline flex gap-8">
         <div class="flex flex-col items-center gap-3">
             <p class="font-medium">Profile Picture</p>
-            <AvatarInput />
+            <AvatarInput
+                objectKey={me.avatarKey}
+                onChange={onAvatarChange}
+                onRemove={onAvatarRemove}
+            />
         </div>
         <div class="flex flex-col gap-3 flex-1">
             <p class="font-medium">Profile Details</p>

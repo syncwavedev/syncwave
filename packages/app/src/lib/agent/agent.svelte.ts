@@ -921,7 +921,7 @@ export class Agent {
         return objectKey as ObjectKey;
     }
 
-    setMyAvatar(objectKey: ObjectKey): void {
+    setMyAvatar(objectKey: ObjectKey | undefined): void {
         const me = this.authManager.ensureAuthorized();
         this.crdtManager.update<User>(me.userId, x => {
             x.avatarKey = objectKey;

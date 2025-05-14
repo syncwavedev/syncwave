@@ -82,7 +82,7 @@ function getApiUrl(stage: Stage, message: string): string {
 function getAppUrl(stage: Stage, message: string): string {
     return match(stage)
         .with('local', () => 'http://localhost:4567')
-        .with('dev', () => 'https://app-dev.syncwave.dev')
+        .with('dev', () => 'https://dev.syncwave.dev')
         .with('prod', () => 'https://app.syncwave.dev')
         .with('self', () => getBaseUrl(message))
         .exhaustive();

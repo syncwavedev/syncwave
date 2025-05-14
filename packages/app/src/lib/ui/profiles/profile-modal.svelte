@@ -26,7 +26,7 @@
     }
 
     function onAvatarRemove() {
-        // TODO
+        agent.setMyAvatar(undefined);
     }
 </script>
 

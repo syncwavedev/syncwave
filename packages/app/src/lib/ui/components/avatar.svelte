@@ -56,6 +56,10 @@
     </div>
 {:else}
     <div class="avatar">
-        <img class="rounded-full object-cover" alt={name} src={imageUrl} />
+        <img
+            class="rounded-full object-cover h-full w-full"
+            alt={name}
+            src={imageUrl}
+        />
     </div>
 {/if}

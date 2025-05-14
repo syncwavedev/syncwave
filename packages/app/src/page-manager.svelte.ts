@@ -139,6 +139,8 @@ export class PageManager {
                 });
         });
 
+        router.notFound(() => router.route('/'));
+
         router.listen();
     }
 

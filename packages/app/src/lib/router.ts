@@ -237,6 +237,10 @@ class Router {
         return this;
     }
 
+    public notFound(handler: (uri: string) => void) {
+        this.on404 = handler;
+    }
+
     /** Stops listening to navigation events. */
     public unlisten(): void {
         window.removeEventListener('popstate', this.runOnEvent);

@@ -323,14 +323,17 @@ export class Agent {
             .filter(x => x.type === 'snapshot')
             .first();
 
-        return boards.map(x =>
-            this.crdtManager.view({
-                id: x.id,
-                isDraft: false,
-                state: x.state,
-                type: 'board',
-            })
-        );
+        return boards
+            .map(
+                x =>
+                    this.crdtManager.view({
+                        id: x.id,
+                        isDraft: false,
+                        state: x.state,
+                        type: 'board',
+                    }) as Board
+            )
+            .filter(x => !x.deletedAt);
     }
 
     async observeMeAsync(): Promise<MeView> {

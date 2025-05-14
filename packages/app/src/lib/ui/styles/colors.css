@@ -77,6 +77,8 @@
 
     --color-material-3: var(--theme-color-material-3);
     --color-material-3-hover: var(--theme-color-material-3-hover);
+
+    --shadow-sm: 0 2px 3px rgba(0, 0, 0, 0.06);
 }
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -92,20 +94,20 @@
         --theme-color-ink-danger: oklch(0.4 0.026 26.2deg);
 
         --theme-color-divider: var(--color-gray-60);
-        --theme-color-divider-object: var(--color-gray-100);
+        --theme-color-divider-object: var(--color-gray-125);
         --theme-color-divider-active: var(--color-primary);
 
         --theme-color-scrollbar: var(--color-gray-200);
 
-        --theme-color-material-elevated: var(--color-gray-10);
+        --theme-color-material-elevated: white;
         --theme-color-material-elevated-hover: var(--color-gray-50);
         --theme-color-material-elevated-highlight: var(--color-gray-30);
-        --theme-color-divider-elevated: var(--color-gray-60);
+        --theme-color-divider-elevated: var(--color-gray-80);
 
         --theme-color-material-elevated-element: var(--color-gray-60);
         --theme-color-material-elevated-element-hover: var(--color-gray-90);
 
-        --theme-color-material-elevated-input: var(--color-gray-30);
+        --theme-color-material-elevated-input: var(--color-gray-10);
 
         --theme-color-material-base: white;
         --theme-color-material-base-hover: var(--color-gray-30);

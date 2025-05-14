@@ -36,10 +36,10 @@
           left-1/2
           z-[1000]
           w-full
-          max-w-lg
+          max-w-xl
           -translate-x-1/2
           rounded-lg
-          shadow-lg
+          shadow-sm
           border
           border-divider-elevated
         "

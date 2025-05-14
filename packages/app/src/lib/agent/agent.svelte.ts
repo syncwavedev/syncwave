@@ -315,25 +315,52 @@ export class Agent {
         return await this.rpc.joinByCode({code, uiUrl: appConfig.uiUrl});
     }
 
-    async getMyBoards(): Promise<Board[]> {
+    async getMe(): Promise<{
+        me: User;
+        boards: Board[];
+    }> {
         const {
-            data: {boards},
+            data: {boards, profile},
         } = await this.rpc
             .getMeViewData({})
             .filter(x => x.type === 'snapshot')
             .first();
 
-        return boards
-            .map(
-                x =>
-                    this.crdtManager.view({
-                        id: x.id,
-                        isDraft: false,
-                        state: x.state,
-                        type: 'board',
-                    }) as Board
-            )
-            .filter(x => !x.deletedAt);
+        return {
+            me: this.crdtManager.view({
+                id: profile.id,
+                isDraft: false,
+                state: profile.state,
+                type: 'user',
+            }) as User,
+            boards: boards
+                .map(
+                    x =>
+                        this.crdtManager.view({
+                            id: x.id,
+                            isDraft: false,
+                            state: x.state,
+                            type: 'board',
+                        }) as Board
+                )
+                .filter(x => !x.deletedAt),
+        };
+    }
+
+    async getBoard(key: string): Promise<Board> {
+        const {
+            data: {board},
+        } = await this.rpc
+            .getBoardViewData({key})
+            .filter(x => x.type === 'snapshot')
+            .first();
+
+        return this.crdtManager.view({
+            id: board.id,
+            isDraft: false,
+            state: board.state,
+            type: 'board',
+        }) as Board;
     }
 
     async observeMeAsync(): Promise<MeView> {

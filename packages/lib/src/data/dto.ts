@@ -1,5 +1,6 @@
 import {Type, type Static} from '@sinclair/typebox';
 import {CrdtDiff} from '../crdt/crdt.js';
+import {Timestamp} from '../timestamp.js';
 import {assert} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type DataTx} from './data-layer.js';
@@ -78,6 +79,7 @@ export function BoardViewDataDto() {
             state: CrdtDiff<Board>(),
             key: Type.String(),
             id: Uuid<BoardId>(),
+            deletedAt: Type.Optional(Timestamp()),
         }),
         columns: Type.Array(
             Type.Object({state: CrdtDiff<Column>(), id: Uuid<ColumnId>()})

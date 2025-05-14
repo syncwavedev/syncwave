@@ -161,6 +161,13 @@ export class PageManager {
             .then(([[boardData, meBoardData], meData]) => {
                 BoardHistoryManager.save(key);
 
+                if (boardData.board.deletedAt) {
+                    console.debug(
+                        'board is deletedAt',
+                        boardData.board.deletedAt
+                    );
+                }
+
                 this._page = BoardPage;
                 this._pageProps = {
                     boardData,

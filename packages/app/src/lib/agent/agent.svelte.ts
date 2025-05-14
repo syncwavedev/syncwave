@@ -364,11 +364,8 @@ export class Agent {
     }
 
     async observeMeAsync(): Promise<MeView> {
-        const ctx = this.contextManager.use();
-
         const me = await this.getMeViewData();
-
-        return ctx.run(() => this.observeMe(me));
+        return this.observeMe(me);
     }
 
     async getMeViewData(): Promise<MeViewDataDto> {
@@ -380,6 +377,12 @@ export class Agent {
     }
 
     observeMe(initialMe: MeViewDataDto): MeView {
+        const ctx = this.contextManager.use();
+
+        return ctx.run(() => this.observeMeImpl(initialMe));
+    }
+
+    private observeMeImpl(initialMe: MeViewDataDto): MeView {
         const data = MeViewData.create(initialMe, this.crdtManager);
 
         this.activeMes.push(data);
@@ -411,29 +414,6 @@ export class Agent {
         return data.userView;
     }
 
-    async observeBoardAsync(
-        key: string
-    ): Promise<[BoardTreeView, Awareness, MemberView]> {
-        const ctx = this.contextManager.use();
-
-        const activeBoard = this.activeBoards.find(
-            x => x.boardView.key === key
-        );
-        if (activeBoard !== undefined) {
-            return [
-                activeBoard.boardTreeView,
-                activeBoard.rawAwareness,
-                activeBoard.meView,
-            ];
-        }
-
-        const [board, me] = await this.getBoardViewData(key);
-
-        return ctx.detach({span: 'observeBoard'}, () =>
-            this.observeBoard(board, me)
-        );
-    }
-
     async getBoardViewData(key: string) {
         return await whenAll([
             this.rpc
@@ -449,7 +429,37 @@ export class Agent {
         ]);
     }
 
+    async observeBoardAsync(
+        key: string
+    ): Promise<[BoardTreeView, Awareness, MemberView]> {
+        const activeBoard = this.activeBoards.find(
+            x => x.boardView.key === key
+        );
+        if (activeBoard !== undefined) {
+            return [
+                activeBoard.boardTreeView,
+                activeBoard.rawAwareness,
+                activeBoard.meView,
+            ];
+        }
+
+        const [board, me] = await this.getBoardViewData(key);
+
+        return this.observeBoard(board, me);
+    }
+
     observeBoard(
+        dto: BoardViewDataDto,
+        initialMe: {id: UserId; state: CrdtDiff<User>}
+    ): [BoardTreeView, Awareness, MemberView] {
+        const ctx = this.contextManager.use();
+
+        return ctx.detach({span: 'observeBoard'}, () =>
+            this.observeBoardImpl(dto, initialMe)
+        );
+    }
+
+    private observeBoardImpl(
         dto: BoardViewDataDto,
         initialMe: {id: UserId; state: CrdtDiff<User>}
     ): [BoardTreeView, Awareness, MemberView] {

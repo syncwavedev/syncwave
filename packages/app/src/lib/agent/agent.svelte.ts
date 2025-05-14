@@ -366,16 +366,20 @@ export class Agent {
     async observeMeAsync(): Promise<MeView> {
         const ctx = this.contextManager.use();
 
-        const me = await this.rpc
-            .getMeViewData({})
-            .filter(x => x.type === 'snapshot')
-            .map(x => x.data)
-            .first();
+        const me = await this.getMeViewData();
 
         return ctx.run(() => this.observeMe(me));
     }
 
-    private observeMe(initialMe: MeViewDataDto): MeView {
+    async getMeViewData(): Promise<MeViewDataDto> {
+        return await this.rpc
+            .getMeViewData({})
+            .filter(x => x.type === 'snapshot')
+            .map(x => x.data)
+            .first();
+    }
+
+    observeMe(initialMe: MeViewDataDto): MeView {
         const data = MeViewData.create(initialMe, this.crdtManager);
 
         this.activeMes.push(data);
@@ -423,7 +427,15 @@ export class Agent {
             ];
         }
 
-        const [board, me] = await whenAll([
+        const [board, me] = await this.getBoardViewData(key);
+
+        return ctx.detach({span: 'observeBoard'}, () =>
+            this.observeBoard(board, me)
+        );
+    }
+
+    async getBoardViewData(key: string) {
+        return await whenAll([
             this.rpc
                 .getBoardViewData({key})
                 .filter(x => x.type === 'snapshot')
@@ -435,13 +447,9 @@ export class Agent {
                 .map(x => x.data.profile)
                 .first(),
         ]);
-
-        return ctx.detach({span: 'observeBoard'}, () =>
-            this.observeBoard(board, me)
-        );
     }
 
-    private observeBoard(
+    observeBoard(
         dto: BoardViewDataDto,
         initialMe: {id: UserId; state: CrdtDiff<User>}
     ): [BoardTreeView, Awareness, MemberView] {

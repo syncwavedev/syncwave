@@ -1,26 +1,38 @@
 <script lang="ts">
-    import {Awareness} from 'syncwave';
+    import {
+        BoardViewDataDto,
+        CrdtDiff,
+        MeViewDataDto,
+        User,
+        type UserId,
+    } from 'syncwave';
     import BoardScreen from '../lib/ui/boards/board-screen.svelte';
     import PermissionBoundary from '../lib/ui/components/permission-boundary.svelte';
-    import type {
-        BoardTreeView,
-        MemberView,
-        MeView,
-    } from '../lib/agent/view.svelte';
+
+    import {getAgent} from '../lib/agent/agent.svelte';
 
     const {
-        board,
-        awareness,
-        boardMeView,
-        me,
+        boardData,
+        meBoardData,
+        meData,
         counter,
     }: {
-        board: BoardTreeView;
-        awareness: Awareness;
-        me: MeView;
-        boardMeView: MemberView;
+        boardData: BoardViewDataDto;
+        meBoardData: {
+            id: UserId;
+            state: CrdtDiff<User>;
+        };
+        meData: MeViewDataDto;
         counter?: number;
     } = $props();
+
+    const agent = getAgent();
+
+    const [board, awareness, boardMeView] = agent.observeBoard(
+        boardData,
+        meBoardData
+    );
+    const me = agent.observeMe(meData);
 </script>
 
 <PermissionBoundary member={boardMeView}>

@@ -51,9 +51,9 @@ export class PageManager {
             if (lastBoardKey) {
                 router.route(`/b/${lastBoardKey}`, {replace: true});
             } else {
-                this._agent.observeMeAsync().then(x => {
-                    if (x.boards.length > 0) {
-                        router.route(`/b/${x.boards[0].key}`, {replace: true});
+                this._agent.getMe().then(me => {
+                    if (me.boards.length > 0) {
+                        router.route(`/b/${me.boards[0].key}`, {replace: true});
                     }
                 });
             }
@@ -154,19 +154,18 @@ export class PageManager {
             return;
         }
 
-        const boardPromise = this._agent.observeBoardAsync(key);
-        const mePromise = this._agent.observeMeAsync();
+        const boardPromise = this._agent.getBoardViewData(key);
+        const mePromise = this._agent.getMeViewData();
 
         Promise.all([boardPromise, mePromise])
-            .then(([[board, awareness, boardMeView], me]) => {
+            .then(([[boardData, meBoardData], meData]) => {
                 BoardHistoryManager.save(key);
 
                 this._page = BoardPage;
                 this._pageProps = {
-                    board,
-                    awareness,
-                    boardMeView,
-                    me,
+                    boardData,
+                    meBoardData,
+                    meData,
                     counter: counter ? parseInt(counter) : undefined,
                 };
             })

@@ -7,7 +7,7 @@
     onMount(() => {
         const timer = setTimeout(() => {
             showLoader = true;
-        }, 500);
+        }, 300);
 
         return () => clearTimeout(timer);
     });

@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
 
 name: self
+concurrency: ${{ github.workflow }}
 
 permissions:
   contents: read

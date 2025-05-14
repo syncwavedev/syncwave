@@ -117,11 +117,12 @@ export function createApiRouter(
                 fit: 'inside',
                 withoutEnlargement: true,
             })
+            .webp({quality: 80})
             .toBuffer();
 
         coordinator()
             .createObject({
-                contentType: originalObject.metadata.contentType,
+                contentType: 'image/webp',
                 stream: new ReadableStream<Uint8Array>({
                     start(controller) {
                         controller.enqueue(resizedObject);

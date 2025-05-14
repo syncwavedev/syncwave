@@ -47,8 +47,6 @@ export class PageManager {
                 throw new Error('User ID not found');
             }
 
-            console.log('USEEEEEEEEER ID', userId);
-
             const lastBoardKey = BoardHistoryManager.last();
             if (lastBoardKey) {
                 router.route(`/b/${lastBoardKey}`, {replace: true});

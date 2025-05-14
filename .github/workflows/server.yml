@@ -115,7 +115,7 @@ jobs:
               -e SECRET_KEY=${{ steps.config.outputs.SECRET_KEY }} \
               -e GOOGLE_CLIENT_ID=${{ steps.config.outputs.GOOGLE_CLIENT_ID }} \
               -e GOOGLE_CLIENT_SECRET=${{ steps.config.outputs.GOOGLE_CLIENT_SECRET }} \
-              -e S3_BUCKET=syncwave \
+              -e S3_BUCKET_NAME=syncwave \
               -e S3_ENDPOINT=https://fsn1.your-objectstorage.com \
               -e S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }} \
               -e S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }} \

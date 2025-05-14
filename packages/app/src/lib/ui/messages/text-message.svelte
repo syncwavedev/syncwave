@@ -28,7 +28,7 @@
         <Avatar
             userId={message.author.id}
             name={message.author.fullName}
-            imageUrl={message.author.avatarUrl}
+            imageUrl={message.author.avatarUrlSmall}
         />
 
         <div class="flex items-baseline gap-1.5">

@@ -244,7 +244,7 @@
                 {#each board.onlineUsers as user (user.user.id)}
                     <Avatar
                         userId={user.user.id}
-                        imageUrl={user.user.avatarUrl}
+                        imageUrl={user.user.avatarUrlSmall}
                         name={`${user.user.fullName}`}
                         class="outline-material-base outline-2"
                     />
@@ -277,7 +277,7 @@
                     >
                         <Avatar
                             userId={me.id}
-                            imageUrl={me.avatarUrl}
+                            imageUrl={me.avatarUrlSmall}
                             name={me.fullName}
                         />
                     </button>

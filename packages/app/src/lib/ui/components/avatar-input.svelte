@@ -67,7 +67,7 @@
     </label>
 {:else}
     <div class="input--avatar">
-        <img alt="avatar" src={getObjectUrl(objectKey)} />
+        <img alt="avatar" src={getObjectUrl(objectKey, 'medium')} />
         <button
             class="btn--icon input--avatar__remove-btn bg-material-elevated-element"
             aria-label="Remove avatar"

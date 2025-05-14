@@ -1144,6 +1144,9 @@ export function getAgent() {
     return agent;
 }
 
-export function getObjectUrl(objectKey: ObjectKey): string {
-    return `${appConfig.apiUrl}/objects/${objectKey}`;
+export function getObjectUrl(
+    objectKey: ObjectKey,
+    size: 'small' | 'medium' | 'large'
+): string {
+    return `${appConfig.apiUrl}/images/${objectKey}?size=${size}`;
 }

@@ -4,18 +4,22 @@ import 'dotenv/config';
 
 import Router from '@koa/router';
 import Busboy from 'busboy';
+import sharp from 'sharp';
 import {Readable} from 'stream';
 import {
     type AttachmentId,
     context,
     CoordinatorServer,
+    createObjectKey,
     getGoogleUser,
     type GoogleOptions,
     log,
     ObjectKey,
     ObjectMetadata,
+    type ObjectStreamEnvelope,
     validateUuid,
 } from 'syncwave';
+import {match} from 'ts-pattern';
 
 export interface ApiRouterOptions {
     google: GoogleOptions | undefined;
@@ -46,7 +50,7 @@ export function createApiRouter(
         );
     });
 
-    router.get('/objects/:key', async ctx => {
+    router.get('/images/:key', async ctx => {
         const {key} = ctx.params;
         if (typeof key !== 'string') {
             ctx.status = 400;
@@ -62,8 +66,38 @@ export function createApiRouter(
             };
             return;
         }
-        const object = await coordinator().getObject(key as ObjectKey);
-        if (object === undefined) {
+
+        const validSizes = ['small', 'medium', 'large'] as const;
+        const inputSize = ctx.query.size ?? 'large';
+        if (
+            typeof inputSize !== 'string' ||
+            !validSizes.includes(inputSize as any)
+        ) {
+            ctx.status = 400;
+            ctx.body = {
+                error: `size must be one of ${validSizes.join(', ')}`,
+            };
+            return;
+        }
+        const size = inputSize as (typeof validSizes)[number];
+
+        function success(object: ObjectStreamEnvelope) {
+            ctx.status = 200;
+            ctx.set('Cache-Control', 'max-age=31536000, immutable');
+            ctx.type = object.metadata.contentType;
+            ctx.body = Readable.fromWeb(object.data as any);
+        }
+
+        const sizedObject = await coordinator().getObjectStream(
+            `${key}.${size}` as ObjectKey
+        );
+
+        if (sizedObject) {
+            return success(sizedObject);
+        }
+
+        const originalObject = await coordinator().getObject(key as ObjectKey);
+        if (originalObject === undefined) {
             ctx.status = 404;
             ctx.body = {
                 error: 'object not found',
@@ -71,10 +105,51 @@ export function createApiRouter(
             return;
         }
 
-        ctx.status = 200;
-        ctx.set('Cache-Control', 'max-age=31536000, immutable');
-        ctx.type = object.metadata.contentType;
-        ctx.body = Readable.fromWeb(object.data as any);
+        const widthHeight = match(size)
+            .with('small', () => 200)
+            .with('medium', () => 500)
+            .with('large', () => 1000)
+            .exhaustive();
+        const resizedObject = await sharp(originalObject.data)
+            .resize({
+                width: widthHeight,
+                height: widthHeight,
+                fit: 'inside',
+                withoutEnlargement: true,
+            })
+            .toBuffer();
+
+        coordinator()
+            .createObject({
+                contentType: originalObject.metadata.contentType,
+                stream: new ReadableStream<Uint8Array>({
+                    start(controller) {
+                        controller.enqueue(resizedObject);
+                        controller.close();
+                    },
+                }),
+                jwt: undefined,
+                objectKey: `${key}.${size}` as ObjectKey,
+            })
+            .catch(error => {
+                log.error({
+                    error,
+                    msg: 'failed to create resized object',
+                });
+            });
+
+        return success({
+            data: new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.enqueue(resizedObject);
+                    controller.close();
+                },
+            }),
+            metadata: {
+                contentType: originalObject.metadata.contentType,
+            },
+            size: resizedObject.length,
+        });
     });
 
     router.get('/attachment/:id', async ctx => {
@@ -150,13 +225,12 @@ export function createApiRouter(
                         const buffer = Buffer.concat(chunks);
                         const data = new Uint8Array(buffer);
 
-                        // Build your metadata however you need it
                         const metadata: ObjectMetadata = {
                             contentType: mimeType,
                         };
 
-                        // Store it
-                        const objectKey = await coordinator().createAttachment({
+                        const objectKey = createObjectKey();
+                        await coordinator().createObject({
                             contentType: mimeType,
                             stream: new ReadableStream<Uint8Array>({
                                 start(controller) {
@@ -165,6 +239,7 @@ export function createApiRouter(
                                 },
                             }),
                             jwt: ctx.query['access_token'] as string,
+                            objectKey,
                         });
 
                         ctx.status = 201;

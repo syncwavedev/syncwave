@@ -40,7 +40,7 @@
             <Avatar
                 userId={member.id}
                 name={member.fullName}
-                imageUrl={member.avatarUrl}
+                imageUrl={member.avatarUrlSmall}
             />
             <span class="ml-1.5">{member.fullName}</span>
             <span class="ml-1.5 text-ink-detail">{member.email}</span>

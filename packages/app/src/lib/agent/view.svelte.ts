@@ -64,9 +64,15 @@ export class UserView implements User {
     pk = $derived(this.user.pk);
     fullName = $derived(this.user.fullName);
     avatarKey = $derived(this.user.avatarKey);
-    avatarUrl = $derived.by(() => {
+    avatarUrlSmall = $derived.by(() => {
         if (this.user.avatarKey) {
-            return getObjectUrl(this.user.avatarKey);
+            return getObjectUrl(this.user.avatarKey, 'small');
+        }
+        return undefined;
+    });
+    avatarUrlMedium = $derived.by(() => {
+        if (this.user.avatarKey) {
+            return getObjectUrl(this.user.avatarKey, 'medium');
         }
         return undefined;
     });

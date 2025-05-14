@@ -145,7 +145,7 @@
                                 <Avatar
                                     userId={user.id}
                                     name={`${user.fullName}`}
-                                    imageUrl={user.avatarUrl}
+                                    imageUrl={user.avatarUrlSmall}
                                     class="outline-gray-75 dark:outline-gray-825 outline-2"
                                 />
                             {/each}
@@ -168,7 +168,7 @@
                         >
                             <Avatar
                                 userId={card.assignee.id}
-                                imageUrl={card.assignee.avatarUrl}
+                                imageUrl={card.assignee.avatarUrlSmall}
                                 name={card.assignee.fullName}
                             />
                         </span>

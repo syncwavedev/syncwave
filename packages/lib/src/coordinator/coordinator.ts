@@ -2,7 +2,6 @@ import {AUTHENTICATOR_PRINCIPAL_CACHE_SIZE} from '../constants.js';
 import {anonymous, Authenticator} from '../data/auth.js';
 import {DataLayer} from '../data/data-layer.js';
 import {
-    createObjectKey,
     ObjectKey,
     type CryptoProvider,
     type EmailProvider,
@@ -136,26 +135,31 @@ export class CoordinatorServer {
         return await this.options.objectStore.getStream(objectKey);
     }
 
-    async getObject(objectKey: ObjectKey) {
+    async getObjectStream(objectKey: ObjectKey) {
         return await this.options.objectStore.getStream(objectKey);
     }
 
-    async createAttachment(params: {
-        jwt: string;
+    async getObject(objectKey: ObjectKey) {
+        return await this.options.objectStore.get(objectKey);
+    }
+
+    async createObject(params: {
+        jwt: string | undefined;
         stream: ReadableStream<Uint8Array>;
         contentType: string;
+        objectKey: ObjectKey;
     }) {
-        const principal = await this.authenticator.authenticate(params.jwt);
-        const objectKey = await this.dataLayer.transact(principal, async tx => {
-            return createObjectKey();
-            // todo
-        });
+        await this.authenticator.authenticate(params.jwt);
 
-        await this.options.objectStore.putStream(objectKey, params.stream, {
-            contentType: params.contentType,
-        });
+        await this.options.objectStore.putStream(
+            params.objectKey,
+            params.stream,
+            {
+                contentType: params.contentType,
+            }
+        );
 
-        return objectKey;
+        params.objectKey;
     }
 }
 

@@ -315,6 +315,24 @@ export class Agent {
         return await this.rpc.joinByCode({code, uiUrl: appConfig.uiUrl});
     }
 
+    async getMyBoards(): Promise<Board[]> {
+        const {
+            data: {boards},
+        } = await this.rpc
+            .getMeViewData({})
+            .filter(x => x.type === 'snapshot')
+            .first();
+
+        return boards.map(x =>
+            this.crdtManager.view({
+                id: x.id,
+                isDraft: false,
+                state: x.state,
+                type: 'board',
+            })
+        );
+    }
+
     async observeMeAsync(): Promise<MeView> {
         const ctx = this.contextManager.use();
 

@@ -70,9 +70,9 @@ export function createApiRouter(
             };
             return;
         }
-        console.log('object', object);
+
         ctx.status = 200;
-        ctx.set('Cache-Control', 'public, immutable, max-age=31536000');
+        ctx.set('Cache-Control', 'max-age=31536000, immutable');
         ctx.type = object.metadata.contentType;
         ctx.body = Readable.fromWeb(object.data as any);
     });

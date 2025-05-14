@@ -24,11 +24,13 @@ export interface S3ObjectStoreOptions {
         secretAccessKey: string;
     };
     forcePathStyle?: boolean;
+    keyPrefix?: string;
 }
 
 export class S3ObjectStore implements ObjectStore {
     private bucketName: string;
     private s3Client: S3Client;
+    private keyPrefix: string;
 
     constructor(options: S3ObjectStoreOptions) {
         this.bucketName = options.bucketName;
@@ -40,13 +42,14 @@ export class S3ObjectStore implements ObjectStore {
             forcePathStyle: options.forcePathStyle ?? true,
         };
         this.s3Client = new S3Client(clientConfig);
+        this.keyPrefix = options.keyPrefix ?? '';
     }
 
     async get(key: ObjectKey): Promise<ObjectEnvelope | undefined> {
         try {
             const command = new GetObjectCommand({
                 Bucket: this.bucketName,
-                Key: key,
+                Key: this.getS3Key(key),
             });
             const response = await this.s3Client.send(command);
 
@@ -96,7 +99,7 @@ export class S3ObjectStore implements ObjectStore {
     ): Promise<void> {
         const command = new PutObjectCommand({
             Bucket: this.bucketName,
-            Key: key,
+            Key: this.getS3Key(key),
             Body: data,
             ContentType: options.contentType,
         });
@@ -125,8 +128,12 @@ export class S3ObjectStore implements ObjectStore {
     async delete(key: ObjectKey): Promise<void> {
         const command = new DeleteObjectCommand({
             Bucket: this.bucketName,
-            Key: key,
+            Key: this.getS3Key(key),
         });
         await this.s3Client.send(command);
+    }
+
+    private getS3Key(key: ObjectKey): string {
+        return this.keyPrefix + key;
     }
 }

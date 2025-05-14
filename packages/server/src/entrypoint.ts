@@ -43,6 +43,7 @@ import {FsObjectStore} from './fs-object-store.js';
 import {createApiRouter} from './http/api.js';
 import {createMetricsRouter} from './http/metrics.js';
 import {createUiRouter} from './http/ui.js';
+import {S3ObjectStore} from './s3-object-store.js';
 import {SesEmailProvider} from './ses-email-provider.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
@@ -149,6 +150,83 @@ function getBaseUrl(message: string): string {
     return baseUrl;
 }
 
+class ConfigurationError extends AppError {
+    constructor(message: string) {
+        super(message);
+        this.name = 'ConfigurationError';
+    }
+}
+
+async function getObjectStore(stage: Stage): Promise<ObjectStore> {
+    if (
+        !process.env.S3_BUCKET_NAME &&
+        !process.env.S3_ENDPOINT &&
+        !process.env.S3_ACCESS_KEY &&
+        !process.env.S3_SECRET_KEY
+    ) {
+        return await FsObjectStore.create({
+            basePath:
+                stage === 'local'
+                    ? './dev-object-store'
+                    : path.join(DATA_DIR, 'objects'),
+        });
+    }
+
+    const errors: string[] = [];
+    if (!process.env.S3_BUCKET_NAME) {
+        errors.push('S3_BUCKET_NAME is required');
+    }
+    if (!process.env.S3_ACCESS_KEY) {
+        errors.push('S3_ACCESS_KEY is required');
+    }
+    if (!process.env.S3_SECRET_KEY) {
+        errors.push('S3_SECRET_KEY is required');
+    }
+    if (
+        process.env.S3_FORCE_PATH_STYLE &&
+        process.env.S3_FORCE_PATH_STYLE !== 'true' &&
+        process.env.S3_FORCE_PATH_STYLE !== 'false'
+    ) {
+        errors.push('S3_FORCE_PATH_STYLE must be true or false');
+    }
+    if (process.env.S3_KEY_PREFIX) {
+        if (/[^a-zA-Z0-9_\-\/]/.test(process.env.S3_KEY_PREFIX)) {
+            errors.push(
+                'S3_KEY_PREFIX can only contain alphanumeric characters, underscores, dashes, and slashes'
+            );
+        }
+        if (process.env.S3_KEY_PREFIX.length > 512) {
+            errors.push('S3_KEY_PREFIX cannot be longer than 512 characters');
+        }
+    }
+    if (errors.length > 0) {
+        throw new ConfigurationError(
+            `S3 configuration is invalid:\n${errors.map(error => `- ${error}`).join('\n')}`
+        );
+    }
+
+    return new S3ObjectStore({
+        bucketName: assertDefined(
+            process.env.S3_BUCKET_NAME,
+            'S3_BUCKET_NAME is required'
+        ),
+        endpoint: process.env.S3_ENDPOINT,
+        credentials: {
+            accessKeyId: assertDefined(
+                process.env.S3_ACCESS_KEY,
+                'S3_ACCESS_KEY_ID is required'
+            ),
+            secretAccessKey: assertDefined(
+                process.env.S3_SECRET_KEY,
+                'S3_SECRET_ACCESS_KEY is required'
+            ),
+        },
+        forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+        region: process.env.S3_REGION ?? 'us-east-1',
+        keyPrefix: process.env.S3_KEY_PREFIX,
+    });
+}
+
 async function getOptions(): Promise<Options> {
     const FORCE_FOUNDATIONDB = process.env.FORCE_FOUNDATIONDB === 'true';
     const stage: Stage = assertOneOf(
@@ -191,12 +269,7 @@ async function getOptions(): Promise<Options> {
         .with('self', () => 'info' as const)
         .exhaustive();
 
-    const objectStore = await FsObjectStore.create({
-        basePath:
-            stage === 'local'
-                ? './dev-object-store'
-                : path.join(DATA_DIR, 'objects'),
-    });
+    const objectStore = await getObjectStore(stage);
 
     const google = getGoogleOptions(stage);
     const uiPath = stage === 'self' ? './ui' : undefined;
@@ -219,7 +292,17 @@ async function getOptions(): Promise<Options> {
     };
 }
 
-const options = await getOptions();
+let options: Options;
+try {
+    options = await getOptions();
+} catch (error) {
+    if (error instanceof ConfigurationError) {
+        console.error(error.message);
+        process.exit(1);
+    }
+
+    throw error;
+}
 
 async function getKvStore(
     stage: string,

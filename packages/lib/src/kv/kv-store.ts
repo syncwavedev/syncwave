@@ -1,7 +1,7 @@
 import type {Codec} from '../codec.js';
 import {AppError} from '../errors.js';
 import {Stream, toStream} from '../stream.js';
-import {tupleStartsWith, type Packer, type Tuple} from '../tuple.js';
+import {isTupleStartsWith, type Packer, type Tuple} from '../tuple.js';
 import {unreachable} from '../utils.js';
 import {SnapshotIsolator, TransactionIsolator} from './kv-store-isolator.js';
 import {SnapshotMapper, TransactionMapper} from './kv-store-mapper.js';
@@ -187,7 +187,7 @@ async function* _queryStartsWith<T>(
     prefix: Tuple
 ): AsyncIterable<Entry<Tuple, T>> {
     for await (const entry of tx.query({gte: prefix})) {
-        if (!tupleStartsWith(entry.key, prefix)) {
+        if (!isTupleStartsWith(entry.key, prefix)) {
             return;
         }
 

@@ -231,6 +231,24 @@ export function pipe<T>(x: T, ...fns: ((x: any) => any)[]): any {
     return fns.reduce((prevResult, fn) => fn(prevResult), x as unknown);
 }
 
+export function isBufferStartsWith({
+    buffer,
+    prefix,
+}: {
+    buffer: Uint8Array;
+    prefix: Uint8Array;
+}) {
+    if (buffer.length < prefix.length) {
+        return false;
+    }
+    for (let i = 0; i < prefix.length; i += 1) {
+        if (buffer[i] !== prefix[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export function concatBuffers(a: Uint8Array, b: Uint8Array): Uint8Array {
     return joinBuffers([a, b]);
 }

@@ -3,7 +3,7 @@ import {pack, unpack} from 'fdb-tuple';
 import type {Codec} from './codec.js';
 import {AppError} from './errors.js';
 import {decodeHex} from './hex.js';
-import {assertNever, compareUint8Array} from './utils.js';
+import {assertNever, compareUint8Array, isBufferStartsWith} from './utils.js';
 import {parseUuid, stringifyUuid, Uuid} from './uuid.js';
 
 export function Primitive() {
@@ -37,6 +37,42 @@ export function getTupleLargestChild(tuple: Tuple): Tuple {
             8 /** magic number, we expect that no more than 8 consecutive true values will be used in a tuple */
         ).fill(true),
     ];
+}
+
+export function isTupleStartsWithLoose({
+    tuple,
+    prefix,
+}: {
+    tuple: Tuple;
+    prefix: Tuple;
+}): boolean {
+    if (tuple.length < prefix.length) {
+        return false;
+    }
+    for (let i = 0; i < prefix.length; i += 1) {
+        if (compareTupleItem(tuple[i], prefix[i]) === 0) {
+            continue;
+        }
+
+        if (i !== prefix.length - 1) {
+            return false;
+        }
+
+        const prefixItem = prefix[i];
+        const tupleItem = tuple[i];
+
+        if (typeof prefixItem === 'string' && typeof tupleItem === 'string') {
+            return tupleItem.startsWith(prefixItem);
+        }
+
+        if (
+            prefixItem instanceof Uint8Array &&
+            tupleItem instanceof Uint8Array
+        ) {
+            return isBufferStartsWith({buffer: tupleItem, prefix: prefixItem});
+        }
+    }
+    return true;
 }
 
 export function decodeTuple(buf: Uint8Array): Tuple {
@@ -280,7 +316,7 @@ export class NullPacker implements Packer<null> {
     }
 }
 
-export function tupleStartsWith(tuple: Tuple, prefix: Tuple): boolean {
+export function isTupleStartsWith(tuple: Tuple, prefix: Tuple): boolean {
     const tuplePrefix = tuple.slice(0, prefix.length);
     return compareTuple(tuplePrefix, prefix) === 0;
 }

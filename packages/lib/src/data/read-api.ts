@@ -7,7 +7,12 @@ import {
     type InferRpcClient,
     streamer,
 } from '../transport/rpc.js';
-import {getTupleLargestChild, Tuple, tupleStartsWith} from '../tuple.js';
+import {
+    getTupleLargestChild,
+    isTupleStartsWith,
+    isTupleStartsWithLoose,
+    Tuple,
+} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {Principal} from './auth.js';
@@ -60,13 +65,14 @@ export function createReadApi() {
             req: Type.Object({
                 parent: Tuple(),
                 after: Type.Optional(Tuple()),
+                prefix: Type.Optional(Type.String()),
             }),
             res: Type.Object({
                 children: Type.Array(Tuple()),
                 hasMore: Type.Boolean(),
                 value: Type.Union([Type.Uint8Array(), Type.Undefined()]),
             }),
-            handle: async (st, {parent, after}, {principal}) => {
+            handle: async (st, {parent, after, prefix}, {principal}) => {
                 return await st.dataLayer.transact(principal, async tx => {
                     if (principal.accountId === undefined) {
                         throw new BusinessError(
@@ -89,7 +95,7 @@ export function createReadApi() {
                     }
 
                     const children: Tuple[] = [];
-                    let last = after ?? parent;
+                    let last = after ?? parent.concat(prefix ? [prefix] : []);
                     const maxChildren = 100;
                     const value = await tx.rawTx.get(parent);
                     while (children.length < maxChildren) {
@@ -99,7 +105,16 @@ export function createReadApi() {
                         if (next === undefined) {
                             break;
                         }
-                        if (!tupleStartsWith(next.key, parent)) {
+                        if (!isTupleStartsWith(next.key, parent)) {
+                            break;
+                        }
+                        if (
+                            prefix &&
+                            !isTupleStartsWithLoose({
+                                prefix: parent.concat([prefix]),
+                                tuple: next.key,
+                            })
+                        ) {
                             break;
                         }
                         const child = next.key.slice(0, parent.length + 1);

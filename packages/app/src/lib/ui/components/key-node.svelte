@@ -4,7 +4,7 @@
         Crdt,
         CrdtDiff,
         decodeMsgpack,
-        decodeTuple,
+        decodeTuple, // Assuming this is used by your actual jsonValue logic if needed
         log,
         toError,
         type Tuple,
@@ -21,80 +21,104 @@
 
     let isOpen = $state(false);
     let isLoading = $state(false);
-    const keyName = keyPath.at(-1)?.toString() ?? '<Root>';
+    const keyName =
+        keyPath.length === 0 ? '<Root>' : keyPath[keyPath.length - 1];
     let children: Tuple[] = $state([]);
     let value: Uint8Array | null = $state(null);
+
+    // Filter related state
+    let filterInputValue = $state('');
+    let activeFilterKeyName: string | null = $state(null); // This will now be used as a 'prefix'
+    let touchedPrefixFilter = $state(false); // Track if the prefix filter has been touched
 
     // User's existing derived logic for jsonValue
     let jsonValue = $derived.by(() => {
         if (value === null) return '<null>';
 
-        let msgpackError: string = 'No error';
-        let tupleError: string = 'No error';
-        let result: unknown;
+        let msgpackResult: unknown;
+        let msgpackError: string = 'Not attempted or failed.';
+        let tupleError: string = 'Not attempted or failed.';
+        let crdtError: string = 'Not attempted or failed.';
+
         try {
-            // Attempt to decode as generic Msgpack
-            result = decodeMsgpack(value);
+            msgpackResult = decodeMsgpack(value);
+            if (
+                typeof msgpackResult === 'object' &&
+                msgpackResult !== null &&
+                typeof (msgpackResult as Record<string, unknown>).timestamp ===
+                    'number' &&
+                (msgpackResult as Record<string, unknown>).payload instanceof
+                    Uint8Array
+            ) {
+                try {
+                    return Crdt.load(
+                        msgpackResult as CrdtDiff<unknown>
+                    ).snapshot();
+                } catch (error: unknown) {
+                    crdtError = JSON.stringify(
+                        toError(error).toJSON(),
+                        null,
+                        2
+                    );
+                }
+            } else {
+                return msgpackResult;
+            }
         } catch (error: unknown) {
             msgpackError = JSON.stringify(toError(error).toJSON(), null, 2);
-
             try {
-                result = decodeTuple(value);
-            } catch (error: unknown) {
-                tupleError = JSON.stringify(toError(error).toJSON(), null, 2);
+                const tupleResult = decodeTuple(value);
+                return tupleResult;
+            } catch (tupleCatchError: unknown) {
+                tupleError = JSON.stringify(
+                    toError(tupleCatchError).toJSON(),
+                    null,
+                    2
+                );
             }
         }
-
-        let crdtError: string = 'No error';
-        if (
-            typeof result === 'object' &&
-            typeof (result as Record<string, unknown>).timestamp === 'number' &&
-            (result as Record<string, unknown>).payload instanceof Uint8Array
-        ) {
-            // If Msgpack decoding failed, try to load as CRDT
-            // (Note: If decodeMsgpack succeeded, this part is skipped due to the return statement above)
-            try {
-                return Crdt.load(result as CrdtDiff<unknown>).snapshot();
-            } catch (error: unknown) {
-                crdtError = JSON.stringify(toError(error).toJSON(), null, 2);
-            }
-        } else {
-            return result;
-        }
-
-        return `Invalid data (unable to decode as Msgpack or CRDT):\n- Msgpack decoding attempt: ${msgpackError}\n- CRDT loading attempt: ${crdtError}\n- Tuple decoding attempt: ${tupleError}`;
+        return `Invalid data (unable to decode):\n- Msgpack: ${msgpackError}\n- CRDT: ${crdtError}\n- Tuple: ${tupleError}`;
     });
 
-    let errorFetchingChildren: string | null = $state(null); // Renamed for clarity
+    let errorFetchingChildren: string | null = $state(null);
     let lastFetchedKeyPath: Tuple | null = $state(null);
     let canLoadMore = $state(false);
 
-    let hasChildren = $state(true); // Initially assume it might have children
+    let hasChildren = $state(true);
     let isEverOpened = $state(false);
 
     async function fetchChildren(loadMoreMode = false) {
         if (isLoading) return;
         isLoading = true;
-        errorFetchingChildren = null; // Clear previous child-fetching errors
+        errorFetchingChildren = null;
         if (!loadMoreMode) {
             isEverOpened = true;
         }
 
         try {
-            const params: {parent: Tuple; after?: Tuple} = {
+            const params: {parent: Tuple; after?: Tuple; prefix?: string} = {
+                // Added prefix to params type
                 parent: keyPath,
             };
+
             if (loadMoreMode && lastFetchedKeyPath) {
                 params.after = lastFetchedKeyPath;
+                // If a prefix filter is active, it should persist during pagination
+                if (activeFilterKeyName) {
+                    params.prefix = activeFilterKeyName;
+                }
+            } else if (!loadMoreMode && activeFilterKeyName) {
+                // Applying a prefix filter for an initial fetch (not loading more)
+                params.prefix = activeFilterKeyName;
+                // 'after' is undefined here, starting the filtered list from the beginning
             }
 
             const {
                 children: newChildren,
-                hasMore, // API indicates if more children can be paginated
-                value: entryValue, // Value of the current keyPath
+                hasMore,
+                value: entryValue,
             } = await agent.getKeyChildren(params);
 
-            // Value is typically fetched/updated on the initial load of a node, not on "load more" for children.
             if (!loadMoreMode) {
                 value = entryValue ?? null;
             }
@@ -102,29 +126,27 @@
             if (loadMoreMode) {
                 children = [...children, ...newChildren];
             } else {
-                // Initial fetch for this node
                 children = newChildren;
-                // Update 'hasChildren' status based on the first fetch results
                 if (newChildren.length > 0 || hasMore) {
                     hasChildren = true;
                 } else {
-                    hasChildren = false; // No children in first batch and no more pages indicated
+                    hasChildren = false;
                 }
             }
 
             if (newChildren.length > 0) {
                 lastFetchedKeyPath = newChildren[newChildren.length - 1];
             }
-            canLoadMore = hasMore; // 'hasMore' from API directly determines if "Load More" for children is shown
+            canLoadMore = hasMore;
         } catch (fetchError: unknown) {
             const err = toError(fetchError);
             log.error({
                 msg: `Failed to fetch children for ${keyPath.join('/')}:`,
-                error: err.toJSON(), // Log structured error
+                error: err.toJSON(),
             });
-            errorFetchingChildren = err.message; // Store user-facing error message
+            errorFetchingChildren = err.message;
             if (!loadMoreMode) {
-                hasChildren = false; // If initial fetch fails, assume no children for UI
+                hasChildren = false;
             }
         } finally {
             isLoading = false;
@@ -133,7 +155,6 @@
 
     function toggleOpen() {
         isOpen = !isOpen;
-        // Fetch children (and value) only if opening for the first time
         if (isOpen) {
             fetchChildren(false);
         }
@@ -141,8 +162,27 @@
 
     function handleLoadMore() {
         if (canLoadMore && !isLoading) {
-            fetchChildren(true); // True for loadMoreMode
+            fetchChildren(true);
         }
+    }
+
+    function handleFilterSubmit(e: Event) {
+        e.preventDefault(); // don't remove it
+        const trimmedFilter = filterInputValue.trim();
+        activeFilterKeyName = trimmedFilter === '' ? null : trimmedFilter;
+        touchedPrefixFilter = true; // Mark the filter as touched
+
+        lastFetchedKeyPath = null;
+        children = [];
+        fetchChildren(false);
+    }
+
+    function clearFilterAndRefetch() {
+        filterInputValue = '';
+        activeFilterKeyName = null;
+        lastFetchedKeyPath = null;
+        children = [];
+        fetchChildren(false);
     }
 </script>
 
@@ -152,9 +192,11 @@
         onclick={toggleOpen}
         role="button"
         tabindex="0"
-        class="flex items-center py-1 group hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-150"
+        class="flex items-center py-1 group hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-150 cursor-pointer"
     >
         <button
+            aria-hidden="true"
+            tabindex="-1"
             class="mr-1 w-7 h-7 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none rounded-full"
             aria-expanded={isOpen}
             aria-label={isOpen ? 'Collapse ' + keyName : 'Expand ' + keyName}
@@ -189,7 +231,7 @@
         </button>
 
         <span
-            class="key-name font-medium text-gray-800 dark:text-gray-200 cursor-default"
+            class="key-name font-medium text-gray-800 dark:text-gray-200"
             title={keyPath.join('/')}
         >
             {keyName || (keyPath.length === 0 ? '(Root)' : '(Unnamed Key)')}
@@ -197,62 +239,120 @@
     </div>
 
     {#if isOpen}
-        {#if isEverOpened && !isLoading && value !== null}
-            <div
-                class="node-value-display p-2 mt-2 ml-7 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-sm"
-            >
-                <h4
-                    class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1"
+        <div class="border-l-1 border-gray-100 dark:border-gray-700">
+            <div class="filter-controls ml-7 mt-1 mb-1.5">
+                {#if children.length > 10 || activeFilterKeyName || touchedPrefixFilter}
+                    <form
+                        onsubmit={handleFilterSubmit}
+                        class="flex items-center gap-1.5"
+                    >
+                        <input
+                            type="text"
+                            bind:value={filterInputValue}
+                            placeholder="Filter by prefix..."
+                            class="flex-grow p-1 text-xs border border-gray-300 dark:border-gray-500 rounded dark:bg-gray-700 dark:text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <button
+                            type="submit"
+                            class="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                            aria-label="Apply prefix filter"
+                        >
+                            Apply
+                        </button>
+                        {#if activeFilterKeyName !== null}
+                            <button
+                                type="button"
+                                onclick={clearFilterAndRefetch}
+                                class="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                                title="Clear filter"
+                                aria-label="Clear prefix filter"
+                            >
+                                Clear
+                            </button>
+                        {/if}
+                    </form>
+                {/if}
+                {#if activeFilterKeyName}
+                    <p
+                        class="text-xs italic text-gray-500 dark:text-gray-400 mt-0.5"
+                    >
+                        Filtering by prefix: "{activeFilterKeyName}"{children.length ===
+                            0 &&
+                        !isLoading &&
+                        !errorFetchingChildren
+                            ? ' (no matches)'
+                            : ''}.
+                    </p>
+                {/if}
+            </div>
+
+            {#if isEverOpened && !isLoading && value !== null}
+                <div
+                    class="node-value-display p-2 mt-2 ml-7 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-sm"
                 >
-                    Value ({typeof jsonValue}):
-                </h4>
-                <pre
-                    class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-all">{JSON.stringify(
-                        jsonValue,
-                        null,
-                        2
-                    )}</pre>
-            </div>
-        {/if}
-        {#if hasChildren}
-            <div
-                class="children-container pl-5 border-l-2 border-gray-200 dark:border-gray-600 ml-3.5 mt-1"
-            >
-                {#if isLoading && children.length === 0 && isEverOpened}
-                    <p
-                        class="text-sm text-gray-500 dark:text-gray-400 py-1 italic ml-2"
+                    <h4
+                        class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1"
                     >
-                        Loading children...
-                    </p>
-                {/if}
+                        Value (type: {typeof jsonValue}):
+                    </h4>
+                    <pre
+                        class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-all">{JSON.stringify(
+                            jsonValue,
+                            null,
+                            2
+                        )}</pre>
+                </div>
+            {/if}
 
-                {#if errorFetchingChildren}
-                    <p class="text-sm text-red-500 dark:text-red-400 py-1 ml-2">
-                        Error loading children: {errorFetchingChildren}
-                    </p>
-                {/if}
+            {#if hasChildren}
+                <div class="children-container pl-5 ml-3.5 mt-1">
+                    {#if isLoading && children.length === 0 && isEverOpened}
+                        <p
+                            class="text-sm text-gray-500 dark:text-gray-400 py-1 italic ml-2"
+                        >
+                            Loading children...
+                        </p>
+                    {/if}
 
-                {#each children as child (child.join('/'))}
-                    <KeyNode keyPath={child} />
-                {/each}
+                    {#if errorFetchingChildren}
+                        <p
+                            class="text-sm text-red-500 dark:text-red-400 py-1 ml-2"
+                        >
+                            Error loading children: {errorFetchingChildren}
+                        </p>
+                    {/if}
 
-                {#if isLoading && children.length > 0}
-                    <p
-                        class="text-sm text-gray-500 dark:text-gray-400 py-1 italic ml-2"
-                    >
-                        Loading more children...
-                    </p>
-                {/if}
+                    {#if !isLoading && children.length === 0 && isEverOpened && !errorFetchingChildren}
+                        <p
+                            class="text-sm text-gray-500 dark:text-gray-400 py-1 italic ml-2"
+                        >
+                            No children found{activeFilterKeyName
+                                ? ` with prefix "${activeFilterKeyName}"`
+                                : ''}.
+                        </p>
+                    {/if}
 
-                {#if canLoadMore && !isLoading}
-                    <button
-                        onclick={handleLoadMore}
-                        class="mt-2 ml-2 px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
-                    >
-                        Load More
-                    </button>
-                {/if}
-            </div>
-        {/if}
-    {/if}
+                    {#each children as child (child.join('/'))}
+                        <KeyNode keyPath={child} />
+                    {/each}
+
+                    {#if isLoading && children.length > 0}
+                        <p
+                            class="text-sm text-gray-500 dark:text-gray-400 py-1 italic ml-2"
+                        >
+                            Loading more children...
+                        </p>
+                    {/if}
+
+                    {#if canLoadMore && !isLoading}
+                        <button
+                            onclick={handleLoadMore}
+                            class="mt-2 ml-2 px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                        >
+                            Load More
+                        </button>
+                    {/if}
+                </div>
+            {/if}
+        </div>{/if}
 </div>

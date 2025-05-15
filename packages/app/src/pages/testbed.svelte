@@ -1,6 +1,5 @@
 <script lang="ts">
     import {getAgent} from '../lib/agent/agent.svelte';
-    import KeyTreeView from '../lib/ui/components/key-tree-view.svelte';
 
     const agent = getAgent();
     agent
@@ -13,4 +12,4 @@
         });
 </script>
 
-<KeyTreeView />
+Testbed

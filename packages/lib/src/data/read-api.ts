@@ -100,7 +100,9 @@ export function createReadApi() {
                     const value = await tx.rawTx.get(parent);
                     while (children.length < maxChildren) {
                         const next = await toStream(
-                            tx.rawTx.query({gt: last})
+                            tx.rawTx.query(
+                                !after && prefix ? {gte: last} : {gt: last}
+                            )
                         ).firstOrDefault();
                         if (next === undefined) {
                             break;

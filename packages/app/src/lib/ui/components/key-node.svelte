@@ -321,7 +321,7 @@
             {/if}
 
             {#if hasChildren}
-                <div class="children-container pl-5 ml-3.5 mt-1">
+                <div class="children-container ml-3.5 mt-1">
                     {#if isLoading && children.length === 0 && isEverOpened}
                         <p
                             class="text-sm text-gray-500 dark:text-gray-400 py-1 italic ml-2"

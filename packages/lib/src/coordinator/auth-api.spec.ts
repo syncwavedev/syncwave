@@ -22,6 +22,7 @@ describe('AccountRepo', () => {
             crypto: NodeCryptoProvider,
             email: new MemEmailProvider(),
             passwordsEnabled: true,
+            superadminEmails: [],
         });
 
         authApi = createAuthApi();

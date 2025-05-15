@@ -6,6 +6,7 @@ import router from './lib/router';
 
 import {log} from 'syncwave';
 import BoardPage from './pages/board.svelte';
+import DbPage from './pages/db.svelte';
 import LoginFailed from './pages/login-failed.svelte';
 import LoginPage from './pages/login.svelte';
 import Testbed from './pages/testbed.svelte';
@@ -81,6 +82,11 @@ export class PageManager {
             this._resetPage();
 
             this._page = LoginPage;
+        });
+        router.on('/db', () => {
+            this._resetPage();
+
+            this._page = DbPage;
         });
         router.on('/login/failed', () => {
             this._resetPage();

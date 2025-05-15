@@ -123,6 +123,8 @@ jobs:
               -e AWS_DEFAULT_REGION=${{ steps.config.outputs.AWS_DEFAULT_REGION }} \
               -e AWS_ACCESS_KEY_ID=${{ steps.config.outputs.AWS_ACCESS_KEY_ID }} \
               -e AWS_SECRET_ACCESS_KEY=${{ steps.config.outputs.AWS_SECRET_ACCESS_KEY }} \
+              -e SUPERADMIN_EMAIL=${{ secrets.SUPERADMIN_EMAIL }} \
+              -e SUPERADMIN_PASSWORD=${{ secrets.SUPERADMIN_PASSWORD }} \
               -d \
               --network phoenix \
               --restart unless-stopped \

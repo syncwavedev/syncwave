@@ -7,6 +7,7 @@ import {
     type InferRpcClient,
     streamer,
 } from '../transport/rpc.js';
+import {getTupleLargestChild, Tuple, tupleStartsWith} from '../tuple.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {Principal} from './auth.js';
@@ -55,6 +56,65 @@ export class ReadApiState {
 
 export function createReadApi() {
     return createApi<ReadApiState>()({
+        getChildren: handler({
+            req: Type.Object({
+                parent: Tuple(),
+                after: Type.Optional(Tuple()),
+            }),
+            res: Type.Object({
+                children: Type.Array(Tuple()),
+                hasMore: Type.Boolean(),
+                value: Type.Union([Type.Uint8Array(), Type.Undefined()]),
+            }),
+            handle: async (st, {parent, after}, {principal}) => {
+                return await st.dataLayer.transact(principal, async tx => {
+                    if (principal.accountId === undefined) {
+                        throw new BusinessError(
+                            'user is not authenticated',
+                            'not_authenticated'
+                        );
+                    }
+                    const account = await tx.accounts.getById(
+                        principal.accountId
+                    );
+                    assert(
+                        account !== undefined,
+                        `account with id ${principal.accountId} not found`
+                    );
+                    if (!tx.config.superadminEmails.includes(account.email)) {
+                        throw new BusinessError(
+                            'user is not superadmin',
+                            'forbidden'
+                        );
+                    }
+
+                    const children: Tuple[] = [];
+                    let last = after ?? parent;
+                    const maxChildren = 100;
+                    const value = await tx.rawTx.get(parent);
+                    while (children.length < maxChildren) {
+                        const next = await toStream(
+                            tx.rawTx.query({gt: last})
+                        ).firstOrDefault();
+                        if (next === undefined) {
+                            break;
+                        }
+                        if (!tupleStartsWith(next.key, parent)) {
+                            break;
+                        }
+                        const child = next.key.slice(0, parent.length + 1);
+                        children.push(child);
+                        last = getTupleLargestChild(child);
+                    }
+
+                    return {
+                        children,
+                        hasMore: children.length === maxChildren,
+                        value,
+                    };
+                });
+            },
+        }),
         echo: handler({
             req: Type.Object({
                 time: Type.Number(),

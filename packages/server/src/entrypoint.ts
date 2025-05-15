@@ -67,7 +67,7 @@ interface Options {
     appPort: number;
     metricsPort: number;
     passwordsEnabled: boolean;
-    instanceAdmin: InstanceAdminOptions | undefined;
+    superadmin: SuperadminOptions | undefined;
 }
 
 function getApiUrl(stage: Stage, message: string): string {
@@ -103,36 +103,36 @@ function getGoogleOptions(stage: Stage): GoogleOptions | undefined {
     return {
         clientId: assertDefined(
             GOOGLE_CLIENT_ID,
-            'GOOGLE_CLIENT_ID is not required for Google OAuth'
+            'GOOGLE_CLIENT_ID is required for Google OAuth'
         ),
         clientSecret: assertDefined(
             GOOGLE_CLIENT_SECRET,
-            'GOOGLE_CLIENT_SECRET is not required for Google OAuth'
+            'GOOGLE_CLIENT_SECRET is required for Google OAuth'
         ),
         redirectUri: `${apiUrl}/callbacks/google`,
         appUrl,
     };
 }
 
-interface InstanceAdminOptions {
+interface SuperadminOptions {
     email: string;
     password: string;
 }
 
-function getInstanceAdminOptions(): InstanceAdminOptions | undefined {
-    const INSTANCE_ADMIN_EMAIL = process.env.INSTANCE_ADMIN_EMAIL;
-    const INSTANCE_ADMIN_PASSWORD = process.env.INSTANCE_ADMIN_PASSWORD;
-    if (!INSTANCE_ADMIN_EMAIL && !INSTANCE_ADMIN_PASSWORD) {
+function getInstanceAdminOptions(): SuperadminOptions | undefined {
+    const SUPERADMIN_EMAIL = process.env.SUPERADMIN_EMAIL;
+    const SUPERADMIN_PASSWORD = process.env.SUPERADMIN_PASSWORD;
+    if (!SUPERADMIN_EMAIL && !SUPERADMIN_PASSWORD) {
         return undefined;
     }
     return {
         email: assertDefined(
-            INSTANCE_ADMIN_EMAIL,
-            'INSTANCE_ADMIN_EMAIL is not required for instance admin'
+            SUPERADMIN_EMAIL,
+            'SUPERADMIN_EMAIL is required for superadmin'
         ),
         password: assertDefined(
-            INSTANCE_ADMIN_PASSWORD,
-            'INSTANCE_ADMIN_PASSWORD is not required for instance admin'
+            SUPERADMIN_PASSWORD,
+            'SUPERADMIN_PASSWORD is required for superadmin'
         ),
     };
 }
@@ -288,7 +288,7 @@ async function getOptions(): Promise<Options> {
         appPort: stage === 'self' ? 8080 : 4567,
         metricsPort: 5678,
         passwordsEnabled: stage === 'local' || stage === 'self',
-        instanceAdmin: getInstanceAdminOptions(),
+        superadmin: getInstanceAdminOptions(),
     };
 }
 
@@ -360,7 +360,7 @@ async function getKvStore(
     };
 }
 
-async function upgradeKVStore({store, instanceAdmin}: Options) {
+async function upgradeKVStore({store, superadmin: superadmin}: Options) {
     const versionKey = ['version_v2'];
     log.info({msg: 'Retrieving KV store version...'});
     let version = await store.transact(async tx => {
@@ -381,13 +381,14 @@ async function upgradeKVStore({store, instanceAdmin}: Options) {
         crypto: NodeCryptoProvider,
         email: options.emailProvider,
         passwordsEnabled: options.passwordsEnabled,
+        superadminEmails: options.superadmin ? [options.superadmin.email] : [],
     });
 
     await dataLayer.upgrade();
 
-    if (instanceAdmin) {
-        log.info({msg: 'Creating instance admin...'});
-        await dataLayer.createInstanceAdmin(instanceAdmin);
+    if (superadmin) {
+        log.info({msg: 'Creating superadmin...'});
+        await dataLayer.createSuperadmin(superadmin);
     }
 }
 
@@ -437,6 +438,7 @@ async function launchApp(options: Options) {
         objectStore: options.objectStore,
         hub: options.hub,
         passwordsEnabled: options.passwordsEnabled,
+        superadminEmails: options.superadmin ? [options.superadmin.email] : [],
     });
 
     async function shutdown() {

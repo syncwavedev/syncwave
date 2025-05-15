@@ -1,25 +1,16 @@
 <script lang="ts">
-    import {getAgent, getObjectUrl} from '../lib/agent/agent.svelte';
-    import UploadButton from '../lib/ui/components/upload-button.svelte';
+    import {getAgent} from '../lib/agent/agent.svelte';
+    import KeyTreeView from '../lib/ui/components/key-tree-view.svelte';
 
     const agent = getAgent();
-    agent.observeMeAsync().then(me => {
-        console.debug('me', $state.snapshot(me.avatarUrl));
-    });
-
-    let fileUrl: string | undefined = $state(undefined);
+    agent
+        .getKeyChildren({
+            parent: ['some', 'key'],
+            after: ['some', 'key', 'child#34'],
+        })
+        .then(keys => {
+            console.log('Keys:', keys);
+        });
 </script>
 
-<UploadButton
-    callback={async file => {
-        const objectKey = await agent.uploadObject(file);
-        fileUrl = getObjectUrl(objectKey);
-        agent.setMyAvatar(objectKey);
-    }}
->
-    Upload
-</UploadButton>
-
-{#if fileUrl}
-    <img src={fileUrl} alt="Uploaded file" />
-{/if}
+<KeyTreeView />

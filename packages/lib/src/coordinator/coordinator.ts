@@ -32,6 +32,7 @@ export interface CoordinatorServerOptions {
     objectStore: ObjectStore;
     hub: Hub;
     passwordsEnabled: boolean;
+    superadminEmails: string[];
 }
 
 export class CoordinatorServer {
@@ -46,6 +47,7 @@ export class CoordinatorServer {
             crypto: this.options.cryptoProvider,
             email: options.emailProvider,
             passwordsEnabled: options.passwordsEnabled,
+            superadminEmails: options.superadminEmails,
         });
         this.authenticator = new Authenticator(
             AUTHENTICATOR_PRINCIPAL_CACHE_SIZE,

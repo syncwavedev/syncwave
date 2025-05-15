@@ -71,6 +71,8 @@ jobs:
               -e AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }} \
               -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
               -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e SUPERADMIN_EMAIL=${{ secrets.SUPERADMIN_EMAIL }} \
+              -e SUPERADMIN_PASSWORD=${{ secrets.SUPERADMIN_PASSWORD }} \
               -d \
               --restart unless-stopped \
               ghcr.io/syncwavedev/syncwave-self:${{ steps.config.outputs.TAG }}

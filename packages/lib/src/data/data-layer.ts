@@ -46,6 +46,7 @@ import {BOARD_DEMO_USERS} from './template.js';
 
 export interface Config {
     readonly passwordsEnabled: boolean;
+    readonly superadminEmails: string[];
 }
 
 export interface DataTx {
@@ -233,6 +234,7 @@ export interface DataLayerOptions {
     crypto: CryptoProvider;
     email: EmailProvider;
     passwordsEnabled: boolean;
+    superadminEmails: string[];
 }
 
 export class DataLayer {
@@ -243,6 +245,7 @@ export class DataLayer {
     private readonly crypto: CryptoProvider;
     private readonly email: EmailProvider;
     private readonly passwordsEnabled: boolean;
+    private readonly superadminEmails: string[] = [];
 
     constructor(options: DataLayerOptions) {
         this.kv = options.kv;
@@ -250,6 +253,7 @@ export class DataLayer {
         this.crypto = options.crypto;
         this.email = options.email;
         this.passwordsEnabled = options.passwordsEnabled;
+        this.superadminEmails = options.superadminEmails;
 
         this.esReader = new EventStoreReader(
             fn =>
@@ -361,6 +365,7 @@ export class DataLayer {
 
             const config: Config = {
                 passwordsEnabled: this.passwordsEnabled,
+                superadminEmails: this.superadminEmails,
             };
 
             const emailService = new EmailService(
@@ -461,7 +466,7 @@ export class DataLayer {
         return result;
     }
 
-    async createInstanceAdmin(params: {email: string; password: string}) {
+    async createSuperadmin(params: {email: string; password: string}) {
         await this.transact(system, async tx => {
             await getAccount({
                 accounts: tx.accounts,

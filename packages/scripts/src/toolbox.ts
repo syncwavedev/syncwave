@@ -22,9 +22,14 @@ const client = new CoordinatorClient(
 );
 
 async function main() {
-    const result = await client.rpc.signIn({
-        email: 'test-3password@gmail.com',
-        password: '123',
+    const result = await client.rpc.getChildren({
+        parent: [
+            'columns',
+            'd',
+            'i',
+            'boardId',
+            '0196c8c8-8ea1-709f-9864-bebdf28734d2',
+        ],
     });
 
     console.log(result);

@@ -31,6 +31,7 @@ import {
     Timestamp,
     toPosition,
     toStream,
+    Tuple,
     whenAll,
     type Account,
     type ActivityMonitor,
@@ -361,6 +362,10 @@ export class Agent {
             state: board.state,
             type: 'board',
         }) as Board;
+    }
+
+    async getKeyChildren(params: {parent: Tuple; after?: Tuple}) {
+        return await this.rpc.getChildren(params);
     }
 
     async observeMeAsync(): Promise<MeView> {

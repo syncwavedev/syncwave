@@ -322,7 +322,10 @@ export class BoardData implements SyncTarget {
             .map(state => ({
                 state,
                 user: state.userId
-                    ? this.crdtManager.tryViewById(state.userId, 'user')
+                    ? findRequired(
+                          this.allMemberViews,
+                          x => x.id === state.userId
+                      )
                     : undefined,
             }))
             // awareness might be ahead of the board data, so ignore unknown users

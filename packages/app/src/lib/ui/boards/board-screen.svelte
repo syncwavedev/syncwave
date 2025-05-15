@@ -28,6 +28,7 @@
     import permissionManager from '../../../permission-manager';
     import {flip} from 'svelte/animate';
     import {DND_REORDER_DURATION_MS} from './board-dnd';
+    import {toastManager} from '../../../toast-manager.svelte';
 
     const {
         board,
@@ -308,7 +309,11 @@
                             onCardClick={selectCard}
                             activeCardId={selectedCard?.id}
                             onCreateCard={() => createCard(column)}
-                            onEditColumn={() => {}}
+                            onEditColumn={() =>
+                                toastManager.info(
+                                    'Not implementd',
+                                    'Wait until we will ad this feater'
+                                )}
                             columnPosition={i}
                             columnsCount={board.columns.length - 1}
                         />

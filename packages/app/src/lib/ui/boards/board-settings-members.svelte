@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {toastManager} from '../../../toast-manager.svelte';
     import {getAgent} from '../../agent/agent.svelte';
     import type {BoardView, MeView} from '../../agent/view.svelte';
     import {appConfig} from '../../config';
@@ -24,6 +25,11 @@
 
     async function onCopyClick() {
         await navigator.clipboard.writeText(joinLink);
+
+        toastManager.info(
+            'Link copied',
+            'The join link has been copied to your clipboard.'
+        );
     }
 </script>
 

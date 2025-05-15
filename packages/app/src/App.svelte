@@ -33,6 +33,7 @@
     import ModalContainer from './lib/ui/components/modal-container.svelte';
     import {PageManager} from './page-manager.svelte.js';
     import Loading from './lib/ui/components/loading.svelte';
+    import ToastContainer from './lib/ui/components/toast-container.svelte';
 
     const documentActivity = new DocumentActivityMonitor();
 
@@ -85,6 +86,7 @@
 
 <main>
     {#if appConfig.stage === 'local' || appConfig.stage === 'dev'}
+        <ToastContainer />
         {#if pageManager.page}
             <ModalContainer />
             <pageManager.page {...pageManager.pageProps} />
@@ -96,6 +98,7 @@
             {#snippet failed(error, reset)}
                 <ErrorCard {error} {reset} />
             {/snippet}
+            <ToastContainer />
             {#if pageManager.page}
                 <ModalContainer />
                 <pageManager.page {...pageManager.pageProps} />

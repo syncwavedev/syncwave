@@ -10,6 +10,7 @@ import DbPage from './pages/db.svelte';
 import LoginFailed from './pages/login-failed.svelte';
 import LoginPage from './pages/login.svelte';
 import Testbed from './pages/testbed.svelte';
+import {toastManager} from './toast-manager.svelte';
 
 export class PageManager {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,15 +138,23 @@ export class PageManager {
                     router.route(`/b/${key}`, {replace: true});
                 })
                 .catch(() => {
-                    alert(
-                        'Unable to join the board. The invitation code may be invalid or expired. Please check the code and try again.'
+                    toastManager.error(
+                        'Unable to join the board',
+                        'The invitation code may be invalid or expired.'
                     );
 
                     router.route('/');
                 });
         });
 
-        router.notFound(() => router.route('/'));
+        router.notFound(() => {
+            toastManager.error(
+                'Page not found',
+                "The page you are looking for doesn't exist."
+            );
+
+            router.route('/');
+        });
 
         router.listen();
     }
@@ -167,14 +176,18 @@ export class PageManager {
 
         Promise.all([boardPromise, mePromise])
             .then(([[boardData, meBoardData], meData]) => {
-                BoardHistoryManager.save(key);
-
                 if (boardData.board.deletedAt) {
-                    console.debug(
-                        'board is deletedAt',
-                        boardData.board.deletedAt
+                    toastManager.error(
+                        'Board has been deleted',
+                        'This board is no longer available as it has been permanently removed.'
                     );
+
+                    BoardHistoryManager.clear();
+                    router.route('/');
+                    return;
                 }
+
+                BoardHistoryManager.save(key);
 
                 this._page = BoardPage;
                 this._pageProps = {
@@ -185,6 +198,10 @@ export class PageManager {
                 };
             })
             .catch(err => {
+                toastManager.error(
+                    'Unable to load board',
+                    'The board may not exist or you may not have permission to view it.'
+                );
                 log.error({msg: 'Error loading board', error: err});
 
                 BoardHistoryManager.clear();

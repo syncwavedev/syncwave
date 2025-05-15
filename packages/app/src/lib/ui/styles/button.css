@@ -17,6 +17,7 @@
     w-[2em]
     place-items-center
     rounded-full
+    pointer-events-auto
     disabled:text-ink-disabled;
 
     &.btn--icon--bordered {
@@ -33,5 +34,5 @@
 }
 
 .btn--ghost {
-    @apply px-1 h-[1.8em] rounded-sm gap-1.5 flex items-center hover:text-ink disabled:text-ink-disabled;
+    @apply px-1 h-[1.8em] rounded-sm gap-1.5 flex items-center hover:text-ink disabled:text-ink-disabled pointer-events-auto;
 }

@@ -91,7 +91,7 @@
         --theme-color-ink-placeholder: var(--color-gray-350);
         --theme-color-ink-disabled: var(--color-gray-450);
 
-        --theme-color-ink-danger: oklch(0.4 0.026 26.2deg);
+        --theme-color-ink-danger: oklch(0.64 0.18 26.2deg);
 
         --theme-color-divider: var(--color-gray-60);
         --theme-color-divider-object: var(--color-gray-125);

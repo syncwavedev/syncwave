@@ -71,6 +71,8 @@ export function isTupleStartsWithLoose({
         ) {
             return isBufferStartsWith({buffer: tupleItem, prefix: prefixItem});
         }
+
+        return false;
     }
     return true;
 }

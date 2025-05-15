@@ -4,12 +4,14 @@
         Crdt,
         CrdtDiff,
         decodeMsgpack,
-        decodeTuple, // Assuming this is used by your actual jsonValue logic if needed
+        decodeTuple,
+        getReadableError, // Assuming this is used by your actual jsonValue logic if needed
         log,
         toError,
         type Tuple,
     } from 'syncwave'; // Assuming these are from your project's 'syncwave' module
     import {getAgent} from '../../agent/agent.svelte';
+    import {onMount} from 'svelte';
 
     interface Props {
         keyPath: Tuple;
@@ -20,9 +22,18 @@
     const agent = getAgent(); // Get the agent instance
 
     let isOpen = $state(false);
+    onMount(() => {
+        if (keyPath.length === 0) {
+            toggleOpen();
+        }
+    });
     let isLoading = $state(false);
     const keyName =
-        keyPath.length === 0 ? '<Root>' : keyPath[keyPath.length - 1];
+        keyPath.length === 0
+            ? '<Root>'
+            : keyPath[keyPath.length - 1] === null
+              ? '<null>'
+              : keyPath[keyPath.length - 1];
     let children: Tuple[] = $state([]);
     let value: Uint8Array | null = $state(null);
 
@@ -138,13 +149,12 @@
                 lastFetchedKeyPath = newChildren[newChildren.length - 1];
             }
             canLoadMore = hasMore;
-        } catch (fetchError: unknown) {
-            const err = toError(fetchError);
+        } catch (error: unknown) {
             log.error({
                 msg: `Failed to fetch children for ${keyPath.join('/')}:`,
-                error: err.toJSON(),
+                error,
             });
-            errorFetchingChildren = err.message;
+            errorFetchingChildren = getReadableError(error);
             if (!loadMoreMode) {
                 hasChildren = false;
             }
@@ -234,7 +244,7 @@
             class="key-name font-medium text-gray-800 dark:text-gray-200"
             title={keyPath.join('/')}
         >
-            {keyName || (keyPath.length === 0 ? '(Root)' : '(Unnamed Key)')}
+            {keyName}
         </span>
     </div>
 
@@ -304,6 +314,12 @@
                 </div>
             {/if}
 
+            {#if errorFetchingChildren}
+                <p class="text-sm text-red-500 dark:text-red-400 py-1 ml-2">
+                    Error loading children: {errorFetchingChildren}
+                </p>
+            {/if}
+
             {#if hasChildren}
                 <div class="children-container pl-5 ml-3.5 mt-1">
                     {#if isLoading && children.length === 0 && isEverOpened}
@@ -311,14 +327,6 @@
                             class="text-sm text-gray-500 dark:text-gray-400 py-1 italic ml-2"
                         >
                             Loading children...
-                        </p>
-                    {/if}
-
-                    {#if errorFetchingChildren}
-                        <p
-                            class="text-sm text-red-500 dark:text-red-400 py-1 ml-2"
-                        >
-                            Error loading children: {errorFetchingChildren}
                         </p>
                     {/if}
 

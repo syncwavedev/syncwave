@@ -9,13 +9,13 @@ import {
     arrayEqual,
     assertDefined,
     assertNever,
-    bufStartsWith,
     compareUint8Array,
     concatBuffers,
     distinct,
     drop,
     equals,
     getRequiredKey,
+    isBufferStartsWith,
     partition,
     pipe,
     run,
@@ -28,68 +28,68 @@ describe('bufStartsWith', () => {
     it('should return true if buffer starts with the given prefix', () => {
         const buf = new Uint8Array([1, 2, 3, 4, 5]);
         const prefix = new Uint8Array([1, 2, 3]);
-        expect(bufStartsWith(buf, prefix)).toBe(true);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(true);
     });
 
     it('should return false if buffer does not start with the given prefix', () => {
         const buf = new Uint8Array([1, 2, 3, 4, 5]);
         const prefix = new Uint8Array([2, 3]);
-        expect(bufStartsWith(buf, prefix)).toBe(false);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(false);
     });
 
     it('should return true if prefix is empty (edge case)', () => {
         const buf = new Uint8Array([1, 2, 3, 4, 5]);
         const prefix = new Uint8Array([]);
-        expect(bufStartsWith(buf, prefix)).toBe(true);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(true);
     });
 
     it('should return false if prefix is longer than the buffer', () => {
         const buf = new Uint8Array([1, 2]);
         const prefix = new Uint8Array([1, 2, 3]);
-        expect(bufStartsWith(buf, prefix)).toBe(false);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(false);
     });
 
     it('should return true if both buffer and prefix are empty', () => {
         const buf = new Uint8Array([]);
         const prefix = new Uint8Array([]);
-        expect(bufStartsWith(buf, prefix)).toBe(true);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(true);
     });
 
     it('should return false if buffer is empty but prefix is not', () => {
         const buf = new Uint8Array([]);
         const prefix = new Uint8Array([1]);
-        expect(bufStartsWith(buf, prefix)).toBe(false);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(false);
     });
 
     it('should return false if buffer starts with similar but not identical values', () => {
         const buf = new Uint8Array([1, 2, 3, 4, 5]);
         const prefix = new Uint8Array([1, 2, 4]); // 4 instead of 3
-        expect(bufStartsWith(buf, prefix)).toBe(false);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(false);
     });
 
     it('should correctly handle large buffers and prefixes', () => {
         const buf = new Uint8Array(1000).fill(1);
         const prefix = new Uint8Array(500).fill(1);
-        expect(bufStartsWith(buf, prefix)).toBe(true);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(true);
     });
 
     it('should return false if large buffer and prefix differ in the middle', () => {
         const buf = new Uint8Array(1000).fill(1);
         buf[499] = 2; // Change one value in the prefix range
         const prefix = new Uint8Array(500).fill(1);
-        expect(bufStartsWith(buf, prefix)).toBe(false);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(false);
     });
 
     it('should handle single-byte buffers and prefixes', () => {
         const buf = new Uint8Array([1]);
         const prefix = new Uint8Array([1]);
-        expect(bufStartsWith(buf, prefix)).toBe(true);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(true);
     });
 
     it('should return false if single-byte buffer and prefix do not match', () => {
         const buf = new Uint8Array([1]);
         const prefix = new Uint8Array([2]);
-        expect(bufStartsWith(buf, prefix)).toBe(false);
+        expect(isBufferStartsWith({buffer: buf, prefix})).toBe(false);
     });
 });
 

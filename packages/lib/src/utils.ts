@@ -231,24 +231,6 @@ export function pipe<T>(x: T, ...fns: ((x: any) => any)[]): any {
     return fns.reduce((prevResult, fn) => fn(prevResult), x as unknown);
 }
 
-export function isBufferStartsWith({
-    buffer,
-    prefix,
-}: {
-    buffer: Uint8Array;
-    prefix: Uint8Array;
-}) {
-    if (buffer.length < prefix.length) {
-        return false;
-    }
-    for (let i = 0; i < prefix.length; i += 1) {
-        if (buffer[i] !== prefix[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 export function concatBuffers(a: Uint8Array, b: Uint8Array): Uint8Array {
     return joinBuffers([a, b]);
 }
@@ -293,8 +275,14 @@ export function compareUint8Array(a: Uint8Array, b: Uint8Array): 1 | 0 | -1 {
     return 0;
 }
 
-export function bufStartsWith(buf: Uint8Array, prefix: Uint8Array): boolean {
-    const bufPrefix = buf.slice(0, prefix.length);
+export function isBufferStartsWith({
+    buffer,
+    prefix,
+}: {
+    buffer: Uint8Array;
+    prefix: Uint8Array;
+}): boolean {
+    const bufPrefix = buffer.slice(0, prefix.length);
     return compareUint8Array(bufPrefix, prefix) === 0;
 }
 

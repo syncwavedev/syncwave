@@ -22,7 +22,6 @@ import {
     context,
     CoordinatorServer,
     DataLayer,
-    decodeMsgpack,
     Deferred,
     type GoogleOptions,
     type KvStore,
@@ -361,20 +360,6 @@ async function getKvStore(
 }
 
 async function upgradeKVStore({store, superadmin: superadmin}: Options) {
-    const versionKey = ['version_v2'];
-    log.info({msg: 'Retrieving KV store version...'});
-    let version = await store.transact(async tx => {
-        log.info({msg: 'Running tx.get(versionKey)...'});
-        const version = await tx.get(versionKey);
-        if (version) {
-            return decodeMsgpack(version);
-        } else {
-            return 0;
-        }
-    });
-
-    log.info({msg: 'KV store version: ' + version});
-
     const dataLayer = new DataLayer({
         kv: store,
         hub: new MemHub(),

@@ -73,7 +73,7 @@
         <div class="flex flex-col gap-1 flex-1">
             <p class="font-medium">Leave board</p>
             <p class="font-detail text-ink-detail text-xs">
-                All local data will be clear, page refreshed.
+                All local data will be cleared and the page will be refreshed.
             </p>
         </div>
         <div class="block-inline">

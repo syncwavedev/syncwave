@@ -81,7 +81,8 @@
             <div class="flex flex-col gap-1 flex-1">
                 <p class="font-medium">Sign Out</p>
                 <p class="text-ink-detail text-xs">
-                    All local data will be clear, page refreshed.
+                    All local data will be cleared and the page will be
+                    refreshed.
                 </p>
             </div>
             <div class="block-inline">

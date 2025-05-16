@@ -43,6 +43,45 @@ describe('observe', () => {
             x => [{type: 'array_push', subject: x, args: [1, 2]}]
         ),
         tc(
+            [1, 2, 3],
+            x => x.splice(1, 0, 'a', 'b'),
+            x => [
+                {
+                    type: 'array_splice',
+                    subject: x,
+                    start: 1,
+                    deleteCount: 0,
+                    items: ['a', 'b'],
+                },
+            ]
+        ),
+        tc(
+            [1, 2, 3],
+            x => x.splice(1, 1),
+            x => [
+                {
+                    type: 'array_splice',
+                    subject: x,
+                    start: 1,
+                    deleteCount: 1,
+                    items: [],
+                },
+            ]
+        ),
+        tc(
+            [1, 2, 3],
+            x => x.splice(1, 1, 'a', 'b'),
+            x => [
+                {
+                    type: 'array_splice',
+                    subject: x,
+                    start: 1,
+                    deleteCount: 1,
+                    items: ['a', 'b'],
+                },
+            ]
+        ),
+        tc(
             [],
             x => x.unshift(1, 2, 3),
             x => [{type: 'array_unshift', subject: x, args: [1, 2, 3]}]

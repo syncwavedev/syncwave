@@ -339,6 +339,7 @@ export function mapFromYValue(
 
 // mapToYValue assumes that value is valid for the given schema
 function mapToYValue(value: any): YValue {
+    const x: YArray<number> = 1 as any;
     if (
         value === null ||
         value === undefined ||
@@ -491,6 +492,22 @@ function replayLog(log: OpLog, locator: Locator): void {
             const yMapValue = mapToYValue(entry.value);
             yValue.set(entry.prop, yMapValue);
             locator.addDeep(entry.value, yMapValue);
+        } else if (entry.type === 'array_splice') {
+            assert(yValue instanceof YArray, 'array_splice: expected YArray');
+            if (entry.deleteCount > 0) {
+                yValue.delete(entry.start, entry.deleteCount);
+            }
+            if (entry.items.length > 0) {
+                const yItems = entry.items.map(x => mapToYValue(x));
+                yValue.insert(
+                    entry.start,
+                    yItems.map(x => new YMap<YValue>([['value', x]]))
+                );
+
+                zip(entry.items, yItems).forEach(([item, yItem]) =>
+                    locator.addDeep(item, yItem)
+                );
+            }
         } else {
             assertNever(entry);
         }

@@ -19,6 +19,12 @@ interface BaseArrayLog<TMethod extends Extract<Method<typeof Array>, string>>
 
 interface ArrayPushLog extends BaseArrayLog<'push'> {}
 
+interface ArraySpliceLog extends BaseOpLogEntry<'array_splice'> {
+    readonly start: number;
+    readonly deleteCount: number;
+    readonly items: any[];
+}
+
 interface ArrayUnshiftLog extends BaseArrayLog<'unshift'> {}
 
 interface ArraySetLog extends BaseOpLogEntry<'array_set'> {
@@ -48,6 +54,7 @@ interface ObjectDeleteLog extends BaseOpLogEntry<'object_delete'> {
 
 export type OpLogEntry =
     | ArrayPushLog
+    | ArraySpliceLog
     | ArrayUnshiftLog
     | ArraySetLog
     | MapSetLog
@@ -121,6 +128,25 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                             args.map(x => createProxy(x, log))
                         );
                     };
+                } else if (method === 'splice') {
+                    return (
+                        start: number,
+                        deleteCount: number,
+                        ...items: any[]
+                    ) => {
+                        log.push({
+                            type: 'array_splice',
+                            start: start,
+                            deleteCount: deleteCount,
+                            items: items,
+                            subject,
+                        });
+                        return original.apply(target, [
+                            start,
+                            deleteCount,
+                            ...items.map(x => createProxy(x, log)),
+                        ] as Parameters<typeof original>);
+                    };
                 } else if (
                     method === 'copyWithin' ||
                     method === 'reverse' ||
@@ -128,7 +154,6 @@ function createArrayProxy<T>(subject: Array<T>, log: OpLog): T[] {
                     method === 'pop' ||
                     method === 'shift' ||
                     method === 'sort' ||
-                    method === 'splice' ||
                     method === 'toReversed' ||
                     method === 'toSorted' ||
                     method === 'toSpliced' ||

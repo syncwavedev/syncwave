@@ -15,7 +15,7 @@
     };
 
     type Props = DropdownMenuRootProps & {
-        items: MenuItem[];
+        items: (MenuItem | null)[];
         contentProps?: WithoutChild<DropdownMenuContentProps>;
         children?: Snippet;
     };
@@ -39,10 +39,10 @@
             alignOffset={0}
             preventOverflowTextSelection={true}
             {...contentProps}
-            class="z-100 bg-material-elevated p-1 rounded-md min-w-40 border border-divider-elevated outline-none shadow-sm"
+            class="z-100 bg-material-elevated p-1 rounded-md min-w-48 border border-divider-elevated outline-none shadow-sm"
         >
             <DropdownMenu.Group>
-                {#each items as item (item.text)}
+                {#each items.filter(x => x !== null) as item (item.text)}
                     <DropdownMenu.Item
                         textValue={item.text}
                         onSelect={item.onSelect}

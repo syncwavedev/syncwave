@@ -5,10 +5,12 @@
     import type {MeView} from '../../agent/view.svelte';
     import AvatarInput from '../components/avatar-input.svelte';
     import type {ObjectKey} from 'syncwave';
+    import {getAuthManager} from '../../utils';
 
     let {me}: {me: MeView} = $props();
 
     const agent = getAgent();
+    const authManager = getAuthManager();
 
     function handleNameChange(event: Event) {
         if ((event.target as HTMLInputElement).value.length < 1) {
@@ -88,6 +90,12 @@
             <div class="block-inline">
                 <button
                     class="settings-element bg-material-elevated-element rounded-sm"
+                    onclick={() => {
+                        const confirmMessage = `Are you sure you want to sign out?`;
+                        if (confirm(confirmMessage)) {
+                            authManager.logOut();
+                        }
+                    }}
                 >
                     Sign Out
                 </button>

@@ -29,6 +29,13 @@
     import {flip} from 'svelte/animate';
     import {DND_REORDER_DURATION_MS} from './board-dnd';
     import {toastManager} from '../../../toast-manager.svelte';
+    import DropdownMenu from '../components/dropdown-menu.svelte';
+    import {getAuthManager} from '../../utils';
+    import DoorOpenIcon from '../components/icons/door-open-icon.svelte';
+    import BoardIcon from '../components/icons/board-icon.svelte';
+    import UserRoundCog from '../components/icons/user-round-cog.svelte';
+    import LogOutIcon from '../components/icons/log-out-icon.svelte';
+    import BoardHistoryManager from '../../board-history-manager';
 
     const {
         board,
@@ -45,6 +52,7 @@
     } = $props();
 
     const agent = getAgent();
+    const authManager = getAuthManager();
 
     let selectedCard = $state<CardTreeView | null>(
         counter
@@ -263,25 +271,65 @@
                 </a>
             {:else}
                 <div class="ml-auto flex gap-1">
-                    {#if permissionManager.hasPermission('write:board')}
-                        <button
-                            onclick={() => modalManager.open(boardSettings)}
-                            class="btn--icon text-ink-body"
-                        >
+                    <DropdownMenu
+                        items={[
+                            permissionManager.hasPermission('write:board')
+                                ? {
+                                      icon: BoardIcon,
+                                      text: 'Board Settings',
+                                      onSelect: () => {
+                                          modalManager.open(boardSettings);
+                                      },
+                                  }
+                                : null,
+                            {
+                                icon: DoorOpenIcon,
+                                text: 'Leave Board',
+                                onSelect: () => {
+                                    const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
+                                    if (confirm(confirmMessage)) {
+                                        BoardHistoryManager.clear();
+                                        agent.deleteMember(board.memberId);
+                                        router.route('/');
+                                    }
+                                },
+                            },
+                        ]}
+                    >
+                        <button class="btn--icon text-ink-body">
                             <EllipsisIcon />
                         </button>
-                    {/if}
+                    </DropdownMenu>
 
-                    <button
-                        class="btn--icon"
-                        onclick={() => modalManager.open(profileSettings)}
+                    <DropdownMenu
+                        items={[
+                            {
+                                icon: UserRoundCog,
+                                text: 'Profile Settings',
+                                onSelect: () => {
+                                    modalManager.open(profileSettings);
+                                },
+                            },
+                            {
+                                icon: LogOutIcon,
+                                text: 'Sign Out',
+                                onSelect: () => {
+                                    const confirmMessage = `Are you sure you want to sign out?`;
+                                    if (confirm(confirmMessage)) {
+                                        authManager.logOut();
+                                    }
+                                },
+                            },
+                        ]}
                     >
-                        <Avatar
-                            userId={me.id}
-                            imageUrl={me.avatarUrlSmall}
-                            name={me.fullName}
-                        />
-                    </button>
+                        <button class="btn--icon">
+                            <Avatar
+                                userId={me.id}
+                                imageUrl={me.avatarUrlSmall}
+                                name={me.fullName}
+                            />
+                        </button>
+                    </DropdownMenu>
                 </div>
             {/if}
         </div>

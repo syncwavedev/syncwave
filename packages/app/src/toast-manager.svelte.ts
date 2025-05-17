@@ -91,12 +91,12 @@ export class ToastManager {
 
         this.toasts.push(toast);
 
-        // const duration = options?.duration ?? this.defaultDuration;
-        // const timeoutId = window.setTimeout(() => {
-        //     this.remove(id);
-        // }, duration);
+        const duration = options?.duration ?? this.defaultDuration;
+        const timeoutId = window.setTimeout(() => {
+            this.remove(id);
+        }, duration);
 
-        // this.timeoutIds.set(id, timeoutId);
+        this.timeoutIds.set(id, timeoutId);
 
         return id;
     }

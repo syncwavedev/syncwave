@@ -21,16 +21,14 @@
                     <ErrorIcon />
                 {/if}
             </span>
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col flex-1">
                 <div class="font-medium flex items-center gap-1">
                     {t.header}
                 </div>
-                <div class="text-ink-detail">
-                    {t.caption}
-                </div>
-                <div class="-ml-1">
+                <div class="text-ink-detail flex gap-6 items-center">
+                    <p>{t.caption}</p>
                     <button
-                        class="btn--ghost hover:bg-material-elevated-hover"
+                        class="btn--ghost hover:bg-material-elevated-hover ml-auto"
                         onclick={() => toastManager.remove(t.id)}
                     >
                         Dismiss
@@ -51,7 +49,7 @@
         flex-direction: column;
         align-items: flex-end;
 
-        gap: 0.5rem;
+        gap: 0.4rem;
 
         z-index: 9999;
 
@@ -71,9 +69,9 @@
 
         box-shadow: var(--shadow-sm);
 
-        padding-block-start: 0.5rem;
-        padding-block-end: 0.25rem; /* compensate actions  */
-        padding-inline: 0.5rem;
+        padding-block-start: 0.75rem;
+        padding-block-end: 0.5rem; /* compensate actions  */
+        padding-inline: 0.75rem;
 
         display: flex;
 

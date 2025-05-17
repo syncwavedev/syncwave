@@ -41,25 +41,30 @@ export class PageManager {
     }
 
     private _register(): void {
-        router.on('/', () => {
-            this._resetPage();
+        router.on(
+            '/',
+            this._protected(() => {
+                this._resetPage();
 
-            const userId = this._authManager.getTokenInfo()?.userId;
-            if (!userId) {
-                throw new Error('User ID not found');
-            }
+                const userId = this._authManager.getTokenInfo()?.userId;
+                if (!userId) {
+                    throw new Error('User ID not found');
+                }
 
-            const lastBoardKey = BoardHistoryManager.last();
-            if (lastBoardKey) {
-                router.route(`/b/${lastBoardKey}`, {replace: true});
-            } else {
-                this._agent.getMe().then(me => {
-                    if (me.boards.length > 0) {
-                        router.route(`/b/${me.boards[0].key}`, {replace: true});
-                    }
-                });
-            }
-        });
+                const lastBoardKey = BoardHistoryManager.last();
+                if (lastBoardKey) {
+                    router.route(`/b/${lastBoardKey}`, {replace: true});
+                } else {
+                    this._agent.getMe().then(me => {
+                        if (me.boards.length > 0) {
+                            router.route(`/b/${me.boards[0].key}`, {
+                                replace: true,
+                            });
+                        }
+                    });
+                }
+            })
+        );
         router.on('/demo', () => {
             this._resetPage();
 
@@ -109,43 +114,54 @@ export class PageManager {
 
             router.route(redirectUrl || '/', {replace: true});
         });
-        router.on('/b/:key', params => {
-            this._resetPage();
+        router.on(
+            '/b/:key',
+            this._protected(params => {
+                this._resetPage();
 
-            this._handleBoard(params.key);
-        });
-        router.on('/b/:key/c/:counter', params => {
-            this._resetPage();
+                this._handleBoard(params.key);
+            })
+        );
+        router.on(
+            '/b/:key/c/:counter',
+            this._protected(params => {
+                this._resetPage();
 
-            this._handleBoard(params.key, params.counter);
-        });
+                this._handleBoard(params.key, params.counter);
+            })
+        );
         router.on('/testbed', () => {
             this._resetPage();
 
             this._page = Testbed;
         });
-        router.on('/join/:code', params => {
-            const code = params.code;
+        router.on(
+            '/join/:code',
+            this._protected(params => {
+                this._resetPage();
 
-            if (code === undefined) {
-                router.route('/');
-                return;
-            }
+                const code = params.code;
 
-            this._agent
-                .joinViaCode(code)
-                .then(key => {
-                    router.route(`/b/${key}`, {replace: true});
-                })
-                .catch(() => {
-                    toastManager.error(
-                        'Unable to join the board',
-                        'The invitation code may be invalid or expired.'
-                    );
-
+                if (code === undefined) {
                     router.route('/');
-                });
-        });
+                    return;
+                }
+
+                this._agent
+                    .joinViaCode(code)
+                    .then(key => {
+                        router.route(`/b/${key}`, {replace: true});
+                    })
+                    .catch(() => {
+                        toastManager.error(
+                            'Unable to join the board',
+                            'The invitation code may be invalid or expired.'
+                        );
+
+                        router.route('/');
+                    });
+            })
+        );
 
         router.notFound(() => {
             toastManager.error(
@@ -207,5 +223,22 @@ export class PageManager {
                 BoardHistoryManager.clear();
                 router.route('/');
             });
+    }
+
+    private _protected<T extends Record<string, string | undefined>, R = void>(
+        handler: (params: T) => R
+    ): (params: T) => R | void {
+        return (params: T): R | void => {
+            const userId = this._authManager.getTokenInfo()?.userId;
+            if (!userId) {
+                const currentUrl = encodeURIComponent(window.location.href);
+                router.route(`/login?redirect_url=${currentUrl}`, {
+                    replace: true,
+                });
+                return;
+            }
+
+            return handler(params);
+        };
     }
 }

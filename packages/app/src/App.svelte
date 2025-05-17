@@ -9,7 +9,7 @@
 </script>
 
 <script lang="ts">
-    import {onDestroy, onMount, setContext} from 'svelte';
+    import {onDestroy, setContext} from 'svelte';
     import {CoordinatorClient} from 'syncwave';
     import {
         createCoordinatorClient,
@@ -27,7 +27,6 @@
     import {appConfig} from './lib/config';
     import {WsTransportClient} from './ws-transport-client';
     import {AuthManager} from './auth-manager';
-    import router from './lib/router';
 
     import {DocumentActivityMonitor} from './document-activity.js';
     import ModalContainer from './lib/ui/components/modal-container.svelte';
@@ -65,23 +64,7 @@
     );
 
     const agent = getAgent();
-
     const pageManager = new PageManager(agent, authManager);
-
-    onMount(() => {
-        const userId = authManager.getTokenInfo()?.userId;
-        if (
-            !userId &&
-            (window.location.pathname.startsWith('/b/') ||
-                window.location.pathname === '/')
-        ) {
-            router.route(
-                `/login?redirect_url=${encodeURIComponent(window.location.href)}`,
-                {replace: true}
-            );
-            return;
-        }
-    });
 </script>
 
 <main>

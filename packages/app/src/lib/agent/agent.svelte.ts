@@ -151,7 +151,7 @@ export class Agent {
             if (this.status === 'online') {
                 this.status = 'unstable';
             }
-        }, 1000);
+        }, 2000);
 
         try {
             const {time} = await this.rpc.echo({time: performance.now()});

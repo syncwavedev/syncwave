@@ -339,7 +339,6 @@ export function mapFromYValue(
 
 // mapToYValue assumes that value is valid for the given schema
 function mapToYValue(value: any): YValue {
-    const x: YArray<number> = 1 as any;
     if (
         value === null ||
         value === undefined ||

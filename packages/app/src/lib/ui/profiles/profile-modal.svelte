@@ -58,7 +58,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <p class="flex-1">Email</p>
-                <p>arey@hey.com</p>
+                <p>{me.email}</p>
             </div>
         </div>
     </div>

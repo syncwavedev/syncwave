@@ -14,7 +14,6 @@
     import {getAgent} from '../../agent/agent.svelte';
     import router from '../../router';
     import {createDndContext} from './board-dnd';
-    import {yFragmentToPlaintext} from 'syncwave';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import PanelSizeManager from '../../panel-size-manager';
     import Avatar from '../components/avatar.svelte';
@@ -187,8 +186,7 @@
 
     $effect(() => {
         if (selectedCard?.isDraft) {
-            const text = yFragmentToPlaintext(selectedCard.text.__fragment!);
-            if (text.length > 0) {
+            if (selectedCard.plainText.length > 0) {
                 agent.commitCardDraft(board, selectedCard.id);
                 router.route(`/b/${board.key}/c/${selectedCard.counter}`, {
                     replace: true,

@@ -15,6 +15,7 @@ import {
     partition,
     TextMessagePayload,
     uniqBy,
+    yFragmentToPlaintext,
     type Account,
     type Attachment,
     type AwarenessState,
@@ -633,6 +634,9 @@ export class CardTreeView implements Card {
     });
     counter = $derived(this._card.counter);
     text = $derived(this._card.text);
+    plainText = $derived.by(() => {
+        return yFragmentToPlaintext(this._card.text.__fragment!);
+    });
     assigneeId = $derived(this._card.assigneeId);
     hoverUsers = $derived.by(() => {
         return uniqBy(

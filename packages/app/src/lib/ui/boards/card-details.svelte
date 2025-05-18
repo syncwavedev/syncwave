@@ -144,10 +144,8 @@
     };
 </script>
 
-<div
-    class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l rounded-r-sm"
->
-    <div class="panel-header border-0!">
+<div class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l">
+    <div class="panel-header">
         <div class="flex items-center gap-0.5 icon-base">
             {#if card.isDraft}
                 New card

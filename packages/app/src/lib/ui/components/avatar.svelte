@@ -9,7 +9,7 @@
         title,
         userId,
     }: {
-        userId: UserId;
+        userId?: UserId;
         imageUrl?: string;
         name: string;
         class?: string;
@@ -39,7 +39,7 @@
         return Math.abs(hash);
     }
 
-    const idHash = $derived(getStringHash(userId));
+    const idHash = $derived(getStringHash(userId ?? name));
     const avatarColor = $derived(avatarColors[idHash % avatarColors.length]);
 </script>
 

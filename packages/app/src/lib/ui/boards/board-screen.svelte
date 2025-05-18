@@ -35,6 +35,7 @@
     import UserRoundCog from '../components/icons/user-round-cog.svelte';
     import LogOutIcon from '../components/icons/log-out-icon.svelte';
     import BoardHistoryManager from '../../board-history-manager';
+    import ActivityPanel from './activity-panel.svelte';
 
     const {
         board,
@@ -240,7 +241,7 @@
     <div class="relative flex min-w-0 flex-col flex-1">
         <div class="panel-header avatar-sm">
             <button
-                class="btn--ghost hover:bg-material-base-hover font-medium"
+                class="btn--ghost hover:bg-material-base-hover -ml-1"
                 onclick={() => modalManager.open(boardCommands)}
             >
                 <span>{board.name}</span>
@@ -371,19 +372,19 @@
             <StatusBar />
         </div>
     </div>
-    {#if selectedCard !== null}
-        {#key selectedCard.id}
-            <ResizablePanel
-                class="max-h-full overflow-auto"
-                freeSide="left"
-                defaultSize={detailsWidth}
-                minWidth={320}
-                maxWidth={1600}
-                onWidthChange={w => {
-                    detailsWidth = w;
-                    PanelSizeManager.saveWidth('right', w);
-                }}
-            >
+    <ResizablePanel
+        class="max-h-full overflow-auto"
+        freeSide="left"
+        defaultSize={detailsWidth}
+        minWidth={320}
+        maxWidth={1600}
+        onWidthChange={w => {
+            detailsWidth = w;
+            PanelSizeManager.saveWidth('right', w);
+        }}
+    >
+        {#if selectedCard !== null}
+            {#key selectedCard.id}
                 <CardDetails
                     me={boardMeView}
                     {awareness}
@@ -392,9 +393,11 @@
                     {assigneeOptions}
                     onDelete={() => deleteCard(selectedCard!)}
                 />
-            </ResizablePanel>
-        {/key}
-    {/if}
+            {/key}
+        {:else}
+            <ActivityPanel />
+        {/if}
+    </ResizablePanel>
 </div>
 
 <style>

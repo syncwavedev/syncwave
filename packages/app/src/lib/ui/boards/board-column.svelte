@@ -55,7 +55,7 @@
 
 <div class="column" data-column-id={column.id}>
     <div
-        class="flex items-center column-padding-inline my-2.75 flex-shrink-0 font-medium"
+        class="flex items-center column-padding-inline my-2.25 flex-shrink-0 font-medium"
         data-disable-scroll-view-drag="true"
     >
         <div class="flex items-center gap-1.5 leading-none">

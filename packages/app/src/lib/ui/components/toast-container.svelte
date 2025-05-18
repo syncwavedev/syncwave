@@ -25,8 +25,8 @@
                 <div class="font-medium flex items-center gap-1">
                     {t.header}
                 </div>
-                <div class="text-ink-detail flex gap-6 items-center">
-                    <p>{t.caption}</p>
+                <div class="text-ink-detail flex gap-6 items-start">
+                    <p class="mt-1 leading-relaxed">{t.caption}</p>
                     <button
                         class="btn--ghost hover:bg-material-elevated-hover ml-auto"
                         onclick={() => toastManager.remove(t.id)}
@@ -53,7 +53,7 @@
 
         z-index: 9999;
 
-        max-width: 42ch;
+        max-width: 46ch;
         width: 100%;
 
         pointer-events: none;

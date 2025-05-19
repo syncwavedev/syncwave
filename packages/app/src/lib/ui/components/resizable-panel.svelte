@@ -3,7 +3,7 @@
 
     interface Props {
         freeSide: 'left' | 'right';
-        defaultSize: number;
+        width: number;
         onWidthChange: (width: number) => void;
         children: Snippet;
         class?: string;
@@ -14,7 +14,7 @@
 
     let {
         freeSide,
-        defaultSize,
+        width,
         onWidthChange,
         children,
         minWidth,
@@ -23,7 +23,6 @@
         resizerClass = 'w-1 cursor-col-resize hover:bg-divider-object',
     }: Props = $props();
 
-    let width = $state(defaultSize);
     let isResizing = $state(false);
     let startX = 0;
     let startWidth = 0;

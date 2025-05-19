@@ -15,7 +15,6 @@
     import router from '../../router';
     import {createDndContext} from './board-dnd';
     import ResizablePanel from '../components/resizable-panel.svelte';
-    import PanelSizeManager from '../../panel-size-manager';
     import Avatar from '../components/avatar.svelte';
     import BoardCommands from './board-commands.svelte';
     import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
@@ -36,6 +35,10 @@
     import LogOutIcon from '../components/icons/log-out-icon.svelte';
     import BoardHistoryManager from '../../board-history-manager';
     import ActivityPanel from './activity-panel.svelte';
+    import {
+        panelSizeManager,
+        type PanelType,
+    } from '../../panel-size-manager.svelte';
 
     const {
         board,
@@ -222,7 +225,10 @@
         board.members.map(x => ({value: x.id, label: x.fullName}))
     );
 
-    let detailsWidth = $state(PanelSizeManager.getWidth('right') ?? 424);
+    let activePanel: PanelType = $derived(
+        selectedCard === null ? 'activity' : 'card_details'
+    );
+    let panelWidth = $derived(panelSizeManager.getWidth(activePanel) ?? 424);
 </script>
 
 {#snippet boardCommands()}
@@ -343,7 +349,7 @@
                 bind:this={columnsContainerRef}
                 class="board-content"
                 style="padding-inline-end: {selectedCard
-                    ? `calc(var(--board-padding-inline-end) - ${detailsWidth}px)`
+                    ? `calc(var(--board-padding-inline-end) - ${panelWidth}px)`
                     : 'var(--board-padding-inline-end)'}"
             >
                 {#each board.columns as column, i (column.id)}
@@ -375,12 +381,12 @@
     <ResizablePanel
         class="max-h-full overflow-auto"
         freeSide="left"
-        defaultSize={detailsWidth}
+        width={panelWidth}
         minWidth={320}
         maxWidth={1600}
         onWidthChange={w => {
-            detailsWidth = w;
-            PanelSizeManager.saveWidth('right', w);
+            console.debug(activePanel, w);
+            panelSizeManager.setWidth(activePanel, w);
         }}
     >
         {#if selectedCard !== null}

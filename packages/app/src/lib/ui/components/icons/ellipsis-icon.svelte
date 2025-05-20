@@ -10,15 +10,18 @@
 
 <svg
     xmlns="http://www.w3.org/2000/svg"
-    fill="none"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
-    stroke-width="1.75"
+    fill="none"
     stroke="currentColor"
+    stroke-width="1.75"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={cx('icon', className)}
+    ><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle
+        cx="5"
+        cy="12"
+        r="1"
+    /></svg
 >
-    <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
-    />
-</svg>

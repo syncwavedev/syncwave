@@ -39,6 +39,8 @@
         panelSizeManager,
         type PanelType,
     } from '../../panel-size-manager.svelte';
+    import TimesIcon from '../components/icons/times-icon.svelte';
+    import SearchIcon from '../components/icons/search-icon.svelte';
 
     const {
         board,
@@ -229,6 +231,43 @@
         selectedCard === null ? 'activity' : 'card_details'
     );
     let panelWidth = $derived(panelSizeManager.getWidth(activePanel) ?? 424);
+
+    let isSearch = $state(false);
+    let searchValue = $state('');
+
+    function onStartSearch() {
+        isSearch = true;
+
+        router.action(() => {
+            onCloseSearch();
+        }, true);
+    }
+
+    function onCloseSearch() {
+        searchValue = '';
+        isSearch = false;
+    }
+
+    let filteredBoard = $state(board);
+
+    $effect(() => {
+        filteredBoard = {
+            ...board,
+            // @ts-expect-error i don't know why this doesn't work
+            columns: board.columns.map(column => ({
+                ...column,
+                cards: column.cards.filter(
+                    card =>
+                        card.plainText
+                            .toLowerCase()
+                            .includes(searchValue.trim().toLowerCase()) ||
+                        `#${card.counter}`.includes(
+                            searchValue.trim().toLowerCase()
+                        )
+                ),
+            })),
+        };
+    });
 </script>
 
 {#snippet boardCommands()}
@@ -243,99 +282,121 @@
     <ProfileModal {me} />
 {/snippet}
 
+{#snippet header()}
+    <button
+        class="btn--ghost hover:bg-material-base-hover -ml-1"
+        onclick={() => modalManager.open(boardCommands)}
+    >
+        <span>{board.name}</span>
+        <ChevronDownIcon />
+    </button>
+
+    <div class="ml-2 flex">
+        {#each board.onlineUsers as user (user.user.id)}
+            <Avatar
+                userId={user.user.id}
+                imageUrl={user.user.avatarUrlSmall}
+                name={`${user.user.fullName}`}
+                class="outline-material-base outline-2"
+            />
+        {/each}
+    </div>
+
+    {#if me.isDemo}
+        <div class="ml-2 text-orange-600 dark:text-orange-400 font-medium">
+            Showcase Board
+        </div>
+        <a href="/login" class="ml-auto">
+            <button class="btn--ghost">Sign In</button>
+        </a>
+    {:else}
+        <div class="ml-auto flex">
+            <button class="btn--icon" onclick={onStartSearch}>
+                <SearchIcon />
+            </button>
+            <DropdownMenu
+                items={[
+                    permissionManager.hasPermission('write:board')
+                        ? {
+                              icon: BoardIcon,
+                              text: 'Board Settings',
+                              onSelect: () => {
+                                  modalManager.open(boardSettings);
+                              },
+                          }
+                        : null,
+                    {
+                        icon: DoorOpenIcon,
+                        text: 'Leave Board',
+                        onSelect: () => {
+                            const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
+                            if (confirm(confirmMessage)) {
+                                BoardHistoryManager.clear();
+                                agent.deleteMember(board.memberId);
+                                router.route('/');
+                            }
+                        },
+                    },
+                ]}
+            >
+                <button class="btn--icon text-ink-body">
+                    <EllipsisIcon />
+                </button>
+            </DropdownMenu>
+
+            <DropdownMenu
+                items={[
+                    {
+                        icon: UserRoundCog,
+                        text: 'Profile Settings',
+                        onSelect: () => {
+                            modalManager.open(profileSettings);
+                        },
+                    },
+                    {
+                        icon: LogOutIcon,
+                        text: 'Sign Out',
+                        onSelect: () => {
+                            const confirmMessage = `Are you sure you want to sign out?`;
+                            if (confirm(confirmMessage)) {
+                                authManager.logOut();
+                            }
+                        },
+                    },
+                ]}
+            >
+                <button class="btn--icon">
+                    <Avatar
+                        userId={me.id}
+                        imageUrl={me.avatarUrlSmall}
+                        name={me.fullName}
+                    />
+                </button>
+            </DropdownMenu>
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet searchHeader()}
+    <input
+        type="text"
+        class="input"
+        placeholder="Search..."
+        bind:value={searchValue}
+        autofocus
+    />
+    <button class="btn--icon" onclick={onCloseSearch}>
+        <TimesIcon />
+    </button>
+{/snippet}
+
 <div class="app flex">
     <div class="relative flex min-w-0 flex-col flex-1">
-        <div class="panel-header avatar-sm">
-            <button
-                class="btn--ghost hover:bg-material-base-hover -ml-1"
-                onclick={() => modalManager.open(boardCommands)}
-            >
-                <span>{board.name}</span>
-                <ChevronDownIcon />
-            </button>
-
-            <div class="ml-2 flex">
-                {#each board.onlineUsers as user (user.user.id)}
-                    <Avatar
-                        userId={user.user.id}
-                        imageUrl={user.user.avatarUrlSmall}
-                        name={`${user.user.fullName}`}
-                        class="outline-material-base outline-2"
-                    />
-                {/each}
-            </div>
-
-            {#if me.isDemo}
-                <div
-                    class="ml-2 text-orange-600 dark:text-orange-400 font-medium"
-                >
-                    Showcase Board
-                </div>
-                <a href="/login" class="ml-auto">
-                    <button class="btn--ghost">Sign In</button>
-                </a>
+        <div class="panel-header avatar-xs">
+            {#if !isSearch}
+                {@render header()}
             {:else}
-                <div class="ml-auto flex gap-1">
-                    <DropdownMenu
-                        items={[
-                            permissionManager.hasPermission('write:board')
-                                ? {
-                                      icon: BoardIcon,
-                                      text: 'Board Settings',
-                                      onSelect: () => {
-                                          modalManager.open(boardSettings);
-                                      },
-                                  }
-                                : null,
-                            {
-                                icon: DoorOpenIcon,
-                                text: 'Leave Board',
-                                onSelect: () => {
-                                    const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
-                                    if (confirm(confirmMessage)) {
-                                        BoardHistoryManager.clear();
-                                        agent.deleteMember(board.memberId);
-                                        router.route('/');
-                                    }
-                                },
-                            },
-                        ]}
-                    >
-                        <button class="btn--icon text-ink-body">
-                            <EllipsisIcon />
-                        </button>
-                    </DropdownMenu>
-
-                    <DropdownMenu
-                        items={[
-                            {
-                                icon: UserRoundCog,
-                                text: 'Profile Settings',
-                                onSelect: () => {
-                                    modalManager.open(profileSettings);
-                                },
-                            },
-                            {
-                                icon: LogOutIcon,
-                                text: 'Sign Out',
-                                onSelect: () => {
-                                    const confirmMessage = `Are you sure you want to sign out?`;
-                                    if (confirm(confirmMessage)) {
-                                        authManager.logOut();
-                                    }
-                                },
-                            },
-                        ]}
-                    >
-                        <button class="btn--icon">
-                            <Avatar
-                                userId={me.id}
-                                imageUrl={me.avatarUrlSmall}
-                                name={me.fullName}
-                            />
-                        </button>
-                    </DropdownMenu>
-                </div>
+                {@render searchHeader()}
             {/if}
         </div>
         <Scrollable
@@ -352,7 +413,7 @@
                     ? `calc(var(--board-padding-inline-end) - ${panelWidth}px)`
                     : 'var(--board-padding-inline-end)'}"
             >
-                {#each board.columns as column, i (column.id)}
+                {#each filteredBoard.columns as column, i (i)}
                     <div
                         class="flex"
                         animate:flip={{duration: DND_REORDER_DURATION_MS}}

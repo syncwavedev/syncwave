@@ -675,6 +675,8 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
+        this.updateCardCursorTimestamp(params.cardId, now);
+
         this.syncTargets().forEach(x => {
             x.newMessage(message);
         });
@@ -719,6 +721,8 @@ export class Agent {
         }).view as Message;
 
         this.crdtManager.commit(messageId);
+
+        this.updateCardCursorTimestamp(params.cardId, now);
 
         this.syncTargets().forEach(x => {
             x.newMessage(message);
@@ -772,6 +776,8 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
+        this.updateCardCursorTimestamp(params.cardId, now);
+
         this.syncTargets().forEach(x => {
             x.newMessage(message);
         });
@@ -813,6 +819,8 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
+        this.updateCardCursorTimestamp(params.cardId, now);
+
         this.syncTargets().forEach(x => {
             x.newMessage(message);
         });
@@ -853,11 +861,11 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
+        this.updateCardCursorTimestamp(params.cardId, now);
+
         this.syncTargets().forEach(x => {
             x.newMessage(message);
         });
-
-        this.updateCardCursorTimestamp(params.cardId, now);
 
         return message;
     }

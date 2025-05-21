@@ -413,7 +413,7 @@
                     ? `calc(var(--board-padding-inline-end) - ${panelWidth}px)`
                     : 'var(--board-padding-inline-end)'}"
             >
-                {#each filteredBoard.columns as column, i (i)}
+                {#each board.columns as column, i (column.id)}
                     <div
                         class="flex"
                         animate:flip={{duration: DND_REORDER_DURATION_MS}}

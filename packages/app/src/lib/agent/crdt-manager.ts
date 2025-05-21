@@ -6,6 +6,7 @@ import {
     Crdt,
     log,
     runAll,
+    SyncwaveChangeEvent,
     Uuid,
     type BaseChangeEvent,
     type ChangeEventMapping,
@@ -112,7 +113,7 @@ interface BaseEntityState<TType extends string, TId extends Uuid, TValue> {
     readonly isDraft: boolean;
 }
 
-type Entity = ChangeEvent extends infer T
+type Entity = SyncwaveChangeEvent extends infer T
     ? T extends BaseChangeEvent<infer TType, infer TId, infer TValue>
         ? BaseEntity<TType, TId, TValue>
         : never
@@ -130,7 +131,7 @@ interface EntityBox {
     observer: EntityObserver;
 }
 
-export type EntityState = ChangeEvent extends infer T
+export type EntityState = SyncwaveChangeEvent extends infer T
     ? T extends BaseChangeEvent<infer TType, infer TId, infer TValue>
         ? BaseEntityState<TType, TId, TValue>
         : never
@@ -145,7 +146,7 @@ export class CrdtManager implements CrdtDerivator {
 
     constructor(private readonly rpc: CoordinatorRpc) {}
 
-    applyRemoteChange(event: ChangeEvent) {
+    applyRemoteChange(event: SyncwaveChangeEvent) {
         if (event.kind === 'create') {
             this.load({
                 id: event.id,
@@ -163,7 +164,7 @@ export class CrdtManager implements CrdtDerivator {
             entity.crdt.apply(event.diff as CrdtDiff<any>, {
                 origin: REMOTE_ORIGIN,
             });
-        } else if (event.kind === 'transaction' || event.kind === 'snapshot') {
+        } else if (event.kind === 'snapshot') {
             // ignore
         } else {
             assertNever(event.kind);

@@ -86,7 +86,7 @@
         type="hover"
     >
         <div
-            class="column-padding-inline min-h-10 overflow-hidden"
+            class="column-padding-inline min-h-10"
             bind:this={cardsContainerRef}
         >
             <ListAnimator

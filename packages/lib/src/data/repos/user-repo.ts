@@ -4,15 +4,15 @@ import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import {
-    Doc,
-    DocRepo,
-    type OnDocChange,
-    type QueryOptions,
-    type Recipe,
-} from '../doc-repo.js';
 import {ObjectKey} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
+import {
+    CrdtRepo,
+    type OnCrdtChange,
+    type QueryOptions,
+    type Recipe,
+} from './base/crdt-repo.js';
+import {Doc} from './base/doc.js';
 
 export type UserId = Brand<Uuid, 'user_id'>;
 
@@ -35,14 +35,14 @@ export function User() {
 export interface User extends Static<ReturnType<typeof User>> {}
 
 export class UserRepo {
-    public readonly rawRepo: DocRepo<User>;
+    public readonly rawRepo: CrdtRepo<User>;
 
     constructor(params: {
         tx: AppTransaction;
-        onChange: OnDocChange<User>;
+        onChange: OnCrdtChange<User>;
         scheduleTrigger: DataTriggerScheduler;
     }) {
-        this.rawRepo = new DocRepo<User>({
+        this.rawRepo = new CrdtRepo<User>({
             tx: isolate(['d'])(params.tx),
             onChange: params.onChange,
             indexes: {},

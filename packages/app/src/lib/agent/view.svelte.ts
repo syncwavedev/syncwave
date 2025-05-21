@@ -6,6 +6,7 @@ import {
     CardAssigneeChangedMessagePayload,
     CardColumnChangedMessagePayload,
     CardCreatedMessagePayload,
+    CardCursorDto,
     CardDeletedMessagePayload,
     compareNumbers,
     compareStrings,
@@ -14,6 +15,7 @@ import {
     MemberRole,
     partition,
     TextMessagePayload,
+    TransactionId,
     uniqBy,
     yFragmentToPlaintext,
     type Account,
@@ -100,6 +102,12 @@ export interface SyncTarget {
     newAccount(account: Account): void;
     newMember(member: Member): void;
     upsertMemberInfo(userEmail: MemberInfoDto): void;
+    upsertCardCursor(cardCursor: CardCursorDto): void;
+    upsertOptimisticCardCursor(
+        cardCursor: CardCursorDto,
+        transactionId: TransactionId
+    ): void;
+    clearOptimisticState(transactionId: TransactionId): void;
 }
 
 export class MeViewData implements SyncTarget {
@@ -131,7 +139,19 @@ export class MeViewData implements SyncTarget {
         this.crdtManager = crdtManager;
     }
 
+    clearOptimisticState(): void {
+        // ignore
+    }
+
     upsertMemberInfo(): void {
+        // ignore
+    }
+
+    upsertOptimisticCardCursor(): void {
+        // ignore
+    }
+
+    upsertCardCursor(): void {
         // ignore
     }
 
@@ -248,12 +268,20 @@ const USER_COLORS = [
     '#E3F4F4',
 ];
 
+interface OptimisticTimelineCursor {
+    readonly transactionId: TransactionId;
+    readonly dto: CardCursorDto;
+}
+
 export class BoardData implements SyncTarget {
     private readonly crdtManager!: CrdtManager;
     private board: Board = $state.raw(lateInit());
     public memberId: MemberId = $state.raw(lateInit());
 
     rawMembers: MemberInfoDto[] = $state.raw(lateInit());
+    rawCardCursors: CardCursorDto[] = $state.raw(lateInit());
+    optimisticTimelineCursors: OptimisticTimelineCursor[] =
+        $state.raw(lateInit());
     rawMe: User = $state.raw(lateInit());
     rawUsers: User[] = $state.raw(lateInit());
     rawColumns: Column[] = $state.raw(lateInit());
@@ -357,10 +385,44 @@ export class BoardData implements SyncTarget {
         this.rawMe = me;
     }
 
+    clearOptimisticState(transactionId: TransactionId): void {
+        this.optimisticTimelineCursors = this.optimisticTimelineCursors.filter(
+            x => x.transactionId !== transactionId
+        );
+    }
+
     upsertMemberInfo(userEmail: MemberInfoDto): void {
         this.rawMembers = this.rawMembers
             .filter(x => x.userId !== userEmail.userId)
             .concat([userEmail]);
+    }
+
+    upsertCardCursor(cardCursor: CardCursorDto): void {
+        if (cardCursor.boardId !== this.board.id) return;
+
+        if (cardCursor)
+            this.rawCardCursors = this.rawCardCursors
+                .filter(
+                    x =>
+                        x.userId !== cardCursor.userId ||
+                        x.cardId !== cardCursor.cardId
+                )
+                .concat([cardCursor]);
+    }
+
+    upsertOptimisticCardCursor(
+        cardCursor: CardCursorDto,
+        transactionId: TransactionId
+    ) {
+        if (cardCursor.boardId !== this.board.id) return;
+
+        this.optimisticTimelineCursors = this.optimisticTimelineCursors
+            .filter(
+                x =>
+                    x.dto.cardId !== cardCursor.cardId ||
+                    x.dto.userId !== cardCursor.userId
+            )
+            .concat([{transactionId, dto: cardCursor}]);
     }
 
     newAccount(): void {
@@ -426,6 +488,9 @@ export class BoardData implements SyncTarget {
         this.memberId = board.memberId;
 
         this.rawMembers = board.members;
+        console.log('override cardCursors', board.cardCursors);
+        this.rawCardCursors = board.cardCursors;
+        this.optimisticTimelineCursors = [];
 
         this.board = derivator.view({
             state: board.board.state,
@@ -692,6 +757,31 @@ export class CardTreeView implements Card {
             .map(x => new MessageView(x, this._data))
             .sort((a, b) => compareNumbers(a.createdAt, b.createdAt))
     );
+
+    lastReadMessageTimestamp = $derived.by(() => {
+        const meId = this._data.meView.id;
+
+        const optimisticCursor = this._data.optimisticTimelineCursors.find(
+            x => x.dto.cardId === this.id && x.dto.userId === meId
+        );
+        if (optimisticCursor) {
+            return optimisticCursor.dto.timestamp;
+        }
+
+        return (
+            this._data.rawCardCursors.find(
+                x => x.cardId === this.id && x.userId === meId
+            )?.timestamp ?? (0 as Timestamp)
+        );
+    });
+
+    unreadMessages = $derived.by(() => {
+        return this._data.messageViews.filter(
+            x =>
+                x.cardId === this.id &&
+                x.createdAt > this.lastReadMessageTimestamp
+        );
+    });
 }
 
 export class MessageView implements Message {

@@ -15,7 +15,7 @@ import {
     XmlFragment as YXmlFragment,
 } from 'yjs';
 import {type Codec, decodeMsgpack, encodeMsgpack} from '../codec.js';
-import type {Recipe} from '../data/doc-repo.js';
+import type {Recipe} from '../data/repos/base/crdt-repo.js';
 import {AppError} from '../errors.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import {

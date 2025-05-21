@@ -6,15 +6,15 @@ import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {
     type CrdtDoc,
-    Doc,
-    DocRepo,
-    type OnDocChange,
+    CrdtRepo,
+    type OnCrdtChange,
     type QueryOptions,
     type Recipe,
-} from '../doc-repo.js';
-import type {TransitionChecker} from '../transition-checker.js';
+} from './base/crdt-repo.js';
+import {Doc} from './base/doc.js';
 import {type BoardId, BoardRepo} from './board-repo.js';
 import {type ColumnId} from './column-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
@@ -33,8 +33,6 @@ const BOARD_ID_COUNTER_INDEX = 'boardId_counter';
 const COLUMN_ID_INDEX = 'column_id';
 const AUTHOR_ID_INDEX = 'author_id';
 const ASSIGNEE_ID_INDEX = 'assignee_id';
-
-// todo: tests should handle get by board_id with counter = undefined to check that BOARD_ID_COUNTER_INDEX is not used (it excludes counter === undefined)
 
 export function Card() {
     return Type.Composite([
@@ -57,16 +55,16 @@ export function Card() {
 export interface Card extends Static<ReturnType<typeof Card>> {}
 
 export class CardRepo {
-    public readonly rawRepo: DocRepo<Card>;
+    public readonly rawRepo: CrdtRepo<Card>;
 
     constructor(params: {
         tx: AppTransaction;
         boardRepo: BoardRepo;
         userRepo: UserRepo;
-        onChange: OnDocChange<Card>;
+        onChange: OnCrdtChange<Card>;
         scheduleTrigger: DataTriggerScheduler;
     }) {
-        this.rawRepo = new DocRepo<Card>({
+        this.rawRepo = new CrdtRepo<Card>({
             tx: isolate(['d'])(params.tx),
             onChange: params.onChange,
             scheduleTrigger: params.scheduleTrigger,

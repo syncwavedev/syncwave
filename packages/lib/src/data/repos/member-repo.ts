@@ -7,15 +7,15 @@ import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {
     type CrdtDoc,
-    Doc,
-    DocRepo,
-    type OnDocChange,
+    CrdtRepo,
+    type OnCrdtChange,
     type QueryOptionsRequired,
     type Recipe,
-} from '../doc-repo.js';
-import type {TransitionChecker} from '../transition-checker.js';
+} from './base/crdt-repo.js';
+import {Doc} from './base/doc.js';
 import {type BoardId, BoardRepo} from './board-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
@@ -68,16 +68,16 @@ export function Member() {
 export interface Member extends Static<ReturnType<typeof Member>> {}
 
 export class MemberRepo {
-    public readonly rawRepo: DocRepo<Member>;
+    public readonly rawRepo: CrdtRepo<Member>;
 
     constructor(params: {
         tx: AppTransaction;
         userRepo: UserRepo;
         boardRepo: BoardRepo;
-        onChange: OnDocChange<Member>;
+        onChange: OnCrdtChange<Member>;
         scheduleTrigger: DataTriggerScheduler;
     }) {
-        this.rawRepo = new DocRepo<Member>({
+        this.rawRepo = new CrdtRepo<Member>({
             tx: isolate(['d'])(params.tx),
             scheduleTrigger: params.scheduleTrigger,
             onChange: params.onChange,

@@ -5,7 +5,7 @@ import {getAccount} from '../coordinator/auth-api.js';
 import {Crdt, CrdtDiff} from '../crdt/crdt.js';
 import {createRichtext} from '../crdt/richtext.js';
 import {BusinessError} from '../errors.js';
-import {getNow} from '../timestamp.js';
+import {Timestamp} from '../timestamp.js';
 import {createApi, handler, type InferRpcClient} from '../transport/rpc.js';
 import {assert, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
@@ -23,7 +23,7 @@ import type {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
 import {createAttachmentId} from './repos/attachment-repo.js';
 import {Board, type BoardId} from './repos/board-repo.js';
-import {type Card, type CardId} from './repos/card-repo.js';
+import {CardId, type Card} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
 import {MemberId, MemberRole, type Member} from './repos/member-repo.js';
 import {type Message, type MessageId} from './repos/message-repo.js';
@@ -260,6 +260,42 @@ export function createWriteApi() {
                 }
             },
         }),
+        putCardCursor: handler({
+            req: Type.Object({
+                cardId: CardId(),
+                timestamp: Timestamp(),
+            }),
+            res: Type.Object({}),
+            handle: async (st, {cardId, timestamp}) => {
+                const meId = st.ps.ensureAuthenticated();
+                const member = await st.ps.ensureCardMember(cardId, 'writer');
+                const cursor = await st.tx.cardCursors.getById(meId, cardId);
+                console.log('cursor', cursor);
+                if (cursor && cursor.timestamp > timestamp) {
+                    // no need to update
+
+                    console.log('cursor', 'no need to update');
+                    return {};
+                }
+                console.log('cursor', 'put put put!', {
+                    boardId: member.boardId,
+                    cardId,
+                    createdAt: st.tx.timestamp,
+                    updatedAt: st.tx.timestamp,
+                    userId: meId,
+                    timestamp,
+                });
+                await st.tx.cardCursors.put({
+                    boardId: member.boardId,
+                    cardId,
+                    createdAt: st.tx.timestamp,
+                    updatedAt: st.tx.timestamp,
+                    userId: meId,
+                    timestamp,
+                });
+                return {};
+            },
+        }),
         applyCardDiff: handler({
             req: Type.Object({
                 cardId: Uuid<CardId>(),
@@ -384,8 +420,6 @@ export function createWriteApi() {
                         'card_not_found'
                     );
                 }
-                const now = getNow();
-
                 const objectKey = createObjectKey();
                 const metadata: ObjectMetadata = {contentType};
                 await st.objectStore.put(objectKey, data, metadata);
@@ -395,10 +429,10 @@ export function createWriteApi() {
                     boardId: card.boardId,
                     cardId,
                     columnId: card.columnId,
-                    createdAt: now,
+                    createdAt: st.tx.timestamp,
                     id: createAttachmentId(),
                     objectKey,
-                    updatedAt: now,
+                    updatedAt: st.tx.timestamp,
                     metadata,
                 });
 
@@ -560,7 +594,7 @@ export function createWriteApi() {
                     memberId,
                     {excludeDeleted: true},
                     x => {
-                        x.deletedAt = getNow();
+                        x.deletedAt = st.tx.timestamp;
                     }
                 );
 
@@ -573,7 +607,7 @@ export function createWriteApi() {
             handle: async (st, {columnId}) => {
                 await st.ps.ensureColumnMember(columnId, 'writer');
                 await st.tx.columns.update(columnId, x => {
-                    x.deletedAt = getNow();
+                    x.deletedAt = st.tx.timestamp;
                 });
 
                 return {};
@@ -585,7 +619,7 @@ export function createWriteApi() {
             handle: async (st, {cardId}) => {
                 await st.ps.ensureCardMember(cardId, 'writer');
                 await st.tx.cards.update(cardId, x => {
-                    x.deletedAt = getNow();
+                    x.deletedAt = st.tx.timestamp;
                 });
 
                 return {};
@@ -617,7 +651,7 @@ export function createWriteApi() {
                 await whenAll([
                     st.ps.ensureBoardMember(boardId, 'owner'),
                     st.tx.boards.update(boardId, x => {
-                        x.deletedAt = getNow();
+                        x.deletedAt = st.tx.timestamp;
                     }),
                 ]);
                 return {};
@@ -736,7 +770,7 @@ export function createWriteApi() {
             handle: async (st, {messageId}) => {
                 await st.ps.ensureMessageMember(messageId, 'writer');
                 await st.tx.messages.update(messageId, x => {
-                    x.deletedAt = getNow();
+                    x.deletedAt = st.tx.timestamp;
                 });
 
                 return {};

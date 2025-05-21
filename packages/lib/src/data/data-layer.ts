@@ -14,10 +14,9 @@ import {createUuidV4, Uuid} from '../uuid.js';
 import {type Principal, system} from './auth.js';
 import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
-import type {ChangeOptions} from './doc-repo.js';
-import {MemberInfoDto} from './dto.js';
+import {CardCursorDto, MemberInfoDto} from './dto.js';
 import {EmailService} from './email-service.js';
-import {EventStoreReader, EventStoreWriter} from './event-store.js';
+import {EventStoreReader, EventStoreWriter, LogEntry} from './event-store.js';
 import type {CryptoProvider, EmailProvider} from './infrastructure.js';
 import {createJoinCode} from './join-code.js';
 import {MemberService} from './member-service.js';
@@ -32,7 +31,10 @@ import {
     type AttachmentId,
     AttachmentRepo,
 } from './repos/attachment-repo.js';
+import type {CrdtChangeOptions} from './repos/base/crdt-repo.js';
+import type {DocChangeOptions} from './repos/base/doc-repo.js';
 import {type Board, type BoardId, BoardRepo} from './repos/board-repo.js';
+import {type CardCursor, CardCursorRepo} from './repos/card-cursor-repo.js';
 import {type Card, type CardId, CardRepo} from './repos/card-repo.js';
 import {type Column, type ColumnId, ColumnRepo} from './repos/column-repo.js';
 import {type Member, type MemberId, MemberRepo} from './repos/member-repo.js';
@@ -64,11 +66,12 @@ export interface DataTx {
     readonly messages: MessageRepo;
     readonly attachments: AttachmentRepo;
     readonly accounts: AccountRepo;
+    readonly cardCursors: CardCursorRepo;
     readonly config: Config;
     readonly rawTx: AppTransaction;
-    readonly events: CollectionManager<ChangeEvent>;
+    readonly events: CollectionManager<SyncwaveLogEntry>;
     readonly permissionService: PermissionService;
-    readonly esWriter: EventStoreWriter<ChangeEvent>;
+    readonly esWriter: EventStoreWriter<SyncwaveChangeEvent>;
     readonly boardService: BoardService;
     // effects are not guaranteed to run because process might die after transaction is commited
     //
@@ -145,10 +148,20 @@ export function MemberInfoChangeEvent() {
     return Type.Object({
         type: Type.Literal('member_info'),
         kind: Type.Literal('snapshot'),
-        info: MemberInfoDto(),
-        ts: Timestamp(),
+        after: MemberInfoDto(),
     });
 }
+
+export function CardCursorChangeEvent() {
+    return Type.Object({
+        type: Type.Literal('timeline_cursor'),
+        kind: Type.Literal('snapshot'),
+        after: CardCursorDto(),
+    });
+}
+
+export interface CardCursorChangeEvent
+    extends Static<ReturnType<typeof CardCursorChangeEvent>> {}
 
 export function createTransactionId() {
     return createUuidV4() as TransactionId;
@@ -159,19 +172,6 @@ export type TransactionId = Brand<Uuid, 'transaction_id'>;
 export function TransactionId() {
     return Uuid<TransactionId>();
 }
-
-// we need transaction events to inform clients when they can discard their optimistic state
-// not all entity modifications emit transaction event, only those who don't use CRDT for sync (e.g. members)
-export function TransactionEvent() {
-    return Type.Object({
-        kind: Type.Literal('transaction'),
-        transactionId: TransactionId(),
-        ts: Timestamp(),
-    });
-}
-
-export interface TransactionEvent
-    extends Static<ReturnType<typeof TransactionEvent>> {}
 
 export interface MemberInfoChangeEvent
     extends Static<ReturnType<typeof MemberInfoChangeEvent>> {}
@@ -192,12 +192,12 @@ type ExtractChangeEvents<T> =
     T extends BaseChangeEvent<any, any, any> ? T : never;
 
 export type ChangeEventMapping = {
-    [E in ExtractChangeEvents<ChangeEvent> as E['type']]: InferCrdtDiffValue<
+    [E in ExtractChangeEvents<SyncwaveChangeEvent> as E['type']]: InferCrdtDiffValue<
         E['diff']
     >;
 };
 
-export function ChangeEvent() {
+export function SyncwaveChangeEvent() {
     return Type.Union([
         UserChangeEvent(),
         MemberChangeEvent(),
@@ -208,11 +208,20 @@ export function ChangeEvent() {
         MessageChangeEvent(),
         AttachmentChangeEvent(),
         MemberInfoChangeEvent(),
-        TransactionEvent(),
+        CardCursorChangeEvent(),
     ]);
 }
 
-export type ChangeEvent = Static<ReturnType<typeof ChangeEvent>>;
+export type SyncwaveChangeEvent = Static<
+    ReturnType<typeof SyncwaveChangeEvent>
+>;
+
+export function SyncwaveLogEntry() {
+    return LogEntry(SyncwaveChangeEvent());
+}
+
+export interface SyncwaveLogEntry
+    extends Static<ReturnType<typeof SyncwaveLogEntry>> {}
 
 export type AsyncCallback = () => Promise<void>;
 export type DataEffectScheduler = Brand<
@@ -238,7 +247,7 @@ export interface DataLayerOptions {
 }
 
 export class DataLayer {
-    public readonly esReader: EventStoreReader<ChangeEvent>;
+    public readonly esReader: EventStoreReader<SyncwaveChangeEvent>;
 
     private readonly kv: KvStore<Tuple, Uint8Array>;
     private readonly hub: Hub;
@@ -345,21 +354,33 @@ export class DataLayer {
                 onChange: options => logAttachmentChange(dataTx, options),
                 scheduleTrigger,
             });
+            const cardCursors = new CardCursorRepo({
+                tx: isolate(['card_cursors'])(tx),
+                boardRepo: boards,
+                userRepo: users,
+                cardRepo: cards,
+                scheduleTrigger,
+                onChange: options => logCardCursorChange(dataTx, options),
+            });
 
-            const events = new CollectionManager<ChangeEvent>(
-                isolate(['events'])(tx),
+            const events = new CollectionManager<LogEntry<SyncwaveChangeEvent>>(
+                isolate(['events_v2'])(tx),
                 new MsgpackCodec()
             );
 
             const scheduleEffect = ((effect: AsyncCallback) =>
                 effects.push(effect)) as unknown as DataEffectScheduler;
 
-            const esWriter = new EventStoreWriter(
-                events,
-                mainEventStoreId,
-                this.hub,
-                scheduleEffect
-            );
+            const timestamp = getNow();
+
+            const esWriter = new EventStoreWriter({
+                logEntries: events,
+                id: mainEventStoreId,
+                hub: this.hub,
+                scheduleEffect,
+                timestamp,
+                transactionId,
+            });
 
             const awareness = new AwarenessStore(isolate(['awareness'])(tx));
 
@@ -373,8 +394,6 @@ export class DataLayer {
                 scheduleEffect,
                 config
             );
-
-            const timestamp = getNow();
 
             const boardService = new BoardService({
                 boards,
@@ -413,6 +432,7 @@ export class DataLayer {
                 cards,
                 columns,
                 attachments,
+                cardCursors,
                 messages,
                 events,
                 accounts,
@@ -748,7 +768,7 @@ export function boardEvents(boardId: BoardId) {
 
 async function logAccountChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<Account>
+    {pk: [id], diff, kind}: CrdtChangeOptions<Account>
 ) {
     const account = await tx.accounts.getById(id);
     assert(account !== undefined, `logAccountChange: account ${id} not found`);
@@ -768,12 +788,11 @@ async function logAccountChange(
             tx.esWriter.append(boardEvents(member.boardId), {
                 type: 'member_info',
                 kind: 'snapshot',
-                info: {
+                after: {
                     email: account.email,
                     role: member.role,
                     userId: member.userId,
                 },
-                ts: tx.timestamp,
             })
         ),
     ]);
@@ -781,7 +800,7 @@ async function logAccountChange(
 
 async function logUserChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<User>
+    {pk: [id], diff, kind}: CrdtChangeOptions<User>
 ) {
     const members = await tx.members
         .getByUserId(id, {excludeDeleted: false})
@@ -804,7 +823,7 @@ async function logUserChange(
 
 async function logBoardChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<Board>
+    {pk: [id], diff, kind}: CrdtChangeOptions<Board>
 ) {
     const event: BoardChangeEvent = {
         type: 'board',
@@ -826,7 +845,7 @@ async function logBoardChange(
 
 async function logMemberChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<Member>
+    {pk: [id], diff, kind}: CrdtChangeOptions<Member>
 ) {
     const member = await tx.members.getById(id, {
         excludeDeleted: false,
@@ -857,21 +876,11 @@ async function logMemberChange(
         tx.esWriter.append(boardEvents(member.boardId), event),
         tx.esWriter.append(userEvents(member.userId), event),
     ]);
-
-    const transactionEvent: TransactionEvent = {
-        kind: 'transaction',
-        transactionId: tx.transactionId,
-        ts: tx.timestamp,
-    };
-    await whenAll([
-        tx.esWriter.append(boardEvents(member.boardId), transactionEvent),
-        tx.esWriter.append(userEvents(member.userId), transactionEvent),
-    ]);
 }
 
 async function logCardChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<Card>
+    {pk: [id], diff, kind}: CrdtChangeOptions<Card>
 ) {
     const card = await tx.cards.getById(id);
     assert(card !== undefined, `logCardChange: card ${id} not found`);
@@ -885,9 +894,21 @@ async function logCardChange(
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }
 
+async function logCardCursorChange(
+    tx: DataTx,
+    {pk: [id], after: timelineCursor, kind}: DocChangeOptions<CardCursor>
+) {
+    const event: CardCursorChangeEvent = {
+        type: 'timeline_cursor',
+        kind: 'snapshot',
+        after: timelineCursor,
+    };
+    await tx.esWriter.append(boardEvents(timelineCursor.boardId), event);
+}
+
 async function logColumnChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<Column>
+    {pk: [id], diff, kind}: CrdtChangeOptions<Column>
 ) {
     const column = await tx.columns.getById(id);
     assert(column !== undefined, `logColumnChange: column ${id} not found`);
@@ -903,7 +924,7 @@ async function logColumnChange(
 
 async function logMessageChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<Message>
+    {pk: [id], diff, kind}: CrdtChangeOptions<Message>
 ) {
     const message = await tx.messages.getById(id);
     assert(message !== undefined, `logMessageChange: message ${id} not found`);
@@ -924,7 +945,7 @@ async function logMessageChange(
 
 async function logAttachmentChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: ChangeOptions<Attachment>
+    {pk: [id], diff, kind}: CrdtChangeOptions<Attachment>
 ) {
     const attachment = await tx.attachments.getById(id);
     assert(

@@ -41,7 +41,6 @@ import {
     type BoardViewDataDto,
     type Card,
     type CardId,
-    type ChangeEvent,
     type Column,
     type ColumnId,
     type CoordinatorRpc,
@@ -52,6 +51,7 @@ import {
     type MessageId,
     type MeViewDataDto,
     type Placement,
+    type SyncwaveLogEntry,
     type TransportClient,
     type User,
     type UserId,
@@ -406,10 +406,10 @@ export class Agent {
                 nextOffset = item.offset + 1;
                 if (item.type === 'snapshot') {
                     data.override(item.data, this.crdtManager);
-                } else if (item.type === 'event') {
-                    this.handleEvent(item.event);
+                } else if (item.type === 'entry') {
+                    this.handleLogEntry(item.entry);
                 } else {
-                    softNever(item, 'observeBoard got an unknown event');
+                    softNever(item, 'observeBoard got an unknown item');
                 }
             }
         }, 'observeMe').catch(error => {
@@ -459,6 +459,8 @@ export class Agent {
     ): [BoardTreeView, Awareness, MemberView] {
         const ctx = this.contextManager.use();
 
+        console.debug('info', $state.snapshot(dto.cardCursors));
+
         return ctx.detach({span: 'observeBoard'}, () =>
             this.observeBoardImpl(dto, initialMe)
         );
@@ -497,10 +499,10 @@ export class Agent {
                 nextOffset = item.offset + 1;
                 if (item.type === 'snapshot') {
                     data.override(item.data, this.crdtManager);
-                } else if (item.type === 'event') {
-                    this.handleEvent(item.event);
+                } else if (item.type === 'entry') {
+                    this.handleLogEntry(item.entry);
                 } else {
-                    softNever(item, 'observeBoard got an unknown event');
+                    softNever(item, 'observeBoard got an unknown item');
                 }
             }
         }, `observeBoard, board id = ${dto.board.id}`).catch(error => {
@@ -554,6 +556,30 @@ export class Agent {
         });
 
         return board;
+    }
+
+    updateCardCursorTimestamp(cardId: CardId, timestamp: Timestamp) {
+        const card = this.crdtManager.viewById(cardId, 'card');
+        const meId = this.authManager.ensureAuthorized().userId;
+        const transactionId = createTransactionId();
+        this.syncTargets().forEach(x =>
+            x.upsertOptimisticCardCursor(
+                {
+                    userId: meId,
+                    boardId: card.boardId,
+                    cardId: card.id,
+                    timestamp,
+                },
+                transactionId
+            )
+        );
+
+        this.rpc.putCardCursor({cardId: card.id, timestamp}).catch(error => {
+            log.error({error, msg: 'putCardCursor failed'});
+            this.syncTargets().forEach(x =>
+                x.clearOptimisticState(transactionId)
+            );
+        });
     }
 
     createCardDraft(
@@ -830,6 +856,8 @@ export class Agent {
         this.syncTargets().forEach(x => {
             x.newMessage(message);
         });
+
+        this.updateCardCursorTimestamp(params.cardId, now);
 
         return message;
     }
@@ -1121,7 +1149,9 @@ export class Agent {
         });
     }
 
-    private handleEvent(event: ChangeEvent) {
+    private handleLogEntry({event, transactionId}: SyncwaveLogEntry) {
+        this.syncTargets().forEach(x => x.clearOptimisticState(transactionId));
+
         if (event.kind === 'create') {
             const view = this.crdtManager.view({
                 id: event.id,
@@ -1162,9 +1192,17 @@ export class Agent {
         } else if (event.kind === 'update') {
             this.crdtManager.applyRemoteChange(event);
         } else if (event.kind === 'snapshot') {
-            this.syncTargets().forEach(x => x.upsertMemberInfo(event.info));
-        } else if (event.kind === 'transaction') {
-            // cleanup optimistic state
+            if (event.type === 'member_info') {
+                this.syncTargets().forEach(x =>
+                    x.upsertMemberInfo(event.after)
+                );
+            } else if (event.type === 'timeline_cursor') {
+                this.syncTargets().forEach(x =>
+                    x.upsertCardCursor(event.after)
+                );
+            } else {
+                softNever(event, 'observeBoard got an unknown snapshot');
+            }
         } else {
             assertNever(event.kind);
         }

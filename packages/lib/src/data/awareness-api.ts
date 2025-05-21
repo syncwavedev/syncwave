@@ -17,8 +17,7 @@ import {assert, equals, interval, whenAll} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import type {Principal} from './auth.js';
 import {AwarenessOwnershipError} from './awareness-store.js';
-import {DataLayer, type ChangeEvent} from './data-layer.js';
-import type {EventStoreReader} from './event-store.js';
+import {DataLayer} from './data-layer.js';
 import type {BoardId} from './repos/board-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
@@ -28,14 +27,11 @@ function boardAwarenessRoom(boardId: BoardId) {
 
 export class AwarenessApiState {
     private batchProcessors = new Map<string, BatchProcessor<AwarenessState>>();
-    public readonly esReader: EventStoreReader<ChangeEvent>;
 
     constructor(
         public readonly dataLayer: DataLayer,
         public readonly hub: Hub
-    ) {
-        this.esReader = dataLayer.esReader;
-    }
+    ) {}
 
     ensureAuthenticated(auth: Principal): UserId {
         if (auth.userId === undefined) {

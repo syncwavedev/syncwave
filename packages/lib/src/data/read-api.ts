@@ -18,9 +18,10 @@ import {Uuid} from '../uuid.js';
 import type {Principal} from './auth.js';
 import {
     boardEvents,
-    ChangeEvent,
     DataLayer,
     type DataTx,
+    SyncwaveChangeEvent,
+    SyncwaveLogEntry,
     userEvents,
 } from './data-layer.js';
 import {BoardViewDataDto, MeViewDataDto} from './dto.js';
@@ -31,7 +32,7 @@ import {type BoardId} from './repos/board-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
 export class ReadApiState {
-    readonly esReader: EventStoreReader<ChangeEvent>;
+    readonly esReader: EventStoreReader<SyncwaveChangeEvent>;
 
     constructor(
         public readonly dataLayer: DataLayer,
@@ -187,8 +188,8 @@ export function createReadApi() {
                     offset: Type.Number(),
                 }),
                 Type.Object({
-                    type: Type.Literal('event'),
-                    event: ChangeEvent(),
+                    type: Type.Literal('entry'),
+                    entry: SyncwaveLogEntry(),
                     offset: Type.Number(),
                 }),
             ]),
@@ -204,7 +205,7 @@ export function createReadApi() {
                 }
 
                 const boardId = boardByKey.id;
-                const {offset, events} = await st.esReader.subscribe(
+                const {offset, entries} = await st.esReader.subscribe(
                     boardEvents(boardId),
                     startOffset
                 );
@@ -215,6 +216,7 @@ export function createReadApi() {
                     cards,
                     users,
                     userEmails,
+                    cardCursors,
                     messages,
                     attachments,
                     member,
@@ -225,6 +227,9 @@ export function createReadApi() {
                         toStream(tx.cards.getByBoardId(boardId)).toArray(),
                         getBoardUsers(tx, boardId),
                         getBoardUserEmails(tx, boardId),
+                        toStream(
+                            tx.cardCursors.getByBoardId(boardId)
+                        ).toArray(),
                         tx.messages.getByBoardId(boardId).toArray(),
                         tx.attachments.getByBoardId(boardId).toArray(),
                         tx.permissionService.ensureBoardMember(
@@ -254,14 +259,15 @@ export function createReadApi() {
                             members: userEmails,
                             messages,
                             attachments,
+                            cardCursors,
                         },
                     };
                 }
 
-                for await (const {event, offset} of events) {
+                for await (const {entry, offset} of entries) {
                     yield {
-                        type: 'event' as const,
-                        event,
+                        type: 'entry' as const,
+                        entry,
                         offset,
                     };
                 }
@@ -278,15 +284,15 @@ export function createReadApi() {
                     offset: Type.Number(),
                 }),
                 Type.Object({
-                    type: Type.Literal('event'),
-                    event: ChangeEvent(),
+                    type: Type.Literal('entry'),
+                    entry: SyncwaveLogEntry(),
                     offset: Type.Number(),
                 }),
             ]),
             async *stream(st, {startOffset}, {principal}) {
                 const profileId = st.ensureAuthenticated(principal);
 
-                const {offset, events} = await st.esReader.subscribe(
+                const {offset, entries} = await st.esReader.subscribe(
                     userEvents(profileId),
                     startOffset
                 );
@@ -348,10 +354,10 @@ export function createReadApi() {
                     };
                 }
 
-                for await (const {event, offset} of events) {
+                for await (const {entry, offset} of entries) {
                     yield {
-                        type: 'event' as const,
-                        event,
+                        type: 'entry' as const,
+                        entry,
                         offset,
                     };
                 }

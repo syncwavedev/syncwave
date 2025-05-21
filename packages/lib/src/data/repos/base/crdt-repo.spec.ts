@@ -1,13 +1,14 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {Type} from '@sinclair/typebox';
-import type {AppStore, Condition} from '../kv/kv-store.js';
-import {MemMvccStore} from '../kv/mem-mvcc-store.js';
-import {TupleStore} from '../kv/tuple-store.js';
-import {getNow, type Timestamp} from '../timestamp.js';
-import type {Tuple} from '../tuple.js';
-import {createUuid, Uuid} from '../uuid.js';
-import {Doc, DocRepo, type IndexSpec, type OnDocChange} from './doc-repo.js';
+import type {AppStore, Condition} from '../../../kv/kv-store.js';
+import {MemMvccStore} from '../../../kv/mem-mvcc-store.js';
+import {TupleStore} from '../../../kv/tuple-store.js';
+import {getNow, type Timestamp} from '../../../timestamp.js';
+import type {Tuple} from '../../../tuple.js';
+import {createUuid, Uuid} from '../../../uuid.js';
+import {CrdtRepo, type OnCrdtChange} from './crdt-repo.js';
+import {Doc, type IndexSpec} from './doc.js';
 
 interface MyDoc extends Doc<readonly [Uuid]> {
     name: string;
@@ -51,11 +52,11 @@ describe('DocStore with MemKVStore', () => {
             updatedAt: now,
         };
 
-        let repo: DocRepo<MyDoc> | undefined;
-        const onChange: OnDocChange<MyDoc> = vi.fn();
+        let repo: CrdtRepo<MyDoc> | undefined;
+        const onChange: OnCrdtChange<MyDoc> = vi.fn();
 
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
 
                 indexes,
@@ -70,7 +71,7 @@ describe('DocStore with MemKVStore', () => {
         // Make sure the doc is retrievable
         const retrieved = await store.transact(async tx => {
             // repo must be re-instantiated each transaction, or pass the same tx
-            const repo2 = new DocRepo<MyDoc>({
+            const repo2 = new CrdtRepo<MyDoc>({
                 tx,
 
                 indexes,
@@ -109,7 +110,7 @@ describe('DocStore with MemKVStore', () => {
         };
 
         await store.transact(async tx => {
-            const repo = new DocRepo<MyDoc>({
+            const repo = new CrdtRepo<MyDoc>({
                 tx,
 
                 indexes,
@@ -124,7 +125,7 @@ describe('DocStore with MemKVStore', () => {
         // Attempt to create the same doc again
         await expect(
             store.transact(async tx => {
-                const repo = new DocRepo<MyDoc>({
+                const repo = new CrdtRepo<MyDoc>({
                     tx,
 
                     indexes,
@@ -147,12 +148,12 @@ describe('DocStore with MemKVStore', () => {
             createdAt: now,
             updatedAt: now,
         };
-        let repo: DocRepo<MyDoc> | undefined;
-        const onChange: OnDocChange<MyDoc> = vi.fn();
+        let repo: CrdtRepo<MyDoc> | undefined;
+        const onChange: OnCrdtChange<MyDoc> = vi.fn();
 
         // Create the doc
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -165,7 +166,7 @@ describe('DocStore with MemKVStore', () => {
 
         // Update the doc
         const updated = await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -182,7 +183,7 @@ describe('DocStore with MemKVStore', () => {
 
         // Re-retrieve the doc
         const retrieved = await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -208,11 +209,11 @@ describe('DocStore with MemKVStore', () => {
             createdAt: now,
             updatedAt: now,
         };
-        let repo: DocRepo<MyDoc> | undefined;
-        const onChange: OnDocChange<MyDoc> = vi.fn();
+        let repo: CrdtRepo<MyDoc> | undefined;
+        const onChange: OnCrdtChange<MyDoc> = vi.fn();
 
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -225,7 +226,7 @@ describe('DocStore with MemKVStore', () => {
 
         await expect(
             store.transact(async tx => {
-                repo = new DocRepo<MyDoc>({
+                repo = new CrdtRepo<MyDoc>({
                     tx,
                     indexes,
                     onChange,
@@ -248,7 +249,7 @@ describe('DocStore with MemKVStore', () => {
 
         await expect(
             store.transact(async tx => {
-                repo = new DocRepo<MyDoc>({
+                repo = new CrdtRepo<MyDoc>({
                     tx,
                     indexes,
                     onChange,
@@ -264,7 +265,7 @@ describe('DocStore with MemKVStore', () => {
 
         await expect(
             store.transact(async tx => {
-                repo = new DocRepo<MyDoc>({
+                repo = new CrdtRepo<MyDoc>({
                     tx,
                     indexes,
                     onChange,
@@ -280,10 +281,10 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should retrieve documents by a non-unique index', async () => {
-        const onChange: OnDocChange<MyDoc> = vi.fn();
+        const onChange: OnCrdtChange<MyDoc> = vi.fn();
 
         await store.transact(async tx => {
-            const repo = new DocRepo<MyDoc>({
+            const repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -315,7 +316,7 @@ describe('DocStore with MemKVStore', () => {
         });
 
         const docsNamedDana = await store.transact(async tx => {
-            const repo = new DocRepo<MyDoc>({
+            const repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -337,7 +338,7 @@ describe('DocStore with MemKVStore', () => {
         );
 
         const docsAge25 = await store.transact(async tx => {
-            const repo = new DocRepo<MyDoc>({
+            const repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -356,10 +357,10 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should retrieve documents by querying an index (range condition)', async () => {
-        const onChange: OnDocChange<MyDoc> = vi.fn();
+        const onChange: OnCrdtChange<MyDoc> = vi.fn();
 
         await store.transact(async tx => {
-            const repo = new DocRepo<MyDoc>({
+            const repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -406,7 +407,7 @@ describe('DocStore with MemKVStore', () => {
         const ageGte15: Condition<Tuple> = {gte: [15]};
 
         const docsBetween15And25 = await store.transact(async tx => {
-            const repo = new DocRepo<MyDoc>({
+            const repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -434,11 +435,11 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should retrieve a single doc via getUnique (and throw if multiple docs exist)', async () => {
-        const onChange: OnDocChange<MyDoc> = vi.fn();
+        const onChange: OnCrdtChange<MyDoc> = vi.fn();
 
-        let repo: DocRepo<MyDoc>;
+        let repo: CrdtRepo<MyDoc>;
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -463,7 +464,7 @@ describe('DocStore with MemKVStore', () => {
         });
 
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -478,7 +479,7 @@ describe('DocStore with MemKVStore', () => {
 
         let firstZedId: Tuple | undefined;
         await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -498,7 +499,7 @@ describe('DocStore with MemKVStore', () => {
         });
 
         const uniqueZedDoc = await store.transact(async tx => {
-            repo = new DocRepo<MyDoc>({
+            repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -512,12 +513,12 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should throw an error on update if doc is not found', async () => {
-        const onChange: OnDocChange<MyDoc> = vi.fn();
+        const onChange: OnCrdtChange<MyDoc> = vi.fn();
         const nonExistentId = [createUuid()];
 
         await expect(
             store.transact(async tx => {
-                const repo = new DocRepo<MyDoc>({
+                const repo = new CrdtRepo<MyDoc>({
                     tx,
                     indexes,
                     onChange,
@@ -533,7 +534,7 @@ describe('DocStore with MemKVStore', () => {
     });
 
     it('should call onChange callback with the correct diffs on create and update', async () => {
-        const onChange = vi.fn<Parameters<OnDocChange<MyDoc>>>();
+        const onChange = vi.fn<Parameters<OnCrdtChange<MyDoc>>>();
 
         const createdDoc: MyDoc = {
             pk: [createUuid()],
@@ -543,7 +544,7 @@ describe('DocStore with MemKVStore', () => {
             updatedAt: now,
         };
         await store.transact(async tx => {
-            const repo = new DocRepo<MyDoc>({
+            const repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,
@@ -565,7 +566,7 @@ describe('DocStore with MemKVStore', () => {
         onChange.mockClear();
 
         await store.transact(async tx => {
-            const repo = new DocRepo<MyDoc>({
+            const repo = new CrdtRepo<MyDoc>({
                 tx,
                 indexes,
                 onChange,

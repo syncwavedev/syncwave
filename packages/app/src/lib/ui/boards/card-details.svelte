@@ -17,6 +17,7 @@
     import {
         cloneYFragment,
         createXmlFragment,
+        getNow,
         yFragmentToPlaintext,
     } from 'syncwave';
     import MessageList from '../messages/message-list.svelte';
@@ -54,6 +55,8 @@
                 editor.focus();
             }
         });
+
+        agent.updateCardCursorTimestamp(card.id, getNow());
     });
 
     const fragment = createXmlFragment();

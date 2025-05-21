@@ -445,10 +445,7 @@
         width={panelWidth}
         minWidth={320}
         maxWidth={1600}
-        onWidthChange={w => {
-            console.debug(activePanel, w);
-            panelSizeManager.setWidth(activePanel, w);
-        }}
+        onWidthChange={w => panelSizeManager.setWidth(activePanel, w)}
     >
         {#if selectedCard !== null}
             {#key selectedCard.id}

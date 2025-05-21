@@ -1,3 +1,4 @@
+import {Type, type Static} from '@sinclair/typebox';
 import {EVENT_STORE_MAX_PULL_COUNT, PULL_INTERVAL_MS} from '../constants.js';
 import {context} from '../context.js';
 import {Cursor} from '../cursor.js';
@@ -5,24 +6,60 @@ import {CancelledError} from '../errors.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {log} from '../logger.js';
 import {Channel, Stream, toStream} from '../stream.js';
+import {Timestamp} from '../timestamp.js';
 import type {Hub} from '../transport/hub.js';
+import type {ToSchema} from '../type.js';
 import {interval} from '../utils.js';
-import {type DataEffectScheduler} from './data-layer.js';
+import {TransactionId, type DataEffectScheduler} from './data-layer.js';
 
 function getEventHubTopic(storeId: string, collection: string) {
     return `es/${storeId}/${collection}`;
 }
 
+export function LogEntry<T>(schema: ToSchema<T>) {
+    return Type.Composite([
+        Type.Object({
+            event: schema,
+            transactionId: TransactionId(),
+            timestamp: Timestamp(),
+        }),
+    ]);
+}
+
+export interface LogEntry<T> extends Static<ReturnType<typeof LogEntry<T>>> {}
+
+export interface EventStoreWriterOptions<T> {
+    readonly logEntries: CollectionManager<LogEntry<T>>;
+    readonly id: string;
+    readonly hub: Hub;
+    readonly transactionId: TransactionId;
+    readonly timestamp: Timestamp;
+    readonly scheduleEffect: DataEffectScheduler;
+}
+
 export class EventStoreWriter<T> implements EventStoreWriter<T> {
-    constructor(
-        private readonly events: CollectionManager<T>,
-        private readonly id: string,
-        private readonly hub: Hub,
-        private readonly scheduleEffect: DataEffectScheduler
-    ) {}
+    private readonly events: CollectionManager<LogEntry<T>>;
+    private readonly id: string;
+    private readonly hub: Hub;
+    private readonly transactionId: TransactionId;
+    private readonly timestamp: Timestamp;
+    private readonly scheduleEffect: DataEffectScheduler;
+
+    constructor(options: EventStoreWriterOptions<T>) {
+        this.events = options.logEntries;
+        this.id = options.id;
+        this.hub = options.hub;
+        this.transactionId = options.transactionId;
+        this.timestamp = options.timestamp;
+        this.scheduleEffect = options.scheduleEffect;
+    }
 
     async append(collection: string, event: T): Promise<void> {
-        await this.events.get(collection).append(event);
+        await this.events.get(collection).append({
+            event,
+            transactionId: this.transactionId,
+            timestamp: this.timestamp,
+        });
         const topic = getEventHubTopic(this.id, collection);
         this.scheduleEffect(() => this.hub.emit(topic));
     }
@@ -34,7 +71,7 @@ type EventStoreReaderTransact<T> = <TResult>(
 
 export class EventStoreReader<T> implements EventStoreReader<T> {
     constructor(
-        private transact: EventStoreReaderTransact<T>,
+        private transact: EventStoreReaderTransact<LogEntry<T>>,
         private id: string,
         private readonly hub: Hub
     ) {}
@@ -42,7 +79,10 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
     async subscribe(
         collection: string,
         offsetArg?: number
-    ): Promise<{offset: number; events: Cursor<{event: T; offset: number}>}> {
+    ): Promise<{
+        offset: number;
+        entries: Cursor<{entry: LogEntry<T>; offset: number}>;
+    }> {
         // we wanna trigger event store iteration immediately if we didn't reach the end of the topic
         const selfTrigger = new Channel<void>();
         context().onEnd(() => selfTrigger.end());
@@ -73,14 +113,14 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             .while(() => context().isActive)
             .flatMap(async () => {
                 try {
-                    const events = await this.transact(async topics => {
+                    const entries = await this.transact(async topics => {
                         const result = await topics
                             .get(collection)
                             .list(offset)
                             .take(EVENT_STORE_MAX_PULL_COUNT)
                             .map(entry => ({
                                 offset: entry.offset,
-                                event: entry.data,
+                                entry: entry.data,
                             }))
                             .toArray();
 
@@ -99,12 +139,12 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                     });
 
                     log.info({
-                        msg: `EventStoreReader.subscribe transact finished: ${events.length}`,
+                        msg: `EventStoreReader.subscribe transact finished: ${entries.length}`,
                     });
 
-                    offset += events.length;
+                    offset += entries.length;
 
-                    return events;
+                    return entries;
                 } catch (error) {
                     if (error instanceof CancelledError) {
                         log.info({msg: 'EventStoreReader.subscribe cancelled'});
@@ -119,6 +159,6 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
             })
             .toCursor();
 
-        return {offset: initialOffset - 1, events: stream};
+        return {offset: initialOffset - 1, entries: stream};
     }
 }

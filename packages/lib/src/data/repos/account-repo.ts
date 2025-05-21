@@ -7,15 +7,15 @@ import {Timestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {
     type CrdtDoc,
-    Doc,
-    DocRepo,
-    type OnDocChange,
+    CrdtRepo,
+    type OnCrdtChange,
     type QueryOptions,
     type Recipe,
-} from '../doc-repo.js';
-import type {TransitionChecker} from '../transition-checker.js';
+} from './base/crdt-repo.js';
+import {Doc} from './base/doc.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
 export type AccountId = Brand<Uuid, 'account_id'>;
@@ -56,15 +56,15 @@ export function Account() {
 export interface Account extends Static<ReturnType<typeof Account>> {}
 
 export class AccountRepo {
-    public readonly rawRepo: DocRepo<Account>;
+    public readonly rawRepo: CrdtRepo<Account>;
 
     constructor(params: {
         tx: AppTransaction;
         userRepo: UserRepo;
-        onChange: OnDocChange<Account>;
+        onChange: OnCrdtChange<Account>;
         scheduleTrigger: DataTriggerScheduler;
     }) {
-        this.rawRepo = new DocRepo<Account>({
+        this.rawRepo = new CrdtRepo<Account>({
             tx: isolate(['d'])(params.tx),
             scheduleTrigger: params.scheduleTrigger,
             indexes: {

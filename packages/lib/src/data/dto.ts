@@ -71,9 +71,22 @@ export function MemberInfoDto() {
 
 export type MemberInfoDto = Static<ReturnType<typeof MemberInfoDto>>;
 
+export function CardCursorDto() {
+    return Type.Object({
+        userId: Uuid<UserId>(),
+        boardId: Uuid<BoardId>(),
+        cardId: Uuid<CardId>(),
+        timestamp: Type.Number(),
+    });
+}
+
+export interface CardCursorDto
+    extends Static<ReturnType<typeof CardCursorDto>> {}
+
 export function BoardViewDataDto() {
     return Type.Object({
         members: Type.Array(MemberInfoDto()),
+        cardCursors: Type.Array(CardCursorDto()),
         memberId: MemberId(),
         board: Type.Object({
             state: CrdtDiff<Board>(),

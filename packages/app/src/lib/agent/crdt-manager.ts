@@ -8,7 +8,6 @@ import {
     runAll,
     Uuid,
     type BaseChangeEvent,
-    type ChangeEvent,
     type ChangeEventMapping,
     type CoordinatorRpc,
     type CrdtDiff,

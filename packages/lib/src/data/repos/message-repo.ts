@@ -7,16 +7,16 @@ import {getNow, Timestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import {
-    type CrdtDoc,
-    Doc,
-    DocRepo,
-    type OnDocChange,
-    type QueryOptions,
-    type Recipe,
-} from '../doc-repo.js';
 import type {TransitionChecker} from '../transition-checker.js';
 import type {AttachmentId} from './attachment-repo.js';
+import {
+    type CrdtDoc,
+    CrdtRepo,
+    type OnCrdtChange,
+    type QueryOptions,
+    type Recipe,
+} from './base/crdt-repo.js';
+import {Doc} from './base/doc.js';
 import type {BoardId, BoardRepo} from './board-repo.js';
 import {type CardId, CardRepo} from './card-repo.js';
 import type {ColumnId, ColumnRepo} from './column-repo.js';
@@ -151,7 +151,7 @@ const AUTHOR_ID_INDEX = 'author_id';
 const ATTACHMENT_ID_INDEX = 'attachment_id';
 
 export class MessageRepo {
-    public readonly rawRepo: DocRepo<Message>;
+    public readonly rawRepo: CrdtRepo<Message>;
 
     constructor(params: {
         tx: AppTransaction;
@@ -159,10 +159,10 @@ export class MessageRepo {
         columnRepo: ColumnRepo;
         boardRepo: BoardRepo;
         userRepo: UserRepo;
-        onChange: OnDocChange<Message>;
+        onChange: OnCrdtChange<Message>;
         scheduleTrigger: DataTriggerScheduler;
     }) {
-        this.rawRepo = new DocRepo<Message>({
+        this.rawRepo = new CrdtRepo<Message>({
             tx: isolate(['d'])(params.tx),
             onChange: params.onChange,
             scheduleTrigger: params.scheduleTrigger,

@@ -8,14 +8,14 @@ import {Registry} from '../../kv/registry.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import {type DataTriggerScheduler} from '../data-layer.js';
+import type {TransitionChecker} from '../transition-checker.js';
 import {
-    Doc,
-    DocRepo,
-    type OnDocChange,
+    CrdtRepo,
+    type OnCrdtChange,
     type QueryOptions,
     type Recipe,
-} from '../doc-repo.js';
-import type {TransitionChecker} from '../transition-checker.js';
+} from './base/crdt-repo.js';
+import {Doc} from './base/doc.js';
 import {MemberRole} from './member-repo.js';
 import type {UserId, UserRepo} from './user-repo.js';
 
@@ -46,16 +46,16 @@ export function Board() {
 export interface Board extends Static<ReturnType<typeof Board>> {}
 
 export class BoardRepo {
-    public readonly rawRepo: DocRepo<Board>;
+    public readonly rawRepo: CrdtRepo<Board>;
     protected readonly counters: Registry<Counter>;
 
     constructor(params: {
         tx: AppTransaction;
         users: UserRepo;
-        onChange: OnDocChange<Board>;
+        onChange: OnCrdtChange<Board>;
         scheduleTrigger: DataTriggerScheduler;
     }) {
-        this.rawRepo = new DocRepo<Board>({
+        this.rawRepo = new CrdtRepo<Board>({
             tx: isolate(['d'])(params.tx),
             onChange: params.onChange,
             scheduleTrigger: params.scheduleTrigger,

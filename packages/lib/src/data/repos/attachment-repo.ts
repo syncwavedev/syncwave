@@ -5,16 +5,16 @@ import {Stream} from '../../stream.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import {
-    type CrdtDoc,
-    Doc,
-    DocRepo,
-    type OnDocChange,
-    type QueryOptions,
-    type Recipe,
-} from '../doc-repo.js';
 import {ObjectKey, ObjectMetadata} from '../infrastructure.js';
 import type {TransitionChecker} from '../transition-checker.js';
+import {
+    type CrdtDoc,
+    CrdtRepo,
+    type OnCrdtChange,
+    type QueryOptions,
+    type Recipe,
+} from './base/crdt-repo.js';
+import {Doc} from './base/doc.js';
 import type {BoardId, BoardRepo} from './board-repo.js';
 import {type CardId, CardRepo} from './card-repo.js';
 import type {ColumnId} from './column-repo.js';
@@ -50,17 +50,17 @@ export function Attachment() {
 export interface Attachment extends Static<ReturnType<typeof Attachment>> {}
 
 export class AttachmentRepo {
-    public readonly rawRepo: DocRepo<Attachment>;
+    public readonly rawRepo: CrdtRepo<Attachment>;
 
     constructor(params: {
         tx: AppTransaction;
         cardRepo: CardRepo;
         userRepo: UserRepo;
         boardRepo: BoardRepo;
-        onChange: OnDocChange<Attachment>;
+        onChange: OnCrdtChange<Attachment>;
         scheduleTrigger: DataTriggerScheduler;
     }) {
-        this.rawRepo = new DocRepo<Attachment>({
+        this.rawRepo = new CrdtRepo<Attachment>({
             tx: isolate(['d'])(params.tx),
             onChange: params.onChange,
             scheduleTrigger: params.scheduleTrigger,

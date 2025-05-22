@@ -50,18 +50,29 @@
             const elementMap = new Map<Key, HTMLElement>();
 
             const containerChildren = container.children;
-            let containerHeight = 0;
+            let targetContainerHeight = 0;
             for (let i = 0; i < containerChildren.length; i += 1) {
                 const element = container.children[i] as HTMLElement;
                 const key = element.dataset.key!;
                 elementMap.set(key, element);
 
-                containerHeight += element.offsetHeight + (i === 0 ? 0 : gap);
+                targetContainerHeight +=
+                    element.offsetHeight + (i === 0 ? 0 : gap);
             }
 
             let targetY = 0;
 
-            container.style.height = `${containerHeight}px`;
+            const containerHeight = container.clientHeight;
+            const containerHeightNeedsTransition =
+                containerHeight > targetContainerHeight;
+            if (!containerHeightNeedsTransition) {
+                container.style.removeProperty('transition');
+            }
+
+            container.style.height = `${targetContainerHeight}px`;
+            if (containerHeightNeedsTransition) {
+                container.style.transition = `height ${DND_REORDER_DURATION_MS}ms`;
+            }
 
             const now = performance.now();
 

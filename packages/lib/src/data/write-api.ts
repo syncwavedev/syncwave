@@ -270,21 +270,11 @@ export function createWriteApi() {
                 const meId = st.ps.ensureAuthenticated();
                 const member = await st.ps.ensureCardMember(cardId, 'writer');
                 const cursor = await st.tx.cardCursors.getById(meId, cardId);
-                console.log('cursor', cursor);
-                if (cursor && cursor.timestamp > timestamp) {
+                if (cursor && cursor.timestamp >= timestamp) {
                     // no need to update
 
-                    console.log('cursor', 'no need to update');
                     return {};
                 }
-                console.log('cursor', 'put put put!', {
-                    boardId: member.boardId,
-                    cardId,
-                    createdAt: st.tx.timestamp,
-                    updatedAt: st.tx.timestamp,
-                    userId: meId,
-                    timestamp,
-                });
                 await st.tx.cardCursors.put({
                     boardId: member.boardId,
                     cardId,

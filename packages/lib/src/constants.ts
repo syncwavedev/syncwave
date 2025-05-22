@@ -1,5 +1,5 @@
-export const RPC_CALL_TIMEOUT_MS = 10_000;
-export const MAX_LOOKAHEAD_COUNT = 124;
+export const RPC_CALL_TIMEOUT_MS = 5_000;
+export const MAX_LOOKAHEAD_COUNT = 64;
 export const PULL_WAIT_MS = 1000;
 export const RECONNECT_WAIT_MS = 1_000;
 export const ENVIRONMENT: 'prod' | 'dev' | 'test' =
@@ -31,4 +31,4 @@ export const USER_INACTIVITY_TIMEOUT_MS = 5 * 60_000; // 5 min
 export const MESSAGE_TYPING_AWARENESS_TIMEOUT_MS = 3_000;
 export const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 export const AUTH_CODE_LENGTH = 6;
-export const RPC_CHUNK_SIZE = 10 * 1024; // 10KB
+export const RPC_CHUNK_SIZE = 2 * 1024; // 2KB (Typical TCP payload: ~1460 bytes)

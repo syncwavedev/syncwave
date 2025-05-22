@@ -161,7 +161,7 @@ export function createRpcChunkerClient<TApi extends StreamerApi<any>>(
         // special case for client close
         if (name === 'close') {
             return () => {
-                cleanup('RpcStreamerClient.close');
+                cleanup('RpcChunkerClient.close');
             };
         }
 

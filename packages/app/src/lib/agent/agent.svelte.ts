@@ -154,10 +154,7 @@ export class Agent {
         }, 2000);
 
         try {
-            console.debug('ping...');
-            const res = await this.rpc.echo({time: performance.now()});
-            console.debug('ping response', res);
-            const time = res.time;
+            const {time} = await this.rpc.echo({time: performance.now()});
             if (unstable) {
                 this.status = 'unstable';
             } else {

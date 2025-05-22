@@ -615,10 +615,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             });
 
                             log.info({msg: `req ${callInfo}...`});
-                            await server.stream(
-                                {streamId, name, arg},
-                                {...headers}
-                            );
+                            await server.stream({streamId, name, arg}, headers);
                             await channel.pipe({
                                 next: value => {
                                     log.info({

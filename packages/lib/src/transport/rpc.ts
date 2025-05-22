@@ -4,8 +4,8 @@ import {BusinessError} from '../errors.js';
 import {Stream} from '../stream.js';
 import {checkValue, type ToSchema} from '../type.js';
 import {assertNever} from '../utils.js';
+import {launchRpcChunkerServer} from './rpc-chunker.js';
 import type {MessageHeaders, RpcMessageId} from './rpc-message.js';
-import {launchRpcStreamerServer} from './rpc-streamer.js';
 import {RpcTransportServer, type RpcConnection} from './rpc-transport.js';
 import type {TransportServer} from './transport.js';
 
@@ -296,14 +296,14 @@ export class RpcServer<TState extends {close: (reason: unknown) => void}> {
     }
 
     private handleConnection(conn: RpcConnection): void {
-        launchRpcStreamerServer(this.api, this.state, conn, this.authenticator);
+        launchRpcChunkerServer(this.api, this.state, conn, this.authenticator);
     }
 }
 
 export {
-    createRpcStreamerClient as createRpcClient,
-    launchRpcStreamerServer as launchRpcServer,
-} from './rpc-streamer.js';
+    createRpcChunkerClient as createRpcClient,
+    launchRpcChunkerServer as launchRpcServer,
+} from './rpc-chunker.js';
 
 export function getRequiredProcessor<T, K extends keyof T>(
     api: T,

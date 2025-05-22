@@ -154,7 +154,10 @@ export class Agent {
         }, 2000);
 
         try {
-            const {time} = await this.rpc.echo({time: performance.now()});
+            console.debug('ping...');
+            const res = await this.rpc.echo({time: performance.now()});
+            console.debug('ping response', res);
+            const time = res.time;
             if (unstable) {
                 this.status = 'unstable';
             } else {
@@ -458,8 +461,6 @@ export class Agent {
         initialMe: {id: UserId; state: CrdtDiff<User>}
     ): [BoardTreeView, Awareness, MemberView] {
         const ctx = this.contextManager.use();
-
-        console.debug('info', $state.snapshot(dto.cardCursors));
 
         return ctx.detach({span: 'observeBoard'}, () =>
             this.observeBoardImpl(dto, initialMe)

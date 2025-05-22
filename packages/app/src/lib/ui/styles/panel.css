@@ -1,7 +1,7 @@
 :root {
     --panel-header-height: 2.25rem;
     --panel-footer-height: 2rem;
-    --panel-padding-inline: 1.25rem;
+    --panel-padding-inline: 0.75rem;
     --panel-border-width: 1px;
 }
 

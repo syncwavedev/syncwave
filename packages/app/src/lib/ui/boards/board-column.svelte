@@ -21,6 +21,7 @@
         activeCardId,
         columnsCount,
         columnPosition,
+        searchValue,
     }: {
         column: ColumnTreeView;
         onCardClick: (card: CardTreeView) => void;
@@ -29,6 +30,7 @@
         onEditColumn: () => void;
         columnsCount: number;
         columnPosition: number;
+        searchValue: string;
     } = $props();
 
     let cardsContainerRef: HTMLDivElement | null = $state(null);
@@ -90,7 +92,15 @@
             bind:this={cardsContainerRef}
         >
             <ListAnimator
-                items={column.cards}
+                items={column.cards.filter(
+                    card =>
+                        card.plainText
+                            .toLowerCase()
+                            .includes(searchValue.trim().toLowerCase()) ||
+                        `#${card.counter}`.includes(
+                            searchValue.trim().toLowerCase()
+                        )
+                )}
                 gap={DND_CARD_GAP}
                 key={item => item.id}
             >

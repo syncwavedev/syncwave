@@ -185,11 +185,9 @@
         </div>
         {#if card.unreadMessages.length > 0}
             <div
-                class="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5 shadow pointer-events-none z-10"
+                class="absolute top-1.5 right-1.5 h-1.5 w-1.5 bg-modified rounded-full pointer-events-none z-100"
                 aria-label="{card.unreadMessages.length} unread messages"
-            >
-                {card.unreadMessages.length}
-            </div>
+            ></div>
         {/if}
     </div>
     <div class="overlay"></div>

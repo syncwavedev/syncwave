@@ -247,27 +247,6 @@
         searchValue = '';
         isSearch = false;
     }
-
-    let filteredBoard = $state(board);
-
-    $effect(() => {
-        filteredBoard = {
-            ...board,
-            // @ts-expect-error i don't know why this doesn't work
-            columns: board.columns.map(column => ({
-                ...column,
-                cards: column.cards.filter(
-                    card =>
-                        card.plainText
-                            .toLowerCase()
-                            .includes(searchValue.trim().toLowerCase()) ||
-                        `#${card.counter}`.includes(
-                            searchValue.trim().toLowerCase()
-                        )
-                ),
-            })),
-        };
-    });
 </script>
 
 {#snippet boardCommands()}
@@ -311,7 +290,7 @@
         </a>
     {:else}
         <div class="ml-auto flex">
-            <button class="btn--icon" onclick={onStartSearch}>
+            <button class="btn--icon text-ink-body" onclick={onStartSearch}>
                 <SearchIcon />
             </button>
             <DropdownMenu
@@ -430,6 +409,7 @@
                                 )}
                             columnPosition={i}
                             columnsCount={board.columns.length - 1}
+                            {searchValue}
                         />
                     </div>
                 {/each}

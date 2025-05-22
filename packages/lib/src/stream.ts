@@ -447,6 +447,27 @@ export class Stream<T> implements AsyncIterable<T> {
         }
     }
 
+    whileInclusive<S extends T>(predicate: (value: T) => value is S): Stream<S>;
+    whileInclusive(
+        predicate: (value: T) => Promise<boolean> | boolean
+    ): Stream<T>;
+    whileInclusive(
+        predicate:
+            | ((value: T) => Promise<boolean> | boolean)
+            | ((value: T) => value is T)
+    ): Stream<T> {
+        return toStream(this._whileInclusive(predicate));
+    }
+
+    private async *_whileInclusive(
+        predicate: (value: T) => Promise<boolean> | boolean
+    ): AsyncIterable<T> {
+        for await (const item of this) {
+            yield item;
+            if (!(await predicate(item))) break;
+        }
+    }
+
     filter<S extends T>(predicate: (value: T) => value is S): Stream<S>;
     filter(predicate: (value: T) => Promise<boolean> | boolean): Stream<T>;
     filter(

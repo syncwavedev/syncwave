@@ -189,6 +189,7 @@ export function createRpcChunkerClient<TApi extends StreamerApi<any>>(
             if (handler.type === 'handler') {
                 return server
                     .handle({method: name, arg}, headers)
+                    .whileInclusive(x => !x.last)
                     .reduce<Uint8Array[]>((acc, {chunk}) => {
                         acc.push(chunk);
                         return acc;

@@ -9,7 +9,7 @@
     let {board}: Props = $props();
 </script>
 
-<div class="border-divider border-l z-10 flex w-full flex-shrink-0 flex-col">
+<div class="border-divider border-r z-10 flex w-full flex-shrink-0 flex-col">
     <div class="panel-header">
         Activity (unread messages count: {board.unreadMessages.length} [{board.lastReadMessageTimestamp}])
     </div>

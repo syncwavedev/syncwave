@@ -10,7 +10,6 @@
 
 .btn--icon {
     @apply hover:bg-material-base-hover
-    hover:text-ink
     grid
     aspect-square
     h-[2em]

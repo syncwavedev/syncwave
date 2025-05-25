@@ -20,7 +20,6 @@
     import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
     import modalManager from '../modal-manager.svelte';
     import BoardSettingsModal from './board-settings-modal.svelte';
-    import StatusBar from './status-bar.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
     import permissionManager from '../../../permission-manager';
@@ -41,6 +40,8 @@
     } from '../../panel-size-manager.svelte';
     import TimesIcon from '../components/icons/times-icon.svelte';
     import SearchIcon from '../components/icons/search-icon.svelte';
+    import MenuSearchIcon from '../components/icons/menu-search-icon.svelte';
+    import ActivityIcon from '../components/icons/activity-icon.svelte';
 
     const {
         board,
@@ -227,10 +228,7 @@
         board.members.map(x => ({value: x.id, label: x.fullName}))
     );
 
-    let activePanel: PanelType = $derived(
-        selectedCard === null ? 'activity' : 'card_details'
-    );
-    let panelWidth = $derived(panelSizeManager.getWidth(activePanel) ?? 424);
+    let activePanel: PanelType | null = $state(null);
 
     let isSearch = $state(false);
     let searchValue = $state('');
@@ -322,7 +320,44 @@
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
+        </div>
+    {/if}
+{/snippet}
 
+{#snippet searchHeader()}
+    <!-- svelte-ignore a11y_autofocus -->
+    <input
+        type="text"
+        class="input"
+        placeholder="Search..."
+        bind:value={searchValue}
+        autofocus
+    />
+    <button class="btn--icon" onclick={onCloseSearch}>
+        <TimesIcon />
+    </button>
+{/snippet}
+
+<div class="app flex">
+    <div class="border-r border-divider icon-lg flex flex-col px-2.75">
+        <div class="panel-header-height flex items-center">
+            <button class="btn--icon text-ink-body">
+                <MenuSearchIcon />
+            </button>
+        </div>
+        <div
+            class="flex flex-col justify-between items-center flex-1 pt-2 pb-4"
+        >
+            <button
+                class="btn--icon text-ink-body"
+                class:text-primary={activePanel === 'activity'}
+                onclick={() => {
+                    activePanel =
+                        activePanel === 'activity' ? null : 'activity';
+                }}
+            >
+                <ActivityIcon />
+            </button>
             <DropdownMenu
                 items={[
                     {
@@ -344,7 +379,7 @@
                     },
                 ]}
             >
-                <button class="btn--icon">
+                <button class="btn--icon mt-auto">
                     <Avatar
                         userId={me.id}
                         imageUrl={me.avatarUrlSmall}
@@ -353,24 +388,19 @@
                 </button>
             </DropdownMenu>
         </div>
+    </div>
+    {#if activePanel && activePanel === 'activity'}
+        <ResizablePanel
+            class="max-h-full overflow-auto"
+            freeSide="right"
+            width={panelSizeManager.getWidth('activity') ?? 360}
+            minWidth={320}
+            maxWidth={1600}
+            onWidthChange={w => panelSizeManager.setWidth('activity', w)}
+        >
+            <ActivityPanel {board} />
+        </ResizablePanel>
     {/if}
-{/snippet}
-
-{#snippet searchHeader()}
-    <!-- svelte-ignore a11y_autofocus -->
-    <input
-        type="text"
-        class="input"
-        placeholder="Search..."
-        bind:value={searchValue}
-        autofocus
-    />
-    <button class="btn--icon" onclick={onCloseSearch}>
-        <TimesIcon />
-    </button>
-{/snippet}
-
-<div class="app flex">
     <div class="relative flex min-w-0 flex-col flex-1">
         <div class="panel-header avatar-xs">
             {#if !isSearch}
@@ -390,7 +420,7 @@
                 bind:this={columnsContainerRef}
                 class="board-content"
                 style="padding-inline-end: {selectedCard
-                    ? `calc(var(--board-padding-inline-end) - ${panelWidth}px)`
+                    ? `calc(var(--board-padding-inline-end) - ${0}px)`
                     : 'var(--board-padding-inline-end)'}"
             >
                 {#each board.columns as column, i (column.id)}
@@ -416,20 +446,18 @@
                 {/each}
             </div>
         </Scrollable>
-        <div class="panel-footer">
-            <StatusBar />
-        </div>
     </div>
-    <ResizablePanel
-        class="max-h-full overflow-auto"
-        freeSide="left"
-        width={panelWidth}
-        minWidth={320}
-        maxWidth={1600}
-        onWidthChange={w => panelSizeManager.setWidth(activePanel, w)}
-    >
-        {#if selectedCard !== null}
-            {#key selectedCard.id}
+    {#if selectedCard !== null}
+        {#key selectedCard.id}
+            <ResizablePanel
+                class="max-h-full overflow-auto"
+                freeSide="left"
+                width={panelSizeManager.getWidth('card_details') ?? 422}
+                minWidth={320}
+                maxWidth={1600}
+                onWidthChange={w =>
+                    panelSizeManager.setWidth('card_details', w)}
+            >
                 <CardDetails
                     me={boardMeView}
                     {awareness}
@@ -438,11 +466,9 @@
                     {assigneeOptions}
                     onDelete={() => deleteCard(selectedCard!)}
                 />
-            {/key}
-        {:else}
-            <ActivityPanel {board} />
-        {/if}
-    </ResizablePanel>
+            </ResizablePanel>
+        {/key}
+    {/if}
 </div>
 
 <style>
@@ -451,6 +477,8 @@
         display: flex;
         overflow-y: auto;
 
-        padding-inline-start: var(--board-padding-inline-start);
+        padding-inline: 2rem;
+
+        /* padding-inline-start: var(--board-padding-inline-start); */
     }
 </style>

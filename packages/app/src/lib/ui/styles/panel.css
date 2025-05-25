@@ -1,5 +1,5 @@
 :root {
-    --panel-header-height: 2.25rem;
+    --panel-header-height: 2.75rem;
     --panel-footer-height: 2rem;
     --panel-padding-inline: 0.75rem;
     --panel-border-width: 1px;
@@ -13,7 +13,7 @@
     height: var(--panel-header-height);
 
     padding-inline: var(--panel-padding-inline);
-    border-bottom: var(--panel-border-width) solid var(--color-divider);
+    /* border-bottom: var(--panel-border-width) solid var(--color-divider); */
 }
 
 .panel-footer {
@@ -33,4 +33,8 @@
 
 .panel-padding-inline {
     padding-inline: var(--panel-padding-inline);
+}
+
+.panel-header-height {
+    height: var(--panel-header-height);
 }

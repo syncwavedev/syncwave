@@ -580,6 +580,29 @@ export class Agent {
         });
     }
 
+    updateBoardCursorTimestamp(boardId: BoardId, timestamp: Timestamp) {
+        const board = this.crdtManager.viewById(boardId, 'board');
+        const meId = this.authManager.ensureAuthorized().userId;
+        const transactionId = createTransactionId();
+        this.syncTargets().forEach(x =>
+            x.upsertOptimisticBoardCursor(
+                {
+                    userId: meId,
+                    boardId,
+                    timestamp,
+                },
+                transactionId
+            )
+        );
+
+        this.rpc.putBoardCursor({boardId: board.id, timestamp}).catch(error => {
+            log.error({error, msg: 'putBoardCursor failed'});
+            this.syncTargets().forEach(x =>
+                x.clearOptimisticState(transactionId)
+            );
+        });
+    }
+
     createCardDraft(
         board: BoardTreeView,
         options: {columnId: ColumnId; placement: Placement}
@@ -1202,9 +1225,13 @@ export class Agent {
                 this.syncTargets().forEach(x =>
                     x.upsertMemberInfo(event.after)
                 );
-            } else if (event.type === 'timeline_cursor') {
+            } else if (event.type === 'card_cursor') {
                 this.syncTargets().forEach(x =>
                     x.upsertCardCursor(event.after)
+                );
+            } else if (event.type === 'board_cursor') {
+                this.syncTargets().forEach(x =>
+                    x.upsertBoardCursor(event.after)
                 );
             } else {
                 softNever(event, 'observeBoard got an unknown snapshot');

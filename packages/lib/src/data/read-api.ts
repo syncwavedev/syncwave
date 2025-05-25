@@ -217,6 +217,7 @@ export function createReadApi() {
                     users,
                     userEmails,
                     cardCursors,
+                    boardCursors,
                     messages,
                     attachments,
                     member,
@@ -229,6 +230,9 @@ export function createReadApi() {
                         getBoardUserEmails(tx, boardId),
                         toStream(
                             tx.cardCursors.getByBoardId(boardId)
+                        ).toArray(),
+                        toStream(
+                            tx.boardCursors.getByBoardId(boardId)
                         ).toArray(),
                         tx.messages.getByBoardId(boardId).toArray(),
                         tx.attachments.getByBoardId(boardId).toArray(),
@@ -260,6 +264,7 @@ export function createReadApi() {
                             messages,
                             attachments,
                             cardCursors,
+                            boardCursors,
                         },
                     };
                 }

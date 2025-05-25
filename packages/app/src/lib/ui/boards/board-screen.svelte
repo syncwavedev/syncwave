@@ -357,6 +357,7 @@
 {/snippet}
 
 {#snippet searchHeader()}
+    <!-- svelte-ignore a11y_autofocus -->
     <input
         type="text"
         class="input"
@@ -439,7 +440,7 @@
                 />
             {/key}
         {:else}
-            <ActivityPanel />
+            <ActivityPanel {board} />
         {/if}
     </ResizablePanel>
 </div>

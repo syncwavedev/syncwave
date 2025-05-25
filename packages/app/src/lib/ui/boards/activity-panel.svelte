@@ -1,9 +1,18 @@
 <script lang="ts">
+    import type {BoardTreeView} from '../../agent/view.svelte';
     import Avatar from '../components/avatar.svelte';
+
+    interface Props {
+        board: BoardTreeView;
+    }
+
+    let {board}: Props = $props();
 </script>
 
 <div class="border-divider border-l z-10 flex w-full flex-shrink-0 flex-col">
-    <div class="panel-header">Activity</div>
+    <div class="panel-header">
+        Activity (unread messages count: {board.unreadMessages.length} [{board.lastReadMessageTimestamp}])
+    </div>
     <!-- Scrollable Content Section -->
     <div class="overflow-y-auto no-scrollbar flex flex-col flex-1 py-2">
         <div

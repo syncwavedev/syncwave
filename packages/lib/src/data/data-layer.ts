@@ -14,7 +14,7 @@ import {createUuidV4, Uuid} from '../uuid.js';
 import {type Principal, system} from './auth.js';
 import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
-import {CardCursorDto, MemberInfoDto} from './dto.js';
+import {BoardCursorDto, CardCursorDto, MemberInfoDto} from './dto.js';
 import {EmailService} from './email-service.js';
 import {EventStoreReader, EventStoreWriter, LogEntry} from './event-store.js';
 import type {CryptoProvider, EmailProvider} from './infrastructure.js';
@@ -33,6 +33,7 @@ import {
 } from './repos/attachment-repo.js';
 import type {CrdtChangeOptions} from './repos/base/crdt-repo.js';
 import type {DocChangeOptions} from './repos/base/doc-repo.js';
+import {BoardCursor, BoardCursorRepo} from './repos/board-cursor-repo.js';
 import {type Board, type BoardId, BoardRepo} from './repos/board-repo.js';
 import {type CardCursor, CardCursorRepo} from './repos/card-cursor-repo.js';
 import {type Card, type CardId, CardRepo} from './repos/card-repo.js';
@@ -67,6 +68,7 @@ export interface DataTx {
     readonly attachments: AttachmentRepo;
     readonly accounts: AccountRepo;
     readonly cardCursors: CardCursorRepo;
+    readonly boardCursors: BoardCursorRepo;
     readonly config: Config;
     readonly rawTx: AppTransaction;
     readonly events: CollectionManager<SyncwaveLogEntry>;
@@ -154,7 +156,7 @@ export function MemberInfoChangeEvent() {
 
 export function CardCursorChangeEvent() {
     return Type.Object({
-        type: Type.Literal('timeline_cursor'),
+        type: Type.Literal('card_cursor'),
         kind: Type.Literal('snapshot'),
         after: CardCursorDto(),
     });
@@ -162,6 +164,17 @@ export function CardCursorChangeEvent() {
 
 export interface CardCursorChangeEvent
     extends Static<ReturnType<typeof CardCursorChangeEvent>> {}
+
+export function BoardCursorChangeEvent() {
+    return Type.Object({
+        type: Type.Literal('board_cursor'),
+        kind: Type.Literal('snapshot'),
+        after: BoardCursorDto(),
+    });
+}
+
+export interface BoardCursorChangeEvent
+    extends Static<ReturnType<typeof BoardCursorChangeEvent>> {}
 
 export function createTransactionId() {
     return createUuidV4() as TransactionId;
@@ -209,6 +222,7 @@ export function SyncwaveChangeEvent() {
         AttachmentChangeEvent(),
         MemberInfoChangeEvent(),
         CardCursorChangeEvent(),
+        BoardCursorChangeEvent(),
     ]);
 }
 
@@ -362,6 +376,13 @@ export class DataLayer {
                 scheduleTrigger,
                 onChange: options => logCardCursorChange(dataTx, options),
             });
+            const boardCursors = new BoardCursorRepo({
+                tx: isolate(['board_cursors'])(tx),
+                boardRepo: boards,
+                userRepo: users,
+                scheduleTrigger,
+                onChange: options => logBoardCursorChange(dataTx, options),
+            });
 
             const events = new CollectionManager<LogEntry<SyncwaveChangeEvent>>(
                 isolate(['events_v2'])(tx),
@@ -433,6 +454,7 @@ export class DataLayer {
                 columns,
                 attachments,
                 cardCursors,
+                boardCursors,
                 messages,
                 events,
                 accounts,
@@ -896,14 +918,26 @@ async function logCardChange(
 
 async function logCardCursorChange(
     tx: DataTx,
-    {pk: [id], after: timelineCursor, kind}: DocChangeOptions<CardCursor>
+    {pk: [id], after, kind}: DocChangeOptions<CardCursor>
 ) {
     const event: CardCursorChangeEvent = {
-        type: 'timeline_cursor',
+        type: 'card_cursor',
         kind: 'snapshot',
-        after: timelineCursor,
+        after,
     };
-    await tx.esWriter.append(boardEvents(timelineCursor.boardId), event);
+    await tx.esWriter.append(boardEvents(after.boardId), event);
+}
+
+async function logBoardCursorChange(
+    tx: DataTx,
+    {pk: [id], after, kind}: DocChangeOptions<BoardCursor>
+) {
+    const event: BoardCursorChangeEvent = {
+        type: 'board_cursor',
+        kind: 'snapshot',
+        after,
+    };
+    await tx.esWriter.append(boardEvents(after.boardId), event);
 }
 
 async function logColumnChange(

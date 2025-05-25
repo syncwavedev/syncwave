@@ -22,7 +22,7 @@ import {
 import type {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
 import {createAttachmentId} from './repos/attachment-repo.js';
-import {Board, type BoardId} from './repos/board-repo.js';
+import {Board, BoardId} from './repos/board-repo.js';
 import {CardId, type Card} from './repos/card-repo.js';
 import {type Column, type ColumnId} from './repos/column-repo.js';
 import {MemberId, MemberRole, type Member} from './repos/member-repo.js';
@@ -278,6 +278,31 @@ export function createWriteApi() {
                 await st.tx.cardCursors.put({
                     boardId: member.boardId,
                     cardId,
+                    createdAt: st.tx.timestamp,
+                    updatedAt: st.tx.timestamp,
+                    userId: meId,
+                    timestamp,
+                });
+                return {};
+            },
+        }),
+        putBoardCursor: handler({
+            req: Type.Object({
+                boardId: BoardId(),
+                timestamp: Timestamp(),
+            }),
+            res: Type.Object({}),
+            handle: async (st, {boardId, timestamp}) => {
+                const meId = st.ps.ensureAuthenticated();
+                await st.ps.ensureBoardMember(boardId, 'writer');
+                const cursor = await st.tx.boardCursors.getById(meId, boardId);
+                if (cursor && cursor.timestamp >= timestamp) {
+                    // no need to update
+
+                    return {};
+                }
+                await st.tx.boardCursors.put({
+                    boardId,
                     createdAt: st.tx.timestamp,
                     updatedAt: st.tx.timestamp,
                     userId: meId,

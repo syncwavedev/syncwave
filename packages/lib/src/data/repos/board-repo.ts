@@ -21,6 +21,10 @@ import type {UserId, UserRepo} from './user-repo.js';
 
 export type BoardId = Brand<Uuid, 'board_id'>;
 
+export function BoardId() {
+    return Uuid<BoardId>();
+}
+
 export function createBoardId(): BoardId {
     return createUuid() as BoardId;
 }

@@ -477,8 +477,8 @@
         display: flex;
         overflow-y: auto;
 
-        padding-inline: 2rem;
+        /* padding-inline: 2rem; */
 
-        /* padding-inline-start: var(--board-padding-inline-start); */
+        padding-inline-start: var(--board-padding-inline-start);
     }
 </style>

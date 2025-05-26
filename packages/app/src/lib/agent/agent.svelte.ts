@@ -33,7 +33,6 @@ import {
     toStream,
     Tuple,
     whenAll,
-    type Account,
     type ActivityMonitor,
     type Attachment,
     type Board,
@@ -1209,9 +1208,6 @@ export class Agent {
             } else if (event.type === 'message') {
                 const message = view as Message;
                 this.syncTargets().forEach(x => x.newMessage(message));
-            } else if (event.type === 'account') {
-                const account = view as Account;
-                this.syncTargets().forEach(x => x.newAccount(account));
             } else if (event.type === 'member') {
                 const member = view as Member;
                 this.syncTargets().forEach(x => x.newMember(member));
@@ -1233,6 +1229,8 @@ export class Agent {
                 this.syncTargets().forEach(x =>
                     x.upsertBoardCursor(event.after)
                 );
+            } else if (event.type === 'account') {
+                this.syncTargets().forEach(x => x.upsertAccount(event.after));
             } else {
                 softNever(event, 'observeBoard got an unknown snapshot');
             }

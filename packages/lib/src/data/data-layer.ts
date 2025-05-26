@@ -21,11 +21,8 @@ import type {CryptoProvider, EmailProvider} from './infrastructure.js';
 import {createJoinCode} from './join-code.js';
 import {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
-import {
-    type Account,
-    type AccountId,
-    AccountRepo,
-} from './repos/account-repo.js';
+import {AccountRepoV2} from './repos/account-repo-v2.js';
+import {Account, AccountRepo} from './repos/account-repo.js';
 import {
     type Attachment,
     type AttachmentId,
@@ -66,7 +63,8 @@ export interface DataTx {
     readonly columns: ColumnRepo;
     readonly messages: MessageRepo;
     readonly attachments: AttachmentRepo;
-    readonly accounts: AccountRepo;
+    readonly accountsOld: AccountRepo;
+    readonly accounts: AccountRepoV2;
     readonly cardCursors: CardCursorRepo;
     readonly boardCursors: BoardCursorRepo;
     readonly config: Config;
@@ -125,13 +123,6 @@ export function CardChangeEvent() {
 export interface CardChangeEvent
     extends Static<ReturnType<typeof CardChangeEvent>> {}
 
-export function AccountChangeEvent() {
-    return BaseChangeEvent<'account', AccountId, Account>('account');
-}
-
-export interface AccountChangeEvent
-    extends Static<ReturnType<typeof AccountChangeEvent>> {}
-
 export function ColumnChangeEvent() {
     return BaseChangeEvent<'column', ColumnId, Column>('column');
 }
@@ -175,6 +166,17 @@ export function BoardCursorChangeEvent() {
 
 export interface BoardCursorChangeEvent
     extends Static<ReturnType<typeof BoardCursorChangeEvent>> {}
+
+export function AccountChangeEvent() {
+    return Type.Object({
+        type: Type.Literal('account'),
+        kind: Type.Literal('snapshot'),
+        after: Account(),
+    });
+}
+
+export interface AccountChangeEvent
+    extends Static<ReturnType<typeof AccountChangeEvent>> {}
 
 export function createTransactionId() {
     return createUuidV4() as TransactionId;
@@ -318,8 +320,14 @@ export class DataLayer {
                 onChange: options => logUserChange(dataTx, options),
                 scheduleTrigger,
             });
-            const accounts = new AccountRepo({
+            const accountsOld = new AccountRepo({
                 tx: isolate(['accounts'])(tx),
+                userRepo: users,
+                onChange: options => Promise.resolve(),
+                scheduleTrigger,
+            });
+            const accountsV2 = new AccountRepoV2({
+                tx: isolate(['accounts_v2'])(tx),
                 userRepo: users,
                 onChange: options => logAccountChange(dataTx, options),
                 scheduleTrigger,
@@ -419,7 +427,7 @@ export class DataLayer {
             const boardService = new BoardService({
                 boards,
                 crypto: this.crypto,
-                accounts,
+                accounts: accountsV2,
                 members,
                 users,
                 emailService,
@@ -457,7 +465,8 @@ export class DataLayer {
                 boardCursors,
                 messages,
                 events,
-                accounts,
+                accountsOld,
+                accounts: accountsV2,
                 esWriter,
                 users,
                 members,
@@ -573,6 +582,11 @@ export class DataLayer {
         if (version <= 8) {
             log.info({msg: 'upgrading to version 9'});
             await this.upgradeToV9();
+        }
+
+        if (version <= 9) {
+            log.info({msg: 'upgrading to version 10'});
+            await this.upgradeToV10();
         }
 
         await this.initDemoUsers();
@@ -774,6 +788,23 @@ export class DataLayer {
         await this.transact(system, tx => tx.version.put(9));
         log.info({msg: 'upgrading to version 9 done'});
     }
+
+    private async upgradeToV10() {
+        let accountsCreated = 0;
+        await this.transact(system, async tx => {
+            for await (const {
+                state: _,
+                ...account
+            } of tx.accountsOld.rawRepo.scan()) {
+                await tx.accounts.create(account);
+                accountsCreated++;
+            }
+        });
+
+        log.info({msg: `accounts created: ${accountsCreated}`});
+        await this.transact(system, tx => tx.version.put(10));
+        log.info({msg: 'upgrading to version 10 done'});
+    }
 }
 
 export function userEvents(userId: UserId) {
@@ -790,7 +821,7 @@ export function boardEvents(boardId: BoardId) {
 
 async function logAccountChange(
     tx: DataTx,
-    {pk: [id], diff, kind}: CrdtChangeOptions<Account>
+    {pk: [id], after, kind}: DocChangeOptions<Account>
 ) {
     const account = await tx.accounts.getById(id);
     assert(account !== undefined, `logAccountChange: account ${id} not found`);
@@ -799,10 +830,8 @@ async function logAccountChange(
         .toArray();
     const event: AccountChangeEvent = {
         type: 'account',
-        id,
-        diff,
-        ts: tx.timestamp,
-        kind,
+        kind: 'snapshot',
+        after,
     };
     await whenAll([
         tx.esWriter.append(userEvents(account.userId), event),

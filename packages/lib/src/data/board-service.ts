@@ -7,7 +7,7 @@ import {createUuidV4} from '../uuid.js';
 import type {EmailService} from './email-service.js';
 import type {CryptoProvider} from './infrastructure.js';
 import {createJoinCode} from './join-code.js';
-import type {AccountRepo} from './repos/account-repo.js';
+import type {AccountRepoV2} from './repos/account-repo-v2.js';
 import {
     createBoardId,
     type Board,
@@ -28,7 +28,7 @@ import type {BoardTemplate, CardTemplate} from './template.js';
 export class BoardService {
     private readonly boards: BoardRepo;
     private readonly members: MemberRepo;
-    private readonly accounts: AccountRepo;
+    private readonly accounts: AccountRepoV2;
     private readonly users: UserRepo;
     private readonly crypto: CryptoProvider;
     private readonly emailService: EmailService;
@@ -40,7 +40,7 @@ export class BoardService {
     constructor(params: {
         boards: BoardRepo;
         members: MemberRepo;
-        accounts: AccountRepo;
+        accounts: AccountRepoV2;
         users: UserRepo;
         crypto: CryptoProvider;
         emailService: EmailService;

@@ -100,7 +100,7 @@ export interface SyncTarget {
     newColumn(column: Column): void;
     newAttachment(attachment: Attachment): void;
     newMessage(message: Message): void;
-    newAccount(account: Account): void;
+    upsertAccount(account: Account): void;
     newMember(member: Member): void;
     upsertMemberInfo(userEmail: MemberInfoDto): void;
     upsertBoardCursor(boardCursor: BoardCursorDto): void;
@@ -169,7 +169,7 @@ export class MeViewData implements SyncTarget {
         // ignore
     }
 
-    newAccount(): void {
+    upsertAccount(): void {
         // ignore
     }
 
@@ -215,12 +215,7 @@ export class MeViewData implements SyncTarget {
             });
         });
 
-        this.account = derivator.view({
-            state: me.account.state,
-            id: me.account.id,
-            type: 'account',
-            isDraft: false,
-        });
+        this.account = me.account;
         this.profile = derivator.view({
             state: me.profile.state,
             id: me.profile.id,
@@ -493,7 +488,7 @@ export class BoardData implements SyncTarget {
             .concat([{transactionId, dto: cardCursor}]);
     }
 
-    newAccount(): void {
+    upsertAccount(): void {
         // ignore
     }
 

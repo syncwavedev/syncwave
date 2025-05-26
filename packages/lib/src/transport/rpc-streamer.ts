@@ -660,7 +660,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                             );
                             // we need to run cancellation separately to avoid cancellation of the cancellation
                             context().detach({span: 'cancel stream'}, () => {
-                                log.debug({
+                                log.trace({
                                     msg: 'stream consumer unsubscribed, send cancellation to the server...',
                                 });
                                 cleanup(new AppError('stream cancelled'));

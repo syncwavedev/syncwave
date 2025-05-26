@@ -4,7 +4,7 @@ import {Timestamp} from '../timestamp.js';
 import {assert} from '../utils.js';
 import {Uuid} from '../uuid.js';
 import {type DataTx} from './data-layer.js';
-import {Account, type AccountId} from './repos/account-repo.js';
+import {Account} from './repos/account-repo.js';
 import {Attachment, type AttachmentId} from './repos/attachment-repo.js';
 import {Board, type BoardId} from './repos/board-repo.js';
 import {Card, CardId} from './repos/card-repo.js';
@@ -39,10 +39,7 @@ export function MeViewDataDto() {
             id: Uuid<UserId>(),
             state: CrdtDiff<User>(),
         }),
-        account: Type.Object({
-            id: Uuid<AccountId>(),
-            state: CrdtDiff<Account>(),
-        }),
+        account: Account(),
         members: Type.Array(
             Type.Object({
                 id: Uuid<MemberId>(),

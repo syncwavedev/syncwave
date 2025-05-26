@@ -1,11 +1,4 @@
-import {
-    assert,
-    context,
-    Context,
-    createXmlFragment,
-    E2eFixture,
-    type Unsubscribe,
-} from 'syncwave';
+import {assert, context, Context, E2eFixture, type Unsubscribe} from 'syncwave';
 import {NodeCryptoProvider} from 'syncwave/node-crypto-provider.js';
 import {NodeJwtProvider} from 'syncwave/node-jwt-provider.js';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
@@ -76,46 +69,5 @@ describe('agent', () => {
         const me = await agentA.observeMeAsync();
 
         expect(me.account.email).toEqual(email);
-    });
-
-    it.only('should observe card', async () => {
-        try {
-            const boardId = await agentA.createBoard({
-                memberEmails: [],
-                name: 'Test board',
-            });
-
-            const column = agentA.createColumn({
-                boardId,
-                name: 'Test column',
-            });
-
-            const [board] = await agentA.observeBoardAsync('TEST');
-
-            const card = agentA.createCardDraft(board, {
-                columnId: column.id,
-                placement: {},
-            });
-            agentA.commitCardDraft(board, card.id);
-
-            await agentA.waitSettled();
-
-            const details = await agentB.observeCardAsync(card.id);
-
-            expect(details.messages.length).toEqual(0);
-
-            agentA.createMessage({
-                text: createXmlFragment(),
-                boardId: board.id,
-                cardId: card.id,
-                columnId: column.id,
-            });
-
-            await agentA.waitSettled();
-
-            expect(details.messages.length).toEqual(1);
-        } catch (e) {
-            console.error(e);
-        }
     });
 });

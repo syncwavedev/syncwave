@@ -13,6 +13,7 @@ import {BOARD_ONBOARDING_TEMPLATE} from '../data/template.js';
 import {AppError, BusinessError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
 import {whenAll} from '../utils.js';
+import {createUuidV4} from '../uuid.js';
 import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_MINUTES,
@@ -226,6 +227,49 @@ export function createAuthApi() {
                     type: 'success',
                     token: await signJwtToken(jwt, account),
                 };
+            },
+        }),
+        deleteMe: handler({
+            req: Type.Object({}),
+            res: Type.Object({}),
+            handle: async (
+                {tx: {accounts, users, members}},
+                {},
+                {principal}
+            ) => {
+                if (!principal.accountId) {
+                    throw new AppError('Not authenticated');
+                }
+
+                const account = await accounts.getById(principal.accountId);
+                if (!account) {
+                    throw new AppError('Account not found');
+                }
+
+                await accounts.update(account.id, x => {
+                    x.email = `ghost-${createUuidV4().replaceAll('-', '')}@syncwave.dev`;
+                });
+
+                await users.update(account.userId, x => {
+                    x.fullName = `Deleted User ${x.id}`;
+                    x.avatarKey = undefined;
+                });
+
+                const userMembers = await members
+                    .getByUserId(account.userId, {excludeDeleted: true})
+                    .toArray();
+
+                for (const member of userMembers) {
+                    await members.update(
+                        member.id,
+                        {excludeDeleted: true},
+                        x => {
+                            x.deletedAt = getNow();
+                        }
+                    );
+                }
+
+                return {};
             },
         }),
     });

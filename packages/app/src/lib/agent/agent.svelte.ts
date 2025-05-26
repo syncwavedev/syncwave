@@ -1177,6 +1177,10 @@ export class Agent {
         });
     }
 
+    async deleteMeForever() {
+        await this.rpc.deleteMe({});
+    }
+
     private handleLogEntry({event, transactionId}: SyncwaveLogEntry) {
         this.syncTargets().forEach(x => x.clearOptimisticState(transactionId));
 

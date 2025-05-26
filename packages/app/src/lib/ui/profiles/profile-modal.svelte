@@ -4,7 +4,7 @@
     import {getAgent} from '../../agent/agent.svelte';
     import type {MeView} from '../../agent/view.svelte';
     import AvatarInput from '../components/avatar-input.svelte';
-    import type {ObjectKey} from 'syncwave';
+    import {log, type ObjectKey} from 'syncwave';
     import {getAuthManager} from '../../utils';
 
     let {me}: {me: MeView} = $props();
@@ -73,6 +73,25 @@
             </div>
             <div class="block-inline">
                 <button
+                    onclick={() => {
+                        const confirmMessage = `Are you sure you want to delete your account? This action cannot be undone.`;
+                        if (confirm(confirmMessage)) {
+                            agent
+                                .deleteMeForever()
+                                .then(() => {
+                                    authManager.logOut();
+                                })
+                                .catch(error => {
+                                    log.error({
+                                        msg: 'Failed to delete account:',
+                                        error,
+                                    });
+                                    alert(
+                                        'Failed to delete account. Please try again later.'
+                                    );
+                                });
+                        }
+                    }}
                     class="settings-element bg-material-elevated-element rounded-sm"
                 >
                     Delete account

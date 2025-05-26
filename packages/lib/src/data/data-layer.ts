@@ -4,7 +4,12 @@ import {getAccount} from '../coordinator/auth-api.js';
 import {CrdtDiff} from '../crdt/crdt.js';
 import {Cell} from '../kv/cell.js';
 import {CollectionManager} from '../kv/collection-manager.js';
-import {type AppTransaction, isolate, type KvStore} from '../kv/kv-store.js';
+import {
+    type AppTransaction,
+    isolate,
+    type KvStore,
+    queryStartsWith,
+} from '../kv/kv-store.js';
 import {log} from '../logger.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import type {Hub} from '../transport/hub.js';
@@ -21,7 +26,6 @@ import type {CryptoProvider, EmailProvider} from './infrastructure.js';
 import {createJoinCode} from './join-code.js';
 import {MemberService} from './member-service.js';
 import {PermissionService} from './permission-service.js';
-import {AccountRepoV2} from './repos/account-repo-v2.js';
 import {Account, AccountRepo} from './repos/account-repo.js';
 import {
     type Attachment,
@@ -63,8 +67,7 @@ export interface DataTx {
     readonly columns: ColumnRepo;
     readonly messages: MessageRepo;
     readonly attachments: AttachmentRepo;
-    readonly accountsOld: AccountRepo;
-    readonly accounts: AccountRepoV2;
+    readonly accounts: AccountRepo;
     readonly cardCursors: CardCursorRepo;
     readonly boardCursors: BoardCursorRepo;
     readonly config: Config;
@@ -320,13 +323,7 @@ export class DataLayer {
                 onChange: options => logUserChange(dataTx, options),
                 scheduleTrigger,
             });
-            const accountsOld = new AccountRepo({
-                tx: isolate(['accounts'])(tx),
-                userRepo: users,
-                onChange: options => Promise.resolve(),
-                scheduleTrigger,
-            });
-            const accountsV2 = new AccountRepoV2({
+            const accountsV2 = new AccountRepo({
                 tx: isolate(['accounts_v2'])(tx),
                 userRepo: users,
                 onChange: options => logAccountChange(dataTx, options),
@@ -465,7 +462,6 @@ export class DataLayer {
                 boardCursors,
                 messages,
                 events,
-                accountsOld,
                 accounts: accountsV2,
                 esWriter,
                 users,
@@ -587,6 +583,11 @@ export class DataLayer {
         if (version <= 9) {
             log.info({msg: 'upgrading to version 10'});
             await this.upgradeToV10();
+        }
+
+        if (version <= 10) {
+            log.info({msg: 'upgrading to version 10'});
+            await this.upgradeToV11();
         }
 
         await this.initDemoUsers();
@@ -790,20 +791,23 @@ export class DataLayer {
     }
 
     private async upgradeToV10() {
-        let accountsCreated = 0;
+        await this.transact(system, tx => tx.version.put(10));
+    }
+
+    private async upgradeToV11() {
+        let deprecatedAccountsDeleted = 0;
         await this.transact(system, async tx => {
-            for await (const {
-                state: _,
-                ...account
-            } of tx.accountsOld.rawRepo.scan()) {
-                await tx.accounts.create(account);
-                accountsCreated++;
+            for await (const entry of queryStartsWith(tx.rawTx, ['accounts'])) {
+                await tx.rawTx.delete(entry.key);
+                deprecatedAccountsDeleted++;
             }
         });
 
-        log.info({msg: `accounts created: ${accountsCreated}`});
-        await this.transact(system, tx => tx.version.put(10));
-        log.info({msg: 'upgrading to version 10 done'});
+        log.info({
+            msg: `deprecated accounts deleted: ${deprecatedAccountsDeleted}`,
+        });
+        await this.transact(system, tx => tx.version.put(11));
+        log.info({msg: 'upgrading to version 11 done'});
     }
 }
 

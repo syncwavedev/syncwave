@@ -1,20 +1,13 @@
 import {type Static, Type} from '@sinclair/typebox';
-import type {CrdtDiff} from '../../crdt/crdt.js';
-import {BusinessError} from '../../errors.js';
+import {AppError, BusinessError} from '../../errors.js';
 import {UniqueError} from '../../kv/data-index.js';
 import {type AppTransaction, isolate} from '../../kv/kv-store.js';
 import {Timestamp} from '../../timestamp.js';
 import {type Brand} from '../../utils.js';
 import {createUuid, Uuid} from '../../uuid.js';
 import type {DataTriggerScheduler} from '../data-layer.js';
-import type {TransitionChecker} from '../transition-checker.js';
-import {
-    type CrdtDoc,
-    CrdtRepo,
-    type OnCrdtChange,
-    type QueryOptions,
-    type Recipe,
-} from './base/crdt-repo.js';
+import {type QueryOptions, type Recipe} from './base/crdt-repo.js';
+import {DocRepo, type OnDocChange} from './base/doc-repo.js';
 import {Doc} from './base/doc.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
@@ -56,15 +49,15 @@ export function Account() {
 export interface Account extends Static<ReturnType<typeof Account>> {}
 
 export class AccountRepo {
-    public readonly rawRepo: CrdtRepo<Account>;
+    public readonly rawRepo: DocRepo<Account>;
 
     constructor(params: {
         tx: AppTransaction;
         userRepo: UserRepo;
-        onChange: OnCrdtChange<Account>;
+        onChange: OnDocChange<Account>;
         scheduleTrigger: DataTriggerScheduler;
     }) {
-        this.rawRepo = new CrdtRepo<Account>({
+        this.rawRepo = new DocRepo<Account>({
             tx: isolate(['d'])(params.tx),
             scheduleTrigger: params.scheduleTrigger,
             indexes: {
@@ -98,24 +91,19 @@ export class AccountRepo {
         });
     }
 
-    getById(id: AccountId): Promise<Account | undefined> {
-        return this.rawRepo.getById([id]);
+    getById(
+        id: AccountId,
+        options?: QueryOptions
+    ): Promise<Account | undefined> {
+        return this.rawRepo.getById([id], options);
     }
 
     getByEmail(email: string): Promise<Account | undefined> {
         return this.rawRepo.getUnique(EMAIL_INDEX, [email]);
     }
 
-    getByUserId(userId: UserId): Promise<CrdtDoc<Account> | undefined> {
+    getByUserId(userId: UserId): Promise<Account | undefined> {
         return this.rawRepo.getUnique(USER_ID_INDEX, [userId]);
-    }
-
-    async apply(
-        id: Uuid,
-        diff: CrdtDiff<Account>,
-        checker: TransitionChecker<Account>
-    ) {
-        return await this.rawRepo.apply([id], diff, checker);
     }
 
     async create(account: Omit<Account, 'pk'>): Promise<Account> {
@@ -133,11 +121,18 @@ export class AccountRepo {
         }
     }
 
-    update(
+    async update(
         id: AccountId,
         recipe: Recipe<Account>,
         options?: QueryOptions
     ): Promise<Account> {
-        return this.rawRepo.update([id], recipe, options);
+        const doc = await this.getById(id, options);
+        if (doc === undefined) {
+            throw new AppError('doc not found: ' + id);
+        }
+
+        recipe(doc);
+
+        return this.rawRepo.put(doc);
     }
 }

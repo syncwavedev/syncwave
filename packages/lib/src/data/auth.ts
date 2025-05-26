@@ -1,7 +1,7 @@
 import {LRUCache} from 'lru-cache';
 import {SUPERADMIN_IDS} from '../constants.js';
 import {type JwtProvider} from './infrastructure.js';
-import {type AccountId} from './repos/account-repo.js';
+import type {AccountId} from './repos/account-repo.js';
 import {type UserId} from './repos/user-repo.js';
 
 export const anonymous: Principal = {

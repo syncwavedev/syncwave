@@ -3,8 +3,11 @@ import type {BoardService} from '../data/board-service.js';
 import type {DataTx} from '../data/data-layer.js';
 import type {EmailService} from '../data/email-service.js';
 import type {CryptoProvider, JwtProvider} from '../data/infrastructure.js';
-import type {AccountRepoV2} from '../data/repos/account-repo-v2.js';
-import {createAccountId, type Account} from '../data/repos/account-repo.js';
+import {
+    createAccountId,
+    type Account,
+    type AccountRepo,
+} from '../data/repos/account-repo.js';
 import {createUserId, UserRepo, type UserId} from '../data/repos/user-repo.js';
 import {BOARD_ONBOARDING_TEMPLATE} from '../data/template.js';
 import {AppError, BusinessError} from '../errors.js';
@@ -286,7 +289,7 @@ export async function signJwtToken(jwt: JwtProvider, account: Account) {
 export const DEFAULT_BOARD_NAME = 'My First Board';
 
 export async function getAccount(params: {
-    accounts: AccountRepoV2;
+    accounts: AccountRepo;
     users: UserRepo;
     email: string;
     crypto: CryptoProvider;

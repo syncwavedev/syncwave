@@ -17,6 +17,7 @@ import {createUuidV4} from '../uuid.js';
 import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
     AUTH_ACTIVITY_WINDOW_MINUTES,
+    AUTH_CODE_ALPHABET,
     AUTH_CODE_LENGTH,
 } from './../constants.js';
 import {addMinutes, getNow, Timestamp} from './../timestamp.js';
@@ -205,7 +206,7 @@ export function createAuthApi() {
 
                 const codeMatches = await crypto.bcryptCompare({
                     hash: account.verificationCode.codeHash,
-                    password: code,
+                    password: code.toUpperCase(),
                 });
 
                 if (!codeMatches) {
@@ -280,17 +281,17 @@ export type AuthApi = ReturnType<typeof createAuthApi>;
 export async function createVerificationCode(
     crypto: CryptoProvider
 ): Promise<{code: string; expires: Timestamp}> {
-    let digits: number[];
+    let codeParts: number[];
 
     do {
-        digits = Array.from(await crypto.randomBytes(AUTH_CODE_LENGTH * 2))
-            .filter(x => x < 250)
+        codeParts = Array.from(await crypto.randomBytes(AUTH_CODE_LENGTH * 4))
+            .filter(x => x < 256 - (256 % AUTH_CODE_ALPHABET.length))
             .slice(0, AUTH_CODE_LENGTH)
-            .map(x => x % 10);
-    } while (digits.length < AUTH_CODE_LENGTH);
+            .map(x => x % AUTH_CODE_ALPHABET.length);
+    } while (codeParts.length < AUTH_CODE_LENGTH);
 
     return {
-        code: digits.join(''),
+        code: codeParts.map(x => AUTH_CODE_ALPHABET[x]).join(''),
         expires: addMinutes(getNow(), 10),
     };
 }

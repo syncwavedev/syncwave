@@ -30,5 +30,8 @@ export const AWARENESS_OFFLINE_TIMEOUT_MS = 30_000;
 export const USER_INACTIVITY_TIMEOUT_MS = 5 * 60_000; // 5 min
 export const MESSAGE_TYPING_AWARENESS_TIMEOUT_MS = 3_000;
 export const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
 export const AUTH_CODE_LENGTH = 6;
+export const AUTH_CODE_ALPHABET = '23456789BCDFGHJKMNPQRTVWXY';
+
 export const RPC_CHUNK_SIZE = 2 * 1024; // 2KB (Typical TCP payload: ~1460 bytes)

@@ -250,8 +250,7 @@
                     <!-- svelte-ignore a11y_autofocus -->
                     <input
                         type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
+                        inputMode="text"
                         maxlength={AUTH_CODE_LENGTH}
                         id="code-input"
                         bind:value={code}

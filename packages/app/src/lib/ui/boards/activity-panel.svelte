@@ -1,45 +1,74 @@
 <script lang="ts">
+    import type {CardId} from 'syncwave';
     import type {BoardTreeView} from '../../agent/view.svelte';
     import Avatar from '../components/avatar.svelte';
+    import {meta} from 'eslint-plugin-svelte/lib/processor';
+    import TimeAgo from '../components/time-ago.svelte';
 
     interface Props {
         board: BoardTreeView;
     }
 
     let {board}: Props = $props();
+
+    const findCard = (cardId: CardId) =>
+        board.columns
+            .flatMap(column => column.cards)
+            .find(card => card.id === cardId);
 </script>
 
 <div class="border-divider border-r z-10 flex w-full flex-shrink-0 flex-col">
-    <div class="panel-header">
-        Activity (unread messages count: {board.unreadMessages.length} [{board.lastReadMessageTimestamp}])
-    </div>
+    <div class="panel-header font-medium">Activity</div>
     <!-- Scrollable Content Section -->
     <div class="overflow-y-auto no-scrollbar flex flex-col flex-1 py-2">
-        <div
-            class="avatar-xs text-ink-body panel-padding-inline py-2 leading-relaxed hover:bg-material-base-hover"
-        >
-            <Avatar name="A" /> <span class="text-ink">Andrei</span>
-            <span>moved task #124:</span>
-            <span class="text-ink">"Define project scope"</span>
-            <span>from</span>
-            <span class="text-ink">"In Progress"</span>
-            <span>to</span>
-            <span class="text-ink">"Done"</span>
-            <span>1 day ago</span>
-        </div>
-        <div
-            class="avatar-xs text-ink-body panel-padding-inline py-2 leading-relaxed hover:bg-material-base-hover"
-        >
-            <Avatar name="A" /> <span class="text-ink">Andrei</span>
-            <span>created task #124:</span>
-            <span class="text-ink"
-                >"Design Initial Technical Architecture and document the core
-                technical approach. Select initial stack and create architecture
-                diagram."</span
-            >
-            <span>2 day ago</span>
-        </div>
-        <div class="flex items-center">
+        {#each board.unreadMessages as message (message.id)}
+            {#if message.payload.type === 'card_column_changed'}
+                {@const card = findCard(message.payload.cardId)}
+                <div
+                    class="avatar-xs text-ink-body panel-padding-inline py-2 leading-relaxed hover:bg-material-base-hover"
+                >
+                    <Avatar
+                        name={message.author.fullName}
+                        userId={message.author.id}
+                        imageUrl={message.author.avatarUrlSmall}
+                    />
+                    <span class="text-ink">{message.author.fullName}</span>
+                    <span>moved task #{card?.counter}:</span>
+                    <span class="text-ink">
+                        "{card?.plainText.slice(0, 50)}"
+                    </span>
+                    <span>from</span>
+                    <span class="text-ink">
+                        "{message.payload.fromColumnName}"
+                    </span>
+                    <span>to</span>
+                    <span class="text-ink">
+                        "{message.payload.toColumnName}"
+                    </span>
+                    <span><TimeAgo time={message.createdAt} /></span>
+                </div>
+            {/if}
+            {#if message.payload.type === 'card_created'}
+                {@const card = findCard(message.payload.cardId)}
+                <div
+                    class="avatar-xs text-ink-body panel-padding-inline py-2 leading-relaxed hover:bg-material-base-hover"
+                >
+                    <Avatar
+                        name={message.author.fullName}
+                        userId={message.author.id}
+                        imageUrl={message.author.avatarUrlSmall}
+                    />
+                    <span class="text-ink">{message.author.fullName}</span>
+                    <span>created task #{card?.counter}:</span>
+                    <span class="text-ink">
+                        "{card?.plainText.slice(0, 50)}"
+                    </span>
+                    <span><TimeAgo time={message.createdAt} /></span>
+                </div>
+            {/if}
+        {/each}
+
+        <!-- <div class="flex items-center">
             <div class="h-[1px] bg-divider flex-1"></div>
             <div
                 class="text-center my-2 text-ink-body text-xs bg-material-1 px-1 py-0.5 rounded-sm"
@@ -47,17 +76,6 @@
                 New activities
             </div>
             <div class="h-[1px] bg-divider flex-1"></div>
-        </div>
-        <div
-            class="avatar-xs text-ink-body panel-padding-inline py-2 leading-relaxed hover:bg-material-base-hover"
-        >
-            <Avatar name="A" /> <span class="text-ink">Andrei</span>
-            <span>created task #124:</span>
-            <span class="text-ink"
-                >"Define MVP Features. Finalize the feature set for v0.1
-                release. Create tickets for each feature."</span
-            >
-            <span>1 week ago</span>
-        </div>
+        </div> -->
     </div>
 </div>

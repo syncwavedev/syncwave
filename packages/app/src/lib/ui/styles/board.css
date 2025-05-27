@@ -7,11 +7,24 @@
     --column-width: 39ch;
     --column-padding-inline: 0.6125rem;
 
+    --board-padding-inline: 2.25rem;
+
     --board-padding-inline-start: calc(
-        var(--panel-padding-inline) - var(--column-padding-inline)
+        var(--board-padding-inline) - var(--column-padding-inline)
     );
     --board-padding-inline-end: calc(
         var(--app-width) - var(--column-width) -
             var(--board-padding-inline-start)
     );
+}
+
+.board-header {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+
+    height: var(--panel-header-height);
+
+    padding-inline: var(--board-padding-inline);
+    /* border-bottom: var(--panel-border-width) solid var(--color-divider); */
 }

@@ -21,27 +21,18 @@
     import modalManager from '../modal-manager.svelte';
     import BoardSettingsModal from './board-settings-modal.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
-    import ProfileModal from '../profiles/profile-modal.svelte';
     import permissionManager from '../../../permission-manager';
     import {flip} from 'svelte/animate';
     import {DND_REORDER_DURATION_MS} from './board-dnd';
     import {toastManager} from '../../../toast-manager.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
-    import {getAuthManager} from '../../utils';
     import DoorOpenIcon from '../components/icons/door-open-icon.svelte';
     import BoardIcon from '../components/icons/board-icon.svelte';
-    import UserRoundCog from '../components/icons/user-round-cog.svelte';
-    import LogOutIcon from '../components/icons/log-out-icon.svelte';
     import BoardHistoryManager from '../../board-history-manager';
-    import ActivityPanel from './activity-panel.svelte';
-    import {
-        panelSizeManager,
-        type PanelType,
-    } from '../../panel-size-manager.svelte';
+    import {panelSizeManager} from '../../panel-size-manager.svelte';
     import TimesIcon from '../components/icons/times-icon.svelte';
     import SearchIcon from '../components/icons/search-icon.svelte';
-    import MenuSearchIcon from '../components/icons/menu-search-icon.svelte';
-    import ActivityIcon from '../components/icons/activity-icon.svelte';
+    import BoardLeftSidebar from './board-left-sidebar.svelte';
 
     const {
         board,
@@ -58,7 +49,6 @@
     } = $props();
 
     const agent = getAgent();
-    const authManager = getAuthManager();
 
     let selectedCard = $state<CardTreeView | null>(
         counter
@@ -228,8 +218,6 @@
         board.members.map(x => ({value: x.id, label: x.fullName}))
     );
 
-    let activePanel: PanelType | null = $state(null);
-
     let isSearch = $state(false);
     let searchValue = $state('');
 
@@ -255,13 +243,9 @@
     <BoardSettingsModal {board} {me} />
 {/snippet}
 
-{#snippet profileSettings()}
-    <ProfileModal {me} />
-{/snippet}
-
 {#snippet header()}
     <button
-        class="btn--ghost hover:bg-material-base-hover -ml-1"
+        class="btn--ghost hover:bg-material-base-hover -ml-1 font-medium"
         onclick={() => modalManager.open(boardCommands)}
     >
         <span>{board.name}</span>
@@ -339,70 +323,9 @@
 {/snippet}
 
 <div class="app flex">
-    <div class="border-r border-divider icon-lg flex flex-col px-2.75">
-        <div class="panel-header-height flex items-center">
-            <button class="btn--icon text-ink-body">
-                <MenuSearchIcon />
-            </button>
-        </div>
-        <div
-            class="flex flex-col justify-between items-center flex-1 pt-2 pb-4"
-        >
-            <button
-                class="btn--icon text-ink-body"
-                class:text-primary={activePanel === 'activity'}
-                onclick={() => {
-                    activePanel =
-                        activePanel === 'activity' ? null : 'activity';
-                }}
-            >
-                <ActivityIcon />
-            </button>
-            <DropdownMenu
-                items={[
-                    {
-                        icon: UserRoundCog,
-                        text: 'Profile Settings',
-                        onSelect: () => {
-                            modalManager.open(profileSettings);
-                        },
-                    },
-                    {
-                        icon: LogOutIcon,
-                        text: 'Sign Out',
-                        onSelect: () => {
-                            const confirmMessage = `Are you sure you want to sign out?`;
-                            if (confirm(confirmMessage)) {
-                                authManager.logOut();
-                            }
-                        },
-                    },
-                ]}
-            >
-                <button class="btn--icon mt-auto">
-                    <Avatar
-                        userId={me.id}
-                        imageUrl={me.avatarUrlSmall}
-                        name={me.fullName}
-                    />
-                </button>
-            </DropdownMenu>
-        </div>
-    </div>
-    {#if activePanel && activePanel === 'activity'}
-        <ResizablePanel
-            class="max-h-full overflow-auto"
-            freeSide="right"
-            width={panelSizeManager.getWidth('activity') ?? 360}
-            minWidth={320}
-            maxWidth={1600}
-            onWidthChange={w => panelSizeManager.setWidth('activity', w)}
-        >
-            <ActivityPanel {board} />
-        </ResizablePanel>
-    {/if}
+    <BoardLeftSidebar {me} {board} />
     <div class="relative flex min-w-0 flex-col flex-1">
-        <div class="panel-header avatar-xs">
+        <div class="board-header avatar-xs">
             {#if !isSearch}
                 {@render header()}
             {:else}
@@ -476,8 +399,6 @@
         height: var(--board-height);
         display: flex;
         overflow-y: auto;
-
-        /* padding-inline: 2rem; */
 
         padding-inline-start: var(--board-padding-inline-start);
     }

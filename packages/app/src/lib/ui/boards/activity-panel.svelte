@@ -2,7 +2,6 @@
     import type {CardId} from 'syncwave';
     import type {BoardTreeView} from '../../agent/view.svelte';
     import Avatar from '../components/avatar.svelte';
-    import {meta} from 'eslint-plugin-svelte/lib/processor';
     import TimeAgo from '../components/time-ago.svelte';
 
     interface Props {

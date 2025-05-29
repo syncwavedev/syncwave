@@ -1,17 +1,23 @@
 <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
+    width="24px"
+    height="24px"
+    stroke-width="1.5"
     viewBox="0 0 24 24"
     fill="none"
+    xmlns="http://www.w3.org/2000/svg"
     stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-    stroke-linejoin="round"
     class="icon"
-    ><path d="M12 2a10 10 0 0 1 7.38 16.75" /><path d="M12 6v6l4 2" /><path
-        d="M2.5 8.875a10 10 0 0 0-.5 3"
-    /><path d="M2.83 16a10 10 0 0 0 2.43 3.4" /><path
-        d="M4.636 5.235a10 10 0 0 1 .891-.857"
-    /><path d="M8.644 21.42a10 10 0 0 0 7.631-.38" /></svg
+    ><path
+        d="M8 12L11 15L16 10"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    ></path><path
+        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.8214 2.48697 15.5291 3.33782 17L2.5 21.5L7 20.6622C8.47087 21.513 10.1786 22 12 22Z"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    ></path></svg
 >

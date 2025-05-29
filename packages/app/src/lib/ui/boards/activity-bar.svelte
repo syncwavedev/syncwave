@@ -33,7 +33,7 @@
     <ProfileModal {me} />
 {/snippet}
 
-<div class="border-r border-divider icon-lg flex flex-col px-2.75">
+<div class="border-r border-divider icon-lg flex flex-col px-2.25">
     <div class="panel-header-height flex items-center">
         <button class="btn--icon text-ink-body">
             <MenuSearchIcon />
@@ -80,6 +80,7 @@
         </DropdownMenu>
     </div>
 </div>
+
 {#if activePanel && activePanel === 'activity'}
     <ResizablePanel
         class="max-h-full overflow-auto"

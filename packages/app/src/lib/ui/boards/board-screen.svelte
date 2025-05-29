@@ -32,7 +32,7 @@
     import {panelSizeManager} from '../../panel-size-manager.svelte';
     import TimesIcon from '../components/icons/times-icon.svelte';
     import SearchIcon from '../components/icons/search-icon.svelte';
-    import BoardLeftSidebar from './board-left-sidebar.svelte';
+    import ActivityBar from './activity-bar.svelte';
 
     const {
         board,
@@ -323,7 +323,7 @@
 {/snippet}
 
 <div class="app flex">
-    <BoardLeftSidebar {me} {board} />
+    <ActivityBar {me} {board} />
     <div class="relative flex min-w-0 flex-col flex-1">
         <div class="board-header avatar-xs">
             {#if !isSearch}

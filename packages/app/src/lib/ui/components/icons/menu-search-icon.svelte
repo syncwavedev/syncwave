@@ -9,9 +9,11 @@
     stroke-linecap="round"
     stroke-linejoin="round"
     class="icon"
-    ><path d="M21 6H3" /><path d="M10 12H3" /><path d="M10 18H3" /><circle
-        cx="17"
-        cy="15"
-        r="3"
-    /><path d="m21 19-1.9-1.9" /></svg
+    ><path d="M15 3v18" /><rect
+        width="18"
+        height="18"
+        x="3"
+        y="3"
+        rx="2"
+    /><path d="M21 9H3" /><path d="M21 15H3" /></svg
 >

@@ -33,7 +33,7 @@
     <ProfileModal {me} />
 {/snippet}
 
-<div class="border-r border-divider icon-lg flex flex-col px-2 bg-gray-925">
+<!-- <div class="border-r border-divider icon-lg flex flex-col px-2 bg-gray-925">
     <div class="panel-header-height flex items-center">
         <button class="btn menu--btn text-ink-body">
             <MenuSearchIcon />
@@ -79,20 +79,18 @@
             </button>
         </DropdownMenu>
     </div>
-</div>
+</div> -->
 
-{#if activePanel && activePanel === 'activity'}
-    <ResizablePanel
-        class="max-h-full overflow-auto"
-        freeSide="right"
-        width={panelSizeManager.getWidth('activity') ?? 360}
-        minWidth={240}
-        maxWidth={1600}
-        onWidthChange={w => panelSizeManager.setWidth('activity', w)}
-    >
-        <ActivityView {board} />
-    </ResizablePanel>
-{/if}
+<ResizablePanel
+    class="max-h-full overflow-auto"
+    freeSide="right"
+    width={panelSizeManager.getWidth('activity') ?? 360}
+    minWidth={240}
+    maxWidth={1600}
+    onWidthChange={w => panelSizeManager.setWidth('activity', w)}
+>
+    <ActivityView {board} />
+</ResizablePanel>
 
 <style>
     .menu--btn {

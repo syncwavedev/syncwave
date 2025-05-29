@@ -16,8 +16,8 @@ import {collectDefaultMetrics} from 'prom-client';
 import type {EmailProvider, Hub, ObjectStore, Tuple} from 'syncwave';
 import {
     AppError,
+    assert,
     assertDefined,
-    assertOneOf,
     CancelledError,
     context,
     CoordinatorServer,
@@ -44,16 +44,17 @@ import {createMetricsRouter} from './http/metrics.js';
 import {createUiRouter} from './http/ui.js';
 import {S3ObjectStore} from './s3-object-store.js';
 import {SesEmailProvider} from './ses-email-provider.js';
+import {getStage, type Stage} from './stage.js';
 import {WsTransportServer} from './ws-transport-server.js';
 
 collectDefaultMetrics();
 
 eventLoopMonitor.enable();
 
-type Stage = 'prod' | 'dev' | 'local' | 'self';
+const stage = getStage();
 
 interface Options {
-    google?: GoogleOptions;
+    google: GoogleOptions | undefined;
     logLevel: LogLevel;
     workersCount: number;
     uiPath: string | undefined;
@@ -67,49 +68,68 @@ interface Options {
     metricsPort: number;
     passwordsEnabled: boolean;
     superadmin: SuperadminOptions | undefined;
+    enableMetrics: boolean;
 }
 
-function getApiUrl(stage: Stage, message: string): string {
-    return match(stage)
+function getApiUrl(params: {stage: Stage; baseUrl: string}): string {
+    return match(params.stage)
         .with('local', () => 'http://localhost:4567')
         .with('dev', () => 'https://api-dev.syncwave.dev')
         .with('prod', () => 'https://api.syncwave.dev')
-        .with('self', () => `${getBaseUrl(message)}/api`)
+        .with('self', () => `${trimBaseUrl(params.baseUrl)}/api`)
         .exhaustive();
 }
 
-function getAppUrl(stage: Stage, message: string): string {
-    return match(stage)
+function getAppUrl(params: {stage: Stage; baseUrl: string}): string {
+    return match(params.stage)
         .with('local', () => 'http://localhost:4567')
         .with('dev', () => 'https://dev.syncwave.dev')
         .with('prod', () => 'https://app.syncwave.dev')
-        .with('self', () => getBaseUrl(message))
+        .with('self', () => trimBaseUrl(params.baseUrl))
         .exhaustive();
 }
 
-function getGoogleOptions(stage: Stage): GoogleOptions | undefined {
+function getGoogleOptions(stage: Stage): Result<GoogleOptions | undefined> {
     const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
     const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+    const BASE_URL = process.env.BASE_URL;
 
     // skip if Google OAuth is not configured
     if (!GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_SECRET) {
-        return undefined;
+        return {type: 'ok', value: undefined};
     }
 
-    const apiUrl = getApiUrl(stage, 'Google OAuth');
-    const appUrl = getAppUrl(stage, 'Google OAuth');
+    const errors: string[] = [];
+    if (!GOOGLE_CLIENT_ID) {
+        errors.push('GOOGLE_CLIENT_ID is required for Google OAuth');
+    }
+    if (!GOOGLE_CLIENT_SECRET) {
+        errors.push('GOOGLE_CLIENT_SECRET is required for Google OAuth');
+    }
+    if (!BASE_URL) {
+        errors.push('BASE_URL is required for Google OAuth');
+    }
+
+    assert(
+        !!GOOGLE_CLIENT_ID && !!GOOGLE_CLIENT_SECRET && !!BASE_URL,
+        'GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and BASE_URL must be defined if Google OAuth is configured'
+    );
+
+    if (errors.length > 0) {
+        return {type: 'error', errors};
+    }
+
+    const apiUrl = getApiUrl({stage, baseUrl: BASE_URL});
+    const appUrl = getAppUrl({stage, baseUrl: BASE_URL});
 
     return {
-        clientId: assertDefined(
-            GOOGLE_CLIENT_ID,
-            'GOOGLE_CLIENT_ID is required for Google OAuth'
-        ),
-        clientSecret: assertDefined(
-            GOOGLE_CLIENT_SECRET,
-            'GOOGLE_CLIENT_SECRET is required for Google OAuth'
-        ),
-        redirectUri: `${apiUrl}/callbacks/google`,
-        appUrl,
+        type: 'ok',
+        value: {
+            clientId: GOOGLE_CLIENT_ID,
+            clientSecret: GOOGLE_CLIENT_SECRET,
+            redirectUri: `${apiUrl}/callbacks/google`,
+            appUrl,
+        },
     };
 }
 
@@ -118,57 +138,65 @@ interface SuperadminOptions {
     password: string;
 }
 
-function getInstanceAdminOptions(): SuperadminOptions | undefined {
+function getInstanceAdminOptions(): Result<SuperadminOptions | undefined> {
     const SUPERADMIN_EMAIL = process.env.SUPERADMIN_EMAIL;
     const SUPERADMIN_PASSWORD = process.env.SUPERADMIN_PASSWORD;
     if (!SUPERADMIN_EMAIL && !SUPERADMIN_PASSWORD) {
-        return undefined;
+        return {type: 'ok', value: undefined};
     }
+
+    const errors: string[] = [];
+    if (!SUPERADMIN_EMAIL) {
+        errors.push('SUPERADMIN_EMAIL is required for superadmin');
+    }
+    if (!SUPERADMIN_PASSWORD) {
+        errors.push('SUPERADMIN_PASSWORD is required for superadmin');
+    }
+    if (errors.length > 0) {
+        return {type: 'error', errors};
+    }
+
+    assert(
+        !!SUPERADMIN_EMAIL && !!SUPERADMIN_PASSWORD,
+        'SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD must be defined if superadmin is configured'
+    );
+
     return {
-        email: assertDefined(
-            SUPERADMIN_EMAIL,
-            'SUPERADMIN_EMAIL is required for superadmin'
-        ),
-        password: assertDefined(
-            SUPERADMIN_PASSWORD,
-            'SUPERADMIN_PASSWORD is required for superadmin'
-        ),
+        type: 'ok',
+        value: {
+            email: SUPERADMIN_EMAIL,
+            password: SUPERADMIN_PASSWORD,
+        },
     };
 }
 
 const DATA_DIR = '/data';
 
-function getBaseUrl(message: string): string {
-    let baseUrl = assertDefined(
-        process.env.BASE_URL,
-        `BASE_URL is required for ${message}`
-    );
+function trimBaseUrl(baseUrl: string): string {
     while (baseUrl.endsWith('/')) {
         baseUrl = baseUrl.slice(0, -1);
     }
     return baseUrl;
 }
 
-class ConfigurationError extends AppError {
-    constructor(message: string) {
-        super(message);
-        this.name = 'ConfigurationError';
-    }
-}
+type Result<T> = {type: 'ok'; value: T} | {type: 'error'; errors: string[]};
 
-async function getObjectStore(stage: Stage): Promise<ObjectStore> {
+async function getObjectStore(stage: Stage): Promise<Result<ObjectStore>> {
     if (
         !process.env.S3_BUCKET_NAME &&
         !process.env.S3_ENDPOINT &&
         !process.env.S3_ACCESS_KEY &&
         !process.env.S3_SECRET_KEY
     ) {
-        return await FsObjectStore.create({
-            basePath:
-                stage === 'local'
-                    ? './dev-object-store'
-                    : path.join(DATA_DIR, 'objects'),
-        });
+        return {
+            type: 'ok',
+            value: await FsObjectStore.create({
+                basePath:
+                    stage === 'local'
+                        ? './dev-object-store'
+                        : path.join(DATA_DIR, 'objects'),
+            }),
+        };
     }
 
     const errors: string[] = [];
@@ -199,61 +227,95 @@ async function getObjectStore(stage: Stage): Promise<ObjectStore> {
         }
     }
     if (errors.length > 0) {
-        throw new ConfigurationError(
-            `S3 configuration is invalid:\n${errors.map(error => `- ${error}`).join('\n')}`
-        );
+        return {type: 'error', errors};
     }
 
-    return new S3ObjectStore({
-        bucketName: assertDefined(
-            process.env.S3_BUCKET_NAME,
-            'S3_BUCKET_NAME is required'
-        ),
-        endpoint: process.env.S3_ENDPOINT,
-        credentials: {
-            accessKeyId: assertDefined(
-                process.env.S3_ACCESS_KEY,
-                'S3_ACCESS_KEY_ID is required'
-            ),
-            secretAccessKey: assertDefined(
-                process.env.S3_SECRET_KEY,
-                'S3_SECRET_ACCESS_KEY is required'
-            ),
-        },
-        forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
-        region: process.env.S3_REGION ?? 'us-east-1',
-        keyPrefix: process.env.S3_KEY_PREFIX,
-    });
+    assert(
+        !!process.env.S3_BUCKET_NAME &&
+            !!process.env.S3_ACCESS_KEY &&
+            !!process.env.S3_SECRET_KEY,
+        'S3_BUCKET_NAME, S3_ACCESS_KEY, and S3_SECRET_KEY must be defined if S3 object store is configured'
+    );
+
+    return {
+        type: 'ok',
+        value: new S3ObjectStore({
+            bucketName: process.env.S3_BUCKET_NAME,
+            endpoint: process.env.S3_ENDPOINT,
+            credentials: {
+                accessKeyId: process.env.S3_ACCESS_KEY,
+                secretAccessKey: process.env.S3_SECRET_KEY,
+            },
+            forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+            region: process.env.S3_REGION ?? 'us-east-1',
+            keyPrefix: process.env.S3_KEY_PREFIX,
+        }),
+    };
 }
 
-async function getOptions(): Promise<Options> {
+function validateJwtSecret(secret: string): Result<string> {
+    if (secret.length < 32) {
+        return {
+            type: 'error',
+            errors: [
+                `JWT secret must be at least 32 characters long (excluding whitespace), found ${secret.length} characters`,
+            ],
+        };
+    }
+    if (secret.length > 512) {
+        return {
+            type: 'error',
+            errors: [
+                `JWT secret cannot be longer than 512 characters (excluding whitespace), found ${secret.length} characters`,
+            ],
+        };
+    }
+    if (secret.length < 64) {
+        log.warn({
+            msg: 'JWT secret is less than 64 characters long, which is not recommended for security reasons (excluding whitespace)',
+        });
+    }
+    return {
+        type: 'ok',
+        value: secret,
+    };
+}
+
+function getJwtSecret(stage: Stage): Result<string> {
+    if (process.env.SECRET_KEY) {
+        const secretFromEnv = process.env.SECRET_KEY.trim();
+        return validateJwtSecret(secretFromEnv);
+    }
+
+    if (stage !== 'self') {
+        return {
+            type: 'error',
+            errors: ['SECRET_KEY is required for JWT authentication.'],
+        };
+    }
+    const secretPath = path.join(DATA_DIR, 'secret.key');
+
+    if (existsSync(secretPath)) {
+        log.info({msg: 'Loaded existing JWT secret.'});
+        const secretFromFile = readFileSync(secretPath, 'utf-8').trim();
+        return validateJwtSecret(secretFromFile);
+    }
+
+    const secret = randomBytes(64).toString('hex');
+    writeFileSync(secretPath, secret, {mode: 0o600});
+    log.info({msg: 'Generated and saved new JWT secret.'});
+
+    return validateJwtSecret(secret);
+}
+
+async function getOptions(): Promise<Result<Options>> {
     const FORCE_FOUNDATIONDB = process.env.FORCE_FOUNDATIONDB === 'true';
-    const stage: Stage = assertOneOf(
-        process.env.STAGE,
-        ['prod', 'dev', 'local', 'self'] as const,
-        'invalid stage'
-    );
+    const stage: Stage = getStage();
     const awsRegion = assertDefined(
         process.env.AWS_DEFAULT_REGION,
         'AWS_DEFAULT_REGION is required for SES email service'
     );
-    let jwtSecret: string;
-    if (process.env.SECRET_KEY) {
-        jwtSecret = process.env.SECRET_KEY;
-    } else if (stage === 'self') {
-        const secretPath = path.join(DATA_DIR, 'secret.key');
-
-        if (existsSync(secretPath)) {
-            jwtSecret = readFileSync(secretPath, 'utf-8').trim();
-            log.info({msg: 'Loaded existing JWT secret.'});
-        } else {
-            jwtSecret = randomBytes(64).toString('hex');
-            writeFileSync(secretPath, jwtSecret, {mode: 0o600});
-            log.info({msg: 'Generated and saved new JWT secret.'});
-        }
-    } else {
-        throw new Error('SECRET_KEY is required');
-    }
+    const jwtSecret = getJwtSecret(stage);
 
     const {store, hub} = await getKvStore(
         stage,
@@ -273,35 +335,73 @@ async function getOptions(): Promise<Options> {
     const google = getGoogleOptions(stage);
     const uiPath = stage === 'self' ? './ui' : undefined;
 
+    const superadmin = getInstanceAdminOptions();
+
+    const errors: string[] = [];
+    if (objectStore.type === 'error') {
+        errors.push(...objectStore.errors);
+    }
+    if (google.type === 'error') {
+        errors.push(...google.errors);
+    }
+    if (jwtSecret.type === 'error') {
+        return {type: 'error', errors: jwtSecret.errors};
+    }
+    if (superadmin.type === 'error') {
+        errors.push(...superadmin.errors);
+    }
+    if (!['true', 'false', undefined].includes(process.env.ENABLE_METRICS)) {
+        errors.push('ENABLE_METRICS must be true or false (default is false)');
+    }
+
+    if (errors.length > 0) {
+        return {type: 'error', errors};
+    }
+
+    assert(
+        objectStore.type === 'ok',
+        'objectStore must be ok if there are no errors'
+    );
+    assert(google.type === 'ok', 'google must be ok if there are no errors');
+    assert(
+        jwtSecret.type === 'ok',
+        'jwtSecret must be ok if there are no errors'
+    );
+    assert(
+        superadmin.type === 'ok',
+        'superadmin must be ok if there are no errors'
+    );
+
     return {
-        objectStore,
-        logLevel,
-        workersCount: stage === 'prod' ? cpus().length : 1,
-        emailProvider: new SesEmailProvider(awsRegion),
-        jwtSecret,
-        uiPath,
-        hub,
-        store,
-        google,
-        launchCluster: stage !== 'local' && stage !== 'self',
-        appPort: stage === 'self' ? 8080 : 4567,
-        metricsPort: 5678,
-        passwordsEnabled: stage === 'local' || stage === 'self',
-        superadmin: getInstanceAdminOptions(),
+        type: 'ok',
+        value: {
+            objectStore: objectStore.value,
+            logLevel,
+            workersCount: stage === 'prod' ? cpus().length : 1,
+            emailProvider: new SesEmailProvider(awsRegion),
+            jwtSecret: jwtSecret.value,
+            uiPath,
+            hub,
+            store,
+            google: google.value,
+            launchCluster: stage !== 'local' && stage !== 'self',
+            appPort: stage === 'self' ? 8080 : 4567,
+            metricsPort: 5678,
+            passwordsEnabled: stage === 'local' || stage === 'self',
+            superadmin: superadmin.value,
+            enableMetrics: process.env.ENABLE_METRICS === 'true',
+        },
     };
 }
 
-let options: Options;
-try {
-    options = await getOptions();
-} catch (error) {
-    if (error instanceof ConfigurationError) {
-        console.error(error.message);
-        process.exit(1);
+const optionsResult = await getOptions();
+if (optionsResult.type === 'error') {
+    for (const error of optionsResult.errors) {
+        log.error({msg: error});
     }
-
-    throw error;
+    process.exit(1);
 }
+const options = optionsResult.value;
 
 async function getKvStore(
     stage: string,
@@ -393,6 +493,13 @@ function getKoaCallback(app: Koa) {
 async function launchApp(options: Options) {
     const app = new Koa();
 
+    if (stage === 'self' && options.enableMetrics) {
+        const metricsRouter =
+            createMetricsRouter('standalone').prefix('/metrics');
+        app.use(metricsRouter.routes()).use(metricsRouter.allowedMethods());
+        app.use(helmet.default());
+    }
+
     app.use(cors());
 
     const apiRouter = createApiRouter(() => coordinator, {
@@ -447,7 +554,7 @@ async function launchApp(options: Options) {
 
 async function launchMetrics() {
     const metrics = new Koa();
-    const metricsRouter = createMetricsRouter().prefix('/metrics');
+    const metricsRouter = createMetricsRouter('cluster').prefix('/metrics');
     metrics.use(metricsRouter.routes()).use(metricsRouter.allowedMethods());
     metrics.use(helmet.default());
 
@@ -520,7 +627,7 @@ if (cluster.isPrimary && options.launchCluster) {
 
             worker.on('exit', (code, signal) => {
                 log.error({
-                    msg: `Worker ${worker.process.pid} died (code: ${code}, signal: ${signal}). Restarting...`,
+                    msg: `Worker ${worker.process.pid} died (code: ${code}, signal: ${signal}). Restarting..`,
                     code,
                     signal,
                 });

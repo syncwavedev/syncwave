@@ -625,5 +625,69 @@ export async function infiniteRetry(
     }
 }
 
-export type UnknownType =
-    'placeholder_type_for_cases_when_new_type_is_added_in_the_future';
+function escapeLogValue(value: unknown): string {
+    return JSON.stringify(value);
+}
+
+function stringifyError(error: unknown) {
+    if (error instanceof Error) {
+        const message = error.stack || error.message || String(error);
+        const cause = error.cause
+            ? `\nCaused by: ${stringifyError(error.cause)}`
+            : '';
+        return message + cause;
+    }
+    return String(error);
+}
+
+export interface LogRecord {
+    body?:
+        | Record<string, unknown>
+        | string
+        | null
+        | undefined
+        | Uint8Array
+        | number
+        | boolean
+        | unknown[];
+    hrTimeObserved: [number, number];
+    severityText?: string;
+    attributes?: Record<string, unknown>;
+}
+
+export function formatLog(record: LogRecord) {
+    if (
+        typeof record.body === 'object' &&
+        record.body !== null &&
+        'msg' in record.body
+    ) {
+        const date = new Date(
+            record.hrTimeObserved[0] * 1000 + record.hrTimeObserved[1] / 1e6
+        );
+        const dateString = date.toISOString();
+
+        const logLine = [`time=${dateString}`, `level=${record.severityText}`];
+
+        if (record.body?.msg) {
+            logLine.push(`msg=${escapeLogValue(record.body.msg)}`);
+        }
+
+        if (record.body?.error) {
+            logLine.push(
+                `error=${escapeLogValue(stringifyError(record.body.error))}`
+            );
+        }
+
+        if (
+            record.body?.traceId &&
+            record.body.traceId !== '00000000000000000000000000000000'
+        ) {
+            logLine.push(`traceId=${escapeLogValue(record.body.traceId)}`);
+        }
+
+        return logLine.join(' ');
+    } else {
+        // eslint-disable-next-line no-console
+        return JSON.stringify(record.body);
+    }
+}

@@ -60,7 +60,7 @@ import type {XmlFragment} from 'yjs';
 import type {AuthManager} from '../../auth-manager';
 
 import {WebCryptoProvider} from 'syncwave/web-crypto-provider.js';
-import {appConfig} from '../config';
+import {appConfig} from '../../config';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import {

@@ -16,8 +16,8 @@ import {
     type Unsubscribe,
 } from 'syncwave';
 import {AuthManager} from '../auth-manager';
+import {appConfig} from '../config';
 import {WsTransportClient} from '../ws-transport-client';
-import {appConfig} from './config';
 
 import {UploadManager} from './upload-manager.svelte';
 

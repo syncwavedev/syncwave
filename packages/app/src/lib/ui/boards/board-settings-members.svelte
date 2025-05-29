@@ -2,7 +2,7 @@
     import {toastManager} from '../../../toast-manager.svelte';
     import {getAgent} from '../../agent/agent.svelte';
     import type {BoardView, MeView} from '../../agent/view.svelte';
-    import {appConfig} from '../../config';
+    import {appConfig} from '../../../config';
     import Avatar from '../components/avatar.svelte';
     import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
     import ClipboardCopyIcon from '../components/icons/clipboard-copy-icon.svelte';

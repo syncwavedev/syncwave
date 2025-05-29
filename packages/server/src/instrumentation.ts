@@ -13,46 +13,87 @@ import {
     LoggerProvider,
     SimpleLogRecordProcessor,
 } from '@opentelemetry/sdk-logs';
+import {formatLog} from 'syncwave';
+import {getStage} from './stage.js';
 
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+const stage = getStage();
 
-// traces
+if (stage === 'self') {
+    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.WARN);
 
-const spanExporter = new BatchSpanProcessor(
-    new OTLPTraceExporter({
-        url: 'https://otel.bridgex.dev/v1/traces',
-    })
-);
+    const tracerProvider = new BasicTracerProvider({
+        resource: resourceFromAttributes({
+            [ATTR_SERVICE_NAME]: 'server',
+        }),
+        spanProcessors: [],
+        sampler: new AlwaysOnSampler(),
+    });
+    trace.setGlobalTracerProvider(tracerProvider);
 
-const tracerProvider = new BasicTracerProvider({
-    resource: resourceFromAttributes({
-        [ATTR_SERVICE_NAME]: 'server',
-    }),
-    spanProcessors: [spanExporter],
-    sampler: new AlwaysOnSampler(),
-});
-trace.setGlobalTracerProvider(tracerProvider);
+    // logs
 
-// logs
+    const loggerProvider = new LoggerProvider({
+        resource: resourceFromAttributes({
+            [ATTR_SERVICE_NAME]: 'server',
+        }),
+    });
 
-const loggerProvider = new LoggerProvider({
-    resource: resourceFromAttributes({
-        [ATTR_SERVICE_NAME]: 'server',
-    }),
-});
+    loggerProvider.addLogRecordProcessor(
+        new SimpleLogRecordProcessor({
+            export: (logs, cb) => {
+                for (const log of logs) {
+                    // eslint-disable-next-line no-console
+                    console.log(formatLog(log));
+                }
 
-loggerProvider.addLogRecordProcessor(
-    new SimpleLogRecordProcessor({
-        export: (logs, cb) => {
-            for (const log of logs) {
-                // eslint-disable-next-line no-console
-                console.log(JSON.stringify(log.body));
-            }
+                cb({code: 0});
+            },
+            shutdown: () => Promise.resolve(),
+        })
+    );
 
-            cb({code: 0});
-        },
-        shutdown: () => Promise.resolve(),
-    })
-);
+    logs.setGlobalLoggerProvider(loggerProvider);
+} else {
+    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 
-logs.setGlobalLoggerProvider(loggerProvider);
+    // traces
+
+    const spanExporter = new BatchSpanProcessor(
+        new OTLPTraceExporter({
+            url: 'https://otel.bridgex.dev/v1/traces',
+        })
+    );
+
+    const tracerProvider = new BasicTracerProvider({
+        resource: resourceFromAttributes({
+            [ATTR_SERVICE_NAME]: 'server',
+        }),
+        spanProcessors: [spanExporter],
+        sampler: new AlwaysOnSampler(),
+    });
+    trace.setGlobalTracerProvider(tracerProvider);
+
+    // logs
+
+    const loggerProvider = new LoggerProvider({
+        resource: resourceFromAttributes({
+            [ATTR_SERVICE_NAME]: 'server',
+        }),
+    });
+
+    loggerProvider.addLogRecordProcessor(
+        new SimpleLogRecordProcessor({
+            export: (logs, cb) => {
+                for (const log of logs) {
+                    // eslint-disable-next-line no-console
+                    console.log(JSON.stringify(log.body));
+                }
+
+                cb({code: 0});
+            },
+            shutdown: () => Promise.resolve(),
+        })
+    );
+
+    logs.setGlobalLoggerProvider(loggerProvider);
+}

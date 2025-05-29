@@ -1,7 +1,7 @@
 <script lang="ts">
     import {AUTH_CODE_LENGTH} from 'syncwave';
     import {getAgent} from '../../agent/agent.svelte';
-    import {appConfig} from '../../config.js';
+    import {appConfig} from '../../../config.js';
     import router from '../../router';
     import {getRpc, getAuthManager} from '../../utils.js';
     import Envelope from '../components/icons/envelope.svelte';

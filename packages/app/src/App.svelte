@@ -24,7 +24,7 @@
         getAgent,
         SvelteComponentContextManager,
     } from './lib/agent/agent.svelte.js';
-    import {appConfig} from './lib/config';
+    import {appConfig} from './config';
     import {WsTransportClient} from './ws-transport-client';
     import {AuthManager} from './auth-manager';
 

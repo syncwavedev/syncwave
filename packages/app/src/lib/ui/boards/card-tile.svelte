@@ -94,7 +94,7 @@
         data-active={active || undefined}
         class="
             bg-gray-40
-            dark:bg-gray-775
+            dark:bg-gray-800
             hover:bg-gray-75
             dark:hover:bg-gray-750
             group

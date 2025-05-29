@@ -13,8 +13,8 @@
     import UserRoundCog from '../components/icons/user-round-cog.svelte';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
-    import ActivityPanel from './activity-panel.svelte';
     import modalManager from '../modal-manager.svelte';
+    import ActivityView from '../activity-view/activity-view.svelte';
 
     const {
         me,
@@ -33,16 +33,16 @@
     <ProfileModal {me} />
 {/snippet}
 
-<div class="border-r border-divider icon-lg flex flex-col px-2.25">
+<div class="border-r border-divider icon-lg flex flex-col px-2 bg-gray-925">
     <div class="panel-header-height flex items-center">
-        <button class="btn--icon text-ink-body">
+        <button class="btn menu--btn text-ink-body">
             <MenuSearchIcon />
         </button>
     </div>
     <div class="flex flex-col justify-between items-center flex-1 pt-2 pb-4">
         <button
-            class="btn--icon text-ink-body"
-            class:text-primary={activePanel === 'activity'}
+            class="btn menu--btn text-ink-body"
+            class:menu--btn--active={activePanel === 'activity'}
             onclick={() => {
                 activePanel = activePanel === 'activity' ? null : 'activity';
             }}
@@ -70,7 +70,7 @@
                 },
             ]}
         >
-            <button class="btn--icon mt-auto">
+            <button class="btn mt-auto">
                 <Avatar
                     userId={me.id}
                     imageUrl={me.avatarUrlSmall}
@@ -86,10 +86,29 @@
         class="max-h-full overflow-auto"
         freeSide="right"
         width={panelSizeManager.getWidth('activity') ?? 360}
-        minWidth={320}
+        minWidth={240}
         maxWidth={1600}
         onWidthChange={w => panelSizeManager.setWidth('activity', w)}
     >
-        <ActivityPanel {board} />
+        <ActivityView {board} />
     </ResizablePanel>
 {/if}
+
+<style>
+    .menu--btn {
+        display: grid;
+        aspect-ratio: 1/1;
+        place-items: center;
+        height: 2.5em;
+        width: 2.5em;
+        border-radius: var(--radius-md);
+
+        &.menu--btn--active {
+            background-color: var(--color-gray-1050);
+        }
+
+        &:hover {
+            background-color: var(--color-gray-1050);
+        }
+    }
+</style>

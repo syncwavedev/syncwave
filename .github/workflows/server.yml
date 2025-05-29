@@ -46,6 +46,7 @@ jobs:
             echo "APP_PORT=7202" >> $GITHUB_OUTPUT
             echo "METRICS_PORT=7204" >> $GITHUB_OUTPUT
             echo "SECRET_KEY=${{ secrets.JWT_SECRET_DEV }}" >> $GITHUB_OUTPUT
+            echo "BASE_URL=https://dev.syncwave.dev" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_DEV }}" >> $GITHUB_OUTPUT
 
@@ -58,6 +59,7 @@ jobs:
             echo "APP_PORT=7201" >> $GITHUB_OUTPUT
             echo "METRICS_PORT=7203" >> $GITHUB_OUTPUT
             echo "SECRET_KEY=${{ secrets.JWT_SECRET_PROD }}" >> $GITHUB_OUTPUT
+            echo "BASE_URL=https://app.syncwave.dev" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PROD }}" >> $GITHUB_OUTPUT
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}" >> $GITHUB_OUTPUT
 
@@ -113,6 +115,7 @@ jobs:
               -e NODE_ENV=production \
               -e STAGE=${{ steps.config.outputs.STAGE }} \
               -e SECRET_KEY=${{ steps.config.outputs.SECRET_KEY }} \
+              -e BASE_URL=${{ steps.config.outputs.BASE_URL }} \
               -e GOOGLE_CLIENT_ID=${{ steps.config.outputs.GOOGLE_CLIENT_ID }} \
               -e GOOGLE_CLIENT_SECRET=${{ steps.config.outputs.GOOGLE_CLIENT_SECRET }} \
               -e S3_BUCKET_NAME=syncwave \

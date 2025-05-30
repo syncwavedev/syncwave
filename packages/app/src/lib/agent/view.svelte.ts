@@ -19,6 +19,7 @@ import {
     TransactionId,
     uniqBy,
     yFragmentToPlaintext,
+    yFragmentToPlaintextAndTaskList,
     type Account,
     type Attachment,
     type AwarenessState,
@@ -747,6 +748,13 @@ export class CardTreeView implements Card {
     dndInProgress = $derived.by(
         () => this._data.cardDragSettledAt.get(this.id) !== undefined
     );
+
+    renderedText = $derived.by(() => {
+        return yFragmentToPlaintextAndTaskList(this.text.__fragment!);
+    });
+    plaintext = $derived.by(() => this.renderedText.text);
+    tasksDone = $derived.by(() => this.renderedText.checked);
+    tasksTotal = $derived.by(() => this.renderedText.total);
 
     isDraft = $derived(this._card.counter === null);
     authorId = $derived(this._card.authorId);

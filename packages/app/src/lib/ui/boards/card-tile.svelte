@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {yFragmentToPlaintextAndTaskList} from 'syncwave';
     import Avatar from '../components/avatar.svelte';
     import type {CardTreeView} from '../../agent/view.svelte';
     import {getAgent} from '../../agent/agent.svelte';
@@ -23,9 +22,7 @@
     } = $props();
 
     let {preview, todoStats} = $derived.by(() => {
-        const {text, checked, total} = yFragmentToPlaintextAndTaskList(
-            card.text.__fragment!
-        );
+        const {text, checked, total} = card.renderedText;
 
         return {
             preview:

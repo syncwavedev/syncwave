@@ -1,6 +1,6 @@
-import './instrumentation.js';
-
 import 'dotenv/config';
+
+import './instrumentation.js';
 
 import cors from '@koa/cors';
 import cluster from 'cluster';
@@ -82,7 +82,7 @@ function getApiUrl(params: {stage: Stage; baseUrl: string}): string {
 
 function getAppUrl(params: {stage: Stage; baseUrl: string}): string {
     return match(params.stage)
-        .with('local', () => 'http://localhost:4567')
+        .with('local', () => 'http://localhost:5173')
         .with('dev', () => 'https://dev.syncwave.dev')
         .with('prod', () => 'https://app.syncwave.dev')
         .with('self', () => trimBaseUrl(params.baseUrl))
@@ -108,6 +108,9 @@ function getGoogleOptions(stage: Stage): Result<GoogleOptions | undefined> {
     }
     if (!BASE_URL) {
         errors.push('BASE_URL is required for Google OAuth');
+    }
+    if (errors.length) {
+        return {type: 'error', errors};
     }
 
     assert(

@@ -178,7 +178,7 @@ export class BoardService {
             )
         );
 
-        let counter = 0;
+        let counter = 1;
         await whenAll(
             template.columns.map(async (column, idx) => {
                 const columnId = createColumnId();

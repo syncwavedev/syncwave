@@ -36,7 +36,6 @@ import {
     createRpcHandlerClient,
     launchRpcHandlerServer,
     reconstructError,
-    reportRpcError,
 } from './rpc-handler.js';
 import type {MessageHeaders} from './rpc-message.js';
 import {RpcConnection} from './rpc-transport.js';
@@ -142,29 +141,13 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError('processor must be a handler');
                 }
 
-                const callInfo = `handle_call ${req.name} [rid=${ctx.requestId}]`;
+                const result = await processor.handle(
+                    state.state,
+                    req.arg,
+                    ctx
+                );
 
-                try {
-                    log.info({msg: `req ${callInfo}...`});
-
-                    const result = await processor.handle(
-                        state.state,
-                        req.arg,
-                        ctx
-                    );
-
-                    log.info({
-                        msg: `res ${callInfo} => ${stringifyLogPart(result)}`,
-                    });
-
-                    return result;
-                } catch (error) {
-                    log.error({
-                        error,
-                        msg: `${callInfo} failed`,
-                    });
-                    throw error;
-                }
+                return result;
             },
         }),
         stream: handler({
@@ -179,10 +162,6 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                 if (processor.type !== 'streamer') {
                     throw new AppError('processor must be a streamer');
                 }
-
-                const callInfo = `handle ${name} [sid=${streamId}]`;
-
-                log.info({msg: `req ${callInfo}...`});
 
                 const [ctx, cancelCtx] = context().createDetached({
                     span: `handle_stream ${name}`,
@@ -204,9 +183,6 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                 )
                                     .map((value, index) => ({value, index}))
                                     .mapParallel(async ({value, index}) => {
-                                        log.info({
-                                            msg: `res ${callInfo} => ${stringifyLogPart(value)}`,
-                                        });
                                         assert(
                                             index === counter,
                                             'stream value index !== counter'
@@ -221,7 +197,6 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                     })
                                     .consume();
                             } catch (error: unknown) {
-                                reportRpcError(toError(error), callInfo);
                                 // no point in sending throw if the stream was cancelled by client
                                 if (!state.jobManager.isCancelled(streamId)) {
                                     await catchConnectionClosed(
@@ -235,8 +210,6 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                                     );
                                 }
                             } finally {
-                                log.info({msg: `end ${callInfo}`});
-
                                 // no point in sending end if the stream was cancelled by client
                                 if (!state.jobManager.isCancelled(streamId)) {
                                     await catchConnectionClosed(
@@ -249,7 +222,9 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
 
                                 state.jobManager.finish(
                                     streamId,
-                                    new AppError(`${callInfo} finished`)
+                                    new AppError(
+                                        `finished stream ${name} [streamId=${streamId}]`
+                                    )
                                 );
                             }
                         }
@@ -257,7 +232,7 @@ function createRpcStreamerServerApi<TState>(api: StreamerApi<TState>) {
                 ).catch(error => {
                     log.error({
                         error,
-                        msg: `${callInfo} failed`,
+                        msg: `failed to handle stream ${name} [streamId=${streamId}]`,
                     });
                 });
 

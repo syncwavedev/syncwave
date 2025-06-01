@@ -3,15 +3,17 @@ import {decodeMsgpack, encodeMsgpack} from '../codec.js';
 import {RPC_CHUNK_SIZE} from '../constants.js';
 import {context} from '../context.js';
 import type {Authenticator} from '../data/auth.js';
-import {AppError, CancelledError} from '../errors.js';
+import {AppError, CancelledError, toError} from '../errors.js';
 import {log} from '../logger.js';
 import {toStream, type Stream} from '../stream.js';
 import {checkValue} from '../type.js';
 import {assertNever, joinBuffers, type Unsubscribe} from '../utils.js';
+import {reportRpcError} from './rpc-handler.js';
 import type {MessageHeaders} from './rpc-message.js';
 import {
     createRpcStreamerClient,
     launchRpcStreamerServer,
+    stringifyLogPart,
     type StreamerApi,
 } from './rpc-streamer.js';
 import {RpcConnection} from './rpc-transport.js';
@@ -90,14 +92,34 @@ function createRpcChunkerServerApi<TState>(api: StreamerApi<TState>) {
                     throw new AppError(`unknown rpc endpoint: ${method}`);
                 }
 
+                const callInfo = `handle_call ${method} [rid=${ctx.requestId}]`;
+
                 if (handler.type !== 'handler') {
                     throw new AppError(
                         `rpc endpoint ${method} is not a handler`
                     );
                 }
 
-                const result = await handler.handle(state, arg, ctx);
-                yield* chunkBuffer(encodeMsgpack(result), RPC_CHUNK_SIZE);
+                try {
+                    if (method !== 'echo') {
+                        log.info({msg: `req ${callInfo}...`});
+                    }
+
+                    const result = await handler.handle(state, arg, ctx);
+
+                    if (method !== 'echo') {
+                        log.info({
+                            msg: `res ${callInfo} => ${stringifyLogPart(result)}`,
+                        });
+                    }
+                    yield* chunkBuffer(encodeMsgpack(result), RPC_CHUNK_SIZE);
+                } catch (error) {
+                    log.error({
+                        error,
+                        msg: `${callInfo} failed`,
+                    });
+                    throw error;
+                }
             },
         }),
         stream: streamer({
@@ -120,8 +142,22 @@ function createRpcChunkerServerApi<TState>(api: StreamerApi<TState>) {
                     );
                 }
 
-                for await (const item of handler.stream(state, arg, ctx)) {
-                    yield* chunkBuffer(encodeMsgpack(item), RPC_CHUNK_SIZE);
+                const callInfo = `handle ${method} [rid=${ctx.requestId}]`;
+
+                log.info({msg: `req ${callInfo}...`});
+
+                try {
+                    for await (const item of handler.stream(state, arg, ctx)) {
+                        log.info({
+                            msg: `res ${callInfo} => ${stringifyLogPart(item)}`,
+                        });
+                        yield* chunkBuffer(encodeMsgpack(item), RPC_CHUNK_SIZE);
+                    }
+                } catch (error) {
+                    reportRpcError(toError(error), callInfo);
+                    throw error;
+                } finally {
+                    log.info({msg: `end ${callInfo}`});
                 }
             },
         }),

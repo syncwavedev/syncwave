@@ -3,11 +3,17 @@ import {decodeMsgpack, encodeMsgpack} from '../codec.js';
 import {RPC_CHUNK_SIZE} from '../constants.js';
 import {context} from '../context.js';
 import type {Authenticator} from '../data/auth.js';
-import {AppError, CancelledError, toError} from '../errors.js';
+import {
+    AppError,
+    CancelledError,
+    getReadableError,
+    toError,
+} from '../errors.js';
 import {log} from '../logger.js';
 import {toStream, type Stream} from '../stream.js';
 import {checkValue} from '../type.js';
 import {assertNever, joinBuffers, type Unsubscribe} from '../utils.js';
+import {createUuidV4} from '../uuid.js';
 import {reportRpcError} from './rpc-handler.js';
 import type {MessageHeaders} from './rpc-message.js';
 import {
@@ -222,6 +228,15 @@ export function createRpcChunkerClient<TApi extends StreamerApi<any>>(
                 throw error;
             }
 
+            const requestId = createUuidV4();
+            const callInfo = `${name}(${stringifyLogPart(arg)}) [rid=${requestId}]`;
+            const logCommunication = name !== 'echo';
+            if (logCommunication) {
+                log.info({msg: `req ${callInfo}...`});
+            }
+
+            log.info({msg: `req ${callInfo}...`});
+
             if (handler.type === 'handler') {
                 return server
                     .handle({method: name, arg}, headers)
@@ -230,11 +245,54 @@ export function createRpcChunkerClient<TApi extends StreamerApi<any>>(
                         acc.push(chunk);
                         return acc;
                     }, [])
-                    .then(chunks => decodeMsgpack(joinBuffers(chunks)));
+                    .then(chunks => decodeMsgpack(joinBuffers(chunks)))
+                    .then(result => {
+                        if (logCommunication) {
+                            log.info({
+                                msg: `res ${callInfo} => ${stringifyLogPart(result)}`,
+                            });
+                        }
+                        return result;
+                    })
+                    .catch(async error => {
+                        if (logCommunication) {
+                            log.error({
+                                error,
+                                msg: `${callInfo} failed: ${getReadableError(error)}`,
+                            });
+                        }
+                        throw error;
+                    });
             } else if (handler.type === 'streamer') {
                 return toStream(
                     transformStream(server.stream({method: name, arg}, headers))
-                ).map(item => decodeMsgpack(item));
+                )
+                    .map(item => decodeMsgpack(item))
+                    .tap(value => {
+                        if (logCommunication) {
+                            log.info({
+                                msg: `next ${callInfo} => ${stringifyLogPart(
+                                    value
+                                )}`,
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        if (logCommunication) {
+                            log.error({
+                                error,
+                                msg: `${callInfo} failed: ${getReadableError(
+                                    error
+                                )}`,
+                            });
+                        }
+                        throw error;
+                    })
+                    .finally(() => {
+                        if (logCommunication) {
+                            log.info({msg: `end ${callInfo}`});
+                        }
+                    });
             } else {
                 assertNever(handler);
             }

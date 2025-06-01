@@ -508,7 +508,6 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
             }
 
             const requestId = createUuidV4();
-            const callInfo = `${name}(${stringifyLogPart(arg)}) [rid=${requestId}]`;
 
             if (handler.type === 'handler') {
                 const [requestCtx, cancelRequestCtx] = context().createChild({
@@ -519,22 +518,7 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                 });
                 return requestCtx
                     .run(async () => {
-                        log.info({msg: `req ${callInfo}...`});
-                        return server
-                            .handle({name, arg}, headers)
-                            .then(async result => {
-                                log.info({
-                                    msg: `res ${callInfo} => ${stringifyLogPart(result)}`,
-                                });
-                                return result;
-                            })
-                            .catch(async error => {
-                                log.error({
-                                    error,
-                                    msg: `${callInfo} failed: ${getReadableError(error)}`,
-                                });
-                                throw error;
-                            });
+                        return server.handle({name, arg}, headers);
                     })
                     .finally(() => {
                         cancelRequestCtx('rpc-streamer: request ended');
@@ -589,28 +573,15 @@ export function createRpcStreamerClient<TApi extends StreamerApi<any>>(
                                 arg,
                             });
 
-                            log.info({msg: `req ${callInfo}...`});
                             await server.stream({streamId, name, arg}, headers);
                             await channel.pipe({
                                 next: value => {
-                                    log.info({
-                                        msg: `next ${callInfo} => ${stringifyLogPart(
-                                            value
-                                        )}`,
-                                    });
                                     return writer.next(value);
                                 },
                                 throw: error => {
-                                    log.error({
-                                        error,
-                                        msg: `${callInfo} failed: ${getReadableError(
-                                            error
-                                        )}`,
-                                    });
                                     return writer.throw(error);
                                 },
                                 end: () => {
-                                    log.info({msg: `end ${callInfo}`});
                                     return writer.end();
                                 },
                             });

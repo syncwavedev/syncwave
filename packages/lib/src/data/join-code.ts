@@ -3,6 +3,5 @@ import type {CryptoProvider} from './infrastructure.js';
 
 export async function createJoinCode(crypto: CryptoProvider) {
     const randomBytes = await crypto.randomBytes(9);
-    const code = decodeBase64(randomBytes);
-    return code;
+    return decodeBase64(randomBytes).replaceAll('/', '_').replaceAll('+', '-');
 }

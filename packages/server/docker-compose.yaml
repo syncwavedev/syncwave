@@ -1,7 +1,7 @@
 # Init db:
 #
-# docker compose exec foundationdb bash -c "fdbcli --exec 'configure new single ssd-redwood-1'"
-# docker compose exec foundationdb bash -c "fdbcli --exec 'status'"
+# docker compose exec fdb bash -c "fdbcli --exec 'configure new single ssd-redwood-1'"
+# docker compose exec fdb bash -c "fdbcli --exec 'status'"
 
 # env:
 #

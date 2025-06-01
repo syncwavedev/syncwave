@@ -138,7 +138,7 @@ export class EventStoreReader<T> implements EventStoreReader<T> {
                         return result;
                     });
 
-                    log.info({
+                    log.debug({
                         msg: `EventStoreReader.subscribe transact finished: ${entries.length}`,
                     });
 

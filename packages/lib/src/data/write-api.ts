@@ -481,11 +481,12 @@ export function createWriteApi() {
                     );
                 }
 
-                await st.memberService.joinBoard({
+                await st.memberService.addMember({
                     account,
                     boardId,
                     role,
                     uiUrl,
+                    checkPermission: true,
                 });
 
                 return {};
@@ -524,11 +525,12 @@ export function createWriteApi() {
                 );
                 assert(account !== undefined, 'account not found');
 
-                await st.memberService.joinBoard({
+                await st.memberService.addMember({
                     account,
                     boardId: board.id,
                     role: board.joinRole,
                     uiUrl,
+                    checkPermission: false,
                 });
 
                 return {boardKey: board.key};

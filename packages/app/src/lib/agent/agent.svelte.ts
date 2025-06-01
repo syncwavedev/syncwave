@@ -311,7 +311,7 @@ export class Agent {
         });
     }
 
-    async joinViaCode(code: string): Promise<{boardKey: string}> {
+    async joinByCode(code: string): Promise<{boardKey: string}> {
         return await this.rpc.joinByCode({code, uiUrl: appConfig.uiUrl});
     }
 

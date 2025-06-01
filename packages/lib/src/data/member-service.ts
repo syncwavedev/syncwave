@@ -21,11 +21,12 @@ export class MemberService {
         private readonly principal: Principal
     ) {}
 
-    async joinBoard(params: {
+    async addMember(params: {
         account: Account;
         boardId: BoardId;
         role: MemberRole;
         uiUrl: string;
+        checkPermission: boolean;
     }) {
         const board = await this.boards.getById(params.boardId);
         if (!board) {
@@ -49,10 +50,12 @@ export class MemberService {
                 existingMember?.deletedAt ||
                 !canManageRole(existingMember.role, params.role)
             ) {
-                await this.permissionService.ensureCanManage(
-                    existingMember.boardId,
-                    existingMember.role
-                );
+                if (params.checkPermission) {
+                    await this.permissionService.ensureCanManage(
+                        existingMember.boardId,
+                        existingMember.role
+                    );
+                }
                 member = await this.members.update(
                     existingMember.id,
                     {excludeDeleted: false},
@@ -69,6 +72,7 @@ export class MemberService {
                 member = existingMember;
             }
         } else {
+            console.log('more');
             member = await this.members.create({
                 id: createMemberId(),
                 boardId: params.boardId,

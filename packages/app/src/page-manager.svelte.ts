@@ -148,9 +148,9 @@ export class PageManager {
                 }
 
                 this._agent
-                    .joinViaCode(code)
-                    .then(key => {
-                        router.route(`/b/${key}`, {replace: true});
+                    .joinByCode(code)
+                    .then(({boardKey}) => {
+                        router.route(`/b/${boardKey}`, {replace: true});
                     })
                     .catch(() => {
                         toastManager.error(

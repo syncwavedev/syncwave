@@ -223,14 +223,12 @@ export class DndBoardContext {
         draggable.element.style.left = `${startDraggableX}px`;
         draggable.element.style.top = `${startDraggableY}px`;
 
-        draggable.element.setPointerCapture(downEvent.pointerId);
-
         const startPointerX = downEvent.pageX;
         const startPointerY = downEvent.pageY;
 
         const cancelPointerMove = this.addListener(
             this,
-            draggable.element,
+            document,
             'pointermove',
             moveEvent => {
                 log.debug({
@@ -283,8 +281,6 @@ export class DndBoardContext {
 
             log.debug({msg: `cleanup`, dragId});
 
-            draggable.element.releasePointerCapture(downEvent.pointerId);
-
             this.handleDrop(card.card.value.id, draggable, dragId);
 
             cancelAutoscroll();
@@ -301,13 +297,13 @@ export class DndBoardContext {
 
         const cancelPointerUp = this.addListener(
             this,
-            draggable.element,
+            document,
             'pointerup',
             cleanup
         );
         const cancelPointerCancel = this.addListener(
             this,
-            draggable.element,
+            document,
             'pointercancel',
             cleanup
         );
@@ -411,9 +407,7 @@ export class DndBoardContext {
                 });
             }
 
-            if (card) {
-                this.agent.finalizeCardPosition(card.card.value.id);
-            }
+            this.agent.finalizeCardPosition(cardId);
 
             return;
         }
@@ -437,7 +431,7 @@ export class DndBoardContext {
                 });
             }
 
-            this.agent.finalizeCardPosition(card.card.value.id);
+            this.agent.finalizeCardPosition(cardId);
         }, DND_DROP_DURATION_MS);
 
         // find final placement

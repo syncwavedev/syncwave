@@ -199,14 +199,12 @@ export class DndColumnListContext {
         draggable.element.style.left = `${startDraggableX}px`;
         draggable.element.style.top = `${startDraggableY}px`;
 
-        draggable.element.setPointerCapture(downEvent.pointerId);
-
         const startPointerX = downEvent.pageX;
         const startPointerY = downEvent.pageY;
 
         const cancelPointerMove = this.addListener(
             this,
-            draggable.element,
+            document,
             'pointermove',
             moveEvent => {
                 log.debug({
@@ -262,8 +260,6 @@ export class DndColumnListContext {
 
             log.debug({msg: `cleanup`, dragId});
 
-            draggable.element.releasePointerCapture(downEvent.pointerId);
-
             this.handleDrop(column.column.value.id, draggable, dragId);
 
             cancelAutoscroll();
@@ -280,13 +276,13 @@ export class DndColumnListContext {
 
         const cancelPointerUp = this.addListener(
             this,
-            draggable.element,
+            document,
             'pointerup',
             cleanup
         );
         const cancelPointerCancel = this.addListener(
             this,
-            draggable.element,
+            document,
             'pointercancel',
             cleanup
         );
@@ -358,9 +354,7 @@ export class DndColumnListContext {
                 });
             }
 
-            if (column) {
-                this.agent.finalizeColumnPosition(column.column.value.id);
-            }
+            this.agent.finalizeColumnPosition(columnId);
 
             return;
         }
@@ -384,7 +378,7 @@ export class DndColumnListContext {
                 });
             }
 
-            this.agent.finalizeColumnPosition(column.column.value.id);
+            this.agent.finalizeColumnPosition(columnId);
         }, DND_DROP_DURATION_MS);
 
         // find final placement

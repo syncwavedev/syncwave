@@ -14,10 +14,10 @@
     class="border-divider border-r z-10 flex w-full flex-shrink-0 flex-col bg-sidebar"
 >
     <div class="flex items-center px-panel-inline h-panel-header">
-        <p>Activity</p>
+        <p class="font-medium">Activity</p>
     </div>
     <div
-        class="overflow-y-auto no-scrollbar flex flex-col flex-1 px-panel-inline-half"
+        class="overflow-y-auto no-scrollbar flex flex-col gap-1 flex-1 px-panel-inline-half"
     >
         {#each board.unreadMessages as message (message.id)}
             {#if message.payload.type === 'card_column_changed'}

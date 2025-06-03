@@ -247,7 +247,7 @@
         class="btn--ghost hover:bg-material-base-hover -ml-1"
         onclick={() => modalManager.open(boardCommands)}
     >
-        <span>{board.name}</span>
+        <span class="font-medium">{board.name}</span>
     </button>
 
     <div class="ml-2 flex">

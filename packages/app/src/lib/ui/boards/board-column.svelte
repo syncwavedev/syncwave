@@ -60,7 +60,7 @@
         class="flex items-center column-padding-inline mb-3 shrink-0"
         data-disable-scroll-view-drag="true"
     >
-        <div class="flex items-center gap-1.5 leading-none">
+        <div class="flex items-center gap-1.5 leading-none font-medium">
             <ColumnIcon active={columnPosition} total={columnsCount} />
 
             {column.name}

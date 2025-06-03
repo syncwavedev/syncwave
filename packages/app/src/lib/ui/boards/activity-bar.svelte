@@ -35,7 +35,7 @@
 {/snippet}
 
 <div
-    class="border-r border-divider flex flex-col px-2"
+    class="border-r border-divider flex flex-col px-1.5 text-ink-body"
     class:bg-sidebar={activePanel !== null}
 >
     <div class="h-panel-header flex items-center">

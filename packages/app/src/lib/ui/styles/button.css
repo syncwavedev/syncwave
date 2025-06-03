@@ -10,7 +10,7 @@
 }
 
 .btn--icon {
-    @apply hover:bg-gray-1025
+    @apply hover:bg-material-1-hover
     grid
     aspect-square
     h-[2em]
@@ -21,7 +21,7 @@
     disabled:text-ink-disabled;
 
     &.btn--icon--active {
-        @apply bg-gray-1025;
+        @apply bg-material-1-hover;
     }
 
     &.btn--icon--bordered {

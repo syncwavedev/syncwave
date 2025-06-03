@@ -1,40 +1,16 @@
 :root {
-    --panel-header-height: 3rem;
-    --panel-footer-height: 2rem;
+    --panel-padding-block: 1rem;
     --panel-padding-inline: 1rem;
-    --panel-border-width: 1px;
+    --panel-header-height: 3rem;
 }
 
-.panel-header {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-
-    height: var(--panel-header-height);
-
-    padding-inline: var(--panel-padding-inline);
-    /* border-bottom: var(--panel-border-width) solid var(--color-divider); */
+@theme static {
+    --spacing-panel-inline: var(--panel-padding-inline);
+    --spacing-panel-block: var(--panel-padding-block);
+    --spacing-panel-inline-half: calc(var(--spacing-panel-inline) / 2);
+    --spacing-panel-block-half: calc(var(--spacing-panel-block) / 2);
 }
 
-.panel-footer {
-    display: flex;
-    flex-shrink: 0;
-
-    height: var(--panel-footer-height);
-
-    padding-inline: var(--panel-padding-inline);
-
-    border-top: var(--panel-border-width) solid var(--color-divider);
-}
-
-.panel-margin-inline {
-    margin-inline: var(--panel-padding-inline);
-}
-
-.panel-padding-inline {
-    padding-inline: var(--panel-padding-inline);
-}
-
-.panel-header-height {
+.h-panel-header {
     height: var(--panel-header-height);
 }

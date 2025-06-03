@@ -1,8 +1,5 @@
 :root {
-    --board-height: calc(
-        var(--app-height) - var(--panel-header-height) - 2 *
-            var(--panel-border-width)
-    );
+    --board-height: calc(var(--app-height) - var(--panel-header-height));
 
     --column-width: 39ch;
     --column-padding-inline: 0.6125rem;
@@ -18,13 +15,6 @@
     );
 }
 
-.board-header {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-
-    height: var(--panel-header-height);
-
-    padding-inline: var(--board-padding-inline);
-    /* border-bottom: var(--panel-border-width) solid var(--color-divider); */
+@theme static {
+    --spacing-board-inline: var(--board-padding-inline);
 }

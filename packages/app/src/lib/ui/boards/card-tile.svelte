@@ -95,7 +95,7 @@
         class="
             bg-gray-40
             dark:bg-gray-800
-            hover:bg-gray-75
+            hover:bg-gray-80
             dark:hover:bg-gray-750
             group
             flex

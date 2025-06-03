@@ -148,7 +148,7 @@
 </script>
 
 <div class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l">
-    <div class="panel-header">
+    <div class="flex items-center shrink-0 h-panel-header px-panel-inline">
         <div class="flex items-center gap-0.5 icon-base">
             {#if card.isDraft}
                 New card
@@ -189,7 +189,7 @@
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="panel-margin-inline mt-2">
+        <div class="mx-panel-inline">
             <div class="input w-full leading-relaxed text-lg">
                 <Editor
                     bind:this={editor}
@@ -205,7 +205,7 @@
             </div>
         </div>
         <!-- Task Actions -->
-        <div class="flex gap-2 panel-margin-inline mt-4 mb-2 items-center">
+        <div class="flex gap-2 mx-panel-inline mt-4 mb-2 items-center">
             <Select
                 value={card.column.id}
                 options={columnOptions}
@@ -254,7 +254,7 @@
         </div>
     {/if}
     <div
-        class="panel-margin-inline border border-divider-object mb-4 p-2 rounded-md text-lg"
+        class="mx-panel-inline border border-divider-object mb-4 p-2 rounded-md text-lg"
     >
         <Editor
             {fragment}

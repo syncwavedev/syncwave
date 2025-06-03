@@ -72,6 +72,8 @@
 
     --color-material-elevated-input: var(--theme-color-material-elevated-input);
 
+    --color-sidebar: var(--theme-color-sidebar);
+
     --color-material-base: var(--theme-color-material-base);
     --color-material-base-hover: var(--theme-color-material-base-hover);
 
@@ -91,7 +93,7 @@
 
 @layer base {
     [data-theme='light'] {
-        --theme-color-ink: var(--color-gray-950);
+        --theme-color-ink: var(--color-gray-1050);
         --theme-color-ink-body: var(--color-gray-600);
         --theme-color-ink-detail: var(--color-gray-500);
         --theme-color-ink-placeholder: var(--color-gray-350);
@@ -115,17 +117,19 @@
 
         --theme-color-material-elevated-input: var(--color-gray-10);
 
+        --theme-color-sidebar: var(--color-gray-10);
+
         --theme-color-material-base: white;
         --theme-color-material-base-hover: var(--color-gray-30);
 
         --theme-color-material-1: var(--color-gray-20);
-        --theme-color-material-1-hover: var(--color-gray-50);
+        --theme-color-material-1-hover: var(--color-gray-70);
 
         --theme-color-material-2: var(--color-gray-40);
-        --theme-color-material-2-hover: var(--color-gray-70);
+        --theme-color-material-2-hover: var(--color-gray-90);
 
         --theme-color-material-3: var(--color-gray-60);
-        --theme-color-material-3-hover: var(--color-gray-90);
+        --theme-color-material-3-hover: var(--color-gray-125);
     }
 
     [data-theme='dark'] {
@@ -151,6 +155,8 @@
         --theme-color-material-elevated-element-hover: var(--color-gray-650);
 
         --theme-color-material-elevated-input: var(--color-gray-800);
+
+        --theme-color-sidebar: var(--color-gray-925);
 
         --theme-color-material-base: var(--color-gray-900);
         --theme-color-material-base-hover: var(--color-gray-825);

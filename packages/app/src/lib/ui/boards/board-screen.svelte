@@ -17,7 +17,6 @@
     import ResizablePanel from '../components/resizable-panel.svelte';
     import Avatar from '../components/avatar.svelte';
     import BoardCommands from './board-commands.svelte';
-    import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
     import modalManager from '../modal-manager.svelte';
     import BoardSettingsModal from './board-settings-modal.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';
@@ -245,11 +244,10 @@
 
 {#snippet header()}
     <button
-        class="btn--ghost hover:bg-material-base-hover -ml-1 font-medium"
+        class="btn--ghost hover:bg-material-base-hover -ml-1"
         onclick={() => modalManager.open(boardCommands)}
     >
         <span>{board.name}</span>
-        <ChevronDownIcon />
     </button>
 
     <div class="ml-2 flex">
@@ -325,7 +323,9 @@
 <div class="app flex">
     <ActivityBar {me} {board} />
     <div class="relative flex min-w-0 flex-col flex-1">
-        <div class="board-header avatar-xs">
+        <div
+            class="flex items-center shrink-0 px-board-inline h-panel-header avatar-xs"
+        >
             {#if !isSearch}
                 {@render header()}
             {:else}
@@ -397,8 +397,8 @@
 <style>
     .board-content {
         height: var(--board-height);
+
         display: flex;
-        overflow-y: auto;
 
         padding-inline-start: var(--board-padding-inline-start);
     }

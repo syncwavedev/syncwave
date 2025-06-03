@@ -22,7 +22,7 @@
 </script>
 
 <div
-    class="flex flex-col panel-padding-inline py-2 relative group avatar-sm icon-sm"
+    class="flex flex-col px-panel-inline py-2 relative group avatar-sm icon-sm"
 >
     <div class="flex items-center gap-1.5 relative">
         <Avatar

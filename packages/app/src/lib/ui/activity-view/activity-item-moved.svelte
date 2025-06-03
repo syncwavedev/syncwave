@@ -8,7 +8,7 @@
 
 {#if message.payload.type === 'card_column_changed'}
     <div
-        class="avatar-xs text-ink-body px-[calc(var(--panel-padding-inline)/2)] py-1.5 leading-relaxed hover:bg-gray-1050 rounded-md"
+        class="avatar-xs text-ink-body px-[calc(var(--panel-padding-inline)/2)] py-2 leading-relaxed hover:bg-material-1-hover rounded-md"
     >
         <Avatar
             name={message.author.fullName}

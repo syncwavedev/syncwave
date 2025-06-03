@@ -9,12 +9,13 @@
     import DropdownMenu from '../components/dropdown-menu.svelte';
     import ActivityIcon from '../components/icons/activity-icon.svelte';
     import LogOutIcon from '../components/icons/log-out-icon.svelte';
-    import MenuSearchIcon from '../components/icons/menu-search-icon.svelte';
     import UserRoundCog from '../components/icons/user-round-cog.svelte';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
     import modalManager from '../modal-manager.svelte';
     import ActivityView from '../activity-view/activity-view.svelte';
+    import FoldersIcon from '../components/icons/folders-icon.svelte';
+    import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
 
     const {
         me,
@@ -33,22 +34,28 @@
     <ProfileModal {me} />
 {/snippet}
 
-<!-- <div class="border-r border-divider icon-lg flex flex-col px-2 bg-gray-925">
-    <div class="panel-header-height flex items-center">
-        <button class="btn menu--btn text-ink-body">
-            <MenuSearchIcon />
+<div
+    class="border-r border-divider flex flex-col px-2"
+    class:bg-sidebar={activePanel !== null}
+>
+    <div class="h-panel-header flex items-center">
+        <button class="btn menu--btn">
+            <LeftPanelIcon />
         </button>
     </div>
-    <div class="flex flex-col justify-between items-center flex-1 pt-2 pb-4">
-        <button
-            class="btn menu--btn text-ink-body"
-            class:menu--btn--active={activePanel === 'activity'}
-            onclick={() => {
-                activePanel = activePanel === 'activity' ? null : 'activity';
-            }}
-        >
-            <ActivityIcon />
-        </button>
+    <button class="btn menu--btn mb-2.5">
+        <FoldersIcon />
+    </button>
+    <button
+        class="btn menu--btn"
+        class:menu--btn--active={activePanel === 'activity'}
+        onclick={() => {
+            activePanel = activePanel === 'activity' ? null : 'activity';
+        }}
+    >
+        <ActivityIcon />
+    </button>
+    <div class="mt-auto flex flex-col items-center mb-4">
         <DropdownMenu
             items={[
                 {
@@ -70,7 +77,7 @@
                 },
             ]}
         >
-            <button class="btn mt-auto">
+            <button class="btn">
                 <Avatar
                     userId={me.id}
                     imageUrl={me.avatarUrlSmall}
@@ -79,34 +86,35 @@
             </button>
         </DropdownMenu>
     </div>
-</div> -->
+</div>
 
-<ResizablePanel
-    class="max-h-full overflow-auto"
-    freeSide="right"
-    width={panelSizeManager.getWidth('activity') ?? 360}
-    minWidth={240}
-    maxWidth={1600}
-    onWidthChange={w => panelSizeManager.setWidth('activity', w)}
->
-    <ActivityView {board} />
-</ResizablePanel>
+{#if activePanel === 'activity'}
+    <ResizablePanel
+        class="max-h-full overflow-auto"
+        freeSide="right"
+        width={panelSizeManager.getWidth('activity') ?? 360}
+        minWidth={240}
+        maxWidth={1600}
+        onWidthChange={w => panelSizeManager.setWidth('activity', w)}
+    >
+        <ActivityView {board} />
+    </ResizablePanel>
+{/if}
 
 <style>
     .menu--btn {
-        display: grid;
-        aspect-ratio: 1/1;
-        place-items: center;
-        height: 2.5em;
-        width: 2.5em;
+        display: flex;
+        align-items: center;
+        height: 1.8rem;
+        width: 2.25rem;
         border-radius: var(--radius-md);
 
         &.menu--btn--active {
-            background-color: var(--color-gray-1050);
+            background-color: var(--color-material-1-hover);
         }
 
         &:hover {
-            background-color: var(--color-gray-1050);
+            background-color: var(--color-material-1-hover);
         }
     }
 </style>

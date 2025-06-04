@@ -660,11 +660,17 @@ export class BoardTreeView extends BoardView {
             .sort((a, b) => compareNumbers(a.position, b.position))
     );
 
-    unreadMessages = $derived.by(() => {
-        return this._data.messageViews.filter(
+    unreadMessages = $derived(
+        this._data.messageViews.filter(
             x => x.createdAt > this.lastReadMessageTimestamp
-        );
-    });
+        )
+    );
+
+    messages = $derived(
+        this._data.messageViews
+            .filter(x => !x.deletedAt)
+            .sort((a, b) => compareNumbers(a.createdAt, b.createdAt))
+    );
 
     lastReadMessageTimestamp = $derived.by(() => {
         return this._data.boardActivityLastReadMessageTimestamp;

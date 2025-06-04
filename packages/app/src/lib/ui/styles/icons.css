@@ -6,7 +6,9 @@
     inline-size: var(--icon-size);
     block-size: var(--icon-size);
     object-fit: contain;
-    display: block;
+    display: inline-block;
+
+    vertical-align: text-bottom;
 }
 
 .icon-base {

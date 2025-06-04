@@ -1,18 +1,18 @@
 <script lang="ts">
     import type {MessageView} from '../../agent/view.svelte';
     import ActivityItem from './activity-item.svelte';
-    import PlusSquareIcon from '../components/icons/plus-square-icon.svelte';
+    import MinusCircleSolidIcon from '../components/icons/minus-circle-solid-icon.svelte';
 
     let {message}: {message: MessageView} = $props();
 </script>
 
 <ActivityItem {message}>
     {#snippet icon()}
-        <span class="text-[#a1c181]">
-            <PlusSquareIcon />
+        <span class="text-[#ffaca3]">
+            <MinusCircleSolidIcon />
         </span>
     {/snippet}
     {#snippet action()}
-        <span class="italic font-medium">Card created</span>
+        <span class="font-medium italic">Card deleted</span>
     {/snippet}
 </ActivityItem>

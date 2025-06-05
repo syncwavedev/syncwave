@@ -57,7 +57,7 @@
     <div
         class="flex items-center px-panel-inline h-panel-header border-b border-divider"
     >
-        <p>Activity</p>
+        <p>Inbox</p>
         <button class="btn--icon ml-auto text-ink-body" onclick={readMessages}>
             <CheckCheckIcon />
         </button>

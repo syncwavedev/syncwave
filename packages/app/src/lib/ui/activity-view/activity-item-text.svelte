@@ -8,11 +8,9 @@
 
 <ActivityItem {message}>
     {#snippet icon()}
-        <span class="text-[#89d0f1]">
-            <MessageSquareTextIcon />
-        </span>
+        <MessageSquareTextIcon />
     {/snippet}
     {#snippet action()}
-        <span class="font-medium italic">New comment</span>
+        <span class="font-medium italic">New message</span>
     {/snippet}
 </ActivityItem>

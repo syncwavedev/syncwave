@@ -43,7 +43,7 @@
             <LeftPanelIcon />
         </button>
     </div>
-    <button class="btn menu--btn mb-2.5">
+    <button class="btn menu--btn mb-1.5">
         <FoldersIcon />
     </button>
     <button

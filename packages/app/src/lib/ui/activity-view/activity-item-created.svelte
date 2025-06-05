@@ -8,9 +8,7 @@
 
 <ActivityItem {message}>
     {#snippet icon()}
-        <span class="text-[#a1c181]">
-            <PlusSquareIcon />
-        </span>
+        <PlusSquareIcon />
     {/snippet}
     {#snippet action()}
         <span class="italic font-medium">Card created</span>

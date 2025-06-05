@@ -247,7 +247,7 @@
         class="btn--ghost hover:bg-material-base-hover -ml-1"
         onclick={() => modalManager.open(boardCommands)}
     >
-        <span class="font-medium">{board.name}</span>
+        <span>{board.name}</span>
     </button>
 
     <div class="ml-2 flex">
@@ -324,7 +324,7 @@
     <ActivityBar {me} {board} />
     <div class="relative flex min-w-0 flex-col flex-1">
         <div
-            class="flex items-center shrink-0 px-board-inline h-panel-header avatar-xs"
+            class="flex items-center shrink-0 px-panel-inline h-panel-header border-b border-divider avatar-xs"
         >
             {#if !isSearch}
                 {@render header()}

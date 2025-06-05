@@ -14,9 +14,7 @@
 
 <ActivityItem {message}>
     {#snippet icon()}
-        <span class="text-[#dec184]">
-            <ArrowRightSquareIcon />
-        </span>
+        <ArrowRightSquareIcon />
     {/snippet}
     {#snippet action()}
         <span class="font-medium italic">Card moved in</span>

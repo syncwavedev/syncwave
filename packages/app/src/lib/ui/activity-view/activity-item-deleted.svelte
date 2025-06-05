@@ -8,7 +8,7 @@
 
 <ActivityItem {message}>
     {#snippet icon()}
-        <span class="text-[#ffaca3]">
+        <span>
             <MinusCircleSolidIcon />
         </span>
     {/snippet}

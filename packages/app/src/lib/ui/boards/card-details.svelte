@@ -148,7 +148,9 @@
 </script>
 
 <div class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l">
-    <div class="flex items-center shrink-0 h-panel-header px-panel-inline">
+    <div
+        class="flex items-center shrink-0 h-panel-header border-b border-divider px-panel-inline"
+    >
         <div class="flex items-center gap-0.5 icon-base">
             {#if card.isDraft}
                 New card
@@ -189,7 +191,7 @@
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="mx-panel-inline">
+        <div class="mx-panel-inline mt-3">
             <div class="input w-full leading-relaxed text-lg">
                 <Editor
                     bind:this={editor}

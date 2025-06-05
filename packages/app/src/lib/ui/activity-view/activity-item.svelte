@@ -18,7 +18,7 @@
     class="avatar-xs px-panel-inline-half py-1 leading-relaxed hover:bg-material-1-hover rounded-md flex flex-col gap-1"
 >
     <div>
-        <span class="mr-0.5">{@render icon()}</span>
+        <span>{@render icon()}</span>
         {@render action()}
     </div>
     <div class="flex items-center">

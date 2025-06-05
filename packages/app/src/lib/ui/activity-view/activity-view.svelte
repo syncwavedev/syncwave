@@ -48,11 +48,13 @@
 <div
     class="border-divider border-r z-10 flex w-full flex-shrink-0 flex-col bg-sidebar"
 >
-    <div class="flex items-center px-panel-inline h-panel-header">
-        <p class="font-medium">Activity</p>
+    <div
+        class="flex items-center px-panel-inline h-panel-header border-b border-divider"
+    >
+        <p>Activity</p>
     </div>
     <div
-        class="overflow-y-auto no-scrollbar flex flex-col gap-2 flex-1 px-panel-inline-half"
+        class="overflow-y-auto no-scrollbar flex flex-col gap-2 flex-1 px-panel-inline-half py-3"
     >
         {@render messageList(unreadMessages)}
         {#if readMessages.length > 0}

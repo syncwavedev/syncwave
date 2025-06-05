@@ -3,10 +3,10 @@
     import ActivityItem from './activity-item.svelte';
     import PlusSquareIcon from '../components/icons/plus-square-icon.svelte';
 
-    let {message}: {message: MessageView} = $props();
+    let {message, isNew}: {message: MessageView; isNew: boolean} = $props();
 </script>
 
-<ActivityItem {message}>
+<ActivityItem {message} {isNew}>
     {#snippet icon()}
         <PlusSquareIcon />
     {/snippet}

@@ -103,14 +103,16 @@
 
 <style>
     .menu--btn {
+        --icon-size: 1.0625rem;
+
         display: flex;
         align-items: center;
         height: 1.8rem;
-        width: 2.25rem;
+        width: 2rem;
         border-radius: var(--radius-md);
 
         &.menu--btn--active {
-            background-color: var(--color-material-1-hover);
+            color: var(--color-primary);
         }
 
         &:hover {

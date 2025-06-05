@@ -3,10 +3,10 @@
     import ActivityItem from './activity-item.svelte';
     import MinusCircleSolidIcon from '../components/icons/minus-circle-solid-icon.svelte';
 
-    let {message}: {message: MessageView} = $props();
+    let {message, isNew}: {message: MessageView; isNew: boolean} = $props();
 </script>
 
-<ActivityItem {message}>
+<ActivityItem {message} {isNew}>
     {#snippet icon()}
         <span>
             <MinusCircleSolidIcon />

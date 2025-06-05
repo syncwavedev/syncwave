@@ -5,6 +5,10 @@
     import ActivityItemDeleted from './activity-item-deleted.svelte';
     import ActivityItemAssigneeChanged from './activity-item-assignee-changed.svelte';
     import ActivityItemText from './activity-item-text.svelte';
+    import CheckCheckIcon from '../components/icons/check-check-icon.svelte';
+    import {getAgent} from '../../agent/agent.svelte';
+    import {getNow} from 'syncwave';
+    import {toastManager} from '../../../toast-manager.svelte';
 
     interface Props {
         board: BoardTreeView;
@@ -16,30 +20,32 @@
         board.messages.sort((a, b) => b.createdAt - a.createdAt)
     );
 
-    const readMessages = $derived(
-        sortedMessages.filter(x => x.createdAt < board.lastReadMessageTimestamp)
-    );
+    const agent = getAgent();
 
-    const unreadMessages = $derived(
-        sortedMessages.filter(
-            x => x.createdAt >= board.lastReadMessageTimestamp
-        )
-    );
+    function readMessages() {
+        agent.updateBoardCursorTimestamp(board.id, getNow());
+
+        toastManager.info(
+            'Messages read',
+            'All messages have been marked as read.'
+        );
+    }
 </script>
 
 {#snippet messageList(messages: Array<MessageView>)}
     {#each messages as message (message.id)}
+        {@const isNew = message.card.unreadMessages.length > 0}
         <div data-message-id={message.id}>
             {#if message.payload.type === 'card_column_changed'}
-                <ActivityItemMoved {message} />
+                <ActivityItemMoved {message} {isNew} />
             {:else if message.payload.type === 'card_created'}
-                <ActivityItemCreated {message} />
+                <ActivityItemCreated {message} {isNew} />
             {:else if message.payload.type === 'card_deleted'}
-                <ActivityItemDeleted {message} />
+                <ActivityItemDeleted {message} {isNew} />
             {:else if message.payload.type === 'card_assignee_changed'}
-                <ActivityItemAssigneeChanged {message} />
+                <ActivityItemAssigneeChanged {message} {isNew} />
             {:else if message.payload.type === 'text'}
-                <ActivityItemText {message} />
+                <ActivityItemText {message} {isNew} />
             {/if}
         </div>
     {/each}
@@ -52,22 +58,13 @@
         class="flex items-center px-panel-inline h-panel-header border-b border-divider"
     >
         <p>Activity</p>
+        <button class="btn--icon ml-auto text-ink-body" onclick={readMessages}>
+            <CheckCheckIcon />
+        </button>
     </div>
     <div
         class="overflow-y-auto no-scrollbar flex flex-col gap-2 flex-1 px-panel-inline-half py-3"
     >
-        {@render messageList(unreadMessages)}
-        {#if readMessages.length > 0}
-            <div class="flex items-center">
-                <div class="h-[1px] bg-divider flex-1"></div>
-                <div
-                    class="text-center my-2 text-ink-body text-xs bg-material-1 px-1 py-0.5 rounded-sm"
-                >
-                    New for you
-                </div>
-                <div class="h-[1px] bg-divider flex-1"></div>
-            </div>
-            {@render messageList(readMessages)}
-        {/if}
+        {@render messageList(sortedMessages)}
     </div>
 </div>

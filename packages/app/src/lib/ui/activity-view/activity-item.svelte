@@ -9,41 +9,57 @@
         message: MessageView;
         icon: Snippet;
         action: Snippet;
+        isNew: boolean;
     }
 
-    let {message, icon, action}: Props = $props();
+    let {message, icon, action, isNew}: Props = $props();
 </script>
 
 <div
-    class="avatar-xs px-panel-inline-half py-1 leading-relaxed hover:bg-material-1-hover rounded-md flex flex-col gap-1"
+    class="
+    flex
+    items-center
+    gap-4
+    justify-between
+    px-panel-inline-half
+    py-1
+    leading-relaxed
+    hover:bg-material-1-hover
+    rounded-md
+    "
 >
-    <div>
-        <span>{@render icon()}</span>
-        {@render action()}
+    <div class="avatar-xs flex flex-col gap-1 truncate">
+        <div>
+            <span>{@render icon()}</span>
+            {@render action()}
+        </div>
+        <div class="flex items-center">
+            <span class="flex items-center icon-base mr-1">
+                <HashtagIcon />
+                {message.card.counter}
+            </span>
+            <span class="truncate">
+                {message.card.plainText
+                    .split('\n')
+                    .map(x => x.trim())
+                    .find(x => x.length > 0) ?? 'Untitled'}
+            </span>
+        </div>
+        <div>
+            <Avatar
+                name={message.author.fullName}
+                userId={message.author.id}
+                imageUrl={message.author.avatarUrlSmall}
+            />
+            <span class="font-medium ml-0.25">
+                {message.author.fullName}
+            </span>
+            <span class="text-ink-detail text-xs ml-1">
+                <TimeAgo time={message.createdAt} />
+            </span>
+        </div>
     </div>
-    <div class="flex items-center">
-        <span class="flex items-center icon-base mr-1">
-            <HashtagIcon />
-            {message.card.counter}
-        </span>
-        <span class="truncate">
-            {message.card.plainText
-                .split('\n')
-                .map(x => x.trim())
-                .find(x => x.length > 0) ?? 'Untitled'}
-        </span>
-    </div>
-    <div>
-        <Avatar
-            name={message.author.fullName}
-            userId={message.author.id}
-            imageUrl={message.author.avatarUrlSmall}
-        />
-        <span class="font-medium ml-0.25">
-            {message.author.fullName}
-        </span>
-        <span class="text-ink-detail text-xs ml-1">
-            <TimeAgo time={message.createdAt} />
-        </span>
-    </div>
+    {#if isNew}
+        <div class="h-1.5 w-1.5 bg-modified rounded-full"></div>
+    {/if}
 </div>

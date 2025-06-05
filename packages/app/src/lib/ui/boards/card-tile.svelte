@@ -169,7 +169,7 @@
                         </span>
                     {:else}
                         <div
-                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-800 icon-xs"
+                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-750 icon-xs"
                             class:ml-auto={todoStats.total == 0}
                         >
                             <UserIconSolid />

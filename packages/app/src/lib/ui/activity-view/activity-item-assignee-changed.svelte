@@ -7,13 +7,13 @@
     import Avatar from '../components/avatar.svelte';
     import UserCircleSolidIcon from '../components/icons/user-circle-solid-icon.svelte';
 
-    let {message}: {message: MessageView} = $props();
+    let {message, isNew}: {message: MessageView; isNew: boolean} = $props();
     let payload = $derived(
         message.payload as CardAssigneeChangedMessagePayloadView
     );
 </script>
 
-<ActivityItem {message}>
+<ActivityItem {message} {isNew}>
     {#snippet icon()}
         <span>
             <UserCircleSolidIcon />

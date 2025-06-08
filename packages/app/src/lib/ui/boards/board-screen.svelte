@@ -16,7 +16,6 @@
     import {createDndContext} from './board-dnd';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import Avatar from '../components/avatar.svelte';
-    import BoardCommands from './board-commands.svelte';
     import modalManager from '../modal-manager.svelte';
     import BoardSettingsModal from './board-settings-modal.svelte';
     import EllipsisIcon from '../components/icons/ellipsis-icon.svelte';

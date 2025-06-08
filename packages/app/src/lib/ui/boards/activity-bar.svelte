@@ -50,7 +50,7 @@
         </button>
     </div>
     <button
-        class="btn menu--btn mb-[0.725rem]"
+        class="btn menu--btn mb-[0.5rem]"
         class:menu--btn--active={activePanel === 'boards'}
         onclick={() => {
             activePanel = activePanel === 'boards' ? null : 'boards';
@@ -139,8 +139,8 @@
 
         display: flex;
         align-items: center;
-        height: 1.8rem;
-        width: 2rem;
+        height: 2.25rem;
+        width: 2.25rem;
         border-radius: var(--radius-md);
 
         &.menu--btn--active {

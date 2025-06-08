@@ -58,7 +58,10 @@
         <div class="flex flex-col gap-1">
             <p class="font-semibold">Inbox</p>
             <p class="text-ink-detail text-xs">
-                Unread Messages: {sortedMessages.length}
+                {sortedMessages.length}
+                {sortedMessages.length === 1
+                    ? 'unread message'
+                    : 'unread messages'}
             </p>
         </div>
         <button class="btn--icon ml-auto" onclick={readMessages}>

@@ -10,7 +10,7 @@
 >
     {#if message.payload.type === 'card_created'}
         <span>
-            <span class="font-medium">{message.author.fullName}</span>
+            <span class="font-semibold">{message.author.fullName}</span>
             created the card
             <TimeAgo time={message.payload.cardCreatedAt} />
         </span>
@@ -18,7 +18,7 @@
 
     {#if message.payload.type === 'card_deleted'}
         <span>
-            <span class="font-medium">{message.author.fullName}</span>
+            <span class="font-semibold">{message.author.fullName}</span>
             deleted the card
             <TimeAgo time={message.payload.cardDeletedAt} />
         </span>
@@ -26,24 +26,24 @@
 
     {#if message.payload.type === 'card_column_changed'}
         <span>
-            <span class="font-medium">{message.author.fullName}</span>
+            <span class="font-semibold">{message.author.fullName}</span>
             moved the card from
-            <span class="font-medium">{message.payload.fromColumnName}</span>
+            <span class="font-semibold">{message.payload.fromColumnName}</span>
             to
-            <span class="font-medium">{message.payload.toColumnName}</span>
+            <span class="font-semibold">{message.payload.toColumnName}</span>
             <TimeAgo time={message.payload.cardColumnChangedAt} />
         </span>
     {/if}
 
     {#if message.payload.type === 'card_assignee_changed'}
         <span>
-            <span class="font-medium">{message.author.fullName}</span>
+            <span class="font-semibold">{message.author.fullName}</span>
             changed the card assignee from
-            <span class="font-medium"
+            <span class="font-semibold"
                 >{message.payload.fromAssignee?.fullName ?? 'Unassigned'}</span
             >
             to
-            <span class="font-medium"
+            <span class="font-semibold"
                 >{message.payload.toAssignee?.fullName ?? 'Unassigned'}</span
             >
             <TimeAgo time={message.payload.cardAssigneeChangedAt} />

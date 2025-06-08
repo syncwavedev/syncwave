@@ -32,7 +32,7 @@
         />
 
         <div class="flex items-baseline gap-1.5">
-            <div class="font-medium text-md">
+            <div class="font-semibold text-md">
                 {message.author.fullName}
             </div>
 

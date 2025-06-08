@@ -212,7 +212,9 @@
                 onValueChange={value =>
                     agent.setCardColumn(card.id, value as ColumnId)}
             >
-                <button class="btn--ghost hover:bg-material-base-hover">
+                <button
+                    class="btn--ghost hover:bg-material-base-hover font-medium"
+                >
                     <CircleDashedIcon />
                     {card.column.name}
                 </button>
@@ -230,7 +232,9 @@
                         (value as UserId) || undefined // select doesn't support undefined, it will return '' instead
                     )}
             >
-                <button class="btn--ghost hover:bg-material-base-hover">
+                <button
+                    class="btn--ghost hover:bg-material-base-hover font-medium"
+                >
                     <UserIcon />
                     {card.assignee?.fullName ?? 'Assignee'}
                 </button>

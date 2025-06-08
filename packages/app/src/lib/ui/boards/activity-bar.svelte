@@ -7,17 +7,19 @@
     import {getAuthManager} from '../../utils';
     import Avatar from '../components/avatar.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
-    import ActivityIcon from '../components/icons/activity-icon.svelte';
     import LogOutIcon from '../components/icons/log-out-icon.svelte';
     import UserRoundCog from '../components/icons/user-round-cog.svelte';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
     import modalManager from '../modal-manager.svelte';
     import ActivityView from '../activity-view/activity-view.svelte';
-    import FoldersIcon from '../components/icons/folders-icon.svelte';
     import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
     import BoardsView from '../boards-view/boards-view.svelte';
     import type {Board} from 'syncwave';
+    import HomeIcon from '../components/icons/home-icon.svelte';
+    import HomeSolidIcon from '../components/icons/home-solid-icon.svelte';
+    import InboxSolidIcon from '../components/icons/inbox-solid-icon.svelte';
+    import InboxIcon from '../components/icons/inbox-icon.svelte';
 
     const {
         me,
@@ -48,13 +50,17 @@
         </button>
     </div>
     <button
-        class="btn menu--btn mb-2.5"
+        class="btn menu--btn mb-[0.725rem]"
         class:menu--btn--active={activePanel === 'boards'}
         onclick={() => {
             activePanel = activePanel === 'boards' ? null : 'boards';
         }}
     >
-        <FoldersIcon />
+        {#if activePanel === 'boards'}
+            <HomeSolidIcon />
+        {:else}
+            <HomeIcon />
+        {/if}
     </button>
     <button
         class="btn menu--btn"
@@ -63,7 +69,11 @@
             activePanel = activePanel === 'activity' ? null : 'activity';
         }}
     >
-        <ActivityIcon />
+        {#if activePanel === 'activity'}
+            <InboxSolidIcon />
+        {:else}
+            <InboxIcon />
+        {/if}
     </button>
     <div class="mt-auto flex flex-col items-center mb-4">
         <DropdownMenu
@@ -125,7 +135,7 @@
 
 <style>
     .menu--btn {
-        --icon-size: 1.1875rem;
+        --icon-size: 1.25rem;
 
         display: flex;
         align-items: center;

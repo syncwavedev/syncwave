@@ -321,7 +321,7 @@
 {/snippet}
 
 <div class="app flex">
-    <ActivityBar {me} {board} />
+    <ActivityBar {me} {board} boards={me.boards} />
     <div class="relative flex min-w-0 flex-col flex-1">
         <div
             class="flex items-center shrink-0 px-panel-inline h-panel-header border-b border-divider avatar-xs"

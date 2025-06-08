@@ -16,13 +16,17 @@
     import ActivityView from '../activity-view/activity-view.svelte';
     import FoldersIcon from '../components/icons/folders-icon.svelte';
     import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
+    import BoardsView from '../boards-view/boards-view.svelte';
+    import type {Board} from 'syncwave';
 
     const {
         me,
         board,
+        boards,
     }: {
         me: MeView;
         board: BoardTreeView;
+        boards: Board[];
     } = $props();
 
     const authManager = getAuthManager();
@@ -43,7 +47,13 @@
             <LeftPanelIcon />
         </button>
     </div>
-    <button class="btn menu--btn mb-1.5">
+    <button
+        class="btn menu--btn mb-1.5"
+        class:menu--btn--active={activePanel === 'boards'}
+        onclick={() => {
+            activePanel = activePanel === 'boards' ? null : 'boards';
+        }}
+    >
         <FoldersIcon />
     </button>
     <button
@@ -98,6 +108,18 @@
         onWidthChange={w => panelSizeManager.setWidth('activity', w)}
     >
         <ActivityView {board} />
+    </ResizablePanel>
+{/if}
+{#if activePanel === 'boards'}
+    <ResizablePanel
+        class="max-h-full overflow-auto"
+        freeSide="right"
+        width={panelSizeManager.getWidth('boards') ?? 360}
+        minWidth={240}
+        maxWidth={1600}
+        onWidthChange={w => panelSizeManager.setWidth('boards', w)}
+    >
+        <BoardsView {boards} />
     </ResizablePanel>
 {/if}
 

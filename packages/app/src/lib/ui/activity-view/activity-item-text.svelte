@@ -11,6 +11,6 @@
         <MessageSquareTextIcon />
     {/snippet}
     {#snippet action()}
-        <span class="font-medium italic">New message</span>
+        <span>has new message</span>
     {/snippet}
 </ActivityItem>

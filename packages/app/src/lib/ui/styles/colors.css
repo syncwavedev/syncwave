@@ -120,7 +120,7 @@
         --theme-color-sidebar: var(--color-gray-10);
 
         --theme-color-material-base: white;
-        --theme-color-material-base-hover: var(--color-gray-30);
+        --theme-color-material-base-hover: var(--color-gray-50);
 
         --theme-color-material-1: var(--color-gray-20);
         --theme-color-material-1-hover: var(--color-gray-70);

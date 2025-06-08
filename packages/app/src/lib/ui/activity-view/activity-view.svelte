@@ -54,17 +54,18 @@
 <div
     class="border-divider border-r z-10 flex w-full flex-shrink-0 flex-col bg-sidebar"
 >
-    <div
-        class="flex items-center px-panel-inline h-panel-header border-b border-divider"
-    >
-        <p>Inbox</p>
-        <button class="btn--icon ml-auto text-ink-body" onclick={readMessages}>
+    <div class="flex items-center px-panel-inline h-panel-header">
+        <div class="flex flex-col gap-1">
+            <p class="font-semibold">Inbox</p>
+            <p class="text-ink-detail text-xs">
+                Unread Messages: {sortedMessages.length}
+            </p>
+        </div>
+        <button class="btn--icon ml-auto" onclick={readMessages}>
             <CheckCheckIcon />
         </button>
     </div>
-    <div
-        class="overflow-y-auto no-scrollbar flex flex-col gap-2 flex-1 px-panel-inline-half py-3"
-    >
+    <div class="overflow-y-auto no-scrollbar flex flex-col flex-1">
         {@render messageList(sortedMessages)}
     </div>
 </div>

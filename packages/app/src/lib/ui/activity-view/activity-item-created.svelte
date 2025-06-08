@@ -11,6 +11,6 @@
         <PlusSquareIcon />
     {/snippet}
     {#snippet action()}
-        <span class="italic font-medium">Card created</span>
+        <span>created</span>
     {/snippet}
 </ActivityItem>

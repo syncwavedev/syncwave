@@ -234,21 +234,15 @@
     }
 </script>
 
-{#snippet boardCommands()}
-    <BoardCommands boards={me.boards} />
-{/snippet}
-
 {#snippet boardSettings()}
     <BoardSettingsModal {board} {me} />
 {/snippet}
 
 {#snippet header()}
-    <button
-        class="btn--ghost hover:bg-material-base-hover -ml-1"
-        onclick={() => modalManager.open(boardCommands)}
-    >
-        <span>{board.name}</span>
-    </button>
+    <div class="flex flex-col gap-1">
+        <p class="font-semibold">{board.name}</p>
+        <p class="text-ink-detail text-xs">6 members + 2 guests</p>
+    </div>
 
     <div class="ml-2 flex">
         {#each board.onlineUsers as user (user.user.id)}
@@ -270,7 +264,7 @@
         </a>
     {:else}
         <div class="ml-auto flex">
-            <button class="btn--icon text-ink-body" onclick={onStartSearch}>
+            <button class="btn--icon" onclick={onStartSearch}>
                 <SearchIcon />
             </button>
             <DropdownMenu
@@ -298,7 +292,7 @@
                     },
                 ]}
             >
-                <button class="btn--icon text-ink-body">
+                <button class="btn--icon">
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
@@ -324,7 +318,7 @@
     <ActivityBar {me} {board} boards={me.boards} />
     <div class="relative flex min-w-0 flex-col flex-1">
         <div
-            class="flex items-center shrink-0 px-panel-inline h-panel-header border-b border-divider avatar-xs"
+            class="flex items-center shrink-0 px-board-inline h-panel-header avatar-xs"
         >
             {#if !isSearch}
                 {@render header()}

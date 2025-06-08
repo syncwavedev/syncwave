@@ -13,6 +13,6 @@
         </span>
     {/snippet}
     {#snippet action()}
-        <span class="font-medium italic">Card deleted</span>
+        <span>deleted</span>
     {/snippet}
 </ActivityItem>

@@ -17,7 +17,7 @@
         <ArrowRightSquareIcon />
     {/snippet}
     {#snippet action()}
-        <span class="font-medium italic">Card moved to</span>
+        <span>moved to</span>
         <span>{payload.toColumnName}</span>
     {/snippet}
 </ActivityItem>

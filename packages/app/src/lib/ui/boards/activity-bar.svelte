@@ -39,7 +39,7 @@
 {/snippet}
 
 <div
-    class="border-r border-divider flex flex-col px-1.5 text-ink-body"
+    class="border-r border-divider flex flex-col px-3"
     class:bg-sidebar={activePanel !== null}
 >
     <div class="h-panel-header flex items-center">
@@ -48,7 +48,7 @@
         </button>
     </div>
     <button
-        class="btn menu--btn mb-1.5"
+        class="btn menu--btn mb-2.5"
         class:menu--btn--active={activePanel === 'boards'}
         onclick={() => {
             activePanel = activePanel === 'boards' ? null : 'boards';
@@ -125,7 +125,7 @@
 
 <style>
     .menu--btn {
-        --icon-size: 1.0625rem;
+        --icon-size: 1.1875rem;
 
         display: flex;
         align-items: center;
@@ -134,7 +134,7 @@
         border-radius: var(--radius-md);
 
         &.menu--btn--active {
-            color: var(--color-primary);
+            background-color: var(--color-material-1-hover);
         }
 
         &:hover {

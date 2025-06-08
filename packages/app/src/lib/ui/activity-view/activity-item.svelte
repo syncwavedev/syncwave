@@ -1,6 +1,5 @@
 <script lang="ts">
     import type {MessageView} from '../../agent/view.svelte';
-    import Avatar from '../components/avatar.svelte';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
     import TimeAgo from '../components/time-ago.svelte';
     import type {Snippet} from 'svelte';
@@ -18,43 +17,42 @@
 <div
     class="
     flex
-    items-center
-    gap-4
-    justify-between
-    px-panel-inline-half
-    py-1
+    gap-2
+    px-panel-inline
+    py-3
     leading-relaxed
     hover:bg-material-1-hover
-    rounded-md
+    border-b
+    border-divider
     "
 >
-    <div class="avatar-xs flex flex-col gap-1 truncate">
-        <div>
-            <span>{@render icon()}</span>
-            {@render action()}
+    <div class="icon-lg text-ink-body mt-0.25">
+        <span>{@render icon()}</span>
+    </div>
+    <div class="avatar-xs flex flex-1 flex-col gap-1 truncate">
+        <div class="flex items-center gap-1" class:font-semibold={isNew}>
+            <div class="flex items-center icon-base">
+                <HashtagIcon strokeWidth={isNew ? '2.5' : '1.5'} />
+
+                {message.card.counter}
+            </div>
+            <div>
+                {@render action()}
+            </div>
         </div>
         <div class="flex items-center">
-            <span class="flex items-center icon-base mr-1">
-                <HashtagIcon />
-                {message.card.counter}
-            </span>
-            <span class="truncate">
+            <span class="truncate text-ink-body">
                 {message.card.plainText
                     .split('\n')
                     .map(x => x.trim())
                     .find(x => x.length > 0) ?? 'Untitled'}
             </span>
         </div>
-        <div>
-            <Avatar
-                name={message.author.fullName}
-                userId={message.author.id}
-                imageUrl={message.author.avatarUrlSmall}
-            />
-            <span class="font-medium ml-0.25">
+        <div class="mt-1 text-xs">
+            <span class="text-ink-detail">
                 {message.author.fullName}
             </span>
-            <span class="text-ink-detail text-xs ml-1">
+            <span class="text-ink-detail">
                 <TimeAgo time={message.createdAt} />
             </span>
         </div>

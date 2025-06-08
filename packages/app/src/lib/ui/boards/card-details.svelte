@@ -148,14 +148,12 @@
 </script>
 
 <div class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l">
-    <div
-        class="flex items-center shrink-0 h-panel-header border-b border-divider px-panel-inline"
-    >
-        <div class="flex items-center gap-0.5 icon-base">
+    <div class="flex items-center shrink-0 h-panel-header px-panel-inline">
+        <div class="flex items-center gap-0.5 icon-base font-semibold">
             {#if card.isDraft}
                 New card
             {:else}
-                <HashtagIcon strokeWidth="1.5" />
+                <HashtagIcon strokeWidth="2.5" />
                 <span>{card.counter}</span>
             {/if}
         </div>
@@ -176,12 +174,12 @@
                     },
                 ]}
             >
-                <button class="btn--icon text-ink-body" id="ellipsis-button">
+                <button class="btn--icon" id="ellipsis-button">
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
         </div>
-        <button class="btn--icon text-ink-body" onclick={() => history.back()}>
+        <button class="btn--icon" onclick={() => history.back()}>
             <TimesIcon />
         </button>
     </div>
@@ -191,7 +189,7 @@
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="mx-panel-inline mt-3">
+        <div class="mx-panel-inline mt-2">
             <div class="input w-full leading-relaxed text-lg">
                 <Editor
                     bind:this={editor}
@@ -255,9 +253,7 @@
             {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
         </div>
     {/if}
-    <div
-        class="mx-panel-inline border border-divider-object mb-4 p-2 rounded-md text-lg"
-    >
+    <div class="border-t border-divider p-3 text-lg">
         <Editor
             {fragment}
             {me}

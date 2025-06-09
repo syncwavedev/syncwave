@@ -50,6 +50,7 @@ export function MeViewDataDto() {
             Type.Object({
                 id: Uuid<BoardId>(),
                 state: CrdtDiff<Board>(),
+                membersCount: Type.Number(),
             })
         ),
     });

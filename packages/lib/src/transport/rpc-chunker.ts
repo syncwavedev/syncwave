@@ -235,8 +235,6 @@ export function createRpcChunkerClient<TApi extends StreamerApi<any>>(
                 log.info({msg: `req ${callInfo}...`});
             }
 
-            log.info({msg: `req ${callInfo}...`});
-
             if (handler.type === 'handler') {
                 return server
                     .handle({method: name, arg}, headers)
@@ -255,12 +253,10 @@ export function createRpcChunkerClient<TApi extends StreamerApi<any>>(
                         return result;
                     })
                     .catch(async error => {
-                        if (logCommunication) {
-                            log.error({
-                                error,
-                                msg: `${callInfo} failed: ${getReadableError(error)}`,
-                            });
-                        }
+                        log.error({
+                            error,
+                            msg: `${callInfo} failed: ${getReadableError(error)}`,
+                        });
                         throw error;
                     });
             } else if (handler.type === 'streamer') {
@@ -278,14 +274,12 @@ export function createRpcChunkerClient<TApi extends StreamerApi<any>>(
                         }
                     })
                     .catch(error => {
-                        if (logCommunication) {
-                            log.error({
-                                error,
-                                msg: `${callInfo} failed: ${getReadableError(
-                                    error
-                                )}`,
-                            });
-                        }
+                        log.error({
+                            error,
+                            msg: `${callInfo} failed: ${getReadableError(
+                                error
+                            )}`,
+                        });
                         throw error;
                     })
                     .finally(() => {

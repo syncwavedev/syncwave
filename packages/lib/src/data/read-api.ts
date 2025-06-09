@@ -333,7 +333,11 @@ export function createReadApi() {
                                             board !== undefined,
                                             'board not found'
                                         );
-                                        return [member, board] as const;
+                                        const membersCount = await tx.members.getByBoardId(
+                                            member.boardId,
+                                            {excludeDeleted: true}
+                                        ).count();
+                                        return [member, {...board, membersCount}] as const;
                                     })
                                     .toArray();
 

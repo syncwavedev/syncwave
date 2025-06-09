@@ -57,22 +57,24 @@
 
 <div class="column" data-column-id={column.id}>
     <div
-        class="flex items-center column-padding-inline mt-2 mb-3 shrink-0"
+        class="flex items-center column-padding-inline my-3 shrink-0"
         data-disable-scroll-view-drag="true"
     >
-        <div class="flex items-center gap-1.5 leading-none font-semibold">
+        <div
+            class="flex items-center gap-1.5 leading-none font-medium indicator"
+        >
             <ColumnIcon active={columnPosition} total={columnsCount} />
 
             {column.name}
         </div>
 
         {#if permissionManager.hasPermission('write:card')}
-            <div class="flex ml-auto text-ink-body">
-                <button class="btn--icon" onclick={onCreateCard}>
+            <div class="flex ml-auto btn--small">
+                <button class="btn btn--icon" onclick={onCreateCard}>
                     <PlusIcon class="pointer-events-none" />
                 </button>
                 {#if permissionManager.hasPermission('write:board')}
-                    <button onclick={onEditColumn} class="btn--icon">
+                    <button onclick={onEditColumn} class="btn btn--icon">
                         <EllipsisIcon class="pointer-events-none" />
                     </button>
                 {/if}
@@ -119,6 +121,10 @@
 </div>
 
 <style>
+    .indicator {
+        --icon-size: 1.4em;
+    }
+
     .column {
         display: flex;
         flex-shrink: 0;

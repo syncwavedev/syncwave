@@ -259,11 +259,11 @@
             Showcase Board
         </div>
         <a href="/login" class="ml-auto">
-            <button class="btn--ghost">Sign In</button>
+            <button class="btn">Sign In</button>
         </a>
     {:else}
         <div class="ml-auto flex">
-            <button class="btn--icon" onclick={onStartSearch}>
+            <button class="btn btn--icon" onclick={onStartSearch}>
                 <SearchIcon />
             </button>
             <DropdownMenu
@@ -291,7 +291,7 @@
                     },
                 ]}
             >
-                <button class="btn--icon">
+                <button class="btn btn--icon">
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
@@ -308,7 +308,7 @@
         bind:value={searchValue}
         autofocus
     />
-    <button class="btn--icon" onclick={onCloseSearch}>
+    <button class="btn btn--icon" onclick={onCloseSearch}>
         <TimesIcon />
     </button>
 {/snippet}

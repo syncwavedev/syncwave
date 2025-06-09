@@ -119,7 +119,7 @@
             <span bind:this={handleRef}>
                 <GripHorizontalIcon />
             </span>
-            <button onclick={() => deleteColumn(column)} class="btn--icon">
+            <button onclick={() => deleteColumn(column)} class="btn btn--icon">
                 <TrashIcon />
             </button>
         </div>

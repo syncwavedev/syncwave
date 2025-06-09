@@ -52,12 +52,12 @@
             <span class="ml-1.5 text-ink-detail">{member.email}</span>
 
             <div class="ml-auto flex gap-4">
-                <button class="btn--ghost hover:bg-material-elevated-hover">
+                <button class="btn hover:bg-material-elevated-hover">
                     {member.role}
                     <ChevronDownIcon />
                 </button>
                 {#if member.id !== me.id && member.role !== 'owner'}
-                    <button class="btn--ghost hover:bg-material-elevated-hover">
+                    <button class="btn hover:bg-material-elevated-hover">
                         Remove
                     </button>
                 {/if}
@@ -82,7 +82,7 @@
             disabled
         />
         <button
-            class="btn--ghost hover:bg-material-elevated-hover shrink-0"
+            class="btn hover:bg-material-elevated-hover shrink-0"
             onclick={onRefreshClick}
             disabled={isUpdating}
         >
@@ -90,7 +90,7 @@
             Refresh Link
         </button>
         <button
-            class="btn--ghost hover:bg-material-elevated-hover shrink-0"
+            class="btn hover:bg-material-elevated-hover shrink-0"
             onclick={onCopyClick}
         >
             <ClipboardCopyIcon />
@@ -112,7 +112,7 @@
             placeholder="Enter an email address..."
         />
         <button
-            class="btn--ghost hover:bg-material-elevated-hover shrink-0"
+            class="btn hover:bg-material-elevated-hover shrink-0"
             onclick={onRefreshClick}
             disabled={isUpdating}
         >

@@ -149,7 +149,7 @@
 
 <div class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l">
     <div class="flex items-center shrink-0 h-panel-header px-panel-inline">
-        <div class="flex items-center gap-0.5 icon-base font-semibold">
+        <div class="flex items-center gap-0.5 font-semibold">
             {#if card.isDraft}
                 New card
             {:else}
@@ -174,12 +174,12 @@
                     },
                 ]}
             >
-                <button class="btn--icon" id="ellipsis-button">
+                <button class="btn btn--icon" id="ellipsis-button">
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
         </div>
-        <button class="btn--icon" onclick={() => history.back()}>
+        <button class="btn btn--icon" onclick={() => history.back()}>
             <TimesIcon />
         </button>
     </div>
@@ -189,7 +189,7 @@
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="mx-panel-inline mt-2">
+        <div class="mx-panel-inline mt-4">
             <div class="input w-full leading-relaxed text-lg">
                 <Editor
                     bind:this={editor}
@@ -205,16 +205,14 @@
             </div>
         </div>
         <!-- Task Actions -->
-        <div class="flex gap-2 mx-panel-inline mt-4 mb-2 items-center">
+        <div class="flex gap-2 mx-panel-inline mt-8 mb-2 items-center">
             <Select
                 value={card.column.id}
                 options={columnOptions}
                 onValueChange={value =>
                     agent.setCardColumn(card.id, value as ColumnId)}
             >
-                <button
-                    class="btn--ghost hover:bg-material-base-hover font-medium"
-                >
+                <button class="btn">
                     <CircleDashedIcon />
                     {card.column.name}
                 </button>
@@ -232,9 +230,7 @@
                         (value as UserId) || undefined // select doesn't support undefined, it will return '' instead
                     )}
             >
-                <button
-                    class="btn--ghost hover:bg-material-base-hover font-medium"
-                >
+                <button class="btn">
                     <UserIcon />
                     {card.assignee?.fullName ?? 'Assignee'}
                 </button>

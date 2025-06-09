@@ -41,17 +41,16 @@
 {/snippet}
 
 <div
-    class="border-r border-divider flex flex-col px-3"
+    class="border-r border-divider flex flex-col px-2.5 btn--large"
     class:bg-sidebar={activePanel !== null}
 >
     <div class="h-panel-header flex items-center">
-        <button class="btn menu--btn">
+        <button class="btn btn--icon">
             <LeftPanelIcon />
         </button>
     </div>
     <button
-        class="btn menu--btn mb-[0.5rem]"
-        class:menu--btn--active={activePanel === 'boards'}
+        class="btn btn--icon btn-margin-block-end"
         onclick={() => {
             activePanel = activePanel === 'boards' ? null : 'boards';
         }}
@@ -63,8 +62,7 @@
         {/if}
     </button>
     <button
-        class="btn menu--btn"
-        class:menu--btn--active={activePanel === 'activity'}
+        class="btn btn--icon"
         onclick={() => {
             activePanel = activePanel === 'activity' ? null : 'activity';
         }}
@@ -75,6 +73,8 @@
             <InboxIcon />
         {/if}
     </button>
+
+    <!-- Profile menu -->
     <div class="mt-auto flex flex-col items-center mb-4">
         <DropdownMenu
             items={[
@@ -97,7 +97,7 @@
                 },
             ]}
         >
-            <button class="btn">
+            <button class="btn btn--plain">
                 <Avatar
                     userId={me.id}
                     imageUrl={me.avatarUrlSmall}
@@ -108,47 +108,27 @@
     </div>
 </div>
 
-{#if activePanel === 'activity'}
+{#if activePanel}
     <ResizablePanel
         class="max-h-full overflow-auto"
         freeSide="right"
-        width={panelSizeManager.getWidth('activity') ?? 360}
+        width={panelSizeManager.getWidth(activePanel) ?? 360}
         minWidth={240}
         maxWidth={1600}
-        onWidthChange={w => panelSizeManager.setWidth('activity', w)}
+        onWidthChange={w => panelSizeManager.setWidth(activePanel!, w)}
     >
-        <ActivityView {board} />
-    </ResizablePanel>
-{/if}
-{#if activePanel === 'boards'}
-    <ResizablePanel
-        class="max-h-full overflow-auto"
-        freeSide="right"
-        width={panelSizeManager.getWidth('boards') ?? 360}
-        minWidth={240}
-        maxWidth={1600}
-        onWidthChange={w => panelSizeManager.setWidth('boards', w)}
-    >
-        <BoardsView {boards} />
+        {#if activePanel === 'activity'}
+            <ActivityView {board} />
+        {:else if activePanel === 'boards'}
+            <BoardsView {boards} />
+        {/if}
     </ResizablePanel>
 {/if}
 
 <style>
-    .menu--btn {
-        --icon-size: 1.25rem;
-
-        display: flex;
-        align-items: center;
-        height: 2.25rem;
-        width: 2.25rem;
-        border-radius: var(--radius-md);
-
-        &.menu--btn--active {
-            background-color: var(--color-material-1-hover);
-        }
-
-        &:hover {
-            background-color: var(--color-material-1-hover);
-        }
+    .btn-margin-block-end {
+        margin-block-end: calc(
+            (var(--panel-header-height) - var(--btn-size)) / 2
+        );
     }
 </style>

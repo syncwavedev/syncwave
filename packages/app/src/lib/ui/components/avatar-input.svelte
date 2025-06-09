@@ -69,7 +69,7 @@
     <div class="input--avatar">
         <img alt="avatar" src={getObjectUrl(objectKey, 'medium')} />
         <button
-            class="btn--icon input--avatar__remove-btn bg-material-elevated-element"
+            class="btn btn--icon input--avatar__remove-btn bg-material-elevated-element"
             aria-label="Remove avatar"
             onclick={onRemove}
         >

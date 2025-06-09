@@ -21,7 +21,7 @@
                 {boards.length === 1 ? 'board' : 'boards'}
             </p>
         </div>
-        <button class="btn--icon ml-auto">
+        <button class="btn btn--icon ml-auto">
             <PlusIcon />
         </button>
     </div>

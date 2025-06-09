@@ -28,7 +28,7 @@
                 <div class="text-ink-detail flex gap-6 items-start">
                     <p class="mt-1 leading-relaxed">{t.caption}</p>
                     <button
-                        class="btn--ghost hover:bg-material-elevated-hover ml-auto"
+                        class="btn hover:bg-material-elevated-hover ml-auto"
                         onclick={() => toastManager.remove(t.id)}
                     >
                         Dismiss

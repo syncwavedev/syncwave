@@ -42,7 +42,7 @@
         </div>
 
         <button
-            class="ml-auto btn--icon btn--icon--sm invisible group-hover:visible"
+            class="ml-auto btn btn--icon invisible group-hover:visible"
             onclick={onDeleteMessage}
         >
             <TrashIcon />

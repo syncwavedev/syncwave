@@ -17,7 +17,7 @@
     <img src={url} alt={file.name} class="h-16 w-16 rounded-md object-cover" />
     <button
         type="button"
-        class="btn--icon btn--icon--ink absolute top-0 right-0 !h-[1em] !w-[1em]"
+        class="btn btn--icon btn--icon--ink absolute top-0 right-0 !h-[1em] !w-[1em]"
         onclick={onRemove}
     >
         <TimesIcon />

@@ -1,5 +1,5 @@
 :root {
-    --icon-size: 1rem;
+    --icon-size: 1em;
 }
 
 .icon {
@@ -8,19 +8,5 @@
     object-fit: contain;
     display: inline-block;
 
-    vertical-align: text-bottom;
-}
-
-.icon-base {
-    --icon-size: 1em;
-}
-
-.icon-sm {
-    --icon-size: 0.9375rem;
-}
-.icon-md {
-    --icon-size: 1.0625rem;
-}
-.icon-lg {
-    --icon-size: 1.125rem;
+    vertical-align: middle;
 }

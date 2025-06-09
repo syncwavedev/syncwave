@@ -1,42 +1,97 @@
-.btn {
-    align-items: center;
-    cursor: pointer;
+:root {
+    --btn-size: 2.65em;
+}
 
-    font-size: 1em;
+.btn {
+    --transition: 100ms ease;
+
+    background-color: var(--btn-background, transparent);
+    color: var(--btn-color, var(--color-ink));
+
+    border-radius: var(--btn-border-radius, 0.5em);
+    border: var(--btn-border-size, 0px) solid
+        var(--btn-border-color, var(--color-subtle-dark));
+
+    cursor: pointer;
+    pointer-events: auto;
 
     display: inline-flex;
+    gap: var(--btn-gap, 0.325em);
     justify-content: center;
-    pointer-events: auto;
+    align-items: center;
+
+    font-size: 1em;
+    font-weight: 400;
+
+    padding: var(--btn-padding, 0.25em 0.25em);
+    white-space: nowrap;
+
+    transition:
+        background-color var(--transition),
+        border var(--transition),
+        color var(--transition),
+        filter var(--transition),
+        opacity var(--transition);
+
+    img {
+        -webkit-touch-callout: none;
+
+        user-select: none;
+    }
+
+    &:where(:has(img, svg)) {
+        text-align: start;
+
+        img,
+        svg {
+            block-size: var(--btn-icon-size, 1.3em);
+            inline-size: var(--btn-icon-size, 1.3em);
+            max-inline-size: unset;
+        }
+    }
+
+    &.btn--icon,
+    &:where(:has(.for-screen-reader):has(img, svg)) {
+        --btn-border-radius: 50%;
+        --btn-padding: 0;
+
+        aspect-ratio: 1;
+        block-size: var(--btn-size);
+        display: grid;
+        inline-size: var(--btn-size);
+        place-items: center;
+
+        > * {
+            grid-area: 1/1;
+        }
+    }
+
+    &:hover {
+        --btn-background: var(--color-material-base-hover);
+    }
+
+    &[disabled],
+    &:has([disabled]),
+    [disabled] &[type='submit'],
+    &[type='submit']:disabled {
+        cursor: not-allowed;
+        opacity: 0.3;
+        pointer-events: none;
+    }
 }
 
-.btn--icon {
-    @apply hover:bg-material-1-hover
-    grid
-    aspect-square
-    h-[2em]
-    w-[2em]
-    place-items-center
-    rounded-sm
-    pointer-events-auto
-    disabled:text-ink-disabled;
-
-    &.btn--icon--active {
-        @apply bg-material-1-hover;
-    }
-
-    &.btn--icon--bordered {
-        @apply border border-divider-object;
-    }
-
-    &.btn--icon--lg {
-        @apply w-[3em] h-[3em];
-    }
-
-    &.btn--icon--sm {
-        @apply w-[1.85em] h-[1.85em];
-    }
+.btn--plain {
+    --btn-border-radius: 0.5em;
+    --btn-border-size: 0;
+    --btn-icon-size: 100%;
+    --btn-padding: 0;
+    --hover-size: 0;
 }
 
-.btn--ghost {
-    @apply px-1 h-[1.8em] rounded-sm gap-1.5 flex items-center hover:text-ink disabled:text-ink-disabled pointer-events-auto;
+.btn--large {
+    font-size: 1.15em;
+}
+
+.btn--small {
+    font-size: 0.85em;
 }

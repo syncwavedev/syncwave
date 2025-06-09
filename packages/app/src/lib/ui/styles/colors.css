@@ -39,8 +39,10 @@
     --color-gray-1100: oklch(12% 0 0deg);
 
     --color-primary: oklch(0.65 0.155 249.85deg);
-    --color-modified: oklch(0.7664 0.1497 93.62deg);
-    --color-danger: oklch(0.8 0.29 27.2deg);
+
+    --color-created: var(--theme-color-created);
+    --color-modified: var(--theme-color-modified);
+    --color-deleted: var(--theme-color-deleted);
 
     /* Semantics */
     --color-ink: var(--theme-color-ink);
@@ -94,14 +96,18 @@
 @layer base {
     [data-theme='light'] {
         --theme-color-ink: var(--color-gray-1050);
-        --theme-color-ink-body: var(--color-gray-600);
-        --theme-color-ink-detail: var(--color-gray-500);
+        --theme-color-ink-body: var(--color-gray-700);
+        --theme-color-ink-detail: var(--color-gray-600);
         --theme-color-ink-placeholder: var(--color-gray-350);
         --theme-color-ink-disabled: var(--color-gray-450);
 
         --theme-color-ink-danger: oklch(0.64 0.18 26.2deg);
 
-        --theme-color-divider: var(--color-gray-80);
+        --theme-color-created: oklch(0.65 0.2266 139.07);
+        --theme-color-modified: oklch(0.55 0.2177 257.42);
+        --theme-color-deleted: oklch(0.48 0.2141 29.7);
+
+        --theme-color-divider: var(--color-gray-100);
         --theme-color-divider-object: var(--color-gray-125);
         --theme-color-divider-active: var(--color-primary);
 
@@ -139,6 +145,10 @@
         --theme-color-ink-placeholder: var(--color-gray-450);
         --theme-color-ink-disabled: var(--color-gray-500);
         --theme-color-ink-danger: var(--color-danger);
+
+        --theme-color-created: oklch(0.72 0.2 139.07);
+        --theme-color-modified: oklch(0.68 0.19 257.42);
+        --theme-color-deleted: oklch(0.62 0.19 29.7);
 
         --theme-color-divider: var(--color-gray-850);
         --theme-color-divider-object: var(--color-gray-700);

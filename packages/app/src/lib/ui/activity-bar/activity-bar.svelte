@@ -1,9 +1,6 @@
 <script lang="ts">
-    import type {BoardTreeView, MeView} from '../../agent/view.svelte';
-    import {
-        panelSizeManager,
-        type PanelType,
-    } from '../../panel-size-manager.svelte';
+    import type {MeView} from '../../agent/view.svelte';
+    import {panelSizeManager} from '../../panel-size-manager.svelte';
     import {getAuthManager} from '../../utils';
     import Avatar from '../components/avatar.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
@@ -15,25 +12,20 @@
     import ActivityView from '../activity-view/activity-view.svelte';
     import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
     import BoardsView from '../boards-view/boards-view.svelte';
-    import type {Board} from 'syncwave';
     import HomeIcon from '../components/icons/home-icon.svelte';
     import HomeSolidIcon from '../components/icons/home-solid-icon.svelte';
     import InboxSolidIcon from '../components/icons/inbox-solid-icon.svelte';
     import InboxIcon from '../components/icons/inbox-icon.svelte';
 
-    const {
+    let {
         me,
-        board,
-        boards,
+        activePanel = $bindable(null),
     }: {
         me: MeView;
-        board: BoardTreeView;
-        boards: Board[];
+        activePanel: 'inbox' | 'home' | null;
     } = $props();
 
     const authManager = getAuthManager();
-
-    let activePanel: PanelType | null = $state(null);
 </script>
 
 {#snippet profileSettings()}
@@ -52,10 +44,10 @@
     <button
         class="btn btn--icon btn-margin-block-end"
         onclick={() => {
-            activePanel = activePanel === 'boards' ? null : 'boards';
+            activePanel = activePanel === 'home' ? null : 'home';
         }}
     >
-        {#if activePanel === 'boards'}
+        {#if activePanel === 'home'}
             <HomeSolidIcon />
         {:else}
             <HomeIcon />
@@ -64,10 +56,10 @@
     <button
         class="btn btn--icon"
         onclick={() => {
-            activePanel = activePanel === 'activity' ? null : 'activity';
+            activePanel = activePanel === 'inbox' ? null : 'inbox';
         }}
     >
-        {#if activePanel === 'activity'}
+        {#if activePanel === 'inbox'}
             <InboxSolidIcon />
         {:else}
             <InboxIcon />
@@ -107,23 +99,6 @@
         </DropdownMenu>
     </div>
 </div>
-
-{#if activePanel}
-    <ResizablePanel
-        class="max-h-full overflow-auto"
-        freeSide="right"
-        width={panelSizeManager.getWidth(activePanel) ?? 360}
-        minWidth={240}
-        maxWidth={1600}
-        onWidthChange={w => panelSizeManager.setWidth(activePanel!, w)}
-    >
-        {#if activePanel === 'activity'}
-            <ActivityView {board} />
-        {:else if activePanel === 'boards'}
-            <BoardsView {boards} />
-        {/if}
-    </ResizablePanel>
-{/if}
 
 <style>
     .btn-margin-block-end {

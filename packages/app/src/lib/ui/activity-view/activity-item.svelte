@@ -30,9 +30,9 @@
         <span>{@render icon()}</span>
     </div>
     <div class="avatar-xs flex flex-1 flex-col gap-1 truncate">
-        <div class="flex items-center gap-1">
-            <div class="flex items-center icon-base">
-                <HashtagIcon />
+        <div class="flex items-center gap-1 font-semibold">
+            <div class="flex items-center">
+                <HashtagIcon strokeWidth="2.5" />
                 {message.card.counter}
             </div>
             <div>

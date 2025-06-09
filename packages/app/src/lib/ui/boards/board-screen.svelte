@@ -1,13 +1,18 @@
 <script lang="ts">
-    import {compareNumbers, log, type Awareness} from 'syncwave';
+    import {
+        BoardViewDataDto,
+        compareNumbers,
+        CrdtDiff,
+        log,
+        type UserId,
+        type User,
+    } from 'syncwave';
     import {onMount, tick} from 'svelte';
     import BoardColumn from './board-column.svelte';
     import Scrollable from '../components/scrollable.svelte';
     import type {
-        BoardTreeView,
         CardTreeView,
         ColumnTreeView,
-        MemberView,
         MeView,
     } from '../../agent/view.svelte';
     import CardDetails from './card-details.svelte';
@@ -30,23 +35,29 @@
     import {panelSizeManager} from '../../panel-size-manager.svelte';
     import TimesIcon from '../components/icons/times-icon.svelte';
     import SearchIcon from '../components/icons/search-icon.svelte';
-    import ActivityBar from './activity-bar.svelte';
+    import PermissionBoundary from '../components/permission-boundary.svelte';
 
     const {
-        board,
-        awareness,
-        boardMeView,
         me,
+        boardData,
+        meBoardData,
         counter,
     }: {
-        board: BoardTreeView;
-        awareness: Awareness;
+        boardData: BoardViewDataDto;
+        meBoardData: {
+            id: UserId;
+            state: CrdtDiff<User>;
+        };
         me: MeView;
-        boardMeView: MemberView;
         counter?: number;
     } = $props();
 
     const agent = getAgent();
+
+    const [board, awareness, boardMeView] = agent.observeBoard(
+        boardData,
+        meBoardData
+    );
 
     let selectedCard = $state<CardTreeView | null>(
         counter
@@ -240,7 +251,10 @@
 {#snippet header()}
     <div class="flex flex-col gap-1">
         <p class="font-semibold">{board.name}</p>
-        <p class="text-ink-detail text-xs">6 members + 2 guests</p>
+        <p class="text-ink-detail text-xs">
+            {board.members.length}
+            {board.members.length === 1 ? 'member' : 'members'}
+        </p>
     </div>
 
     <div class="ml-2 flex">
@@ -313,8 +327,7 @@
     </button>
 {/snippet}
 
-<div class="app flex">
-    <ActivityBar {me} {board} boards={me.boards} />
+<PermissionBoundary member={boardMeView}>
     <div class="relative flex min-w-0 flex-col flex-1">
         <div
             class="flex items-center shrink-0 px-board-inline h-panel-header avatar-xs"
@@ -385,7 +398,7 @@
             </ResizablePanel>
         {/key}
     {/if}
-</div>
+</PermissionBoundary>
 
 <style>
     .board-content {

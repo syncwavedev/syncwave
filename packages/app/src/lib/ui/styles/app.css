@@ -1,10 +1,8 @@
 :root {
-    --app-margin: 0px;
     --app-border: 0px;
-    --app-border-radius: 0px;
 
-    --app-width: calc(100vw - (var(--app-margin) * 2));
-    --app-height: calc(100vh - var(--app-margin));
+    --app-width: 100vw;
+    --app-height: calc(100vh - var(--app-border));
 }
 
 .app {

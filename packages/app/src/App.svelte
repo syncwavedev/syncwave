@@ -67,7 +67,7 @@
     const pageManager = new PageManager(agent, authManager);
 </script>
 
-<main>
+<main class="app">
     {#if appConfig.stage === 'local' || appConfig.stage === 'dev'}
         <ToastContainer />
         {#if pageManager.page}

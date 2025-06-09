@@ -181,46 +181,20 @@ export class PageManager {
             throw new Error('User ID not found');
         }
 
-        if (key === undefined) {
-            router.route('/');
-            log.warn({msg: 'board key is undefined'});
-            return;
-        }
-
-        const boardPromise = this._agent.getBoardViewData(key);
         const mePromise = this._agent.getMeViewData();
 
-        Promise.all([boardPromise, mePromise])
-            .then(([[boardData, meBoardData], meData]) => {
-                if (boardData.board.deletedAt) {
-                    toastManager.error(
-                        'Board has been deleted',
-                        'This board is no longer available as it has been permanently removed.'
-                    );
-
-                    BoardHistoryManager.clear();
-                    router.route('/');
-                    return;
-                }
-
-                BoardHistoryManager.save(key);
-
+        Promise.all([mePromise])
+            .then(([meData]) => {
                 this._page = BoardPage;
                 this._pageProps = {
-                    boardData,
-                    meBoardData,
                     meData,
+                    key: key,
                     counter: counter ? parseInt(counter) : undefined,
                 };
             })
             .catch(err => {
-                toastManager.error(
-                    'Unable to load board',
-                    'The board may not exist or you may not have permission to view it.'
-                );
-                log.error({msg: 'Error loading board', error: err});
+                log.error({msg: 'Error loading user data', error: err});
 
-                BoardHistoryManager.clear();
                 router.route('/');
             });
     }

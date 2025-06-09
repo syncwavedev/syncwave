@@ -1,9 +1,9 @@
-export type PanelType = 'activity' | 'card_details' | 'boards';
+export type PanelType = 'inbox' | 'card_details' | 'home';
 
 export class PanelSizeManager {
     private _panelWidths: Record<PanelType, number | null> = $state({
-        activity: null,
-        boards: null,
+        inbox: null,
+        home: null,
         card_details: null,
     });
 

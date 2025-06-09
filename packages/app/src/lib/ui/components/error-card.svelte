@@ -57,6 +57,7 @@
         text-align: center;
         padding: 2rem;
         border-radius: 8px;
+        height: 100%;
     }
 
     h2 {

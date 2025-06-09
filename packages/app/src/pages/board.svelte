@@ -1,40 +1,77 @@
 <script lang="ts">
-    import {
-        BoardViewDataDto,
-        CrdtDiff,
-        MeViewDataDto,
-        User,
-        type UserId,
-    } from 'syncwave';
-    import BoardScreen from '../lib/ui/boards/board-screen.svelte';
-    import PermissionBoundary from '../lib/ui/components/permission-boundary.svelte';
+    import {MeViewDataDto} from 'syncwave';
 
     import {getAgent} from '../lib/agent/agent.svelte';
+    import ActivityBar from '../lib/ui/activity-bar/activity-bar.svelte';
+    import BoardHistoryManager from '../lib/board-history-manager';
+    import BoardScreen from '../lib/ui/boards/board-screen.svelte';
+    import BoardLoader from '../lib/ui/boards/board-loader.svelte';
 
     const {
-        boardData,
-        meBoardData,
         meData,
         counter,
+        key,
     }: {
-        boardData: BoardViewDataDto;
-        meBoardData: {
-            id: UserId;
-            state: CrdtDiff<User>;
-        };
         meData: MeViewDataDto;
         counter?: number;
+        key?: string;
     } = $props();
 
     const agent = getAgent();
 
-    const [board, awareness, boardMeView] = agent.observeBoard(
-        boardData,
-        meBoardData
-    );
+    function getDefaultBoardKey(): string | undefined {
+        const lastKey = BoardHistoryManager.last();
+
+        // The last board can be deleted, or user access can be revoked
+        if (lastKey && me.boards.some(b => b.key === lastKey)) {
+            return lastKey;
+        }
+
+        return me.boards[0].key;
+    }
+
+    const selectedKey = $state(key ?? getDefaultBoardKey());
+
+    // Save the selected board key to history on change
+    $effect(() => {
+        if (selectedKey) {
+            BoardHistoryManager.save(selectedKey);
+        }
+    });
+
     const me = agent.observeMe(meData);
 </script>
 
-<PermissionBoundary member={boardMeView}>
-    <BoardScreen {board} {awareness} {me} {boardMeView} {counter} />
-</PermissionBoundary>
+<div class="flex h-full">
+    <ActivityBar {me} activePanel={null} />
+    <!-- {#if activePanel}
+        <ResizablePanel
+            class="max-h-full overflow-auto"
+            freeSide="right"
+            width={panelSizeManager.getWidth(activePanel) ?? 360}
+            minWidth={240}
+            maxWidth={1600}
+            onWidthChange={w => panelSizeManager.setWidth(activePanel!, w)}
+        >
+            {#if activePanel === 'activity'}
+                <ActivityView {board} />
+            {:else if activePanel === 'boards'}
+                <BoardsView {boards} />
+            {/if}
+        </ResizablePanel>
+    {/if} -->
+    {#if selectedKey}
+        {#await agent.getBoardViewData(selectedKey)}
+            {@const board = me.boards.find(b => b.key === selectedKey)}
+            {#if board}
+                <BoardLoader {board} />
+            {:else}
+                <div class="flex flex-col items-center justify-center h-full">
+                    <p class="text-gray-500">Board not found</p>
+                </div>
+            {/if}
+        {:then [boardData, meBoardData]}
+            <BoardScreen {me} {boardData} {meBoardData} {counter} />
+        {/await}
+    {/if}
+</div>

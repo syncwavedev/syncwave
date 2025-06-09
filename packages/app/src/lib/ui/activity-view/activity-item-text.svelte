@@ -8,7 +8,9 @@
 
 <ActivityItem {message} {isNew}>
     {#snippet icon()}
-        <MessageSquareTextIcon />
+        <span class="text-created">
+            <MessageSquareTextIcon />
+        </span>
     {/snippet}
     {#snippet action()}
         <span>has new message</span>

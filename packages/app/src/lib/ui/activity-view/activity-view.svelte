@@ -64,7 +64,7 @@
                     : 'unread messages'}
             </p>
         </div>
-        <button class="btn--icon ml-auto" onclick={readMessages}>
+        <button class="btn btn--icon ml-auto" onclick={readMessages}>
             <CheckCheckIcon />
         </button>
     </div>

@@ -18,22 +18,21 @@
     class="
     flex
     gap-2
-    px-panel-inline
-    py-3
+    px-panel-inline-half
+    mx-panel-inline-half
+    py-2
     leading-relaxed
     hover:bg-material-1-hover
-    border-b
-    border-divider
+    rounded-md
     "
 >
-    <div class="icon-lg text-ink-body mt-0.25">
+    <div class="symbol">
         <span>{@render icon()}</span>
     </div>
     <div class="avatar-xs flex flex-1 flex-col gap-1 truncate">
-        <div class="flex items-center gap-1" class:font-semibold={isNew}>
+        <div class="flex items-center gap-1">
             <div class="flex items-center icon-base">
-                <HashtagIcon strokeWidth={isNew ? '2.5' : '1.5'} />
-
+                <HashtagIcon />
                 {message.card.counter}
             </div>
             <div>
@@ -41,23 +40,25 @@
             </div>
         </div>
         <div class="flex items-center">
-            <span class="truncate text-ink-body">
+            <span class="truncate">
                 {message.card.plainText
                     .split('\n')
                     .map(x => x.trim())
                     .find(x => x.length > 0) ?? 'Untitled'}
             </span>
         </div>
-        <div class="mt-1 text-xs">
-            <span class="text-ink-detail">
-                {message.author.fullName}
-            </span>
-            <span class="text-ink-detail">
-                <TimeAgo time={message.createdAt} />
-            </span>
+        <div class="text-sm text-ink-detail mt-0.75">
+            {message.author.fullName}
+            <TimeAgo time={message.createdAt} />
         </div>
     </div>
     {#if isNew}
         <div class="h-1.5 w-1.5 bg-modified rounded-full"></div>
     {/if}
 </div>
+
+<style>
+    .symbol {
+        --icon-size: 1.4em;
+    }
+</style>

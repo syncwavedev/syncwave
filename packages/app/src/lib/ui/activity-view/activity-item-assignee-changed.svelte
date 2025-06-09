@@ -15,7 +15,7 @@
 
 <ActivityItem {message} {isNew}>
     {#snippet icon()}
-        <span>
+        <span class="text-modified">
             <UsersIcon />
         </span>
     {/snippet}

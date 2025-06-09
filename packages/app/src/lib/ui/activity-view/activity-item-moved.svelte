@@ -14,7 +14,9 @@
 
 <ActivityItem {message} {isNew}>
     {#snippet icon()}
-        <ArrowRightSquareIcon />
+        <span class="text-modified">
+            <ArrowRightSquareIcon />
+        </span>
     {/snippet}
     {#snippet action()}
         <span>moved to</span>

@@ -637,7 +637,7 @@ function stringifyError(error: unknown) {
             : '';
         return message + cause;
     }
-    return String(error);
+    return JSON.stringify(error);
 }
 
 export interface LogRecord {

@@ -381,9 +381,22 @@ export class Agent {
     }
 
     observeMe(initialMe: MeViewDataDto): MeView {
-        const ctx = this.contextManager.use();
+        const {data, destroy} = this.observeMeUnsafe(initialMe);
+        this.contextManager.use().onEnd(() => destroy());
 
-        return ctx.run(() => this.observeMeImpl(initialMe));
+        return data;
+    }
+
+    observeMeUnsafe(initialMe: MeViewDataDto): {
+        data: MeView;
+        destroy: () => void;
+    } {
+        const [ctx, destroy] = context().createChild({span: 'observeMeUnsafe'});
+
+        return {
+            data: ctx.run(() => this.observeMeImpl(initialMe)),
+            destroy: () => destroy('observeMeUnsafe destroyed'),
+        };
     }
 
     private observeMeImpl(initialMe: MeViewDataDto): MeView {
@@ -456,11 +469,24 @@ export class Agent {
         dto: BoardViewDataDto,
         initialMe: {id: UserId; state: CrdtDiff<User>}
     ): [BoardTreeView, Awareness, MemberView] {
-        const ctx = this.contextManager.use();
+        const {data, destroy} = this.observeBoardUnsafe(dto, initialMe);
+        this.contextManager.use().onEnd(() => destroy());
 
-        return ctx.detach({span: 'observeBoard'}, () =>
-            this.observeBoardImpl(dto, initialMe)
-        );
+        return data;
+    }
+
+    observeBoardUnsafe(
+        dto: BoardViewDataDto,
+        initialMe: {id: UserId; state: CrdtDiff<User>}
+    ): {data: [BoardTreeView, Awareness, MemberView]; destroy: () => void} {
+        const [ctx, destroy] = context().createChild({
+            span: 'observeBoardUnsafe',
+        });
+
+        return {
+            data: ctx.run(() => this.observeBoardImpl(dto, initialMe)),
+            destroy: () => destroy('observeBoardUnsafe destroyed'),
+        };
     }
 
     private observeBoardImpl(

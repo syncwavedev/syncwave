@@ -510,12 +510,21 @@ export function hashString(s: string) {
     return hash;
 }
 
-export function uniqBy<K, V>(items: V[], cb: (item: V) => K) {
-    const result = new Map<K, V>();
+/**
+ * This function returns unique items (by key) deterministically. If there are duplicates, the first occurrence
+ * will be used for the result. Item in the result array are in the same order as in the input array
+ */
+export function uniqBy<K, V>(items: V[], getKey: (item: V) => K) {
+    const keys = new Set<K>();
+    const result: V[] = [];
     for (const item of items) {
-        result.set(cb(item), item);
+        const key = getKey(item);
+        if (keys.has(key)) continue;
+
+        result.push(item);
+        keys.add(key);
     }
-    return [...result.values()];
+    return result;
 }
 
 export interface ClipOptions {

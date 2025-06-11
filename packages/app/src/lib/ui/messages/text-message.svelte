@@ -39,6 +39,10 @@
             <span class="text-ink-detail text-sm">
                 <TimeAgo time={message.createdAt} />
             </span>
+
+            <span class="text-ink-detail text-sm">
+                {new Date(message.readByMeAt ?? 0).toISOString()}
+            </span>
         </div>
 
         <button

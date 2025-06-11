@@ -56,7 +56,12 @@
             }
         });
 
-        agent.updateCardCursorTimestamp(card.id, getNow());
+        const now = getNow();
+        card.messages.forEach(message => {
+            if (!message.readByMeAt) {
+                agent.markMessageAsRead(message.id, now);
+            }
+        });
     });
 
     const fragment = createXmlFragment();

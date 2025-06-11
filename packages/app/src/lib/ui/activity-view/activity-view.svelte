@@ -16,14 +16,15 @@
 
     let {board}: Props = $props();
 
-    const sortedMessages = $derived(
-        board.messages.sort((a, b) => b.createdAt - a.createdAt)
-    );
-
     const agent = getAgent();
 
     function readMessages() {
-        agent.updateBoardCursorTimestamp(board.id, getNow());
+        const now = getNow();
+        board.messages.forEach(message => {
+            if (!message.readByMeAt) {
+                agent.markMessageAsRead(message.id, now);
+            }
+        });
 
         toastManager.info(
             'Messages read',
@@ -34,7 +35,7 @@
 
 {#snippet messageList(messages: Array<MessageView>)}
     {#each messages as message (message.id)}
-        {@const isNew = message.card.unreadMessages.length > 0}
+        {@const isNew = message.card.messages.some(x => !x.readByMeAt)}
         <div data-message-id={message.id}>
             {#if message.payload.type === 'card_column_changed'}
                 <ActivityItemMoved {message} {isNew} />
@@ -58,8 +59,8 @@
         <div class="flex flex-col gap-1">
             <p class="font-semibold">Inbox</p>
             <p class="text-ink-detail text-xs">
-                {sortedMessages.length}
-                {sortedMessages.length === 1
+                {board.messages.length}
+                {board.messages.length === 1
                     ? 'unread message'
                     : 'unread messages'}
             </p>
@@ -69,6 +70,6 @@
         </button>
     </div>
     <div class="overflow-y-auto no-scrollbar flex flex-col flex-1">
-        {@render messageList(sortedMessages)}
+        {@render messageList(board.messages)}
     </div>
 </div>

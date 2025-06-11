@@ -19,7 +19,7 @@ import {createUuidV4, Uuid} from '../uuid.js';
 import {type Principal, system} from './auth.js';
 import {AwarenessStore} from './awareness-store.js';
 import {BoardService} from './board-service.js';
-import {BoardCursorDto, CardCursorDto, MemberInfoDto} from './dto.js';
+import {MemberInfoDto, MessageReadDto} from './dto.js';
 import {EmailService} from './email-service.js';
 import {EventStoreReader, EventStoreWriter, LogEntry} from './event-store.js';
 import type {CryptoProvider, EmailProvider} from './infrastructure.js';
@@ -34,12 +34,11 @@ import {
 } from './repos/attachment-repo.js';
 import type {CrdtChangeOptions} from './repos/base/crdt-repo.js';
 import type {DocChangeOptions} from './repos/base/doc-repo.js';
-import {BoardCursor, BoardCursorRepo} from './repos/board-cursor-repo.js';
 import {type Board, type BoardId, BoardRepo} from './repos/board-repo.js';
-import {type CardCursor, CardCursorRepo} from './repos/card-cursor-repo.js';
 import {type Card, type CardId, CardRepo} from './repos/card-repo.js';
 import {type Column, type ColumnId, ColumnRepo} from './repos/column-repo.js';
 import {type Member, type MemberId, MemberRepo} from './repos/member-repo.js';
+import {MessageRead, MessageReadRepo} from './repos/message-read-repo.js';
 import {
     type Message,
     type MessageId,
@@ -68,8 +67,7 @@ export interface DataTx {
     readonly messages: MessageRepo;
     readonly attachments: AttachmentRepo;
     readonly accounts: AccountRepo;
-    readonly cardCursors: CardCursorRepo;
-    readonly boardCursors: BoardCursorRepo;
+    readonly messageReads: MessageReadRepo;
     readonly config: Config;
     readonly rawTx: AppTransaction;
     readonly events: CollectionManager<SyncwaveLogEntry>;
@@ -148,27 +146,16 @@ export function MemberInfoChangeEvent() {
     });
 }
 
-export function CardCursorChangeEvent() {
+export function MessageReadChangeEvent() {
     return Type.Object({
-        type: Type.Literal('card_cursor'),
+        type: Type.Literal('message_read'),
         kind: Type.Literal('snapshot'),
-        after: CardCursorDto(),
+        after: MessageReadDto(),
     });
 }
 
-export interface CardCursorChangeEvent
-    extends Static<ReturnType<typeof CardCursorChangeEvent>> {}
-
-export function BoardCursorChangeEvent() {
-    return Type.Object({
-        type: Type.Literal('board_cursor'),
-        kind: Type.Literal('snapshot'),
-        after: BoardCursorDto(),
-    });
-}
-
-export interface BoardCursorChangeEvent
-    extends Static<ReturnType<typeof BoardCursorChangeEvent>> {}
+export interface MessageReadChangeEvent
+    extends Static<ReturnType<typeof MessageReadChangeEvent>> {}
 
 export function AccountChangeEvent() {
     return Type.Object({
@@ -226,8 +213,7 @@ export function SyncwaveChangeEvent() {
         MessageChangeEvent(),
         AttachmentChangeEvent(),
         MemberInfoChangeEvent(),
-        CardCursorChangeEvent(),
-        BoardCursorChangeEvent(),
+        MessageReadChangeEvent(),
     ]);
 }
 
@@ -373,22 +359,16 @@ export class DataLayer {
                 onChange: options => logAttachmentChange(dataTx, options),
                 scheduleTrigger,
             });
-            const cardCursors = new CardCursorRepo({
-                tx: isolate(['card_cursors'])(tx),
+            // card_cursors
+            // board_cursors
+            const messageReads = new MessageReadRepo({
+                tx: isolate(['message_reads'])(tx),
                 boardRepo: boards,
                 userRepo: users,
-                cardRepo: cards,
+                messageRepo: messages,
                 scheduleTrigger,
-                onChange: options => logCardCursorChange(dataTx, options),
+                onChange: options => logMessageReadChange(dataTx, options),
             });
-            const boardCursors = new BoardCursorRepo({
-                tx: isolate(['board_cursors'])(tx),
-                boardRepo: boards,
-                userRepo: users,
-                scheduleTrigger,
-                onChange: options => logBoardCursorChange(dataTx, options),
-            });
-
             const events = new CollectionManager<LogEntry<SyncwaveChangeEvent>>(
                 isolate(['events_v2'])(tx),
                 new MsgpackCodec()
@@ -458,8 +438,7 @@ export class DataLayer {
                 cards,
                 columns,
                 attachments,
-                cardCursors,
-                boardCursors,
+                messageReads,
                 messages,
                 events,
                 accounts: accountsV2,
@@ -949,24 +928,12 @@ async function logCardChange(
     await tx.esWriter.append(boardEvents(card.boardId), event);
 }
 
-async function logCardCursorChange(
+async function logMessageReadChange(
     tx: DataTx,
-    {pk: [id], after, kind}: DocChangeOptions<CardCursor>
+    {pk: [id], after, kind}: DocChangeOptions<MessageRead>
 ) {
-    const event: CardCursorChangeEvent = {
-        type: 'card_cursor',
-        kind: 'snapshot',
-        after,
-    };
-    await tx.esWriter.append(boardEvents(after.boardId), event);
-}
-
-async function logBoardCursorChange(
-    tx: DataTx,
-    {pk: [id], after, kind}: DocChangeOptions<BoardCursor>
-) {
-    const event: BoardCursorChangeEvent = {
-        type: 'board_cursor',
+    const event: MessageReadChangeEvent = {
+        type: 'message_read',
         kind: 'snapshot',
         after,
     };

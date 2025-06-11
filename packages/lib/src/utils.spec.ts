@@ -20,6 +20,7 @@ import {
     pipe,
     run,
     shuffle,
+    uniqBy,
     whenAll,
     zip,
 } from './utils.js';
@@ -351,6 +352,98 @@ describe('distinct', () => {
         const result = distinct(items);
         // Sets don't handle object equality, so this won't remove duplicates.
         expect(result).toEqual(items);
+    });
+});
+
+describe('uniqBy', () => {
+    it('should return an array with unique elements based on an object key', () => {
+        const items = [
+            {id: 1, name: 'a'},
+            {id: 2, name: 'b'},
+            {id: 1, name: 'c'}, // Duplicate id
+            {id: 3, name: 'd'},
+        ];
+        const result = uniqBy(items, item => item.id);
+        expect(result).toEqual([
+            {id: 1, name: 'a'},
+            {id: 2, name: 'b'},
+            {id: 3, name: 'd'},
+        ]);
+    });
+
+    it('should preserve the order of the first occurrences', () => {
+        const items = [
+            {group: 'a', value: 1},
+            {group: 'b', value: 2},
+            {group: 'a', value: 3},
+            {group: 'c', value: 4},
+            {group: 'b', value: 5},
+        ];
+        const result = uniqBy(items, item => item.group);
+        expect(result).toEqual([
+            {group: 'a', value: 1},
+            {group: 'b', value: 2},
+            {group: 'c', value: 4},
+        ]);
+    });
+
+    it('should handle an empty array', () => {
+        const items: {id: number}[] = [];
+        const result = uniqBy(items, item => item.id);
+        expect(result).toEqual([]);
+    });
+
+    it('should return the original array if all item keys are unique', () => {
+        const items = [
+            {id: 1, name: 'a'},
+            {id: 2, name: 'b'},
+            {id: 3, name: 'c'},
+        ];
+        const originalItems = [...items];
+        const result = uniqBy(items, item => item.id);
+        expect(result).toEqual(originalItems);
+    });
+
+    it('should handle an array where all items have the same key', () => {
+        const items = [
+            {id: 1, value: 10},
+            {id: 1, value: 20},
+            {id: 1, value: 30},
+        ];
+        const result = uniqBy(items, item => item.id);
+        expect(result).toEqual([{id: 1, value: 10}]);
+    });
+
+    it('should work with string keys', () => {
+        const items = [
+            {name: 'apple', color: 'red'},
+            {name: 'banana', color: 'yellow'},
+            {name: 'apple', color: 'green'}, // Duplicate name
+        ];
+        const result = uniqBy(items, item => item.name);
+        expect(result).toEqual([
+            {name: 'apple', color: 'red'},
+            {name: 'banana', color: 'yellow'},
+        ]);
+    });
+
+    it('should work with primitive types in the array', () => {
+        const items = [1, 2, 2, 3, 1, 4, 5, 4];
+        const result = uniqBy(items, item => item);
+        expect(result).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('should work with a nested key', () => {
+        const items = [
+            {data: {id: 1}, value: 'a'},
+            {data: {id: 2}, value: 'b'},
+            {data: {id: 1}, value: 'c'},
+        ];
+        const result = uniqBy(items, item => item.data.id);
+        expect(result).toEqual([
+            {data: {id: 1}, value: 'a'},
+            {data: {id: 2}, value: 'b'},
+        ]);
     });
 });
 

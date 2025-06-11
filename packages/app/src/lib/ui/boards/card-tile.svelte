@@ -78,6 +78,8 @@
             clearTimeout(timeoutId);
         };
     });
+
+    const unreadMessagesCount = $derived(card.messages.filter(x => !x.readByMeAt).length);
 </script>
 
 <div
@@ -178,10 +180,10 @@
                 </div>
             {/if}
         </div>
-        {#if card.unreadMessages.length > 0}
+        {#if unreadMessagesCount > 0}
             <div
                 class="absolute top-1.5 right-1.5 h-1.5 w-1.5 bg-modified rounded-full pointer-events-none z-100"
-                aria-label="{card.unreadMessages.length} unread messages"
+                aria-label="{unreadMessagesCount} unread messages"
             ></div>
         {/if}
     </div>

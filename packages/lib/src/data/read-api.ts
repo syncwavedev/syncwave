@@ -216,8 +216,7 @@ export function createReadApi() {
                     cards,
                     users,
                     userEmails,
-                    cardCursors,
-                    boardCursors,
+                    messageReads,
                     messages,
                     attachments,
                     member,
@@ -229,10 +228,7 @@ export function createReadApi() {
                         getBoardUsers(tx, boardId),
                         getBoardUserEmails(tx, boardId),
                         toStream(
-                            tx.cardCursors.getByBoardId(boardId)
-                        ).toArray(),
-                        toStream(
-                            tx.boardCursors.getByBoardId(boardId)
+                            tx.messageReads.getByBoardId(boardId)
                         ).toArray(),
                         tx.messages.getByBoardId(boardId).toArray(),
                         tx.attachments.getByBoardId(boardId).toArray(),
@@ -263,8 +259,7 @@ export function createReadApi() {
                             members: userEmails,
                             messages,
                             attachments,
-                            cardCursors,
-                            boardCursors,
+                            messageReads,
                         },
                     };
                 }
@@ -333,11 +328,15 @@ export function createReadApi() {
                                             board !== undefined,
                                             'board not found'
                                         );
-                                        const membersCount = await tx.members.getByBoardId(
-                                            member.boardId,
-                                            {excludeDeleted: true}
-                                        ).count();
-                                        return [member, {...board, membersCount}] as const;
+                                        const membersCount = await tx.members
+                                            .getByBoardId(member.boardId, {
+                                                excludeDeleted: true,
+                                            })
+                                            .count();
+                                        return [
+                                            member,
+                                            {...board, membersCount},
+                                        ] as const;
                                     })
                                     .toArray();
 

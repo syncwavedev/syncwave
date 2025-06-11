@@ -581,51 +581,30 @@ export class Agent {
         return board;
     }
 
-    updateCardCursorTimestamp(cardId: CardId, timestamp: Timestamp) {
-        const card = this.crdtManager.viewById(cardId, 'card');
+    markMessageAsRead(messageId: MessageId, timestamp: Timestamp) {
+        const message = this.crdtManager.viewById(messageId, 'message');
         const meId = this.authManager.ensureAuthorized().userId;
         const transactionId = createTransactionId();
         this.syncTargets().forEach(x =>
-            x.upsertOptimisticCardCursor(
+            x.upsertOptimisticMessageRead(
                 {
                     userId: meId,
-                    boardId: card.boardId,
-                    cardId: card.id,
+                    boardId: message.boardId,
+                    messageId: message.id,
                     timestamp,
                 },
                 transactionId
             )
         );
 
-        this.rpc.putCardCursor({cardId: card.id, timestamp}).catch(error => {
-            log.error({error, msg: 'putCardCursor failed'});
-            this.syncTargets().forEach(x =>
-                x.clearOptimisticState(transactionId)
-            );
-        });
-    }
-
-    updateBoardCursorTimestamp(boardId: BoardId, timestamp: Timestamp) {
-        const board = this.crdtManager.viewById(boardId, 'board');
-        const meId = this.authManager.ensureAuthorized().userId;
-        const transactionId = createTransactionId();
-        this.syncTargets().forEach(x =>
-            x.upsertOptimisticBoardCursor(
-                {
-                    userId: meId,
-                    boardId,
-                    timestamp,
-                },
-                transactionId
-            )
-        );
-
-        this.rpc.putBoardCursor({boardId: board.id, timestamp}).catch(error => {
-            log.error({error, msg: 'putBoardCursor failed'});
-            this.syncTargets().forEach(x =>
-                x.clearOptimisticState(transactionId)
-            );
-        });
+        this.rpc
+            .putMessageRead({messageId: message.id, timestamp})
+            .catch(error => {
+                log.error({error, msg: 'putMessageRead failed'});
+                this.syncTargets().forEach(x =>
+                    x.clearOptimisticState(transactionId)
+                );
+            });
     }
 
     createCardDraft(
@@ -721,7 +700,7 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
-        this.updateCardCursorTimestamp(params.cardId, now);
+        this.markMessageAsRead(messageId, now);
 
         this.syncTargets().forEach(x => {
             x.newMessage(message);
@@ -768,7 +747,7 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
-        this.updateCardCursorTimestamp(params.cardId, now);
+        this.markMessageAsRead(messageId, now);
 
         this.syncTargets().forEach(x => {
             x.newMessage(message);
@@ -822,7 +801,7 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
-        this.updateCardCursorTimestamp(params.cardId, now);
+        this.markMessageAsRead(messageId, now);
 
         this.syncTargets().forEach(x => {
             x.newMessage(message);
@@ -865,7 +844,7 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
-        this.updateCardCursorTimestamp(params.cardId, now);
+        this.markMessageAsRead(messageId, now);
 
         this.syncTargets().forEach(x => {
             x.newMessage(message);
@@ -907,7 +886,7 @@ export class Agent {
 
         this.crdtManager.commit(messageId);
 
-        this.updateCardCursorTimestamp(params.cardId, now);
+        this.markMessageAsRead(messageId, now);
 
         this.syncTargets().forEach(x => {
             x.newMessage(message);
@@ -1251,13 +1230,9 @@ export class Agent {
                 this.syncTargets().forEach(x =>
                     x.upsertMemberInfo(event.after)
                 );
-            } else if (event.type === 'card_cursor') {
+            } else if (event.type === 'message_read') {
                 this.syncTargets().forEach(x =>
-                    x.upsertCardCursor(event.after)
-                );
-            } else if (event.type === 'board_cursor') {
-                this.syncTargets().forEach(x =>
-                    x.upsertBoardCursor(event.after)
+                    x.upsertMessageRead(event.after)
                 );
             } else if (event.type === 'account') {
                 this.syncTargets().forEach(x => x.upsertAccount(event.after));

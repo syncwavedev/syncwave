@@ -22,6 +22,10 @@ import {type CardId, CardRepo} from './card-repo.js';
 import type {ColumnId, ColumnRepo} from './column-repo.js';
 import {type UserId, UserRepo} from './user-repo.js';
 
+export function MessageId() {
+    return Uuid<MessageId>();
+}
+
 export type MessageId = Brand<Uuid, 'message_id'>;
 
 export function createMessageId(): MessageId {

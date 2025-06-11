@@ -14,6 +14,10 @@ import {
 } from './base/crdt-repo.js';
 import {Doc} from './base/doc.js';
 
+export function UserId() {
+    return Uuid<UserId>();
+}
+
 export type UserId = Brand<Uuid, 'user_id'>;
 
 export function createUserId(): UserId {

@@ -69,34 +69,22 @@ export function MemberInfoDto() {
 
 export type MemberInfoDto = Static<ReturnType<typeof MemberInfoDto>>;
 
-export function CardCursorDto() {
+export function MessageReadDto() {
     return Type.Object({
         userId: Uuid<UserId>(),
         boardId: Uuid<BoardId>(),
-        cardId: Uuid<CardId>(),
+        messageId: Uuid<MessageId>(),
         timestamp: Type.Number(),
     });
 }
 
-export interface CardCursorDto
-    extends Static<ReturnType<typeof CardCursorDto>> {}
-
-export function BoardCursorDto() {
-    return Type.Object({
-        userId: Uuid<UserId>(),
-        boardId: Uuid<BoardId>(),
-        timestamp: Type.Number(),
-    });
-}
-
-export interface BoardCursorDto
-    extends Static<ReturnType<typeof BoardCursorDto>> {}
+export interface MessageReadDto
+    extends Static<ReturnType<typeof MessageReadDto>> {}
 
 export function BoardViewDataDto() {
     return Type.Object({
         members: Type.Array(MemberInfoDto()),
-        cardCursors: Type.Array(CardCursorDto()),
-        boardCursors: Type.Array(BoardCursorDto()),
+        messageReads: Type.Array(MessageReadDto()),
         memberId: MemberId(),
         board: Type.Object({
             state: CrdtDiff<Board>(),

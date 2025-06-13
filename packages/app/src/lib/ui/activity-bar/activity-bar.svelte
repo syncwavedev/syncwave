@@ -1,17 +1,13 @@
 <script lang="ts">
     import type {MeView} from '../../agent/view.svelte';
-    import {panelSizeManager} from '../../panel-size-manager.svelte';
     import {getAuthManager} from '../../utils';
     import Avatar from '../components/avatar.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
     import LogOutIcon from '../components/icons/log-out-icon.svelte';
     import UserRoundCog from '../components/icons/user-round-cog.svelte';
-    import ResizablePanel from '../components/resizable-panel.svelte';
     import ProfileModal from '../profiles/profile-modal.svelte';
     import modalManager from '../modal-manager.svelte';
-    import ActivityView from '../activity-view/activity-view.svelte';
     import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
-    import BoardsView from '../boards-view/boards-view.svelte';
     import HomeIcon from '../components/icons/home-icon.svelte';
     import HomeSolidIcon from '../components/icons/home-solid-icon.svelte';
     import InboxSolidIcon from '../components/icons/inbox-solid-icon.svelte';

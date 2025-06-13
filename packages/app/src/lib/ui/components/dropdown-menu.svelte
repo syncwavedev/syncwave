@@ -39,7 +39,7 @@
             alignOffset={0}
             preventOverflowTextSelection={true}
             {...contentProps}
-            class="z-100 bg-material-elevated p-1 rounded-md min-w-48 border border-divider-elevated outline-none shadow-sm"
+            class="z-100 bg-material-elevated p-1 rounded-md min-w-56 border border-divider-elevated outline-none shadow-sm mt-2"
         >
             <DropdownMenu.Group>
                 {#each items.filter(x => x !== null) as item (item.text)}
@@ -50,7 +50,7 @@
                         <div
                             class="flex items-center gap-1.5 hover:bg-material-elevated-hover px-2 py-1.25 rounded-sm cursor-default outline-none"
                         >
-                            <item.icon />
+                            <span class="icon"><item.icon /></span>
                             {item.text}
                             {#if item.shortcut}
                                 <span class="ml-auto text-ink-detail"
@@ -64,3 +64,9 @@
         </DropdownMenu.Content>
     </DropdownMenu.Portal>
 </DropdownMenu.Root>
+
+<style>
+    .icon {
+        --icon-size: 1.4em;
+    }
+</style>

@@ -52,9 +52,7 @@
     {/each}
 {/snippet}
 
-<div
-    class="border-divider border-r z-10 flex w-full flex-shrink-0 flex-col bg-sidebar"
->
+<div class="border-divider border-r z-10 flex w-full flex-shrink-0 flex-col">
     <div class="flex items-center px-panel-inline h-panel-header">
         <div class="flex flex-col gap-1">
             <p class="font-semibold">Inbox</p>
@@ -65,7 +63,10 @@
                     : 'unread messages'}
             </p>
         </div>
-        <button class="btn btn--icon ml-auto" onclick={readMessages}>
+        <button
+            class="btn btn--icon btn--bordered ml-auto"
+            onclick={readMessages}
+        >
             <CheckCheckIcon />
         </button>
     </div>

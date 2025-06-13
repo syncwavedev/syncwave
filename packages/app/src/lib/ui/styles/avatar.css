@@ -1,5 +1,5 @@
 :root {
-    --avatar-size: 1.5rem;
+    --avatar-size: 2.2em;
 }
 
 .avatar {
@@ -17,14 +17,6 @@
     text-align: center;
 }
 
-.avatar-xs {
-    --avatar-size: 1rem;
-}
-
-.avatar-sm {
-    --avatar-size: 1.25rem;
-}
-
-.avatar-lg {
-    --avatar-size: 1.75rem;
+.avatar--small {
+    font-size: 0.7em;
 }

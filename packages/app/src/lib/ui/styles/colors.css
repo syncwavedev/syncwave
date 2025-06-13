@@ -108,7 +108,7 @@
         --theme-color-deleted: oklch(0.48 0.2141 29.7);
 
         --theme-color-divider: var(--color-gray-100);
-        --theme-color-divider-object: var(--color-gray-125);
+        --theme-color-divider-object: var(--color-gray-200);
         --theme-color-divider-active: var(--color-primary);
 
         --theme-color-scrollbar: var(--color-gray-200);

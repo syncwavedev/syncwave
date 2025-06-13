@@ -2,10 +2,12 @@
     import {MeViewDataDto} from 'syncwave';
 
     import {getAgent} from '../lib/agent/agent.svelte';
-    import ActivityBar from '../lib/ui/activity-bar/activity-bar.svelte';
     import BoardHistoryManager from '../lib/board-history-manager';
     import BoardScreen from '../lib/ui/boards/board-screen.svelte';
     import BoardLoader from '../lib/ui/boards/board-loader.svelte';
+    import ResizablePanel from '../lib/ui/components/resizable-panel.svelte';
+    import {panelSizeManager} from '../lib/panel-size-manager.svelte';
+    import LeftPanel from '../lib/ui/left-panel/left-panel.svelte';
 
     const {
         meData,
@@ -40,26 +42,27 @@
     });
 
     const me = agent.observeMe(meData);
+
+    let leftPanelActive = $state(true);
 </script>
 
 <div class="flex h-full">
-    <ActivityBar {me} activePanel={null} />
-    <!-- {#if activePanel}
+    {#if leftPanelActive}
         <ResizablePanel
             class="max-h-full overflow-auto"
             freeSide="right"
-            width={panelSizeManager.getWidth(activePanel) ?? 360}
-            minWidth={240}
+            width={panelSizeManager.getWidth('home') ?? 260}
+            minWidth={200}
             maxWidth={1600}
-            onWidthChange={w => panelSizeManager.setWidth(activePanel!, w)}
+            onWidthChange={w => panelSizeManager.setWidth('home', w)}
         >
-            {#if activePanel === 'activity'}
-                <ActivityView {board} />
-            {:else if activePanel === 'boards'}
-                <BoardsView {boards} />
-            {/if}
+            <LeftPanel
+                {me}
+                boards={me.boards}
+                onLeftPanelClose={() => (leftPanelActive = false)}
+            />
         </ResizablePanel>
-    {/if} -->
+    {/if}
     {#if selectedKey}
         {#await agent.getBoardViewData(selectedKey)}
             {@const board = me.boards.find(b => b.key === selectedKey)}
@@ -71,7 +74,14 @@
                 </div>
             {/if}
         {:then [boardData, meBoardData]}
-            <BoardScreen {me} {boardData} {meBoardData} {counter} />
+            <BoardScreen
+                {me}
+                {boardData}
+                {meBoardData}
+                {counter}
+                onLeftPanelOpen={() => (leftPanelActive = true)}
+                hideLeftPanelButton={leftPanelActive === true}
+            />
         {/await}
     {/if}
 </div>

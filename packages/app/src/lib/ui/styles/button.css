@@ -1,5 +1,5 @@
 :root {
-    --btn-size: 2.65em;
+    --btn-size: 2.6em;
 }
 
 .btn {
@@ -10,7 +10,7 @@
 
     border-radius: var(--btn-border-radius, 0.5em);
     border: var(--btn-border-size, 0px) solid
-        var(--btn-border-color, var(--color-subtle-dark));
+        var(--btn-border-color, var(--color-divider-object));
 
     cursor: pointer;
     pointer-events: auto;
@@ -78,6 +78,16 @@
         opacity: 0.3;
         pointer-events: none;
     }
+
+    &.btn--reversed {
+        --btn-color: var(--color-material-base);
+        --btn-background: var(--color-ink);
+        --btn-border-size: 0px;
+
+        &:hover {
+            --btn-background: var(--color-ink);
+        }
+    }
 }
 
 .btn--plain {
@@ -88,10 +98,18 @@
     --hover-size: 0;
 }
 
+.btn--bordered {
+    --btn-border-size: 1px;
+}
+
 .btn--large {
     font-size: 1.15em;
 }
 
 .btn--small {
     font-size: 0.85em;
+}
+
+.btn--x-small {
+    font-size: 0.75em;
 }

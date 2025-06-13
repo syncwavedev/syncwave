@@ -36,12 +36,17 @@
     import TimesIcon from '../components/icons/times-icon.svelte';
     import SearchIcon from '../components/icons/search-icon.svelte';
     import PermissionBoundary from '../components/permission-boundary.svelte';
+    import InboxSolidIcon from '../components/icons/inbox-solid-icon.svelte';
+    import MenuIcon from '../components/icons/menu-icon.svelte';
+    import InboxView from '../activity-view/inbox-view.svelte';
 
     const {
         me,
         boardData,
         meBoardData,
         counter,
+        onLeftPanelOpen,
+        hideLeftPanelButton,
     }: {
         boardData: BoardViewDataDto;
         meBoardData: {
@@ -50,6 +55,8 @@
         };
         me: MeView;
         counter?: number;
+        onLeftPanelOpen: () => void;
+        hideLeftPanelButton: boolean;
     } = $props();
 
     const agent = getAgent();
@@ -242,6 +249,8 @@
         searchValue = '';
         isSearch = false;
     }
+
+    let inboxActive = $state(false);
 </script>
 
 {#snippet boardSettings()}
@@ -249,13 +258,30 @@
 {/snippet}
 
 {#snippet header()}
-    <div class="flex flex-col gap-1">
+    {#if !hideLeftPanelButton}
+        <button
+            class="btn btn--icon btn--bordered mr-4"
+            onclick={onLeftPanelOpen}
+        >
+            <MenuIcon />
+        </button>
+    {/if}
+
+    <div class="flex flex-col gap-0.5">
         <p class="font-semibold">{board.name}</p>
         <p class="text-ink-detail text-xs">
             {board.members.length}
             {board.members.length === 1 ? 'member' : 'members'}
         </p>
     </div>
+
+    <button
+        class="btn btn--icon btn--bordered ml-4"
+        onclick={() => (inboxActive = !inboxActive)}
+        class:btn--reversed={inboxActive}
+    >
+        <InboxSolidIcon />
+    </button>
 
     <div class="ml-2 flex">
         {#each board.onlineUsers as user (user.user.id)}
@@ -276,8 +302,8 @@
             <button class="btn">Sign In</button>
         </a>
     {:else}
-        <div class="ml-auto flex">
-            <button class="btn btn--icon" onclick={onStartSearch}>
+        <div class="ml-auto flex gap-2">
+            <button class="btn btn--icon btn--bordered" onclick={onStartSearch}>
                 <SearchIcon />
             </button>
             <DropdownMenu
@@ -305,7 +331,7 @@
                     },
                 ]}
             >
-                <button class="btn btn--icon">
+                <button class="btn btn--icon btn--bordered">
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
@@ -327,6 +353,18 @@
     </button>
 {/snippet}
 
+{#if inboxActive}
+    <ResizablePanel
+        class="max-h-full overflow-auto"
+        freeSide="right"
+        width={panelSizeManager.getWidth('inbox') ?? 360}
+        minWidth={240}
+        maxWidth={1600}
+        onWidthChange={w => panelSizeManager.setWidth('inbox', w)}
+    >
+        <InboxView {board} />
+    </ResizablePanel>
+{/if}
 <PermissionBoundary member={boardMeView}>
     <div class="relative flex min-w-0 flex-col flex-1">
         <div

@@ -79,7 +79,9 @@
         };
     });
 
-    const unreadMessagesCount = $derived(card.messages.filter(x => !x.readByMeAt).length);
+    const unreadMessagesCount = $derived(
+        card.messages.filter(x => !x.readByMeAt).length
+    );
 </script>
 
 <div
@@ -137,13 +139,13 @@
                         <HashtagIcon />{card.counter}
                     {/if}
                     {#if card.viewerUsers.length > 0}
-                        <div class="ml-2 flex avatar-sm">
+                        <div class="ml-2 flex">
                             {#each card.viewerUsers as user (user.id)}
                                 <Avatar
                                     userId={user.id}
                                     name={`${user.fullName}`}
                                     imageUrl={user.avatarUrlSmall}
-                                    class="outline-gray-75 dark:outline-gray-825 outline-2"
+                                    class="outline-gray-75 dark:outline-gray-825 outline-2  avatar--small"
                                 />
                             {/each}
                         </div>
@@ -160,7 +162,7 @@
                     {/if}
                     {#if card.assignee}
                         <span
-                            class="ml-2 avatar-sm"
+                            class="ml-2 avatar--small"
                             class:ml-auto={todoStats.total == 0}
                         >
                             <Avatar

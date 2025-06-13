@@ -22,13 +22,25 @@
 </script>
 
 <div
-    class="flex flex-col px-panel-inline py-2 relative group avatar-sm icon-sm"
+    class="
+    flex
+    flex-col
+    px-panel-inline-half
+    mx-panel-inline-half
+    py-2
+    relative
+    group
+    icon-sm
+    hover:bg-material-base-hover
+    rounded-md
+    "
 >
-    <div class="flex items-center gap-1.5 relative">
+    <div class="flex items-center gap-1.5">
         <Avatar
             userId={message.author.id}
             name={message.author.fullName}
             imageUrl={message.author.avatarUrlSmall}
+            class="avatar--small"
         />
 
         <div class="flex items-baseline gap-1.5">
@@ -39,21 +51,29 @@
             <span class="text-ink-detail text-sm">
                 <TimeAgo time={message.createdAt} />
             </span>
-
-            <span class="text-ink-detail text-sm">
-                {new Date(message.readByMeAt ?? 0).toISOString()}
-            </span>
         </div>
 
         <button
-            class="ml-auto btn btn--icon invisible group-hover:visible"
+            class="
+            z-20
+            absolute
+            right-2
+            top-0
+            -translate-y-1/2
+            bg-material-base!
+            btn
+            btn--icon
+            btn--bordered
+            btn--small
+            invisible
+            group-hover:visible"
             onclick={onDeleteMessage}
         >
             <TrashIcon />
         </button>
     </div>
     <div
-        class="select-text leading-relaxed ml-[calc(var(--avatar-size)+0.375rem))] relative"
+        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.7+0.375rem))] relative"
     >
         <RichtextView
             fragment={(message.payload as TextMessagePayloadView).text

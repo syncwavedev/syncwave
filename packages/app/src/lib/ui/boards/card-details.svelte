@@ -153,7 +153,9 @@
 </script>
 
 <div class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l">
-    <div class="flex items-center shrink-0 h-panel-header px-panel-inline">
+    <div
+        class="flex items-center justify-between shrink-0 h-panel-header px-panel-inline"
+    >
         <div class="flex items-center gap-0.5 font-semibold">
             {#if card.isDraft}
                 New card
@@ -179,12 +181,18 @@
                     },
                 ]}
             >
-                <button class="btn btn--icon" id="ellipsis-button">
+                <button
+                    class="btn btn--icon btn--bordered"
+                    id="ellipsis-button"
+                >
                     <EllipsisIcon />
                 </button>
             </DropdownMenu>
         </div>
-        <button class="btn btn--icon" onclick={() => history.back()}>
+        <button
+            class="btn btn--icon btn--bordered ml-2"
+            onclick={() => history.back()}
+        >
             <TimesIcon />
         </button>
     </div>

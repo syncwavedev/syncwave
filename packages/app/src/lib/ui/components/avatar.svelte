@@ -46,10 +46,7 @@
 {#if !imageUrl}
     <div
         title={title ?? name}
-        class={clsx(
-            'avatar text-[calc(var(--avatar-size)*0.55)] text-white font-semibold',
-            className
-        )}
+        class={clsx('avatar text-white font-semibold', className)}
         style={`background-color: ${avatarColor};`}
     >
         {name[0]?.toUpperCase() ?? 'U'}

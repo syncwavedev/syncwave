@@ -268,20 +268,12 @@
     {/if}
 
     <div class="flex flex-col gap-0.5">
-        <p class="font-semibold">{board.name}</p>
-        <p class="text-ink-detail text-xs">
+        <p class="font-semibold text-lg">{board.name}</p>
+        <!-- <p class="text-ink-detail text-xs">
             {board.members.length}
             {board.members.length === 1 ? 'member' : 'members'}
-        </p>
+        </p> -->
     </div>
-
-    <button
-        class="btn btn--icon btn--bordered ml-4"
-        onclick={() => (inboxActive = !inboxActive)}
-        class:btn--reversed={inboxActive}
-    >
-        <InboxSolidIcon />
-    </button>
 
     <div class="ml-2 flex">
         {#each board.onlineUsers as user (user.user.id)}
@@ -303,6 +295,13 @@
         </a>
     {:else}
         <div class="ml-auto flex gap-2">
+            <button
+                class="btn btn--icon btn--bordered ml-4"
+                onclick={() => (inboxActive = !inboxActive)}
+                class:btn--reversed={inboxActive}
+            >
+                <InboxSolidIcon />
+            </button>
             <button class="btn btn--icon btn--bordered" onclick={onStartSearch}>
                 <SearchIcon />
             </button>

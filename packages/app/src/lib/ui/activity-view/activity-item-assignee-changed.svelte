@@ -21,13 +21,14 @@
     {/snippet}
     {#snippet action()}
         {#if payload.toAssignee}
-            <span class="mr-1">assigned to</span>
+            <span class="mr-0.5">assigned to</span>
             <Avatar
                 name={payload.toAssignee.fullName}
                 userId={payload.toAssignee.id}
                 imageUrl={payload.toAssignee.avatarUrlSmall}
+                class="text-[0.575em]"
             />
-            <span class="ml-0.25">{payload.toAssignee.fullName}</span>
+            <span>{payload.toAssignee.fullName}</span>
         {:else}
             <span>unassigned</span>
         {/if}

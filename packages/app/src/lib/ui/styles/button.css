@@ -44,8 +44,8 @@
 
         img,
         svg {
-            block-size: var(--btn-icon-size, 1.3em);
-            inline-size: var(--btn-icon-size, 1.3em);
+            block-size: var(--btn-icon-size, 1.25em);
+            inline-size: var(--btn-icon-size, 1.25em);
             max-inline-size: unset;
         }
     }
@@ -107,7 +107,8 @@
 }
 
 .btn--small {
-    font-size: 0.85em;
+    --btn-size: 2.4em;
+    font-size: 0.8725em;
 }
 
 .btn--x-small {

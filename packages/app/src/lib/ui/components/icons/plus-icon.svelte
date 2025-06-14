@@ -3,9 +3,10 @@
 
     interface Props {
         class?: string;
+        strokeWidth?: number;
     }
 
-    let {class: className}: Props = $props();
+    let {class: className, strokeWidth}: Props = $props();
 </script>
 
 <svg
@@ -15,7 +16,7 @@
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    stroke-width="1.5"
+    stroke-width={strokeWidth || 1.5}
     stroke-linecap="round"
     stroke-linejoin="round"
     class={cx('icon', className)}

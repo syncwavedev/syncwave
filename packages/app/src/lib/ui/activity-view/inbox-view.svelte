@@ -9,6 +9,7 @@
     import {getAgent} from '../../agent/agent.svelte';
     import {getNow} from 'syncwave';
     import {toastManager} from '../../../toast-manager.svelte';
+    import TimesIcon from '../components/icons/times-icon.svelte';
 
     interface Props {
         board: BoardTreeView;
@@ -52,8 +53,17 @@
     {/each}
 {/snippet}
 
-<div class="border-divider border-r z-10 flex w-full flex-shrink-0 flex-col">
-    <div class="flex items-center px-panel-inline h-panel-header">
+<div class="border-divider border-l z-10 flex w-full flex-shrink-0 flex-col">
+    <div
+        class="
+          flex
+          items-center
+          justify-between
+          gap-4
+          px-panel-inline
+          h-panel-header
+        "
+    >
         <div class="flex flex-col gap-1">
             <p class="font-semibold">Inbox</p>
             <p class="text-ink-detail text-xs">
@@ -63,12 +73,14 @@
                     : 'unread messages'}
             </p>
         </div>
-        <button
-            class="btn btn--icon btn--bordered ml-auto"
-            onclick={readMessages}
-        >
-            <CheckCheckIcon />
-        </button>
+        <div class="flex gap-2">
+            <button class="btn btn--icon btn--bordered" onclick={readMessages}>
+                <CheckCheckIcon />
+            </button>
+            <button class="btn btn--icon btn--bordered">
+                <TimesIcon />
+            </button>
+        </div>
     </div>
     <div class="overflow-y-auto no-scrollbar flex flex-col flex-1">
         {@render messageList(board.messages)}

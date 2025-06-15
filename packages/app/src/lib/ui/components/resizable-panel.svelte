@@ -10,6 +10,7 @@
         minWidth: number;
         maxWidth: number;
         resizerClass?: string;
+        disabled?: boolean;
     }
 
     let {
@@ -20,7 +21,8 @@
         minWidth,
         maxWidth,
         class: className,
-        resizerClass = 'w-1 cursor-col-resize hover:bg-divider-object',
+        resizerClass = 'w-1 hover:bg-divider-object',
+        disabled = false,
     }: Props = $props();
 
     let isResizing = $state(false);
@@ -28,9 +30,11 @@
     let startWidth = 0;
 
     function handlePointerDown(e: PointerEvent) {
+        if (disabled) return;
+
         isResizing = true;
         startX = e.clientX;
-        startWidth = width;
+        startWidth = typeof width === 'number' ? width : 0;
 
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
@@ -39,7 +43,7 @@
     }
 
     function handlePointerMove(e: PointerEvent) {
-        if (!isResizing) return;
+        if (!isResizing || disabled) return;
 
         const deltaX = e.clientX - startX;
         let newWidth =
@@ -70,17 +74,20 @@
 
 <div
     class={`relative shrink-0 max-w-[100vw] flex ${className ?? ''}`}
-    style={`width: ${width}px;`}
+    style={disabled ? 'width: auto;' : `width: ${width}px;`}
 >
     {@render children()}
 
-    <div
-        class={`resizer z-50 ${resizerClass}`}
-        class:select-none={isResizing}
-        style="position: absolute; {freeSide}: 0; top: 0; bottom: 0;"
-        onpointerdown={handlePointerDown}
-        onpointermove={handlePointerMove}
-        onpointerup={handlePointerUp}
-        onpointercancel={handlePointerUp}
-    ></div>
+    {#if !disabled}
+        <div
+            class={`resizer z-50 ${resizerClass}`}
+            class:cursor-col-resize={!disabled}
+            class:select-none={isResizing}
+            style="position: absolute; {freeSide}: 0; top: 0; bottom: 0;"
+            onpointerdown={handlePointerDown}
+            onpointermove={handlePointerMove}
+            onpointerup={handlePointerUp}
+            onpointercancel={handlePointerUp}
+        ></div>
+    {/if}
 </div>

@@ -49,7 +49,7 @@
         class={clsx('avatar text-white font-semibold', className)}
         style={`background-color: ${avatarColor};`}
     >
-        {name[0]?.toUpperCase() ?? 'U'}
+        {name.slice(0, 2)?.toUpperCase() ?? 'UN'}
     </div>
 {:else}
     <div class="avatar">

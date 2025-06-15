@@ -37,7 +37,6 @@
     import SearchIcon from '../components/icons/search-icon.svelte';
     import PermissionBoundary from '../components/permission-boundary.svelte';
     import InboxSolidIcon from '../components/icons/inbox-solid-icon.svelte';
-    import MenuIcon from '../components/icons/menu-icon.svelte';
     import InboxView from '../activity-view/inbox-view.svelte';
 
     const {
@@ -45,8 +44,6 @@
         boardData,
         meBoardData,
         counter,
-        onLeftPanelOpen,
-        hideLeftPanelButton,
     }: {
         boardData: BoardViewDataDto;
         meBoardData: {
@@ -55,8 +52,6 @@
         };
         me: MeView;
         counter?: number;
-        onLeftPanelOpen: () => void;
-        hideLeftPanelButton: boolean;
     } = $props();
 
     const agent = getAgent();
@@ -258,15 +253,6 @@
 {/snippet}
 
 {#snippet header()}
-    {#if !hideLeftPanelButton}
-        <button
-            class="btn btn--icon btn--bordered mr-4"
-            onclick={onLeftPanelOpen}
-        >
-            <MenuIcon />
-        </button>
-    {/if}
-
     <div class="flex flex-col gap-0.5">
         <p class="font-semibold text-lg">{board.name}</p>
         <!-- <p class="text-ink-detail text-xs">
@@ -352,18 +338,6 @@
     </button>
 {/snippet}
 
-{#if inboxActive}
-    <ResizablePanel
-        class="max-h-full overflow-auto"
-        freeSide="right"
-        width={panelSizeManager.getWidth('inbox') ?? 360}
-        minWidth={240}
-        maxWidth={1600}
-        onWidthChange={w => panelSizeManager.setWidth('inbox', w)}
-    >
-        <InboxView {board} />
-    </ResizablePanel>
-{/if}
 <PermissionBoundary member={boardMeView}>
     <div class="relative flex min-w-0 flex-col flex-1">
         <div
@@ -413,6 +387,7 @@
             </div>
         </Scrollable>
     </div>
+
     {#if selectedCard !== null}
         {#key selectedCard.id}
             <ResizablePanel
@@ -434,6 +409,18 @@
                 />
             </ResizablePanel>
         {/key}
+    {/if}
+    {#if inboxActive}
+        <ResizablePanel
+            class="max-h-full overflow-auto"
+            freeSide="left"
+            width={panelSizeManager.getWidth('inbox') ?? 360}
+            minWidth={240}
+            maxWidth={1600}
+            onWidthChange={w => panelSizeManager.setWidth('inbox', w)}
+        >
+            <InboxView {board} />
+        </ResizablePanel>
     {/if}
 </PermissionBoundary>
 

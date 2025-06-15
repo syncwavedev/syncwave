@@ -5,8 +5,6 @@
     import BoardHistoryManager from '../lib/board-history-manager';
     import BoardScreen from '../lib/ui/boards/board-screen.svelte';
     import BoardLoader from '../lib/ui/boards/board-loader.svelte';
-    import ResizablePanel from '../lib/ui/components/resizable-panel.svelte';
-    import {panelSizeManager} from '../lib/panel-size-manager.svelte';
     import LeftPanel from '../lib/ui/left-panel/left-panel.svelte';
 
     const {
@@ -42,27 +40,10 @@
     });
 
     const me = agent.observeMe(meData);
-
-    let leftPanelActive = $state(true);
 </script>
 
 <div class="flex h-full">
-    {#if leftPanelActive}
-        <ResizablePanel
-            class="max-h-full overflow-auto"
-            freeSide="right"
-            width={panelSizeManager.getWidth('home') ?? 260}
-            minWidth={200}
-            maxWidth={1600}
-            onWidthChange={w => panelSizeManager.setWidth('home', w)}
-        >
-            <LeftPanel
-                {me}
-                boards={me.boards}
-                onLeftPanelClose={() => (leftPanelActive = false)}
-            />
-        </ResizablePanel>
-    {/if}
+    <LeftPanel {me} boards={me.boards} />
     {#if selectedKey}
         {#await agent.getBoardViewData(selectedKey)}
             {@const board = me.boards.find(b => b.key === selectedKey)}
@@ -74,14 +55,7 @@
                 </div>
             {/if}
         {:then [boardData, meBoardData]}
-            <BoardScreen
-                {me}
-                {boardData}
-                {meBoardData}
-                {counter}
-                onLeftPanelOpen={() => (leftPanelActive = true)}
-                hideLeftPanelButton={leftPanelActive === true}
-            />
+            <BoardScreen {me} {boardData} {meBoardData} {counter} />
         {/await}
     {/if}
 </div>

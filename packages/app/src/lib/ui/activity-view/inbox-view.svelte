@@ -64,25 +64,16 @@
           h-panel-header
         "
     >
-        <div class="flex flex-col gap-1">
+        <div class="flex">
             <p class="font-semibold">Inbox</p>
-            <p class="text-ink-detail text-xs">
-                {board.messages.length}
-                {board.messages.length === 1
-                    ? 'unread message'
-                    : 'unread messages'}
-            </p>
         </div>
         <div class="flex gap-2">
             <button class="btn btn--icon btn--bordered" onclick={readMessages}>
                 <CheckCheckIcon />
             </button>
-            <button class="btn btn--icon btn--bordered">
-                <TimesIcon />
-            </button>
         </div>
     </div>
-    <div class="overflow-y-auto no-scrollbar flex flex-col flex-1">
+    <div class="overflow-y-auto no-scrollbar flex flex-col flex-1 py-1.5">
         {@render messageList(board.messages)}
     </div>
 </div>

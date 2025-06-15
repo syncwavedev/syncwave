@@ -3,7 +3,38 @@
 }
 
 .input {
-    @apply placeholder:text-ink-placeholder flex-grow focus-visible:outline-none;
+    background-color: var(--input-background-color, var(--color-background));
+    color: var(--input-color, var(--color-ink));
+
+    height: var(--input-height, 2.5em);
+
+    border-radius: var(--input-border-radius, 0.5em);
+    border: var(--input-border-size, 0px) solid
+        var(--input-border-color, var(--color-divider-object));
+
+    pointer-events: auto;
+
+    font-size: 1em;
+    font-weight: 400;
+
+    padding: var(--input-padding, 0);
+
+    &::placeholder {
+        color: var(--color-ink-placeholder);
+    }
+
+    &:focus {
+        outline: none;
+    }
+
+    &.input--bordered {
+        --input-padding: 0 1em;
+        --input-border-size: 1px;
+    }
+
+    &.input--text-area {
+        --input-height: auto;
+    }
 }
 
 .input--block {

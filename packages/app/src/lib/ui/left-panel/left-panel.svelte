@@ -12,6 +12,8 @@
     import PlusIcon from '../components/icons/plus-icon.svelte';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import {panelSizeManager} from '../../panel-size-manager.svelte';
+    import HashtagIcon from '../components/icons/hashtag-icon.svelte';
+    import PlusCircleIcon from '../components/icons/plus-circle-icon.svelte';
 
     const {
         me,
@@ -40,7 +42,7 @@
     disabled={collapsed}
 >
     <div class="border-divider border-r flex w-full flex-shrink-0 flex-col">
-        <div class="flex justify-between items-center px-3 h-panel-header">
+        <div class="flex justify-between items-center px-2.5 h-panel-header">
             <button
                 class="btn btn--icon btn--bordered"
                 onclick={() => (collapsed = !collapsed)}
@@ -48,40 +50,43 @@
                 <MenuIcon />
             </button>
         </div>
-        {#if !collapsed}
-            <div
-                class="
-        flex
-        items-center
-        gap-1.5
-
-        mx-panel-inline-half
-        px-panel-inline-half
-        rounded-md
-        hover:bg-material-1-hover
-        py-1.5
-        my-2.5
-      "
-            >
-                <div class="text-[1.3em] grid place-items-center">
-                    <PlusIcon />
-                </div>
-                Create a new board
-            </div>
-        {/if}
-        <div class="flex flex-col flex-1">
+        <div class="flex flex-col flex-1 mt-2.5">
             {#if !collapsed}
                 {#each boards as board (board.id)}
                     <div
-                        class="mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-1-hover py-1.5"
+                        class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-1-hover py-1.5"
                     >
+                        <div class="text-[1.3em] grid place-items-center">
+                            <HashtagIcon />
+                        </div>
                         {board.name}
                     </div>
                 {/each}
             {/if}
+
+            {#if !collapsed}
+                <div
+                    class="
+                    flex
+                    items-center
+                    gap-1.5
+                    mx-panel-inline-half
+                    px-panel-inline-half
+                    rounded-md
+                    hover:bg-material-1-hover
+                    py-1.5
+                    "
+                >
+                    <div class="text-[1.3em] grid place-items-center">
+                        <PlusCircleIcon />
+                    </div>
+                    New board
+                </div>
+            {/if}
         </div>
+
         <!-- Profile menu -->
-        <div class="mb-4 px-3">
+        <div class="mb-4 px-2.5">
             <DropdownMenu
                 items={[
                     {
@@ -108,7 +113,6 @@
                         userId={me.id}
                         imageUrl={me.avatarUrlSmall}
                         name={me.fullName}
-                        class="avatar--large"
                     />
                 </button>
             </DropdownMenu>

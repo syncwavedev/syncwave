@@ -282,9 +282,9 @@
     {:else}
         <div class="ml-auto flex gap-2">
             <button
-                class="btn btn--icon btn--bordered ml-4"
+                class="btn btn--icon btn--bordered"
                 onclick={() => (inboxActive = !inboxActive)}
-                class:btn--reversed={inboxActive}
+                class:btn--active={inboxActive}
             >
                 <InboxSolidIcon />
             </button>
@@ -328,12 +328,12 @@
     <!-- svelte-ignore a11y_autofocus -->
     <input
         type="text"
-        class="input"
+        class="input input--bordered flex-grow"
         placeholder="Search..."
         bind:value={searchValue}
         autofocus
     />
-    <button class="btn btn--icon" onclick={onCloseSearch}>
+    <button class="btn btn--icon btn--bordered ml-2" onclick={onCloseSearch}>
         <TimesIcon />
     </button>
 {/snippet}

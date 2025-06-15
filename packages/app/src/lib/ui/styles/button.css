@@ -88,6 +88,10 @@
             --btn-background: var(--color-ink);
         }
     }
+
+    &.btn--active {
+        --btn-border-color: var(--color-ink);
+    }
 }
 
 .btn--plain {

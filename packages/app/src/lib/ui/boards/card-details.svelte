@@ -203,7 +203,9 @@
     >
         <!-- Task Description -->
         <div class="mx-panel-inline mt-4">
-            <div class="input w-full leading-relaxed text-lg">
+            <div
+                class="input input--text-area flex-grow w-full leading-relaxed text-lg"
+            >
                 <Editor
                     bind:this={editor}
                     placeholder="Description"

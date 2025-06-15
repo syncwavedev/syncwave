@@ -202,9 +202,9 @@
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="mx-panel-inline mt-4">
+        <div class="mx-panel-inline mt-4 text-lg">
             <div
-                class="input input--text-area flex-grow w-full leading-relaxed text-lg"
+                class="input input--text-area flex-grow w-full leading-relaxed"
             >
                 <Editor
                     bind:this={editor}

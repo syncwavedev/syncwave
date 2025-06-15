@@ -30,7 +30,7 @@
         return me.boards[0].key;
     }
 
-    const selectedKey = $state(key ?? getDefaultBoardKey());
+    let selectedKey = $state(key ?? getDefaultBoardKey());
 
     // Save the selected board key to history on change
     $effect(() => {
@@ -39,11 +39,20 @@
         }
     });
 
+    function onBoardSelect(boardKey: string) {
+        selectedKey = boardKey;
+    }
+
     const me = agent.observeMe(meData);
 </script>
 
 <div class="flex h-full">
-    <LeftPanel {me} boards={me.boards} />
+    <LeftPanel
+        {me}
+        boards={me.boards}
+        onBoardClick={onBoardSelect}
+        {selectedKey}
+    />
     {#if selectedKey}
         {#await agent.getBoardViewData(selectedKey)}
             {@const board = me.boards.find(b => b.key === selectedKey)}

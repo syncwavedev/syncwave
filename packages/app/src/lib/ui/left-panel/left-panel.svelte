@@ -9,7 +9,6 @@
     import LogOutIcon from '../components/icons/log-out-icon.svelte';
     import {getAuthManager} from '../../utils';
     import Avatar from '../components/avatar.svelte';
-    import PlusIcon from '../components/icons/plus-icon.svelte';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import {panelSizeManager} from '../../panel-size-manager.svelte';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
@@ -18,9 +17,13 @@
     const {
         me,
         boards,
+        onBoardClick,
+        selectedKey,
     }: {
         me: MeView;
         boards: Board[];
+        onBoardClick: (key: string) => void;
+        selectedKey: string | undefined;
     } = $props();
 
     const authManager = getAuthManager();
@@ -53,14 +56,16 @@
         <div class="flex flex-col flex-1 mt-2.5">
             {#if !collapsed}
                 {#each boards as board (board.id)}
-                    <div
+                    <button
                         class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-1-hover py-1.5"
+                        class:board--active={selectedKey === board.key}
+                        onclick={() => onBoardClick(board.key)}
                     >
                         <div class="text-[1.3em] grid place-items-center">
                             <HashtagIcon />
                         </div>
                         {board.name}
-                    </div>
+                    </button>
                 {/each}
             {/if}
 
@@ -119,3 +124,10 @@
         </div>
     </div>
 </ResizablePanel>
+
+<style>
+    .board--active {
+        background-color: var(--color-ink);
+        color: var(--color-material-base);
+    }
+</style>

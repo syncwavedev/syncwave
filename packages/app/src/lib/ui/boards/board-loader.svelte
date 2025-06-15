@@ -12,9 +12,8 @@
 <div
     class="flex items-center shrink-0 px-board-inline h-panel-header avatar-xs gap-2"
 >
-    <div class="flex flex-col gap-1">
-        <p class="font-semibold">{board.name}</p>
-        <p class="text-ink-detail text-xs">No members data</p>
+    <div class="flex">
+        <p class="font-semibold text-lg">{board.name}</p>
     </div>
     <span class="ml-2 animate-spin"><Loader /></span>
 </div>

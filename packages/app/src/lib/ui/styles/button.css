@@ -8,7 +8,7 @@
     background-color: var(--btn-background, transparent);
     color: var(--btn-color, var(--color-ink));
 
-    border-radius: var(--btn-border-radius, 0.5em);
+    border-radius: var(--btn-border-radius, 0.25em);
     border: var(--btn-border-size, 0px) solid
         var(--btn-border-color, var(--color-divider-object));
 

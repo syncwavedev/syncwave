@@ -44,7 +44,10 @@
     onWidthChange={w => panelSizeManager.setWidth('home', w)}
     disabled={collapsed}
 >
-    <div class="border-divider border-r flex w-full flex-shrink-0 flex-col">
+    <div
+        class="border-divider border-r flex w-full flex-shrink-0 flex-col"
+        class:bg-sidebar={!collapsed}
+    >
         <div class="flex justify-between items-center px-2.5 h-panel-header">
             <button
                 class="btn btn--icon btn--bordered"

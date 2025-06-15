@@ -160,7 +160,7 @@
             {#if card.isDraft}
                 New card
             {:else}
-                <HashtagIcon strokeWidth="2.5" />
+                <HashtagIcon strokeWidth={2.5} />
                 <span>{card.counter}</span>
             {/if}
         </div>
@@ -268,7 +268,20 @@
             {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
         </div>
     {/if}
-    <div class="border-t border-divider p-3 text-lg">
+    <div
+        class="
+        border
+        border-divider
+        rounded-md
+        m-panel-inline-half
+        p-panel-inline-half
+        text-lg
+        bg-material-1
+        focus-within:outline-[1.5px]
+        focus-within:outline-ink
+        focus-within:-outline-offset-[-2px]
+        "
+    >
         <Editor
             {fragment}
             {me}

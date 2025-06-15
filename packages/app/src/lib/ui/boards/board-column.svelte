@@ -90,7 +90,7 @@
         type="hover"
     >
         <div
-            class="column-padding-inline min-h-10"
+            class="column-padding-inline min-h-10 py-1"
             bind:this={cardsContainerRef}
         >
             <ListAnimator

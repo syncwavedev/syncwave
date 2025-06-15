@@ -65,6 +65,7 @@
     <!-- Profile menu -->
     <div class="mt-auto flex flex-col items-center mb-4">
         <DropdownMenu
+            side="right"
             items={[
                 {
                     icon: UserRoundCog,

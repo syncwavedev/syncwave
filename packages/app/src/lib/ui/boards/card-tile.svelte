@@ -98,7 +98,7 @@
         data-active={active || undefined}
         class="
             bg-gray-40
-            dark:bg-gray-800
+            dark:bg-gray-850
             hover:bg-gray-80
             dark:hover:bg-gray-750
             group
@@ -109,11 +109,11 @@
             rounded-md
             p-2.5
             content
-            outline-offset-[-2px]
+            outline-offset-[2px]
             data-active:outline-2
-            data-active:outline-divider-active
-            focus:outline-2
-            focus:outline-divider-active/50
+            data-active:outline-ink
+            focus:outline-[1.5px]
+            focus:outline-ink/50
         "
         class:border-dashed={card.isDraft}
         onclick={onClick}
@@ -173,7 +173,7 @@
                         </span>
                     {:else}
                         <div
-                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-825 icon-xs"
+                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-800 icon-xs"
                             class:ml-auto={todoStats.total == 0}
                         >
                             <UserIconSolid />

@@ -23,7 +23,7 @@
     font-size: 1em;
     font-weight: 400;
 
-    padding: var(--btn-padding, 0.25em 0.25em);
+    padding: var(--btn-padding, 0.4em 0.4em);
     white-space: nowrap;
 
     transition:
@@ -111,7 +111,6 @@
 }
 
 .btn--small {
-    --btn-size: 2.4em;
     font-size: 0.8725em;
 }
 

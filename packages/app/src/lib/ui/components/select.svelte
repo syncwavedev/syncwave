@@ -30,9 +30,9 @@
     </Select.Trigger>
     <Select.Portal>
         <Select.Content
-            class="z-100 bg-material-elevated p-1 rounded-md min-w-40 border border-divider-elevated outline-none shadow-sm"
+            class="z-100 bg-material-elevated p-1 rounded-md min-w-48 border border-divider-elevated outline-none shadow-sm"
             side="bottom"
-            sideOffset={0}
+            sideOffset={6}
             align="end"
             alignOffset={0}
             preventOverflowTextSelection={true}
@@ -43,12 +43,12 @@
                         value={option.value ?? ''}
                         label={option.label}
                         disabled={option.disabled}
-                        class="flex items-center hover:bg-material-elevated-hover px-2 py-1.25 rounded-sm cursor-default outline-none"
+                        class="flex items-center hover:bg-material-elevated-hover px-1.5 h-7 rounded-sm cursor-default outline-none"
                     >
                         {#snippet children({selected})}
                             <span class="truncate">{option.label}</span>
                             {#if selected}
-                                <span class="ml-auto">
+                                <span class="ml-auto text-[1.3em]">
                                     <CheckIcon />
                                 </span>
                             {/if}

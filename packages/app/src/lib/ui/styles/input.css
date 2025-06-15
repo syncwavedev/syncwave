@@ -24,7 +24,8 @@
     }
 
     &:focus {
-        outline: none;
+        outline: 1.5px solid var(--color-ink);
+        outline-offset: 2px;
     }
 
     &.input--bordered {

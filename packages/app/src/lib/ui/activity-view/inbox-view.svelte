@@ -9,7 +9,6 @@
     import {getAgent} from '../../agent/agent.svelte';
     import {getNow} from 'syncwave';
     import {toastManager} from '../../../toast-manager.svelte';
-    import TimesIcon from '../components/icons/times-icon.svelte';
 
     interface Props {
         board: BoardTreeView;
@@ -73,7 +72,7 @@
             </button>
         </div>
     </div>
-    <div class="overflow-y-auto no-scrollbar flex flex-col flex-1 py-1.5">
+    <div class="overflow-y-auto no-scrollbar flex flex-col flex-1">
         {@render messageList(board.messages)}
     </div>
 </div>

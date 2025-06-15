@@ -1,8 +1,8 @@
 <script lang="ts">
     let {
-        strokeWidth = '1.5',
+        strokeWidth = 1.5,
     }: {
-        strokeWidth?: string;
+        strokeWidth?: number;
     } = $props();
 </script>
 

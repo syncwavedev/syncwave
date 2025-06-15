@@ -18,9 +18,18 @@
         items: (MenuItem | null)[];
         contentProps?: WithoutChild<DropdownMenuContentProps>;
         children?: Snippet;
+        side?: 'top' | 'bottom' | 'left' | 'right';
+        align?: 'start' | 'center' | 'end';
     };
 
-    let {children, items, contentProps, ...restProps}: Props = $props();
+    let {
+        children,
+        items,
+        contentProps,
+        side,
+        align = 'end',
+        ...restProps
+    }: Props = $props();
 
     let open = $state(false);
 </script>
@@ -33,13 +42,13 @@
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
         <DropdownMenu.Content
-            side="bottom"
-            sideOffset={0}
-            align="end"
+            {side}
+            sideOffset={6}
+            {align}
             alignOffset={0}
             preventOverflowTextSelection={true}
             {...contentProps}
-            class="z-100 bg-material-elevated p-1 rounded-md min-w-52 border border-divider-elevated outline-none shadow-sm mt-2"
+            class="z-100 bg-material-elevated p-1 rounded-md min-w-48 border border-divider-elevated outline-none shadow-sm"
         >
             <DropdownMenu.Group>
                 {#each items.filter(x => x !== null) as item (item.text)}
@@ -48,7 +57,7 @@
                         onSelect={item.onSelect}
                     >
                         <div
-                            class="flex items-center gap-1.5 hover:bg-material-elevated-hover px-2 py-1 rounded-sm cursor-default outline-none"
+                            class="flex items-center gap-2 hover:bg-material-elevated-hover px-1.5 py-1 rounded-sm cursor-default outline-none h-7"
                         >
                             <span class="icon"><item.icon /></span>
                             {item.text}

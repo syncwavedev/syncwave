@@ -56,46 +56,52 @@
                 <MenuIcon />
             </button>
         </div>
-        <div class="flex flex-col flex-1 mt-2.5">
+        {#if !collapsed}
+            <div
+                class="
+                flex
+                items-center
+                gap-1.5
+                mx-panel-inline-half
+                px-panel-inline-half
+                rounded-md
+                hover:bg-material-1-hover
+                py-2
+                my-2
+                "
+            >
+                <div class="text-[1.3em] grid place-items-center">
+                    <PlusCircleIcon />
+                </div>
+                New board
+            </div>
+        {/if}
+        <div class="flex flex-col flex-1">
             {#if !collapsed}
                 {#each boards as board (board.id)}
                     <button
-                        class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-1-hover py-1.5"
+                        class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-1-hover py-2"
                         class:board--active={selectedKey === board.key}
                         onclick={() => onBoardClick(board.key)}
                     >
                         <div class="text-[1.3em] grid place-items-center">
-                            <HashtagIcon />
+                            <HashtagIcon
+                                strokeWidth={selectedKey === board.key
+                                    ? 2.5
+                                    : 1.5}
+                            />
                         </div>
                         {board.name}
                     </button>
                 {/each}
-            {/if}
-
-            {#if !collapsed}
-                <div
-                    class="
-                    flex
-                    items-center
-                    gap-1.5
-                    mx-panel-inline-half
-                    px-panel-inline-half
-                    rounded-md
-                    hover:bg-material-1-hover
-                    py-1.5
-                    "
-                >
-                    <div class="text-[1.3em] grid place-items-center">
-                        <PlusCircleIcon />
-                    </div>
-                    New board
-                </div>
             {/if}
         </div>
 
         <!-- Profile menu -->
         <div class="mb-4 px-2.5">
             <DropdownMenu
+                side="right"
+                align="end"
                 items={[
                     {
                         icon: UserRoundCog,
@@ -130,7 +136,6 @@
 
 <style>
     .board--active {
-        background-color: var(--color-ink);
-        color: var(--color-material-base);
+        font-weight: 600;
     }
 </style>

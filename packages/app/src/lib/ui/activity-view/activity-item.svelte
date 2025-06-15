@@ -18,12 +18,12 @@
     class="
     flex
     gap-2
-    px-panel-inline-half
-    mx-panel-inline-half
-    py-2
+    px-panel-inline
+    py-3
     leading-relaxed
-    hover:bg-material-1-hover
-    rounded-md
+    hover:bg-material-base-hover
+    border-b
+    border-divider
     "
 >
     <div class="symbol">
@@ -32,7 +32,7 @@
     <div class="avatar-xs flex flex-1 flex-col gap-1 truncate">
         <div class="flex items-center gap-1 font-semibold">
             <div class="flex items-center">
-                <HashtagIcon strokeWidth="2.5" />
+                <HashtagIcon strokeWidth={2.5} />
                 {message.card.counter}
             </div>
             <div>

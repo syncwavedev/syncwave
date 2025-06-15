@@ -38,6 +38,7 @@
     import PermissionBoundary from '../components/permission-boundary.svelte';
     import InboxSolidIcon from '../components/icons/inbox-solid-icon.svelte';
     import InboxView from '../activity-view/inbox-view.svelte';
+    import PlusIcon from '../components/icons/plus-icon.svelte';
 
     const {
         me,
@@ -281,6 +282,9 @@
         </a>
     {:else}
         <div class="ml-auto flex gap-2">
+            <button class="btn btn--icon btn--bordered" onclick={onStartSearch}>
+                <PlusIcon />
+            </button>
             <button
                 class="btn btn--icon btn--bordered"
                 onclick={() => (inboxActive = !inboxActive)}
@@ -292,6 +296,7 @@
                 <SearchIcon />
             </button>
             <DropdownMenu
+                side="bottom"
                 items={[
                     permissionManager.hasPermission('write:board')
                         ? {
@@ -333,7 +338,7 @@
         bind:value={searchValue}
         autofocus
     />
-    <button class="btn btn--icon btn--bordered ml-2" onclick={onCloseSearch}>
+    <button class="btn btn--icon btn--bordered ml-4" onclick={onCloseSearch}>
         <TimesIcon />
     </button>
 {/snippet}

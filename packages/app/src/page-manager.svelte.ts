@@ -12,6 +12,8 @@ import LoginPage from './pages/login.svelte';
 import Testbed from './pages/testbed.svelte';
 import {toastManager} from './toast-manager.svelte';
 
+let counterGlobal = 0;
+
 export class PageManager {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _page: Component<any> | undefined = $state(undefined);
@@ -181,7 +183,15 @@ export class PageManager {
             throw new Error('User ID not found');
         }
 
-        const mePromise = this._agent.getMeViewData();
+        counterGlobal += 1;
+        const mePromise =
+            counterGlobal < 10
+                ? this._agent.getMeViewData().then(x => {
+                      counterGlobal = 0;
+                      return x;
+                  })
+                : // we can't use Promise.reject, because router enters an infinite crush loop for any rejection and page freezes
+                  new Promise(() => {});
 
         Promise.all([mePromise])
             .then(([meData]) => {

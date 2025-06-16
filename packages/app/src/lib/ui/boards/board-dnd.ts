@@ -2,7 +2,6 @@ import {getContext, onDestroy, setContext} from 'svelte';
 import {
     clip,
     compareNumbers,
-    createUuidV4,
     EventEmitter,
     log,
     runAll,
@@ -73,10 +72,6 @@ export class DndBoardContext {
                 document,
                 eventName,
                 e => {
-                    log.debug({
-                        msg: '[board-dnd] cancelDragEmitter.emit',
-                        eventName,
-                    });
                     this.cancelDragEmitter.emit({pointerId: e.pointerId});
                 }
             );
@@ -102,28 +97,16 @@ export class DndBoardContext {
         this.cards.push(card);
 
         this.addListener(card, card.container, 'pointerdown', downEvent => {
-            log.debug({
-                msg: '[board-dnd] pointerdown',
-                eventName: 'pointerdown',
-                pointerId: downEvent.pointerId,
-            });
             const cleanupDown = () => {
-                log.debug({msg: '[board-dnd] cleanupDown'});
                 cancelPointerMoveListener();
                 cancelDragSub('registerCard pointerdown cleanup');
             };
 
             const cancelDragSub = this.cancelDragEmitter.subscribe(e => {
-                log.debug({msg: '[board-dnd] cancelDragEmitter', e});
                 if (
                     e.pointerId !== undefined ||
                     e.pointerId === downEvent.pointerId
                 ) {
-                    log.debug({
-                        msg: '[board-dnd] cancelDragEmitter cleanup',
-                        eventName: 'cancelDragEmitter',
-                        pointerId: e.pointerId,
-                    });
                     cleanupDown();
                 }
             });
@@ -133,21 +116,12 @@ export class DndBoardContext {
                 this.container,
                 'pointermove',
                 moveEvent => {
-                    log.debug({
-                        msg: '[board-dnd] pointermove',
-                        eventName: 'pointermove',
-                        movePointerId: moveEvent.pointerId,
-                        downPointerId: downEvent.pointerId,
-                    });
                     if (downEvent.pointerId !== moveEvent.pointerId) return;
 
                     const distance = Math.sqrt(
                         Math.pow(downEvent.pageX - moveEvent.pageX, 2) +
                             Math.pow(downEvent.pageY - moveEvent.pageY, 2)
                     );
-                    log.debug({
-                        msg: '[board-dnd] pointermove distance: ' + distance,
-                    });
                     if (distance < 10) return;
 
                     cleanupDown();
@@ -189,13 +163,6 @@ export class DndBoardContext {
     }
 
     private startDrag(downEvent: PointerEvent, card: DndCardContext) {
-        const dragId = createUuidV4();
-        log.debug({
-            msg: '[board-dnd] startDrag',
-            dragId,
-            cardId: card.card.value.id,
-        });
-
         const draggable: Draggable = {
             element: card.container.cloneNode(true) as HTMLDivElement,
             targetX: card.container.getBoundingClientRect().left,
@@ -231,14 +198,6 @@ export class DndBoardContext {
             document,
             'pointermove',
             moveEvent => {
-                log.debug({
-                    msg: '[board-dnd] pointermove',
-                    eventName: 'pointermove',
-                    dragId,
-                    movePointerId: moveEvent.pointerId,
-                    downPointerId: downEvent.pointerId,
-                });
-
                 const deltaX = moveEvent.pageX - startPointerX;
                 const deltaY = moveEvent.pageY - startPointerY;
 
@@ -274,14 +233,11 @@ export class DndBoardContext {
         let cleanedUp = false;
         const cleanup = () => {
             if (cleanedUp) {
-                log.debug({msg: '[board-dnd] cleanup already called', dragId});
                 return;
             }
             cleanedUp = true;
 
-            log.debug({msg: `cleanup`, dragId});
-
-            this.handleDrop(card.card.value.id, draggable, dragId);
+            this.handleDrop(card.card.value.id, draggable);
 
             cancelAutoscroll();
             cancelPointerUp();
@@ -385,26 +341,13 @@ export class DndBoardContext {
         return cleanup;
     }
 
-    private handleDrop(cardId: CardId, draggable: Draggable, dragId: string) {
-        log.debug({
-            msg: '[board-dnd] handleDrop',
-            dragId,
-        });
+    private handleDrop(cardId: CardId, draggable: Draggable) {
         const card = this.cards.find(x => x.card.value.id === cardId);
 
         if (!card || !card.container.isConnected) {
             log.warn({msg: `card ${cardId} not found for DnD drop`});
             if (draggable.element.isConnected) {
-                log.debug({
-                    msg: `removing dnd draggable element from DOM`,
-                    dragId,
-                });
                 document.body.removeChild(draggable.element);
-            } else {
-                log.debug({
-                    msg: `dnd draggable element already removed from DOM`,
-                    dragId,
-                });
             }
 
             this.agent.finalizeCardPosition(cardId);
@@ -412,23 +355,9 @@ export class DndBoardContext {
             return;
         }
 
-        log.debug({
-            msg: `dnd drop: card ${cardId} found`,
-            dragId,
-        });
-
         setTimeout(() => {
             if (draggable.element.isConnected) {
-                log.debug({
-                    msg: `dnd drop timeout: removing dnd draggable element from DOM`,
-                    dragId,
-                });
                 document.body.removeChild(draggable.element);
-            } else {
-                log.debug({
-                    msg: `dnd drop timeout: dnd draggable element already removed from DOM`,
-                    dragId,
-                });
             }
 
             this.agent.finalizeCardPosition(cardId);

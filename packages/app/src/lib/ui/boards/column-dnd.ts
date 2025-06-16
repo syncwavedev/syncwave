@@ -2,7 +2,6 @@ import {getContext, onDestroy, setContext} from 'svelte';
 import {
     clip,
     compareNumbers,
-    createUuidV4,
     EventEmitter,
     log,
     runAll,
@@ -65,10 +64,6 @@ export class DndColumnListContext {
                 document,
                 eventName,
                 e => {
-                    log.debug({
-                        msg: '[column-list-dnd] cancelDragEmitter.emit',
-                        eventName,
-                    });
                     this.cancelDragEmitter.emit({pointerId: e.pointerId});
                 }
             );
@@ -94,28 +89,16 @@ export class DndColumnListContext {
         this.columns.push(column);
 
         this.addListener(column, column.handle, 'pointerdown', downEvent => {
-            log.debug({
-                msg: '[column-list-dnd] pointerdown',
-                eventName: 'pointerdown',
-                pointerId: downEvent.pointerId,
-            });
             const cleanupDown = () => {
-                log.debug({msg: '[column-list-dnd] cleanupDown'});
                 cancelPointerMoveListener();
                 cancelDragSub('registerCard pointerdown cleanup');
             };
 
             const cancelDragSub = this.cancelDragEmitter.subscribe(e => {
-                log.debug({msg: '[column-list-dnd] cancelDragEmitter', e});
                 if (
                     e.pointerId !== undefined ||
                     e.pointerId === downEvent.pointerId
                 ) {
-                    log.debug({
-                        msg: '[column-list-dnd] cancelDragEmitter cleanup',
-                        eventName: 'cancelDragEmitter',
-                        pointerId: e.pointerId,
-                    });
                     cleanupDown();
                 }
             });
@@ -125,23 +108,12 @@ export class DndColumnListContext {
                 this.container,
                 'pointermove',
                 moveEvent => {
-                    log.debug({
-                        msg: '[column-list-dnd] pointermove',
-                        eventName: 'pointermove',
-                        movePointerId: moveEvent.pointerId,
-                        downPointerId: downEvent.pointerId,
-                    });
                     if (downEvent.pointerId !== moveEvent.pointerId) return;
 
                     const distance = Math.sqrt(
                         Math.pow(downEvent.pageX - moveEvent.pageX, 2) +
                             Math.pow(downEvent.pageY - moveEvent.pageY, 2)
                     );
-                    log.debug({
-                        msg:
-                            '[column-list-dnd] pointermove distance: ' +
-                            distance,
-                    });
                     if (distance < 10) return;
 
                     cleanupDown();
@@ -168,12 +140,6 @@ export class DndColumnListContext {
     }
 
     private startDrag(downEvent: PointerEvent, column: DndColumnContext) {
-        const dragId = createUuidV4();
-        log.debug({
-            msg: '[column-list-dnd] startDrag',
-            dragId,
-            columnId: column.column.value.id,
-        });
         const draggable: Draggable = {
             element: column.container.cloneNode(true) as HTMLDivElement,
             targetX: column.container.getBoundingClientRect().left,
@@ -207,14 +173,6 @@ export class DndColumnListContext {
             document,
             'pointermove',
             moveEvent => {
-                log.debug({
-                    msg: '[column-list-dnd] pointermove',
-                    eventName: 'pointermove',
-                    dragId,
-                    movePointerId: moveEvent.pointerId,
-                    downPointerId: downEvent.pointerId,
-                });
-
                 const deltaX = moveEvent.pageX - startPointerX;
                 const deltaY = moveEvent.pageY - startPointerY;
 
@@ -250,17 +208,11 @@ export class DndColumnListContext {
         let cleanedUp = false;
         const cleanup = () => {
             if (cleanedUp) {
-                log.debug({
-                    msg: '[column-list-dnd] cleanup already called',
-                    dragId,
-                });
                 return;
             }
             cleanedUp = true;
 
-            log.debug({msg: `cleanup`, dragId});
-
-            this.handleDrop(column.column.value.id, draggable, dragId);
+            this.handleDrop(column.column.value.id, draggable);
 
             cancelAutoscroll();
             cancelPointerUp();
@@ -328,30 +280,13 @@ export class DndColumnListContext {
         return cleanup;
     }
 
-    private handleDrop(
-        columnId: ColumnId,
-        draggable: Draggable,
-        dragId: string
-    ) {
-        log.debug({
-            msg: '[column-list-dnd] handleDrop',
-            dragId,
-        });
+    private handleDrop(columnId: ColumnId, draggable: Draggable) {
         const column = this.columns.find(x => x.column.value.id === columnId);
 
         if (!column || !column.container.isConnected) {
             log.warn({msg: `card ${columnId} not found for DnD drop`});
             if (draggable.element.isConnected) {
-                log.debug({
-                    msg: `removing dnd draggable element from DOM`,
-                    dragId,
-                });
                 document.body.removeChild(draggable.element);
-            } else {
-                log.debug({
-                    msg: `dnd draggable element already removed from DOM`,
-                    dragId,
-                });
             }
 
             this.agent.finalizeColumnPosition(columnId);
@@ -359,23 +294,9 @@ export class DndColumnListContext {
             return;
         }
 
-        log.debug({
-            msg: `dnd drop: card ${columnId} found`,
-            dragId,
-        });
-
         setTimeout(() => {
             if (draggable.element.isConnected) {
-                log.debug({
-                    msg: `dnd drop timeout: removing dnd draggable element from DOM`,
-                    dragId,
-                });
                 document.body.removeChild(draggable.element);
-            } else {
-                log.debug({
-                    msg: `dnd drop timeout: dnd draggable element already removed from DOM`,
-                    dragId,
-                });
             }
 
             this.agent.finalizeColumnPosition(columnId);

@@ -26,6 +26,12 @@ import {RpcConnection} from './rpc-transport.js';
 import {createApi, streamer, type InferRpcClient} from './rpc.js';
 import {type Connection} from './transport.js';
 
+const ignoreMethods = new Set([
+    'joinBoardAwareness',
+    'updateBoardAwarenessState',
+    'echo',
+]);
+
 export function launchRpcChunkerServer<T>(
     api: StreamerApi<T>,
     state: T,
@@ -107,13 +113,13 @@ function createRpcChunkerServerApi<TState>(api: StreamerApi<TState>) {
                 }
 
                 try {
-                    if (method !== 'echo') {
+                    if (!ignoreMethods.has(method)) {
                         log.info({msg: `req ${callInfo}...`});
                     }
 
                     const result = await handler.handle(state, arg, ctx);
 
-                    if (method !== 'echo') {
+                    if (!ignoreMethods.has(method)) {
                         log.info({
                             msg: `res ${callInfo} => ${stringifyLogPart(result)}`,
                         });
@@ -230,7 +236,7 @@ export function createRpcChunkerClient<TApi extends StreamerApi<any>>(
 
             const requestId = createUuidV4();
             const callInfo = `${name}(${stringifyLogPart(arg)}) [rid=${requestId}]`;
-            const logCommunication = name !== 'echo';
+            const logCommunication = !ignoreMethods.has(name);
             if (logCommunication) {
                 log.info({msg: `req ${callInfo}...`});
             }

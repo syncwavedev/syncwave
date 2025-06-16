@@ -32,6 +32,7 @@ import {
     toPosition,
     toStream,
     Tuple,
+    wait,
     whenAll,
     type ActivityMonitor,
     type Attachment,
@@ -597,14 +598,18 @@ export class Agent {
             )
         );
 
-        this.rpc
-            .putMessageRead({messageId: message.id, timestamp})
-            .catch(error => {
-                log.error({error, msg: 'putMessageRead failed'});
-                this.syncTargets().forEach(x =>
-                    x.clearOptimisticState(transactionId)
-                );
-            });
+        // this is a temporary workaround to ensure that the message is commited before marking it as read
+        // this wait will be removed once we have a single command queue for all operations, so ordering wouldn't be an issue
+        wait({ms: 1000, onCancel: 'resolve'}).then(() => {
+            this.rpc
+                .putMessageRead({messageId: message.id, timestamp})
+                .catch(error => {
+                    log.error({error, msg: 'putMessageRead failed'});
+                    this.syncTargets().forEach(x =>
+                        x.clearOptimisticState(transactionId)
+                    );
+                });
+        });
     }
 
     createCardDraft(
@@ -1231,6 +1236,7 @@ export class Agent {
                     x.upsertMemberInfo(event.after)
                 );
             } else if (event.type === 'message_read') {
+                console.warn('upsert message read!!!');
                 this.syncTargets().forEach(x =>
                     x.upsertMessageRead(event.after)
                 );

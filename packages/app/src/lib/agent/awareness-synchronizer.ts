@@ -77,6 +77,11 @@ export class AwarenessSynchronizer {
     }
 
     private async pull() {
+        log.info({
+            msg: 'starting awareness pull',
+            boardId: this.boardId,
+        });
+
         const updates = this.rpc
             .joinBoardAwareness({
                 boardId: this.boardId,

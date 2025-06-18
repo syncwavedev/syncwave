@@ -8,7 +8,7 @@
 
     height: var(--input-height, 2.5em);
 
-    border-radius: var(--input-border-radius, 0.5em);
+    border-radius: var(--input-border-radius, 0.4em);
     border: var(--input-border-size, 0px) solid
         var(--input-border-color, var(--color-divider-object));
 
@@ -26,6 +26,10 @@
     &:focus {
         outline: 1.5px solid var(--color-ink);
         outline-offset: 2px;
+    }
+
+    &.input--no-focus {
+        outline: none;
     }
 
     &.input--bordered {

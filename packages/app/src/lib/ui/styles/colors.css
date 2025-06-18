@@ -23,6 +23,7 @@
     --color-gray-600: oklch(52% 0 0deg);
     --color-gray-650: oklch(48% 0 0deg);
     --color-gray-700: oklch(44% 0 0deg);
+    --color-gray-725: oklch(42% 0 0deg);
     --color-gray-750: oklch(40% 0 0deg);
     --color-gray-775: oklch(38% 0 0deg);
     --color-gray-800: oklch(36% 0 0deg);
@@ -149,14 +150,14 @@
         --theme-color-deleted: oklch(0.62 0.19 29.7);
 
         --theme-color-divider: var(--color-gray-850);
-        --theme-color-divider-object: var(--color-gray-775);
+        --theme-color-divider-object: var(--color-gray-750);
 
         --theme-color-scrollbar: var(--color-gray-750);
 
         --theme-color-material-elevated: var(--color-gray-850);
         --theme-color-material-elevated-hover: var(--color-gray-800);
         --theme-color-material-elevated-highlight: var(--color-gray-800);
-        --theme-color-divider-elevated: var(--color-gray-750);
+        --theme-color-divider-elevated: var(--color-gray-775);
 
         --theme-color-material-elevated-element: var(--color-gray-700);
         --theme-color-material-elevated-element-hover: var(--color-gray-650);

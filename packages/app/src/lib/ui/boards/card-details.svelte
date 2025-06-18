@@ -4,7 +4,6 @@
     import TrashIcon from '../components/icons/trash-icon.svelte';
     import TimesIcon from '../components/icons/times-icon.svelte';
     import CircleDashedIcon from '../components/icons/circle-dashed-icon.svelte';
-    import UserIcon from '../components/icons/user-icon.svelte';
     import Editor from '../components/editor.svelte';
     import type {CardTreeView, MemberView} from '../../agent/view.svelte';
     import type {Awareness} from 'syncwave';
@@ -21,7 +20,6 @@
         yFragmentToPlaintext,
     } from 'syncwave';
     import MessageList from '../messages/message-list.svelte';
-    import UserIconSolid from '../components/icons/user-icon-solid.svelte';
     import Avatar from '../components/avatar.svelte';
     import UsersSolidIcon from '../components/icons/users-solid-icon.svelte';
 
@@ -251,7 +249,6 @@
                     )}
             >
                 <button class="btn">
-                    <!-- <UserIcon strokeWidth={2} /> -->
                     {#if card.assignee}
                         <Avatar
                             userId={card.assignee.id}

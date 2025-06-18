@@ -1,7 +1,6 @@
 <script lang="ts">
     import {Portal} from 'bits-ui';
     import type {Snippet} from 'svelte';
-    import TimesIcon from './icons/times-icon.svelte';
     import modalManager from '../modal-manager.svelte';
 
     let {

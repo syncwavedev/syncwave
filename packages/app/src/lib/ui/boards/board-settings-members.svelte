@@ -35,8 +35,8 @@
 
 <div class="flex flex-col gap-3 my-6 modal-padding-inline">
     <div class="flex flex-col gap-1 flex-1">
-        <p class="font-medium">Who has access</p>
-        <p class="font-detail text-ink-detail text-xs">
+        <p class="font-semibold">Who has access</p>
+        <p class="font-detail text-ink-detail text-sm">
             View and manage who has access to this board and their permission
             levels
         </p>
@@ -52,14 +52,12 @@
             <span class="ml-1.5 text-ink-detail">{member.email}</span>
 
             <div class="ml-auto flex gap-4">
-                <button class="btn hover:bg-material-elevated-hover">
+                <button class="btn">
                     {member.role}
                     <ChevronDownIcon />
                 </button>
                 {#if member.id !== me.id && member.role !== 'owner'}
-                    <button class="btn hover:bg-material-elevated-hover">
-                        Remove
-                    </button>
+                    <button class="btn"> Remove </button>
                 {/if}
             </div>
         </div>
@@ -68,8 +66,8 @@
 <hr class="material-elevated" />
 <div class="flex flex-col gap-2 mt-6 mb-8 modal-padding-inline">
     <div class="flex flex-col gap-1 flex-1">
-        <p class="font-medium">Invite by link</p>
-        <p class="font-detail text-ink-detail text-xs">
+        <p class="font-semibold">Invite by link</p>
+        <p class="font-detail text-ink-detail text-sm">
             Anyone with this link can join and edit the board
         </p>
     </div>
@@ -77,29 +75,26 @@
         <input
             autocomplete="off"
             type="text"
-            class="input input--block settings-input text-ink-detail w-full"
+            class="input input--bordered flex-grow"
             value={joinLink}
             disabled
         />
         <button
-            class="btn hover:bg-material-elevated-hover shrink-0"
+            class="btn shrink-0"
             onclick={onRefreshClick}
             disabled={isUpdating}
         >
             <RefreshIcon />
             Refresh Link
         </button>
-        <button
-            class="btn hover:bg-material-elevated-hover shrink-0"
-            onclick={onCopyClick}
-        >
+        <button class="btn shrink-0" onclick={onCopyClick}>
             <ClipboardCopyIcon />
             Copy Link
         </button>
     </div>
     <div class="flex flex-col gap-1 flex-1 mt-3">
-        <p class="font-medium">Send invintation email</p>
-        <p class="font-detail text-ink-detail text-xs">
+        <p class="font-semibold">Send invintation email</p>
+        <p class="font-detail text-ink-detail text-sm">
             Link will be valid for 1 week
         </p>
     </div>
@@ -108,11 +103,11 @@
             name="invite"
             autocomplete="off"
             type="email"
-            class="input input--block settings-input"
+            class="input input--bordered flex-grow"
             placeholder="Enter an email address..."
         />
         <button
-            class="btn hover:bg-material-elevated-hover shrink-0"
+            class="btn shrink-0"
             onclick={onRefreshClick}
             disabled={isUpdating}
         >

@@ -1,6 +1,5 @@
 <script lang="ts">
     import type {Board} from 'syncwave';
-    import MenuIcon from '../components/icons/menu-icon.svelte';
     import DropdownMenu from '../components/dropdown-menu.svelte';
     import UserRoundCog from '../components/icons/user-round-cog.svelte';
     import modalManager from '../modal-manager.svelte';
@@ -13,6 +12,7 @@
     import {panelSizeManager} from '../../panel-size-manager.svelte';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
     import PlusCircleIcon from '../components/icons/plus-circle-icon.svelte';
+    import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
 
     const {
         me,
@@ -48,12 +48,12 @@
         class="border-divider border-r flex w-full flex-shrink-0 flex-col"
         class:bg-sidebar={!collapsed}
     >
-        <div class="flex justify-between items-center px-2.5 h-panel-header">
+        <div class="flex justify-between items-center px-3 h-panel-header">
             <button
                 class="btn btn--icon btn--bordered"
                 onclick={() => (collapsed = !collapsed)}
             >
-                <MenuIcon />
+                <LeftPanelIcon />
             </button>
         </div>
         {#if !collapsed}
@@ -68,6 +68,7 @@
                 hover:bg-material-1-hover
                 py-2
                 my-2
+                font-semibold
                 "
             >
                 <div class="text-[1.3em] grid place-items-center">
@@ -98,7 +99,7 @@
         </div>
 
         <!-- Profile menu -->
-        <div class="mb-4 px-2.5">
+        <div class="mb-4 px-3">
             <DropdownMenu
                 side="right"
                 align="end"

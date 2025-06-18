@@ -23,7 +23,7 @@
     font-size: 1em;
     font-weight: var(--btn-font-weight, 400);
 
-    padding: var(--btn-padding, 0.3em 0.4em);
+    padding: var(--btn-padding, 0.35em 0.35em);
     white-space: nowrap;
 
     transition:
@@ -67,7 +67,8 @@
     }
 
     &:hover {
-        --btn-background: var(--color-material-base-hover);
+        /* --btn-background: var(--color-material-base-hover); */
+        outline: 1px solid var(--color-divider-object);
     }
 
     &[disabled],
@@ -100,6 +101,11 @@
     --btn-icon-size: 100%;
     --btn-padding: 0;
     --hover-size: 0;
+}
+
+.btn--flat-elevated {
+    --btn-padding: 0.35em 0.7em;
+    --btn-background: var(--color-material-elevated-element);
 }
 
 .btn--bordered {

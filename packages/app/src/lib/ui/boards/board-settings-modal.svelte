@@ -17,8 +17,8 @@
 </script>
 
 <Modal size="xl">
-    <p class="mt-3 mb-4 font-semibold text-center">Board Settings</p>
-    <div class="flex justify-center items-center">
+    <p class="mt-3 mb-4 font-semibold text-center text-lg">Board Settings</p>
+    <div class="flex justify-center items-center tab__icon">
         <button
             class="flex flex-col items-center gap-0.5 icon-lg py-2 px-4 rounded-md hover:bg-material-elevated-hover"
             onclick={() => (selectedTab = 'general')}
@@ -30,7 +30,7 @@
                 <CogIcon />
             {/if}
 
-            <span class="text-xs">General</span>
+            <span class="text-sm">General</span>
         </button>
         <button
             class="flex flex-col items-center gap-0.5 icon-lg py-2 px-4 rounded-md hover:bg-material-elevated-hover"
@@ -42,7 +42,7 @@
             {:else}
                 <UsersIcon />
             {/if}
-            <span class="text-xs">Members</span>
+            <span class="text-sm">Members</span>
         </button>
         <button
             class="flex flex-col items-center gap-0.5 icon-lg py-2 px-4 rounded-md hover:bg-material-elevated-hover"
@@ -54,7 +54,7 @@
             {:else}
                 <ColumnsIcon />
             {/if}
-            <span class="text-xs">Columns</span>
+            <span class="text-sm">Columns</span>
         </button>
     </div>
     <hr class="mt-1 material-elevated" />
@@ -66,3 +66,9 @@
         <BoardSettingsColumns {board} />
     {/if}
 </Modal>
+
+<style>
+    .tab__icon {
+        --icon-size: 1.5em;
+    }
+</style>

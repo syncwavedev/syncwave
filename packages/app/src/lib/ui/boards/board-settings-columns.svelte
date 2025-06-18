@@ -45,8 +45,8 @@
 
 <div class="modal-padding-inline">
     <div class="flex flex-col gap-1 flex-1 mb-2 mt-6">
-        <p class="font-medium">Manage columns</p>
-        <p class="font-detail text-ink-detail text-xs">
+        <p class="font-semibold">Manage columns</p>
+        <p class="font-detail text-ink-detail text-sm">
             Add, edit, or reorder columns to organize your board layout
         </p>
     </div>
@@ -65,7 +65,7 @@
             <CircleDashedIcon />
             <input
                 type="text"
-                class="input py-2 ml-1.5 text-ink"
+                class="input py-2 ml-1.5 flex-1 input--no-focus"
                 bind:value={newColumn}
                 required
                 placeholder="New Column"

@@ -33,15 +33,15 @@
 
 <div class="flex items-center gap-6 flex-1 modal-padding-inline py-6">
     <div class="flex flex-col gap-1 flex-1">
-        <p class="font-medium flex-1">Choose board name</p>
-        <p class="font-detail text-ink-detail text-xs">
+        <p class="font-semibold flex-1">Choose board name</p>
+        <p class="font-detail text-ink-detail text-sm">
             Use clear, unique names for easier board navigation.
         </p>
     </div>
     <input
         autocomplete="off"
         type="text"
-        class="input input--block settings-input max-w-48"
+        class="input input--bordered max-w-48"
         placeholder="Not set"
         oninput={e =>
             agent.setBoardName(board.id, (e.target as HTMLInputElement).value)}
@@ -53,16 +53,13 @@
     {#if permissionManager.hasPermission('delete:board')}
         <div class="flex items-center">
             <div class="flex flex-col gap-1 flex-1">
-                <p class="font-medium">Delete board</p>
-                <p class="font-detail text-ink-detail text-xs">
+                <p class="font-semibold">Delete board</p>
+                <p class="font-detail text-ink-detail text-sm">
                     All data, for all members, will be deleted forever.
                 </p>
             </div>
             <div class="block-inline">
-                <button
-                    class="settings-element bg-material-elevated-element rounded-sm"
-                    onclick={onDeleteBoard}
-                >
+                <button class="btn btn--flat-elevated" onclick={onDeleteBoard}>
                     Delete board
                 </button>
             </div>
@@ -71,16 +68,13 @@
 
     <div class="flex items-center">
         <div class="flex flex-col gap-1 flex-1">
-            <p class="font-medium">Leave board</p>
-            <p class="font-detail text-ink-detail text-xs">
+            <p class="font-semibold">Leave board</p>
+            <p class="font-detail text-ink-detail text-sm">
                 All local data will be cleared and the page will be refreshed.
             </p>
         </div>
         <div class="block-inline">
-            <button
-                class="settings-element bg-material-elevated-element rounded-sm"
-                onclick={onLeaveBoard}
-            >
+            <button class="btn btn--flat-elevated" onclick={onLeaveBoard}>
                 Leave board
             </button>
         </div>

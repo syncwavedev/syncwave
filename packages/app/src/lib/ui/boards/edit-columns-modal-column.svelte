@@ -97,7 +97,7 @@
         <ColumnIcon total={board.columns.length - 1} active={index} />
         <input
             type="text"
-            class="input py-2 ml-1.5"
+            class="input py-2 ml-1.5 flex-1 input--no-focus"
             required
             value={column.name}
             oninput={e => agent.setColumnName(column.id, e.currentTarget.value)}

@@ -94,7 +94,7 @@
 
 @layer base {
     [data-theme='light'] {
-        --theme-color-ink: var(--color-gray-900);
+        --theme-color-ink: var(--color-gray-1000);
         --theme-color-ink-body: var(--color-gray-700);
         --theme-color-ink-detail: var(--color-gray-600);
         --theme-color-ink-placeholder: var(--color-gray-350);

@@ -16,14 +16,14 @@
     pointer-events: auto;
 
     display: inline-flex;
-    gap: var(--btn-gap, 0.5em);
+    gap: var(--btn-gap, 0.4em);
     justify-content: center;
     align-items: center;
 
     font-size: 1em;
     font-weight: var(--btn-font-weight, 400);
 
-    padding: var(--btn-padding, 0.4em 0.4em);
+    padding: var(--btn-padding, 0.3em 0.4em);
     white-space: nowrap;
 
     transition:

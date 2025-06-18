@@ -21,6 +21,9 @@
         yFragmentToPlaintext,
     } from 'syncwave';
     import MessageList from '../messages/message-list.svelte';
+    import UserIconSolid from '../components/icons/user-icon-solid.svelte';
+    import Avatar from '../components/avatar.svelte';
+    import UsersSolidIcon from '../components/icons/users-solid-icon.svelte';
 
     const {
         card,
@@ -230,7 +233,7 @@
                     agent.setCardColumn(card.id, value as ColumnId)}
             >
                 <button class="btn">
-                    <CircleDashedIcon />
+                    <CircleDashedIcon strokeWidth={2} />
                     {card.column.name}
                 </button>
             </Select>
@@ -248,16 +251,22 @@
                     )}
             >
                 <button class="btn">
-                    <UserIcon />
+                    <!-- <UserIcon strokeWidth={2} /> -->
+                    {#if card.assignee}
+                        <Avatar
+                            userId={card.assignee.id}
+                            name={card.assignee.fullName}
+                            imageUrl={card.assignee.avatarUrlSmall}
+                            class="avatar--x-small"
+                        />
+                    {:else}
+                        <UsersSolidIcon />
+                    {/if}
                     {card.assignee?.fullName ?? 'Assignee'}
                 </button>
             </Select>
         </div>
         <hr />
-        <!-- <div class="flex mx-6 mt-4 items-center gap-1.5">
-            <span class="text-ink-detail text-sm leading-none">1 Message</span>
-            <hr class="flex-grow" />
-        </div> -->
         <div class="my-2 text-lg">
             <MessageList messages={card.messages} />
         </div>
@@ -298,6 +307,6 @@
 
 <style>
     .btn--action {
-        --btn-background: var(--color-material-1);
+        --btn-font-weight: 500;
     }
 </style>

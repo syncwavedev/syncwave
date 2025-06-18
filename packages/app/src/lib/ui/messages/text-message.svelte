@@ -26,15 +26,13 @@
     flex
     flex-col
     px-panel-inline-half
-    mx-panel-inline-half
+    mx-panel-inline
     py-2
     relative
     group
     icon-sm
     hover:bg-material-base-hover
     rounded-md
-    bg-material-1
-    my-1.5
     "
 >
     <div class="flex items-center gap-1.5">

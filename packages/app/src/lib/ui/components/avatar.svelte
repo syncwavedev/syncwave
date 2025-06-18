@@ -52,7 +52,7 @@
         {name.slice(0, 2)?.toUpperCase() ?? 'UN'}
     </div>
 {:else}
-    <div class="avatar">
+    <div class={clsx('avatar', className)}>
         <img
             class="rounded-full object-cover h-full w-full"
             alt={name}

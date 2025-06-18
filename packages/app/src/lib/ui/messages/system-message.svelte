@@ -7,7 +7,7 @@
 </script>
 
 <div
-    class="flex items-center gap-1.5 relative text-sm px-panel-inline py-1.5 leading-relaxed"
+    class="flex items-center gap-1.5 relative text-sm mx-panel-inline px-panel-inline-half py-2 leading-relaxed text-ink-detail"
 >
     {#if message.payload.type === 'card_created'}
         <span class="avatar-container">

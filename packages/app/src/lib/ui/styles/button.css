@@ -16,12 +16,12 @@
     pointer-events: auto;
 
     display: inline-flex;
-    gap: var(--btn-gap, 0.325em);
+    gap: var(--btn-gap, 0.5em);
     justify-content: center;
     align-items: center;
 
     font-size: 1em;
-    font-weight: 400;
+    font-weight: var(--btn-font-weight, 400);
 
     padding: var(--btn-padding, 0.4em 0.4em);
     white-space: nowrap;
@@ -39,7 +39,7 @@
         user-select: none;
     }
 
-    &:where(:has(img, svg)) {
+    &:where(:has(svg)) {
         text-align: start;
 
         img,

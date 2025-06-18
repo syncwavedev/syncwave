@@ -220,7 +220,9 @@
             </div>
         </div>
         <!-- Task Actions -->
-        <div class="flex gap-2 mx-panel-inline mt-8 mb-2 items-center">
+        <div
+            class="flex gap-1.5 mx-panel-inline mt-8 mb-2 items-center btn--action"
+        >
             <Select
                 value={card.column.id}
                 options={columnOptions}
@@ -271,12 +273,11 @@
     <div
         class="
         border
-        border-divider
+        border-divider-object
         rounded-md
-        m-panel-inline-half
+        m-panel-inline
         p-panel-inline-half
         text-lg
-        bg-material-1
         focus-within:outline-[1.5px]
         focus-within:outline-ink
         focus-within:-outline-offset-[-2px]
@@ -294,3 +295,9 @@
         />
     </div>
 </div>
+
+<style>
+    .btn--action {
+        --btn-background: var(--color-material-1);
+    }
+</style>

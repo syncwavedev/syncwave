@@ -126,7 +126,7 @@
         --theme-color-material-base: white;
         --theme-color-material-base-hover: var(--color-gray-50);
 
-        --theme-color-material-1: var(--color-gray-20);
+        --theme-color-material-1: var(--color-gray-30);
         --theme-color-material-1-hover: var(--color-gray-70);
 
         --theme-color-material-2: var(--color-gray-40);
@@ -163,7 +163,7 @@
 
         --theme-color-material-elevated-input: var(--color-gray-800);
 
-        --theme-color-sidebar: var(--color-gray-950);
+        --theme-color-sidebar: var(--color-gray-975);
 
         --theme-color-material-base: var(--color-gray-925);
         --theme-color-material-base-hover: var(--color-gray-850);

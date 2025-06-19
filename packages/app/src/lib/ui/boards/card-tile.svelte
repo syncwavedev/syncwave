@@ -9,7 +9,7 @@
     } from './board-dnd';
     import {getNow} from 'syncwave';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
-    import UserIconSolid from '../components/icons/user-icon-solid.svelte';
+    import UserSolidIcon from '../components/icons/user-solid-icon.svelte';
 
     const {
         card,
@@ -176,7 +176,7 @@
                             class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-800 icon-xs"
                             class:ml-auto={todoStats.total == 0}
                         >
-                            <UserIconSolid />
+                            <UserSolidIcon />
                         </div>
                     {/if}
                 </div>

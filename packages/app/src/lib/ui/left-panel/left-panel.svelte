@@ -56,6 +56,22 @@
                 <LeftPanelIcon />
             </button>
         </div>
+        <div class="flex flex-col flex-1 my-2.5">
+            {#if !collapsed}
+                {#each boards as board (board.id)}
+                    <button
+                        class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-base-hover py-1.5"
+                        class:board--active={selectedKey === board.key}
+                        onclick={() => onBoardClick(board.key)}
+                    >
+                        <div class="grid place-items-center">
+                            <HashtagIcon />
+                        </div>
+                        {board.name}
+                    </button>
+                {/each}
+            {/if}
+        </div>
         {#if !collapsed}
             <div
                 class="
@@ -66,9 +82,8 @@
                 px-panel-inline-half
                 rounded-md
                 hover:bg-material-1-hover
-                py-2
-                my-2
-                font-semibold
+                py-1.5
+                my-3
                 "
             >
                 <div class="text-[1.3em] grid place-items-center">
@@ -77,25 +92,6 @@
                 New board
             </div>
         {/if}
-        <div class="flex flex-col flex-1">
-            {#if !collapsed}
-                {#each boards as board (board.id)}
-                    <button
-                        class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-1-hover py-2"
-                        class:board--active={selectedKey === board.key}
-                        onclick={() => onBoardClick(board.key)}
-                    >
-                        <div
-                            class="text-[1.3em] grid place-items-center"
-                            class:icon--bold={selectedKey === board.key}
-                        >
-                            <HashtagIcon />
-                        </div>
-                        {board.name}
-                    </button>
-                {/each}
-            {/if}
-        </div>
 
         <!-- Profile menu -->
         <div class="mb-4 px-3">
@@ -136,6 +132,6 @@
 
 <style>
     .board--active {
-        font-weight: 600;
+        background-color: var(--color-material-1-hover);
     }
 </style>

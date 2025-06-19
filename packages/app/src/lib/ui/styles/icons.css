@@ -5,8 +5,29 @@
 .icon {
     inline-size: var(--icon-size);
     block-size: var(--icon-size);
-    object-fit: contain;
+
+    fill: var(--icon-fill, none);
+
+    stroke: var(--icon-stroke, currentColor);
+    stroke-width: var(--icon-stroke-width, 1.5);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
     display: inline-block;
 
     vertical-align: middle;
+    flex-shrink: 0;
+
+    &.icon--solid {
+        --icon-fill: currentColor;
+        --icon-stroke: none;
+    }
+}
+
+.icon--medium {
+    --icon-stroke-width: 2;
+}
+
+.icon--bold {
+    --icon-stroke-width: 2.5;
 }

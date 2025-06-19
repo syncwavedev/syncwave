@@ -1,15 +1,5 @@
-<svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    class="icon"
-    ><path d="m14.305 19.53.923-.382" /><path
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon">
+    <path d="m14.305 19.53.923-.382" /><path
         d="m15.228 16.852-.923-.383"
     /><path d="m16.852 15.228-.383-.923" /><path
         d="m16.852 20.772-.383.924"
@@ -21,5 +11,5 @@
         cx="18"
         cy="18"
         r="3"
-    /></svg
->
+    />
+</svg>

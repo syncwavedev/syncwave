@@ -85,12 +85,11 @@
                         class:board--active={selectedKey === board.key}
                         onclick={() => onBoardClick(board.key)}
                     >
-                        <div class="text-[1.3em] grid place-items-center">
-                            <HashtagIcon
-                                strokeWidth={selectedKey === board.key
-                                    ? 2.5
-                                    : 1.5}
-                            />
+                        <div
+                            class="text-[1.3em] grid place-items-center"
+                            class:icon--bold={selectedKey === board.key}
+                        >
+                            <HashtagIcon />
                         </div>
                         {board.name}
                     </button>

@@ -157,11 +157,11 @@
     <div
         class="flex items-center justify-between shrink-0 h-panel-header px-panel-inline"
     >
-        <div class="flex items-center gap-0.5 font-semibold">
+        <div class="flex items-center gap-0.5 font-semibold icon--bold">
             {#if card.isDraft}
                 New card
             {:else}
-                <HashtagIcon strokeWidth={2.5} />
+                <HashtagIcon />
                 <span>{card.counter}</span>
             {/if}
         </div>

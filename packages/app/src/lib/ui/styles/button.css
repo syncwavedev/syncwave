@@ -8,7 +8,7 @@
     background-color: var(--btn-background, transparent);
     color: var(--btn-color, var(--color-ink));
 
-    border-radius: var(--btn-border-radius, 0.25em);
+    border-radius: var(--btn-border-radius, var(--radius-sm));
     border: var(--btn-border-size, 0px) solid
         var(--btn-border-color, var(--color-divider-object));
 
@@ -23,7 +23,7 @@
     font-size: 1em;
     font-weight: var(--btn-font-weight, 400);
 
-    padding: var(--btn-padding, 0.35em 0.35em);
+    padding: var(--btn-padding, 0.4em);
     white-space: nowrap;
 
     transition:
@@ -71,6 +71,10 @@
         outline: 1px solid var(--color-divider-object);
     }
 
+    &.btn--no-focus {
+        outline: none;
+    }
+
     &[disabled],
     &:has([disabled]),
     [disabled] &[type='submit'],
@@ -91,7 +95,7 @@
     }
 
     &.btn--active {
-        --btn-border-color: var(--color-ink);
+        --btn-color: var(--color-primary);
     }
 }
 

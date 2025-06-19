@@ -222,7 +222,7 @@
         </div>
         <!-- Task Actions -->
         <div
-            class="flex gap-1.5 mx-panel-inline mt-8 mb-2 items-center btn--action"
+            class="flex gap-1.5 mx-panel-inline mt-8 mb-2 items-center text-sm"
         >
             <Select
                 value={card.column.id}
@@ -231,7 +231,7 @@
                     agent.setCardColumn(card.id, value as ColumnId)}
             >
                 <button class="btn">
-                    <CircleDashedIcon strokeWidth={2} />
+                    <CircleDashedIcon />
                     {card.column.name}
                 </button>
             </Select>
@@ -301,9 +301,3 @@
         />
     </div>
 </div>
-
-<style>
-    .btn--action {
-        --btn-font-weight: 500;
-    }
-</style>

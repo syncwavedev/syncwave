@@ -37,6 +37,7 @@ export * from './kv/kv-store-isolator.js';
 export * from './kv/kv-store-mapper.js';
 export * from './kv/kv-store.js';
 export * from './kv/mem-mvcc-store.js';
+export * from './kv/mem-rw-store.js';
 export * from './kv/rw-mvcc-adapter.js';
 export * from './kv/tuple-store.js';
 export * from './logger.js';

@@ -29,6 +29,7 @@ import {
     log,
     type LogLevel,
     MemHub,
+    MemRwStore,
     MsgpackCodec,
     MvccAdapter,
     TupleStore,
@@ -324,7 +325,7 @@ async function getOptions(): Promise<Result<Options>> {
         stage,
         (stage !== 'local' && stage !== 'self') || FORCE_FOUNDATIONDB
             ? 'fdb'
-            : 'sqlite'
+            : 'mem'
     );
     const logLevel = match(stage)
         .with('local', () => 'info' as const)
@@ -408,7 +409,7 @@ const options = optionsResult.value;
 
 async function getKvStore(
     stage: string,
-    type: 'fdb' | 'sqlite'
+    type: 'fdb' | 'sqlite' | 'mem'
 ): Promise<{
     store: KvStore<Tuple, Uint8Array>;
     hub: Hub;
@@ -458,6 +459,14 @@ async function getKvStore(
 
             return {
                 store,
+                hub: new MemHub(),
+            };
+        })
+        .with('mem', async () => {
+            log.info({msg: 'using mem store as primary store'});
+
+            return {
+                store: new MvccAdapter(new MemRwStore()),
                 hub: new MemHub(),
             };
         })

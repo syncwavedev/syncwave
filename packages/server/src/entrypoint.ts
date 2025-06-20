@@ -449,12 +449,12 @@ async function getKvStore(
             );
             const store = new MvccAdapter(sqliteStore);
 
-            const stats = await store.stats();
-            for (const [statName, statValue] of Object.entries(stats)) {
-                log.info({
-                    msg: `mvcc adapter ${statName}: ${statValue}`,
-                });
-            }
+            // const stats = await store.stats();
+            // for (const [statName, statValue] of Object.entries(stats)) {
+            //     log.info({
+            //         msg: `mvcc adapter ${statName}: ${statValue}`,
+            //     });
+            // }
 
             return {
                 store,

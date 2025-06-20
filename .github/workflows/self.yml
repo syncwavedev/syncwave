@@ -64,6 +64,7 @@ jobs:
               -v syncwave-data-self:/data \
               --name syncwave-self \
               -p 7301:8080 \
+              -p 9229:9229 \
               -e BASE_URL=https://self.syncwave.dev \
               -e ENABLE_METRICS=true \
               -e SECRET_KEY=${{ secrets.JWT_SECRET_DEV }} \

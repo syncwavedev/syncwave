@@ -58,4 +58,4 @@ WORKDIR /app/packages/server
 
 VOLUME /data
 
-CMD ["node", "dist/esm/src/entrypoint.js"]
+CMD ["node", "--inspect=0.0.0.0:9229", "dist/esm/src/entrypoint.js"]

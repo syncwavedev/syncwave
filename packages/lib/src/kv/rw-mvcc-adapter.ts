@@ -449,6 +449,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             return {
                 totalKeys,
                 staleKeys,
+                staleRatio: totalKeys > 0 ? staleKeys / totalKeys : 0,
                 totalTombstones,
                 staleTombstones,
                 activeTransactions,

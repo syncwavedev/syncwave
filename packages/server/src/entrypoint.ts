@@ -18,6 +18,7 @@ import {
     AppError,
     assert,
     assertDefined,
+    camelCaseToSnakeCase,
     CancelledError,
     context,
     CoordinatorServer,
@@ -448,6 +449,13 @@ async function getKvStore(
                     })
             );
             const store = new MvccAdapter(sqliteStore);
+
+            const stats = await store.stats();
+            for (const [statName, statValue] of Object.entries(stats)) {
+                log.info({
+                    msg: `mvcc adapter ${camelCaseToSnakeCase(statName)}: ${statValue}`,
+                });
+            }
 
             return {
                 store,

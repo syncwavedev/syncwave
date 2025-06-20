@@ -65,6 +65,7 @@ jobs:
               --name syncwave-self \
               -p 7301:8080 \
               -e BASE_URL=https://self.syncwave.dev \
+              -e ENABLE_METRICS=true \
               -e SECRET_KEY=${{ secrets.JWT_SECRET_DEV }} \
               -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_DEV }} \
               -e GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET_DEV }} \

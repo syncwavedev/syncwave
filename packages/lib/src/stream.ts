@@ -581,27 +581,30 @@ export class Stream<T> implements AsyncIterable<T> {
     }
 
     partition<S extends T>(
-        predicate: (value: T) => value is S
+        predicate: (value: T, index: number) => value is S
     ): [Cursor<S>, Cursor<Exclude<T, S>>];
     partition(
-        predicate: (value: T) => Promise<boolean> | boolean
+        predicate: (value: T, index: number) => Promise<boolean> | boolean
     ): [Cursor<T>, Cursor<T>];
     partition<S extends T>(
         predicate:
-            | ((value: T) => value is S)
-            | ((value: T) => Promise<boolean> | boolean)
+            | ((value: T, index: number) => value is S)
+            | ((value: T, index: number) => Promise<boolean> | boolean)
     ): [Cursor<S>, Cursor<Exclude<T, S>>] | [Cursor<T>, Cursor<T>] {
         const truthyChan = new Channel<T>();
         const falsyChan = new Channel<T>();
 
         (async () => {
             try {
+                let index = 0;
                 for await (const item of this) {
-                    if (await predicate(item)) {
+                    if (await predicate(item, index)) {
                         await truthyChan.next(item);
                     } else {
                         await falsyChan.next(item);
                     }
+
+                    index += 1;
                 }
             } catch (error) {
                 await whenAll([
@@ -620,6 +623,44 @@ export class Stream<T> implements AsyncIterable<T> {
             Cursor<S>,
             Cursor<Exclude<T, S>>,
         ];
+    }
+
+    lookbehind(): Stream<{item: T; previous: T | undefined}> {
+        return toStream(this._lookbehind());
+    }
+
+    private async *_lookbehind(): AsyncIterable<{
+        item: T;
+        previous: T | undefined;
+    }> {
+        let previous: T | undefined = undefined;
+
+        for await (const item of this) {
+            yield {item, previous};
+            previous = item;
+        }
+    }
+
+    lookahead(): Stream<{item: T; next: T | undefined}> {
+        return toStream(this._lookahead());
+    }
+
+    private async *_lookahead(): AsyncIterable<{item: T; next: T | undefined}> {
+        let previous: T | undefined = undefined;
+
+        for await (const item of this) {
+            if (previous === undefined) {
+                previous = item;
+                continue;
+            } else {
+                yield {item: previous, next: item};
+                previous = item;
+            }
+        }
+
+        if (previous !== undefined) {
+            yield {item: previous, next: undefined};
+        }
     }
 }
 

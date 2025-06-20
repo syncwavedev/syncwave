@@ -1,7 +1,7 @@
 import {MsgpackCodec} from '../codec.js';
 import {AppError} from '../errors.js';
 import {log} from '../logger.js';
-import {toStream} from '../stream.js';
+import {Stream, toStream} from '../stream.js';
 import {getNow, type Timestamp} from '../timestamp.js';
 import {
     NumberPacker,
@@ -11,9 +11,11 @@ import {
 } from '../tuple.js';
 import {
     assert,
+    camelCaseToSnakeCase,
     compareUint8Array,
     partition,
     pipe,
+    toObject,
     unreachable,
     whenAll,
     zip,
@@ -242,7 +244,19 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
     public readonly options: MvccAdapterOptions;
     // always start with GC in case if adapter is recreated frequently
     private writtenCount = PERFECT_GC_SCAN_SIZE;
-    private gcScanOffsetKey = Math.trunc(Math.random() * GC_OFFSETS);
+    private sessionGcScanOffsetKey = Math.trunc(Math.random() * GC_OFFSETS);
+
+    private sessionWrittenCount = 0;
+    private sessionGcScannedCount = 0;
+    private sessionGcRollOverCount = 0;
+    private gcEpochStart: Timestamp = 0 as Timestamp;
+    private gcEpochStaleSnapshots = 0;
+    private gcEpochFreshSnapshots = 0;
+    private sessionGcEpochs = 0;
+
+    private gcEpochNewKeys = 0;
+    private gcEpochStaleKeys = 0;
+    private gcEpochScannedKeys = 0;
 
     constructor(
         store: KvStore<Uint8Array, Uint8Array>,
@@ -307,11 +321,13 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
 
                 await this.commit(tx, snapKey, attempt);
 
+                this.sessionWrittenCount += tx.writeSet.length;
+
                 this.writtenCount += tx.writeSet.length;
                 if (this.writtenCount >= PERFECT_GC_SCAN_SIZE) {
-                    const gcScanSize = this.writtenCount;
+                    const gcWrittenCount = this.writtenCount;
                     this.writtenCount = 0;
-                    const gcPromise = this.gc(gcScanSize).catch(error => {
+                    const gcPromise = this.gc(gcWrittenCount).catch(error => {
                         log.error({
                             error,
                             msg: 'Failed to run GC',
@@ -374,7 +390,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
     /**
      * Warning: scans all the data
      */
-    async stats() {
+    async stats(): Promise<Record<string, number>> {
         return await this._read(undefined, async suite => {
             const readVersion = (await suite.version.get([])) ?? 0;
             const now = getNow();
@@ -418,9 +434,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     : 0;
 
             let totalKeys = 0;
-            let staleKeys = 0;
             let totalTombstones = 0;
-            let staleTombstones = 0;
 
             for await (const {
                 key: [, version, deleted],
@@ -428,14 +442,23 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                 gte: [] as unknown as DataKey,
             })) {
                 totalKeys++;
-                if (version < oldestReadVersionInUse) {
-                    staleKeys++;
-                    if (deleted) {
-                        staleTombstones++;
-                    }
-                }
                 if (deleted) {
                     totalTombstones++;
+                }
+            }
+
+            let staleKeys = 0;
+            let staleTombstones = 0;
+
+            for await (const [, , tombstone] of this._getStaleKeys(
+                toStream(suite.data.query({gte: [] as unknown as DataKey})).map(
+                    x => x.key
+                ),
+                oldestReadVersionInUse
+            )) {
+                staleKeys++;
+                if (tombstone) {
+                    staleTombstones++;
                 }
             }
 
@@ -446,27 +469,46 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                 suite.gcScanOffset.query({gte: 0})
             ).count();
 
-            return {
-                totalKeys,
-                staleKeys,
-                staleRatio: totalKeys > 0 ? staleKeys / totalKeys : 0,
-                totalTombstones,
-                staleTombstones,
-                activeTransactions,
-                staleTransactions,
-                averageActiveTransactionVersionsBehind,
-                averageActiveTransactionAge,
+            return toObject(
+                Object.entries({
+                    totalKeys,
+                    staleKeys,
+                    staleRatio: totalKeys > 0 ? staleKeys / totalKeys : 0,
+                    sessionWrittenCount: this.sessionWrittenCount,
+                    totalTombstones,
+                    staleTombstones,
+                    observableTombstones: totalTombstones - staleTombstones,
+                    activeTransactions,
+                    staleTransactions,
+                    averageActiveTransactionVersionsBehind,
+                    averageActiveTransactionAge,
 
-                readVersion,
-                oldestReadVersionInUse,
-                gcOffsets,
-                commitSets,
-                observableTombstones: totalTombstones - staleTombstones,
-            };
+                    readVersion,
+                    oldestReadVersionInUse,
+                    gcOffsets,
+                    commitSets,
+
+                    sessionGcScanOffsetKey: this.sessionGcScanOffsetKey,
+                    sessionGcScannedCount: this.sessionGcScannedCount,
+                    sessionGcRollOverCount: this.sessionGcRollOverCount,
+                    sessionGcEpochs: this.sessionGcEpochs,
+
+                    gcEpochAge: getNow() - this.gcEpochStart,
+
+                    gcEpochStaleSnapshots: this.gcEpochStaleSnapshots,
+                    gcEpochFreshSnapshots: this.gcEpochFreshSnapshots,
+
+                    gcEpochNewKeys: this.gcEpochNewKeys,
+                    gcEpochStaleKeys: this.gcEpochStaleKeys,
+                    gcEpochScannedKeys: this.gcEpochScannedKeys,
+                }).map(([key, value]) => [camelCaseToSnakeCase(key), value])
+            );
         });
     }
 
     private async gc(writtenCount: number) {
+        this.sessionGcEpochs += 1;
+        this.gcEpochNewKeys = writtenCount;
         const [activeSnapshots, version] = await this._read(
             undefined,
             async suite => {
@@ -483,11 +525,15 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
         // cleanup stale snapshots
 
         const now = getNow();
+        this.gcEpochStart = now;
+
         const [staleSnaps, freshSnaps] = partition(
             activeSnapshots,
             ({key: [readVersion], value: ts}) =>
                 this.isSnapshotStale(version - readVersion, now - ts)
         );
+        this.gcEpochStaleSnapshots = staleSnaps.length;
+        this.gcEpochFreshSnapshots = freshSnaps.length;
 
         if (staleSnaps.length > 0) {
             await this._write(undefined, async suite => {
@@ -512,8 +558,9 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             undefined,
             async suite => {
                 return (
-                    (await suite.gcScanOffset.get(this.gcScanOffsetKey)) ??
-                    MIN_DATA_KEY
+                    (await suite.gcScanOffset.get(
+                        this.sessionGcScanOffsetKey
+                    )) ?? MIN_DATA_KEY
                 );
             }
         );
@@ -525,41 +572,20 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     suite.data.query({gte: gcScanOffset})
                 )
                     .map(x => x.key)
-                    .take(writtenCount * 2) // multiply to stay ahead of the garbage
+                    .take(Math.max(PERFECT_GC_SCAN_SIZE, writtenCount * 2)) // multiply to stay ahead of the garbage
                     .toArray();
 
+                this.sessionGcScannedCount += keys.length;
+                this.gcEpochScannedKeys = keys.length;
+
                 if (keys.length < PERFECT_GC_SCAN_SIZE) {
+                    this.sessionGcRollOverCount += 1;
                     return [MIN_DATA_KEY, []];
                 }
 
-                const staleKeys: DataKey[] = [];
-                let [prevKey] = keys[0];
-                for (let i = 1; i < keys.length - 1; i += 1) {
-                    const [currentKey, , currentIsDeleted] = keys[i];
-                    const [nextKey, nextVersion] = keys[i + 1];
-
-                    const nextIsVisibleToAllTransactions =
-                        nextVersion < oldestReadVersionInUse;
-
-                    const nextIsTheSame = () =>
-                        compareUint8Array(currentKey, nextKey) === 0;
-                    const prevIsDifferent = () =>
-                        compareUint8Array(prevKey, currentKey) !== 0;
-
-                    const nextOverridesCurrent =
-                        nextIsVisibleToAllTransactions && nextIsTheSame();
-                    const currentTombstoneOverridesNothing =
-                        currentIsDeleted && prevIsDifferent();
-
-                    if (
-                        nextOverridesCurrent ||
-                        currentTombstoneOverridesNothing
-                    ) {
-                        staleKeys.push(keys[i]);
-                    } else {
-                        prevKey = currentKey;
-                    }
-                }
+                const staleKeys = await toStream(
+                    this._getStaleKeys(toStream(keys), oldestReadVersionInUse)
+                ).toArray();
 
                 return [keys[keys.length - 1], staleKeys];
             }
@@ -567,10 +593,12 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
 
         await this._write(undefined, async suite => {
             await suite.gcScanOffset.put(
-                this.gcScanOffsetKey,
+                this.sessionGcScanOffsetKey,
                 nextGcScanOffset
             );
         });
+
+        this.gcEpochStaleKeys = staleKeys.length;
 
         if (staleKeys.length > 0) {
             await this._write(undefined, async suite => {
@@ -597,6 +625,61 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             await this._write(undefined, async suite => {
                 await whenAll(staleLogs.map(key => suite.log.delete(key)));
             });
+        }
+    }
+
+    /**
+     * Stale key is a key that can never be read by any running or future transaction.
+     */
+    private async *_getStaleKeys(
+        keys: Stream<DataKey>,
+        oldestReadVersionInUse: MvccVersion
+    ) {
+        const mappedKeys = keys
+            .lookbehind()
+            .lookahead()
+            .map(x => ({
+                current: x.item.item,
+                previous: x.item.previous,
+                next: x.next?.item,
+            }));
+        let prevKey: Uint8Array | undefined = undefined;
+        for await (const {current, previous, next} of mappedKeys) {
+            if (next === undefined || previous === undefined) {
+                continue;
+            }
+
+            if (prevKey === undefined) {
+                // first key, no previous key to compare
+                prevKey = current[0];
+            }
+
+            const [currentKey, , currentIsDeleted] = current;
+            const [nextKey, nextVersion] = next;
+
+            const nextIsVisibleToAllTransactions =
+                nextVersion < oldestReadVersionInUse;
+
+            const nextIsTheSame = () =>
+                compareUint8Array(currentKey, nextKey) === 0;
+            const prevIsDifferent = () => {
+                assert(
+                    prevKey !== undefined,
+                    'Previous was defined at the start of the loop'
+                );
+                compareUint8Array(prevKey, currentKey) !== 0;
+            };
+
+            const nextOverridesCurrent =
+                nextIsVisibleToAllTransactions && nextIsTheSame();
+            const currentTombstoneOverridesNothing =
+                currentIsDeleted && prevIsDifferent();
+
+            if (nextOverridesCurrent || currentTombstoneOverridesNothing) {
+                yield current;
+            } else {
+                prevKey = currentKey;
+            }
         }
     }
 

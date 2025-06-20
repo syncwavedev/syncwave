@@ -700,6 +700,15 @@ export function formatLog(record: LogRecord) {
         return JSON.stringify(record.body);
     }
 }
+
 export function camelCaseToSnakeCase(str: string): string {
     return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+}
+
+export function toObject<T>(entries: [string, T][]): Record<string, T> {
+    const result: Record<string, T> = {};
+    for (const [key, value] of entries) {
+        result[key] = value;
+    }
+    return result;
 }

@@ -184,7 +184,7 @@ function getMonotonicTime(): [number, number] {
     return now;
 }
 
-class ConsoleLogger extends BaseLogger {
+export class ConsoleLogger extends BaseLogger {
     private level: LogLevel = 'debug';
 
     _log(level: LogLevel, message: LogMessage) {

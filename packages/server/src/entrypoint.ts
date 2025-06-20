@@ -18,7 +18,6 @@ import {
     AppError,
     assert,
     assertDefined,
-    camelCaseToSnakeCase,
     CancelledError,
     context,
     CoordinatorServer,
@@ -453,7 +452,7 @@ async function getKvStore(
             const stats = await store.stats();
             for (const [statName, statValue] of Object.entries(stats)) {
                 log.info({
-                    msg: `mvcc adapter ${camelCaseToSnakeCase(statName)}: ${statValue}`,
+                    msg: `mvcc adapter ${statName}: ${statValue}`,
                 });
             }
 
@@ -600,7 +599,6 @@ process.once('SIGINT', () => cancelServerCtx(new AppError('server shutdown')));
 process.once('SIGTERM', () => cancelServerCtx(new AppError('server shutdown')));
 process.on('unhandledRejection', reason => {
     if (reason instanceof CancelledError) {
-        log.info({msg: 'unhandled cancellation'});
         return;
     }
 

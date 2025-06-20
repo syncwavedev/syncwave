@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {unreachable} from '../dist/esm/src/utils.js';
 import {Deferred} from '../src/deferred.js';
 import {AppError} from '../src/errors.js';
-import {KvStoreMapper, log, MsgpackCodec} from '../src/index.js';
+import {ConsoleLogger, KvStoreMapper, MsgpackCodec} from '../src/index.js';
 import type {Condition, Entry, KvStore} from '../src/kv/kv-store.js';
 import {MemMvccStore, MvccConflictError} from '../src/kv/mem-mvcc-store.js';
 import {MemRwStore} from '../src/kv/mem-rw-store.js';
@@ -13,6 +13,8 @@ import {SnapController, TxController} from '../src/kv/tx-controller.js';
 import {Rand} from '../src/rand.js';
 import {toStream} from '../src/stream.js';
 import {whenAll} from '../src/utils.js';
+
+const log = new ConsoleLogger();
 
 const createId = (state: StressTestState) =>
     state.options.rand.int32(10000).toString().padStart(4, '0');

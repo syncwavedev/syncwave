@@ -202,6 +202,7 @@ interface ReadSuite {
     readonly version: Snapshot<VersionKey, number>;
     readonly activeTransactions: Snapshot<MvccSnapshotKey, Timestamp>;
     readonly gcScanOffset: Snapshot<GcOffsetKey, DataKey>;
+    readonly rawStore: Snapshot<Tuple, Uint8Array>;
 }
 
 type LogKey = readonly [commitVersion: MvccVersion, writeKeyIndex: number];
@@ -217,6 +218,7 @@ interface WriteSuite {
     readonly version: Transaction<VersionKey, number>;
     readonly activeTransactions: Transaction<MvccSnapshotKey, Timestamp>;
     readonly gcScanOffset: Transaction<GcOffsetKey, DataKey>;
+    readonly rawStore: Transaction<Tuple, Uint8Array>;
 }
 
 export interface MvccAdapterGcOptions {
@@ -392,6 +394,16 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
      */
     async stats(): Promise<Record<string, number>> {
         return await this._read(undefined, async suite => {
+            const totalKeys = await toStream(
+                suite.rawStore.query({
+                    gte: [],
+                })
+            ).count();
+
+            const totalLogKeys = await toStream(
+                suite.log.query({gte: [] as unknown as LogKey})
+            ).count();
+
             const readVersion = (await suite.version.get([])) ?? 0;
             const now = getNow();
 
@@ -433,22 +445,22 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     ? sumTransactionAge / activeTransactions
                     : 0;
 
-            let totalKeys = 0;
-            let totalTombstones = 0;
+            let totalDataKeys = 0;
+            let totalDataTombstones = 0;
 
             for await (const {
                 key: [, version, deleted],
             } of suite.data.query({
                 gte: [] as unknown as DataKey,
             })) {
-                totalKeys++;
+                totalDataKeys++;
                 if (deleted) {
-                    totalTombstones++;
+                    totalDataTombstones++;
                 }
             }
 
-            let staleKeys = 0;
-            let staleTombstones = 0;
+            let staleDataKeys = 0;
+            let staleDataTombstones = 0;
 
             for await (const [, , tombstone] of this._getStaleKeys(
                 toStream(suite.data.query({gte: [] as unknown as DataKey})).map(
@@ -456,9 +468,9 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                 ),
                 oldestReadVersionInUse
             )) {
-                staleKeys++;
+                staleDataKeys++;
                 if (tombstone) {
-                    staleTombstones++;
+                    staleDataTombstones++;
                 }
             }
 
@@ -471,13 +483,19 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
 
             return toObject(
                 Object.entries({
-                    totalKeys,
-                    staleKeys,
-                    staleRatio: totalKeys > 0 ? staleKeys / totalKeys : 0,
-                    sessionWrittenCount: this.sessionWrittenCount,
-                    totalTombstones,
-                    staleTombstones,
-                    observableTombstones: totalTombstones - staleTombstones,
+                    totalKeys: totalKeys,
+
+                    totalLogKeys: totalLogKeys,
+
+                    totalDataKeys: totalDataKeys,
+                    staleDataKeys: staleDataKeys,
+                    staleDataRatio:
+                        totalDataKeys > 0 ? staleDataKeys / totalDataKeys : 0,
+                    totalDataTombstones: totalDataTombstones,
+                    staleDataTombstones: staleDataTombstones,
+                    observableDataTombstones:
+                        totalDataTombstones - staleDataTombstones,
+
                     activeTransactions,
                     staleTransactions,
                     averageActiveTransactionVersionsBehind,
@@ -488,6 +506,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     gcOffsets,
                     commitSets,
 
+                    sessionWrittenCount: this.sessionWrittenCount,
                     sessionGcScanOffsetKey: this.sessionGcScanOffsetKey,
                     sessionGcScannedCount: this.sessionGcScannedCount,
                     sessionGcRollOverCount: this.sessionGcRollOverCount,
@@ -788,6 +807,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     withSnapshotPacker(new RunningTransactionKeyPacker()),
                     withSnapshotCodec(new MsgpackCodec<Timestamp>())
                 ),
+                rawStore: tx,
             };
 
             const [result] = await whenAll([
@@ -831,6 +851,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     withPacker(new RunningTransactionKeyPacker()),
                     withCodec(new MsgpackCodec<Timestamp>())
                 ),
+                rawStore: tx,
             };
 
             const [result] = await whenAll([

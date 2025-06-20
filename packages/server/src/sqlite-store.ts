@@ -7,6 +7,7 @@ import {
     type Uint8KvStore,
     type Uint8Snapshot,
     type Uint8Transaction,
+    log,
     mapCondition,
     unreachable,
 } from 'syncwave';
@@ -90,6 +91,9 @@ export class SqliteRwStore implements Uint8KvStore {
                 value BLOB
             );
         `);
+
+        const cacheSize = (this.db.pragma('cache_size') as any)[0].cache_size;
+        log.info({msg: `SQLite cache size: ${cacheSize}`});
     }
 
     async snapshot<R>(fn: (snap: Uint8Snapshot) => Promise<R>): Promise<R> {

@@ -92,7 +92,8 @@ export class SqliteRwStore implements Uint8KvStore {
             );
         `);
 
-        this.db.exec(`PRAGMA cache_size = -128000;`);
+        this.db.exec(`PRAGMA cache_size = -131072;`); // 128 MB
+        this.db.exec(`PRAGMA mmap_size = 268435456;`); // 256 MB
 
         const cacheSize = (this.db.pragma('cache_size') as any)[0].cache_size;
         log.info({msg: `SQLite cache size: ${cacheSize}`});

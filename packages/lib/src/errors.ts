@@ -165,7 +165,7 @@ export function getReadableError(error: unknown): string {
         return error.message;
     }
 
-    return 'An unknown error occurred: ' + JSON.stringify(error);
+    return `An unknown error occurred: ${error?.toString()}, JSON: ${JSON.stringify(error)}`;
 }
 
 export function toError(reason: unknown): AppError {

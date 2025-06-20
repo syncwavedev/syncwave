@@ -507,7 +507,6 @@ async function launchApp(options: Options) {
         const metricsRouter =
             createMetricsRouter('standalone').prefix('/metrics');
         app.use(metricsRouter.routes()).use(metricsRouter.allowedMethods());
-        app.use(helmet.default());
     }
 
     app.use(cors());
@@ -518,6 +517,7 @@ async function launchApp(options: Options) {
     app.use(apiRouter.routes());
 
     if (options.uiPath) {
+        app.use(helmet.default({contentSecurityPolicy: false}));
         const uiRouter = await createUiRouter({
             staticPath: options.uiPath,
             googleClientId: options.google?.clientId,
@@ -566,7 +566,6 @@ async function launchMetrics() {
     const metrics = new Koa();
     const metricsRouter = createMetricsRouter('cluster').prefix('/metrics');
     metrics.use(metricsRouter.routes()).use(metricsRouter.allowedMethods());
-    metrics.use(helmet.default());
 
     const metricsHttpServer = createServer(getKoaCallback(metrics));
 

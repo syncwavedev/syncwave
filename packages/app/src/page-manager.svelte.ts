@@ -7,6 +7,7 @@ import router from './lib/router';
 import {log} from 'syncwave';
 import BoardPage from './pages/board.svelte';
 import DbPage from './pages/db.svelte';
+import ImpersonatePage from './pages/impersonate.svelte';
 import LoginFailed from './pages/login-failed.svelte';
 import LoginPage from './pages/login.svelte';
 import Testbed from './pages/testbed.svelte';
@@ -95,6 +96,11 @@ export class PageManager {
             this._resetPage();
 
             this._page = DbPage;
+        });
+        router.on('/impersonate', () => {
+            this._resetPage();
+
+            this._page = ImpersonatePage;
         });
         router.on('/login/failed', () => {
             this._resetPage();

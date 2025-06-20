@@ -243,6 +243,10 @@ export class Agent {
         });
     }
 
+    async impersonate(params: {email: string}) {
+        return await this.rpc.impersonate({email: params.email});
+    }
+
     handleCardMouseEnter(boardId: BoardId, cardId: CardId) {
         this.activeBoards
             .filter(x => x.boardView.id === boardId)

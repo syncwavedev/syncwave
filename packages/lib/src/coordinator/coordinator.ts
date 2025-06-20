@@ -102,7 +102,7 @@ export class CoordinatorServer {
         fullName: string;
     }): Promise<string> {
         return await this.dataLayer.transact(
-            {accountId: undefined, superadmin: false, userId: undefined},
+            {accountId: undefined, userId: undefined},
             async tx => {
                 const account = await getAccount({
                     accounts: tx.accounts,

@@ -12,7 +12,7 @@ import {createUserId, UserRepo, type UserId} from '../data/repos/user-repo.js';
 import {BOARD_ONBOARDING_TEMPLATE} from '../data/template.js';
 import {AppError, BusinessError} from '../errors.js';
 import {createApi, handler} from '../transport/rpc.js';
-import {whenAll} from '../utils.js';
+import {assert, whenAll} from '../utils.js';
 import {createUuidV4} from '../uuid.js';
 import {
     AUTH_ACTIVITY_WINDOW_ALLOWED_ACTIONS_COUNT,
@@ -230,6 +230,49 @@ export function createAuthApi() {
                 };
             },
         }),
+        impersonate: handler({
+            req: Type.Object({email: Type.String()}),
+            res: Type.Object({
+                token: Type.String(),
+            }),
+            handle: async (
+                {tx: {accounts, users, config}, jwt, crypto, boardService},
+                {email},
+                {principal}
+            ) => {
+                if (!principal.accountId) {
+                    throw new BusinessError(
+                        'user is not authenticated',
+                        'forbidden'
+                    );
+                }
+
+                const account = await accounts.getById(principal.accountId);
+                assert(
+                    account !== undefined,
+                    `account with id ${principal.accountId} not found`
+                );
+                if (!config.superadminEmails.includes(account.email)) {
+                    throw new BusinessError(
+                        'user is not superadmin',
+                        'forbidden'
+                    );
+                }
+
+                const impersonateAccount = await getAccount({
+                    accounts,
+                    users,
+                    email,
+                    crypto,
+                    fullName: undefined,
+                    boardService,
+                });
+
+                const token = await signJwtToken(jwt, impersonateAccount);
+
+                return {token};
+            },
+        }),
         deleteMe: handler({
             req: Type.Object({}),
             res: Type.Object({}),
@@ -239,7 +282,10 @@ export function createAuthApi() {
                 {principal}
             ) => {
                 if (!principal.accountId) {
-                    throw new AppError('Not authenticated');
+                    throw new BusinessError(
+                        'user is not authenticated',
+                        'forbidden'
+                    );
                 }
 
                 const account = await accounts.getById(principal.accountId);

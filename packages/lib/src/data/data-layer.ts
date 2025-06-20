@@ -274,7 +274,6 @@ export class DataLayer {
                 this.transact(
                     {
                         accountId: undefined,
-                        superadmin: false,
                         userId: undefined,
                     },
                     data => fn(data.events)

@@ -251,7 +251,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
     private sessionWrittenCount = 0;
     private sessionGcScannedCount = 0;
     private sessionGcRollOverCount = 0;
-    private gcEpochStart: Timestamp = 0 as Timestamp;
+    private gcEpochStart: Timestamp = getNow();
     private gcEpochStaleSnapshots = 0;
     private gcEpochFreshSnapshots = 0;
     private sessionGcEpochs = 0;
@@ -400,10 +400,6 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                 })
             ).count();
 
-            const totalLogKeys = await toStream(
-                suite.log.query({gte: [] as unknown as LogKey})
-            ).count();
-
             const readVersion = (await suite.version.get([])) ?? 0;
             const now = getNow();
 
@@ -485,7 +481,7 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                 Object.entries({
                     totalKeys: totalKeys,
 
-                    totalLogKeys: totalLogKeys,
+                    commitSets,
 
                     totalDataKeys: totalDataKeys,
                     staleDataKeys: staleDataKeys,
@@ -504,7 +500,6 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     readVersion,
                     oldestReadVersionInUse,
                     gcOffsets,
-                    commitSets,
 
                     sessionWrittenCount: this.sessionWrittenCount,
                     sessionGcScanOffsetKey: this.sessionGcScanOffsetKey,

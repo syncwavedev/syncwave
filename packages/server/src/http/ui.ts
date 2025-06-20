@@ -20,11 +20,11 @@ export async function createUiRouter(options: {
         .readFile(`${options.staticPath}/index.html`, 'utf-8')
         .then(html => {
             return html.replace(
-                '</head>',
-                `
+                '<head>',
+                `<head>
                 <script>
                     window.SELF_HOSTED_CONFIG = ${JSON.stringify(clientConfig)};
-                </script></head>`
+                </script>`
             );
         });
 

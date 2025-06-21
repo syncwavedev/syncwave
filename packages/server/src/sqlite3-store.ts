@@ -42,7 +42,7 @@ interface Row {
     value: Uint8Array | Buffer;
 }
 
-class SqliteTransaction implements Uint8Transaction {
+class Sqlite3Transaction implements Uint8Transaction {
     constructor(private readonly db: Database) {}
 
     get(key: Uint8Array): Promise<Uint8Array | undefined> {
@@ -106,11 +106,11 @@ class SqliteTransaction implements Uint8Transaction {
     }
 }
 
-export interface SqliteRwStoreOptions {
+export interface Sqlite3RwStoreOptions {
     dbFilePath: string;
 }
 
-export class SqliteRwStore implements Uint8KvStore {
+export class Sqlite3RwStore implements Uint8KvStore {
     private db: Database;
     private mutex = new Mutex();
 
@@ -119,8 +119,8 @@ export class SqliteRwStore implements Uint8KvStore {
     }
 
     public static async create(
-        options: SqliteRwStoreOptions
-    ): Promise<SqliteRwStore> {
+        options: Sqlite3RwStoreOptions
+    ): Promise<Sqlite3RwStore> {
         const db: Database = await new Promise((resolve, reject) => {
             const database = new sqlite3.Database(options.dbFilePath, err => {
                 if (err) return reject(err);
@@ -128,7 +128,7 @@ export class SqliteRwStore implements Uint8KvStore {
             });
         });
 
-        const store = new SqliteRwStore(db);
+        const store = new Sqlite3RwStore(db);
         await store.initialize();
         return store;
     }
@@ -140,6 +140,9 @@ export class SqliteRwStore implements Uint8KvStore {
                 value BLOB
             );
         `);
+
+        await this.exec(`PRAGMA cache_size = -131072;`); // 128 MB
+        await this.exec(`PRAGMA mmap_size = 268435456;`); // 256 MB
 
         const row = await this.getPragma('cache_size');
         log.info({msg: `SQLite cache size: ${row.cache_size}`});
@@ -185,7 +188,7 @@ export class SqliteRwStore implements Uint8KvStore {
             await this.exec(beginCommand);
 
             try {
-                const txn = new SqliteTransaction(this.db);
+                const txn = new Sqlite3Transaction(this.db);
                 const result = await fn(txn);
                 await this.exec('COMMIT');
                 return result;

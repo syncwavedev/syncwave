@@ -9,13 +9,13 @@ import {
     toStream,
 } from 'syncwave';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
-import {SqliteRwStore} from './better-sqlite-store.js';
+import {BetterSqlite3RwStore} from './better-sqlite3-store.js';
 
 describe('SqliteUint8KVStore (localhost:4500)', () => {
-    let store: SqliteRwStore;
+    let store: BetterSqlite3RwStore;
 
     beforeEach(() => {
-        store = new SqliteRwStore({
+        store = new BetterSqlite3RwStore({
             dbFilePath: './test.sqlite',
             concurrentReadLimit: 4,
         });

@@ -34,7 +34,7 @@ interface Row {
     value: Uint8Array | Buffer;
 }
 
-class SqliteTransaction implements Uint8Transaction {
+class BetterSqlite3Transaction implements Uint8Transaction {
     constructor(private readonly db: Database) {}
 
     async get(key: Uint8Array): Promise<Uint8Array | undefined> {
@@ -73,16 +73,16 @@ class SqliteTransaction implements Uint8Transaction {
     }
 }
 
-export interface SqliteRwStoreOptions {
+export interface BetterSqlite3RwStoreOptions {
     dbFilePath: string;
     concurrentReadLimit: number;
 }
 
-export class SqliteRwStore implements Uint8KvStore {
+export class BetterSqlite3RwStore implements Uint8KvStore {
     private db: Database;
     private mutex = new Mutex();
 
-    constructor(options: SqliteRwStoreOptions) {
+    constructor(options: BetterSqlite3RwStoreOptions) {
         this.db = new BetterSqlite3(options.dbFilePath);
 
         this.db.exec(`
@@ -118,7 +118,7 @@ export class SqliteRwStore implements Uint8KvStore {
             this.db.exec('BEGIN IMMEDIATE');
 
             try {
-                const txn = new SqliteTransaction(this.db);
+                const txn = new BetterSqlite3Transaction(this.db);
                 const result = await fn(txn);
 
                 this.db.exec('COMMIT');

@@ -438,9 +438,9 @@ async function getKvStore(
         })
         .with('better-sqlite', async () => {
             log.info({msg: 'using better-sqlite as primary store'});
-            const sqliteStore = await import('./better-sqlite-store.js').then(
+            const sqliteStore = await import('./better-sqlite3-store.js').then(
                 x =>
-                    new x.SqliteRwStore({
+                    new x.BetterSqlite3RwStore({
                         dbFilePath:
                             stage === 'local'
                                 ? './dev.sqlite'
@@ -465,7 +465,7 @@ async function getKvStore(
         .with('sqlite3', async () => {
             log.info({msg: 'using sqlite3 as primary store'});
             const sqliteStore = await import('./sqlite3-store.js').then(x =>
-                x.SqliteRwStore.create({
+                x.Sqlite3RwStore.create({
                     dbFilePath:
                         stage === 'local' ? './dev.sqlite' : '/data/db.sqlite',
                 })

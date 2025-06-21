@@ -83,7 +83,7 @@ export class BetterSqlite3RwStore implements Uint8KvStore {
     private mutex = new Mutex();
 
     constructor(options: BetterSqlite3RwStoreOptions) {
-        this.db = new BetterSqlite3(options.dbFilePath);
+        this.db = new BetterSqlite3(options.dbFilePath, {});
 
         this.db.exec(`
             CREATE TABLE IF NOT EXISTS kv_store (
@@ -92,8 +92,9 @@ export class BetterSqlite3RwStore implements Uint8KvStore {
             );
         `);
 
+        this.db.pragma('journal_mode = WAL');
         this.db.exec(`PRAGMA cache_size = -131072;`); // 128 MB
-        this.db.exec(`PRAGMA mmap_size = 268435456;`); // 256 MB
+        this.db.exec(`PRAGMA mmap_size = 0;`);
 
         const cacheSize = (this.db.pragma('cache_size') as any)[0].cache_size;
         log.info({msg: `SQLite cache size: ${cacheSize}`});

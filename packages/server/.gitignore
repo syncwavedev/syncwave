@@ -1,5 +1,7 @@
 test.sqlite
 dev.sqlite
+dev.sqlite-wal
+dev.sqlite-shm
 test.sqlite-journal
 dev.sqlite-journal
 /.env

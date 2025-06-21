@@ -325,7 +325,7 @@ async function getOptions(): Promise<Result<Options>> {
         stage,
         (stage !== 'local' && stage !== 'self') || FORCE_FOUNDATIONDB
             ? 'fdb'
-            : 'sqlite3'
+            : 'better-sqlite3'
     );
     const logLevel = match(stage)
         .with('local', () => 'info' as const)
@@ -409,7 +409,7 @@ const options = optionsResult.value;
 
 async function getKvStore(
     stage: string,
-    type: 'fdb' | 'sqlite3' | 'better-sqlite' | 'mem'
+    type: 'fdb' | 'sqlite3' | 'better-sqlite3' | 'mem'
 ): Promise<{
     store: KvStore<Tuple, Uint8Array>;
     hub: Hub;
@@ -436,7 +436,7 @@ async function getKvStore(
                 hub: fdbStore,
             };
         })
-        .with('better-sqlite', async () => {
+        .with('better-sqlite3', async () => {
             log.info({msg: 'using better-sqlite as primary store'});
             const sqliteStore = await import('./better-sqlite3-store.js').then(
                 x =>

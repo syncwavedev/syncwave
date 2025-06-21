@@ -9,7 +9,7 @@ import {
     toStream,
 } from 'syncwave';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
-import {SqliteRwStore} from './sqlite-store.js';
+import {SqliteRwStore} from './better-sqlite-store.js';
 
 describe('SqliteUint8KVStore (localhost:4500)', () => {
     let store: SqliteRwStore;

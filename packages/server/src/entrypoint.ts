@@ -325,7 +325,7 @@ async function getOptions(): Promise<Result<Options>> {
         stage,
         (stage !== 'local' && stage !== 'self') || FORCE_FOUNDATIONDB
             ? 'fdb'
-            : 'sqlite'
+            : 'sqlite3'
     );
     const logLevel = match(stage)
         .with('local', () => 'info' as const)
@@ -409,7 +409,7 @@ const options = optionsResult.value;
 
 async function getKvStore(
     stage: string,
-    type: 'fdb' | 'sqlite' | 'mem'
+    type: 'fdb' | 'sqlite3' | 'better-sqlite' | 'mem'
 ): Promise<{
     store: KvStore<Tuple, Uint8Array>;
     hub: Hub;
@@ -436,9 +436,9 @@ async function getKvStore(
                 hub: fdbStore,
             };
         })
-        .with('sqlite', async () => {
-            log.info({msg: 'using Sqlite as primary store'});
-            const sqliteStore = await import('./sqlite-store.js').then(
+        .with('better-sqlite', async () => {
+            log.info({msg: 'using better-sqlite as primary store'});
+            const sqliteStore = await import('./better-sqlite-store.js').then(
                 x =>
                     new x.SqliteRwStore({
                         dbFilePath:
@@ -447,6 +447,28 @@ async function getKvStore(
                                 : '/data/db.sqlite',
                         concurrentReadLimit: 4,
                     })
+            );
+            const store = new MvccAdapter(sqliteStore);
+
+            const stats = await store.stats();
+            for (const [statName, statValue] of Object.entries(stats)) {
+                log.info({
+                    msg: `mvcc adapter ${statName}: ${statValue}`,
+                });
+            }
+
+            return {
+                store,
+                hub: new MemHub(),
+            };
+        })
+        .with('sqlite3', async () => {
+            log.info({msg: 'using sqlite3 as primary store'});
+            const sqliteStore = await import('./sqlite3-store.js').then(x =>
+                x.SqliteRwStore.create({
+                    dbFilePath:
+                        stage === 'local' ? './dev.sqlite' : '/data/db.sqlite',
+                })
             );
             const store = new MvccAdapter(sqliteStore);
 

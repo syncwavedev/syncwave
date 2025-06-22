@@ -2,11 +2,13 @@ import sqlite3, {type Database} from 'sqlite3';
 import {
     type Condition,
     type Entry,
+    KV_STORE_QUERY_BATCH_SIZE,
     Mutex,
     TXN_RETRIES_COUNT,
     type Uint8KvStore,
     type Uint8Snapshot,
     type Uint8Transaction,
+    assert,
     log,
     mapCondition,
     unreachable,
@@ -37,6 +39,18 @@ function buildConditionSql(condition: Condition<Uint8Array>): {
     });
 }
 
+function remapConditionKey(
+    condition: Condition<Uint8Array>,
+    key: Uint8Array
+): Condition<Uint8Array> {
+    return mapCondition<Uint8Array, Condition<Uint8Array>>(condition, {
+        gt: cond => ({gt: key}),
+        gte: cond => ({gte: key}),
+        lt: cond => ({lt: key}),
+        lte: cond => ({lte: key}),
+    });
+}
+
 interface Row {
     key: Uint8Array | Buffer;
     value: Uint8Array | Buffer;
@@ -59,23 +73,38 @@ class Sqlite3Transaction implements Uint8Transaction {
     }
 
     async *query(
-        condition: Condition<Uint8Array>
+        inputCondition: Condition<Uint8Array>
     ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
-        const {clause, param, order} = buildConditionSql(condition);
-        const sql = `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order}`;
+        let condition = inputCondition;
+        while (true) {
+            const {clause, param, order} = buildConditionSql(condition);
+            const sql = `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order} LIMIT ${KV_STORE_QUERY_BATCH_SIZE};`;
 
-        const rows: Row[] = await new Promise((resolve, reject) => {
-            this.db.all(sql, param, (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows as Row[]);
+            const rows: Row[] = await new Promise((resolve, reject) => {
+                this.db.all(sql, param, (err, rows) => {
+                    if (err) return reject(err);
+                    resolve(rows as Row[]);
+                });
             });
-        });
 
-        for (const row of rows) {
-            yield {
-                key: new Uint8Array(row.key),
-                value: new Uint8Array(row.value),
-            };
+            for (const row of rows) {
+                yield {
+                    key: new Uint8Array(row.key),
+                    value: new Uint8Array(row.value),
+                };
+            }
+
+            if (rows.length < KV_STORE_QUERY_BATCH_SIZE) {
+                return;
+            }
+
+            const lastKey = rows.at(-1)?.key;
+            assert(lastKey !== undefined, 'lastKey is undefined');
+            if (condition.gt || condition.gte) {
+                condition = {gt: new Uint8Array(lastKey)};
+            } else {
+                condition = {lt: new Uint8Array(lastKey)};
+            }
         }
     }
 

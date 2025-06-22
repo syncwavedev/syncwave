@@ -2,11 +2,13 @@ import BetterSqlite3, {type Database, SqliteError} from 'better-sqlite3';
 import {
     type Condition,
     type Entry,
+    KV_STORE_QUERY_BATCH_SIZE,
     Mutex,
     TXN_RETRIES_COUNT,
     type Uint8KvStore,
     type Uint8Snapshot,
     type Uint8Transaction,
+    assert,
     log,
     mapCondition,
     unreachable,
@@ -45,18 +47,36 @@ class BetterSqlite3Transaction implements Uint8Transaction {
     }
 
     async *query(
-        condition: Condition<Uint8Array>
+        inputCondition: Condition<Uint8Array>
     ): AsyncIterable<Entry<Uint8Array, Uint8Array>> {
-        const {clause, param, order} = buildConditionSql(condition);
-        const stmt = this.db.prepare(
-            `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order}`
-        );
+        let condition = inputCondition;
 
-        for (const row of stmt.iterate(param)) {
-            yield {
-                key: new Uint8Array((row as Row).key),
-                value: new Uint8Array((row as Row).value),
-            };
+        while (true) {
+            const {clause, param, order} = buildConditionSql(condition);
+            const rows = this.db
+                .prepare(
+                    `SELECT key, value FROM kv_store WHERE ${clause} ORDER BY key ${order} LIMIT ${KV_STORE_QUERY_BATCH_SIZE}`
+                )
+                .all(param) as Row[];
+
+            for (const row of rows) {
+                yield {
+                    key: new Uint8Array((row as Row).key),
+                    value: new Uint8Array((row as Row).value),
+                };
+            }
+
+            if (rows.length < KV_STORE_QUERY_BATCH_SIZE) {
+                return;
+            }
+
+            const lastKey = rows.at(-1)?.key;
+            assert(lastKey !== undefined, 'lastKey is undefined');
+            if (condition.gt || condition.gte) {
+                condition = {gt: new Uint8Array(lastKey)};
+            } else {
+                condition = {lt: new Uint8Array(lastKey)};
+            }
         }
     }
 
@@ -92,7 +112,7 @@ export class BetterSqlite3RwStore implements Uint8KvStore {
             );
         `);
 
-        this.db.pragma('journal_mode = WAL');
+        // this.db.pragma('journal_mode = WAL');
         this.db.exec(`PRAGMA cache_size = -131072;`); // 128 MB
         this.db.exec(`PRAGMA mmap_size = 0;`);
 

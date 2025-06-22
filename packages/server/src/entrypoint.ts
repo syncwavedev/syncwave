@@ -325,7 +325,7 @@ async function getOptions(): Promise<Result<Options>> {
         stage,
         (stage !== 'local' && stage !== 'self') || FORCE_FOUNDATIONDB
             ? 'fdb'
-            : 'better-sqlite3'
+            : 'sqlite3'
     );
     const logLevel = match(stage)
         .with('local', () => 'info' as const)

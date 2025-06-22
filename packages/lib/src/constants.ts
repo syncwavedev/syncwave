@@ -23,4 +23,4 @@ export const AUTH_CODE_LENGTH = 6;
 export const AUTH_CODE_ALPHABET = '23456789BCDFGHJKMNPQRTVWXY';
 
 export const RPC_CHUNK_SIZE = 2 * 1024; // 2KB (Typical TCP payload: ~1460 bytes)
-export const KV_STORE_QUERY_BATCH_SIZE = 32;
+export const KV_STORE_QUERY_BATCH_SIZE = 8;

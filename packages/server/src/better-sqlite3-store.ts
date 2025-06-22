@@ -36,6 +36,16 @@ interface Row {
     value: Uint8Array | Buffer;
 }
 
+let keysRead = 0;
+let keysWritten = 0;
+setInterval(() => {
+    console.log(
+        `[stats] keys read = ${keysRead}, keys written = ${keysWritten}`
+    );
+    keysRead = 0;
+    keysWritten = 0;
+}, 1000);
+
 class BetterSqlite3Transaction implements Uint8Transaction {
     constructor(private readonly db: Database) {}
 

@@ -15,6 +15,16 @@ import {
     wait,
 } from 'syncwave';
 
+let keysRead = 0;
+let keysWritten = 0;
+setInterval(() => {
+    console.log(
+        `[stats] keys read = ${keysRead}, keys written = ${keysWritten}`
+    );
+    keysRead = 0;
+    keysWritten = 0;
+}, 1000);
+
 function isSqliteRetryableError(error: unknown): boolean {
     if (error instanceof Error) {
         return ['SQLITE_BUSY', 'SQLITE_LOCKED'].includes((error as any).code);
@@ -61,6 +71,7 @@ class Sqlite3Transaction implements Uint8Transaction {
 
     get(key: Uint8Array): Promise<Uint8Array | undefined> {
         return new Promise((resolve, reject) => {
+            keysRead += 1;
             this.db.get(
                 'SELECT value FROM kv_store WHERE key = ?',
                 key,
@@ -87,6 +98,8 @@ class Sqlite3Transaction implements Uint8Transaction {
                 });
             });
 
+            keysRead += rows.length;
+
             for (const row of rows) {
                 yield {
                     key: new Uint8Array(row.key),
@@ -110,6 +123,7 @@ class Sqlite3Transaction implements Uint8Transaction {
 
     put(key: Uint8Array, value: Uint8Array): Promise<void> {
         return new Promise((resolve, reject) => {
+            keysWritten += 1;
             this.db.run(
                 'INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)',
                 [key, value],
@@ -123,6 +137,8 @@ class Sqlite3Transaction implements Uint8Transaction {
 
     delete(key: Uint8Array): Promise<void> {
         return new Promise((resolve, reject) => {
+            keysWritten += 1;
+
             this.db.run(
                 'DELETE FROM kv_store WHERE key = ?',
                 key,

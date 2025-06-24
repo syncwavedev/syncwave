@@ -22,15 +22,7 @@ const client = new CoordinatorClient(
 );
 
 async function main() {
-    const result = await client.rpc.getChildren({
-        parent: [
-            'columns',
-            'd',
-            'i',
-            'boardId',
-            '0196c8c8-8ea1-709f-9864-bebdf28734d2',
-        ],
-    });
+    const result = await client.rpc.getMeViewData({}).first();
 
     console.log(result);
 }

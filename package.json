@@ -9,7 +9,7 @@
     },
     "scripts": {
         "start": "tsx ./packages/scripts/src/playground.ts | tsx ./packages/scripts/src/log-prettify.ts",
-        "toolbox": "tsx --import ./packages/server/src/instrumentation.ts ./packages/scripts/src/toolbox.ts | tsx ./packages/scripts/src/log-prettify.ts",
+        "toolbox": "dotenv -- tsx --import ./packages/server/src/instrumentation.ts ./packages/scripts/src/toolbox.ts | tsx ./packages/scripts/src/log-prettify.ts",
         "bootstrap": "npm install && npm install --workspaces && npm run build",
         "test": "npm test --workspaces",
         "build": "npm run build --workspaces",
@@ -21,6 +21,7 @@
     "devDependencies": {
         "@eslint/js": "^9.23.0",
         "@typescript-eslint/parser": "^8.29.0",
+        "dotenv-cli": "^8.0.0",
         "editorconfig": "^2.0.0",
         "eslint": "^9.23.0",
         "eslint-config-prettier": "^10.1.1",

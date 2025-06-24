@@ -122,7 +122,7 @@ export class BetterSqlite3RwStore implements Uint8KvStore {
             );
         `);
 
-        // this.db.pragma('journal_mode = WAL');
+        this.db.pragma('PRAGMA journal_mode=DELETE;');
         this.db.exec(`PRAGMA cache_size = -131072;`); // 128 MB
         this.db.exec(`PRAGMA mmap_size = 0;`);
 

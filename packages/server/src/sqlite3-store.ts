@@ -170,6 +170,7 @@ export class Sqlite3RwStore implements Uint8KvStore {
             );
         `);
 
+        await this.exec(`PRAGMA journal_mode=DELETE;`);
         await this.exec(`PRAGMA cache_size = -131072;`); // 128 MB
         await this.exec(`PRAGMA mmap_size = 268435456;`); // 256 MB
 

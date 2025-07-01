@@ -264,38 +264,40 @@
             <LeftPanelIcon />
         </button>
     {/if}
-    <DropdownMenu
-        side="bottom"
-        align="start"
-        items={[
-            permissionManager.hasPermission('write:board')
-                ? {
-                      icon: BoardIcon,
-                      text: 'Board Settings',
-                      onSelect: () => {
-                          modalManager.open(boardSettings);
-                      },
-                  }
-                : null,
-            {
-                icon: DoorOpenIcon,
-                text: 'Leave Board',
-                onSelect: () => {
-                    const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
-                    if (confirm(confirmMessage)) {
-                        BoardHistoryManager.clear();
-                        agent.deleteMember(board.memberId);
-                        router.route('/');
-                    }
+    <div class="ml-4">
+        <DropdownMenu
+            side="bottom"
+            align="start"
+            items={[
+                permissionManager.hasPermission('write:board')
+                    ? {
+                          icon: BoardIcon,
+                          text: 'Board Settings',
+                          onSelect: () => {
+                              modalManager.open(boardSettings);
+                          },
+                      }
+                    : null,
+                {
+                    icon: DoorOpenIcon,
+                    text: 'Leave Board',
+                    onSelect: () => {
+                        const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
+                        if (confirm(confirmMessage)) {
+                            BoardHistoryManager.clear();
+                            agent.deleteMember(board.memberId);
+                            router.route('/');
+                        }
+                    },
                 },
-            },
-        ]}
-    >
-        <button class="btn ml-4">
-            {board.name}
-            <EllipsisIcon />
-        </button>
-    </DropdownMenu>
+            ]}
+        >
+            <button class="btn">
+                {board.name}
+                <EllipsisIcon />
+            </button>
+        </DropdownMenu>
+    </div>
 
     <div class="ml-2 flex">
         {#each board.onlineUsers as user (user.user.id)}

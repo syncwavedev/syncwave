@@ -16,7 +16,7 @@
     pointer-events: auto;
 
     display: inline-flex;
-    gap: var(--btn-gap, 0.4em);
+    gap: var(--btn-gap, 0.3em);
     justify-content: center;
     align-items: center;
 

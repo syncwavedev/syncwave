@@ -91,30 +91,7 @@
             </button>
         </div>
 
-        <div class="flex">
-            <button
-                class="
-                    flex
-                    flex-1
-                    gap-1
-                    items-center
-                    hover:bg-material-base-hover
-                    rounded-md
-                    py-1.5
-                    px-panel-inline-half
-                    mx-panel-inline-half
-                    my-3
-                    item__icon
-                    "
-                onclick={onNewBoard}
-                class:board--active={selectedKey === 'new-board'}
-            >
-                <PlusSquareIcon />
-                New Board
-            </button>
-        </div>
-
-        <div class="flex flex-col flex-1 text-ink-body">
+        <div class="flex flex-col flex-1 text-ink-body mt-3">
             {#each boards as board (board.id)}
                 <button
                     class="flex items-center gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-base-hover py-1.5 item__icon"
@@ -125,10 +102,25 @@
                 </button>
             {/each}
         </div>
-        <div class="mb-4 mx-panel-inline text-ink-body">
-            <a href="https://discord.gg/FzQjQVFdQz" class="btn" target="_blank">
-                <ChatBubbleSolidIcon /> Leave Feedback
-            </a>
+        <div class="mx-panel-inline-half">
+            <button
+                class="btn"
+                onclick={onNewBoard}
+                class:board--active={selectedKey === 'new-board'}
+            >
+                <PlusSquareIcon />
+                New Board
+            </button>
+            <hr class="my-2" />
+            <div class="mb-2">
+                <a
+                    href="https://discord.gg/FzQjQVFdQz"
+                    class="btn"
+                    target="_blank"
+                >
+                    <ChatBubbleSolidIcon /> Leave Feedback
+                </a>
+            </div>
         </div>
     </div>
 </ResizablePanel>

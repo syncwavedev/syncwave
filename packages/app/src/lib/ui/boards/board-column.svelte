@@ -57,7 +57,7 @@
 
 <div class="column" data-column-id={column.id}>
     <div
-        class="flex items-center column-padding-inline my-3 shrink-0"
+        class="flex items-center column-padding-inline mt-3.5 mb-2.5 shrink-0"
         data-disable-scroll-view-drag="true"
     >
         <div
@@ -71,11 +71,11 @@
         {#if permissionManager.hasPermission('write:card')}
             <div class="flex ml-auto btn--small">
                 <button class="btn btn--icon" onclick={onCreateCard}>
-                    <PlusIcon class="pointer-events-none" />
+                    <PlusIcon />
                 </button>
                 {#if permissionManager.hasPermission('write:board')}
                     <button onclick={onEditColumn} class="btn btn--icon">
-                        <EllipsisIcon class="pointer-events-none" />
+                        <EllipsisIcon />
                     </button>
                 {/if}
             </div>

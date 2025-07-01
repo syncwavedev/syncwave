@@ -39,12 +39,15 @@
     import InboxSolidIcon from '../components/icons/inbox-solid-icon.svelte';
     import InboxView from '../activity-view/inbox-view.svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
+    import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
 
     const {
         me,
         boardData,
         meBoardData,
         counter,
+        hideLeftPanel,
+        onOpenLeftPanel,
     }: {
         boardData: BoardViewDataDto;
         meBoardData: {
@@ -53,6 +56,8 @@
         };
         me: MeView;
         counter?: number;
+        hideLeftPanel: boolean;
+        onOpenLeftPanel: () => void;
     } = $props();
 
     const agent = getAgent();
@@ -254,13 +259,43 @@
 {/snippet}
 
 {#snippet header()}
-    <div class="flex flex-col gap-0.5">
-        <p class="font-semibold text-lg">{board.name}</p>
-        <!-- <p class="text-ink-detail text-xs">
-            {board.members.length}
-            {board.members.length === 1 ? 'member' : 'members'}
-        </p> -->
-    </div>
+    {#if !hideLeftPanel}
+        <button class="btn btn--icon" onclick={onOpenLeftPanel}>
+            <LeftPanelIcon />
+        </button>
+    {/if}
+    <DropdownMenu
+        side="bottom"
+        align="start"
+        items={[
+            permissionManager.hasPermission('write:board')
+                ? {
+                      icon: BoardIcon,
+                      text: 'Board Settings',
+                      onSelect: () => {
+                          modalManager.open(boardSettings);
+                      },
+                  }
+                : null,
+            {
+                icon: DoorOpenIcon,
+                text: 'Leave Board',
+                onSelect: () => {
+                    const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
+                    if (confirm(confirmMessage)) {
+                        BoardHistoryManager.clear();
+                        agent.deleteMember(board.memberId);
+                        router.route('/');
+                    }
+                },
+            },
+        ]}
+    >
+        <button class="btn ml-4">
+            {board.name}
+            <EllipsisIcon />
+        </button>
+    </DropdownMenu>
 
     <div class="ml-2 flex">
         {#each board.onlineUsers as user (user.user.id)}
@@ -281,50 +316,20 @@
             <button class="btn">Sign In</button>
         </a>
     {:else}
-        <div class="ml-auto flex gap-2">
-            <button class="btn btn--icon btn--bordered" onclick={onStartSearch}>
+        <div class="ml-auto flex gap-1">
+            <button class="btn btn--icon" onclick={onStartSearch}>
                 <PlusIcon />
             </button>
             <button
-                class="btn btn--icon btn--bordered"
+                class="btn btn--icon"
                 onclick={() => (inboxActive = !inboxActive)}
                 class:btn--active={inboxActive}
             >
                 <InboxSolidIcon />
             </button>
-            <button class="btn btn--icon btn--bordered" onclick={onStartSearch}>
+            <button class="btn btn--icon" onclick={onStartSearch}>
                 <SearchIcon />
             </button>
-            <DropdownMenu
-                side="bottom"
-                items={[
-                    permissionManager.hasPermission('write:board')
-                        ? {
-                              icon: BoardIcon,
-                              text: 'Board Settings',
-                              onSelect: () => {
-                                  modalManager.open(boardSettings);
-                              },
-                          }
-                        : null,
-                    {
-                        icon: DoorOpenIcon,
-                        text: 'Leave Board',
-                        onSelect: () => {
-                            const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
-                            if (confirm(confirmMessage)) {
-                                BoardHistoryManager.clear();
-                                agent.deleteMember(board.memberId);
-                                router.route('/');
-                            }
-                        },
-                    },
-                ]}
-            >
-                <button class="btn btn--icon btn--bordered">
-                    <EllipsisIcon />
-                </button>
-            </DropdownMenu>
         </div>
     {/if}
 {/snippet}
@@ -333,12 +338,12 @@
     <!-- svelte-ignore a11y_autofocus -->
     <input
         type="text"
-        class="input input--bordered flex-grow"
+        class="input flex-grow"
         placeholder="Search..."
         bind:value={searchValue}
         autofocus
     />
-    <button class="btn btn--icon btn--bordered ml-4" onclick={onCloseSearch}>
+    <button class="btn btn--icon ml-4" onclick={onCloseSearch}>
         <TimesIcon />
     </button>
 {/snippet}
@@ -346,7 +351,7 @@
 <PermissionBoundary member={boardMeView}>
     <div class="relative flex min-w-0 flex-col flex-1">
         <div
-            class="flex items-center shrink-0 px-board-inline h-panel-header avatar-xs"
+            class="flex items-center shrink-0 px-panel-inline h-panel-header border-b border-divider avatar-xs"
         >
             {#if !isSearch}
                 {@render header()}

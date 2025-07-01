@@ -1,12 +1,12 @@
 :root {
-    --btn-size: 2.6em;
+    --btn-size: 2.4em;
 }
 
 .btn {
     --transition: 100ms ease;
 
     background-color: var(--btn-background, transparent);
-    color: var(--btn-color, var(--color-ink));
+    color: var(--btn-color, inherit);
 
     border-radius: var(--btn-border-radius, var(--radius-sm));
     border: var(--btn-border-size, 0px) solid
@@ -67,8 +67,7 @@
     }
 
     &:hover {
-        /* --btn-background: var(--color-material-base-hover); */
-        outline: 1px solid var(--color-divider-object);
+        --btn-background: var(--color-material-1-hover);
     }
 
     &.btn--no-focus {

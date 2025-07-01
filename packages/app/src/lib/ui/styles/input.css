@@ -24,8 +24,7 @@
     }
 
     &:focus {
-        outline: 1.5px solid var(--color-ink);
-        outline-offset: 2px;
+        outline: none;
     }
 
     &.input--no-focus {
@@ -33,7 +32,7 @@
     }
 
     &.input--bordered {
-        --input-padding: 0 1em;
+        --input-padding: 0 0.75em;
         --input-border-size: 1px;
     }
 

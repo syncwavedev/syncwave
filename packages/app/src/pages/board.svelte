@@ -6,6 +6,9 @@
     import BoardScreen from '../lib/ui/boards/board-screen.svelte';
     import BoardLoader from '../lib/ui/boards/board-loader.svelte';
     import LeftPanel from '../lib/ui/left-panel/left-panel.svelte';
+    import NewBoardScreen from '../lib/ui/boards/new-board-screen.svelte';
+
+    type View = {type: 'board'; key: string} | {type: 'new-board'};
 
     const {
         meData,
@@ -18,6 +21,7 @@
     } = $props();
 
     const agent = getAgent();
+    const me = agent.observeMe(meData);
 
     function getDefaultBoardKey(): string | undefined {
         const lastKey = BoardHistoryManager.last();
@@ -27,44 +31,80 @@
             return lastKey;
         }
 
-        return me.boards[0].key;
+        return me.boards[0]?.key;
     }
 
-    let selectedKey = $state(key ?? getDefaultBoardKey());
+    function getInitialView(): View {
+        const boardKey = key ?? getDefaultBoardKey();
+        return boardKey ? {type: 'board', key: boardKey} : {type: 'new-board'};
+    }
 
-    // Save the selected board key to history on change
+    let currentView = $state<View>(getInitialView());
+    let leftPanelOpen = $state(true);
+
+    let currentBoardKey = $derived(
+        currentView.type === 'board' ? currentView.key : undefined
+    );
+
+    let currentBoard = $derived(
+        currentBoardKey
+            ? me.boards.find(b => b.key === currentBoardKey)
+            : undefined
+    );
+
     $effect(() => {
-        if (selectedKey) {
-            BoardHistoryManager.save(selectedKey);
+        if (currentView.type === 'board') {
+            BoardHistoryManager.save(currentView.key);
         }
     });
 
-    function onBoardSelect(boardKey: string) {
-        selectedKey = boardKey;
+    function navigateToBoard(key: string) {
+        currentView = {type: 'board', key};
     }
 
-    const me = agent.observeMe(meData);
+    function navigateToNewBoard() {
+        currentView = {type: 'new-board'};
+    }
+
+    function openLeftPanel() {
+        leftPanelOpen = true;
+    }
+
+    function closeLeftPanel() {
+        leftPanelOpen = false;
+    }
 </script>
 
 <div class="flex h-full">
-    <LeftPanel
-        {me}
-        boards={me.boards}
-        onBoardClick={onBoardSelect}
-        {selectedKey}
-    />
-    {#if selectedKey}
-        {#await agent.getBoardViewData(selectedKey)}
-            {@const board = me.boards.find(b => b.key === selectedKey)}
-            {#if board}
-                <BoardLoader {board} />
-            {:else}
-                <div class="flex flex-col items-center justify-center h-full">
-                    <p class="text-gray-500">Board not found</p>
-                </div>
+    {#if leftPanelOpen}
+        <LeftPanel
+            {me}
+            boards={me.boards}
+            onBoardClick={navigateToBoard}
+            onNewBoard={navigateToNewBoard}
+            onClose={closeLeftPanel}
+            selectedKey={currentView.type === 'board'
+                ? currentView.key
+                : 'new-board'}
+        />
+    {/if}
+
+    {#if currentView.type === 'new-board'}
+        <NewBoardScreen onBoardCreated={navigateToBoard} />
+    {:else if currentView.type === 'board'}
+        {#await agent.getBoardViewData(currentView.key)}
+            {#if currentBoard}
+                <BoardLoader board={currentBoard} />
             {/if}
         {:then [boardData, meBoardData]}
-            <BoardScreen {me} {boardData} {meBoardData} {counter} />
+            <BoardScreen
+                {me}
+                {boardData}
+                {meBoardData}
+                {counter}
+                hideLeftPanel={leftPanelOpen}
+                onOpenLeftPanel={openLeftPanel}
+            />
         {/await}
     {/if}
 </div>

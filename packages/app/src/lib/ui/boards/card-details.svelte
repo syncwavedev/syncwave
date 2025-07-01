@@ -153,47 +153,53 @@
     };
 </script>
 
-<div class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l">
+<div
+    class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l dark:bg-material-1"
+>
     <div
-        class="flex items-center justify-between shrink-0 h-panel-header px-panel-inline"
+        class="flex items-center justify-between shrink-0 h-panel-header border-b border-divider px-panel-inline"
     >
-        <div class="flex items-center gap-0.5 font-semibold icon--bold">
+        <div class="flex items-center">
             {#if card.isDraft}
                 New card
             {:else}
-                <HashtagIcon />
-                <span>{card.counter}</span>
+                <DropdownMenu
+                    align="start"
+                    items={[
+                        {
+                            icon: HashtagIcon,
+                            text: 'Copy Card Number',
+                            onSelect: () => {
+                                navigator.clipboard.writeText(
+                                    card.counter?.toString() ?? 'N/A'
+                                );
+                            },
+                        },
+                        {
+                            icon: LinkIcon,
+                            text: 'Copy Card Link',
+                            onSelect: () => {
+                                navigator.clipboard.writeText(
+                                    window.location.href
+                                );
+                            },
+                        },
+                        {
+                            icon: TrashIcon,
+                            text: 'Delete Card',
+                            onSelect: () => onDelete(),
+                        },
+                    ]}
+                >
+                    <button class="btn" id="ellipsis-button">
+                        {card.counter}
+                        <EllipsisIcon />
+                    </button>
+                </DropdownMenu>
             {/if}
         </div>
-        <div class="relative ml-auto">
-            <DropdownMenu
-                items={[
-                    {
-                        icon: LinkIcon,
-                        text: 'Copy Card Link',
-                        onSelect: () => {
-                            navigator.clipboard.writeText(window.location.href);
-                        },
-                    },
-                    {
-                        icon: TrashIcon,
-                        text: 'Delete',
-                        onSelect: () => onDelete(),
-                    },
-                ]}
-            >
-                <button
-                    class="btn btn--icon btn--bordered"
-                    id="ellipsis-button"
-                >
-                    <EllipsisIcon />
-                </button>
-            </DropdownMenu>
-        </div>
-        <button
-            class="btn btn--icon btn--bordered ml-2"
-            onclick={() => history.back()}
-        >
+        <div class="relative ml-auto"></div>
+        <button class="btn btn--icon ml-1" onclick={() => history.back()}>
             <TimesIcon />
         </button>
     </div>

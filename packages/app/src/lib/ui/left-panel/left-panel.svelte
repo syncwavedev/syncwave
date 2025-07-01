@@ -10,25 +10,26 @@
     import Avatar from '../components/avatar.svelte';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import {panelSizeManager} from '../../panel-size-manager.svelte';
-    import HashtagIcon from '../components/icons/hashtag-icon.svelte';
-    import PlusCircleIcon from '../components/icons/plus-circle-icon.svelte';
     import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
+    import PlusIcon from '../components/icons/plus-icon.svelte';
 
     const {
         me,
         boards,
         onBoardClick,
+        onNewBoard,
         selectedKey,
+        onClose,
     }: {
         me: MeView;
         boards: Board[];
         onBoardClick: (key: string) => void;
+        onNewBoard: () => void;
+        onClose: () => void;
         selectedKey: string | undefined;
     } = $props();
 
     const authManager = getAuthManager();
-
-    let collapsed = $state(false);
 </script>
 
 {#snippet profileSettings()}
@@ -42,59 +43,52 @@
     minWidth={200}
     maxWidth={1600}
     onWidthChange={w => panelSizeManager.setWidth('home', w)}
-    disabled={collapsed}
 >
-    <div
-        class="border-divider border-r flex w-full flex-shrink-0 flex-col"
-        class:bg-sidebar={!collapsed}
-    >
-        <div class="flex justify-between items-center px-3 h-panel-header">
-            <button
-                class="btn btn--icon btn--bordered"
-                onclick={() => (collapsed = !collapsed)}
-            >
+    <div class="border-divider border-r flex w-full flex-shrink-0 flex-col">
+        <div
+            class="flex justify-between items-center mx-panel-inline h-panel-header"
+        >
+            <button class="btn btn--icon" onclick={onClose}>
                 <LeftPanelIcon />
             </button>
         </div>
-        <div class="flex flex-col flex-1 my-2.5">
-            {#if !collapsed}
-                {#each boards as board (board.id)}
-                    <button
-                        class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-base-hover py-1.5"
-                        class:board--active={selectedKey === board.key}
-                        onclick={() => onBoardClick(board.key)}
-                    >
-                        <div class="grid place-items-center">
-                            <HashtagIcon />
-                        </div>
-                        {board.name}
-                    </button>
-                {/each}
-            {/if}
-        </div>
-        {#if !collapsed}
-            <div
+
+        <div class="flex">
+            <button
                 class="
-                flex
-                items-center
-                gap-1.5
-                mx-panel-inline-half
-                px-panel-inline-half
-                rounded-md
-                hover:bg-material-1-hover
-                py-1.5
-                my-3
-                "
+                    flex
+                    flex-1
+                    gap-1
+                    items-center
+                    hover:bg-material-base-hover
+                    rounded-md
+                    py-1.5
+                    px-panel-inline-half
+                    mx-panel-inline-half
+                    my-3
+                    "
+                onclick={onNewBoard}
+                class:board--active={selectedKey === 'new-board'}
             >
-                <div class="text-[1.3em] grid place-items-center">
-                    <PlusCircleIcon />
-                </div>
+                <span class="text-[1.4em]"><PlusIcon /></span>
                 New board
-            </div>
-        {/if}
+            </button>
+        </div>
+
+        <div class="flex flex-col flex-1 text-ink-body">
+            {#each boards as board (board.id)}
+                <button
+                    class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-base-hover py-1.5"
+                    class:board--active={selectedKey === board.key}
+                    onclick={() => onBoardClick(board.key)}
+                >
+                    {board.name}
+                </button>
+            {/each}
+        </div>
 
         <!-- Profile menu -->
-        <div class="mb-4 px-3">
+        <div class="mb-4 mx-panel-inline">
             <DropdownMenu
                 side="right"
                 align="end"
@@ -133,5 +127,6 @@
 <style>
     .board--active {
         background-color: var(--color-material-1-hover);
+        color: var(--color-ink);
     }
 </style>

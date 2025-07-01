@@ -9,6 +9,7 @@
     import {getAgent} from '../../agent/agent.svelte';
     import {getNow} from 'syncwave';
     import {toastManager} from '../../../toast-manager.svelte';
+    import TimesIcon from '../components/icons/times-icon.svelte';
 
     interface Props {
         board: BoardTreeView;
@@ -61,14 +62,19 @@
           gap-4
           px-panel-inline
           h-panel-header
+          border-b
+          border-divider
         "
     >
         <div class="flex">
-            <p class="font-semibold">Inbox</p>
+            <p>Inbox</p>
         </div>
-        <div class="flex gap-2">
-            <button class="btn btn--icon btn--bordered" onclick={readMessages}>
+        <div class="flex gap-1">
+            <button class="btn btn--icon" onclick={readMessages}>
                 <CheckCheckIcon />
+            </button>
+            <button class="btn btn--icon">
+                <TimesIcon />
             </button>
         </div>
     </div>

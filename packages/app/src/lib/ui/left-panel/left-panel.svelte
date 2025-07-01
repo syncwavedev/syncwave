@@ -10,8 +10,9 @@
     import Avatar from '../components/avatar.svelte';
     import ResizablePanel from '../components/resizable-panel.svelte';
     import {panelSizeManager} from '../../panel-size-manager.svelte';
-    import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
-    import PlusIcon from '../components/icons/plus-icon.svelte';
+    import PlusSquareIcon from '../components/icons/plus-square-icon.svelte';
+    import ArrowLeftFromLineIcon from '../components/icons/arrow-left-from-line-icon.svelte';
+    import ChatBubbleSolidIcon from '../components/icons/chat-bubble-solid-icon.svelte';
 
     const {
         me,
@@ -36,6 +37,40 @@
     <ProfileModal {me} />
 {/snippet}
 
+{#snippet profileMenu()}
+    <DropdownMenu
+        side="right"
+        align="start"
+        items={[
+            {
+                icon: UserRoundCog,
+                text: 'Profile Settings',
+                onSelect: () => {
+                    modalManager.open(profileSettings);
+                },
+            },
+            {
+                icon: LogOutIcon,
+                text: 'Sign Out',
+                onSelect: () => {
+                    const confirmMessage = `Are you sure you want to sign out?`;
+                    if (confirm(confirmMessage)) {
+                        authManager.logOut();
+                    }
+                },
+            },
+        ]}
+    >
+        <button class="btn btn--icon">
+            <Avatar
+                userId={me.id}
+                imageUrl={me.avatarUrlSmall}
+                name={me.fullName}
+            />
+        </button>
+    </DropdownMenu>
+{/snippet}
+
 <ResizablePanel
     class="max-h-full overflow-auto"
     freeSide="right"
@@ -44,12 +79,15 @@
     maxWidth={1600}
     onWidthChange={w => panelSizeManager.setWidth('home', w)}
 >
-    <div class="border-divider border-r flex w-full flex-shrink-0 flex-col">
+    <div
+        class="border-divider border-r flex w-full flex-shrink-0 flex-col bg-sidebar"
+    >
         <div
             class="flex justify-between items-center mx-panel-inline h-panel-header"
         >
+            {@render profileMenu()}
             <button class="btn btn--icon" onclick={onClose}>
-                <LeftPanelIcon />
+                <ArrowLeftFromLineIcon />
             </button>
         </div>
 
@@ -66,19 +104,20 @@
                     px-panel-inline-half
                     mx-panel-inline-half
                     my-3
+                    item__icon
                     "
                 onclick={onNewBoard}
                 class:board--active={selectedKey === 'new-board'}
             >
-                <span class="text-[1.4em]"><PlusIcon /></span>
-                New board
+                <PlusSquareIcon />
+                New Board
             </button>
         </div>
 
         <div class="flex flex-col flex-1 text-ink-body">
             {#each boards as board (board.id)}
                 <button
-                    class="flex gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-base-hover py-1.5"
+                    class="flex items-center gap-1.5 mx-panel-inline-half px-panel-inline-half rounded-md hover:bg-material-base-hover py-1.5 item__icon"
                     class:board--active={selectedKey === board.key}
                     onclick={() => onBoardClick(board.key)}
                 >
@@ -86,45 +125,19 @@
                 </button>
             {/each}
         </div>
-
-        <!-- Profile menu -->
-        <div class="mb-4 mx-panel-inline">
-            <DropdownMenu
-                side="right"
-                align="end"
-                items={[
-                    {
-                        icon: UserRoundCog,
-                        text: 'Profile Settings',
-                        onSelect: () => {
-                            modalManager.open(profileSettings);
-                        },
-                    },
-                    {
-                        icon: LogOutIcon,
-                        text: 'Sign Out',
-                        onSelect: () => {
-                            const confirmMessage = `Are you sure you want to sign out?`;
-                            if (confirm(confirmMessage)) {
-                                authManager.logOut();
-                            }
-                        },
-                    },
-                ]}
-            >
-                <button class="btn btn--icon">
-                    <Avatar
-                        userId={me.id}
-                        imageUrl={me.avatarUrlSmall}
-                        name={me.fullName}
-                    />
-                </button>
-            </DropdownMenu>
+        <div class="mb-4 mx-panel-inline text-ink-body">
+            <a href="https://discord.gg/FzQjQVFdQz" class="btn" target="_blank">
+                <ChatBubbleSolidIcon /> Leave Feedback
+            </a>
         </div>
     </div>
 </ResizablePanel>
 
 <style>
+    .item__icon {
+        --icon-size: 1.4em;
+    }
+
     .board--active {
         background-color: var(--color-material-1-hover);
         color: var(--color-ink);

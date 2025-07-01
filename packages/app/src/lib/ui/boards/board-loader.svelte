@@ -1,6 +1,5 @@
 <script lang="ts">
     import type {MeView} from '../../agent/view.svelte';
-    import Loader from '../components/icons/loader.svelte';
 
     const {
         board,
@@ -10,10 +9,9 @@
 </script>
 
 <div
-    class="flex items-center shrink-0 px-board-inline h-panel-header avatar-xs gap-2"
+    class="flex items-center shrink-0 px-panel-inline h-panel-header border-b border-divider w-full"
 >
-    <div class="flex">
-        <p class="font-semibold text-lg">{board.name}</p>
-    </div>
-    <span class="ml-2 animate-spin"><Loader /></span>
+    <p class="ml-5">
+        {board.name} <span class="text-ink-detail ml-2">Syncing...</span>
+    </p>
 </div>

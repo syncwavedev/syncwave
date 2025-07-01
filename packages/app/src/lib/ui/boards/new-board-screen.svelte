@@ -90,8 +90,8 @@
                         required
                         placeholder="e.g. john@company.com"
                     />
-                    <button type="submit" class="btn btn--icon btn--bordered">
-                        <PlusIcon />
+                    <button type="submit" class="btn font-semibold! btn--small">
+                        <PlusIcon /> Add
                     </button>
                 </fieldset>
             </form>
@@ -99,17 +99,15 @@
             {#if inviteEmails.length > 0}
                 <ul>
                     {#each inviteEmails as email (email)}
-                        <li
-                            class="text-ink-body flex items-center justify-between gap-1"
-                        >
+                        <li class="flex items-center justify-between gap-1">
                             {email}
                             <button
                                 type="button"
-                                class="btn btn--icon"
+                                class="btn btn--small text-ink-body!"
                                 onclick={() => onRemoveEmail(email)}
                                 disabled={isLoading}
                             >
-                                <TimesIcon />
+                                <TimesIcon /> Remove
                             </button>
                         </li>
                     {/each}

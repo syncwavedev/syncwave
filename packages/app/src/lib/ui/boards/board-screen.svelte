@@ -28,7 +28,7 @@
     import {flip} from 'svelte/animate';
     import {DND_REORDER_DURATION_MS} from './board-dnd';
     import {toastManager} from '../../../toast-manager.svelte';
-    import DropdownMenu from '../components/dropdown-menu.svelte';
+    import Dropdown from '../components/dropdown.svelte';
     import DoorOpenIcon from '../components/icons/door-open-icon.svelte';
     import BoardIcon from '../components/icons/board-icon.svelte';
     import BoardHistoryManager from '../../board-history-manager';
@@ -265,38 +265,39 @@
         </button>
     {/if}
     <div class="ml-4">
-        <DropdownMenu
-            side="bottom"
-            align="start"
-            items={[
-                permissionManager.hasPermission('write:board')
-                    ? {
-                          icon: BoardIcon,
-                          text: 'Board Settings',
-                          onSelect: () => {
-                              modalManager.open(boardSettings);
-                          },
-                      }
-                    : null,
-                {
-                    icon: DoorOpenIcon,
-                    text: 'Leave Board',
-                    onSelect: () => {
-                        const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
-                        if (confirm(confirmMessage)) {
-                            BoardHistoryManager.clear();
-                            agent.deleteMember(board.memberId);
-                            router.route('/');
-                        }
-                    },
-                },
-            ]}
-        >
-            <button class="btn">
-                {board.name}
-                <EllipsisIcon />
+        <Dropdown placement="bottom-start">
+            {#snippet trigger()}
+                <div class="btn">
+                    {board.name}
+                    <EllipsisIcon />
+                </div>
+            {/snippet}
+            {#if permissionManager.hasPermission('write:board')}
+                <button
+                    type="button"
+                    onclick={() => {
+                        modalManager.open(boardSettings);
+                    }}
+                    class="dropdown__item"
+                >
+                    <BoardIcon /> Board Settings
+                </button>
+            {/if}
+            <button
+                type="button"
+                onclick={() => {
+                    const confirmMessage = `Are you sure you want to leave "${board.name}"? You'll lose access to this board.`;
+                    if (confirm(confirmMessage)) {
+                        BoardHistoryManager.clear();
+                        agent.deleteMember(board.memberId);
+                        router.route('/');
+                    }
+                }}
+                class="dropdown__item"
+            >
+                <DoorOpenIcon /> Leave Board
             </button>
-        </DropdownMenu>
+        </Dropdown>
     </div>
 
     <div class="ml-2 flex">
@@ -351,7 +352,9 @@
 {/snippet}
 
 <PermissionBoundary member={boardMeView}>
-    <div class="relative flex min-w-0 flex-col flex-1">
+    <div
+        class="relative flex min-w-0 flex-col flex-1 bg-gray-10 dark:bg-gray-925"
+    >
         <div
             class="flex items-center shrink-0 px-panel-inline h-panel-header border-b border-divider avatar-xs"
         >
@@ -403,7 +406,7 @@
     {#if selectedCard !== null}
         {#key selectedCard.id}
             <ResizablePanel
-                class="max-h-full overflow-auto"
+                class="max-h-full"
                 freeSide="left"
                 width={panelSizeManager.getWidth('card_details') ?? 422}
                 minWidth={320}

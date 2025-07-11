@@ -7,91 +7,65 @@
 </script>
 
 <div
-    class="flex items-center gap-1.5 relative text-sm mx-panel-inline px-panel-inline-half py-2 leading-relaxed text-ink-detail"
+    class="
+    flex
+    flex-col
+    px-panel-inline-half
+    mx-panel-inline
+    py-2
+    "
 >
-    {#if message.payload.type === 'card_created'}
-        <span class="avatar-container">
-            <Avatar
-                userId={message.author.id}
-                name={message.author.fullName}
-                imageUrl={message.author.avatarUrlSmall}
-                class="avatar--small"
-            />
-        </span>
-        <span>
-            <span class="font-semibold">{message.author.fullName}</span>
-            created the card
-            <TimeAgo time={message.payload.cardCreatedAt} />
-        </span>
-    {/if}
+    <div class="flex items-center gap-1.5">
+        <Avatar
+            userId={message.author.id}
+            name={message.author.fullName}
+            imageUrl={message.author.avatarUrlSmall}
+            class="avatar--small"
+        />
 
-    {#if message.payload.type === 'card_deleted'}
-        <span class="avatar-container">
-            <Avatar
-                userId={message.author.id}
-                name={message.author.fullName}
-                imageUrl={message.author.avatarUrlSmall}
-                class="avatar--small"
-            />
-        </span>
-        <span>
-            <span class="font-semibold">{message.author.fullName}</span>
-            deleted the card
-            <TimeAgo time={message.payload.cardDeletedAt} />
-        </span>
-    {/if}
+        <div class="flex items-baseline gap-1.5">
+            <div class="font-semibold text-md">
+                {message.author.fullName}
+            </div>
 
-    {#if message.payload.type === 'card_column_changed'}
-        <span class="avatar-container">
-            <Avatar
-                userId={message.author.id}
-                name={message.author.fullName}
-                imageUrl={message.author.avatarUrlSmall}
-                class="avatar--small"
-            />
-        </span>
-        <span>
-            <span class="font-semibold">{message.author.fullName}</span>
-            moved the card from
-            <span class="font-semibold">{message.payload.fromColumnName}</span>
-            to
-            <span class="font-semibold">{message.payload.toColumnName}</span>
-            <TimeAgo time={message.payload.cardColumnChangedAt} />
-        </span>
-    {/if}
+            <span class="text-ink-detail text-sm">
+                <TimeAgo time={message.createdAt} />
+            </span>
+        </div>
+    </div>
+    <div
+        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.7+0.375rem))] relative"
+    >
+        {#if message.payload.type === 'card_created'}
+            <p class="text-ink-detail">Created this card</p>
+        {/if}
 
-    {#if message.payload.type === 'card_assignee_changed'}
-        <span class="avatar-container">
-            <Avatar
-                userId={message.author.id}
-                name={message.author.fullName}
-                imageUrl={message.author.avatarUrlSmall}
-                class="avatar--small"
-            />
-        </span>
-        <span>
-            <span class="font-semibold">{message.author.fullName}</span>
-            changed the card assignee from
-            <span class="font-semibold"
-                >{message.payload.fromAssignee?.fullName ?? 'Unassigned'}</span
-            >
-            to
-            <span class="font-semibold"
-                >{message.payload.toAssignee?.fullName ?? 'Unassigned'}</span
-            >
-            <TimeAgo time={message.payload.cardAssigneeChangedAt} />
-        </span>
-    {/if}
+        {#if message.payload.type === 'card_deleted'}
+            <p class="text-ink-detail">Deleted the card</p>
+        {/if}
+
+        {#if message.payload.type === 'card_column_changed'}
+            <p class="text-ink-detail">
+                Moved the card from
+                <span class="">{message.payload.fromColumnName}</span>
+                to
+                <span class="">{message.payload.toColumnName}</span>
+            </p>
+        {/if}
+
+        {#if message.payload.type === 'card_assignee_changed'}
+            <p class="text-ink-detail">
+                Changed the card assignee from
+                <span class=""
+                    >{message.payload.fromAssignee?.fullName ??
+                        'Unassigned'}</span
+                >
+                to
+                <span class=""
+                    >{message.payload.toAssignee?.fullName ??
+                        'Unassigned'}</span
+                >
+            </p>
+        {/if}
+    </div>
 </div>
-
-<style>
-    .avatar-container {
-        display: grid;
-        place-items: center;
-
-        aspect-ratio: 1 / 1;
-
-        width: calc(2.2 * 0.7 * 14px);
-        height: calc(2.2 * 0.7 * 14px);
-    }
-</style>

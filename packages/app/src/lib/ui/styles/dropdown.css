@@ -1,0 +1,88 @@
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown__trigger {
+    list-style: none;
+    cursor: pointer;
+}
+
+.dropdown__trigger::-webkit-details-marker {
+    display: none;
+}
+
+.dropdown__content {
+    position: absolute;
+
+    background: var(--color-material-floating);
+    border: 1px solid var(--color-divider-floating);
+    border-radius: var(--radius-md);
+
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+
+    box-shadow: var(--shadow-sm);
+
+    min-width: 26ch;
+
+    z-index: 900;
+
+    padding: 0.3em;
+}
+
+.dropdown__content--bottom-start {
+    top: calc(100% + 2px);
+    left: 0;
+}
+.dropdown__content--bottom-end {
+    top: calc(100% + 2px);
+    right: 0;
+}
+.dropdown__content--top-start {
+    bottom: calc(100% + 2px);
+    left: 0;
+}
+.dropdown__content--top-end {
+    bottom: calc(100% + 2px);
+    right: 0;
+}
+
+.dropdown__item {
+    cursor: pointer;
+    pointer-events: auto;
+
+    display: inline-flex;
+    gap: var(--btn-gap, 0.4em);
+    justify-content: start;
+    align-items: center;
+
+    border-radius: var(--radius-sm);
+
+    padding: 0.3em 0.6em;
+
+    width: 100%;
+
+    &:where(:has(svg)) {
+        text-align: start;
+
+        img,
+        svg {
+            block-size: var(--btn-icon-size, 1.4em);
+            inline-size: var(--btn-icon-size, 1.4em);
+            max-inline-size: unset;
+        }
+    }
+
+    &:hover {
+        background-color: var(--color-material-floating-hover);
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        pointer-events: none;
+
+        color: var(--color-ink-disabled);
+    }
+}

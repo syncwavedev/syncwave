@@ -1,6 +1,6 @@
 <script lang="ts">
     import type {Board} from 'syncwave';
-    import DropdownMenu from '../components/dropdown-menu.svelte';
+    import Dropdown from '../components/dropdown.svelte';
     import UserRoundCog from '../components/icons/user-round-cog.svelte';
     import modalManager from '../modal-manager.svelte';
     import type {MeView} from '../../agent/view.svelte';
@@ -38,41 +38,40 @@
 {/snippet}
 
 {#snippet profileMenu()}
-    <DropdownMenu
-        side="right"
-        align="start"
-        items={[
-            {
-                icon: UserRoundCog,
-                text: 'Profile Settings',
-                onSelect: () => {
-                    modalManager.open(profileSettings);
-                },
-            },
-            {
-                icon: LogOutIcon,
-                text: 'Sign Out',
-                onSelect: () => {
-                    const confirmMessage = `Are you sure you want to sign out?`;
-                    if (confirm(confirmMessage)) {
-                        authManager.logOut();
-                    }
-                },
-            },
-        ]}
-    >
-        <button class="btn btn--icon">
-            <Avatar
-                userId={me.id}
-                imageUrl={me.avatarUrlSmall}
-                name={me.fullName}
-            />
+    <Dropdown placement="bottom-start">
+        {#snippet trigger()}
+            <div class="btn btn--icon">
+                <Avatar
+                    userId={me.id}
+                    imageUrl={me.avatarUrlSmall}
+                    name={me.fullName}
+                />
+            </div>
+        {/snippet}
+        <button
+            type="button"
+            class="dropdown__item"
+            onclick={() => modalManager.open(profileSettings)}
+        >
+            <UserRoundCog /> Profile Settings
         </button>
-    </DropdownMenu>
+        <button
+            type="button"
+            class="dropdown__item"
+            onclick={() => () => {
+                const confirmMessage = `Are you sure you want to sign out?`;
+                if (confirm(confirmMessage)) {
+                    authManager.logOut();
+                }
+            }}
+        >
+            <LogOutIcon /> Sign Out
+        </button>
+    </Dropdown>
 {/snippet}
 
 <ResizablePanel
-    class="max-h-full overflow-auto"
+    class="max-h-full"
     freeSide="right"
     width={panelSizeManager.getWidth('home') ?? 260}
     minWidth={200}
@@ -111,7 +110,9 @@
                 <PlusSquareIcon />
                 New Board
             </button>
-            <hr class="my-2" />
+        </div>
+        <hr class="my-2" />
+        <div class="mx-panel-inline-half">
             <div class="mb-2">
                 <a
                     href="https://discord.gg/FzQjQVFdQz"

@@ -10,7 +10,7 @@
     import type {ColumnId, UserId} from 'syncwave';
     import {onDestroy, onMount, tick} from 'svelte';
     import HashtagIcon from '../components/icons/hashtag-icon.svelte';
-    import DropdownMenu from '../components/dropdown-menu.svelte';
+    import Dropdown from '../components/dropdown.svelte';
     import Select from '../components/select.svelte';
     import {getAgent} from '../../agent/agent.svelte';
     import {
@@ -154,7 +154,7 @@
 </script>
 
 <div
-    class="border-divider z-10 flex w-full flex-shrink-0 flex-col border-l dark:bg-material-1"
+    class="border-divider flex w-full flex-shrink-0 flex-col border-l dark:bg-material-1"
 >
     <div
         class="flex items-center justify-between shrink-0 h-panel-header border-b border-divider px-panel-inline"
@@ -163,39 +163,43 @@
             {#if card.isDraft}
                 New card
             {:else}
-                <DropdownMenu
-                    align="start"
-                    items={[
-                        {
-                            icon: HashtagIcon,
-                            text: 'Copy Card Number',
-                            onSelect: () => {
-                                navigator.clipboard.writeText(
-                                    card.counter?.toString() ?? 'N/A'
-                                );
-                            },
-                        },
-                        {
-                            icon: LinkIcon,
-                            text: 'Copy Card Link',
-                            onSelect: () => {
-                                navigator.clipboard.writeText(
-                                    window.location.href
-                                );
-                            },
-                        },
-                        {
-                            icon: TrashIcon,
-                            text: 'Delete Card',
-                            onSelect: () => onDelete(),
-                        },
-                    ]}
-                >
-                    <button class="btn" id="ellipsis-button">
-                        {card.counter}
-                        <EllipsisIcon />
+                <Dropdown placement="bottom-start">
+                    {#snippet trigger()}
+                        <div class="dropdown__item" id="ellipsis-button">
+                            {card.counter}
+                            <EllipsisIcon />
+                        </div>
+                    {/snippet}
+                    <button
+                        type="button"
+                        class="dropdown__item"
+                        onclick={() => {
+                            navigator.clipboard.writeText(
+                                card.counter?.toString() ?? 'N/A'
+                            );
+                        }}
+                    >
+                        <HashtagIcon /> Copy Card Number
                     </button>
-                </DropdownMenu>
+                    <button
+                        type="button"
+                        class="dropdown__item"
+                        onclick={() => {
+                            navigator.clipboard.writeText(window.location.href);
+                        }}
+                    >
+                        <LinkIcon /> Copy Card Link
+                    </button>
+                    <button
+                        type="button"
+                        class="dropdown__item"
+                        onclick={() => {
+                            onDelete();
+                        }}
+                    >
+                        <TrashIcon /> Delete Card
+                    </button>
+                </Dropdown>
             {/if}
         </div>
         <div class="relative ml-auto"></div>
@@ -209,7 +213,7 @@
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="mx-panel-inline mt-4 text-lg">
+        <div class="mx-panel-inline mt-4">
             <div
                 class="input input--text-area flex-grow w-full leading-relaxed"
             >
@@ -227,9 +231,7 @@
             </div>
         </div>
         <!-- Task Actions -->
-        <div
-            class="flex gap-1.5 mx-panel-inline mt-8 mb-2 items-center text-sm"
-        >
+        <div class="flex gap-2 mx-panel-inline mt-6 mb-2 items-center text-sm">
             <Select
                 value={card.column.id}
                 options={columnOptions}
@@ -238,7 +240,10 @@
             >
                 <button class="btn">
                     <CircleDashedIcon />
-                    {card.column.name}
+                    <span class="font-medium">
+                        {card.column.name}
+                    </span>
+                    <span class="text-ink-detail">cmd-s</span>
                 </button>
             </Select>
 
@@ -265,12 +270,15 @@
                     {:else}
                         <UsersSolidIcon />
                     {/if}
-                    {card.assignee?.fullName ?? 'Assignee'}
+                    <span class="font-medium">
+                        {card.assignee?.fullName ?? 'Assignee'}
+                    </span>
+                    <span class="text-ink-detail">cmd-a</span>
                 </button>
             </Select>
         </div>
         <hr />
-        <div class="my-2 text-lg">
+        <div class="my-2">
             <MessageList messages={card.messages} />
         </div>
     </div>
@@ -289,10 +297,9 @@
         rounded-md
         m-panel-inline
         p-panel-inline-half
-        text-lg
         focus-within:outline-[1.5px]
-        focus-within:outline-ink
-        focus-within:-outline-offset-[-2px]
+        focus-within:outline-primary
+        focus-within:-outline-offset-[1px]
         "
     >
         <Editor

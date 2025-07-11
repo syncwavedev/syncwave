@@ -33,6 +33,7 @@
 @import './avatar.css';
 @import './tiptap.css';
 @import './settings.css';
+@import './dropdown.css';
 
 html,
 body {

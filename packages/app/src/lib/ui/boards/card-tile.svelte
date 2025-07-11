@@ -97,7 +97,7 @@
         tabindex="0"
         data-active={active || undefined}
         class="
-            bg-gray-40
+            bg-gray-60
             dark:bg-gray-850
             hover:bg-gray-80
             dark:hover:bg-gray-750
@@ -109,11 +109,12 @@
             rounded-md
             p-2.5
             content
-            outline-offset-[2px]
-            data-active:outline-2
-            data-active:outline-ink
+            data-active:outline-[1.5px]
+            data-active:outline-primary
+            data-active:-outline-offset-[1px]
             focus:outline-[1.5px]
-            focus:outline-ink/50
+            focus:outline-primary/50
+            focus-within:-outline-offset-[1px]
         "
         class:border-dashed={card.isDraft}
         onclick={onClick}

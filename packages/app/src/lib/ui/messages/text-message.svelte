@@ -73,7 +73,7 @@
         </button>
     </div>
     <div
-        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.7+0.375rem))] relative"
+        class="select-text ml-[calc(var(--avatar-size)*0.7+0.375rem))] relative"
     >
         <RichtextView
             fragment={(message.payload as TextMessagePayloadView).text

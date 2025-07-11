@@ -72,6 +72,10 @@
         --theme-color-material-elevated-element-hover
     );
 
+    --color-material-floating: var(--theme-color-material-floating);
+    --color-material-floating-hover: var(--theme-color-material-floating-hover);
+    --color-divider-floating: var(--theme-color-divider-floating);
+
     --color-material-elevated-input: var(--theme-color-material-elevated-input);
 
     --color-sidebar: var(--theme-color-sidebar);
@@ -107,7 +111,7 @@
         --theme-color-modified: oklch(0.55 0.2177 257.42);
         --theme-color-deleted: oklch(0.48 0.2141 29.7);
 
-        --theme-color-divider: var(--color-gray-60);
+        --theme-color-divider: var(--color-gray-80);
         --theme-color-divider-object: var(--color-gray-200);
 
         --theme-color-scrollbar: var(--color-gray-200);
@@ -122,7 +126,11 @@
 
         --theme-color-material-elevated-input: var(--color-gray-10);
 
-        --theme-color-sidebar: var(--color-gray-10);
+        --color-material-floating: var(--color-gray-40);
+        --color-material-floating-hover: var(--color-gray-100);
+        --color-divider-floating: var(--color-gray-150);
+
+        --theme-color-sidebar: var(--color-gray-20);
 
         --theme-color-material-base: white;
         --theme-color-material-base-hover: var(--color-gray-50);
@@ -140,7 +148,7 @@
     [data-theme='dark'] {
         --theme-color-ink: var(--color-gray-50);
         --theme-color-ink-body: var(--color-gray-200);
-        --theme-color-ink-detail: var(--color-gray-400);
+        --theme-color-ink-detail: var(--color-gray-300);
         --theme-color-ink-placeholder: var(--color-gray-450);
         --theme-color-ink-disabled: var(--color-gray-500);
         --theme-color-ink-danger: var(--color-danger);
@@ -164,7 +172,11 @@
 
         --theme-color-material-elevated-input: var(--color-gray-800);
 
-        --theme-color-sidebar: var(--color-gray-975);
+        --color-material-floating: var(--color-gray-800);
+        --color-material-floating-hover: var(--color-gray-750);
+        --color-divider-floating: var(--color-gray-725);
+
+        --theme-color-sidebar: var(--color-gray-950);
 
         --theme-color-material-base: var(--color-gray-925);
         --theme-color-material-base-hover: var(--color-gray-850);

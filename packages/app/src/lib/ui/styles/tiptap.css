@@ -12,7 +12,7 @@
 /* Basic editor styles */
 .tiptap {
     font-feature-settings: 'liga', 'kern';
-    line-height: 1.5;
+    line-height: 1.75;
 
     :first-child {
         margin-top: 0;

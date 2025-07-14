@@ -1,12 +1,12 @@
 @theme static {
-    --text-base: 0.85rem; /* 13.6px */
+    --text-base: 0.8125rem; /* 13px */
 
     /* Font */
-    --text-xs: calc(var(--text-base) * 0.8);
+    --text-xs: calc(var(--text-base) * 0.85);
     --text-sm: calc(var(--text-base) * 0.9);
     --text-md: var(--text-base);
     --text-lg: calc(var(--text-base) * 1.1);
-    --text-xl: calc(var(--text-base) * 1.2);
+    --text-xl: calc(var(--text-base) * 1.15);
 
     --text-xs--line-height: 1.25;
     --text-sm--line-height: 1.25;

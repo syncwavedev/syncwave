@@ -207,13 +207,59 @@
             <TimesIcon />
         </button>
     </div>
+    <!-- Task Actions -->
+    <div class="mt-3 flex gap-2 px-panel-inline items-center">
+        <Select
+            value={card.column.id}
+            options={columnOptions}
+            onValueChange={value =>
+                agent.setCardColumn(card.id, value as ColumnId)}
+        >
+            <button class="btn">
+                <CircleDashedIcon />
+                <span class="font-medium">
+                    {card.column.name}
+                </span>
+            </button>
+        </Select>
+
+        <Select
+            value={card.assignee?.id}
+            options={[
+                {value: undefined, label: 'No assignee'},
+                ...assigneeOptions,
+            ]}
+            onValueChange={value =>
+                agent.setCardAssignee(
+                    card.id,
+                    (value as UserId) || undefined // select doesn't support undefined, it will return '' instead
+                )}
+        >
+            <button class="btn">
+                {#if card.assignee}
+                    <Avatar
+                        userId={card.assignee.id}
+                        name={card.assignee.fullName}
+                        imageUrl={card.assignee.avatarUrlSmall}
+                        class="avatar--x-small"
+                    />
+                {:else}
+                    <UsersSolidIcon />
+                {/if}
+                <span class="font-medium">
+                    {card.assignee?.fullName ?? 'Assignee'}
+                </span>
+            </button>
+        </Select>
+    </div>
+    <!-- <hr /> -->
     <!-- Scrollable Content Section -->
     <div
         bind:this={scrollable}
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="mx-panel-inline mt-4">
+        <div class="mx-5.5 mt-6 text-xl">
             <div
                 class="input input--text-area flex-grow w-full leading-relaxed"
             >
@@ -230,57 +276,8 @@
                 />
             </div>
         </div>
-        <!-- Task Actions -->
-        <div class="flex gap-2 mx-panel-inline mt-6 mb-2 items-center text-sm">
-            <Select
-                value={card.column.id}
-                options={columnOptions}
-                onValueChange={value =>
-                    agent.setCardColumn(card.id, value as ColumnId)}
-            >
-                <button class="btn">
-                    <CircleDashedIcon />
-                    <span class="font-medium">
-                        {card.column.name}
-                    </span>
-                    <span class="text-ink-detail">cmd-s</span>
-                </button>
-            </Select>
-
-            <Select
-                value={card.assignee?.id}
-                options={[
-                    {value: undefined, label: 'No assignee'},
-                    ...assigneeOptions,
-                ]}
-                onValueChange={value =>
-                    agent.setCardAssignee(
-                        card.id,
-                        (value as UserId) || undefined // select doesn't support undefined, it will return '' instead
-                    )}
-            >
-                <button class="btn">
-                    {#if card.assignee}
-                        <Avatar
-                            userId={card.assignee.id}
-                            name={card.assignee.fullName}
-                            imageUrl={card.assignee.avatarUrlSmall}
-                            class="avatar--x-small"
-                        />
-                    {:else}
-                        <UsersSolidIcon />
-                    {/if}
-                    <span class="font-medium">
-                        {card.assignee?.fullName ?? 'Assignee'}
-                    </span>
-                    <span class="text-ink-detail">cmd-a</span>
-                </button>
-            </Select>
-        </div>
-        <hr />
-        <div class="my-2">
-            <MessageList messages={card.messages} />
-        </div>
+        <hr class="my-6" />
+        <MessageList messages={card.messages} />
     </div>
     {#if card.typingUsers.length > 0}
         <div>

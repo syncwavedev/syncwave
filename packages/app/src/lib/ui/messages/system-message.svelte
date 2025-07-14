@@ -34,7 +34,7 @@
         </div>
     </div>
     <div
-        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.7+0.375rem))] relative"
+        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.7+0.375rem))] relative text-xl"
     >
         {#if message.payload.type === 'card_created'}
             <p class="text-ink-detail">Created this card</p>

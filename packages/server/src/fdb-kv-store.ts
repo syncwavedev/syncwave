@@ -22,6 +22,12 @@ fdb.setAPIVersion(620, 620);
 // todo: use context
 export class FoundationDBUint8Transaction implements Uint8Transaction {
     private readonly tx: fdb.Transaction;
+    keysRead = 0;
+    keysReturned = 0;
+
+    get base() {
+        return undefined;
+    }
 
     constructor(tx: fdb.Transaction) {
         this.tx = tx;
@@ -29,6 +35,8 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
 
     async get(key: Uint8Array): Promise<Uint8Array | undefined> {
         const val = await this.tx.get(Buffer.from(key));
+        this.keysRead += 1;
+        this.keysReturned += 1;
         if (val === undefined) {
             return undefined;
         }
@@ -69,6 +77,8 @@ export class FoundationDBUint8Transaction implements Uint8Transaction {
         for await (const [kBuf, vBuf] of toStream(
             this.tx.getRange(start, end, {reverse})
         )) {
+            this.keysRead += 1;
+            this.keysReturned += 1;
             yield {
                 key: new Uint8Array(kBuf),
                 value: new Uint8Array(vBuf),

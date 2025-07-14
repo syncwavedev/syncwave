@@ -2,6 +2,8 @@ import {type Static, Type} from '@sinclair/typebox';
 import {MsgpackCodec} from '../codec.js';
 import {getAccount} from '../coordinator/auth-api.js';
 import {CrdtDiff} from '../crdt/crdt.js';
+import {Deferred} from '../deferred.js';
+import {CancelledError} from '../errors.js';
 import {Cell} from '../kv/cell.js';
 import {CollectionManager} from '../kv/collection-manager.js';
 import {
@@ -10,6 +12,8 @@ import {
     type KvStore,
     queryStartsWith,
 } from '../kv/kv-store.js';
+import {MemMvccStore} from '../kv/mem-mvcc-store.js';
+import {TupleStore} from '../kv/tuple-store.js';
 import {log} from '../logger.js';
 import {getNow, Timestamp} from '../timestamp.js';
 import type {Hub} from '../transport/hub.js';
@@ -249,6 +253,7 @@ export interface DataLayerOptions {
     email: EmailProvider;
     passwordsEnabled: boolean;
     superadminEmails: string[];
+    useMemAwarenessStore: boolean;
 }
 
 export class DataLayer {
@@ -260,6 +265,8 @@ export class DataLayer {
     private readonly email: EmailProvider;
     private readonly passwordsEnabled: boolean;
     private readonly superadminEmails: string[] = [];
+    private readonly useMemAwarenessStore: boolean;
+    private readonly awarenessMemKvStore: KvStore<Tuple, Uint8Array>;
 
     constructor(options: DataLayerOptions) {
         this.kv = options.kv;
@@ -268,6 +275,8 @@ export class DataLayer {
         this.email = options.email;
         this.passwordsEnabled = options.passwordsEnabled;
         this.superadminEmails = options.superadminEmails;
+        this.useMemAwarenessStore = options.useMemAwarenessStore;
+        this.awarenessMemKvStore = new TupleStore(new MemMvccStore());
 
         this.esReader = new EventStoreReader(
             fn =>
@@ -277,7 +286,7 @@ export class DataLayer {
                         accountId: undefined,
                         userId: undefined,
                     },
-                    data => fn(data.events, data.rawTx)
+                    data => fn(data.events)
                 ),
             mainEventStoreId,
             options.hub
@@ -297,7 +306,15 @@ export class DataLayer {
     ): Promise<T> {
         const transactionId = overrideTransactionId ?? createTransactionId();
         let effects: AsyncCallback[] = [];
+        let transactionEndSignal: Deferred<void> | undefined = undefined as
+            | Deferred<void>
+            | undefined;
         const result = await this.kv.transact(async tx => {
+            transactionEndSignal?.reject(
+                new CancelledError('transaction cancelled', undefined)
+            );
+            transactionEndSignal = new Deferred<void>();
+
             // clear effects because of transaction retries
             effects = [];
             let triggers: AsyncCallback[] = [];
@@ -389,7 +406,34 @@ export class DataLayer {
                 transactionId,
             });
 
-            const awareness = new AwarenessStore(isolate(['awareness'])(tx));
+            /**
+             * We use mem awareness store only to prevent mvcc garbage accumulation related to the awareness state.
+             * We can use in-memory store because awareness state is not persisted and self-hosted works only in
+             * single instance mode.
+             */
+            let awarenessTx = new Deferred<AppTransaction>();
+            if (this.useMemAwarenessStore) {
+                this.awarenessMemKvStore
+                    .transact(async tx => {
+                        awarenessTx.resolve(tx);
+                        assert(
+                            transactionEndSignal !== undefined,
+                            'transactionEndSignal must be defined'
+                        );
+                        await transactionEndSignal.promise;
+                    })
+                    .catch(error => {
+                        if (!(error instanceof CancelledError)) {
+                            log.error({
+                                msg: 'awareness mem transaction failed',
+                                error,
+                            });
+                        }
+                    });
+            } else {
+                awarenessTx.resolve(isolate(['awareness'])(tx));
+            }
+            const awareness = new AwarenessStore(await awarenessTx.promise);
 
             const config: Config = {
                 passwordsEnabled: this.passwordsEnabled,
@@ -470,6 +514,12 @@ export class DataLayer {
 
             return result;
         });
+
+        assert(
+            transactionEndSignal !== undefined,
+            'transactionEndSignal must be defined'
+        );
+        transactionEndSignal.resolve();
 
         while (effects.length > 0) {
             const effectsSnapshot = effects;

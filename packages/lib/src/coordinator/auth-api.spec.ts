@@ -23,6 +23,7 @@ describe('AccountRepo', () => {
             email: new MemEmailProvider(),
             passwordsEnabled: true,
             superadminEmails: [],
+            useMemAwarenessStore: false,
         });
 
         authApi = createAuthApi();

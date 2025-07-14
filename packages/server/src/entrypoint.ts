@@ -70,6 +70,7 @@ interface Options {
     passwordsEnabled: boolean;
     superadmin: SuperadminOptions | undefined;
     enableMetrics: boolean;
+    singleInstanceMode: boolean;
 }
 
 function getApiUrl(params: {stage: Stage; baseUrl: string}): string {
@@ -394,6 +395,7 @@ async function getOptions(): Promise<Result<Options>> {
             passwordsEnabled: stage === 'local' || stage === 'self',
             superadmin: superadmin.value,
             enableMetrics: process.env.ENABLE_METRICS === 'true',
+            singleInstanceMode: stage === 'self',
         },
     };
 }
@@ -508,6 +510,7 @@ async function upgradeKVStore({store, superadmin: superadmin}: Options) {
         email: options.emailProvider,
         passwordsEnabled: options.passwordsEnabled,
         superadminEmails: options.superadmin ? [options.superadmin.email] : [],
+        useMemAwarenessStore: options.singleInstanceMode,
     });
 
     await dataLayer.upgrade();
@@ -572,6 +575,7 @@ async function launchApp(options: Options) {
         hub: options.hub,
         passwordsEnabled: options.passwordsEnabled,
         superadminEmails: options.superadmin ? [options.superadmin.email] : [],
+        singleInstanceMode: options.singleInstanceMode,
     });
 
     async function shutdown() {

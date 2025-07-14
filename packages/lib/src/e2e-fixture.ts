@@ -38,6 +38,7 @@ export class E2eFixture {
             hub: new MemHub(),
             passwordsEnabled: true,
             superadminEmails: [],
+            singleInstanceMode: false,
         });
 
         drop(coordinator.launch());

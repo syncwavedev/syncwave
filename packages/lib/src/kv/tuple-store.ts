@@ -10,9 +10,18 @@ import {
 export class TupleSnapshot<TKey extends Tuple, TValue>
     implements Snapshot<TKey, TValue>
 {
+    keysRead = 0;
+    keysReturned = 0;
+
+    get base() {
+        return this.snap;
+    }
+
     constructor(private readonly snap: Snapshot<Uint8Array, TValue>) {}
 
     get(key: TKey): Promise<TValue | undefined> {
+        this.keysRead += 1;
+        this.keysReturned += 1;
         return this.snap.get(encodeTuple(key));
     }
 
@@ -27,6 +36,8 @@ export class TupleSnapshot<TKey extends Tuple, TValue>
                 lte: cond => ({lte: encodeTuple(cond.lte)}),
             })
         )) {
+            this.keysRead += 1;
+            this.keysReturned += 1;
             yield {key: decodeTuple(key) as TKey, value};
         }
     }

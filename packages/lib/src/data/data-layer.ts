@@ -272,11 +272,12 @@ export class DataLayer {
         this.esReader = new EventStoreReader(
             fn =>
                 this.transact(
+                    'DataLayer.esReader',
                     {
                         accountId: undefined,
                         userId: undefined,
                     },
-                    data => fn(data.events)
+                    data => fn(data.events, data.rawTx)
                 ),
             mainEventStoreId,
             options.hub
@@ -289,6 +290,7 @@ export class DataLayer {
     }
 
     async transact<T>(
+        txName: string,
         principal: Principal,
         fn: (tx: DataTx) => Promise<T>,
         overrideTransactionId?: TransactionId
@@ -484,7 +486,7 @@ export class DataLayer {
     }
 
     async createSuperadmin(params: {email: string; password: string}) {
-        await this.transact(system, async tx => {
+        await this.transact('createSuperadmin', system, async tx => {
             await getAccount({
                 accounts: tx.accounts,
                 email: params.email,
@@ -499,6 +501,7 @@ export class DataLayer {
 
     async upgrade() {
         const version = await this.transact(
+            'DataLayer.upgrade',
             system,
             async tx => await tx.version.get()
         );
@@ -566,7 +569,7 @@ export class DataLayer {
     private async initDemoUsers() {
         log.info({msg: 'init demo users...'});
 
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.initDemoUsers', system, async tx => {
             for (const user of BOARD_DEMO_USERS) {
                 await getAccount({
                     accounts: tx.accounts,
@@ -586,7 +589,7 @@ export class DataLayer {
 
     private async upgradeToV1() {
         let membersUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV1', system, async tx => {
             for await (const member of tx.members.rawRepo.scan()) {
                 await tx.members.update(
                     member.id,
@@ -604,13 +607,15 @@ export class DataLayer {
 
         log.info({msg: `members updated: ${membersUpdated}`});
 
-        await this.transact(system, tx => tx.version.put(1));
+        await this.transact('DataLayer.upgradeToV1 version', system, tx =>
+            tx.version.put(1)
+        );
         log.info({msg: 'upgrading to version 1 done'});
     }
 
     private async upgradeToV2() {
         let boardsUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV2', system, async tx => {
             for await (const board of tx.boards.rawRepo.scan()) {
                 const joinCode = await createJoinCode(this.crypto);
                 await tx.boards.update(board.id, x => {
@@ -623,13 +628,15 @@ export class DataLayer {
 
         log.info({msg: `boards updated: ${boardsUpdated}`});
 
-        await this.transact(system, tx => tx.version.put(2));
+        await this.transact('DataLayer.upgradeToV2 version', system, tx =>
+            tx.version.put(2)
+        );
         log.info({msg: 'upgrading to version 2 done'});
     }
 
     private async upgradeToV3() {
         let boardsUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV3', system, async tx => {
             for await (const board of tx.boards.rawRepo.scan()) {
                 await tx.boards.update(board.id, x => {
                     x.joinRole = 'admin';
@@ -640,13 +647,15 @@ export class DataLayer {
 
         log.info({msg: `boards updated: ${boardsUpdated}`});
 
-        await this.transact(system, tx => tx.version.put(3));
+        await this.transact('DataLayer.upgradeToV3 version', system, tx =>
+            tx.version.put(3)
+        );
         log.info({msg: 'upgrading to version 3 done'});
     }
 
     private async upgradeToV4() {
         let membersUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV4', system, async tx => {
             for await (const member of tx.members.rawRepo.scan()) {
                 await tx.members.update(
                     member.id,
@@ -662,13 +671,15 @@ export class DataLayer {
 
         log.info({msg: `members updated: ${membersUpdated}`});
 
-        await this.transact(system, tx => tx.version.put(4));
+        await this.transact('DataLayer.upgradeToV4 version', system, tx =>
+            tx.version.put(4)
+        );
         log.info({msg: 'upgrading to version 4 done'});
     }
 
     private async upgradeToV5() {
         let membersUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV5', system, async tx => {
             for await (const member of tx.members.rawRepo.scan()) {
                 await tx.members.update(
                     member.id,
@@ -683,14 +694,16 @@ export class DataLayer {
 
         log.info({msg: `members updated: ${membersUpdated}`});
 
-        await this.transact(system, tx => tx.version.put(5));
+        await this.transact('DataLayer.upgradeToV5 version', system, tx =>
+            tx.version.put(5)
+        );
         log.info({msg: 'upgrading to version 5 done'});
     }
 
     private async upgradeToV6() {
         // sets isDemo = false for all users
         let usersUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV6', system, async tx => {
             for await (const user of tx.users.rawRepo.scan()) {
                 await tx.users.update(user.id, x => {
                     (x as Record<string, any>).isDemo = false;
@@ -699,13 +712,15 @@ export class DataLayer {
             }
         });
         log.info({msg: `users updated: ${usersUpdated}`});
-        await this.transact(system, tx => tx.version.put(6));
+        await this.transact('DataLayer.upgradeToV6 version', system, tx =>
+            tx.version.put(6)
+        );
         log.info({msg: 'upgrading to version 6 done'});
     }
 
     private async upgradeToV7() {
         let boardsUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV7', system, async tx => {
             for await (const board of tx.boards.rawRepo.scan()) {
                 await tx.boards.update(board.id, x => {
                     (x as Record<string, any>).key = createUuidV4();
@@ -716,13 +731,15 @@ export class DataLayer {
 
         log.info({msg: `boards updated: ${boardsUpdated}`});
 
-        await this.transact(system, tx => tx.version.put(7));
+        await this.transact('DataLayer.upgradeToV7 version', system, tx =>
+            tx.version.put(7)
+        );
         log.info({msg: 'upgrading to version 7 done'});
     }
 
     private async upgradeToV8() {
         let boardsUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV8', system, async tx => {
             for await (const board of tx.boards.rawRepo.scan()) {
                 await tx.boards.update(board.id, x => {
                     (x as Record<string, any>).key = createUuidV4().replaceAll(
@@ -736,13 +753,15 @@ export class DataLayer {
 
         log.info({msg: `boards updated: ${boardsUpdated}`});
 
-        await this.transact(system, tx => tx.version.put(8));
+        await this.transact('DataLayer.upgradeToV8 version', system, tx =>
+            tx.version.put(8)
+        );
         log.info({msg: 'upgrading to version 8 done'});
     }
 
     private async upgradeToV9() {
         let accountsUpdated = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV9', system, async tx => {
             for await (const account of tx.accounts.rawRepo.scan()) {
                 await tx.accounts.update(account.id, x => {
                     x.verificationCode = {
@@ -756,17 +775,21 @@ export class DataLayer {
 
         log.info({msg: `accounts updated: ${accountsUpdated}`});
 
-        await this.transact(system, tx => tx.version.put(9));
+        await this.transact('DataLayer.upgradeToV9 version', system, tx =>
+            tx.version.put(9)
+        );
         log.info({msg: 'upgrading to version 9 done'});
     }
 
     private async upgradeToV10() {
-        await this.transact(system, tx => tx.version.put(10));
+        await this.transact('DataLayer.upgradeToV10 version', system, tx =>
+            tx.version.put(10)
+        );
     }
 
     private async upgradeToV11() {
         let deprecatedAccountsDeleted = 0;
-        await this.transact(system, async tx => {
+        await this.transact('DataLayer.upgradeToV11', system, async tx => {
             for await (const entry of queryStartsWith(tx.rawTx, ['accounts'])) {
                 await tx.rawTx.delete(entry.key);
                 deprecatedAccountsDeleted++;
@@ -776,7 +799,9 @@ export class DataLayer {
         log.info({
             msg: `deprecated accounts deleted: ${deprecatedAccountsDeleted}`,
         });
-        await this.transact(system, tx => tx.version.put(11));
+        await this.transact('DataLayer.upgradeToV11 version', system, tx =>
+            tx.version.put(11)
+        );
         log.info({msg: 'upgrading to version 11 done'});
     }
 }

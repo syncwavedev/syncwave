@@ -15,6 +15,12 @@ export class SnapshotMapper<
     TValuePublic,
 > implements Snapshot<TKeyPublic, TValuePublic>
 {
+    keysRead = 0;
+    keysReturned = 0;
+
+    get base() {
+        return this.snapshot;
+    }
     constructor(
         private snapshot: Snapshot<TKeyPrivate, TValuePrivate>,
         protected keyMapper: Mapper<TKeyPrivate, TKeyPublic>,
@@ -22,6 +28,8 @@ export class SnapshotMapper<
     ) {}
 
     async get(key: TKeyPublic): Promise<TValuePublic | undefined> {
+        this.keysRead += 1;
+        this.keysReturned += 1;
         const result = await this.snapshot.get(this.keyMapper.encode(key));
         if (result) {
             return this.valueMapper.decode(result);
@@ -37,6 +45,8 @@ export class SnapshotMapper<
             projectCondition(condition, this.keyMapper)
         );
         for await (const {key, value} of entries) {
+            this.keysRead += 1;
+            this.keysReturned += 1;
             yield {
                 key: this.keyMapper.decode(key),
                 value: this.valueMapper.decode(value),

@@ -32,6 +32,7 @@ export function createCoordinatorApi() {
         createWriteApi(),
         async (next, state: CoordinatorApiState, ctx) => {
             await state.dataLayer.transact(
+                `CoordinatorApi.createWriteApi ${ctx.method}`,
                 ctx.principal,
                 async tx => {
                     await next(
@@ -69,16 +70,20 @@ export function createCoordinatorApi() {
         AuthApiState,
         CoordinatorApiState,
         AuthApi
-    >(createAuthApi(), async (next, state, {principal}) => {
-        await state.dataLayer.transact(principal, async tx => {
-            await next({
-                crypto: state.crypto,
-                tx,
-                emailService: tx.emailService,
-                jwt: state.jwtService,
-                boardService: tx.boardService,
-            });
-        });
+    >(createAuthApi(), async (next, state, {principal, method}) => {
+        await state.dataLayer.transact(
+            `CoordinatorApi.createAuthApi ${method}`,
+            principal,
+            async tx => {
+                await next({
+                    crypto: state.crypto,
+                    tx,
+                    emailService: tx.emailService,
+                    jwt: state.jwtService,
+                    boardService: tx.boardService,
+                });
+            }
+        );
     });
 
     const combinedApi = {

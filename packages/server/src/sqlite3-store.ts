@@ -57,10 +57,19 @@ interface Row {
 }
 
 class Sqlite3Transaction implements Uint8Transaction {
+    keysRead = 0;
+    keysReturned = 0;
+
+    get base() {
+        return undefined;
+    }
+
     constructor(private readonly db: Database) {}
 
     get(key: Uint8Array): Promise<Uint8Array | undefined> {
         return new Promise((resolve, reject) => {
+            this.keysRead += 1;
+            this.keysReturned += 1;
             this.db.get(
                 'SELECT value FROM kv_store WHERE key = ?',
                 key,
@@ -87,7 +96,10 @@ class Sqlite3Transaction implements Uint8Transaction {
                 });
             });
 
+            this.keysRead += rows.length;
+
             for (const row of rows) {
+                this.keysReturned += 1;
                 yield {
                     key: new Uint8Array(row.key),
                     value: new Uint8Array(row.value),

@@ -36,20 +36,19 @@ interface Row {
     value: Uint8Array | Buffer;
 }
 
-let keysRead = 0;
-let keysWritten = 0;
-setInterval(() => {
-    console.log(
-        `[stats] keys read = ${keysRead}, keys written = ${keysWritten}`
-    );
-    keysRead = 0;
-    keysWritten = 0;
-}, 1000);
-
 class BetterSqlite3Transaction implements Uint8Transaction {
+    keysRead = 0;
+    keysReturned = 0;
+
+    get base() {
+        return undefined;
+    }
+
     constructor(private readonly db: Database) {}
 
     async get(key: Uint8Array): Promise<Uint8Array | undefined> {
+        this.keysRead += 1;
+        this.keysReturned += 1;
         const row = this.db
             .prepare('SELECT value FROM kv_store WHERE key = ?')
             .get(key) as Row;
@@ -69,7 +68,10 @@ class BetterSqlite3Transaction implements Uint8Transaction {
                 )
                 .all(param) as Row[];
 
+            this.keysRead += rows.length;
+
             for (const row of rows) {
+                this.keysReturned += 1;
                 yield {
                     key: new Uint8Array((row as Row).key),
                     value: new Uint8Array((row as Row).value),
@@ -122,7 +124,7 @@ export class BetterSqlite3RwStore implements Uint8KvStore {
             );
         `);
 
-        this.db.pragma('PRAGMA journal_mode=DELETE;');
+        this.db.exec('PRAGMA journal_mode=DELETE;');
         this.db.exec(`PRAGMA cache_size = -131072;`); // 128 MB
         this.db.exec(`PRAGMA mmap_size = 0;`);
 

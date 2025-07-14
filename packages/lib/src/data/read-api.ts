@@ -53,10 +53,11 @@ export class ReadApiState {
     }
 
     async transact<T>(
+        name: string,
         principal: Principal,
         fn: (tx: DataTx) => Promise<T>
     ): Promise<T> {
-        return this.dataLayer.transact(principal, fn);
+        return this.dataLayer.transact(name, principal, fn);
     }
 }
 
@@ -74,63 +75,70 @@ export function createReadApi() {
                 value: Type.Union([Type.Uint8Array(), Type.Undefined()]),
             }),
             handle: async (st, {parent, after, prefix}, {principal}) => {
-                return await st.dataLayer.transact(principal, async tx => {
-                    if (principal.accountId === undefined) {
-                        throw new BusinessError(
-                            'user is not authenticated',
-                            'not_authenticated'
-                        );
-                    }
-                    const account = await tx.accounts.getById(
-                        principal.accountId
-                    );
-                    assert(
-                        account !== undefined,
-                        `account with id ${principal.accountId} not found`
-                    );
-                    if (!tx.config.superadminEmails.includes(account.email)) {
-                        throw new BusinessError(
-                            'user is not superadmin',
-                            'forbidden'
-                        );
-                    }
-
-                    const children: Tuple[] = [];
-                    let last = after ?? parent.concat(prefix ? [prefix] : []);
-                    const maxChildren = 100;
-                    const value = await tx.rawTx.get(parent);
-                    while (children.length < maxChildren) {
-                        const next = await toStream(
-                            tx.rawTx.query(
-                                !after && prefix ? {gte: last} : {gt: last}
-                            )
-                        ).firstOrDefault();
-                        if (next === undefined) {
-                            break;
+                return await st.dataLayer.transact(
+                    'ReadApi.getChildren',
+                    principal,
+                    async tx => {
+                        if (principal.accountId === undefined) {
+                            throw new BusinessError(
+                                'user is not authenticated',
+                                'not_authenticated'
+                            );
                         }
-                        if (!isTupleStartsWith(next.key, parent)) {
-                            break;
-                        }
+                        const account = await tx.accounts.getById(
+                            principal.accountId
+                        );
+                        assert(
+                            account !== undefined,
+                            `account with id ${principal.accountId} not found`
+                        );
                         if (
-                            prefix &&
-                            !isTupleStartsWithLoose({
-                                prefix: parent.concat([prefix]),
-                                tuple: next.key,
-                            })
+                            !tx.config.superadminEmails.includes(account.email)
                         ) {
-                            break;
+                            throw new BusinessError(
+                                'user is not superadmin',
+                                'forbidden'
+                            );
                         }
-                        const child = next.key.slice(0, parent.length + 1);
-                        children.push(child);
-                        last = getTupleLargestChild(child);
-                    }
 
-                    return {
-                        children,
-                        hasMore: children.length === maxChildren,
-                        value,
-                    };
-                });
+                        const children: Tuple[] = [];
+                        let last =
+                            after ?? parent.concat(prefix ? [prefix] : []);
+                        const maxChildren = 100;
+                        const value = await tx.rawTx.get(parent);
+                        while (children.length < maxChildren) {
+                            const next = await toStream(
+                                tx.rawTx.query(
+                                    !after && prefix ? {gte: last} : {gt: last}
+                                )
+                            ).firstOrDefault();
+                            if (next === undefined) {
+                                break;
+                            }
+                            if (!isTupleStartsWith(next.key, parent)) {
+                                break;
+                            }
+                            if (
+                                prefix &&
+                                !isTupleStartsWithLoose({
+                                    prefix: parent.concat([prefix]),
+                                    tuple: next.key,
+                                })
+                            ) {
+                                break;
+                            }
+                            const child = next.key.slice(0, parent.length + 1);
+                            children.push(child);
+                            last = getTupleLargestChild(child);
+                        }
+
+                        return {
+                            children,
+                            hasMore: children.length === maxChildren,
+                            value,
+                        };
+                    }
+                );
             },
         }),
         echo: handler({
@@ -150,30 +158,34 @@ export function createReadApi() {
             }),
             res: ObjectEnvelope(),
             async handle(st, {attachmentId}, {principal}) {
-                return await st.transact(principal, async tx => {
-                    await tx.permissionService.ensureAttachmentMember(
-                        attachmentId,
-                        'reader'
-                    );
-                    const attachment =
-                        await tx.attachments.getById(attachmentId);
-                    if (attachment === undefined) {
-                        throw new BusinessError(
-                            `attachment with id ${attachmentId} not found`,
-                            'attachment_not_found'
+                return await st.transact(
+                    'ReadApi.getAttachmentObject',
+                    principal,
+                    async tx => {
+                        await tx.permissionService.ensureAttachmentMember(
+                            attachmentId,
+                            'reader'
                         );
+                        const attachment =
+                            await tx.attachments.getById(attachmentId);
+                        if (attachment === undefined) {
+                            throw new BusinessError(
+                                `attachment with id ${attachmentId} not found`,
+                                'attachment_not_found'
+                            );
+                        }
+
+                        const envelope = await st.objectStore.get(
+                            attachment.objectKey
+                        );
+                        assert(
+                            envelope !== undefined,
+                            'getAttachmentObject: object not found'
+                        );
+
+                        return envelope;
                     }
-
-                    const envelope = await st.objectStore.get(
-                        attachment.objectKey
-                    );
-                    assert(
-                        envelope !== undefined,
-                        'getAttachmentObject: object not found'
-                    );
-
-                    return envelope;
-                });
+                );
             },
         }),
         getBoardViewData: streamer({
@@ -194,8 +206,10 @@ export function createReadApi() {
                 }),
             ]),
             async *stream(st, {key, startOffset}, {principal}) {
-                const boardByKey = await st.transact(principal, tx =>
-                    tx.boards.getByKey(key)
+                const boardByKey = await st.transact(
+                    'ReadApi.getBoardByKey',
+                    principal,
+                    tx => tx.boards.getByKey(key)
                 );
                 if (!boardByKey) {
                     throw new BusinessError(
@@ -220,24 +234,30 @@ export function createReadApi() {
                     messages,
                     attachments,
                     member,
-                ] = await st.transact(principal, async tx => {
-                    return await whenAll([
-                        tx.boards.getById(boardId),
-                        toStream(tx.columns.getByBoardId(boardId)).toArray(),
-                        toStream(tx.cards.getByBoardId(boardId)).toArray(),
-                        getBoardUsers(tx, boardId),
-                        getBoardUserEmails(tx, boardId),
-                        toStream(
-                            tx.messageReads.getByBoardId(boardId)
-                        ).toArray(),
-                        tx.messages.getByBoardId(boardId).toArray(),
-                        tx.attachments.getByBoardId(boardId).toArray(),
-                        tx.permissionService.ensureBoardMember(
-                            boardId,
-                            'reader'
-                        ),
-                    ]);
-                });
+                ] = await st.transact(
+                    'ReadApi.getBoardData',
+                    principal,
+                    async tx => {
+                        return await whenAll([
+                            tx.boards.getById(boardId),
+                            toStream(
+                                tx.columns.getByBoardId(boardId)
+                            ).toArray(),
+                            toStream(tx.cards.getByBoardId(boardId)).toArray(),
+                            getBoardUsers(tx, boardId),
+                            getBoardUserEmails(tx, boardId),
+                            toStream(
+                                tx.messageReads.getByBoardId(boardId)
+                            ).toArray(),
+                            tx.messages.getByBoardId(boardId).toArray(),
+                            tx.attachments.getByBoardId(boardId).toArray(),
+                            tx.permissionService.ensureBoardMember(
+                                boardId,
+                                'reader'
+                            ),
+                        ]);
+                    }
+                );
 
                 if (!board) {
                     throw new BusinessError(
@@ -298,6 +318,7 @@ export function createReadApi() {
                 );
 
                 const [profile, account, [members, boards]] = await st.transact(
+                    'ReadApi.getUserData',
                     principal,
                     async tx => {
                         return await whenAll([

@@ -427,7 +427,7 @@ async function stress(state: StressTestState, timeBudget: number) {
     let reportTime = performance.now();
     for (let seed = 0; performance.now() - startTime < timeBudget; seed += 1) {
         for (let round = 0; round < state.options.maxRounds; round++) {
-            if (performance.now() - reportTime > 10_000) {
+            if (performance.now() - reportTime > 5_000) {
                 reportTime = performance.now();
                 log.info({msg: `seed=${seed}, round=${round}...`});
             }
@@ -473,7 +473,7 @@ if (process.argv[2] === 'prof') {
         const state = getState(variant, seed);
 
         for (let round = 0; round < fastestSeedScore; round++) {
-            if (performance.now() - reportTime > 10_000) {
+            if (performance.now() - reportTime > 5_000) {
                 reportTime = performance.now();
                 log.info({msg: `seed=${seed}, round=${round}...`});
                 log.info({

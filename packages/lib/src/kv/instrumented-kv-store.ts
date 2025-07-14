@@ -11,9 +11,18 @@ import type {
 export class SnapshotInstrumenter<K extends Tuple, V>
     implements Snapshot<K, V>
 {
+    keysRead = 0;
+    keysReturned = 0;
+
+    get base() {
+        return this.snap;
+    }
+
     constructor(private readonly snap: Snapshot<K, V>) {}
 
     async get(key: K): Promise<V | undefined> {
+        this.keysRead++;
+        this.keysReturned++;
         return await context().runChild({span: 'kv.get'}, async () => {
             return this.snap.get(key);
         });
@@ -22,6 +31,8 @@ export class SnapshotInstrumenter<K extends Tuple, V>
         const [, cancelCtx] = context().createChild({span: 'kv.query'});
         try {
             for await (const entry of this.snap.query(condition)) {
+                this.keysRead++;
+                this.keysReturned++;
                 yield entry;
             }
         } finally {

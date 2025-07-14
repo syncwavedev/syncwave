@@ -63,9 +63,18 @@ function toIter<V>(
 }
 
 export class MemMvccSnapshot implements Uint8Snapshot {
+    keysRead = 0;
+    keysReturned = 0;
+
+    get base() {
+        return undefined;
+    }
+
     constructor(private readonly snapshot: Tree<Uint8Array, Uint8Array>) {}
 
     async get(key: Uint8Array): Promise<Uint8Array | undefined> {
+        this.keysRead += 1;
+        this.keysReturned += 1;
         return this.snapshot.get(key) ?? undefined;
     }
 
@@ -80,9 +89,11 @@ export class MemMvccSnapshot implements Uint8Snapshot {
         });
 
         for await (const entry of toCursor(iter)) {
+            this.keysRead += 1;
             context().ensureActive();
 
             if (entry.value !== undefined) {
+                this.keysReturned += 1;
                 yield entry;
             }
         }
@@ -92,6 +103,13 @@ export class MemMvccSnapshot implements Uint8Snapshot {
 export class MvccTransaction implements Uint8Transaction {
     public writeSet: WriteSet = createTree(compareUint8Array);
     public readonly readRanges: KeyRange[] = [];
+
+    keysRead = 0;
+    keysReturned = 0;
+
+    get base() {
+        return this.snapshot;
+    }
 
     constructor(private readonly snapshot: Snapshot<Uint8Array, Uint8Array>) {}
 
@@ -104,6 +122,9 @@ export class MvccTransaction implements Uint8Transaction {
         if (writeSetValue) {
             return writeSetValue.value;
         }
+
+        this.keysRead += 1;
+        this.keysReturned += 1;
 
         return (await this.snapshot.get(key)) ?? undefined;
     }
@@ -136,6 +157,7 @@ export class MvccTransaction implements Uint8Transaction {
                 if (result.done) {
                     snapIterKeyMax = undefined;
                 } else {
+                    this.keysRead += 1;
                     snapIterKeyMax = result.value.key;
                 }
 
@@ -155,6 +177,7 @@ export class MvccTransaction implements Uint8Transaction {
                 context().ensureActive();
 
                 if (entry.value !== undefined) {
+                    this.keysReturned += 1;
                     yield entry;
                 }
             }

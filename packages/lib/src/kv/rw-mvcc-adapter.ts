@@ -23,6 +23,7 @@ import {
 import {createUuidV4, Uuid, validateUuid} from '../uuid.js';
 import type {Snapshot} from './kv-store.js';
 import {
+    interceptSnapshot,
     isolate,
     isolateSnapshot,
     mapCondition,
@@ -46,8 +47,17 @@ import {
 import {TupleStore} from './tuple-store.js';
 
 export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
-    retrievedCount = 0;
-    returnedCount = 0;
+    keysReturned = 0;
+    keysRead = 0;
+    notReturnedBecauseDidNotMatch = 0;
+    notReturnedBecauseTombstone = 0;
+    notReturnedBecauseVersionInFuture = 0;
+    notReturnedBecauseVersionOverridden = 0;
+    notReturnedBecauseDidNotAskForIt = 0;
+
+    get base() {
+        return undefined;
+    }
 
     constructor(
         private readonly adapter: MvccAdapter,
@@ -64,12 +74,13 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
             } of snapshot.query({
                 lte: [key, this.readVersion, true],
             })) {
-                this.retrievedCount += 1;
+                this.keysRead += 1;
 
                 const cmpResult = compareUint8Array(entryKey, key);
                 assert(cmpResult <= 0, 'Invalid key: must be lte');
 
                 if (cmpResult !== 0) {
+                    this.notReturnedBecauseDidNotMatch += 1;
                     return undefined;
                 }
 
@@ -79,10 +90,11 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                 );
 
                 if (deleted) {
+                    this.notReturnedBecauseTombstone += 1;
                     return undefined;
                 }
 
-                this.returnedCount += 1;
+                this.keysReturned += 1;
                 return value;
             }
 
@@ -123,13 +135,17 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                 lte: () => ({lt: last.key}),
             });
 
+            this.keysRead += entries.length;
+            this.notReturnedBecauseDidNotAskForIt += entries.length;
+
             for (const {
                 key: [key, version, deleted],
                 value,
             } of entries) {
-                this.retrievedCount += 1;
+                this.notReturnedBecauseDidNotAskForIt -= 1;
 
                 if (version > this.readVersion) {
+                    this.notReturnedBecauseVersionInFuture += 1;
                     continue;
                 }
 
@@ -146,6 +162,7 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                     );
 
                     if (!isKeyMatches) {
+                        this.notReturnedBecauseDidNotMatch += 1;
                         continue;
                     }
                 }
@@ -158,12 +175,16 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                         compareUint8Array(key, lastObservedEntry.key) !== 0
                     ) {
                         if (lastObservedEntry.value) {
-                            this.returnedCount += 1;
+                            this.keysReturned += 1;
                             yield {
                                 key: lastObservedEntry.key,
                                 value: lastObservedEntry.value,
                             };
+                        } else {
+                            this.notReturnedBecauseTombstone += 1;
                         }
+                    } else {
+                        this.notReturnedBecauseVersionOverridden += 1;
                     }
                 } else {
                     if (
@@ -171,9 +192,13 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
                         compareUint8Array(key, lastObservedEntry.key) !== 0
                     ) {
                         if (!deleted) {
-                            this.returnedCount += 1;
+                            this.keysReturned += 1;
                             yield {key, value};
+                        } else {
+                            this.notReturnedBecauseTombstone += 1;
                         }
+                    } else {
+                        this.notReturnedBecauseVersionOverridden += 1;
                     }
                 }
 
@@ -185,7 +210,8 @@ export class MvccSnapshotAdapter implements Snapshot<Uint8Array, Uint8Array> {
         }
 
         if (forward && lastObservedEntry?.value) {
-            this.returnedCount += 1;
+            this.keysReturned += 1;
+            this.notReturnedBecauseVersionOverridden -= 1;
             yield {
                 key: lastObservedEntry.key,
                 value: lastObservedEntry.value,
@@ -246,6 +272,9 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
     public readonly options: MvccAdapterOptions;
     // always start with GC in case if adapter is recreated frequently
     private writtenCount = PERFECT_GC_SCAN_SIZE;
+    private readCount = 0;
+    // randomized set of recently read keys, GC'll clean up one of those keys on run
+    private lastRead: {key: DataKey; forward: boolean} | undefined;
     private sessionGcScanOffsetKey = Math.trunc(Math.random() * GC_OFFSETS);
 
     private sessionWrittenCount = 0;
@@ -290,7 +319,12 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             const result = await fn(tx);
 
             log.trace({
-                msg: `snapshot stats: retrieved = ${tx.retrievedCount}, returned = ${tx.returnedCount}`,
+                msg: `snapshot stats: retrieved = ${tx.keysRead}, returned = ${tx.keysReturned}`,
+            });
+
+            await this.reportTransactionStats({
+                writtenCount: 0,
+                readCount: this.readCount,
             });
 
             return result;
@@ -323,23 +357,10 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
 
                 await this.commit(tx, snapKey, attempt);
 
-                this.sessionWrittenCount += tx.writeSet.length;
-
-                this.writtenCount += tx.writeSet.length;
-                if (this.writtenCount >= PERFECT_GC_SCAN_SIZE) {
-                    const gcWrittenCount = this.writtenCount;
-                    this.writtenCount = 0;
-                    const gcPromise = this.gc(gcWrittenCount).catch(error => {
-                        log.error({
-                            error,
-                            msg: 'Failed to run GC',
-                        });
-                    });
-
-                    if (this.options.syncGc) {
-                        await gcPromise;
-                    }
-                }
+                await this.reportTransactionStats({
+                    writtenCount: tx.writeSet.length,
+                    readCount: this.readCount,
+                });
 
                 return result;
             } catch (error) {
@@ -353,6 +374,43 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
         }
 
         unreachable();
+    }
+
+    private async reportTransactionStats(params: {
+        writtenCount: number;
+        readCount: number;
+    }) {
+        this.sessionWrittenCount += params.writtenCount;
+
+        this.writtenCount += params.writtenCount;
+        this.readCount += params.readCount;
+
+        if (this.writtenCount >= PERFECT_GC_SCAN_SIZE) {
+            const gcWrittenCount = this.writtenCount;
+            this.writtenCount = 0;
+            const gcPromise = this.gc(gcWrittenCount).catch(error => {
+                log.error({
+                    error,
+                    msg: 'Failed to run GC',
+                });
+            });
+
+            if (this.options.syncGc) {
+                await gcPromise;
+            }
+        } else if (this.readCount >= PERFECT_GC_SCAN_SIZE * 8) {
+            this.readCount = 0;
+            const gcPromise = this.gc(PERFECT_GC_SCAN_SIZE).catch(error => {
+                log.error({
+                    error,
+                    msg: 'Failed to run GC',
+                });
+            });
+
+            if (this.options.syncGc) {
+                await gcPromise;
+            }
+        }
     }
 
     private async startSnapshotLease(tx: WriteSuite, snapKey: MvccSnapshotKey) {
@@ -502,7 +560,6 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                     gcOffsets,
 
                     sessionWrittenCount: this.sessionWrittenCount,
-                    sessionGcScanOffsetKey: this.sessionGcScanOffsetKey,
                     sessionGcScannedCount: this.sessionGcScannedCount,
                     sessionGcRollOverCount: this.sessionGcRollOverCount,
                     sessionGcEpochs: this.sessionGcEpochs,
@@ -568,26 +625,38 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             )
         );
 
-        const gcScanOffset = await this._read<DataKey>(
-            undefined,
-            async suite => {
+        let gcScanOffset: DataKey;
+        let forward: boolean;
+        // we wanna make progress on both global and hot garbage
+        if (Math.random() < 0.5 && this.lastRead) {
+            gcScanOffset = this.lastRead.key;
+            forward = this.lastRead.forward;
+        } else {
+            gcScanOffset = await this._read<DataKey>(undefined, async suite => {
                 return (
                     (await suite.gcScanOffset.get(
                         this.sessionGcScanOffsetKey
                     )) ?? MIN_DATA_KEY
                 );
-            }
-        );
+            });
+            forward = true;
+        }
 
         const [nextGcScanOffset, staleKeys] = await this._read(
             undefined,
             async suite => {
                 const keys = await toStream(
-                    suite.data.query({gte: gcScanOffset})
+                    suite.data.query(
+                        forward ? {gte: gcScanOffset} : {lte: gcScanOffset}
+                    )
                 )
                     .map(x => x.key)
                     .take(Math.max(PERFECT_GC_SCAN_SIZE, writtenCount * 2)) // multiply to stay ahead of the garbage
                     .toArray();
+
+                if (!forward) {
+                    keys.reverse();
+                }
 
                 this.sessionGcScannedCount += keys.length;
                 this.gcEpochScannedKeys = keys.length;
@@ -662,6 +731,15 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
             if (next === undefined || previous === undefined) {
                 continue;
             }
+
+            assert(
+                compareUint8Array(current[0], previous[0]) >= 0,
+                'Current key must be greater than or equal to previous key'
+            );
+            assert(
+                compareUint8Array(current[0], next[0]) <= 0,
+                'Current key must be less than or equal to next key'
+            );
 
             if (prevKey === undefined) {
                 // first key, no previous key to compare
@@ -777,7 +855,10 @@ export class MvccAdapter implements KvStore<Uint8Array, Uint8Array> {
                 data: pipe(
                     tx,
                     isolateSnapshot(['data']),
-                    withSnapshotPacker(new PersistentKeyPacker())
+                    withSnapshotPacker(new PersistentKeyPacker()),
+                    interceptSnapshot(
+                        (key, forward) => (this.lastRead = {key, forward})
+                    )
                 ),
                 version: pipe(
                     tx,

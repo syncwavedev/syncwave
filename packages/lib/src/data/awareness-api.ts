@@ -57,34 +57,40 @@ export class AwarenessApiState {
                 state: {type: 'running'},
                 enqueueDelay: 0,
                 process: async batch => {
-                    await this.dataLayer.transact(principal, async tx => {
-                        try {
-                            const latestState = batch.at(-1);
-                            assert(
-                                latestState !== undefined,
-                                'awareness latest state now found'
-                            );
-                            await tx.awareness.put(
-                                boardAwarenessRoom(boardId),
-                                this.ensureAuthenticated(principal),
-                                clientId,
-                                latestState
-                            );
-                        } catch (error) {
-                            if (error instanceof AwarenessOwnershipError) {
-                                throw new BusinessError(
-                                    `awareness client ${clientId} is owned by another user ${error.ownerId}, user ${principal.userId} is not allowed to update it`,
-                                    'forbidden'
+                    await this.dataLayer.transact(
+                        'AwarenessApi.putState',
+                        principal,
+                        async tx => {
+                            try {
+                                const latestState = batch.at(-1);
+                                assert(
+                                    latestState !== undefined,
+                                    'awareness latest state now found'
                                 );
+                                await tx.awareness.put(
+                                    boardAwarenessRoom(boardId),
+                                    this.ensureAuthenticated(principal),
+                                    clientId,
+                                    latestState
+                                );
+                            } catch (error) {
+                                if (error instanceof AwarenessOwnershipError) {
+                                    throw new BusinessError(
+                                        `awareness client ${clientId} is owned by another user ${error.ownerId}, user ${principal.userId} is not allowed to update it`,
+                                        'forbidden'
+                                    );
+                                }
+
+                                throw error;
                             }
 
-                            throw error;
+                            tx.scheduleEffect(async () => {
+                                await this.hub.emit(
+                                    boardAwarenessRoom(boardId)
+                                );
+                            });
                         }
-
-                        tx.scheduleEffect(async () => {
-                            await this.hub.emit(boardAwarenessRoom(boardId));
-                        });
-                    });
+                    );
                 },
                 doneCallback: () => this.batchProcessors.delete(batchKey),
                 retries: 0,
@@ -96,12 +102,19 @@ export class AwarenessApiState {
     }
 
     async offline(principal: Principal, boardId: BoardId, clientId: number) {
-        await this.dataLayer.transact(principal, async tx => {
-            await tx.awareness.offline(boardAwarenessRoom(boardId), clientId);
-            tx.scheduleEffect(async () => {
-                await this.hub.emit(boardAwarenessRoom(boardId));
-            });
-        });
+        await this.dataLayer.transact(
+            'AwarenessApi.offline',
+            principal,
+            async tx => {
+                await tx.awareness.offline(
+                    boardAwarenessRoom(boardId),
+                    clientId
+                );
+                tx.scheduleEffect(async () => {
+                    await this.hub.emit(boardAwarenessRoom(boardId));
+                });
+            }
+        );
     }
 }
 
@@ -122,8 +135,10 @@ export function createAwarenessApi() {
                 ),
             }),
             async *stream(st, {boardId, clientId, state}, {principal}) {
-                const board = await st.dataLayer.transact(principal, tx =>
-                    tx.boards.getById(boardId)
+                const board = await st.dataLayer.transact(
+                    'AwarenessApi.joinBoardAwareness getBoardById',
+                    principal,
+                    tx => tx.boards.getById(boardId)
                 );
                 if (board === undefined) {
                     throw new BusinessError(
@@ -148,6 +163,7 @@ export function createAwarenessApi() {
                     let prevItem: unknown = undefined;
                     for await (const _ of updates) {
                         const nextItem = await st.dataLayer.transact(
+                            'AwarenessApi.joinBoardAwareness getAwarenessStates',
                             principal,
                             async tx => {
                                 const [states] = await whenAll([
@@ -192,16 +208,20 @@ export function createAwarenessApi() {
             }),
             res: Type.Object({}),
             async handle(st, {boardId, clientId, state}, {principal}) {
-                await st.dataLayer.transact(principal, async tx => {
-                    const [result] = await whenAll([
-                        tx.permissionService.ensureBoardMember(
-                            boardId,
-                            'reader'
-                        ),
-                        st.putState(principal, boardId, clientId, state),
-                    ]);
-                    return result;
-                });
+                await st.dataLayer.transact(
+                    'AwarenessApi.updateBoardAwarenessState',
+                    principal,
+                    async tx => {
+                        const [result] = await whenAll([
+                            tx.permissionService.ensureBoardMember(
+                                boardId,
+                                'reader'
+                            ),
+                            st.putState(principal, boardId, clientId, state),
+                        ]);
+                        return result;
+                    }
+                );
 
                 return {};
             },

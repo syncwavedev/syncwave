@@ -78,10 +78,14 @@ export class CoordinatorServer {
 
     async status() {
         try {
-            await this.dataLayer.transact(anonymous, async tx => {
-                const board = await tx.boards.rawRepo.scan().first();
-                assert(board !== undefined, 'board not found');
-            });
+            await this.dataLayer.transact(
+                'CoordinatorServer.status',
+                anonymous,
+                async tx => {
+                    const board = await tx.boards.rawRepo.scan().first();
+                    assert(board !== undefined, 'board not found');
+                }
+            );
 
             return {status: 'ok' as const};
         } catch (error) {
@@ -102,6 +106,7 @@ export class CoordinatorServer {
         fullName: string;
     }): Promise<string> {
         return await this.dataLayer.transact(
+            'CoordinatorServer.issueJwtByUserEmail',
             {accountId: undefined, userId: undefined},
             async tx => {
                 const account = await getAccount({
@@ -120,19 +125,23 @@ export class CoordinatorServer {
 
     async getAttachment(params: {attachmentId: AttachmentId; jwt: string}) {
         const principal = await this.authenticator.authenticate(params.jwt);
-        const objectKey = await this.dataLayer.transact(principal, async tx => {
-            const attachment = await tx.attachments.getById(
-                params.attachmentId
-            );
-            if (attachment === undefined) {
-                throw new BusinessError(
-                    'Attachment not found',
-                    'attachment_not_found'
+        const objectKey = await this.dataLayer.transact(
+            'CoordinatorServer.getAttachment',
+            principal,
+            async tx => {
+                const attachment = await tx.attachments.getById(
+                    params.attachmentId
                 );
-            }
+                if (attachment === undefined) {
+                    throw new BusinessError(
+                        'Attachment not found',
+                        'attachment_not_found'
+                    );
+                }
 
-            return attachment.objectKey;
-        });
+                return attachment.objectKey;
+            }
+        );
 
         return await this.options.objectStore.getStream(objectKey);
     }

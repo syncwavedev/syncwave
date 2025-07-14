@@ -3,6 +3,10 @@ import {AppError} from '../errors.js';
 import {Stream, toStream} from '../stream.js';
 import {isTupleStartsWith, type Packer, type Tuple} from '../tuple.js';
 import {unreachable} from '../utils.js';
+import {
+    SnapshotInterceptor,
+    TransactionInterceptor,
+} from './kv-store-interceptor.js';
 import {SnapshotIsolator, TransactionIsolator} from './kv-store-isolator.js';
 import {SnapshotMapper, TransactionMapper} from './kv-store-mapper.js';
 
@@ -55,6 +59,15 @@ export class InvalidQueryCondition extends AppError {
 }
 
 export interface Snapshot<K, V> {
+    readonly base: Snapshot<unknown, unknown> | undefined;
+    readonly keysRead: number;
+    readonly keysReturned: number;
+    readonly notReturnedBecauseDidNotMatch?: number;
+    readonly notReturnedBecauseTombstone?: number;
+    readonly notReturnedBecauseVersionInFuture?: number;
+    readonly notReturnedBecauseVersionOverridden?: number;
+    readonly notReturnedBecauseDidNotAskForIt?: number;
+
     get(key: K): Promise<V | undefined>;
     query(condition: Condition<K>): AsyncIterable<Entry<K, V>>;
 }
@@ -147,6 +160,18 @@ export function isolateSnapshot(
     return store => new SnapshotIsolator(store, prefix);
 }
 
+export function intercept<K>(
+    onRead: (key: K, forward: boolean) => void
+): <V>(store: Transaction<K, V>) => Transaction<K, V> {
+    return store => new TransactionInterceptor<K, any>(store, onRead);
+}
+
+export function interceptSnapshot<K>(
+    onRead: (key: K, forward: boolean) => void
+): <V>(store: Snapshot<K, V>) => Snapshot<K, V> {
+    return store => new SnapshotInterceptor<K, any>(store, onRead);
+}
+
 export function withCodec<TData>(
     codec: Codec<TData>
 ): <K>(store: Transaction<K, Uint8Array>) => Transaction<K, TData> {
@@ -193,4 +218,53 @@ async function* _queryStartsWith<T>(
 
         yield entry;
     }
+}
+
+export interface SnapshotStats {
+    name: string;
+    keysRead: number;
+    keysReturned: number;
+    allReads: number;
+    allReturns: number;
+    base?: SnapshotStats;
+    notReturnedBecauseDidNotMatch?: number;
+    notReturnedBecauseTombstone?: number;
+    notReturnedBecauseVersionInFuture?: number;
+    notReturnedBecauseVersionOverridden?: number;
+    notReturnedBecauseDidNotAskForIt?: number;
+}
+
+export function getSnapshotStats(
+    tx: Snapshot<unknown, unknown>
+): SnapshotStats {
+    const base = tx.base ? getSnapshotStats(tx.base) : undefined;
+    const result: SnapshotStats = {
+        name: tx.constructor.name,
+        keysRead: tx.keysRead,
+        keysReturned: tx.keysReturned,
+        allReads: base?.allReads ?? tx.keysRead,
+        allReturns: base?.allReturns ?? tx.keysReturned,
+        base,
+    };
+
+    if (tx.notReturnedBecauseDidNotMatch !== undefined) {
+        result.notReturnedBecauseDidNotMatch = tx.notReturnedBecauseDidNotMatch;
+    }
+    if (tx.notReturnedBecauseTombstone !== undefined) {
+        result.notReturnedBecauseTombstone = tx.notReturnedBecauseTombstone;
+    }
+    if (tx.notReturnedBecauseVersionInFuture !== undefined) {
+        result.notReturnedBecauseVersionInFuture =
+            tx.notReturnedBecauseVersionInFuture;
+    }
+    if (tx.notReturnedBecauseVersionOverridden !== undefined) {
+        result.notReturnedBecauseVersionOverridden =
+            tx.notReturnedBecauseVersionOverridden;
+    }
+    if (tx.notReturnedBecauseDidNotAskForIt !== undefined) {
+        result.notReturnedBecauseDidNotAskForIt =
+            tx.notReturnedBecauseDidNotAskForIt;
+    }
+
+    return result;
 }

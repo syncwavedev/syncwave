@@ -3,7 +3,6 @@ import {MsgpackCodec} from '../codec.js';
 import {AWARENESS_OFFLINE_TIMEOUT_MS} from '../constants.js';
 import {AppError} from '../errors.js';
 import {
-    getSnapshotStats,
     isolate,
     withCodec,
     withPacker,
@@ -130,37 +129,11 @@ class AwarenessRoom {
     }
 
     async getAll(): Promise<AwarenessStateEntry[]> {
-        // const [owners, updatedAtInfo, states] = await whenAll([
-        //     toStream(this.owners.query({gte: 0})).toArray(),
-        //     toStream(this.updatedAt.query({gte: 0})).toArray(),
-        //     toStream(this.states.query({gte: 0})).toArray(),
-        // ]);
-
-        const ownersStatsBefore = getSnapshotStats(this.owners);
-        const owners = await toStream(this.owners.query({gte: 0})).toArray();
-        const ownersStatsAfter = getSnapshotStats(this.owners);
-
-        const updatedAtStatsBefore = getSnapshotStats(this.updatedAt);
-        const updatedAtInfo = await toStream(
-            this.updatedAt.query({gte: 0})
-        ).toArray();
-        const updatedAtStatsAfter = getSnapshotStats(this.updatedAt);
-
-        const statesStatsBefore = getSnapshotStats(this.states);
-        const states = await toStream(this.states.query({gte: 0})).toArray();
-        const statesStatsAfter = getSnapshotStats(this.states);
-
-        console.log(
-            'owners',
-            JSON.stringify(
-                {
-                    before: ownersStatsBefore,
-                    after: ownersStatsAfter,
-                },
-                null,
-                2
-            )
-        );
+        const [owners, updatedAtInfo, states] = await whenAll([
+            toStream(this.owners.query({gte: 0})).toArray(),
+            toStream(this.updatedAt.query({gte: 0})).toArray(),
+            toStream(this.states.query({gte: 0})).toArray(),
+        ]);
 
         const offlineIds: number[] = [];
 

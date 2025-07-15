@@ -122,7 +122,7 @@ This project wouldn't be possible without open-source technologies like:
 
 - [Svelte](https://github.com/sveltejs/svelte) powers UI layer of the app.
 - [Node.js](https://github.com/nodejs/node) powers our backend.
-- [SQLite](https://github.com/sqlite/sqlite) is the default storage for our self-hosted offering.
+- [LevelDB](https://github.com/google/leveldb) is the default storage for our self-hosted offering.
 - [FoundationDB](https://github.com/apple/foundationdb) is the storage used by [app.syncwave.dev](https://app.syncwave.dev).
 - [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) makes the UI beautiful.
 - [Astro](https://github.com/withastro/astro) is the build tool for our static (landing, docs).

@@ -1,5 +1,5 @@
 import {Type, type Static} from '@sinclair/typebox';
-import {TransactionId} from '../data/data-layer.js';
+import {TransactionId} from '../transaction-id.js';
 import type {Brand} from '../utils.js';
 import {createUuid, Uuid} from '../uuid.js';
 

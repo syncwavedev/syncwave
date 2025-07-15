@@ -1,10 +1,18 @@
 import createTree, {type Iterator, type Tree} from 'functional-red-black-tree';
+import {decodeBase64} from '../base64.js';
 import {TXN_RETRIES_COUNT} from '../constants.js';
 import {context} from '../context.js';
 import {toCursor} from '../cursor.js';
 import {AppError} from '../errors.js';
 import {decodeHex} from '../hex.js';
-import {compareUint8Array, unreachable, zip, type Brand} from '../utils.js';
+import {Mutex} from '../mutex.js';
+import {
+    assert,
+    compareUint8Array,
+    unreachable,
+    zip,
+    type Brand,
+} from '../utils.js';
 import {
     mapCondition,
     type Condition,
@@ -335,13 +343,12 @@ export function incrementMvccVersion(version: MvccVersion): MvccVersion {
     return toMvccVersion(version + 1);
 }
 
-export class MemMvccStore implements Uint8KvStore {
+export abstract class ExclusiveMvccStore implements Uint8KvStore {
     private version = 1 as MvccVersion;
     private commited: WriteEntry[] = [];
     private running: MvccVersion[] = [];
     private closed = false;
-
-    private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
+    private commitMutex = new Mutex();
 
     private readonly options: MemMvccKvStoreOptions;
 
@@ -354,9 +361,9 @@ export class MemMvccStore implements Uint8KvStore {
         );
     }
 
-    async snapshot<R>(fn: (snapshot: Uint8Snapshot) => Promise<R>): Promise<R> {
-        return await this.transact(fn);
-    }
+    abstract snapshot<R>(
+        fn: (snapshot: Uint8Snapshot) => Promise<R>
+    ): Promise<R>;
 
     async transact<R>(fn: (tx: Uint8Transaction) => Promise<R>): Promise<R> {
         this.ensureOpen();
@@ -369,23 +376,27 @@ export class MemMvccStore implements Uint8KvStore {
             this.running.push(txVersion);
 
             try {
-                const tx = new MvccTransaction(new MemMvccSnapshot(this.tree));
+                return await this.snapshot(async snap => {
+                    const tx = new MvccTransaction(snap);
 
-                const result = await fn(tx);
+                    const result = await fn(tx);
 
-                this.ensureOpen();
+                    this.ensureOpen();
 
-                if (tx.writeSet.length > 0) {
-                    ensureSerializable(
-                        txVersion,
-                        tx.readRanges,
-                        attempt + 1,
-                        this.commited
-                    );
-                    this.commit(tx.writeSet);
-                }
+                    if (tx.writeSet.length > 0) {
+                        await this.commitMutex.run(async () => {
+                            ensureSerializable(
+                                txVersion,
+                                tx.readRanges,
+                                attempt + 1,
+                                this.commited
+                            );
+                            await this.commit(tx.writeSet);
+                        });
+                    }
 
-                return result;
+                    return result;
+                });
             } catch (error) {
                 if (
                     attempt === this.options.conflictRetryCount ||
@@ -406,7 +417,7 @@ export class MemMvccStore implements Uint8KvStore {
         unreachable();
     }
 
-    close(): void {
+    close(_reason: unknown): void {
         this.closed = true;
         // no resources to close
     }
@@ -417,14 +428,26 @@ export class MemMvccStore implements Uint8KvStore {
         }
     }
 
-    private commit(writeSet: WriteSet) {
+    protected abstract atomicWrite(
+        puts: Uint8Entry[],
+        deletes: Uint8Array[]
+    ): Promise<void>;
+
+    /**
+     * call to commit must be protected by `commitMutex`
+     */
+    private async commit(writeSet: WriteSet) {
+        let puts: Uint8Entry[] = [];
+        let deletes: Uint8Array[] = [];
         for (const [key, {value}] of zip(writeSet.keys, writeSet.values)) {
             if (value === undefined) {
-                this.tree = this.tree.remove(key);
+                deletes.push(key);
             } else {
-                this.tree = this.tree.remove(key).insert(key, value);
+                puts.push({key, value});
             }
         }
+
+        await this.atomicWrite(puts, deletes);
 
         this.version = (this.version + 1) as MvccVersion;
         this.commited.push(
@@ -440,6 +463,44 @@ export class MemMvccStore implements Uint8KvStore {
         this.commited = this.commited.filter(({version}) =>
             this.running.some(readVersion => readVersion < version)
         );
+    }
+}
+
+export class MemMvccStore extends ExclusiveMvccStore {
+    private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
+
+    constructor(options: Partial<MemMvccKvStoreOptions> = {}) {
+        super(options);
+    }
+
+    async snapshot<R>(fn: (snapshot: Uint8Snapshot) => Promise<R>): Promise<R> {
+        return await fn(new MemMvccSnapshot(this.tree));
+    }
+
+    protected override atomicWrite(
+        puts: Uint8Entry[],
+        deletes: Uint8Array[]
+    ): Promise<void> {
+        const uniqueKeys = new Set(
+            puts
+                .map(({key}) => key)
+                .concat(deletes)
+                .map(decodeBase64)
+        );
+        assert(
+            uniqueKeys.size === puts.length + deletes.length,
+            'Duplicate keys in puts + deletes'
+        );
+
+        for (const {key, value} of puts) {
+            this.tree = this.tree.remove(key).insert(key, value);
+        }
+
+        for (const key of deletes) {
+            this.tree = this.tree.remove(key);
+        }
+
+        return Promise.resolve();
     }
 }
 

@@ -326,7 +326,7 @@ async function getOptions(): Promise<Result<Options>> {
         stage,
         (stage !== 'local' && stage !== 'self') || FORCE_FOUNDATIONDB
             ? 'fdb'
-            : 'sqlite3'
+            : 'leveldb'
     );
     const logLevel = match(stage)
         .with('local', () => 'info' as const)
@@ -411,7 +411,7 @@ const options = optionsResult.value;
 
 async function getKvStore(
     stage: string,
-    type: 'fdb' | 'sqlite3' | 'better-sqlite3' | 'mem'
+    type: 'fdb' | 'sqlite3' | 'better-sqlite3' | 'mem' | 'leveldb'
 ): Promise<{
     store: KvStore<Tuple, Uint8Array>;
     hub: Hub;
@@ -491,6 +491,31 @@ async function getKvStore(
 
             return {
                 store: new MvccAdapter(new MemRwStore()),
+                hub: new MemHub(),
+            };
+        })
+        .with('leveldb', async () => {
+            log.info({msg: 'using leveldb as primary store'});
+            const sqliteStore = await import('./classic-level-store.js').then(
+                x =>
+                    x.ClassicLevelStore.create({
+                        dbPath:
+                            stage === 'local'
+                                ? './dev.level'
+                                : '/data/db.level',
+                    })
+            );
+            const store = new MvccAdapter(sqliteStore);
+
+            const stats = await store.stats();
+            for (const [statName, statValue] of Object.entries(stats)) {
+                log.info({
+                    msg: `mvcc adapter ${statName}: ${statValue}`,
+                });
+            }
+
+            return {
+                store,
                 hub: new MemHub(),
             };
         })

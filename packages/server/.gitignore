@@ -1,4 +1,6 @@
 test.sqlite
+test.level
+dev.level
 dev.sqlite
 dev.sqlite-wal
 dev.sqlite-shm

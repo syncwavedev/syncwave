@@ -16,6 +16,7 @@ import {MemMvccStore} from '../kv/mem-mvcc-store.js';
 import {TupleStore} from '../kv/tuple-store.js';
 import {log} from '../logger.js';
 import {getNow, Timestamp} from '../timestamp.js';
+import type {TransactionId} from '../transaction-id.js';
 import type {Hub} from '../transport/hub.js';
 import type {Tuple} from '../tuple.js';
 import {assert, type Brand, whenAll} from '../utils.js';
@@ -174,12 +175,6 @@ export interface AccountChangeEvent
 
 export function createTransactionId() {
     return createUuidV4() as TransactionId;
-}
-
-export type TransactionId = Brand<Uuid, 'transaction_id'>;
-
-export function TransactionId() {
-    return Uuid<TransactionId>();
 }
 
 export interface MemberInfoChangeEvent

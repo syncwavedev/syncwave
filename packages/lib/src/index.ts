@@ -48,6 +48,7 @@ export * from './self-hosted-client-config.js';
 export * from './stream.js';
 export * from './subject.js';
 export * from './timestamp.js';
+export * from './transaction-id.js';
 export * from './transport/hub.js';
 export * from './transport/instrumented-transport.js';
 export * from './transport/mem-transport.js';

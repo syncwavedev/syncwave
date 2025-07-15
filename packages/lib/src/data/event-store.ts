@@ -7,10 +7,11 @@ import {CollectionManager} from '../kv/collection-manager.js';
 import {log} from '../logger.js';
 import {Channel, Stream, toStream} from '../stream.js';
 import {Timestamp} from '../timestamp.js';
+import {TransactionId} from '../transaction-id.js';
 import type {Hub} from '../transport/hub.js';
 import type {ToSchema} from '../type.js';
 import {interval} from '../utils.js';
-import {TransactionId, type DataEffectScheduler} from './data-layer.js';
+import {type DataEffectScheduler} from './data-layer.js';
 
 function getEventHubTopic(storeId: string, collection: string) {
     return `es/${storeId}/${collection}`;

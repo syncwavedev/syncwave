@@ -499,7 +499,9 @@ async function getKvStore(
             const store = await import('./classic-level-store.js').then(x =>
                 x.ClassicLevelStore.create({
                     dbPath:
-                        stage === 'local' ? './dev.level' : '/data/db.leveldb',
+                        stage === 'local'
+                            ? './dev.leveldb'
+                            : '/data/db.leveldb',
                 })
             );
 

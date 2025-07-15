@@ -9,13 +9,13 @@ import {
     toStream,
 } from 'syncwave';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
-import {ClassicLevelStore} from './classic-level-store.js';
+import {LevelDbStore} from './leveldb-store.js';
 
-describe('ClassicLevelStore', () => {
-    let store: ClassicLevelStore;
+describe('LevelDbStore', () => {
+    let store: LevelDbStore;
 
     beforeEach(async () => {
-        store = await ClassicLevelStore.create({
+        store = await LevelDbStore.create({
             dbPath: './test.level',
         });
     });

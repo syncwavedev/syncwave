@@ -343,7 +343,7 @@ export function incrementMvccVersion(version: MvccVersion): MvccVersion {
     return toMvccVersion(version + 1);
 }
 
-export abstract class ExclusiveMvccStore implements Uint8KvStore {
+export abstract class SingleProcessMvccStore implements Uint8KvStore {
     private version = 1 as MvccVersion;
     private commited: WriteEntry[] = [];
     private running: MvccVersion[] = [];
@@ -466,7 +466,7 @@ export abstract class ExclusiveMvccStore implements Uint8KvStore {
     }
 }
 
-export class MemMvccStore extends ExclusiveMvccStore {
+export class MemMvccStore extends SingleProcessMvccStore {
     private tree: Tree<Uint8Array, Uint8Array> = createTree(compareUint8Array);
 
     constructor(options: Partial<MemMvccKvStoreOptions> = {}) {

@@ -496,8 +496,8 @@ async function getKvStore(
         })
         .with('leveldb', async () => {
             log.info({msg: 'using leveldb as primary store'});
-            const store = await import('./classic-level-store.js').then(x =>
-                x.ClassicLevelStore.create({
+            const store = await import('./leveldb-store.js').then(x =>
+                x.LevelDbStore.create({
                     dbPath:
                         stage === 'local'
                             ? './dev.leveldb'

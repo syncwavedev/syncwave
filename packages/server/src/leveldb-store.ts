@@ -5,7 +5,7 @@ import {
     type IteratorOptions,
 } from 'classic-level';
 import {
-    ExclusiveMvccStore,
+    SingleProcessMvccStore,
     log,
     type Condition,
     type Entry,
@@ -17,7 +17,7 @@ export interface ClassicLevelOptions {
     dbPath: string;
 }
 
-class ClassicLevelSnapshot implements Snapshot<Uint8Array, Uint8Array> {
+class LevelDbSnapshot implements Snapshot<Uint8Array, Uint8Array> {
     constructor(
         private readonly db: ClassicLevel<Uint8Array, Uint8Array>,
         private snapshot: AbstractSnapshot
@@ -71,15 +71,15 @@ class ClassicLevelSnapshot implements Snapshot<Uint8Array, Uint8Array> {
 }
 
 /**
- * ExclusiveMvccStore has in-memory state, so it can only be used in single process environment.
+ * SingleProcessMvccStore has in-memory state, so it can only be used in single process environment.
  * Notably, NodeJS cluster mode is not supported. It's intended to be used only in self-hosted
  * environments, where the server is running in a single process.
  */
-export class ClassicLevelStore extends ExclusiveMvccStore {
+export class LevelDbStore extends SingleProcessMvccStore {
     private readonly db: ClassicLevel<Uint8Array, Uint8Array>;
 
     static async create(options: ClassicLevelOptions) {
-        const store = new ClassicLevelStore(options);
+        const store = new LevelDbStore(options);
         await store.db.open();
         return store;
     }
@@ -98,7 +98,7 @@ export class ClassicLevelStore extends ExclusiveMvccStore {
     ): Promise<R> {
         const levelSnap = this.db.snapshot();
         try {
-            return await fn(new ClassicLevelSnapshot(this.db, levelSnap));
+            return await fn(new LevelDbSnapshot(this.db, levelSnap));
         } finally {
             levelSnap.close().catch(error => {
                 log.error({error, msg: 'Failed to close LevelDB snapshot'});

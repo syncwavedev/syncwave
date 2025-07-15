@@ -131,7 +131,7 @@ export class ClassicLevelStore extends ExclusiveMvccStore {
             );
 
         try {
-            await this.db.batch(batch);
+            await this.db.batch(batch, {sync: true});
         } catch (error) {
             log.error({error, msg: 'Failed to write to LevelDB store'});
             throw error;

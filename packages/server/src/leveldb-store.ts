@@ -130,12 +130,7 @@ export class LevelDbStore extends SingleProcessMvccStore {
                 }))
             );
 
-        try {
-            await this.db.batch(batch, {sync: true});
-        } catch (error) {
-            log.error({error, msg: 'Failed to write to LevelDB store'});
-            throw error;
-        }
+        await this.db.batch(batch, {sync: true});
     }
 
     override close(reason: unknown): void {

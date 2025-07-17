@@ -12,7 +12,7 @@
     flex-col
     px-panel-inline-half
     mx-panel-inline
-    py-2
+    py-1.5
     "
 >
     <div class="flex items-center gap-1.5">

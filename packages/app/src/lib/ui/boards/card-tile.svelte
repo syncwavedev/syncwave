@@ -107,15 +107,11 @@
             cursor-default
             gap-1
             rounded-md
-            px-3.5
-            py-2.5
+            px-3
+            py-2
             content
-            data-active:outline-[1.5px]
-            data-active:outline-primary
-            data-active:-outline-offset-[1px]
-            focus:outline-[1.5px]
-            focus:outline-primary/50
-            focus-within:-outline-offset-[1px]
+            data-active:bg-gray-150
+            dark:data-active:bg-gray-650
         "
         class:border-dashed={card.isDraft}
         onclick={onClick}
@@ -130,13 +126,13 @@
                 data-active={active || undefined}
             >
                 {#if !card.isDraft}
-                    <span class="truncate font-medium">
+                    <span class="truncate text-lg">
                         {preview}
                     </span>
                 {/if}
             </div>
             {#if !card.isDraft}
-                <div class="flex items-center icon-base text-ink-detail">
+                <div class="flex items-center icon-base text-md">
                     {#if card.counter}
                         <HashtagIcon />{card.counter}
                     {/if}
@@ -153,7 +149,7 @@
                         </div>
                     {/if}
                     {#if todoStats.total > 0}
-                        <span class="text-ink-detail ml-auto text-sm">
+                        <span class="ml-auto text-ink-detail">
                             {#if todoStats.left === 0}
                                 All done
                             {:else}
@@ -175,7 +171,7 @@
                         </span>
                     {:else}
                         <div
-                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-775 icon-xs"
+                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-775 icon-xs text-ink-detail"
                             class:ml-auto={todoStats.total == 0}
                         >
                             <UserSolidIcon />

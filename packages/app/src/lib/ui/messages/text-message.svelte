@@ -27,7 +27,7 @@
     flex-col
     px-panel-inline-half
     mx-panel-inline
-    py-2
+    py-1.5
     relative
     group
     icon-sm

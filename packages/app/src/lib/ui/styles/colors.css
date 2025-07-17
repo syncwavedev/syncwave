@@ -99,7 +99,7 @@
 
 @layer base {
     [data-theme='light'] {
-        --theme-color-ink: var(--color-gray-1000);
+        --theme-color-ink: var(--color-gray-900);
         --theme-color-ink-body: var(--color-gray-700);
         --theme-color-ink-detail: var(--color-gray-600);
         --theme-color-ink-placeholder: var(--color-gray-350);
@@ -111,7 +111,7 @@
         --theme-color-modified: oklch(0.55 0.2177 257.42);
         --theme-color-deleted: oklch(0.48 0.2141 29.7);
 
-        --theme-color-divider: var(--color-gray-80);
+        --theme-color-divider: var(--color-gray-100);
         --theme-color-divider-object: var(--color-gray-200);
 
         --theme-color-scrollbar: var(--color-gray-200);

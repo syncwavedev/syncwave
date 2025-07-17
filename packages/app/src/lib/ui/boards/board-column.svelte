@@ -61,10 +61,8 @@
         data-disable-scroll-view-drag="true"
     >
         <div
-            class="flex items-center gap-1.5 leading-none font-semibold indicator"
+            class="flex items-center gap-1.5 leading-none font-semibold text-lg"
         >
-            <ColumnIcon active={columnPosition} total={columnsCount} />
-
             {column.name}
         </div>
 
@@ -121,10 +119,6 @@
 </div>
 
 <style>
-    .indicator {
-        --icon-size: 1.4em;
-    }
-
     .column {
         display: flex;
         flex-shrink: 0;

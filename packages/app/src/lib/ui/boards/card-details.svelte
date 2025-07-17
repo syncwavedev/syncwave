@@ -155,19 +155,19 @@
 </script>
 
 <div
-    class="border-divider flex w-full flex-shrink-0 flex-col border-l dark:bg-material-1"
+    class="border-divider flex w-full flex-shrink-0 flex-col border-l dark:bg-material-1 bg-gray-10"
 >
     <div
         class="flex items-center justify-between shrink-0 h-panel-header px-panel-inline"
     >
         <div class="flex items-center">
             {#if card.isDraft}
-                <span class="font-semibold">New card</span>
+                New card
             {:else}
                 <Dropdown placement="bottom-start">
                     {#snippet trigger()}
                         <div class="dropdown__item" id="ellipsis-button">
-                            <span class="font-semibold">{card.counter}</span>
+                            {card.counter}
                             <EllipsisIcon />
                         </div>
                     {/snippet}
@@ -209,7 +209,7 @@
         </button>
     </div>
     <!-- Task Actions -->
-    <div class="my-2 flex gap-2 px-panel-inline items-center">
+    <div class="my-1.5 flex gap-2 px-panel-inline items-center">
         <Select
             value={card.column.id}
             options={columnOptions}
@@ -275,8 +275,7 @@
             </div>
         </div>
         <hr />
-        <div class="mt-4">
-            <p class="mx-6 mb-4 text-ink-detail">4 Messages</p>
+        <div class="mt-2">
             <MessageList messages={card.messages} />
         </div>
     </div>
@@ -290,16 +289,10 @@
     {/if}
     <div
         class="
-        border
+        border-t
         border-divider
         py-3
-        mx-6
         px-panel-inline
-        rounded-md
-        mb-3
-        focus-within:outline-[1.5px]
-        focus-within:outline-primary
-        focus-within:-outline-offset-[1px]
         text-lg
         bg-material-base
         "

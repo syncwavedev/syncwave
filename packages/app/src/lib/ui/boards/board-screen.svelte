@@ -268,7 +268,7 @@
         <Dropdown placement="bottom-start">
             {#snippet trigger()}
                 <div class="btn">
-                    <span class="font-semibold">{board.name}</span>
+                    {board.name}
                     <EllipsisIcon />
                 </div>
             {/snippet}
@@ -352,7 +352,9 @@
 {/snippet}
 
 <PermissionBoundary member={boardMeView}>
-    <div class="relative flex min-w-0 flex-col flex-1 dark:bg-material-1">
+    <div
+        class="relative flex min-w-0 flex-col flex-1 dark:bg-material-1 bg-gray-10"
+    >
         <div
             class="flex items-center shrink-0 px-panel-inline h-panel-header border-b border-divider avatar-xs"
         >

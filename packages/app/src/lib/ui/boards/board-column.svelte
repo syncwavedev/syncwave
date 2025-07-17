@@ -60,9 +60,7 @@
         class="flex items-center column-padding-inline mt-3 mb-2 shrink-0"
         data-disable-scroll-view-drag="true"
     >
-        <div
-            class="flex items-center gap-1.5 leading-none font-semibold text-lg"
-        >
+        <div class="flex items-center gap-1.5 leading-none font-semibold">
             {column.name}
         </div>
 

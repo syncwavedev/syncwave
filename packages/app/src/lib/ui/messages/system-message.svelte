@@ -24,7 +24,7 @@
         />
 
         <div class="flex items-baseline gap-1.5">
-            <div class="font-semibold text-lg">
+            <div class="font-semibold text-md">
                 {message.author.fullName}
             </div>
 
@@ -34,7 +34,7 @@
         </div>
     </div>
     <div
-        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.7+0.3rem))] relative text-lg"
+        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.8+0.3rem))] relative text-lg"
     >
         {#if message.payload.type === 'card_created'}
             <p class="text-ink-detail">Created this card</p>

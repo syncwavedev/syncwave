@@ -22,6 +22,7 @@
     import MessageList from '../messages/message-list.svelte';
     import Avatar from '../components/avatar.svelte';
     import UsersSolidIcon from '../components/icons/users-solid-icon.svelte';
+    import ChevronDownIcon from '../components/icons/chevron-down-icon.svelte';
 
     const {
         card,
@@ -157,16 +158,16 @@
     class="border-divider flex w-full flex-shrink-0 flex-col border-l dark:bg-material-1"
 >
     <div
-        class="flex items-center justify-between shrink-0 h-panel-header border-b border-divider px-panel-inline"
+        class="flex items-center justify-between shrink-0 h-panel-header px-panel-inline"
     >
         <div class="flex items-center">
             {#if card.isDraft}
-                New card
+                <span class="font-semibold">New card</span>
             {:else}
                 <Dropdown placement="bottom-start">
                     {#snippet trigger()}
                         <div class="dropdown__item" id="ellipsis-button">
-                            {card.counter}
+                            <span class="font-semibold">{card.counter}</span>
                             <EllipsisIcon />
                         </div>
                     {/snippet}
@@ -208,7 +209,7 @@
         </button>
     </div>
     <!-- Task Actions -->
-    <div class="mt-3 flex gap-2 px-panel-inline items-center">
+    <div class="my-2 flex gap-2 px-panel-inline items-center">
         <Select
             value={card.column.id}
             options={columnOptions}
@@ -217,9 +218,7 @@
         >
             <button class="btn">
                 <CircleDashedIcon />
-                <span class="font-medium">
-                    {card.column.name}
-                </span>
+                {card.column.name}
             </button>
         </Select>
 
@@ -246,20 +245,19 @@
                 {:else}
                     <UsersSolidIcon />
                 {/if}
-                <span class="font-medium">
-                    {card.assignee?.fullName ?? 'Assignee'}
-                </span>
+                {card.assignee?.fullName ?? 'Assignee'}
             </button>
         </Select>
     </div>
-    <!-- <hr /> -->
+    <hr />
+
     <!-- Scrollable Content Section -->
     <div
         bind:this={scrollable}
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="mx-5.5 mt-6 text-xl">
+        <div class="px-8 py-6 text-xl bg-material-base">
             <div
                 class="input input--text-area flex-grow w-full leading-relaxed"
             >
@@ -276,8 +274,11 @@
                 />
             </div>
         </div>
-        <hr class="my-6" />
-        <MessageList messages={card.messages} />
+        <hr />
+        <div class="mt-4">
+            <p class="mx-6 mb-4 text-ink-detail">4 Messages</p>
+            <MessageList messages={card.messages} />
+        </div>
     </div>
     {#if card.typingUsers.length > 0}
         <div>
@@ -290,13 +291,17 @@
     <div
         class="
         border
-        border-divider-object
+        border-divider
+        py-3
+        mx-6
+        px-panel-inline
         rounded-md
-        m-panel-inline
-        p-panel-inline-half
+        mb-3
         focus-within:outline-[1.5px]
         focus-within:outline-primary
         focus-within:-outline-offset-[1px]
+        text-lg
+        bg-material-base
         "
     >
         <Editor

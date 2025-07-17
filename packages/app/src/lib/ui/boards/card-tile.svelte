@@ -98,7 +98,7 @@
         data-active={active || undefined}
         class="
             bg-gray-60
-            dark:bg-gray-850
+            dark:bg-gray-825
             hover:bg-gray-80
             dark:hover:bg-gray-750
             group
@@ -107,7 +107,8 @@
             cursor-default
             gap-1
             rounded-md
-            p-2.5
+            px-3.5
+            py-2.5
             content
             data-active:outline-[1.5px]
             data-active:outline-primary
@@ -129,7 +130,7 @@
                 data-active={active || undefined}
             >
                 {#if !card.isDraft}
-                    <span class="truncate">
+                    <span class="truncate font-medium">
                         {preview}
                     </span>
                 {/if}
@@ -174,7 +175,7 @@
                         </span>
                     {:else}
                         <div
-                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-800 icon-xs"
+                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-775 icon-xs"
                             class:ml-auto={todoStats.total == 0}
                         >
                             <UserSolidIcon />

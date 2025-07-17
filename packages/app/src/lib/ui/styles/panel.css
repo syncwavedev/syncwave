@@ -1,7 +1,7 @@
 :root {
     --panel-padding-block: 1rem;
     --panel-padding-inline: 1rem;
-    --panel-header-height: 2.65rem;
+    --panel-header-height: 2.8rem;
 }
 
 @theme static {

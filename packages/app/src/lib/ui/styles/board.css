@@ -1,7 +1,7 @@
 :root {
     --board-height: calc(var(--app-height) - var(--panel-header-height));
 
-    --column-width: 46ch;
+    --column-width: 44ch;
     --column-padding-inline: 0.6125rem;
 
     --board-padding-inline: 2.25rem;

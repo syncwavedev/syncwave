@@ -10,8 +10,6 @@
     class="
     flex
     flex-col
-    px-panel-inline-half
-    mx-panel-inline
     py-1.5
     "
 >
@@ -34,7 +32,7 @@
         </div>
     </div>
     <div
-        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.8+0.3rem))] relative text-lg"
+        class="select-text leading-relaxed ml-[calc(var(--avatar-size)*0.8+0.3rem))] relative text-xl"
     >
         {#if message.payload.type === 'card_created'}
             <p class="text-ink-detail">Created this card</p>

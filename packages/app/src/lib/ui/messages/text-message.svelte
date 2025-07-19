@@ -25,14 +25,10 @@
     class="
     flex
     flex-col
-    px-panel-inline-half
-    mx-panel-inline
     py-1.5
     relative
     group
     icon-sm
-    hover:bg-material-base-hover
-    rounded-md
     "
 >
     <div class="flex items-center gap-1.5">
@@ -53,27 +49,23 @@
             </span>
         </div>
 
-        <button
-            class="
-            z-20
-            absolute
-            right-2
-            top-0
-            -translate-y-1/2
-            bg-material-base!
-            btn
-            btn--icon
-            btn--bordered
-            btn--small
-            invisible
-            group-hover:visible"
-            onclick={onDeleteMessage}
-        >
-            <TrashIcon />
-        </button>
+        <div class="ml-auto">
+            <button
+                class="
+                btn
+                btn--icon
+                btn--small
+                invisible
+                group-hover:visible
+                "
+                onclick={onDeleteMessage}
+            >
+                <TrashIcon />
+            </button>
+        </div>
     </div>
     <div
-        class="select-text ml-[calc(var(--avatar-size)*0.8+0.3rem))] relative text-lg"
+        class="select-text ml-[calc(var(--avatar-size)*0.8+0.3rem))] relative text-xl"
     >
         <RichtextView
             fragment={(message.payload as TextMessagePayloadView).text

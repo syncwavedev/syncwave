@@ -112,6 +112,8 @@
 
 .btn--bordered {
     --btn-border-size: 1px;
+    --btn-padding: 0.4em 0.8em;
+    --btn-border-radius: 0.5em;
 }
 
 .btn--large {

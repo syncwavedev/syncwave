@@ -154,11 +154,18 @@
     };
 </script>
 
-<div
-    class="border-divider flex w-full flex-shrink-0 flex-col border-l dark:bg-material-1 bg-gray-10"
->
+<div class="border-divider flex w-full flex-shrink-0 flex-col border-l">
     <div
-        class="flex items-center justify-between shrink-0 h-panel-header px-panel-inline"
+        class="
+        flex
+        items-center
+        justify-between
+        shrink-0
+        h-panel-header
+        border-b
+        border-divider
+        px-panel-inline
+        "
     >
         <div class="flex items-center">
             {#if card.isDraft}
@@ -167,7 +174,7 @@
                 <Dropdown placement="bottom-start">
                     {#snippet trigger()}
                         <div class="dropdown__item" id="ellipsis-button">
-                            {card.counter}
+                            No. {card.counter}
                             <EllipsisIcon />
                         </div>
                     {/snippet}
@@ -209,20 +216,20 @@
         </button>
     </div>
     <!-- Task Actions -->
-    <div class="my-1.5 flex gap-2 px-panel-inline items-center">
-        <Select
+    <div class="flex gap-3 items-center mx-6 my-3">
+        <!-- <Select
             value={card.column.id}
             options={columnOptions}
             onValueChange={value =>
                 agent.setCardColumn(card.id, value as ColumnId)}
-        >
-            <button class="btn">
-                <CircleDashedIcon />
-                {card.column.name}
-            </button>
-        </Select>
+        > -->
+        <button class="btn btn--plain">
+            <CircleDashedIcon />
+            {card.column.name}
+        </button>
+        <!-- </Select> -->
 
-        <Select
+        <!-- <Select
             value={card.assignee?.id}
             options={[
                 {value: undefined, label: 'No assignee'},
@@ -233,22 +240,23 @@
                     card.id,
                     (value as UserId) || undefined // select doesn't support undefined, it will return '' instead
                 )}
-        >
-            <button class="btn">
-                {#if card.assignee}
-                    <Avatar
-                        userId={card.assignee.id}
-                        name={card.assignee.fullName}
-                        imageUrl={card.assignee.avatarUrlSmall}
-                        class="avatar--x-small"
-                    />
-                {:else}
-                    <UsersSolidIcon />
-                {/if}
-                {card.assignee?.fullName ?? 'Assignee'}
-            </button>
-        </Select>
+        > -->
+        <button class="btn btn--plain">
+            {#if card.assignee}
+                <Avatar
+                    userId={card.assignee.id}
+                    name={card.assignee.fullName}
+                    imageUrl={card.assignee.avatarUrlSmall}
+                    class="avatar--x-small"
+                />
+            {:else}
+                <UsersSolidIcon />
+            {/if}
+            {card.assignee?.fullName ?? 'Assignee'}
+        </button>
+        <!-- </Select> -->
     </div>
+
     <hr />
 
     <!-- Scrollable Content Section -->
@@ -257,7 +265,7 @@
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="px-8 py-6 text-xl bg-material-base">
+        <div class="px-8 pb-8 pt-8 text-xl bg-material-base">
             <div
                 class="input input--text-area flex-grow w-full leading-relaxed"
             >
@@ -265,7 +273,6 @@
                     bind:this={editor}
                     placeholder="Description"
                     fragment={card.text.__fragment!}
-                    class="min-h-30"
                     {awareness}
                     me={{
                         fullName: me.fullName,
@@ -274,8 +281,13 @@
                 />
             </div>
         </div>
-        <hr />
-        <div class="mt-2">
+        <div class="flex items-center gap-2 mx-8">
+            <p class="text-ink-detail">
+                {card.messages.length} Activities
+            </p>
+            <div class="h-[1px] flex-1 bg-divider"></div>
+        </div>
+        <div class="mt-4 mx-8 pb-4">
             <MessageList messages={card.messages} />
         </div>
     </div>
@@ -289,18 +301,21 @@
     {/if}
     <div
         class="
-        border-t
-        border-divider
-        py-3
-        px-panel-inline
+        py-2.5
+        px-3
+        mx-8
+        mb-4
+        rounded-md
         text-lg
-        bg-material-base
+        bg-material-1
+        border-1
+        border-divider
         "
     >
         <Editor
             {fragment}
             {me}
-            placeholder="Write a message..."
+            placeholder="Add message..."
             class="px-1 w-full leading-relaxed"
             onEnter={() => onSendMessage()}
             onKeyDown={() =>

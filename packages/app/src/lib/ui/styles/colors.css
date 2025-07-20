@@ -19,25 +19,25 @@
     --color-gray-400: oklch(68% 0 264deg);
     --color-gray-450: oklch(64% 0 264deg);
     --color-gray-500: oklch(60% 0 264deg);
-    --color-gray-550: oklch(56% 0 264deg);
-    --color-gray-600: oklch(52% 0 264deg);
-    --color-gray-650: oklch(48% 0 264deg);
-    --color-gray-700: oklch(44% 0 264deg);
-    --color-gray-725: oklch(42% 0.0083 264deg);
-    --color-gray-750: oklch(40% 0.0083 264deg);
-    --color-gray-775: oklch(38% 0.0083 264deg);
-    --color-gray-800: oklch(36% 0.0083 264deg);
-    --color-gray-825: oklch(34% 0.0083 264deg);
-    --color-gray-850: oklch(32% 0.0083 264deg);
-    --color-gray-875: oklch(30% 0.0083 264deg);
-    --color-gray-900: oklch(28% 0.0083 264deg);
-    --color-gray-925: oklch(26% 0.0083 264deg);
-    --color-gray-950: oklch(24% 0.0083 264deg);
-    --color-gray-975: oklch(22% 0.0083 264deg);
-    --color-gray-1000: oklch(20% 0.0083 264deg);
-    --color-gray-1025: oklch(18% 0.0083 264deg);
-    --color-gray-1050: oklch(16% 0.0083 264deg);
-    --color-gray-1100: oklch(12% 0.0083 264deg);
+    --color-gray-550: oklch(56% 0.001 264deg);
+    --color-gray-600: oklch(52% 0.002 264deg);
+    --color-gray-650: oklch(48% 0.003 264deg);
+    --color-gray-700: oklch(44% 0.004 264deg);
+    --color-gray-725: oklch(42% 0.005 264deg);
+    --color-gray-750: oklch(40% 0.006 264deg);
+    --color-gray-775: oklch(38% 0.007 264deg);
+    --color-gray-800: oklch(36% 0.008 264deg);
+    --color-gray-825: oklch(34% 0.009 264deg);
+    --color-gray-850: oklch(32% 0.01 264deg);
+    --color-gray-875: oklch(30% 0.011 264deg);
+    --color-gray-900: oklch(28% 0.012 264deg);
+    --color-gray-925: oklch(26% 0.013 264deg);
+    --color-gray-950: oklch(24% 0.014 264deg);
+    --color-gray-975: oklch(22% 0.015 264deg);
+    --color-gray-1000: oklch(20% 0.016 264deg);
+    --color-gray-1025: oklch(18% 0.017 264deg);
+    --color-gray-1050: oklch(16% 0.018 264deg);
+    --color-gray-1100: oklch(12% 0.02 264deg);
 
     --color-primary: oklch(0.65 0.155 249.85deg);
 
@@ -157,7 +157,7 @@
         --theme-color-modified: oklch(0.68 0.19 257.42);
         --theme-color-deleted: oklch(0.62 0.19 29.7);
 
-        --theme-color-divider: var(--color-gray-825);
+        --theme-color-divider: var(--color-gray-800);
         --theme-color-divider-object: var(--color-gray-750);
 
         --theme-color-scrollbar: var(--color-gray-750);

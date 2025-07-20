@@ -132,9 +132,9 @@
                 {/if}
             </div>
             {#if !card.isDraft}
-                <div class="flex items-center icon-base text-md">
+                <div class="flex items-center icon-base">
                     {#if card.counter}
-                        <HashtagIcon />{card.counter}
+                        <span class="text-lg">{card.counter}</span>
                     {/if}
                     {#if card.viewerUsers.length > 0}
                         <div class="ml-2 flex">
@@ -149,7 +149,7 @@
                         </div>
                     {/if}
                     {#if todoStats.total > 0}
-                        <span class="ml-auto text-ink-detail">
+                        <span class="ml-auto text-ink-detail text-sm">
                             {#if todoStats.left === 0}
                                 All done
                             {:else}
@@ -171,7 +171,7 @@
                         </span>
                     {:else}
                         <div
-                            class="ml-2 h-[1.25rem] w-[1.25rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-775 icon-xs text-ink-detail"
+                            class="ml-2 h-[1.425rem] w-[1.425rem] rounded-full flex items-center justify-center bg-gray-80 dark:bg-gray-775 icon-xs text-ink-detail"
                             class:ml-auto={todoStats.total == 0}
                         >
                             <UserSolidIcon />

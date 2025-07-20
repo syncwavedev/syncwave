@@ -265,7 +265,7 @@
         class="overflow-y-auto no-scrollbar flex flex-col flex-1"
     >
         <!-- Task Description -->
-        <div class="px-8 pb-8 pt-8 text-xl bg-material-base">
+        <div class="px-8 pb-8 pt-8 text-xl">
             <div
                 class="input input--text-area flex-grow w-full leading-relaxed"
             >
@@ -299,28 +299,4 @@
             {card.typingUsers.length > 1 ? 'are' : 'is'} typing...
         </div>
     {/if}
-    <div
-        class="
-        py-2.5
-        px-3
-        mx-8
-        mb-4
-        rounded-md
-        text-lg
-        bg-material-1
-        border-1
-        border-divider
-        "
-    >
-        <Editor
-            {fragment}
-            {me}
-            placeholder="Add message..."
-            class="px-1 w-full leading-relaxed"
-            onEnter={() => onSendMessage()}
-            onKeyDown={() =>
-                agent.handleCardMessageKeyDown(card.boardId, card.id)}
-            onBlur={() => agent.handleCardMessageBlur(card.boardId, card.id)}
-        />
-    </div>
 </div>

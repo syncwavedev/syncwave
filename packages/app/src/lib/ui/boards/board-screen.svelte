@@ -36,8 +36,6 @@
     import TimesIcon from '../components/icons/times-icon.svelte';
     import SearchIcon from '../components/icons/search-icon.svelte';
     import PermissionBoundary from '../components/permission-boundary.svelte';
-    import InboxSolidIcon from '../components/icons/inbox-solid-icon.svelte';
-    import InboxView from '../activity-view/inbox-view.svelte';
     import PlusIcon from '../components/icons/plus-icon.svelte';
     import LeftPanelIcon from '../components/icons/left-panel-icon.svelte';
 
@@ -250,8 +248,6 @@
         searchValue = '';
         isSearch = false;
     }
-
-    let inboxActive = $state(false);
 </script>
 
 {#snippet boardSettings()}
@@ -260,9 +256,9 @@
 
 {#snippet header()}
     {#if !hideLeftPanel}
-        <!-- <button class="btn btn--icon" onclick={onOpenLeftPanel}>
+        <button class="btn btn--icon" onclick={onOpenLeftPanel}>
             <LeftPanelIcon />
-        </button> -->
+        </button>
     {/if}
     <div class="ml-4">
         <Dropdown placement="bottom-start">
@@ -322,13 +318,6 @@
         <div class="ml-auto flex gap-1">
             <button class="btn btn--icon" onclick={onStartSearch}>
                 <PlusIcon />
-            </button>
-            <button
-                class="btn btn--icon"
-                onclick={() => (inboxActive = !inboxActive)}
-                class:btn--active={inboxActive}
-            >
-                <InboxSolidIcon />
             </button>
             <button class="btn btn--icon" onclick={onStartSearch}>
                 <SearchIcon />
@@ -422,18 +411,6 @@
                 />
             </ResizablePanel>
         {/key}
-    {/if}
-    {#if inboxActive}
-        <ResizablePanel
-            class="max-h-full overflow-auto"
-            freeSide="left"
-            width={panelSizeManager.getWidth('inbox') ?? 360}
-            minWidth={240}
-            maxWidth={1600}
-            onWidthChange={w => panelSizeManager.setWidth('inbox', w)}
-        >
-            <InboxView {board} />
-        </ResizablePanel>
     {/if}
 </PermissionBoundary>
 

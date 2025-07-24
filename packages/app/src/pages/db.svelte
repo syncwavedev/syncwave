@@ -1,5 +1,5 @@
 <script>
-    import KeyNode from '../lib/ui/components/key-node.svelte';
+    import KeyNode from '../lib/components/KeyNode.svelte';
 </script>
 
 <div class="h-screen overflow-scroll select-text">

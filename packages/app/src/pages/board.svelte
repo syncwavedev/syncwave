@@ -2,11 +2,11 @@
     import {MeViewDataDto} from 'syncwave';
 
     import {getAgent} from '../lib/agent/agent.svelte';
-    import BoardHistoryManager from '../lib/board-history-manager';
-    import BoardScreen from '../lib/ui/boards/board-screen.svelte';
-    import BoardLoader from '../lib/ui/boards/board-loader.svelte';
-    import LeftPanel from '../lib/ui/left-panel/left-panel.svelte';
-    import NewBoardScreen from '../lib/ui/boards/new-board-screen.svelte';
+    import BoardHistoryManager from '../lib/managers/board-history-manager';
+    import BoardScreen from '../lib/components/boards/BoardScreen.svelte';
+    import BoardLoader from '../lib/components/boards/BoardLoader.svelte';
+    import LeftPanel from '../lib/components/left-panel/LeftPanel.svelte';
+    import NewBoardScreen from '../lib/components/boards/NewBoardScreen.svelte';
 
     type View = {type: 'board'; key: string} | {type: 'new-board'};
 

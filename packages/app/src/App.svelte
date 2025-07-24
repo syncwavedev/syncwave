@@ -15,10 +15,10 @@
         createCoordinatorClient,
         setAuthManager,
         setUploadManager,
-    } from './lib/utils.js';
-    import ErrorCard from './lib/ui/components/error-card.svelte';
-    import {UploadManager} from './lib/upload-manager.svelte';
-    import {createThemeManager} from './lib/ui/theme-manager.svelte.js';
+    } from './lib/utils/utils.js';
+    import ErrorCard from './lib/components/ErrorCard.svelte';
+    import {UploadManager} from './lib/managers/upload-manager.svelte';
+    import {createThemeManager} from './lib/managers/theme-manager.svelte.js';
     import {
         createAgent,
         getAgent,
@@ -26,13 +26,13 @@
     } from './lib/agent/agent.svelte.js';
     import {appConfig} from './config';
     import {WsTransportClient} from './ws-transport-client';
-    import {AuthManager} from './auth-manager';
+    import {AuthManager} from './lib/managers/auth-manager';
 
     import {DocumentActivityMonitor} from './document-activity.js';
-    import ModalContainer from './lib/ui/components/modal-container.svelte';
-    import {PageManager} from './page-manager.svelte.js';
-    import Loading from './lib/ui/components/loading.svelte';
-    import ToastContainer from './lib/ui/components/toast-container.svelte';
+    import ModalContainer from './lib/components/ModalContainer.svelte';
+    import {PageManager} from './lib/managers/page-manager.svelte.js';
+    import Loading from './lib/components/Loading.svelte';
+    import ToastContainer from './lib/components/ToastContainer.svelte';
 
     const documentActivity = new DocumentActivityMonitor();
 

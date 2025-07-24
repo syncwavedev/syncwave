@@ -1,6 +1,6 @@
 <script>
     import {getAgent} from '../lib/agent/agent.svelte';
-    import {getAuthManager} from '../lib/utils';
+    import {getAuthManager} from '../lib/utils/utils';
 
     const agent = getAgent();
     const authManager = getAuthManager();

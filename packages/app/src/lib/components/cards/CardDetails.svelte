@@ -182,11 +182,57 @@
                 />
             </div>
         </div>
-        <div class="flex items-center gap-2 mx-8">
-            <p class="text-ink-detail">
-                {card.messages.length} Activities
-            </p>
-            <div class="h-[1px] flex-1 bg-divider"></div>
-        </div>
+        {#if card.messages.length > 0}
+            <div class="flex items-center gap-2 mx-8 mb-2">
+                <p class="text-ink-detail">
+                    {card.messages.length} Activities
+                </p>
+                <div class="h-[1px] flex-1 bg-divider"></div>
+            </div>
+            {#each card.messages
+                .filter(m => m.payload.type !== 'text')
+                .reverse() as message (message.id)}
+                <div class="flex items-start gap-3 mx-8 py-1">
+                    <div
+                        class="w-1 h-1 bg-ink-detail rounded-full my-auto flex-shrink-0"
+                    ></div>
+                    <div class="flex flex-col gap-1 min-w-0">
+                        <p class="text-ink-detail text-sm leading-relaxed">
+                            {#if message.payload.type === 'card_created'}
+                                <span class="font-medium text-ink">
+                                    {message.author.fullName}
+                                </span>
+                                created this card
+                            {/if}
+                            {#if message.payload.type === 'card_assignee_changed'}
+                                <span class="font-medium text-ink">
+                                    {message.author.fullName}
+                                </span>
+                                assigned this to
+                                <span class="font-medium text-ink">
+                                    {message.payload.toAssignee?.fullName ||
+                                        'no one'}
+                                </span>
+                            {/if}
+                            {#if message.payload.type === 'card_column_changed'}
+                                <span class="font-medium text-ink">
+                                    {message.author.fullName}
+                                </span>
+                                moved this to
+                                <span class="font-medium text-ink">
+                                    {message.payload.toColumnName}
+                                </span>
+                            {/if}
+                            {#if message.payload.type === 'card_deleted'}
+                                <span class="font-medium text-ink">
+                                    {message.author.fullName}
+                                </span>
+                                deleted this card
+                            {/if}
+                        </p>
+                    </div>
+                </div>
+            {/each}
+        {/if}
     </div>
 </div>

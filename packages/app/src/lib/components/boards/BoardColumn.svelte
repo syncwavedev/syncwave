@@ -68,11 +68,6 @@
                 <button class="btn btn--icon" onclick={onCreateCard}>
                     <PlusIcon />
                 </button>
-                {#if permissionManager.hasPermission('write:board')}
-                    <button onclick={onEditColumn} class="btn btn--icon">
-                        <EllipsisIcon />
-                    </button>
-                {/if}
             </div>
         {/if}
     </div>

@@ -58,7 +58,7 @@
         <button
             type="button"
             class="dropdown__item"
-            onclick={() => () => {
+            onclick={() => {
                 const confirmMessage = `Are you sure you want to sign out?`;
                 if (confirm(confirmMessage)) {
                     authManager.logOut();

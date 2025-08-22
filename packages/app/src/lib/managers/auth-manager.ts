@@ -1,4 +1,5 @@
 import {assert, type JwtPayload, type UserId} from 'syncwave';
+import BoardHistoryManager from './board-history-manager';
 
 function parseJwt(token: string): unknown {
     const base64Url = token.split('.')[1];
@@ -91,6 +92,7 @@ export class AuthManager {
      * Logs out the user by removing the JWT token from storage and redirecting to the home page.
      */
     logOut(options: {pageReload: boolean} = {pageReload: true}): void {
+        BoardHistoryManager.clear();
         this.storage.removeItem(this.JWT_KEY);
         if (options.pageReload) {
             window.location.href = '/';

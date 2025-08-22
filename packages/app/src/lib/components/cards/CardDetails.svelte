@@ -15,6 +15,7 @@
     import Avatar from '../Avatar.svelte';
     import UsersSolidIcon from '../icons/UsersSolidIcon.svelte';
     import Select from '../Select.svelte';
+    import TimeAgo from '../TimeAgo.svelte';
 
     const {
         card,
@@ -193,9 +194,6 @@
                 .filter(m => m.payload.type !== 'text')
                 .reverse() as message (message.id)}
                 <div class="flex items-start gap-3 mx-8 py-1">
-                    <div
-                        class="w-1 h-1 bg-ink-detail rounded-full my-auto flex-shrink-0"
-                    ></div>
                     <div class="flex flex-col gap-1 min-w-0">
                         <p class="text-ink-detail text-sm leading-relaxed">
                             {#if message.payload.type === 'card_created'}
@@ -229,6 +227,9 @@
                                 </span>
                                 deleted this card
                             {/if}
+                            <span class="text-xs">
+                                • <TimeAgo time={message.createdAt} />
+                            </span>
                         </p>
                     </div>
                 </div>

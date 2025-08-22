@@ -19,7 +19,6 @@
         column,
         onCardClick,
         onCreateCard,
-        onEditColumn,
         activeCardId,
         searchValue,
     }: {
@@ -27,7 +26,6 @@
         onCardClick: (card: CardTreeView) => void;
         activeCardId?: string;
         onCreateCard: () => void;
-        onEditColumn: () => void;
         searchValue: string;
     } = $props();
 

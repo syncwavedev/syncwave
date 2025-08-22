@@ -27,7 +27,6 @@
     import permissionManager from '../../managers/permission-manager';
     import {flip} from 'svelte/animate';
     import {DND_REORDER_DURATION_MS} from '../../dnd/board-dnd';
-    import {toastManager} from '../../managers/toast-manager.svelte';
     import Dropdown from '../Dropdown.svelte';
     import DoorOpenIcon from '../icons/DoorOpenIcon.svelte';
     import BoardIcon from '../icons/BoardIcon.svelte';
@@ -375,11 +374,6 @@
                             onCardClick={selectCard}
                             activeCardId={selectedCard?.id}
                             onCreateCard={() => createCard(column)}
-                            onEditColumn={() =>
-                                toastManager.info(
-                                    'Not implementd',
-                                    'Wait until we will ad this feater'
-                                )}
                             {searchValue}
                         />
                     </div>

@@ -7,7 +7,6 @@
         ColumnTreeView,
     } from '../../agent/view.svelte';
     import PlusIcon from '../icons/PlusIcon.svelte';
-    import EllipsisIcon from '../icons/EllipsisIcon.svelte';
     import {
         DND_CARD_GAP,
         getDndBoardContext,

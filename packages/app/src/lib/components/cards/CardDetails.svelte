@@ -121,14 +121,14 @@
         </button>
     </div>
     <!-- Task Actions -->
-    <div class="flex gap-3 items-center mx-6 my-3">
+    <div class="flex gap-3 items-center mx-5 my-1.5">
         <Select
             value={card.column.id}
             options={columnOptions}
             onValueChange={value =>
                 agent.setCardColumn(card.id, value as ColumnId)}
         >
-            <button class="btn btn--plain">
+            <button class="btn">
                 <CircleDashedIcon />
                 {card.column.name}
             </button>
@@ -146,7 +146,7 @@
                     (value as UserId) || undefined // select doesn't support undefined, it will return '' instead
                 )}
         >
-            <button class="btn btn--plain">
+            <button class="btn">
                 {#if card.assignee}
                     <Avatar
                         userId={card.assignee.id}
@@ -183,13 +183,9 @@
                 />
             </div>
         </div>
+        <hr />
         {#if card.messages.length > 0}
-            <div class="flex items-center gap-2 mx-8 mb-2">
-                <p class="text-ink-detail">
-                    {card.messages.length} Activities
-                </p>
-                <div class="h-[1px] flex-1 bg-divider"></div>
-            </div>
+            <div class="mx-8 mb-2 mt-6 text-ink-detail">Activities history</div>
             {#each card.messages
                 .filter(m => m.payload.type !== 'text')
                 .reverse() as message (message.id)}

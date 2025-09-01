@@ -95,6 +95,7 @@ export class MemberView extends UserView {
 
     memberId = $derived(this._state.memberId);
     role = $derived(this._state.role);
+    memberDeletedAt = $derived(this._state.memberDeletedAt);
 
     upsertMemberInfo(userEmail: MemberInfoDto): void {
         if (userEmail.memberId === this._state.memberId) {
@@ -572,7 +573,11 @@ export class BoardView implements Board {
     protected readonly _data!: BoardData;
     protected readonly _board!: Board;
 
-    members = $derived(this._data.allMemberViews.filter(x => !x.deletedAt));
+    members = $derived(
+        this._data.allMemberViews.filter(
+            x => !x.deletedAt && !x.memberDeletedAt
+        )
+    );
 
     memberId = $derived(this._data.memberId);
 

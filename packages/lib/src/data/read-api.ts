@@ -428,7 +428,8 @@ function getBoardUserEmails(
                 userId: x.userId,
                 email: account.email,
                 memberId: x.id,
-            };
+                memberDeletedAt: x.deletedAt,
+            } satisfies MemberInfoDto;
         })
         .toArray();
 }

@@ -65,6 +65,7 @@ export function MemberInfoDto() {
         memberId: Uuid<MemberId>(),
         email: Type.String(),
         role: MemberRole(),
+        memberDeletedAt: Type.Union([Type.Undefined(), Timestamp()]),
     });
 }
 

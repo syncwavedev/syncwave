@@ -888,6 +888,7 @@ async function logAccountChange(
                     role: member.role,
                     userId: member.userId,
                     memberId: member.id,
+                    memberDeletedAt: member.deletedAt,
                 },
             })
         ),
@@ -981,6 +982,7 @@ async function logMemberChange(
             role: member.role,
             userId: member.userId,
             memberId: member.id,
+            memberDeletedAt: member.deletedAt,
         },
     };
     await whenAll([

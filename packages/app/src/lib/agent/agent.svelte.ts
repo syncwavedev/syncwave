@@ -58,10 +58,9 @@ import {
 } from 'syncwave';
 import type {XmlFragment} from 'yjs';
 
-import type {AuthManager} from '../../auth-manager';
-
 import {WebCryptoProvider} from 'syncwave/web-crypto-provider.js';
 import {appConfig} from '../../config';
+import type {AuthManager} from '../managers/auth-manager';
 import {AwarenessSynchronizer} from './awareness-synchronizer';
 import {CrdtManager, type EntityState} from './crdt-manager';
 import {
@@ -1236,6 +1235,7 @@ export class Agent {
             this.crdtManager.applyRemoteChange(event);
         } else if (event.kind === 'snapshot') {
             if (event.type === 'member_info') {
+                console.warn('upsert member info!!!', event);
                 this.syncTargets().forEach(x =>
                     x.upsertMemberInfo(event.after)
                 );

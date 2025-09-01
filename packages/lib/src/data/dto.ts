@@ -62,6 +62,7 @@ export interface MeViewDataDto
 export function MemberInfoDto() {
     return Type.Object({
         userId: Uuid<UserId>(),
+        memberId: Uuid<MemberId>(),
         email: Type.String(),
         role: MemberRole(),
     });

@@ -521,11 +521,15 @@ export function createWriteApi() {
             }),
             res: Type.Object({}),
             handle: async (st, {memberId, role}) => {
+                console.log(`Updating member ${memberId} role to ${role}`);
                 const member = await st.tx.members.getById(memberId, {
                     excludeDeleted: true,
                 });
 
+                console.log(member);
+
                 if (!member) {
+                    console.log(`Member ${memberId} not found`);
                     throw new BusinessError(
                         `member ${memberId} not found`,
                         'member_not_found'
@@ -533,6 +537,7 @@ export function createWriteApi() {
                 }
 
                 if (member.role === role) {
+                    console.log(`Member ${memberId} role is already ${role}`);
                     return {};
                 }
 
@@ -541,6 +546,10 @@ export function createWriteApi() {
                     st.ps.ensureCanManage(member.boardId, role),
                 ]);
 
+                console.log(
+                    `Member ${memberId} role can be changed from ${member.role} to ${role}`
+                );
+
                 if (member.role === 'owner') {
                     const allMembers = await st.tx.members
                         .getByBoardId(member.boardId, {excludeDeleted: true})
@@ -548,6 +557,7 @@ export function createWriteApi() {
                         .toArray();
 
                     if (allMembers.length === 1) {
+                        console.log(`Member ${memberId} is the last owner`);
                         throw new BusinessError(
                             'cannot remove the last owner',
                             'last_owner'
@@ -555,6 +565,7 @@ export function createWriteApi() {
                     }
                 }
 
+                console.log(`Updating member ${memberId} role to ${role}`);
                 await st.tx.members.update(
                     memberId,
                     {excludeDeleted: true},
@@ -562,6 +573,8 @@ export function createWriteApi() {
                         x.role = role;
                     }
                 );
+
+                console.log(`Member ${memberId} role updated to ${role}`);
 
                 return {};
             },

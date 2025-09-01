@@ -87,7 +87,7 @@
         }
 
         try {
-            agent.updateMemberRole(member.id as MemberId, role);
+            agent.updateMemberRole(member.memberId, role);
         } catch (e) {
             toastManager.error(
                 'Failed to change member role',
@@ -101,7 +101,7 @@
         if (!confirm('Are you sure you want to remove this member?')) return;
 
         try {
-            agent.deleteMember(member.id as MemberId);
+            agent.deleteMember(member.memberId);
         } catch (e) {
             toastManager.error(
                 'Failed to remove member',

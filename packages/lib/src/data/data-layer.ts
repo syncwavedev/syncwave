@@ -887,6 +887,7 @@ async function logAccountChange(
                     email: account.email,
                     role: member.role,
                     userId: member.userId,
+                    memberId: member.id,
                 },
             })
         ),
@@ -960,16 +961,33 @@ async function logMemberChange(
             kind: 'create',
         });
     }
-    const event: MemberChangeEvent = {
+    const account = await tx.accounts.getByUserId(member.userId);
+    assert(
+        account !== undefined,
+        `logMemberChange: account ${member.userId} not found`
+    );
+    const memberChangeEvent: MemberChangeEvent = {
         type: 'member',
         id,
         diff,
         ts: tx.timestamp,
         kind,
     };
+    const memberInfoEvent: MemberInfoChangeEvent = {
+        type: 'member_info',
+        kind: 'snapshot',
+        after: {
+            email: account.email,
+            role: member.role,
+            userId: member.userId,
+            memberId: member.id,
+        },
+    };
     await whenAll([
-        tx.esWriter.append(boardEvents(member.boardId), event),
-        tx.esWriter.append(userEvents(member.userId), event),
+        tx.esWriter.append(boardEvents(member.boardId), memberChangeEvent),
+        tx.esWriter.append(userEvents(member.userId), memberChangeEvent),
+        tx.esWriter.append(boardEvents(member.boardId), memberInfoEvent),
+        tx.esWriter.append(userEvents(member.userId), memberInfoEvent),
     ]);
 }
 

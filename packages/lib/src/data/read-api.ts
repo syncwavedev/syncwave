@@ -24,7 +24,7 @@ import {
     SyncwaveLogEntry,
     userEvents,
 } from './data-layer.js';
-import {BoardViewDataDto, MeViewDataDto} from './dto.js';
+import {BoardViewDataDto, MemberInfoDto, MeViewDataDto} from './dto.js';
 import {EventStoreReader} from './event-store.js';
 import {ObjectEnvelope, type ObjectStore} from './infrastructure.js';
 import type {AttachmentId} from './repos/attachment-repo.js';
@@ -412,7 +412,10 @@ function getBoardUsers(tx: DataTx, boardId: BoardId) {
         .toArray();
 }
 
-function getBoardUserEmails(tx: DataTx, boardId: BoardId) {
+function getBoardUserEmails(
+    tx: DataTx,
+    boardId: BoardId
+): Promise<MemberInfoDto[]> {
     return toStream(tx.members.getByBoardId(boardId, {excludeDeleted: false}))
         .mapParallel(async x => {
             const account = await tx.accounts.getByUserId(x.userId);
@@ -424,6 +427,7 @@ function getBoardUserEmails(tx: DataTx, boardId: BoardId) {
                 role: x.role,
                 userId: x.userId,
                 email: account.email,
+                memberId: x.id,
             };
         })
         .toArray();

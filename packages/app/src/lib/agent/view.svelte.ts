@@ -11,7 +11,6 @@ import {
     compareStrings,
     MemberId,
     MemberInfoDto,
-    MemberRole,
     MessageReadDto,
     partition,
     TextMessagePayload,
@@ -83,13 +82,24 @@ export class UserView implements User {
 }
 
 export class MemberView extends UserView {
+    private _state: MemberInfoDto = $state.raw(lateInit());
+
     constructor(
         user: User,
-        email: string,
-        public readonly role: MemberRole,
+        memberInfo: MemberInfoDto,
         public readonly color: string
     ) {
-        super(user, email);
+        super(user, memberInfo.email);
+        this._state = memberInfo;
+    }
+
+    memberId = $derived(this._state.memberId);
+    role = $derived(this._state.role);
+
+    upsertMemberInfo(userEmail: MemberInfoDto): void {
+        if (userEmail.memberId === this._state.memberId) {
+            this._state = userEmail;
+        }
     }
 }
 
@@ -341,12 +351,7 @@ export class BoardData implements SyncTarget {
             .map((x, idx) => {
                 const memberInfo = this.getMemberInfo(x.id);
                 const memberColor = USER_COLORS[idx % USER_COLORS.length];
-                return new MemberView(
-                    x,
-                    memberInfo.email,
-                    memberInfo.role,
-                    memberColor
-                );
+                return new MemberView(x, memberInfo, memberColor);
             })
     );
     activeMemberViews = $derived(this.allMemberViews.filter(x => !x.deletedAt));
@@ -409,6 +414,9 @@ export class BoardData implements SyncTarget {
         this.rawMembers = this.rawMembers
             .filter(x => x.userId !== userEmail.userId)
             .concat([userEmail]);
+
+        console.warn(userEmail);
+        this.allMemberViews.forEach(x => x.upsertMemberInfo(userEmail));
     }
 
     upsertMessageRead(messageRead: MessageReadDto): void {

@@ -1,14 +1,13 @@
 <h1 align="center">Syncwave</h1>
 
 <p align="center">
-  <b>Kanban board</b> that helps you build software people love.
+  Syncwave is a real-time kanban board that's simple and beautiful.
 </p>
 <h4 align="center">
   <a href="https://discord.com/invite/FzQjQVFdQz">
     <img src="https://img.shields.io/badge/Chat%20on-Discord-%235766f2?style=for-the-badge" alt="Discord community" /></a>
   <a href="https://github.com/syncwavedev/syncwave/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-AGPL--v3-green?style=for-the-badge" alt="Syncwave is released under the AGPLv3 license." /></a>
-  <img alt="Commit activity per month" src="https://img.shields.io/github/commit-activity/m/syncwavedev/syncwave?style=for-the-badge" />
 </h4>
 <h4 align="center">
   <a href="https://app.syncwave.dev/demo">Demo</a>
@@ -27,50 +26,48 @@
     <img alt="Syncwave Screenshot" src="./packages/www/src/assets/syncwave-window-screenshot-light-v2.png">
 </picture>
 
-We built Syncwave because we were tired of project management tools that get in your way. As developers ourselves, we wanted something that feels familiar (like our IDEs) but keeps things simple with a kanban approach. No unnecessary features, no clutter—just a fast, collaborative tool that lets you focus on building great software. We've stripped away all the distractions to create something we actually enjoy using ourselves.
+We built Syncwave because we were tired of kanban boards that do too much.
+
+Most boards bury you in features. Settings, integrations, workflows, automations. You spend more time configuring than working.
+
+Syncwave does less on purpose.
+
+Open it, create cards, drag them between columns, and watch your teammates' changes appear instantly—that's it.
+
+That's the whole product.
 
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li><a href="#features">Features</a></li>
     <li><a href="#quick-start">Quick start</a></li>
     <li><a href="#self-hosted">Self-Hosted</a></li>
     <li><a href="#documentation">Documentation</a></li>
     <li><a href="#help">Help</a></li>
-    <li><a href="#alternatives">Alternatives</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
-## Features
-
-- **Realtime** collaboration.
-- Know what your friends are doing with board wide **activity**.
-- Communicate using built-in **messaging**.
-- Own your data with **self-hosting**.
-- Stay productive with **keyboard shortcuts**.
-
 ## Live Demo
 
-You can try out Syncwave in your browser at [app.syncwave.dev/demo](https://app.syncwave.dev/demo).
+Try it at [app.syncwave.dev/demo](https://app.syncwave.dev/demo). No signup required.
 
 ## Quick start
 
-If you don't want to host Syncwave yourself, we already did it for your at [app.syncwave.dev](https://app.syncwave.dev).
+Use our hosted version at [app.syncwave.dev](https://app.syncwave.dev) or self-host it.
 
 ## Self-Hosted
 
-Syncwave is available as a Docker image [syncwave/syncwave](http://hub.docker.com/r/syncwave/syncwave) that you can run on your own server:
+Pull the Docker image and run it:
 
 ```sh
 docker run --name syncwave -d -p 8080:8080 -v syncwave-data:/data syncwave/syncwave
 ```
 
-Open your browser at `http://localhost:8080/`.
+Then open `http://localhost:8080/`.
 
-Here is the Docker Compose file:
+Docker Compose:
 
 ```yaml
 services:
@@ -89,41 +86,32 @@ volumes:
 
 ## Documentation
 
-For full documentation, visit [syncwave.dev/docs](https://www.syncwave.dev/docs).
+Full docs at [syncwave.dev/docs](https://www.syncwave.dev/docs).
 
 ## Help
 
-If you have questions or need assistance, you can:
-
-- Ask in our [GitHub Discussions](https://github.com/syncwavedev/syncwave/discussions/new/choose)
-- Join our [Discord server](https://discord.com/invite/FzQjQVFdQz) Syncwave for real-time support
-- File an [issue on GitHub](https://github.com/syncwavedev/syncwave/issues) to report problems
-
-## Alternatives
-
-- [Plane](http://github.com/makeplane/plane/) - JIRA alternative, better suited for enterprises.
-- [OpenProject](https://github.com/opf/openproject) - if Plane for some reason doesn't work for your organization.
-- [Vikunja](https://github.com/go-vikunja/vikunja/tree/main) - a todo-app for personal use.
-- [Planka](https://github.com/plankanban/planka) - realtime kanban board for workgroups.
+- [GitHub Discussions](https://github.com/syncwavedev/syncwave/discussions/new/choose) for questions
+- [Discord](https://discord.com/invite/FzQjQVFdQz) for quick help
+- [GitHub Issues](https://github.com/syncwavedev/syncwave/issues) for bugs
 
 ## License
 
-Syncwave is open source under the GNU Affero General Public License Version 3 (AGPLv3) or any later version. You can [find it here](./LICENSE).
+AGPLv3. See [LICENSE](./LICENSE).
 
 ## Contact
 
 Dmitry Tilyupo - tilyupo@gmail.com
 
-Project Link: [https://github.com/syncwavedev/syncwave](https://github.com/syncwavedev/syncwave)
+Project: [https://github.com/syncwavedev/syncwave](https://github.com/syncwavedev/syncwave)
 
 ## Acknowledgments
 
-This project wouldn't be possible without open-source technologies like:
+Built with:
 
-- [Svelte](https://github.com/sveltejs/svelte) powers UI layer of the app.
-- [Node.js](https://github.com/nodejs/node) powers our backend.
-- [LevelDB](https://github.com/google/leveldb) is the default storage for our self-hosted offering.
-- [FoundationDB](https://github.com/apple/foundationdb) is the storage used by [app.syncwave.dev](https://app.syncwave.dev).
-- [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) makes the UI beautiful.
-- [Astro](https://github.com/withastro/astro) is the build tool for our static (landing, docs).
-- [TypeScript](https://github.com/microsoft/TypeScript) - the whole app is written in TypeScript.
+- [Svelte](https://github.com/sveltejs/svelte) - frontend framework
+- [Node.js](https://github.com/nodejs/node) - backend runtime
+- [LevelDB](https://github.com/google/leveldb) - embedded database for self-hosted version
+- [FoundationDB](https://github.com/apple/foundationdb) - distributed database for hosted version
+- [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) - styling
+- [Astro](https://github.com/withastro/astro) - static site generator for docs
+- [TypeScript](https://github.com/microsoft/TypeScript) - type safety throughout

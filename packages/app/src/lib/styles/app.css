@@ -19,6 +19,6 @@
 /* Styles for PWA modes (standalone, minimal-ui) */
 @media all and (display-mode: standalone), all and (display-mode: minimal-ui) {
     :root {
-        --app-border: 2px;
+        --app-border: 1px;
     }
 }

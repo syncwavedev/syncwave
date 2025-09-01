@@ -72,7 +72,6 @@ export class MemberService {
                 member = existingMember;
             }
         } else {
-            console.log('more');
             member = await this.members.create({
                 id: createMemberId(),
                 boardId: params.boardId,

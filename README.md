@@ -7,7 +7,7 @@
   <a href="https://discord.com/invite/FzQjQVFdQz">
     <img src="https://img.shields.io/badge/Chat%20on-Discord-%235766f2?style=for-the-badge" alt="Discord community" /></a>
   <a href="https://github.com/syncwavedev/syncwave/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-AGPL--v3-green?style=for-the-badge" alt="Syncwave is released under the AGPLv3 license." /></a>
+    <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="Syncwave is released under the MIT license." /></a>
 </h4>
 <h4 align="center">
   <a href="https://app.syncwave.dev/demo">Demo</a>
@@ -96,7 +96,7 @@ Full docs at [syncwave.dev/docs](https://www.syncwave.dev/docs).
 
 ## License
 
-AGPLv3. See [LICENSE](./LICENSE).
+MIT. See [LICENSE](./LICENSE).
 
 ## Contact
 

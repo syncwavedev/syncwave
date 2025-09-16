@@ -12,8 +12,6 @@
 <h4 align="center">
   <a href="https://app.syncwave.dev/demo">Demo</a>
   &middot;
-  <a href="https://www.syncwave.dev/docs">Docs</a>
-  &middot;
   <a href="https://github.com/syncwavedev/syncwave/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
   &middot;
   <a href="https://github.com/syncwavedev/syncwave/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>

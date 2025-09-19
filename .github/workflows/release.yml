@@ -63,3 +63,17 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64/v8
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Replane ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            Docker images published with this release:
+            ${{ steps.meta.outputs.tags }}
+
+            Pull the image:
+            docker pull syncwave/syncwave:${{ github.ref_name }}

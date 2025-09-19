@@ -82,10 +82,6 @@ volumes:
   syncwave-data:
 ```
 
-## Documentation
-
-Full docs at [syncwave.dev/docs](https://www.syncwave.dev/docs).
-
 ## Help
 
 - [GitHub Discussions](https://github.com/syncwavedev/syncwave/discussions/new/choose) for questions

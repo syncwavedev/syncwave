@@ -39,7 +39,6 @@ That's the whole product.
   <ol>
     <li><a href="#quick-start">Quick start</a></li>
     <li><a href="#self-hosted">Self-Hosted</a></li>
-    <li><a href="#documentation">Documentation</a></li>
     <li><a href="#help">Help</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>

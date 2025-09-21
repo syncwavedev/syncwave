@@ -69,7 +69,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: Replane ${{ github.ref_name }}
+          name: Syncwave ${{ github.ref_name }}
           generate_release_notes: true
           body: |
             Docker images published with this release:

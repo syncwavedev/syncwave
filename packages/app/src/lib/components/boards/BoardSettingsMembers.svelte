@@ -12,12 +12,15 @@
     import CheckIcon from '../icons/CheckIcon.svelte';
     import permissionManager from '../../managers/permission-manager';
     import {log, type MemberId, type MemberRole} from 'syncwave';
+    import {tripEnd} from '../../utils/utils';
 
     let {board, me}: {board: BoardView; me: MeView} = $props();
 
     const agent = getAgent();
 
-    const joinLink = $derived(`${appConfig.uiUrl}/join/${board.joinCode}`);
+    const joinLink = $derived(
+        `${tripEnd(appConfig.uiUrl, '/')}/join/${board.joinCode}`
+    );
 
     let isUpdating = $state(false);
     let inviteEmail = $state('');

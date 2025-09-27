@@ -184,3 +184,11 @@ export function onEscape(priority: number, cb: () => void): Unsubscribe {
         }
     };
 }
+
+export function tripEnd(s: string, ending: string) {
+    while (s.endsWith(ending)) {
+        s = s.slice(0, s.length - ending.length);
+    }
+
+    return s;
+}
